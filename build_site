@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Works with
+#
+# - wasm-pack 0.12.1
+# - wasm-opt version 114 (version_114-3-g5f6594c52)
+
+set -e
+set -x
+
+OUT_DIR=../fir-lang.github.io
+
+mkdir -p $OUT_DIR
+
+wasm-pack build \
+    --target web \
+    --debug \
+    --out-dir target/wasm-pack \
+    --no-pack \
+    --no-typescript
+
+cp target/wasm-pack/fir.js $OUT_DIR/fir.js
+cp target/wasm-pack/fir_bg.wasm $OUT_DIR/fir_bg.wasm

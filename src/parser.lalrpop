@@ -1,0 +1,536 @@
+#![allow(unused)]
+#![allow(clippy::all)]
+
+use crate::ast::*;
+use crate::token::{TokenKind, Token};
+
+use std::convert::Infallible;
+
+use lexgen_util::{LexerError, Loc};
+use smol_str::SmolStr;
+
+grammar<'input>;
+
+extern {
+    type Location = Loc;
+    type Error = LexerError<Infallible>;
+
+    enum Token<'input> {
+        UpperId => Token { kind: TokenKind::UpperId, .. },
+        LowerId => Token { kind: TokenKind::LowerId, .. },
+        "(" => Token { kind: TokenKind::LParen, .. },
+        ")" => Token { kind: TokenKind::RParen, .. },
+        "[" => Token { kind: TokenKind::LBracket, .. },
+        "]" => Token { kind: TokenKind::RBracket, .. },
+        "{" => Token { kind: TokenKind::LBrace, .. },
+        "}" => Token { kind: TokenKind::RBrace, .. },
+        ":" => Token { kind: TokenKind::Colon, .. },
+        "," => Token { kind: TokenKind::Comma, .. },
+        "." => Token { kind: TokenKind::Dot, .. },
+        "=" => Token { kind: TokenKind::Eq, .. },
+        ".." => Token { kind: TokenKind::DotDot, .. },
+        "_" => Token { kind: TokenKind::Underscore, .. },
+        "==" => Token { kind: TokenKind::EqEq, .. },
+        "+" => Token { kind: TokenKind::Plus, .. },
+        "-" => Token { kind: TokenKind::Minus, .. },
+        "*" => Token { kind: TokenKind::Star, .. },
+        "+=" => Token { kind: TokenKind::PlusEq, .. },
+        "-=" => Token { kind: TokenKind::MinusEq, .. },
+        "!" => Token { kind: TokenKind::Exclamation, .. },
+        "!=" => Token { kind: TokenKind::ExclamationEq, .. },
+        "&&" => Token { kind: TokenKind::AmpAmp, .. },
+        "||" => Token { kind: TokenKind::PipePipe, .. },
+        "<" => Token { kind: TokenKind::LAngle, .. },
+        ">" => Token { kind: TokenKind::RAngle, .. },
+        INDENT => Token { kind: TokenKind::Indent, .. },
+        DEDENT => Token { kind: TokenKind::Dedent, .. },
+        NEWLINE => Token { kind: TokenKind::Newline, .. },
+        "type" => Token { kind: TokenKind::Type, .. },
+        "fn" => Token { kind: TokenKind::Fn, .. },
+        "let" => Token { kind: TokenKind::Let, .. },
+        "if" => Token { kind: TokenKind::If, .. },
+        "else" => Token { kind: TokenKind::Else, .. },
+        "elif" => Token { kind: TokenKind::Elif, .. },
+        "match" => Token { kind: TokenKind::Match, .. },
+        "self" => Token { kind: TokenKind::Self_, .. },
+        "for" => Token { kind: TokenKind::For, .. },
+        "while" => Token { kind: TokenKind::While, .. },
+        "in" => Token { kind: TokenKind::In, .. },
+        "return" => Token { kind: TokenKind::Return, .. },
+        IntLit => Token { kind: TokenKind::Int, .. },
+        StringLit => Token { kind: TokenKind::String, .. },
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Utils
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sep<T, S>: Vec<T> = {
+    <mut v:(<T> S)*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Type declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TypeDecl: L<TypeDecl> = {
+    <l:@L> "type" <type_name:UpperId> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+        L::new(l, r, TypeDecl {
+            name: type_name.smol_str(),
+            type_params,
+            rhs,
+        })
+}
+
+TypeDeclRhs: TypeDeclRhs = {
+    ":" NEWLINE INDENT <constrs:TypeConstrs> DEDENT =>
+        TypeDeclRhs::Sum(constrs),
+
+    ":" NEWLINE INDENT <named_fields:NamedFields> DEDENT =>
+        TypeDeclRhs::Product(ConstructorFields::Named(named_fields)),
+}
+
+TypeParams: Vec<SmolStr> = {
+    => vec![],
+
+    "[" <params:Sep<UpperId, ",">> "]" =>
+        params.into_iter().map(|id| id.smol_str()).collect(),
+}
+
+TypeConstrs: Vec<ConstructorDecl> = {
+    ConstructorDecl+
+}
+
+ConstructorDecl: ConstructorDecl = {
+    <name:UpperId> NEWLINE =>
+        ConstructorDecl {
+            name: name.smol_str(),
+            fields: ConstructorFields::Empty
+        },
+
+    <name:UpperId> ":" NEWLINE INDENT <named_fields:NamedFields> DEDENT =>
+        ConstructorDecl {
+            name: name.smol_str(),
+            fields: ConstructorFields::Named(named_fields),
+        },
+
+    <name:UpperId> "(" <fields:UnnamedFields> ","? ")" NEWLINE =>
+        ConstructorDecl {
+            name: name.smol_str(),
+            fields: ConstructorFields::Unnamed(fields),
+        },
+}
+
+NamedFields: Vec<(SmolStr, Type)> = {
+    (<NamedField> NEWLINE)+
+}
+
+NamedField: (SmolStr, Type) = {
+    <name:LowerId> ":" <type_:Type> =>
+        (name.smol_str(), type_),
+}
+
+UnnamedFields: Vec<Type> = {
+    <mut fields:UnnamedFields> "," <field:Type> => {
+        fields.push(field);
+        fields
+    },
+
+    <field:Type> => vec![field],
+}
+
+Type: Type = {
+    <name:UpperId> =>
+        Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
+
+    <name:UpperId> "[" <args:Sep<Type, ",">> "]" =>
+        Type::Named(NamedType { name: name.smol_str(), args }),
+
+    "(" <fields:Sep<RecordTypeField, ",">> ")" =>
+        Type::Record(fields),
+}
+
+RecordTypeField: Named<Type> = {
+    <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), thing: ty },
+    <ty:Type> => Named { name: None, thing: ty },
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Function declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FunDecl: L<FunDecl> = {
+    // We need two productions here as with two optional bracketed type/pred
+    // list we can't tell that one list means only type list.
+
+    // TODO: comma parsing after `self` is not right.
+
+    // Without type params and preds.
+    <l:@L> "fn" <type_name:(<UpperId> ".")?> <name:LowerId>
+            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
+            <return_ty:(":" <Type>)?>
+            "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+        L::new(l, r, FunDecl {
+            type_name: type_name.map(|t| t.smol_str()),
+            name: name.smol_str(),
+            type_params: vec![],
+            predicates: vec![],
+            self_: self_.is_some(),
+            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+            return_ty,
+            body: L::new(body_l, body_r, body),
+        }),
+
+    // With type params and potentially preds.
+    <l:@L> "fn" <type_name:(<UpperId> ".")?> <name:LowerId>
+            "[" <type_params:Sep<UpperId, ",">> "]"
+            <predicates:("[" Sep<Type, ","> "]")?>
+            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
+            "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+        L::new(l, r, FunDecl {
+            type_name: type_name.map(|t| t.smol_str()),
+            name: name.smol_str(),
+            type_params: type_params.into_iter().map(|t| t.smol_str()).collect(),
+            predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
+            self_: self_.is_some(),
+            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+            return_ty: None,
+            body: L::new(body_l, body_r, body),
+        }),
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Statements
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LStmts: Vec<L<Stmt>> = {
+    <stmts:LStmt*> =>
+        stmts,
+}
+
+LStmt: L<Stmt> = {
+    <l:@L> <stmt:Stmt> <r:@R> => L::new(l, r, stmt),
+}
+
+Stmt: Stmt = {
+    "let" <lhs:LowerId> <ty:(":" <Type>)?> "=" <rhs:LExpr> NEWLINE =>
+        Stmt::Let(LetStatement { lhs: lhs.smol_str(), ty, rhs }),
+
+    "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
+            <mut branches:("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)*>
+            <else_branch:("else" ":" NEWLINE INDENT <LStmts> DEDENT)?> => {
+        branches.insert(0, (cond, then_));
+        Stmt::If(IfStatement {
+            branches,
+            else_branch,
+        })
+    },
+
+    <lhs:LExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
+        Stmt::Assign(AssignStatement {
+            lhs,
+            rhs,
+            op,
+        }),
+
+    <expr:LExpr> NEWLINE =>
+        Stmt::Expr(expr),
+
+    "match" <expr:LExpr> ":" NEWLINE INDENT <alts:Alts> DEDENT =>
+        Stmt::Match(MatchStatement {
+            scrutinee: expr,
+            alts,
+        }),
+
+    // "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    //     Stmt::For(ForStatement {
+    //         var: id.smol_str(),
+    //         ty: None,
+    //         expr,
+    //         body: statements,
+    //     }),
+
+    "while" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+        Stmt::While(WhileStatement {
+            cond,
+            body:statements,
+        }),
+
+    "return" <expr:LExpr> NEWLINE =>
+        Stmt::Return(expr),
+
+    // <fun:FunDecl> =>
+    //     Stmt::LetFn(fun),
+}
+
+Alts: Vec<Alt> = {
+    Alt*
+}
+
+Alt: Alt = {
+    <pattern:LPat> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
+        Alt {
+            pattern,
+            guard: None,
+            rhs: stmts,
+        },
+
+    <pattern:LPat> ":" <stmt:LStmt>  =>
+        Alt {
+            pattern,
+            guard: None,
+            rhs: vec![stmt],
+        },
+}
+
+AssignOp: AssignOp = {
+    "=" => AssignOp::Eq,
+    "+=" => AssignOp::PlusEq,
+    "-=" => AssignOp::MinusEq,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Expressions
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LExpr: L<Expr> = {
+    <l:@L> <expr:Expr> <r:@R> => L::new(l, r, expr),
+}
+
+Expr: Expr = {
+    #[precedence(level = "0")]
+    "self" =>
+        Expr::Self_,
+
+    <id:LowerId> =>
+        Expr::Var(id.smol_str()),
+
+    <id:UpperId> =>
+        Expr::UpperVar(id.smol_str()),
+
+    "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
+        match exprs.len() {
+            0 => Expr::Record(vec![]),
+            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.thing,
+            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, thing: Box::new(expr) }).collect()),
+        }
+    },
+
+    <int:IntLit> =>
+        Expr::Int(i32::from_str_radix(int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
+
+    <string:StringLit> =>
+        Expr::String(string.text.to_string()),
+
+    <l:@L> <array:Expr> <r:@R> "[" <index:LExpr> "]" =>
+        Expr::ArrayIndex(ArrayIndexExpr {
+            array: Box::new(L::new(l, r, array)),
+            index: Box::new(index),
+        }),
+
+    <l:@L> <fun:Expr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
+        Expr::Call(CallExpr {
+            fun: Box::new(L::new(l, r, fun)),
+            args,
+        }),
+
+    <l:@L> <expr:Expr> <r:@R> "." <field:LowerId> =>
+        Expr::FieldSelect(FieldSelectExpr {
+            object: Box::new(L::new(l, r, expr)),
+            field: field.smol_str(),
+        }),
+
+    <expr:Expr> "." <constr:UpperId> => {
+        match expr {
+            Expr::UpperVar(ty) => Expr::ConstrSelect(ConstrSelectExpr {
+                ty,
+                constr: constr.smol_str(),
+            }),
+
+            _ => panic!(),
+        }
+    },
+
+    // #[precedence(level = "1")]
+    // #[assoc(side = "left")]
+    // <from:Expr> ".." <to:Expr> =>
+    //     Expr::Range(RangeExpr {
+    //         from: Box::new(from),
+    //         to: Box::new(to),
+    //         inclusive: false,
+    //     }),
+
+    #[precedence(level = "2")]
+    "!" <l:@L> <expr:Expr> <r:@R> =>
+        Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(l, r, expr)) }),
+
+    #[precedence(level = "3")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:Expr> <r1:@R> "*" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Multiply,
+        }),
+
+    #[precedence(level = "4")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:Expr> <r1:@R> "+" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Add,
+        }),
+
+    <l1:@L> <left:Expr> <r1:@R> "-" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Subtract,
+        }),
+
+    #[precedence(level = "5")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:Expr> <r1:@R> "==" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Equal,
+        }),
+
+    <l1:@L> <left:Expr> <r1:@R> "!=" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::NotEqual,
+        }),
+
+    <l1:@L> <left:Expr> <r1:@R> ">" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Gt,
+        }),
+
+    #[precedence(level = "6")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:Expr> <r1:@R> "&&" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::And,
+        }),
+
+    #[precedence(level = "7")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:Expr> <r1:@R> "||" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Or,
+        }),
+}
+
+ParenExpr: (Option<SmolStr>, L<Expr>) = {
+    <id:LowerId> "=" <expr:LExpr> =>
+        (Some(id.smol_str()), expr),
+
+    <expr:LExpr> =>
+        (None, expr),
+}
+
+CallArg: CallArg = {
+    <name:LowerId> "=" <expr:LExpr> =>
+        CallArg {
+            name: Some(name.smol_str()),
+            expr,
+        },
+
+    <expr:LExpr> =>
+        CallArg {
+            name: None,
+            expr,
+        },
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Patterns
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LPat: L<Pat> = {
+    <l:@L> <pat:Pat> <r:@R> => L::new(l, r, pat),
+}
+
+Pat: Pat = {
+    <id:LowerId> => Pat::Var(id.smol_str()),
+
+    <constr:ConstrPattern> => Pat::Constr(constr),
+
+    "(" <fields:Sep<PatternField, ",">> ")" =>
+        Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect()),
+
+    "_" => Pat::Ignore,
+}
+
+Constructor: Constructor = {
+    <type_:UpperId> "." <constr:UpperId> =>
+        Constructor { type_: type_.smol_str(), constr: Some(constr.smol_str()) },
+
+    <type_:UpperId> =>
+        Constructor { type_: type_.smol_str(), constr: None },
+}
+
+ConstrPattern: ConstrPattern = {
+    <constr:Constructor> =>
+        ConstrPattern { constr, fields: vec![] },
+
+    <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
+        ConstrPattern { constr, fields: fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect() },
+}
+
+PatternField: (Option<SmolStr>, L<Pat>) = {
+    <id:LowerId> "=" <pat:LPat> =>
+        (Some(id.smol_str()), pat),
+
+    <pat:LPat> =>
+        (None, pat),
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Top-level declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub TopDecls: Vec<L<TopDecl>> = {
+    TopDecl*
+}
+
+TopDecl: L<TopDecl> = {
+    NEWLINE* <l:@L> <type_decl:TypeDecl> <r:@R> =>
+        L::new(l, r, TopDecl::Type(type_decl)),
+
+    NEWLINE* <l:@L> <fun_decl:FunDecl> <r:@R> =>
+        L::new(l, r, TopDecl::Fun(fun_decl)),
+}
