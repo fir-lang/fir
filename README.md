@@ -29,7 +29,8 @@ Some notable features are:
   memory with 32-bit integers, instead of a memory with pointers to boxed
   32-bit integer objects.
 
-  It also allows unboxing objects with immutable fields.
+  It also allows unboxing objects with immutable fields (such as `Option`,
+  `Result`), and multiple return values without allocation via records.
 
 - Whole-program compilation
 
