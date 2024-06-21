@@ -199,6 +199,7 @@ FunDecl: L<FunDecl> = {
             "[" <type_params:Sep<UpperId, ",">> "]"
             <predicates:("[" Sep<Type, ","> "]")?>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
+            <return_ty:(":" <Type>)?>
             "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(l, r, FunDecl {
             type_name: type_name.map(|t| t.smol_str()),
@@ -207,12 +208,10 @@ FunDecl: L<FunDecl> = {
             predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            return_ty: None,
+            return_ty,
             body: L::new(body_l, body_r, body),
         }),
 }
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
