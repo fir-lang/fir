@@ -123,7 +123,7 @@ pub enum Stmt {
     If(IfStatement),
     Assign(AssignStatement),
     Expr(L<Expr>),
-    // For(ForStatement),
+    For(ForStatement),
     While(WhileStatement),
     Return(L<Expr>),
 }
@@ -200,13 +200,13 @@ pub enum AssignOp {
     MinusEq,
 }
 
-// #[derive(Debug, Clone)]
-// pub struct ForStatement {
-//     pub var: SmolStr,
-//     pub ty: Option<Type>,
-//     pub expr: L<Expr>,
-//     pub body: Vec<Statement>,
-// }
+#[derive(Debug, Clone)]
+pub struct ForStatement {
+    pub var: SmolStr,
+    pub ty: Option<Type>,
+    pub expr: L<Expr>,
+    pub body: Vec<L<Stmt>>,
+}
 
 #[derive(Debug, Clone)]
 pub struct WhileStatement {
@@ -234,7 +234,8 @@ pub enum Expr {
     Call(CallExpr),
 
     /// A range expression: `x .. y`.
-    // Range(RangeExpr),
+    Range(RangeExpr),
+
     Int(i32),
 
     String(String),
@@ -274,12 +275,12 @@ pub struct ConstrSelectExpr {
     pub constr: SmolStr,
 }
 
-// #[derive(Debug, Clone)]
-// pub struct RangeExpr {
-//     pub from: Box<L<Expr>>,
-//     pub to: Box<L<Expr>>,
-//     pub inclusive: bool,
-// }
+#[derive(Debug, Clone)]
+pub struct RangeExpr {
+    pub from: Box<L<Expr>>,
+    pub to: Box<L<Expr>>,
+    pub inclusive: bool,
+}
 
 #[derive(Debug, Clone)]
 pub struct BinOpExpr {

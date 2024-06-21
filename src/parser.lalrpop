@@ -258,13 +258,13 @@ Stmt: Stmt = {
             alts,
         }),
 
-    // "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
-    //     Stmt::For(ForStatement {
-    //         var: id.smol_str(),
-    //         ty: None,
-    //         expr,
-    //         body: statements,
-    //     }),
+    "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+        Stmt::For(ForStatement {
+            var: id.smol_str(),
+            ty: None,
+            expr,
+            body: statements,
+        }),
 
     "while" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
         Stmt::While(WhileStatement {
@@ -369,14 +369,14 @@ Expr: Expr = {
         }
     },
 
-    // #[precedence(level = "1")]
-    // #[assoc(side = "left")]
-    // <from:Expr> ".." <to:Expr> =>
-    //     Expr::Range(RangeExpr {
-    //         from: Box::new(from),
-    //         to: Box::new(to),
-    //         inclusive: false,
-    //     }),
+    #[precedence(level = "1")]
+    #[assoc(side = "left")]
+    <l1:@L> <from:Expr> <r1:@R> ".." <l2:@L> <to:Expr> <r2:@R> =>
+        Expr::Range(RangeExpr {
+            from: Box::new(L::new(l1, r1, from)),
+            to: Box::new(L::new(l2, r2, to)),
+            inclusive: false,
+        }),
 
     #[precedence(level = "2")]
     "!" <l:@L> <expr:Expr> <r:@R> =>

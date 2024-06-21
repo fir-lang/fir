@@ -421,6 +421,62 @@ fn exec<W: Write>(
                 }
             },
 
+            ast::Stmt::For(ast::ForStatement {
+                var,
+                ty: _,
+                expr,
+                body,
+            }) => {
+                let (from, to, inclusive) = match &expr.thing {
+                    ast::Expr::Range(ast::RangeExpr {
+                        from,
+                        to,
+                        inclusive,
+                    }) => (from, to, inclusive),
+                    _ => panic!(
+                        "Interpreter only supports for loops with a range expression in the head"
+                    ),
+                };
+
+                let from = eval(w, pgm, heap, locals, from);
+                debug_assert_eq!(heap[from], I32_TYPE_TAG);
+                let from = heap[from + 1] as i32;
+
+                let to = eval(w, pgm, heap, locals, to);
+                debug_assert_eq!(heap[to], I32_TYPE_TAG);
+                let to = heap[to + 1] as i32;
+
+                let iter_value = heap.allocate_i32(from);
+                locals.insert(var.clone(), iter_value);
+
+                if *inclusive {
+                    for i in from..=to {
+                        heap[iter_value + 1] = i as u64;
+                        match exec(w, pgm, heap, locals, body) {
+                            ControlFlow::Next(_) => {}
+                            ControlFlow::Return(val) => {
+                                locals.remove(var);
+                                return ControlFlow::Return(val);
+                            }
+                        }
+                    }
+                } else {
+                    for i in from..to {
+                        heap[iter_value + 1] = i as u64;
+                        match exec(w, pgm, heap, locals, body) {
+                            ControlFlow::Next(_) => {}
+                            ControlFlow::Return(val) => {
+                                locals.remove(var);
+                                return ControlFlow::Return(val);
+                            }
+                        }
+                    }
+                }
+
+                locals.remove(var);
+                0
+            }
+
             ast::Stmt::Return(expr) => {
                 return ControlFlow::Return(eval(w, pgm, heap, locals, expr))
             }
@@ -544,7 +600,8 @@ fn eval<W: Write>(
                 | ast::Expr::BinOp(_)
                 | ast::Expr::UnOp(_)
                 | ast::Expr::ArrayIndex(_)
-                | ast::Expr::Record(_) => eval(w, pgm, heap, locals, fun),
+                | ast::Expr::Record(_)
+                | ast::Expr::Range(_) => eval(w, pgm, heap, locals, fun),
             };
 
             match heap[fun] {
@@ -706,6 +763,10 @@ fn eval<W: Write>(
             }
 
             record
+        }
+
+        ast::Expr::Range(_) => {
+            panic!("Interpreter only supports range expressions in for loops")
         }
     }
 }

@@ -173,20 +173,21 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
 
         ast::Stmt::Expr(expr) => visit_expr(&expr.thing, records),
 
-        // ast::Statement::For(ast::ForStatement {
-        //     var: _,
-        //     ty,
-        //     expr,
-        //     body,
-        // }) => {
-        //     if let Some(ty) = ty {
-        //         visit_ty(ty, records);
-        //     }
-        //     visit_expr(expr, records);
-        //     for stmt in body {
-        //         visit_stmt(stmt, records);
-        //     }
-        // }
+        ast::Stmt::For(ast::ForStatement {
+            var: _,
+            ty,
+            expr,
+            body,
+        }) => {
+            if let Some(ty) = ty {
+                visit_ty(ty, records);
+            }
+            visit_expr(&expr.thing, records);
+            for stmt in body {
+                visit_stmt(&stmt.thing, records);
+            }
+        }
+
         ast::Stmt::While(ast::WhileStatement { cond, body }) => {
             visit_expr(&cond.thing, records);
             for stmt in body {
@@ -238,14 +239,15 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             }
         }
 
-        // ast::Expr::Range(ast::RangeExpr {
-        //     from,
-        //     to,
-        //     inclusive: _,
-        // }) => {
-        //     visit_expr(from, records);
-        //     visit_expr(to, records);
-        // }
+        ast::Expr::Range(ast::RangeExpr {
+            from,
+            to,
+            inclusive: _,
+        }) => {
+            visit_expr(&from.thing, records);
+            visit_expr(&to.thing, records);
+        }
+
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
             visit_expr(&left.thing, records);
             visit_expr(&right.thing, records);
