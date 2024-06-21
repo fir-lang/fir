@@ -57,7 +57,9 @@ lexgen::lexer! {
     "&&" = TokenKind::AmpAmp,
     "||" = TokenKind::PipePipe,
     "<" = TokenKind::LAngle,
+    "<=" = TokenKind::LAngleEq,
     ">" = TokenKind::RAngle,
+    ">=" = TokenKind::RAngleEq,
     "!=" = TokenKind::ExclamationEq,
 
     $$ascii_uppercase ($$ascii_alphanumeric | '_')* = TokenKind::UpperId,

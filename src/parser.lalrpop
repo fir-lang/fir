@@ -41,7 +41,9 @@ extern {
         "&&" => Token { kind: TokenKind::AmpAmp, .. },
         "||" => Token { kind: TokenKind::PipePipe, .. },
         "<" => Token { kind: TokenKind::LAngle, .. },
+        "<=" => Token { kind: TokenKind::LAngleEq, .. },
         ">" => Token { kind: TokenKind::RAngle, .. },
+        ">=" => Token { kind: TokenKind::RAngleEq, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
@@ -423,11 +425,32 @@ Expr: Expr = {
             op: BinOp::NotEqual,
         }),
 
+    <l1:@L> <left:Expr> <r1:@R> "<" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::Lt,
+        }),
+
     <l1:@L> <left:Expr> <r1:@R> ">" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(l1, r1, left)),
             right: Box::new(L::new(l2, r2, right)),
             op: BinOp::Gt,
+        }),
+
+    <l1:@L> <left:Expr> <r1:@R> "<=" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::LtEq,
+        }),
+
+    <l1:@L> <left:Expr> <r1:@R> ">=" <l2:@L> <right:Expr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(l1, r1, left)),
+            right: Box::new(L::new(l2, r2, right)),
+            op: BinOp::GtEq,
         }),
 
     #[precedence(level = "6")]

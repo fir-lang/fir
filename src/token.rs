@@ -67,7 +67,9 @@ pub enum TokenKind {
     AmpAmp,
     PipePipe,
     LAngle,
+    LAngleEq,
     RAngle,
+    RAngleEq,
 
     // Literals
     String,

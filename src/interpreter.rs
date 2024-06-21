@@ -687,7 +687,10 @@ fn eval<W: Write>(
                 ast::BinOp::Equal => "__eq",
                 ast::BinOp::NotEqual => "__neq",
                 ast::BinOp::Multiply => "__mul",
+                ast::BinOp::Lt => "__lt",
                 ast::BinOp::Gt => "__gt",
+                ast::BinOp::LtEq => "__lt_eq",
+                ast::BinOp::GtEq => "__gt_eq",
                 ast::BinOp::And => "__and",
                 ast::BinOp::Or => "__or",
             };

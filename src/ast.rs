@@ -308,7 +308,10 @@ pub enum BinOp {
     Equal,
     NotEqual,
     Multiply,
+    Lt,
     Gt,
+    LtEq,
+    GtEq,
     And,
     Or,
 }
