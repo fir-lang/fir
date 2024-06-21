@@ -43,6 +43,28 @@ Some notable features are:
 
 - Coroutines
 
-## Goals
+# Goals and non-goals
 
-## Current status
+We want Fir to be your go-to programming language when you need types, with
+modern tooling (compiler, language server, documentation generator, formatter,
+build system, all in one executable), syntax, batteries-included approach to
+the standard libraries, and an expressive type system.
+
+# Current status and plans
+
+Currently only a simple interpreter is available. The interpreter does not have
+a type checker yet, it ignores all types.
+
+The goal is to bootstrap the language as quickly as possible. To that end, we
+only add features to the interpreter when the cost of implementing the feature
+in the interpreter is paid off by writing the bootstrapping compiler with that
+feature.
+
+For example, implementing a type checker in the interpreter makes sense, as it
+will be difficult to write the bootstrapping compiler without a type checker.
+
+As an example feature that we probably don't want: the interepreter currently
+doesn't have a garbage collector and it will probably not need a garbage
+collector. The interpreter only needs to be able to run bootstrapping compiler
+when compiling itself. 16 GB RAM (which I suspect most development PCs have
+these days) should be enough for this.
