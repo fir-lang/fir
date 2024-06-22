@@ -118,13 +118,12 @@ pub fn call_builtin_fun<W: Write>(
         }
 
         BuiltinFun::ArrayNew => {
-            debug_assert_eq!(args.len(), 2);
+            debug_assert_eq!(args.len(), 1);
 
             let cap = args[0];
             debug_assert_eq!(heap[cap], I32_TYPE_TAG);
             let cap = heap[cap + 1];
-            let elem = args[1];
-            heap.allocate_array(cap, elem)
+            heap.allocate_array(cap)
         }
 
         BuiltinFun::ArrayLen => {
@@ -168,7 +167,11 @@ pub fn call_builtin_fun<W: Write>(
             let idx = heap[idx + 1];
             assert!(idx < array_len);
 
-            heap[array + 2 + idx]
+            let value = heap[array + 2 + idx];
+            if value == 0 {
+                panic!("Reading uninitialized array element");
+            }
+            value
         }
 
         BuiltinFun::StrLen => {

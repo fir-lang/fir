@@ -26,9 +26,11 @@ impl std::ops::IndexMut<u64> for Heap {
 
 impl Heap {
     pub fn new() -> Self {
+        // Heap pointer starts from 1. Address 0 is used as "null" or "uninitialized" marker in
+        // arrays.
         Heap {
             values: vec![0; INITIAL_HEAP_SIZE_WORDS].into_boxed_slice(),
-            hp: 0,
+            hp: 1,
         }
     }
 
@@ -109,12 +111,12 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_array(&mut self, cap: u64, elem: u64) -> u64 {
+    pub fn allocate_array(&mut self, cap: u64) -> u64 {
         let alloc = self.allocate(2 + cap as usize);
         self[alloc] = ARRAY_TYPE_TAG;
         self[alloc + 1] = cap;
         for i in 0..cap {
-            self[alloc + 2 + i] = elem;
+            self[alloc + 2 + i] = 0;
         }
         alloc
     }
