@@ -220,11 +220,18 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
 
 fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
     match expr {
-        ast::Expr::Var(_)
-        | ast::Expr::UpperVar(_)
-        | ast::Expr::Int(_)
-        | ast::Expr::String(_)
-        | ast::Expr::Self_ => {}
+        ast::Expr::Var(_) | ast::Expr::UpperVar(_) | ast::Expr::Int(_) | ast::Expr::Self_ => {}
+
+        ast::Expr::String(parts) => {
+            for part in parts {
+                match part {
+                    crate::interpolation::StringPart::Str(_) => {}
+                    crate::interpolation::StringPart::Expr(expr) => {
+                        visit_expr(&expr.thing, records)
+                    }
+                }
+            }
+        }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
             visit_expr(&object.thing, records);
