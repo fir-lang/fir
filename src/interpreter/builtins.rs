@@ -19,8 +19,8 @@ pub enum BuiltinFun {
     BoolOr,
     BoolToString,
     I32Add,
+    I32Cmp,
     I32Eq,
-    I32Gt,
     I32Sub,
     I32ToString,
     StrEq,
@@ -29,7 +29,6 @@ pub enum BuiltinFun {
     StrViewEq,
     StrViewIsEmpty,
     StrViewLen,
-    StrViewNEq,
     StrViewStartsWith,
     StrViewSubstring,
 }
@@ -220,7 +219,7 @@ pub fn call_builtin_fun<W: Write>(
             heap.allocate_i32((i1 as i32) - (i2 as i32))
         }
 
-        BuiltinFun::I32Gt => {
+        BuiltinFun::I32Cmp => {
             debug_assert_eq!(args.len(), 2);
 
             let i1 = args[0];
@@ -229,10 +228,20 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(heap[i1], I32_TYPE_TAG);
             debug_assert_eq!(heap[i2], I32_TYPE_TAG);
 
+            let ordering_ty_con = pgm.ty_cons.get("Ordering").unwrap_or_else(|| {
+                panic!("__cmp was called, but the Ordering type is not defined")
+            });
+
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
 
-            heap.allocate_bool(i1 > i2)
+            let constr_name = match i1.cmp(&i2) {
+                Ordering::Less => "Less",
+                Ordering::Equal => "Equal",
+                Ordering::Greater => "Greater",
+            };
+
+            heap.allocate_tag(ordering_ty_con.get_constr_with_tag(constr_name).0)
         }
 
         BuiltinFun::I32Eq => {
@@ -304,9 +313,7 @@ pub fn call_builtin_fun<W: Write>(
             })
         }
 
-        BuiltinFun::StrViewNEq | BuiltinFun::StrViewEq => {
-            let negate = *fun == BuiltinFun::StrViewNEq;
-
+        BuiltinFun::StrViewEq => {
             debug_assert_eq!(args.len(), 2);
 
             let s1 = args[0];
@@ -340,7 +347,7 @@ pub fn call_builtin_fun<W: Write>(
                 == heap_bytes[(s2_payload_byte_addr + s2_start) as usize
                     ..(s2_payload_byte_addr + s2_end) as usize];
 
-            heap.allocate_bool(if negate { !eq } else { eq })
+            heap.allocate_bool(eq)
         }
 
         BuiltinFun::StrViewSubstring => {

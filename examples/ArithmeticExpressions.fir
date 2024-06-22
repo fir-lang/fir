@@ -154,3 +154,10 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     let pgm = pgm.substring(1, pgm.len())
 
     (arg = arg, rest = pgm)
+
+-- For now, this needs to be defined somewhere in the program. We will remove
+-- this once we have a prelude.
+type Ordering:
+    Less
+    Equal
+    Greater

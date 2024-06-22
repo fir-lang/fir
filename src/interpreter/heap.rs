@@ -42,6 +42,13 @@ impl Heap {
         hp as u64
     }
 
+    // TODO: These should be allocated once and reused.
+    pub fn allocate_tag(&mut self, tag: u64) -> u64 {
+        let alloc = self.allocate(1);
+        self[alloc] = tag;
+        alloc
+    }
+
     pub fn allocate_str(&mut self, string: &[u8]) -> u64 {
         let size_words = string.len().div_ceil(8);
         let alloc = self.allocate(size_words + 2);

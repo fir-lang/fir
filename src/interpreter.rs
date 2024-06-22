@@ -16,6 +16,7 @@ use crate::ast::{self, L};
 use crate::collections::{Map, Set};
 use crate::record_collector::{collect_records, RecordShape};
 
+use std::cmp::Ordering;
 use std::io::Write;
 
 use bytemuck::cast_slice_mut;
@@ -34,18 +35,32 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     call(w, &pgm, &mut heap, main_fun, vec![input], Loc::default());
 }
 
-const FALSE_TYPE_TAG: u64 = 0;
-const TRUE_TYPE_TAG: u64 = 1;
-const I32_TYPE_TAG: u64 = 2;
-const STR_TYPE_TAG: u64 = 3;
-const STR_VIEW_TYPE_TAG: u64 = 4;
-const ARRAY_TYPE_TAG: u64 = 5;
-const CONSTR_TYPE_TAG: u64 = 6; // constructor closure, e.g. `Option.Some`.
-const TOP_FUN_TYPE_TAG: u64 = 7; // top-level function closure, e.g. `id`.
-const ASSOC_FUN_TYPE_TAG: u64 = 8; // associated function closure, e.g. `Value.toString`.
+macro_rules! generate_ty_tags {
+    ($($name:ident),* $(,)?) => {
+        generate_ty_tags!(@generate 0, $($name),*);
+    };
 
-/// First available type tag for user types.
-const FIRST_TYPE_TAG: u64 = 9;
+    (@generate $index:expr, $name:ident $(, $rest:ident)*) => {
+        const $name: u64 = $index;
+        generate_ty_tags!(@generate $index + 1, $($rest),*);
+    };
+
+    (@generate $index:expr,) => {};
+}
+
+#[rustfmt::skip]
+generate_ty_tags!(
+    FALSE_TYPE_TAG,
+    TRUE_TYPE_TAG,
+    I32_TYPE_TAG,
+    STR_TYPE_TAG,
+    STR_VIEW_TYPE_TAG,
+    ARRAY_TYPE_TAG,
+    CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
+    TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
+    ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
+    FIRST_TYPE_TAG,     // First available type tag for user types.
+);
 
 #[derive(Debug, Default)]
 struct Pgm {
@@ -116,6 +131,17 @@ impl TyCon {
             self.type_tag,
             self.type_tag + (self.value_constrs.len() as u64) - 1,
         )
+    }
+
+    fn get_constr_with_tag(&self, name: &str) -> (u64, &Fields) {
+        let (idx, constr) = self
+            .value_constrs
+            .iter()
+            .enumerate()
+            .find(|(_, constr)| constr.name.as_ref().map(|s| s.as_str()) == Some(name))
+            .unwrap();
+
+        (self.type_tag + idx as u64, &constr.fields)
     }
 }
 
@@ -786,13 +812,31 @@ fn eval<W: Write>(
             let method_name = match op {
                 ast::BinOp::Add => "__add",
                 ast::BinOp::Subtract => "__sub",
-                ast::BinOp::Equal => "__eq",
-                ast::BinOp::NotEqual => "__neq",
                 ast::BinOp::Multiply => "__mul",
-                ast::BinOp::Lt => "__lt",
-                ast::BinOp::Gt => "__gt",
-                ast::BinOp::LtEq => "__lt_eq",
-                ast::BinOp::GtEq => "__gt_eq",
+                ast::BinOp::Equal => {
+                    let eq = eq(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(eq);
+                }
+                ast::BinOp::NotEqual => {
+                    let eq = eq(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(!eq);
+                }
+                ast::BinOp::Lt => {
+                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(matches!(ord, Ordering::Less));
+                }
+                ast::BinOp::Gt => {
+                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(matches!(ord, Ordering::Greater));
+                }
+                ast::BinOp::LtEq => {
+                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(matches!(ord, Ordering::Less | Ordering::Equal));
+                }
+                ast::BinOp::GtEq => {
+                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    return heap.allocate_bool(matches!(ord, Ordering::Greater | Ordering::Equal));
+                }
                 ast::BinOp::And => "__and",
                 ast::BinOp::Or => "__or",
             };
@@ -874,6 +918,53 @@ fn eval<W: Write>(
             panic!("Interpreter only supports range expressions in for loops")
         }
     }
+}
+
+fn cmp<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    val1: u64,
+    val2: u64,
+    loc: Loc,
+) -> Ordering {
+    let val1_tag = heap[val1];
+    let cmp_method = pgm.associated_funs[val1_tag as usize]
+        .get("__cmp")
+        .unwrap_or_else(|| panic!("Receiver with tag {} does not have __cmp method", val1_tag));
+    let ret = call(w, pgm, heap, cmp_method, vec![val1, val2], loc);
+    let ret_tag = heap[ret];
+    let ordering_ty_con = pgm
+        .ty_cons
+        .get("Ordering")
+        .unwrap_or_else(|| panic!("__cmp was called, but the Ordering type is not defined"));
+
+    assert_eq!(ordering_ty_con.value_constrs.len(), 3);
+    let (less_tag, _) = ordering_ty_con.get_constr_with_tag("Less");
+    let (eq_tag, _) = ordering_ty_con.get_constr_with_tag("Equal");
+    let (greater_tag, _) = ordering_ty_con.get_constr_with_tag("Greater");
+
+    if ret_tag == less_tag {
+        Ordering::Less
+    } else if ret_tag == eq_tag {
+        Ordering::Equal
+    } else if ret_tag == greater_tag {
+        Ordering::Greater
+    } else {
+        panic!()
+    }
+}
+
+fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: Loc) -> bool {
+    let val1_tag = heap[val1];
+    let cmp_method = pgm.associated_funs[val1_tag as usize]
+        .get("__eq")
+        .unwrap_or_else(|| panic!("Receiver with tag {} does not have __eq method", val1_tag));
+    let ret = call(w, pgm, heap, cmp_method, vec![val1, val2], loc);
+    let ret_tag = heap[ret];
+
+    debug_assert!(matches!(ret_tag, TRUE_TYPE_TAG | FALSE_TYPE_TAG));
+    ret_tag == TRUE_TYPE_TAG
 }
 
 // NB. Because we don't have a proper type system yet, this doesn't assume that the program is

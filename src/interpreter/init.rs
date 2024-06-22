@@ -201,7 +201,7 @@ pub fn collect_funs(
         "I32" => {
             "__add" => BuiltinFun::I32Add,
             "__sub" => BuiltinFun::I32Sub,
-            "__gt" => BuiltinFun::I32Gt,
+            "__cmp" => BuiltinFun::I32Cmp,
             "__eq" => BuiltinFun::I32Eq,
             "toString" => BuiltinFun::I32ToString,
         },
@@ -212,7 +212,6 @@ pub fn collect_funs(
         },
         "StrView" => {
             "__eq" => BuiltinFun::StrViewEq,
-            "__neq" => BuiltinFun::StrViewNEq,
             "substring" => BuiltinFun::StrViewSubstring,
             "len" => BuiltinFun::StrViewLen,
             "startsWith" => BuiltinFun::StrViewStartsWith,
