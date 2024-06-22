@@ -166,7 +166,11 @@ pub enum Pat {
 
     /// Underscore, aka. wildcard.
     Ignore,
-    // TODO: Add literals
+
+    Str(String),
+
+    /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
+    StrPfx(String, SmolStr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

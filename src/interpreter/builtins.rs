@@ -495,11 +495,3 @@ pub fn call_builtin_fun<W: Write>(
         }
     }
 }
-
-struct LocDisplay(Loc);
-
-impl std::fmt::Display for LocDisplay {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.0.line + 1, self.0.col + 1)
-    }
-}

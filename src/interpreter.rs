@@ -1075,6 +1075,14 @@ fn test_pattern(
 
             true
         }
+
+        ast::Pat::StrPfx(_, _) => {
+            todo!()
+        }
+
+        ast::Pat::Str(_str) => {
+            todo!()
+        }
     }
 }
 
@@ -1202,7 +1210,9 @@ fn bind_pattern(
             }
         }
 
-        ast::Pat::Ignore => {}
+        ast::Pat::StrPfx(_pfx, _var) => todo!(),
+
+        ast::Pat::Ignore | ast::Pat::Str(_) => {}
     }
 }
 

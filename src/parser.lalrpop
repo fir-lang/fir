@@ -514,6 +514,10 @@ Pat: Pat = {
         Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect()),
 
     "_" => Pat::Ignore,
+
+    <str:StringLit> => Pat::Str(str.text.to_string()),
+
+    <str:StringLit> ".." <id:LowerId> => Pat::StrPfx(str.text.to_string(), id.smol_str()),
 }
 
 Constructor: Constructor = {
