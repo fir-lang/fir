@@ -20,12 +20,12 @@ pub enum BuiltinFun {
     ArrayGet,
     BoolAnd,
     BoolOr,
-    BoolToString,
+    BoolToStr,
     I32Add,
     I32Cmp,
     I32Eq,
     I32Sub,
-    I32ToString,
+    I32ToStr,
     StrEq,
     StrLen,
     StrSubstr,
@@ -306,7 +306,7 @@ pub fn call_builtin_fun<W: Write>(
             heap.allocate_bool(i1 == i2)
         }
 
-        BuiltinFun::I32ToString => {
+        BuiltinFun::I32ToStr => {
             debug_assert_eq!(args.len(), 1);
             let obj = args[0];
             debug_assert_eq!(heap[obj], I32_TYPE_TAG);
@@ -344,7 +344,7 @@ pub fn call_builtin_fun<W: Write>(
             heap.allocate_bool(b1 == TRUE_TYPE_TAG || b2 == TRUE_TYPE_TAG)
         }
 
-        BuiltinFun::BoolToString => {
+        BuiltinFun::BoolToStr => {
             debug_assert_eq!(args.len(), 1);
 
             let b = args[0];

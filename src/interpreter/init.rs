@@ -203,12 +203,12 @@ pub fn collect_funs(
             "__sub" => BuiltinFun::I32Sub,
             "__cmp" => BuiltinFun::I32Cmp,
             "__eq" => BuiltinFun::I32Eq,
-            "toString" => BuiltinFun::I32ToString,
+            "toStr" => BuiltinFun::I32ToStr,
         },
         "Bool" => {
             "__and" => BuiltinFun::BoolAnd,
             "__or" => BuiltinFun::BoolOr,
-            "toString" => BuiltinFun::BoolToString,
+            "toStr" => BuiltinFun::BoolToStr,
         },
         "StrView" => {
             "__eq" => BuiltinFun::StrViewEq,

@@ -5,7 +5,7 @@
 
 fn main(pgm: Str) =
     let pgmStringView = pgm.substr(0, pgm.len())
-    printStr(eval(parse(pgmStringView)).toString())
+    printStr(eval(parse(pgmStringView)).toStr())
 
 type Term:
     True
@@ -62,10 +62,10 @@ fn eval(term: Term): Value =
                 Value.Bool(_): panic("IsZero argument evaluated to bool")
                 Value.Num(value): Value.Bool(value == 0)
 
-fn Value.toString(self): Str =
+fn Value.toStr(self): Str =
     match self:
-        Value.Bool(value): value.toString()
-        Value.Num(value): value.toString()
+        Value.Bool(value): value.toStr()
+        Value.Num(value): value.toStr()
 
 fn parse(pgm: StrView): Term =
     let termAndRest: (term: Term, rest: StrView) = parseWithRest(pgm)
