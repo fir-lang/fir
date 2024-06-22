@@ -219,6 +219,9 @@ pub fn collect_funs(
         },
         "Array" => {
             "new" => BuiltinFun::ArrayNew,
+            "len" => BuiltinFun::ArrayLen,
+            "set" => BuiltinFun::ArraySet,
+            "get" => BuiltinFun::ArrayGet,
         },
     };
 

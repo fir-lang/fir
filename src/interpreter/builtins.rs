@@ -15,6 +15,9 @@ pub enum BuiltinFun {
 
     // Assoc funs
     ArrayNew,
+    ArrayLen,
+    ArraySet,
+    ArrayGet,
     BoolAnd,
     BoolOr,
     BoolToString,
@@ -122,6 +125,50 @@ pub fn call_builtin_fun<W: Write>(
             let cap = heap[cap + 1];
             let elem = args[1];
             heap.allocate_array(cap, elem)
+        }
+
+        BuiltinFun::ArrayLen => {
+            debug_assert_eq!(args.len(), 1);
+
+            let array = args[0];
+            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+            let len = heap[array + 1];
+            heap.allocate_i32(len as i32)
+        }
+
+        BuiltinFun::ArraySet => {
+            debug_assert_eq!(args.len(), 3);
+
+            let array = args[0];
+            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+
+            let idx = args[1];
+            debug_assert_eq!(heap[idx], I32_TYPE_TAG);
+
+            let elem = args[2];
+
+            let array_len = heap[array + 1];
+            let idx = heap[idx + 1];
+            assert!(idx < array_len);
+
+            heap[array + 2 + idx] = elem;
+            elem
+        }
+
+        BuiltinFun::ArrayGet => {
+            debug_assert_eq!(args.len(), 2);
+
+            let array = args[0];
+            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+
+            let idx = args[1];
+            debug_assert_eq!(heap[idx], I32_TYPE_TAG);
+
+            let array_len = heap[array + 1];
+            let idx = heap[idx + 1];
+            assert!(idx < array_len);
+
+            heap[array + 2 + idx]
         }
 
         BuiltinFun::StrLen => {
@@ -250,8 +297,8 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i1], I32_TYPE_TAG, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i2], I32_TYPE_TAG, "{}", LocDisplay(loc));
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
