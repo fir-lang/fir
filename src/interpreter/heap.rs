@@ -82,12 +82,6 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_bool(&mut self, b: bool) -> u64 {
-        let alloc = self.allocate(1);
-        self[alloc] = if b { TRUE_TYPE_TAG } else { FALSE_TYPE_TAG };
-        alloc
-    }
-
     pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {
         let alloc = self.allocate(2);
         self[alloc] = CONSTR_TYPE_TAG;

@@ -194,18 +194,18 @@ pub fn call_builtin_fun<W: Write>(
             let str2_len = heap[str2 + 1];
 
             if str1_len != str2_len {
-                return heap.allocate_bool(false);
+                return pgm.bool_alloc(false);
             }
 
             let len_words = str1_len.div_ceil(8);
 
             for i in 0..len_words {
                 if heap[str1 + 2 + i] != heap[str2 + 2 + i] {
-                    return heap.allocate_bool(false);
+                    return pgm.bool_alloc(false);
                 }
             }
 
-            heap.allocate_bool(true)
+            pgm.bool_alloc(true)
         }
 
         BuiltinFun::StrSubstr => {
@@ -306,7 +306,7 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
 
-            heap.allocate_bool(i1 == i2)
+            pgm.bool_alloc(i1 == i2)
         }
 
         BuiltinFun::I32ToStr => {
@@ -329,7 +329,7 @@ pub fn call_builtin_fun<W: Write>(
             let b1 = heap[b1];
             let b2 = heap[b2];
 
-            heap.allocate_bool(b1 == TRUE_TYPE_TAG && b2 == TRUE_TYPE_TAG)
+            pgm.bool_alloc(b1 == TRUE_TYPE_TAG && b2 == TRUE_TYPE_TAG)
         }
 
         BuiltinFun::BoolOr => {
@@ -344,7 +344,7 @@ pub fn call_builtin_fun<W: Write>(
             let b1 = heap[b1];
             let b2 = heap[b2];
 
-            heap.allocate_bool(b1 == TRUE_TYPE_TAG || b2 == TRUE_TYPE_TAG)
+            pgm.bool_alloc(b1 == TRUE_TYPE_TAG || b2 == TRUE_TYPE_TAG)
         }
 
         BuiltinFun::BoolToStr => {
@@ -379,7 +379,7 @@ pub fn call_builtin_fun<W: Write>(
             let s2_end = heap[s2 + 2];
 
             if s1_end - s1_start != s2_end - s2_start {
-                return heap.allocate_bool(false);
+                return pgm.bool_alloc(false);
             }
 
             let s1_payload_byte_addr = {
@@ -397,7 +397,7 @@ pub fn call_builtin_fun<W: Write>(
                 == heap_bytes[(s2_payload_byte_addr + s2_start) as usize
                     ..(s2_payload_byte_addr + s2_end) as usize];
 
-            heap.allocate_bool(eq)
+            pgm.bool_alloc(eq)
         }
 
         BuiltinFun::StrViewSubstr => {
@@ -465,7 +465,7 @@ pub fn call_builtin_fun<W: Write>(
             let s2_len = heap[s2 + 1];
 
             if s1_len < s2_len {
-                return heap.allocate_bool(false);
+                return pgm.bool_alloc(false);
             }
 
             let s1_payload_byte_addr = {
@@ -483,7 +483,7 @@ pub fn call_builtin_fun<W: Write>(
                 == heap_bytes
                     [s2_payload_byte_addr as usize..(s2_payload_byte_addr + s2_len) as usize];
 
-            heap.allocate_bool(eq)
+            pgm.bool_alloc(eq)
         }
 
         BuiltinFun::StrViewIsEmpty => {
@@ -494,7 +494,7 @@ pub fn call_builtin_fun<W: Write>(
             let s_start = heap[s + 1];
             let s_end = heap[s + 2];
 
-            heap.allocate_bool(s_start == s_end)
+            pgm.bool_alloc(s_start == s_end)
         }
     }
 }

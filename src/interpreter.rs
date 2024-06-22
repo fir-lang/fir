@@ -25,8 +25,8 @@ use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
-    let pgm = Pgm::new(pgm);
     let mut heap = Heap::new();
+    let pgm = Pgm::new(pgm, &mut heap);
 
     // Allocate command line arguments to be passed to the program.
     let input = heap.allocate_str(input.as_bytes());
@@ -93,7 +93,11 @@ struct Pgm {
 #[derive(Debug)]
 struct Con {
     info: ConInfo,
+
     fields: Fields,
+
+    /// For constructors with no fields, this holds the canonical allocation.
+    alloc: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -201,7 +205,7 @@ enum ControlFlow {
 }
 
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>) -> Pgm {
+    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap) -> Pgm {
         // Initialize `ty_cons`.
         let (ty_cons, mut next_type_tag): (Map<SmolStr, TyCon>, u64) = init::collect_types(&pgm);
 
@@ -229,15 +233,22 @@ impl Pgm {
                         con_name: None,
                     },
                     fields: Fields::Unnamed(0),
+                    alloc: None,
                 });
             } else {
                 for constr in ty_con.value_constrs {
+                    let alloc: Option<u64> = if constr.fields.is_empty() {
+                        Some(heap.allocate_tag(cons_by_tag.len() as u64))
+                    } else {
+                        None
+                    };
                     cons_by_tag.push(Con {
                         info: ConInfo::Named {
                             ty_name: ty_name.clone(),
                             con_name: constr.name.clone(),
                         },
                         fields: constr.fields.clone(),
+                        alloc,
                     });
                 }
             }
@@ -254,6 +265,7 @@ impl Pgm {
                     shape: record_shape.clone(),
                 },
                 fields,
+                alloc: None,
             });
             record_ty_tags.insert(record_shape, next_type_tag);
             next_type_tag += 1;
@@ -301,6 +313,22 @@ impl Pgm {
 
     fn get_tag_fields(&self, tag: u64) -> &Fields {
         &self.cons_by_tag[tag as usize].fields
+    }
+
+    fn true_alloc(&self) -> u64 {
+        self.cons_by_tag[TRUE_TYPE_TAG as usize].alloc.unwrap()
+    }
+
+    fn false_alloc(&self) -> u64 {
+        self.cons_by_tag[FALSE_TYPE_TAG as usize].alloc.unwrap()
+    }
+
+    fn bool_alloc(&self, b: bool) -> u64 {
+        if b {
+            self.true_alloc()
+        } else {
+            self.false_alloc()
+        }
     }
 }
 
@@ -827,27 +855,27 @@ fn eval<W: Write>(
                 ast::BinOp::Multiply => "__mul",
                 ast::BinOp::Equal => {
                     let eq = eq(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(eq);
+                    return pgm.bool_alloc(eq);
                 }
                 ast::BinOp::NotEqual => {
                     let eq = eq(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(!eq);
+                    return pgm.bool_alloc(!eq);
                 }
                 ast::BinOp::Lt => {
                     let ord = cmp(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(matches!(ord, Ordering::Less));
+                    return pgm.bool_alloc(matches!(ord, Ordering::Less));
                 }
                 ast::BinOp::Gt => {
                     let ord = cmp(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(matches!(ord, Ordering::Greater));
+                    return pgm.bool_alloc(matches!(ord, Ordering::Greater));
                 }
                 ast::BinOp::LtEq => {
                     let ord = cmp(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(matches!(ord, Ordering::Less | Ordering::Equal));
+                    return pgm.bool_alloc(matches!(ord, Ordering::Less | Ordering::Equal));
                 }
                 ast::BinOp::GtEq => {
                     let ord = cmp(w, pgm, heap, left, right, expr.start);
-                    return heap.allocate_bool(matches!(ord, Ordering::Greater | Ordering::Equal));
+                    return pgm.bool_alloc(matches!(ord, Ordering::Greater | Ordering::Equal));
                 }
                 ast::BinOp::And => "__and",
                 ast::BinOp::Or => "__or",
@@ -870,7 +898,7 @@ fn eval<W: Write>(
             assert!(heap[val] <= TRUE_TYPE_TAG);
 
             match op {
-                ast::UnOp::Not => heap.allocate_bool(heap[val] == FALSE_TYPE_TAG),
+                ast::UnOp::Not => pgm.bool_alloc(heap[val] == FALSE_TYPE_TAG),
             }
         }
 
