@@ -92,4 +92,14 @@ impl Heap {
         self[alloc + 3] = string;
         alloc
     }
+
+    pub fn allocate_array(&mut self, cap: u64, elem: u64) -> u64 {
+        let alloc = self.allocate(2 + cap as usize);
+        self[alloc] = ARRAY_TYPE_TAG;
+        self[alloc + 1] = cap;
+        for i in 0..cap {
+            self[alloc + 2 + i] = elem;
+        }
+        alloc
+    }
 }

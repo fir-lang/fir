@@ -3,7 +3,7 @@
 //! Since we don't have a proper type checker (it will be implemented in the bootstrapped compiler)
 //! we don't assume type safety here and always check types.
 
-#![allow(clippy::needless_range_loop)]
+#![allow(clippy::needless_range_loop, clippy::too_many_arguments)]
 
 mod builtins;
 mod heap;

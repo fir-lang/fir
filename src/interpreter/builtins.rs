@@ -14,23 +14,24 @@ pub enum BuiltinFun {
     PrintStrView,
 
     // Assoc funs
-    StrLen,
-    StrEq,
-    StrSubstring,
-    I32Add,
-    I32Sub,
-    I32Gt,
-    I32Eq,
-    I32ToString,
+    ArrayNew,
     BoolAnd,
     BoolOr,
     BoolToString,
+    I32Add,
+    I32Eq,
+    I32Gt,
+    I32Sub,
+    I32ToString,
+    StrEq,
+    StrLen,
+    StrSubstring,
     StrViewEq,
-    StrViewNEq,
-    StrViewSubstring,
-    StrViewLen,
-    StrViewStartsWith,
     StrViewIsEmpty,
+    StrViewLen,
+    StrViewNEq,
+    StrViewStartsWith,
+    StrViewSubstring,
 }
 
 pub fn call_builtin_fun<W: Write>(
@@ -112,6 +113,16 @@ pub fn call_builtin_fun<W: Write>(
             .unwrap();
 
             0
+        }
+
+        BuiltinFun::ArrayNew => {
+            debug_assert_eq!(args.len(), 2);
+
+            let cap = args[0];
+            debug_assert_eq!(heap[cap], I32_TYPE_TAG);
+            let cap = heap[cap + 1];
+            let elem = args[1];
+            heap.allocate_array(cap, elem)
         }
 
         BuiltinFun::StrLen => {

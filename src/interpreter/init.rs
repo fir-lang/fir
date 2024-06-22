@@ -218,6 +218,9 @@ pub fn collect_funs(
             "startsWith" => BuiltinFun::StrViewStartsWith,
             "isEmpty" => BuiltinFun::StrViewIsEmpty,
         },
+        "Array" => {
+            "new" => BuiltinFun::ArrayNew,
+        },
     };
 
     let mut associated_fun_indices: Map<SmolStr, u64> = Default::default();
