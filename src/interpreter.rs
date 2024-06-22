@@ -1,4 +1,4 @@
-//! An AST interpreter, feature complete enough to interpret the bootstrapping compiler.
+//! An AST interpreter, feature complete enough to interpret the bootstrapping compiler.
 //!
 //! Since we don't have a proper type checker (it will be implemented in the bootstrapped compiler)
 //! we don't assume type safety here and always check types.
@@ -326,6 +326,101 @@ fn call_source_fun<W: Write>(
     }
 }
 
+/// Allocate an object from type name and optional constructor name.
+fn allocate_object_from_names<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    locals: &mut Map<SmolStr, u64>,
+    ty: &SmolStr,
+    constr_name: Option<SmolStr>,
+    args: &[ast::CallArg],
+    loc: Loc,
+) -> u64 {
+    let ty_con = pgm
+        .ty_cons
+        .get(ty)
+        .unwrap_or_else(|| panic!("Undefined type {} at {}", ty, LocDisplay(loc)));
+
+    let constr_idx = match constr_name {
+        Some(constr_name) => {
+            let (constr_idx_, _) = ty_con
+                .value_constrs
+                .iter()
+                .enumerate()
+                .find(|(_, constr)| constr.name.as_ref() == Some(&constr_name))
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Type {} does not have a constructor named {}",
+                        ty, constr_name
+                    )
+                });
+
+            constr_idx_
+        }
+        None => {
+            assert_eq!(ty_con.value_constrs.len(), 1);
+            0
+        }
+    };
+
+    allocate_object_from_tag(
+        w,
+        pgm,
+        heap,
+        locals,
+        ty_con.type_tag + constr_idx as u64,
+        args,
+    )
+}
+
+/// Allocate an object from a constructor tag and fields.
+fn allocate_object_from_tag<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    locals: &mut Map<SmolStr, u64>,
+    constr_tag: u64,
+    args: &[ast::CallArg],
+) -> u64 {
+    let fields = pgm.get_tag_fields(constr_tag);
+    let mut arg_values = Vec::with_capacity(args.len());
+
+    match fields {
+        Fields::Unnamed(num_fields) => {
+            // Evaluate in program order and store in the same order.
+            assert_eq!(*num_fields as usize, args.len());
+            for arg in args {
+                assert!(arg.name.is_none());
+                arg_values.push(eval(w, pgm, heap, locals, &arg.expr));
+            }
+        }
+
+        Fields::Named(field_names) => {
+            // Evalaute in program order, store based on the order of the names
+            // in the type.
+            let mut named_values: Map<SmolStr, u64> = Default::default();
+            for arg in args {
+                let name = arg.name.as_ref().unwrap().clone();
+                let value = eval(w, pgm, heap, locals, &arg.expr);
+                let old = named_values.insert(name.clone(), value);
+                assert!(old.is_none());
+            }
+            for name in field_names {
+                arg_values.push(*named_values.get(name).unwrap());
+            }
+        }
+    }
+
+    let object = heap.allocate(1 + args.len());
+    heap[object] = constr_tag;
+    for (arg_idx, arg_value) in arg_values.into_iter().enumerate() {
+        heap[object + 1 + (arg_idx as u64)] = arg_value;
+    }
+
+    object
+}
+
 fn exec<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -570,6 +665,44 @@ fn eval<W: Write>(
                 },
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+                    if let ast::Expr::UpperVar(ty) = &object.thing {
+                        let ty_con = pgm
+                            .ty_cons
+                            .get(ty)
+                            .unwrap_or_else(|| panic!("Undefined type: {}", ty));
+
+                        // Handle `Type.Constructor`.
+                        if field.chars().next().unwrap().is_uppercase() {
+                            return allocate_object_from_names(
+                                w,
+                                pgm,
+                                heap,
+                                locals,
+                                ty,
+                                Some(field.clone()),
+                                args,
+                                expr.start,
+                            );
+                        } else {
+                            // Handle `Type.associatedFunction`.
+                            let fun = pgm.associated_funs[ty_con.type_tag as usize]
+                                .get(field)
+                                .unwrap_or_else(|| {
+                                    panic!(
+                                        "Type {} does not have associated function {}",
+                                        ty, field
+                                    )
+                                });
+
+                            let args: Vec<u64> = args
+                                .iter()
+                                .map(|arg| eval(w, pgm, heap, locals, &arg.expr))
+                                .collect();
+
+                            return call(w, pgm, heap, fun, args, expr.start);
+                        }
+                    }
+
                     let object = eval(w, pgm, heap, locals, object);
                     let object_tag = heap[object];
                     let fun = pgm.associated_funs[object_tag as usize]
@@ -590,7 +723,11 @@ fn eval<W: Write>(
                     return call(w, pgm, heap, fun, args, expr.start);
                 }
 
-                ast::Expr::UpperVar(_) => todo!(),
+                ast::Expr::UpperVar(ty) => {
+                    return allocate_object_from_names(
+                        w, pgm, heap, locals, ty, None, args, expr.start,
+                    );
+                }
 
                 ast::Expr::ConstrSelect(_)
                 | ast::Expr::Call(_)
@@ -607,42 +744,7 @@ fn eval<W: Write>(
             match heap[fun] {
                 CONSTR_TYPE_TAG => {
                     let constr_tag = heap[fun + 1];
-                    let fields = pgm.get_tag_fields(constr_tag);
-                    let mut arg_values = Vec::with_capacity(args.len());
-
-                    match fields {
-                        Fields::Unnamed(num_fields) => {
-                            // Evaluate in program order and store in the same order.
-                            assert_eq!(*num_fields as usize, args.len());
-                            for arg in args {
-                                assert!(arg.name.is_none());
-                                arg_values.push(eval(w, pgm, heap, locals, &arg.expr));
-                            }
-                        }
-
-                        Fields::Named(field_names) => {
-                            // Evalaute in program order, store based on the order of the names
-                            // in the type.
-                            let mut named_values: Map<SmolStr, u64> = Default::default();
-                            for arg in args {
-                                let name = arg.name.as_ref().unwrap().clone();
-                                let value = eval(w, pgm, heap, locals, &arg.expr);
-                                let old = named_values.insert(name.clone(), value);
-                                assert!(old.is_none());
-                            }
-                            for name in field_names {
-                                arg_values.push(*named_values.get(name).unwrap());
-                            }
-                        }
-                    }
-
-                    let constr_value = heap.allocate(1 + args.len());
-                    heap[constr_value] = constr_tag;
-                    for (arg_idx, arg_value) in arg_values.into_iter().enumerate() {
-                        heap[constr_value + 1 + (arg_idx as u64)] = arg_value;
-                    }
-
-                    constr_value
+                    allocate_object_from_tag(w, pgm, heap, locals, constr_tag, args)
                 }
 
                 TOP_FUN_TYPE_TAG => {
