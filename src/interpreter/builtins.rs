@@ -28,12 +28,12 @@ pub enum BuiltinFun {
     I32ToString,
     StrEq,
     StrLen,
-    StrSubstring,
+    StrSubstr,
     StrViewEq,
     StrViewIsEmpty,
     StrViewLen,
     StrViewStartsWith,
-    StrViewSubstring,
+    StrViewSubstr,
 }
 
 pub fn call_builtin_fun<W: Write>(
@@ -205,7 +205,7 @@ pub fn call_builtin_fun<W: Write>(
             heap.allocate_bool(true)
         }
 
-        BuiltinFun::StrSubstring => {
+        BuiltinFun::StrSubstr => {
             debug_assert_eq!(args.len(), 3);
 
             // Returns a `StrView`.
@@ -222,15 +222,15 @@ pub fn call_builtin_fun<W: Write>(
             let byte_end = heap[byte_end + 1];
 
             if byte_start > str_len {
-                panic!("String.substring start index out of bounds");
+                panic!("String.substr start index out of bounds");
             }
 
             if byte_end > str_len {
-                panic!("String.substring end index out of bounds");
+                panic!("String.substr end index out of bounds");
             }
 
             if byte_start > byte_end {
-                panic!("String.substring start index larger than end index");
+                panic!("String.substr start index larger than end index");
             }
 
             heap.allocate_str_view(byte_start, byte_end, str)
@@ -397,7 +397,7 @@ pub fn call_builtin_fun<W: Write>(
             heap.allocate_bool(eq)
         }
 
-        BuiltinFun::StrViewSubstring => {
+        BuiltinFun::StrViewSubstr => {
             debug_assert_eq!(args.len(), 3);
 
             let s = args[0];
@@ -415,14 +415,14 @@ pub fn call_builtin_fun<W: Write>(
 
             if start > view_len {
                 panic!(
-                    "StrView.substring start index {} is larger than view length {}",
+                    "StrView.substr start index {} is larger than view length {}",
                     start, view_len
                 );
             }
 
             if end > view_len {
                 panic!(
-                    "{}: StrView.substring({}, {}) out of bounds, view length = {}",
+                    "{}: StrView.substr({}, {}) out of bounds, view length = {}",
                     LocDisplay(loc),
                     start,
                     end,
@@ -431,7 +431,7 @@ pub fn call_builtin_fun<W: Write>(
             }
 
             if start > end {
-                panic!("StrView.substring start index larger than end index");
+                panic!("StrView.substr start index larger than end index");
             }
 
             heap.allocate_str_view(start + heap[s + 1], end + heap[s + 1], heap[s + 3])

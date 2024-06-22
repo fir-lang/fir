@@ -4,7 +4,7 @@
 -- Takes the program code as the first command line argument.
 
 fn main(pgm: Str) =
-    let pgmStringView = pgm.substring(0, pgm.len())
+    let pgmStringView = pgm.substr(0, pgm.len())
     printStr(eval(parse(pgmStringView)).toString())
 
 type Term:
@@ -77,8 +77,8 @@ fn parse(pgm: StrView): Term =
     term
 
 fn skipWhitespace(pgm: StrView): StrView =
-    while pgm.len() > 0 && pgm.substring(0, 1) == " ".substring(0, 1):
-        pgm = pgm.substring(1, pgm.len())
+    while pgm.len() > 0 && pgm.substr(0, 1) == " ".substr(0, 1):
+        pgm = pgm.substr(1, pgm.len())
     pgm
 
 -- | Parse the program, return the parsed term and the unparsed part of the program.
@@ -89,11 +89,11 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
     -- Bound variables should be stack allocated view objects.
     -- match pgm:
     --     "0" .. rest:
-    --         return (term = Term.Zero, rest = pgm.substring(1, pgm.len()))
+    --         return (term = Term.Zero, rest = pgm.substr(1, pgm.len()))
     --     "true" .. rest:
-    --         return (term = Term.True, rest = pgm.substring(4, pgm.len()))
+    --         return (term = Term.True, rest = pgm.substr(4, pgm.len()))
     --     "false" .. rest:
-    --         return (term = Term.False, rest = pgm.substring(5, pgm.len()))
+    --         return (term = Term.False, rest = pgm.substr(5, pgm.len()))
     --     "succ" .. rest:
     --         let (arg, rest) = parseArg(rest)
     --         return (term = Term.Succ(arg), rest = rest)
@@ -105,30 +105,30 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
     --         return (term = Term.IsZero(arg), rest)
 
     if pgm.startsWith("0"):
-        return (term = Term.Zero, rest = pgm.substring(1, pgm.len()))
+        return (term = Term.Zero, rest = pgm.substr(1, pgm.len()))
 
     if pgm.startsWith("true"):
-        return (term = Term.True, rest = pgm.substring(4, pgm.len()))
+        return (term = Term.True, rest = pgm.substr(4, pgm.len()))
 
     if pgm.startsWith("false"):
-        return (term = Term.False, rest = pgm.substring(5, pgm.len()))
+        return (term = Term.False, rest = pgm.substr(5, pgm.len()))
 
     if pgm.startsWith("succ"):
-        let pgm = pgm.substring(4, pgm.len())
+        let pgm = pgm.substr(4, pgm.len())
         let argAndRest = parseArg(pgm)
         let arg = argAndRest.arg
         let rest = argAndRest.rest
         return (term = Term.Succ(arg), rest = rest)
 
     if pgm.startsWith("pred"):
-        let pgm = pgm.substring(4, pgm.len())
+        let pgm = pgm.substr(4, pgm.len())
         let argAndRest  = parseArg(pgm)
         let arg = argAndRest.arg
         let rest = argAndRest.rest
         return (term = Term.Pred(arg), rest = rest)
 
     if pgm.startsWith("iszero"):
-        let pgm = pgm.substring(6, pgm.len())
+        let pgm = pgm.substr(6, pgm.len())
         let argAndRest = parseArg(pgm)
         let arg = argAndRest.arg
         let rest = argAndRest.rest
@@ -138,10 +138,10 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
 
 fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     -- Skip "("
-    if pgm.isEmpty() || pgm.substring(0, 1) != "(".substring(0, 1):
+    if pgm.isEmpty() || pgm.substr(0, 1) != "(".substr(0, 1):
         panic()
 
-    let pgm: StrView = pgm.substring(1, pgm.len())
+    let pgm: StrView = pgm.substr(1, pgm.len())
 
     -- Parse argument
     let termAndRest: (term: Term, rest: StrView) = parseWithRest(pgm)
@@ -149,9 +149,9 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     let pgm = termAndRest.rest
 
     -- Skip ")"
-    if pgm.isEmpty() || pgm.substring(0, 1) != ")".substring(0, 1):
+    if pgm.isEmpty() || pgm.substr(0, 1) != ")".substr(0, 1):
         panic()
-    let pgm = pgm.substring(1, pgm.len())
+    let pgm = pgm.substr(1, pgm.len())
 
     (arg = arg, rest = pgm)
 
