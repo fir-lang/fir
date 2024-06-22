@@ -1,5 +1,6 @@
 mod ast;
 mod collections;
+mod interpolation;
 mod interpreter;
 mod lexer;
 mod parser;

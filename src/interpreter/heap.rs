@@ -1,5 +1,7 @@
 use crate::interpreter::*;
 
+use bytemuck::cast_slice;
+
 /// Heap is just a growable array of words. A word is 8 bytes, to easily allow references larger
 /// than 4 bytes, which we may need when interpreting the bootstrapping compiler without a GC.
 #[derive(Debug)]
@@ -62,6 +64,13 @@ impl Heap {
         bytes[..string.len()].copy_from_slice(string);
 
         alloc
+    }
+
+    pub fn str_bytes(&self, str_addr: u64) -> &[u8] {
+        let str_len_bytes = self[str_addr + 1];
+        let str_payload_byte_addr = (str_addr + 2) * 8;
+        &cast_slice(&self.values)
+            [str_payload_byte_addr as usize..(str_payload_byte_addr + str_len_bytes) as usize]
     }
 
     pub fn allocate_i32(&mut self, i: i32) -> u64 {

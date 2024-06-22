@@ -44,7 +44,6 @@ pub enum TokenKind {
     LBrace,
     RBrace,
     SingleQuote,
-    DoubleQuote,
 
     // Punctuation
     Colon,

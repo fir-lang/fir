@@ -14,6 +14,7 @@ use heap::Heap;
 
 use crate::ast::{self, L};
 use crate::collections::{Map, Set};
+use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
 
 use std::cmp::Ordering;
@@ -796,8 +797,19 @@ fn eval<W: Write>(
 
         ast::Expr::Int(i) => heap.allocate_i32(*i),
 
-        ast::Expr::String(string) => {
-            let bytes = string.as_bytes();
+        ast::Expr::String(parts) => {
+            let mut bytes: Vec<u8> = vec![];
+            for part in parts {
+                match part {
+                    StringPart::Str(str) => bytes.extend(str.as_bytes()),
+                    StringPart::Expr(expr) => {
+                        let part_val = eval(w, pgm, heap, locals, expr);
+                        assert_eq!(heap[part_val], STR_TYPE_TAG);
+                        let part_bytes = heap.str_bytes(part_val);
+                        bytes.extend(part_bytes);
+                    }
+                }
+            }
             heap.allocate_str(&bytes[1..bytes.len() - 1])
         }
 

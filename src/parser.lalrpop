@@ -3,6 +3,7 @@
 
 use crate::ast::*;
 use crate::token::{TokenKind, Token};
+use crate::interpolation::parse_string_parts;
 
 use std::convert::Infallible;
 
@@ -313,7 +314,7 @@ AssignOp: AssignOp = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LExpr: L<Expr> = {
+pub LExpr: L<Expr> = {
     <l:@L> <expr:Expr> <r:@R> => L::new(l, r, expr),
 }
 
@@ -340,7 +341,7 @@ Expr: Expr = {
         Expr::Int(i32::from_str_radix(int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
 
     <string:StringLit> =>
-        Expr::String(string.text.to_string()),
+        Expr::String(parse_string_parts(string.text)),
 
     <l:@L> <array:Expr> <r:@R> "[" <index:LExpr> "]" =>
         Expr::ArrayIndex(ArrayIndexExpr {

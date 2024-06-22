@@ -1,8 +1,10 @@
+use crate::interpolation::StringPart;
+
 use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 /// Things with location information.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct L<T> {
     pub start: Loc,
     #[allow(unused)]
@@ -17,7 +19,7 @@ impl<T> L<T> {
 }
 
 /// A top-level declaration.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TopDecl {
     /// A type declaration: `type T = ...`.
     Type(L<TypeDecl>),
@@ -27,7 +29,7 @@ pub enum TopDecl {
 }
 
 /// A type declaration: `type Vec[T] = ...`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeDecl {
     /// The type name, e.g. `Vec`.
     pub name: SmolStr,
@@ -41,7 +43,7 @@ pub struct TypeDecl {
 }
 
 /// Constructors of a type declaration.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TypeDeclRhs {
     /// A sum type, with more than one constructor.
     Sum(Vec<ConstructorDecl>),
@@ -51,39 +53,39 @@ pub enum TypeDeclRhs {
 }
 
 /// A sum type constructor.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstructorDecl {
     pub name: SmolStr,
     pub fields: ConstructorFields,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConstructorFields {
     Empty,
     Named(Vec<(SmolStr, Type)>),
     Unnamed(Vec<Type>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Named(NamedType),
     Record(Vec<Named<Type>>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
     #[allow(unused)]
     pub name: SmolStr,
     pub args: Vec<Type>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Named<T> {
     pub name: Option<SmolStr>,
     pub thing: T,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunDecl {
     /// For associated functions, name of the type the function belongs.
     pub type_name: Option<SmolStr>,
@@ -115,7 +117,7 @@ impl FunDecl {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Stmt {
     Let(LetStatement),
     // LetFn(FunDecl),
@@ -129,7 +131,7 @@ pub enum Stmt {
 }
 
 /// A let statement: `let x: T = expr`.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LetStatement {
     // For now, left-hand sides are just variables.
     pub lhs: SmolStr,
@@ -139,20 +141,20 @@ pub struct LetStatement {
     pub rhs: L<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MatchStatement {
     pub scrutinee: L<Expr>,
     pub alts: Vec<Alt>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Alt {
     pub pattern: L<Pat>,
     pub guard: Option<L<Expr>>,
     pub rhs: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pat {
     /// Matches anything, binds it to variable.
     Var(SmolStr),
@@ -167,40 +169,40 @@ pub enum Pat {
     // TODO: Add literals
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstrPattern {
     pub constr: Constructor,
     pub fields: Vec<Named<Box<L<Pat>>>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
     pub type_: SmolStr,
     pub constr: Option<SmolStr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IfStatement {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssignStatement {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
     pub op: AssignOp,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AssignOp {
     Eq,
     PlusEq,
     MinusEq,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ForStatement {
     pub var: SmolStr,
     pub ty: Option<Type>,
@@ -208,13 +210,13 @@ pub struct ForStatement {
     pub body: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WhileStatement {
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     /// A variable: `x`.
     Var(SmolStr),
@@ -238,7 +240,7 @@ pub enum Expr {
 
     Int(i32),
 
-    String(String),
+    String(Vec<StringPart>),
 
     Self_,
 
@@ -251,57 +253,57 @@ pub enum Expr {
     Record(Vec<Named<Box<L<Expr>>>>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallArg {
     pub name: Option<SmolStr>,
     pub expr: L<Expr>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
     pub field: SmolStr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstrSelectExpr {
     pub ty: SmolStr,
     pub constr: SmolStr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RangeExpr {
     pub from: Box<L<Expr>>,
     pub to: Box<L<Expr>>,
     pub inclusive: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArrayIndexExpr {
     pub array: Box<L<Expr>>,
     pub index: Box<L<Expr>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BinOp {
     Add,
     Subtract,
@@ -316,7 +318,7 @@ pub enum BinOp {
     Or,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UnOp {
     Not,
 }
