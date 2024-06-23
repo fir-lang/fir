@@ -68,9 +68,7 @@ fn Value.toStr(self): Str =
         Value.Num(value): value.toStr()
 
 fn parse(pgm: StrView): Term =
-    let termAndRest: (term: Term, rest: StrView) = parseWithRest(pgm)
-    let term = termAndRest.term
-    let rest = termAndRest.rest
+    let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
         panic("Leftover code after parsing the program: \"$(rest)\"")
     term
@@ -92,14 +90,14 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
         "false" rest:
             return (term = Term.False, rest = rest)
         "succ" rest:
-            let argAndRest = parseArg(rest)
-            return (term = Term.Succ(argAndRest.arg), rest = argAndRest.rest)
+            let (arg = arg, rest = rest) = parseArg(rest)
+            return (term = Term.Succ(arg), rest = rest)
         "pred" rest:
-            let argAndRest = parseArg(rest)
-            return (term = Term.Pred(argAndRest.arg), rest = argAndRest.rest)
+            let (arg = arg, rest = rest) = parseArg(rest)
+            return (term = Term.Pred(arg), rest = rest)
         "iszero" rest:
-            let argAndRest = parseArg(rest)
-            return (term = Term.IsZero(argAndRest.arg), rest = argAndRest.rest)
+            let (arg = arg, rest = rest) = parseArg(rest)
+            return (term = Term.IsZero(arg), rest = rest)
         _:
             panic("Invalid syntax: \"$(pgm)\"")
 
@@ -108,19 +106,17 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     if pgm.isEmpty() || pgm.substr(0, 1) != "(".substr(0, 1):
         panic("Unexpected end of program while parsing arguments")
 
-    let pgm: StrView = pgm.substr(1, pgm.len())
-
-    -- Parse argument
-    let termAndRest: (term: Term, rest: StrView) = parseWithRest(pgm)
-    let arg = termAndRest.term
-    let pgm = termAndRest.rest
-
-    -- Skip ")"
-    if pgm.isEmpty() || pgm.substr(0, 1) != ")".substr(0, 1):
-        panic("Unexpected end of program while parsing arguments")
     let pgm = pgm.substr(1, pgm.len())
 
-    (arg = arg, rest = pgm)
+    -- Parse argument
+    let (term = arg, rest = rest)  = parseWithRest(pgm)
+
+    -- Skip ")"
+    if rest.isEmpty() || rest.substr(0, 1) != ")".substr(0, 1):
+        panic("Unexpected end of program while parsing arguments")
+    let rest = rest.substr(1, rest.len())
+
+    (arg = arg, rest = rest)
 
 -- For now, this needs to be defined somewhere in the program. We will remove
 -- this once we have a prelude.

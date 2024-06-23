@@ -133,11 +133,8 @@ pub enum Stmt {
 /// A let statement: `let x: T = expr`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LetStatement {
-    // For now, left-hand sides are just variables.
-    pub lhs: SmolStr,
-
+    pub lhs: L<Pat>,
     pub ty: Option<Type>,
-
     pub rhs: L<Expr>,
 }
 

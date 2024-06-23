@@ -518,9 +518,10 @@ fn exec<W: Write>(
         return_value = match &stmt.thing {
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = eval(w, pgm, heap, locals, rhs);
-                // assert!(self.test_pattern(heap, locals, lhs, val));
-                // self.bind_pattern(heap, locals, lhs, val);
-                locals.insert(lhs.clone(), val);
+                if !test_pattern(pgm, heap, lhs, val) {
+                    panic!("Pattern binding at {} failed", LocDisplay(stmt.start));
+                }
+                bind_pattern(pgm, heap, locals, lhs, val);
                 val
             }
 
@@ -533,7 +534,7 @@ fn exec<W: Write>(
                 } in alts
                 {
                     assert!(guard.is_none()); // TODO
-                    if test_pattern(pgm, heap, locals, pattern, scrut) {
+                    if test_pattern(pgm, heap, pattern, scrut) {
                         bind_pattern(pgm, heap, locals, pattern, scrut);
                         match exec(w, pgm, heap, locals, rhs) {
                             ControlFlow::Next(val) => {
@@ -1071,13 +1072,7 @@ fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc
 //
 // TODO: It would be simpler to clone the env before `bind_pattern` and restore it if binding
 // fails.
-fn test_pattern(
-    pgm: &Pgm,
-    heap: &Heap,
-    locals: &Map<SmolStr, u64>,
-    pattern: &L<ast::Pat>,
-    value: u64,
-) -> bool {
+fn test_pattern(pgm: &Pgm, heap: &Heap, pattern: &L<ast::Pat>, value: u64) -> bool {
     match &pattern.thing {
         ast::Pat::Var(_) | ast::Pat::Ignore => true,
 
@@ -1123,7 +1118,7 @@ fn test_pattern(
             }
 
             let fields = pgm.get_tag_fields(value_tag);
-            test_field_patterns(pgm, heap, locals, fields, field_pats, value)
+            test_field_patterns(pgm, heap, fields, field_pats, value)
         }
 
         ast::Pat::Record(fields) => {
@@ -1137,7 +1132,6 @@ fn test_pattern(
                         if !test_pattern(
                             pgm,
                             heap,
-                            locals,
                             &fields[i as usize].thing,
                             heap[value + 1 + (i as u64)],
                         ) {
@@ -1153,7 +1147,7 @@ fn test_pattern(
                             .iter()
                             .find(|field| field.name.as_ref().unwrap() == field_name)
                             .unwrap();
-                        if !test_pattern(pgm, heap, locals, &field_pattern.thing, field_value) {
+                        if !test_pattern(pgm, heap, &field_pattern.thing, field_value) {
                             return false;
                         }
                     }
@@ -1188,7 +1182,6 @@ fn test_pattern(
 fn test_field_patterns(
     pgm: &Pgm,
     heap: &Heap,
-    locals: &Map<SmolStr, u64>,
     constr_fields: &Fields,
     field_pats: &[ast::Named<Box<L<ast::Pat>>>],
     value: u64,
@@ -1203,7 +1196,7 @@ fn test_field_patterns(
             for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_value = heap[value + (field_pat_idx as u64) + 1];
                 assert!(field_pat.name.is_none());
-                if !test_pattern(pgm, heap, locals, &field_pat.thing, field_value) {
+                if !test_pattern(pgm, heap, &field_pat.thing, field_value) {
                     return false;
                 }
             }
@@ -1224,7 +1217,6 @@ fn test_field_patterns(
                 if !test_pattern(
                     pgm,
                     heap,
-                    locals,
                     &field_pattern.thing,
                     heap[value + 1 + field_idx as u64],
                 ) {

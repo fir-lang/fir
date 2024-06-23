@@ -232,8 +232,8 @@ LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "let" <lhs:LowerId> <ty:(":" <Type>)?> "=" <rhs:LExpr> NEWLINE =>
-        Stmt::Let(LetStatement { lhs: lhs.smol_str(), ty, rhs }),
+    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LExpr> NEWLINE =>
+        Stmt::Let(LetStatement { lhs, ty, rhs }),
 
     "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
             <mut branches:("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)*>

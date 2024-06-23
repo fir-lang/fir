@@ -107,8 +107,8 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
 
 fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
     match stmt {
-        ast::Stmt::Let(ast::LetStatement { lhs: _, ty, rhs }) => {
-            // visit_pat(lhs, records);
+        ast::Stmt::Let(ast::LetStatement { lhs, ty, rhs }) => {
+            visit_pat(&lhs.thing, records);
             if let Some(ty) = ty {
                 visit_ty(ty, records);
             }
