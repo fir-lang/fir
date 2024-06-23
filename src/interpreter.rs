@@ -191,6 +191,18 @@ impl Fields {
     fn is_empty(&self) -> bool {
         matches!(self, Fields::Unnamed(0))
     }
+
+    fn find_named_field_idx(&self, name: &str) -> u64 {
+        match self {
+            Fields::Unnamed(_) => panic!(),
+            Fields::Named(fields) => fields
+                .iter()
+                .enumerate()
+                .find(|(_, f)| f.as_str() == name)
+                .map(|(idx, _)| idx as u64)
+                .unwrap(),
+        }
+    }
 }
 
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
@@ -344,6 +356,23 @@ fn call<W: Write>(
         FunKind::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
         FunKind::Source(source) => call_source_fun(w, pgm, heap, source, args, loc),
     }
+}
+
+fn call_method<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    receiver: u64,
+    method: &SmolStr,
+    mut args: Vec<u64>,
+    loc: Loc,
+) -> u64 {
+    let tag = heap[receiver];
+    let fun = pgm.associated_funs[tag as usize]
+        .get(method)
+        .unwrap_or_else(|| panic!("Receiver with tag {} does not have {} method", tag, method));
+    args.insert(0, receiver);
+    call(w, pgm, heap, fun, args, loc)
 }
 
 fn call_source_fun<W: Write>(
@@ -544,17 +573,7 @@ fn exec<W: Write>(
 
             ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op }) => {
                 let rhs = eval(w, pgm, heap, locals, rhs);
-                match &lhs.thing {
-                    ast::Expr::Var(var) => match op {
-                        ast::AssignOp::Eq => {
-                            let old = locals.insert(var.clone(), rhs);
-                            assert!(old.is_some());
-                        }
-                        ast::AssignOp::PlusEq => todo!(),
-                        ast::AssignOp::MinusEq => todo!(),
-                    },
-                    _ => todo!("Assign statement with fancy LHS at {:?}", lhs.start),
-                }
+                assign(w, pgm, heap, locals, lhs, rhs, *op, stmt.start);
                 rhs
             }
 
@@ -833,10 +852,15 @@ fn eval<W: Write>(
                     StringPart::Expr(expr) => {
                         let part_val = eval(w, pgm, heap, locals, expr);
                         // Call toStr
-                        let to_str = pgm.associated_funs[heap[part_val] as usize]
-                            .get("toStr")
-                            .unwrap();
-                        let part_str_val = call(w, pgm, heap, to_str, vec![part_val], expr.start);
+                        let part_str_val = call_method(
+                            w,
+                            pgm,
+                            heap,
+                            part_val,
+                            &"toStr".into(),
+                            vec![],
+                            expr.start,
+                        );
                         assert_eq!(heap[part_str_val], STR_TYPE_TAG);
                         let part_bytes = heap.str_bytes(part_str_val);
                         bytes.extend(part_bytes);
@@ -851,8 +875,6 @@ fn eval<W: Write>(
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let left = eval(w, pgm, heap, locals, left);
             let right = eval(w, pgm, heap, locals, right);
-
-            let left_tag = heap[left];
 
             let method_name = match op {
                 ast::BinOp::Add => "__add",
@@ -886,16 +908,15 @@ fn eval<W: Write>(
                 ast::BinOp::Or => "__or",
             };
 
-            let method = pgm.associated_funs[left_tag as usize]
-                .get(method_name)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "Receiver with tag {} doesn't have {} method ({:?})",
-                        left_tag, method_name, expr.start
-                    )
-                });
-
-            call(w, pgm, heap, method, vec![left, right], expr.start)
+            call_method(
+                w,
+                pgm,
+                heap,
+                left,
+                &method_name.into(),
+                vec![right],
+                expr.start,
+            )
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
@@ -965,6 +986,48 @@ fn eval<W: Write>(
     }
 }
 
+fn assign<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    locals: &mut Map<SmolStr, u64>,
+    lhs: &ast::L<ast::Expr>,
+    val: u64,
+    op: ast::AssignOp,
+    loc: Loc,
+) {
+    match &lhs.thing {
+        ast::Expr::Var(var) => match op {
+            ast::AssignOp::Eq => {
+                let old = locals.insert(var.clone(), val);
+                assert!(old.is_some());
+            }
+            ast::AssignOp::PlusEq => todo!(),
+            ast::AssignOp::MinusEq => todo!(),
+        },
+        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+            let object = eval(w, pgm, heap, locals, object);
+            let object_tag = heap[object];
+            let object_con = &pgm.cons_by_tag[object_tag as usize];
+            let object_fields = &object_con.fields;
+            let field_idx = object_fields.find_named_field_idx(field);
+            let new_val = match op {
+                ast::AssignOp::Eq => val,
+                ast::AssignOp::PlusEq => {
+                    let field_value = heap[object + 1 + field_idx];
+                    call_method(w, pgm, heap, field_value, &"__add".into(), vec![val], loc)
+                }
+                ast::AssignOp::MinusEq => {
+                    let field_value = heap[object + 1 + field_idx];
+                    call_method(w, pgm, heap, field_value, &"__sub".into(), vec![val], loc)
+                }
+            };
+            heap[object + 1 + field_idx] = new_val;
+        }
+        _ => todo!("Assign statement with fancy LHS at {:?}", lhs.start),
+    }
+}
+
 fn cmp<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -973,11 +1036,7 @@ fn cmp<W: Write>(
     val2: u64,
     loc: Loc,
 ) -> Ordering {
-    let val1_tag = heap[val1];
-    let cmp_method = pgm.associated_funs[val1_tag as usize]
-        .get("__cmp")
-        .unwrap_or_else(|| panic!("Receiver with tag {} does not have __cmp method", val1_tag));
-    let ret = call(w, pgm, heap, cmp_method, vec![val1, val2], loc);
+    let ret = call_method(w, pgm, heap, val1, &"__cmp".into(), vec![val2], loc);
     let ret_tag = heap[ret];
     let ordering_ty_con = pgm
         .ty_cons
@@ -1001,11 +1060,7 @@ fn cmp<W: Write>(
 }
 
 fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: Loc) -> bool {
-    let val1_tag = heap[val1];
-    let cmp_method = pgm.associated_funs[val1_tag as usize]
-        .get("__eq")
-        .unwrap_or_else(|| panic!("Receiver with tag {} does not have __eq method", val1_tag));
-    let ret = call(w, pgm, heap, cmp_method, vec![val1, val2], loc);
+    let ret = call_method(w, pgm, heap, val1, &"__eq".into(), vec![val2], loc);
     let ret_tag = heap[ret];
 
     debug_assert!(matches!(ret_tag, TRUE_TYPE_TAG | FALSE_TYPE_TAG));

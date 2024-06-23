@@ -199,7 +199,7 @@ pub struct AssignStatement {
     pub op: AssignOp,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AssignOp {
     Eq,
     PlusEq,
