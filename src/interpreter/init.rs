@@ -200,8 +200,9 @@ pub fn collect_funs(
         },
         "I32" => {
             "__add" => BuiltinFun::I32Add,
-            "__sub" => BuiltinFun::I32Sub,
             "__cmp" => BuiltinFun::I32Cmp,
+            "__mul" => BuiltinFun::I32Mul,
+            "__sub" => BuiltinFun::I32Sub,
             "__eq" => BuiltinFun::I32Eq,
             "toStr" => BuiltinFun::I32ToStr,
         },

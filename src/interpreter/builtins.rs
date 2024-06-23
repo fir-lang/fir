@@ -24,6 +24,7 @@ pub enum BuiltinFun {
     I32Add,
     I32Cmp,
     I32Eq,
+    I32Mul,
     I32Sub,
     I32ToStr,
     StrEq,
@@ -268,6 +269,21 @@ pub fn call_builtin_fun<W: Write>(
             let i2 = heap[i2 + 1];
 
             heap.allocate_i32((i1 as i32) - (i2 as i32))
+        }
+
+        BuiltinFun::I32Mul => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            heap.allocate_i32((i1 as i32) * (i2 as i32))
         }
 
         BuiltinFun::I32Cmp => {
