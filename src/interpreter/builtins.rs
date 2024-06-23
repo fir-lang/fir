@@ -34,6 +34,7 @@ pub enum BuiltinFun {
     StrViewLen,
     StrViewStartsWith,
     StrViewSubstr,
+    StrViewToStr,
 }
 
 pub fn call_builtin_fun<W: Write>(
@@ -495,6 +496,14 @@ pub fn call_builtin_fun<W: Write>(
             let s_end = heap[s + 2];
 
             pgm.bool_alloc(s_start == s_end)
+        }
+
+        BuiltinFun::StrViewToStr => {
+            debug_assert_eq!(args.len(), 1);
+            let s = args[0];
+            debug_assert_eq!(heap[s], STR_VIEW_TYPE_TAG);
+            let str_view_bytes = heap.str_view_bytes(s).to_vec();
+            heap.allocate_str(&str_view_bytes)
         }
     }
 }

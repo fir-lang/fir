@@ -43,23 +43,23 @@ fn eval(term: Term): Value =
                     else:
                         eval(else_)
                 Value.Num(i):
-                    panic("If condition evaluated to number")
+                    panic("If condition evaluated to number $(i)")
 
         Term.Zero: Value.Num(0)
 
         Term.Succ(term):
             match eval(term):
-                Value.Bool(_): panic("Succ argument evaluated to bool")
+                Value.Bool(bool): panic("Succ argument evaluated to bool $(bool)")
                 Value.Num(value): Value.Num(value + 1)
 
         Term.Pred(term):
             match eval(term):
-                Value.Bool(_): panic("Pred argument evaluated to bool")
+                Value.Bool(bool): panic("Pred argument evaluated to bool $(bool)")
                 Value.Num(value): Value.Num(value - 1)
 
         Term.IsZero(term):
             match eval(term):
-                Value.Bool(_): panic("IsZero argument evaluated to bool")
+                Value.Bool(bool): panic("IsZero argument evaluated to bool $(bool)")
                 Value.Num(value): Value.Bool(value == 0)
 
 fn Value.toStr(self): Str =
@@ -72,8 +72,7 @@ fn parse(pgm: StrView): Term =
     let term = termAndRest.term
     let rest = termAndRest.rest
     if !rest.isEmpty():
-        printStrView(rest)
-        panic()
+        panic("Leftover code after parsing the program: \"$(rest)\"")
     term
 
 fn skipWhitespace(pgm: StrView): StrView =
@@ -101,13 +100,13 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
         "iszero" rest:
             let argAndRest = parseArg(rest)
             return (term = Term.IsZero(argAndRest.arg), rest = argAndRest.rest)
-
-    panic()
+        _:
+            panic("Invalid syntax: \"$(pgm)\"")
 
 fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     -- Skip "("
     if pgm.isEmpty() || pgm.substr(0, 1) != "(".substr(0, 1):
-        panic()
+        panic("Unexpected end of program while parsing arguments")
 
     let pgm: StrView = pgm.substr(1, pgm.len())
 
@@ -118,7 +117,7 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
 
     -- Skip ")"
     if pgm.isEmpty() || pgm.substr(0, 1) != ")".substr(0, 1):
-        panic()
+        panic("Unexpected end of program while parsing arguments")
     let pgm = pgm.substr(1, pgm.len())
 
     (arg = arg, rest = pgm)

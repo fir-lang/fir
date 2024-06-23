@@ -216,6 +216,7 @@ pub fn collect_funs(
             "len" => BuiltinFun::StrViewLen,
             "startsWith" => BuiltinFun::StrViewStartsWith,
             "isEmpty" => BuiltinFun::StrViewIsEmpty,
+            "toStr" => BuiltinFun::StrViewToStr,
         },
         "Array" => {
             "new" => BuiltinFun::ArrayNew,

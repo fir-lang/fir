@@ -832,8 +832,13 @@ fn eval<W: Write>(
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
                         let part_val = eval(w, pgm, heap, locals, expr);
-                        assert_eq!(heap[part_val], STR_TYPE_TAG);
-                        let part_bytes = heap.str_bytes(part_val);
+                        // Call toStr
+                        let to_str = pgm.associated_funs[heap[part_val] as usize]
+                            .get("toStr")
+                            .unwrap();
+                        let part_str_val = call(w, pgm, heap, to_str, vec![part_val], expr.start);
+                        assert_eq!(heap[part_str_val], STR_TYPE_TAG);
+                        let part_bytes = heap.str_bytes(part_str_val);
                         bytes.extend(part_bytes);
                     }
                 }
