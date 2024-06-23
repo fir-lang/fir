@@ -75,6 +75,14 @@ impl Heap {
             [str_payload_byte_addr as usize..(str_payload_byte_addr + str_len_bytes) as usize]
     }
 
+    pub fn str_view_bytes(&self, str_view_addr: u64) -> &[u8] {
+        let str_addr = self[str_view_addr + 3];
+        let byte_start = self[str_view_addr + 1];
+        let byte_end = self[str_view_addr + 2];
+        let str_bytes = self.str_bytes(str_addr);
+        &str_bytes[byte_start as usize..byte_end as usize]
+    }
+
     pub fn allocate_i32(&mut self, i: i32) -> u64 {
         let alloc = self.allocate(2);
         self[alloc] = I32_TYPE_TAG;
@@ -96,12 +104,45 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str_view(&mut self, start_byte: u64, end_byte: u64, string: u64) -> u64 {
+    pub fn allocate_str_view(&mut self, string: u64, start_byte: u64, end_byte: u64) -> u64 {
+        debug_assert!(
+            start_byte <= end_byte,
+            "start_byte={}, end_byte={}",
+            start_byte,
+            end_byte
+        );
         let alloc = self.allocate(4);
         self[alloc] = STR_VIEW_TYPE_TAG;
         self[alloc + 1] = start_byte;
         self[alloc + 2] = end_byte;
         self[alloc + 3] = string;
+        alloc
+    }
+
+    pub fn allocate_str_view_from_str_view(
+        &mut self,
+        str_view: u64,
+        start_byte: u64,
+        end_byte: u64,
+    ) -> u64 {
+        debug_assert!(
+            start_byte <= end_byte,
+            "start_byte={}, end_byte={}",
+            start_byte,
+            end_byte
+        );
+
+        let str = self[str_view + 3];
+        let str_view_start = self[str_view + 1];
+        let str_view_end = self[str_view + 2];
+
+        assert!(str_view_start + end_byte <= str_view_end);
+
+        let alloc = self.allocate(4);
+        self[alloc] = STR_VIEW_TYPE_TAG;
+        self[alloc + 1] = str_view_start + start_byte;
+        self[alloc + 2] = str_view_start + end_byte;
+        self[alloc + 3] = str;
         alloc
     }
 

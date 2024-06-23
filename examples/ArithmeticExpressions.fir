@@ -85,54 +85,22 @@ fn skipWhitespace(pgm: StrView): StrView =
 fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
     let pgm = skipWhitespace(pgm)
 
-    -- TODO: Implement pattern matching on strings.
-    -- Bound variables should be stack allocated view objects.
-    -- match pgm:
-    --     "0" .. rest:
-    --         return (term = Term.Zero, rest = pgm.substr(1, pgm.len()))
-    --     "true" .. rest:
-    --         return (term = Term.True, rest = pgm.substr(4, pgm.len()))
-    --     "false" .. rest:
-    --         return (term = Term.False, rest = pgm.substr(5, pgm.len()))
-    --     "succ" .. rest:
-    --         let (arg, rest) = parseArg(rest)
-    --         return (term = Term.Succ(arg), rest = rest)
-    --     "pred" .. rest:
-    --         let (arg, rest) = parseArg(pgm)
-    --         return (term = Term.Pred(arg), rest)
-    --     "iszero" .. rest:
-    --         let (arg, rest) = parseArg(pgm)
-    --         return (term = Term.IsZero(arg), rest)
-
-    if pgm.startsWith("0"):
-        return (term = Term.Zero, rest = pgm.substr(1, pgm.len()))
-
-    if pgm.startsWith("true"):
-        return (term = Term.True, rest = pgm.substr(4, pgm.len()))
-
-    if pgm.startsWith("false"):
-        return (term = Term.False, rest = pgm.substr(5, pgm.len()))
-
-    if pgm.startsWith("succ"):
-        let pgm = pgm.substr(4, pgm.len())
-        let argAndRest = parseArg(pgm)
-        let arg = argAndRest.arg
-        let rest = argAndRest.rest
-        return (term = Term.Succ(arg), rest = rest)
-
-    if pgm.startsWith("pred"):
-        let pgm = pgm.substr(4, pgm.len())
-        let argAndRest  = parseArg(pgm)
-        let arg = argAndRest.arg
-        let rest = argAndRest.rest
-        return (term = Term.Pred(arg), rest = rest)
-
-    if pgm.startsWith("iszero"):
-        let pgm = pgm.substr(6, pgm.len())
-        let argAndRest = parseArg(pgm)
-        let arg = argAndRest.arg
-        let rest = argAndRest.rest
-        return (term = Term.IsZero(arg), rest = rest)
+    match pgm:
+        "0" rest:
+            return (term = Term.Zero, rest = rest)
+        "true" rest:
+            return (term = Term.True, rest = rest)
+        "false" rest:
+            return (term = Term.False, rest = rest)
+        "succ" rest:
+            let argAndRest = parseArg(rest)
+            return (term = Term.Succ(argAndRest.arg), rest = argAndRest.rest)
+        "pred" rest:
+            let argAndRest = parseArg(rest)
+            return (term = Term.Pred(argAndRest.arg), rest = argAndRest.rest)
+        "iszero" rest:
+            let argAndRest = parseArg(rest)
+            return (term = Term.IsZero(argAndRest.arg), rest = argAndRest.rest)
 
     panic()
 

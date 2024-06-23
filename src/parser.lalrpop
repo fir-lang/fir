@@ -341,7 +341,7 @@ Expr: Expr = {
         Expr::Int(i32::from_str_radix(int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
 
     <string:StringLit> =>
-        Expr::String(parse_string_parts(string.text)),
+        Expr::String(parse_string_parts(&string.text[1..string.text.len() - 1])),
 
     <l:@L> <array:Expr> <r:@R> "[" <index:LExpr> "]" =>
         Expr::ArrayIndex(ArrayIndexExpr {
@@ -515,9 +515,9 @@ Pat: Pat = {
 
     "_" => Pat::Ignore,
 
-    <str:StringLit> => Pat::Str(str.text.to_string()),
+    <str:StringLit> => Pat::Str(str.text[1..str.text.len() - 1].to_string()),
 
-    <str:StringLit> ".." <id:LowerId> => Pat::StrPfx(str.text.to_string(), id.smol_str()),
+    <str:StringLit> <id:LowerId> => Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str()),
 }
 
 Constructor: Constructor = {

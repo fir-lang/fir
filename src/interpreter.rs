@@ -838,7 +838,7 @@ fn eval<W: Write>(
                     }
                 }
             }
-            heap.allocate_str(&bytes[1..bytes.len() - 1])
+            heap.allocate_str(&bytes)
         }
 
         ast::Expr::Self_ => *locals.get("self").unwrap(),
@@ -1104,12 +1104,24 @@ fn test_pattern(
             true
         }
 
-        ast::Pat::StrPfx(_, _) => {
-            todo!()
+        ast::Pat::StrPfx(pfx, _var) => {
+            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
+            let value_bytes = if heap[value] == STR_TYPE_TAG {
+                heap.str_bytes(value)
+            } else {
+                heap.str_view_bytes(value)
+            };
+            value_bytes.starts_with(pfx.as_bytes())
         }
 
-        ast::Pat::Str(_str) => {
-            todo!()
+        ast::Pat::Str(str) => {
+            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
+            let value_bytes = if heap[value] == STR_TYPE_TAG {
+                heap.str_bytes(value)
+            } else {
+                heap.str_view_bytes(value)
+            };
+            value_bytes == str.as_bytes()
         }
     }
 }
@@ -1168,7 +1180,7 @@ fn test_field_patterns(
 
 fn bind_pattern(
     pgm: &Pgm,
-    heap: &Heap,
+    heap: &mut Heap,
     locals: &mut Map<SmolStr, u64>,
     pattern: &L<ast::Pat>,
     value: u64,
@@ -1238,7 +1250,17 @@ fn bind_pattern(
             }
         }
 
-        ast::Pat::StrPfx(_pfx, _var) => todo!(),
+        ast::Pat::StrPfx(pfx, var) => {
+            let pfx_len = pfx.len();
+            let rest = if heap[value] == STR_TYPE_TAG {
+                let len = heap.str_bytes(value).len();
+                heap.allocate_str_view(value, pfx_len as u64, len as u64)
+            } else {
+                let len = heap.str_view_bytes(value).len();
+                heap.allocate_str_view_from_str_view(value, pfx_len as u64, len as u64)
+            };
+            locals.insert(var.clone(), rest);
+        }
 
         ast::Pat::Ignore | ast::Pat::Str(_) => {}
     }

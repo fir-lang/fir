@@ -14,10 +14,10 @@ pub enum BuiltinFun {
     PrintStrView,
 
     // Assoc funs
-    ArrayNew,
-    ArrayLen,
-    ArraySet,
     ArrayGet,
+    ArrayLen,
+    ArrayNew,
+    ArraySet,
     BoolAnd,
     BoolOr,
     BoolToStr,
@@ -236,7 +236,7 @@ pub fn call_builtin_fun<W: Write>(
                 panic!("String.substr start index larger than end index");
             }
 
-            heap.allocate_str_view(byte_start, byte_end, str)
+            heap.allocate_str_view(str, byte_start, byte_end)
         }
 
         BuiltinFun::I32Add => {
@@ -437,7 +437,7 @@ pub fn call_builtin_fun<W: Write>(
                 panic!("StrView.substr start index larger than end index");
             }
 
-            heap.allocate_str_view(start + heap[s + 1], end + heap[s + 1], heap[s + 3])
+            heap.allocate_str_view(heap[s + 3], start + heap[s + 1], end + heap[s + 1])
         }
 
         BuiltinFun::StrViewLen => {
