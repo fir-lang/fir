@@ -615,12 +615,10 @@ fn exec<W: Write>(
                 debug_assert_eq!(heap[to], I32_TYPE_TAG);
                 let to = heap[to + 1] as i32;
 
-                let iter_value = heap.allocate_i32(from);
-                locals.insert(var.clone(), iter_value);
-
                 if *inclusive {
                     for i in from..=to {
-                        heap[iter_value + 1] = i as u64;
+                        let iter_value = heap.allocate_i32(i);
+                        locals.insert(var.clone(), iter_value);
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Next(_) => {}
                             ControlFlow::Return(val) => {
@@ -631,7 +629,8 @@ fn exec<W: Write>(
                     }
                 } else {
                     for i in from..to {
-                        heap[iter_value + 1] = i as u64;
+                        let iter_value = heap.allocate_i32(i);
+                        locals.insert(var.clone(), iter_value);
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Next(_) => {}
                             ControlFlow::Return(val) => {
