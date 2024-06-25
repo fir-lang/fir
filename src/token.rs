@@ -21,12 +21,16 @@ pub enum TokenKind {
     LowerId,
 
     // Keywords
+    As,
     Elif,
     Else,
+    Export,
     Fn,
     For,
     If,
+    Import,
     In,
+    Jump,
     Let,
     Match,
     Return,

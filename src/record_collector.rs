@@ -46,6 +46,7 @@ pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> Set<RecordShape> {
         match &decl.thing {
             ast::TopDecl::Type(ty_decl) => visit_ty_decl(&ty_decl.thing, &mut records),
             ast::TopDecl::Fun(fun_decl) => visit_fun_decl(&fun_decl.thing, &mut records),
+            ast::TopDecl::Import(_) => panic!("Import declaration in record collector"),
         }
     }
 

@@ -18,6 +18,8 @@ impl<T> L<T> {
     }
 }
 
+pub type Module = Vec<L<TopDecl>>;
+
 /// A top-level declaration.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TopDecl {
@@ -26,6 +28,9 @@ pub enum TopDecl {
 
     /// A function declaration: `fn f(...) = ...`.
     Fun(L<FunDecl>),
+
+    /// An import declaration.
+    Import(L<ImportDecl>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
@@ -322,4 +327,10 @@ pub enum BinOp {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UnOp {
     Not,
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImportDecl {
+    /// Import path, e.g. `Fir.Prelude`.
+    pub path: Vec<SmolStr>,
+    // TODO: Imported thing list, renaming (`as`).
 }

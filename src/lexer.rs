@@ -23,12 +23,16 @@ lexgen::lexer! {
         "#" (_ # '\n')* '\n',
 
         // Keywords
+        "as" = TokenKind::As,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
+        "export" = TokenKind::Export,
         "fn" = TokenKind::Fn,
         "for" = TokenKind::For,
         "if" = TokenKind::If,
+        "import" = TokenKind::Import,
         "in" = TokenKind::In,
+        "jump" = TokenKind::Jump,
         "let" = TokenKind::Let,
         "match" = TokenKind::Match,
         "return" = TokenKind::Return, // maybe shorten as "ret"?

@@ -102,6 +102,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
         } = match &decl.thing {
             ast::TopDecl::Type(ty_decl) => &ty_decl.thing,
             ast::TopDecl::Fun(_) => continue,
+            ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 
         match rhs {
@@ -233,6 +234,7 @@ pub fn collect_funs(
         let fun_decl: ast::FunDecl = match decl.thing {
             ast::TopDecl::Type(_) => continue,
             ast::TopDecl::Fun(fun_decl) => fun_decl.thing,
+            ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 
         let old = match &fun_decl.type_name {

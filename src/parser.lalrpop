@@ -60,6 +60,7 @@ extern {
         "while" => Token { kind: TokenKind::While, .. },
         "in" => Token { kind: TokenKind::In, .. },
         "return" => Token { kind: TokenKind::Return, .. },
+        "import" => Token { kind: TokenKind::Import, .. },
         IntLit => Token { kind: TokenKind::Int, .. },
         StringLit => Token { kind: TokenKind::String, .. },
     }
@@ -542,6 +543,17 @@ PatternField: (Option<SmolStr>, L<Pat>) = {
 
     <pat:LPat> =>
         (None, pat),
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Import declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ImportDecl: L<ImportDecl> = {
+    <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R>=>
+        L::new(l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
