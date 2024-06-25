@@ -17,7 +17,7 @@ syntax keyword firKeyword
     \ var
     \ while
 
-syntax region firLineComment start="--" end="$"  contains=@Spell
+syntax region firLineComment start="#" end="$"  contains=@Spell
 
 syntax match firDecNumber display "[0-9][0-9_]*"
 

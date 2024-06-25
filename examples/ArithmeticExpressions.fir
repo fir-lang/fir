@@ -1,7 +1,7 @@
--- An implementation of the "Untyped Arithmetic Expressions" language described in Types and
--- Programming Languages section 3.
-
--- Takes the program code as the first command line argument.
+# An implementation of the "Untyped Arithmetic Expressions" language described in Types and
+# Programming Languages section 3.
+#
+# Takes the program code as the first command line argument.
 
 fn main(pgm: Str) =
     let pgmStringView = pgm.substr(0, pgm.len())
@@ -78,7 +78,7 @@ fn skipWhitespace(pgm: StrView): StrView =
         pgm = pgm.substr(1, pgm.len())
     pgm
 
--- | Parse the program, return the parsed term and the unparsed part of the program.
+## Parse the program, return the parsed term and the unparsed part of the program.
 fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
     let pgm = skipWhitespace(pgm)
 
@@ -102,24 +102,24 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
             panic("Invalid syntax: \"$(pgm)\"")
 
 fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
-    -- Skip "("
+    # Skip "("
     if pgm.isEmpty() || pgm.substr(0, 1) != "(".substr(0, 1):
         panic("Unexpected end of program while parsing arguments")
 
     let pgm = pgm.substr(1, pgm.len())
 
-    -- Parse argument
+    # Parse argument
     let (term = arg, rest = rest)  = parseWithRest(pgm)
 
-    -- Skip ")"
+    # Skip ")"
     if rest.isEmpty() || rest.substr(0, 1) != ")".substr(0, 1):
         panic("Unexpected end of program while parsing arguments")
     let rest = rest.substr(1, rest.len())
 
     (arg = arg, rest = rest)
 
--- For now, this needs to be defined somewhere in the program. We will remove
--- this once we have a prelude.
+# For now, this needs to be defined somewhere in the program. We will remove this once we have a
+# prelude.
 type Ordering:
     Less
     Equal

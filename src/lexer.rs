@@ -20,7 +20,7 @@ lexgen::lexer! {
         [' ' '\n'],
 
         // Skip comments
-        "--" (_ # '\n')* '\n',
+        "#" (_ # '\n')* '\n',
 
         // Keywords
         "elif" = TokenKind::Elif,
