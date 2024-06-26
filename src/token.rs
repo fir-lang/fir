@@ -1,14 +1,14 @@
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Token<'a> {
+#[derive(Debug, Clone)]
+pub struct Token {
     pub kind: TokenKind,
-    pub text: &'a str,
+    pub text: SmolStr,
 }
 
-impl<'a> Token<'a> {
+impl Token {
     pub fn smol_str(&self) -> SmolStr {
-        SmolStr::new(self.text)
+        self.text.clone()
     }
 }
 

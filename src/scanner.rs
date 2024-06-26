@@ -4,19 +4,18 @@ use std::cmp::Ordering;
 
 use lexgen_util::Loc;
 
-pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>, Loc)> {
+pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
     if tokens.is_empty() {
         return vec![];
     }
 
-    let mut new_tokens: Vec<(Loc, Token<'b>, Loc)> = Vec::with_capacity(tokens.len() * 2);
+    let mut new_tokens: Vec<(Loc, Token, Loc)> = Vec::with_capacity(tokens.len() * 2);
     let mut indent_stack: Vec<u32> = vec![0];
 
-    let token_iter = tokens.iter().enumerate();
-    let mut last_line_number = tokens[0].0.line;
+    let mut last_loc = tokens[0].0;
     let mut delimiter_stack: Vec<Delimiter> = vec![];
 
-    for (token_idx, (l, token, r)) in token_iter {
+    for (l, token, r) in tokens {
         let token_kind = token.kind;
 
         if token_kind == TokenKind::Backslash {
@@ -25,16 +24,15 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
             continue;
         }
 
-        if delimiter_stack.is_empty() && l.line != last_line_number {
+        if delimiter_stack.is_empty() && l.line != last_loc.line {
             // Generate a newline at the last line.
-            let loc = tokens[token_idx - 1].2;
             new_tokens.push((
-                loc,
+                last_loc,
                 Token {
                     kind: TokenKind::Newline,
-                    text: "",
+                    text: "".into(),
                 },
-                loc,
+                last_loc,
             ));
 
             // Generate indentation tokens.
@@ -44,12 +42,12 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
                     Ordering::Greater => {
                         indent_stack.push(l.col);
                         new_tokens.push((
-                            *l,
+                            l,
                             Token {
                                 kind: TokenKind::Indent,
-                                text: "",
+                                text: "".into(),
                             },
-                            *l,
+                            l,
                         ));
                         break;
                     }
@@ -61,19 +59,19 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
                     Ordering::Less => {
                         indent_stack.pop();
                         new_tokens.push((
-                            *l,
+                            l,
                             Token {
                                 kind: TokenKind::Dedent,
-                                text: "",
+                                text: "".into(),
                             },
-                            *l,
+                            l,
                         ));
                     }
                 }
             }
         }
 
-        last_line_number = l.line;
+        last_loc = l;
 
         match token_kind {
             TokenKind::LParen => delimiter_stack.push(Delimiter::Paren),
@@ -95,7 +93,7 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
             _ => {}
         }
 
-        new_tokens.push((*l, *token, *r));
+        new_tokens.push((l, token, r));
     }
 
     // Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
@@ -105,7 +103,7 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
         l,
         Token {
             kind: TokenKind::Newline,
-            text: "",
+            text: "".into(),
         },
         l,
     ));
@@ -121,7 +119,7 @@ pub fn scan<'a, 'b>(tokens: &'a [(Loc, Token<'b>, Loc)]) -> Vec<(Loc, Token<'b>,
             l,
             Token {
                 kind: TokenKind::Dedent,
-                text: "",
+                text: "".into(),
             },
             l,
         ));

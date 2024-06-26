@@ -1,19 +1,19 @@
 // auto-generated: "lalrpop 0.20.2"
-// sha3: a24ba742abcf98ac5ad98e23c680db93aca0abfbc8e188655d1fe3b808e1aa2c
+// sha3: e2b4f1dbc42b98fb06fc9297f5751e89e092f45892b13636693fb6bc82759598
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
-use crate::token::{TokenKind, Token};
 use crate::interpolation::parse_string_parts;
-use std::convert::Infallible;
+use crate::token::{Token, TokenKind};
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
+use std::convert::Infallible;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
 #[allow(unused_imports)]
 use self::__lalrpop_util::state_machine as __state_machine;
-extern crate core;
 extern crate alloc;
+extern crate core;
 
 #[rustfmt::skip]
 #[allow(non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::never_loop, clippy::match_single_binding, clippy::needless_raw_string_hashes)]
@@ -33,25 +33,25 @@ mod __parse__LExpr {
     extern crate alloc;
     use super::__ToTriple;
     #[allow(dead_code)]
-    pub(crate) enum __Symbol<'input>
+    pub(crate) enum __Symbol<>
      {
-        Variant0(Token<'input>),
-        Variant1(core::option::Option<Token<'input>>),
+        Variant0(Token),
+        Variant1(core::option::Option<Token>),
         Variant2(Type),
         Variant3(core::option::Option<Type>),
-        Variant4((Token<'input>, Vec<Type>, Token<'input>)),
-        Variant5(core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>),
+        Variant4((Token, Vec<Type>, Token)),
+        Variant5(core::option::Option<(Token, Vec<Type>, Token)>),
         Variant6((L<Expr>, Vec<L<Stmt>>)),
         Variant7(alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>),
         Variant8(Vec<L<Stmt>>),
         Variant9(core::option::Option<Vec<L<Stmt>>>),
-        Variant10((Token<'input>, core::option::Option<Token<'input>>)),
-        Variant11(core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>),
-        Variant12((Token<'input>, Type)),
-        Variant13(alloc::vec::Vec<(Token<'input>, Type)>),
+        Variant10((Token, core::option::Option<Token>)),
+        Variant11(core::option::Option<(Token, core::option::Option<Token>)>),
+        Variant12((Token, Type)),
+        Variant13(alloc::vec::Vec<(Token, Type)>),
         Variant14(CallArg),
         Variant15(alloc::vec::Vec<CallArg>),
-        Variant16(core::option::Option<(Token<'input>, Type)>),
+        Variant16(core::option::Option<(Token, Type)>),
         Variant17((SmolStr, Type)),
         Variant18(alloc::vec::Vec<(SmolStr, Type)>),
         Variant19((Option<SmolStr>, L<Expr>)),
@@ -61,7 +61,7 @@ mod __parse__LExpr {
         Variant23(Named<Type>),
         Variant24(alloc::vec::Vec<Named<Type>>),
         Variant25(alloc::vec::Vec<Type>),
-        Variant26(alloc::vec::Vec<Token<'input>>),
+        Variant26(alloc::vec::Vec<Token>),
         Variant27(Loc),
         Variant28(Alt),
         Variant29(alloc::vec::Vec<Alt>),
@@ -84,13 +84,13 @@ mod __parse__LExpr {
         Variant46(Pat),
         Variant47(core::option::Option<(Option<SmolStr>, L<Pat>)>),
         Variant48(core::option::Option<Named<Type>>),
-        Variant49(Vec<(Token<'input>, Type)>),
+        Variant49(Vec<(Token, Type)>),
         Variant50(Vec<CallArg>),
         Variant51(Vec<(Option<SmolStr>, L<Expr>)>),
         Variant52(Vec<(Option<SmolStr>, L<Pat>)>),
         Variant53(Vec<Named<Type>>),
         Variant54(Vec<Type>),
-        Variant55(Vec<Token<'input>>),
+        Variant55(Vec<Token>),
         Variant56(Stmt),
         Variant57(L<TopDecl>),
         Variant58(alloc::vec::Vec<L<TopDecl>>),
@@ -508,33 +508,32 @@ mod __parse__LExpr {
         }).collect()
     }
     fn __expected_tokens_from_states<
-        'input,
     >(
         __states: &[i16],
-        _: core::marker::PhantomData<(&'input ())>,
+        _: core::marker::PhantomData<()>,
     ) -> alloc::vec::Vec<alloc::string::String>
     {
         __TERMINAL.iter().enumerate().filter_map(|(index, terminal)| {
-            if __accepts(None, __states, Some(index), core::marker::PhantomData::<(&())>) {
+            if __accepts(None, __states, Some(index), core::marker::PhantomData::<()>) {
                 Some(alloc::string::ToString::to_string(terminal))
             } else {
                 None
             }
         }).collect()
     }
-    struct __StateMachine<'input>
+    struct __StateMachine<>
     where 
     {
-        __phantom: core::marker::PhantomData<(&'input ())>,
+        __phantom: core::marker::PhantomData<()>,
     }
-    impl<'input> __state_machine::ParserDefinition for __StateMachine<'input>
+    impl<> __state_machine::ParserDefinition for __StateMachine<>
     where 
     {
         type Location = Loc;
         type Error = LexerError<Infallible>;
-        type Token = Token<'input>;
+        type Token = Token;
         type TokenIndex = usize;
-        type Symbol = __Symbol<'input>;
+        type Symbol = __Symbol<>;
         type Success = L<Expr>;
         type StateIndex = i16;
         type Action = i16;
@@ -553,7 +552,7 @@ mod __parse__LExpr {
 
         #[inline]
         fn token_to_index(&self, token: &Self::Token) -> Option<usize> {
-            __token_to_integer(token, core::marker::PhantomData::<(&())>)
+            __token_to_integer(token, core::marker::PhantomData::<()>)
         }
 
         #[inline]
@@ -577,7 +576,7 @@ mod __parse__LExpr {
         }
 
         fn token_to_symbol(&self, token_index: usize, token: Self::Token) -> Self::Symbol {
-            __token_to_symbol(token_index, token, core::marker::PhantomData::<(&())>)
+            __token_to_symbol(token_index, token, core::marker::PhantomData::<()>)
         }
 
         fn expected_tokens(&self, state: i16) -> alloc::vec::Vec<alloc::string::String> {
@@ -585,7 +584,7 @@ mod __parse__LExpr {
         }
 
         fn expected_tokens_from_states(&self, states: &[i16]) -> alloc::vec::Vec<alloc::string::String> {
-            __expected_tokens_from_states(states, core::marker::PhantomData::<(&())>)
+            __expected_tokens_from_states(states, core::marker::PhantomData::<()>)
         }
 
         #[inline]
@@ -613,19 +612,18 @@ mod __parse__LExpr {
                 start_location,
                 states,
                 symbols,
-                core::marker::PhantomData::<(&())>,
+                core::marker::PhantomData::<()>,
             )
         }
 
         fn simulate_reduce(&self, action: i16) -> __state_machine::SimulatedReduce<Self> {
-            __simulate_reduce(action, core::marker::PhantomData::<(&())>)
+            __simulate_reduce(action, core::marker::PhantomData::<()>)
         }
     }
     fn __token_to_integer<
-        'input,
     >(
-        __token: &Token<'input>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __token: &Token,
+        _: core::marker::PhantomData<()>,
     ) -> Option<usize>
     {
         match *__token {
@@ -679,12 +677,11 @@ mod __parse__LExpr {
         }
     }
     fn __token_to_symbol<
-        'input,
     >(
         __token_index: usize,
-        __token: Token<'input>,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> __Symbol<'input>
+        __token: Token,
+        _: core::marker::PhantomData<()>,
+    ) -> __Symbol<>
     {
         #[allow(clippy::manual_range_patterns)]match __token_index {
             0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 | 45 => __Symbol::Variant0(__token),
@@ -692,11 +689,10 @@ mod __parse__LExpr {
         }
     }
     fn __simulate_reduce<
-        'input,
     >(
         __reduce_index: i16,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> __state_machine::SimulatedReduce<__StateMachine<'input>>
+        _: core::marker::PhantomData<()>,
+    ) -> __state_machine::SimulatedReduce<__StateMachine<>>
     {
         match __reduce_index {
             0 => {
@@ -2313,31 +2309,29 @@ mod __parse__LExpr {
 
         #[allow(dead_code)]
         pub fn parse<
-            'input,
-            __TOKEN: __ToTriple<'input, >,
+            __TOKEN: __ToTriple<>,
             __TOKENS: IntoIterator<Item=__TOKEN>,
         >(
             &self,
             __tokens0: __TOKENS,
-        ) -> Result<L<Expr>, __lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>>
+        ) -> Result<L<Expr>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
             let __tokens = __tokens0.into_iter();
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
             __state_machine::Parser::drive(
                 __StateMachine {
-                    __phantom: core::marker::PhantomData::<(&())>,
+                    __phantom: core::marker::PhantomData::<()>,
                 },
                 __tokens,
             )
         }
     }
     fn __accepts<
-        'input,
     >(
         __error_state: Option<i16>,
         __states: &[i16],
         __opt_integer: Option<usize>,
-        _: core::marker::PhantomData<(&'input ())>,
+        _: core::marker::PhantomData<()>,
     ) -> bool
     {
         let mut __states = __states.to_vec();
@@ -2351,7 +2345,7 @@ mod __parse__LExpr {
             };
             if __action == 0 { return false; }
             if __action > 0 { return true; }
-            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<(&())>) {
+            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<()>) {
                 __state_machine::SimulatedReduce::Reduce {
                     states_to_pop, nonterminal_produced
                 } => (states_to_pop, nonterminal_produced),
@@ -2365,810 +2359,809 @@ mod __parse__LExpr {
         }
     }
     fn __reduce<
-        'input,
     >(
         __action: i16,
         __lookahead_start: Option<&Loc>,
         __states: &mut alloc::vec::Vec<i16>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> Option<Result<L<Expr>,__lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>>>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
+    ) -> Option<Result<L<Expr>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
-                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             1 => {
-                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             2 => {
-                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             3 => {
-                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             4 => {
-                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             5 => {
-                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             6 => {
-                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             7 => {
-                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             8 => {
-                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             9 => {
-                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             10 => {
-                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             11 => {
-                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             12 => {
-                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             13 => {
-                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             14 => {
-                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             15 => {
-                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             16 => {
-                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             17 => {
-                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             18 => {
-                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             19 => {
-                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             20 => {
-                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             21 => {
-                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             22 => {
-                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             23 => {
-                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             24 => {
-                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             25 => {
-                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             26 => {
-                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             27 => {
-                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             28 => {
-                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             29 => {
-                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             30 => {
-                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             31 => {
-                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             32 => {
-                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             33 => {
-                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             34 => {
-                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             35 => {
-                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             36 => {
-                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             37 => {
-                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             38 => {
-                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             39 => {
-                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             40 => {
-                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             41 => {
-                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             42 => {
-                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             43 => {
-                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             44 => {
-                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             45 => {
-                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             46 => {
-                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             47 => {
-                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             48 => {
-                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             49 => {
-                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             50 => {
-                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             51 => {
-                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             52 => {
-                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             53 => {
-                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             54 => {
-                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             55 => {
-                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             56 => {
-                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             57 => {
-                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             58 => {
-                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             59 => {
-                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             60 => {
-                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             61 => {
-                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             62 => {
-                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             63 => {
-                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             64 => {
-                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             65 => {
-                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             66 => {
-                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             67 => {
-                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             68 => {
-                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             69 => {
-                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             70 => {
-                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             71 => {
-                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             72 => {
-                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             73 => {
-                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             74 => {
-                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             75 => {
-                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             76 => {
-                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             77 => {
-                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             78 => {
-                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             79 => {
-                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             80 => {
-                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             81 => {
-                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             82 => {
-                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             83 => {
-                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             84 => {
-                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             85 => {
-                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             86 => {
-                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             87 => {
-                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             88 => {
-                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             89 => {
-                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             90 => {
-                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             91 => {
-                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             92 => {
-                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             93 => {
-                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             94 => {
-                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             95 => {
-                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             96 => {
-                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             97 => {
-                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             98 => {
-                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             99 => {
-                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             100 => {
-                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             101 => {
-                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             102 => {
-                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             103 => {
-                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             104 => {
-                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             105 => {
-                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             106 => {
-                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             107 => {
-                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             108 => {
-                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             109 => {
-                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             110 => {
-                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             111 => {
-                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             112 => {
-                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             113 => {
-                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             114 => {
-                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             115 => {
-                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             116 => {
-                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             117 => {
-                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             118 => {
-                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             119 => {
-                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             120 => {
-                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             121 => {
-                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             122 => {
-                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             123 => {
-                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             124 => {
-                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             125 => {
-                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             126 => {
-                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             127 => {
-                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             128 => {
-                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             129 => {
-                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             130 => {
-                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             131 => {
-                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             132 => {
-                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             133 => {
-                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             134 => {
-                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             135 => {
-                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             136 => {
-                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             137 => {
-                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             138 => {
-                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             139 => {
-                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             140 => {
-                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             141 => {
-                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             142 => {
-                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             143 => {
-                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             144 => {
-                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             145 => {
-                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             146 => {
-                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             147 => {
-                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             148 => {
-                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             149 => {
-                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             150 => {
-                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             151 => {
-                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             152 => {
-                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             153 => {
-                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             154 => {
-                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             155 => {
-                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             156 => {
-                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             157 => {
-                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             158 => {
-                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             159 => {
-                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             160 => {
-                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             161 => {
-                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             162 => {
-                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             163 => {
-                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             164 => {
-                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             165 => {
-                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             166 => {
-                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             167 => {
-                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             168 => {
-                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             169 => {
-                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             170 => {
-                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             171 => {
-                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             172 => {
-                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             173 => {
-                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             174 => {
-                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             175 => {
-                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             176 => {
-                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             177 => {
-                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             178 => {
-                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             179 => {
-                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             180 => {
-                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             181 => {
-                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             182 => {
-                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             183 => {
-                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             184 => {
-                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             185 => {
-                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             186 => {
-                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             187 => {
-                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             188 => {
-                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             189 => {
-                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             190 => {
-                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             191 => {
-                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             192 => {
-                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             193 => {
-                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             194 => {
-                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             195 => {
-                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             196 => {
-                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             197 => {
-                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             198 => {
-                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             199 => {
-                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             200 => {
-                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             201 => {
-                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             202 => {
-                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             203 => {
-                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             204 => {
-                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             205 => {
-                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             206 => {
-                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             207 => {
-                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             208 => {
-                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             209 => {
-                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             210 => {
-                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             211 => {
-                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             212 => {
-                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             213 => {
-                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             214 => {
-                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             215 => {
-                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             216 => {
-                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             217 => {
-                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             218 => {
-                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             219 => {
-                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             220 => {
-                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             221 => {
-                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             222 => {
-                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             223 => {
-                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             224 => {
-                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             225 => {
-                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             226 => {
-                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             227 => {
-                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             228 => {
-                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             229 => {
-                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             230 => {
-                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             231 => {
-                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             232 => {
-                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             233 => {
-                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             234 => {
-                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             235 => {
-                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             236 => {
-                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             237 => {
-                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             238 => {
-                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             239 => {
-                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             240 => {
-                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             241 => {
-                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             242 => {
-                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             243 => {
-                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             244 => {
-                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             245 => {
-                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             246 => {
-                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             247 => {
-                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             248 => {
-                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             249 => {
-                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             250 => {
-                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             251 => {
-                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             252 => {
-                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             253 => {
-                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             254 => {
-                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             255 => {
-                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             256 => {
-                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             257 => {
-                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             258 => {
-                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             259 => {
-                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             260 => {
-                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             261 => {
-                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             262 => {
-                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             263 => {
-                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             264 => {
-                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             265 => {
                 // __LExpr = LExpr => ActionFn(0);
@@ -3179,7 +3172,7 @@ mod __parse__LExpr {
                 return Some(Ok(__nt));
             }
             266 => {
-                __reduce266(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce266(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             _ => panic!("invalid action code {}", __action)
         };
@@ -3195,9 +3188,8 @@ mod __parse__LExpr {
         panic!("symbol type mismatch")
     }
     fn __pop_Variant6<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (L<Expr>, Vec<L<Stmt>>), Loc)
      {
         match __symbols.pop() {
@@ -3206,9 +3198,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant19<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (Option<SmolStr>, L<Expr>), Loc)
      {
         match __symbols.pop() {
@@ -3217,9 +3208,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant21<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (Option<SmolStr>, L<Pat>), Loc)
      {
         match __symbols.pop() {
@@ -3228,9 +3218,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant17<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (SmolStr, Type), Loc)
      {
         match __symbols.pop() {
@@ -3239,10 +3228,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant12<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, Type), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, Type), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant12(__v), __r)) => (__l, __v, __r),
@@ -3250,10 +3238,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant4<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, Vec<Type>, Token<'input>), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, Vec<Type>, Token), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant4(__v), __r)) => (__l, __v, __r),
@@ -3261,10 +3248,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant10<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, core::option::Option<Token<'input>>), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, core::option::Option<Token>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant10(__v), __r)) => (__l, __v, __r),
@@ -3272,9 +3258,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant28<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Alt, Loc)
      {
         match __symbols.pop() {
@@ -3283,9 +3268,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant31<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, AssignOp, Loc)
      {
         match __symbols.pop() {
@@ -3294,9 +3278,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant14<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, CallArg, Loc)
      {
         match __symbols.pop() {
@@ -3305,9 +3288,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant33<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, ConstrPattern, Loc)
      {
         match __symbols.pop() {
@@ -3316,9 +3298,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant34<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Constructor, Loc)
      {
         match __symbols.pop() {
@@ -3327,9 +3308,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant35<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, ConstructorDecl, Loc)
      {
         match __symbols.pop() {
@@ -3338,9 +3318,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant37<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Expr, Loc)
      {
         match __symbols.pop() {
@@ -3349,9 +3328,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant40<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Expr>, Loc)
      {
         match __symbols.pop() {
@@ -3360,9 +3338,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant38<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<FunDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3371,9 +3348,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant39<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<ImportDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3382,9 +3358,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant41<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Pat>, Loc)
      {
         match __symbols.pop() {
@@ -3393,9 +3368,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant42<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Stmt>, Loc)
      {
         match __symbols.pop() {
@@ -3404,9 +3378,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant57<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<TopDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3415,9 +3388,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant61<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<TypeDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3426,9 +3398,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant27<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Loc, Loc)
      {
         match __symbols.pop() {
@@ -3437,9 +3408,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant23<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Named<Type>, Loc)
      {
         match __symbols.pop() {
@@ -3448,9 +3418,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant46<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Pat, Loc)
      {
         match __symbols.pop() {
@@ -3459,9 +3428,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant56<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Stmt, Loc)
      {
         match __symbols.pop() {
@@ -3470,10 +3438,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant0<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Token<'input>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Token, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant0(__v), __r)) => (__l, __v, __r),
@@ -3481,9 +3448,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant2<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Type, Loc)
      {
         match __symbols.pop() {
@@ -3492,9 +3458,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant62<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, TypeDeclRhs, Loc)
      {
         match __symbols.pop() {
@@ -3503,9 +3468,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant51<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -3514,9 +3478,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant52<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -3525,9 +3488,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant44<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(SmolStr, Type)>, Loc)
      {
         match __symbols.pop() {
@@ -3536,10 +3498,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant49<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Vec<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant49(__v), __r)) => (__l, __v, __r),
@@ -3547,9 +3508,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant30<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Alt>, Loc)
      {
         match __symbols.pop() {
@@ -3558,9 +3518,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant50<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -3569,9 +3528,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant60<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<ConstructorDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3580,9 +3538,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant8<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<L<Stmt>>, Loc)
      {
         match __symbols.pop() {
@@ -3591,9 +3548,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant59<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<L<TopDecl>>, Loc)
      {
         match __symbols.pop() {
@@ -3602,9 +3558,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant53<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -3613,9 +3568,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant63<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<SmolStr>, Loc)
      {
         match __symbols.pop() {
@@ -3624,10 +3578,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant55<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Vec<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant55(__v), __r)) => (__l, __v, __r),
@@ -3635,9 +3588,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant54<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Type>, Loc)
      {
         match __symbols.pop() {
@@ -3646,9 +3598,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant7<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc)
      {
         match __symbols.pop() {
@@ -3657,9 +3608,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant20<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -3668,9 +3618,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant22<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -3679,9 +3628,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant18<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc)
      {
         match __symbols.pop() {
@@ -3690,10 +3638,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant13<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant13(__v), __r)) => (__l, __v, __r),
@@ -3701,9 +3648,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant29<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Alt>, Loc)
      {
         match __symbols.pop() {
@@ -3712,9 +3658,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant15<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -3723,9 +3668,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant36<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)
      {
         match __symbols.pop() {
@@ -3734,9 +3678,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant43<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<L<Stmt>>, Loc)
      {
         match __symbols.pop() {
@@ -3745,9 +3688,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant58<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)
      {
         match __symbols.pop() {
@@ -3756,9 +3698,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant24<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -3767,10 +3708,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant26<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant26(__v), __r)) => (__l, __v, __r),
@@ -3778,9 +3718,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant25<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Type>, Loc)
      {
         match __symbols.pop() {
@@ -3789,9 +3728,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant45<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -3800,9 +3738,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant47<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -3811,10 +3748,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant16<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant16(__v), __r)) => (__l, __v, __r),
@@ -3822,10 +3758,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant5<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, Vec<Type>, Token)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant5(__v), __r)) => (__l, __v, __r),
@@ -3833,10 +3768,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant11<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, core::option::Option<Token>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant11(__v), __r)) => (__l, __v, __r),
@@ -3844,9 +3778,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant32<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -3855,9 +3788,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant48<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -3866,10 +3798,9 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant1<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant1(__v), __r)) => (__l, __v, __r),
@@ -3877,9 +3808,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant3<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Type>, Loc)
      {
         match __symbols.pop() {
@@ -3888,9 +3818,8 @@ mod __parse__LExpr {
         }
     }
     fn __pop_Variant9<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Vec<L<Stmt>>>, Loc)
      {
         match __symbols.pop() {
@@ -3899,11 +3828,10 @@ mod __parse__LExpr {
         }
     }
     fn __reduce0<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ","? = "," => ActionFn(127);
@@ -3915,11 +3843,10 @@ mod __parse__LExpr {
         (1, 0)
     }
     fn __reduce1<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ","? =  => ActionFn(128);
@@ -3930,11 +3857,10 @@ mod __parse__LExpr {
         (0, 0)
     }
     fn __reduce2<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>) = ":", Type => ActionFn(113);
@@ -3948,11 +3874,10 @@ mod __parse__LExpr {
         (2, 1)
     }
     fn __reduce3<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? = ":", Type => ActionFn(201);
@@ -3966,11 +3891,10 @@ mod __parse__LExpr {
         (2, 2)
     }
     fn __reduce4<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? =  => ActionFn(112);
@@ -3981,11 +3905,10 @@ mod __parse__LExpr {
         (0, 2)
     }
     fn __reduce5<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]") = "[", Sep<Type, ",">, "]" => ActionFn(110);
@@ -4000,11 +3923,10 @@ mod __parse__LExpr {
         (3, 3)
     }
     fn __reduce6<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? = "[", Sep<Type, ",">, "]" => ActionFn(208);
@@ -4019,11 +3941,10 @@ mod __parse__LExpr {
         (3, 4)
     }
     fn __reduce7<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? =  => ActionFn(109);
@@ -4034,11 +3955,10 @@ mod __parse__LExpr {
         (0, 4)
     }
     fn __reduce8<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT) = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(105);
@@ -4057,11 +3977,10 @@ mod __parse__LExpr {
         (7, 5)
     }
     fn __reduce9<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* =  => ActionFn(103);
@@ -4072,11 +3991,10 @@ mod __parse__LExpr {
         (0, 6)
     }
     fn __reduce10<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(104);
@@ -4088,11 +4006,10 @@ mod __parse__LExpr {
         (1, 6)
     }
     fn __reduce11<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(213);
@@ -4111,11 +4028,10 @@ mod __parse__LExpr {
         (7, 7)
     }
     fn __reduce12<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(214);
@@ -4135,11 +4051,10 @@ mod __parse__LExpr {
         (8, 7)
     }
     fn __reduce13<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT) = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(102);
@@ -4157,11 +4072,10 @@ mod __parse__LExpr {
         (6, 8)
     }
     fn __reduce14<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(217);
@@ -4179,11 +4093,10 @@ mod __parse__LExpr {
         (6, 9)
     }
     fn __reduce15<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? =  => ActionFn(101);
@@ -4194,11 +4107,10 @@ mod __parse__LExpr {
         (0, 9)
     }
     fn __reduce16<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self", "," => ActionFn(197);
@@ -4212,11 +4124,10 @@ mod __parse__LExpr {
         (2, 10)
     }
     fn __reduce17<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self" => ActionFn(198);
@@ -4228,11 +4139,10 @@ mod __parse__LExpr {
         (1, 10)
     }
     fn __reduce18<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self", "," => ActionFn(222);
@@ -4246,11 +4156,10 @@ mod __parse__LExpr {
         (2, 11)
     }
     fn __reduce19<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self" => ActionFn(223);
@@ -4262,11 +4171,10 @@ mod __parse__LExpr {
         (1, 11)
     }
     fn __reduce20<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? =  => ActionFn(117);
@@ -4277,11 +4185,10 @@ mod __parse__LExpr {
         (0, 11)
     }
     fn __reduce21<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",") = LowerId, ":", Type, "," => ActionFn(242);
@@ -4297,11 +4204,10 @@ mod __parse__LExpr {
         (4, 12)
     }
     fn __reduce22<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* =  => ActionFn(149);
@@ -4312,11 +4218,10 @@ mod __parse__LExpr {
         (0, 13)
     }
     fn __reduce23<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(150);
@@ -4328,11 +4233,10 @@ mod __parse__LExpr {
         (1, 13)
     }
     fn __reduce24<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = LowerId, ":", Type, "," => ActionFn(244);
@@ -4348,11 +4252,10 @@ mod __parse__LExpr {
         (4, 14)
     }
     fn __reduce25<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type, "," => ActionFn(245);
@@ -4369,11 +4272,10 @@ mod __parse__LExpr {
         (5, 14)
     }
     fn __reduce26<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",") = CallArg, "," => ActionFn(167);
@@ -4387,11 +4289,10 @@ mod __parse__LExpr {
         (2, 15)
     }
     fn __reduce27<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* =  => ActionFn(165);
@@ -4402,11 +4303,10 @@ mod __parse__LExpr {
         (0, 16)
     }
     fn __reduce28<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(166);
@@ -4418,11 +4318,10 @@ mod __parse__LExpr {
         (1, 16)
     }
     fn __reduce29<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = CallArg, "," => ActionFn(248);
@@ -4436,11 +4335,10 @@ mod __parse__LExpr {
         (2, 17)
     }
     fn __reduce30<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = (<CallArg> ",")+, CallArg, "," => ActionFn(249);
@@ -4455,11 +4353,10 @@ mod __parse__LExpr {
         (3, 17)
     }
     fn __reduce31<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>) = LowerId, ":", Type => ActionFn(115);
@@ -4474,11 +4371,10 @@ mod __parse__LExpr {
         (3, 18)
     }
     fn __reduce32<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? = LowerId, ":", Type => ActionFn(243);
@@ -4493,11 +4389,10 @@ mod __parse__LExpr {
         (3, 19)
     }
     fn __reduce33<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? =  => ActionFn(148);
@@ -4508,11 +4403,10 @@ mod __parse__LExpr {
         (0, 19)
     }
     fn __reduce34<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE) = NamedField, NEWLINE => ActionFn(126);
@@ -4526,11 +4420,10 @@ mod __parse__LExpr {
         (2, 20)
     }
     fn __reduce35<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = NamedField, NEWLINE => ActionFn(256);
@@ -4544,11 +4437,10 @@ mod __parse__LExpr {
         (2, 21)
     }
     fn __reduce36<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = (<NamedField> NEWLINE)+, NamedField, NEWLINE => ActionFn(257);
@@ -4563,11 +4455,10 @@ mod __parse__LExpr {
         (3, 21)
     }
     fn __reduce37<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",") = ParenExpr, "," => ActionFn(162);
@@ -4581,11 +4472,10 @@ mod __parse__LExpr {
         (2, 22)
     }
     fn __reduce38<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* =  => ActionFn(160);
@@ -4596,11 +4486,10 @@ mod __parse__LExpr {
         (0, 23)
     }
     fn __reduce39<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(161);
@@ -4612,11 +4501,10 @@ mod __parse__LExpr {
         (1, 23)
     }
     fn __reduce40<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = ParenExpr, "," => ActionFn(258);
@@ -4630,11 +4518,10 @@ mod __parse__LExpr {
         (2, 24)
     }
     fn __reduce41<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = (<ParenExpr> ",")+, ParenExpr, "," => ActionFn(259);
@@ -4649,11 +4536,10 @@ mod __parse__LExpr {
         (3, 24)
     }
     fn __reduce42<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",") = PatternField, "," => ActionFn(172);
@@ -4667,11 +4553,10 @@ mod __parse__LExpr {
         (2, 25)
     }
     fn __reduce43<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* =  => ActionFn(170);
@@ -4682,11 +4567,10 @@ mod __parse__LExpr {
         (0, 26)
     }
     fn __reduce44<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* = (<PatternField> ",")+ => ActionFn(171);
@@ -4698,11 +4582,10 @@ mod __parse__LExpr {
         (1, 26)
     }
     fn __reduce45<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = PatternField, "," => ActionFn(262);
@@ -4716,11 +4599,10 @@ mod __parse__LExpr {
         (2, 27)
     }
     fn __reduce46<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = (<PatternField> ",")+, PatternField, "," => ActionFn(263);
@@ -4735,11 +4617,10 @@ mod __parse__LExpr {
         (3, 27)
     }
     fn __reduce47<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",") = RecordTypeField, "," => ActionFn(146);
@@ -4753,11 +4634,10 @@ mod __parse__LExpr {
         (2, 28)
     }
     fn __reduce48<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* =  => ActionFn(144);
@@ -4768,11 +4648,10 @@ mod __parse__LExpr {
         (0, 29)
     }
     fn __reduce49<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(145);
@@ -4784,11 +4663,10 @@ mod __parse__LExpr {
         (1, 29)
     }
     fn __reduce50<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = RecordTypeField, "," => ActionFn(266);
@@ -4802,11 +4680,10 @@ mod __parse__LExpr {
         (2, 30)
     }
     fn __reduce51<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = (<RecordTypeField> ",")+, RecordTypeField, "," => ActionFn(267);
@@ -4821,11 +4698,10 @@ mod __parse__LExpr {
         (3, 30)
     }
     fn __reduce52<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",") = Type, "," => ActionFn(141);
@@ -4839,11 +4715,10 @@ mod __parse__LExpr {
         (2, 31)
     }
     fn __reduce53<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* =  => ActionFn(139);
@@ -4854,11 +4729,10 @@ mod __parse__LExpr {
         (0, 32)
     }
     fn __reduce54<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* = (<Type> ",")+ => ActionFn(140);
@@ -4870,11 +4744,10 @@ mod __parse__LExpr {
         (1, 32)
     }
     fn __reduce55<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = Type, "," => ActionFn(270);
@@ -4888,11 +4761,10 @@ mod __parse__LExpr {
         (2, 33)
     }
     fn __reduce56<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = (<Type> ",")+, Type, "," => ActionFn(271);
@@ -4907,11 +4779,10 @@ mod __parse__LExpr {
         (3, 33)
     }
     fn __reduce57<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",") = UpperId, "," => ActionFn(136);
@@ -4925,11 +4796,10 @@ mod __parse__LExpr {
         (2, 34)
     }
     fn __reduce58<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* =  => ActionFn(134);
@@ -4940,11 +4810,10 @@ mod __parse__LExpr {
         (0, 35)
     }
     fn __reduce59<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* = (<UpperId> ",")+ => ActionFn(135);
@@ -4956,11 +4825,10 @@ mod __parse__LExpr {
         (1, 35)
     }
     fn __reduce60<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = UpperId, "," => ActionFn(274);
@@ -4974,11 +4842,10 @@ mod __parse__LExpr {
         (2, 36)
     }
     fn __reduce61<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = (<UpperId> ",")+, UpperId, "," => ActionFn(275);
@@ -4993,11 +4860,10 @@ mod __parse__LExpr {
         (3, 36)
     }
     fn __reduce62<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".") = UpperId, "." => ActionFn(121);
@@ -5011,11 +4877,10 @@ mod __parse__LExpr {
         (2, 37)
     }
     fn __reduce63<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* =  => ActionFn(175);
@@ -5026,11 +4891,10 @@ mod __parse__LExpr {
         (0, 38)
     }
     fn __reduce64<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* = (<UpperId> ".")+ => ActionFn(176);
@@ -5042,11 +4906,10 @@ mod __parse__LExpr {
         (1, 38)
     }
     fn __reduce65<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = UpperId, "." => ActionFn(278);
@@ -5060,11 +4923,10 @@ mod __parse__LExpr {
         (2, 39)
     }
     fn __reduce66<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = (<UpperId> ".")+, UpperId, "." => ActionFn(279);
@@ -5079,11 +4941,10 @@ mod __parse__LExpr {
         (3, 39)
     }
     fn __reduce67<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? = UpperId, "." => ActionFn(280);
@@ -5097,11 +4958,10 @@ mod __parse__LExpr {
         (2, 40)
     }
     fn __reduce68<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? =  => ActionFn(120);
@@ -5112,11 +4972,10 @@ mod __parse__LExpr {
         (0, 40)
     }
     fn __reduce69<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // @L =  => ActionFn(133);
@@ -5127,11 +4986,10 @@ mod __parse__LExpr {
         (0, 41)
     }
     fn __reduce70<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // @R =  => ActionFn(132);
@@ -5142,11 +5000,10 @@ mod __parse__LExpr {
         (0, 42)
     }
     fn __reduce71<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(33);
@@ -5164,11 +5021,10 @@ mod __parse__LExpr {
         (6, 43)
     }
     fn __reduce72<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", LStmt => ActionFn(34);
@@ -5183,11 +5039,10 @@ mod __parse__LExpr {
         (3, 43)
     }
     fn __reduce73<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt* =  => ActionFn(98);
@@ -5198,11 +5053,10 @@ mod __parse__LExpr {
         (0, 44)
     }
     fn __reduce74<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt* = Alt+ => ActionFn(99);
@@ -5214,11 +5068,10 @@ mod __parse__LExpr {
         (1, 44)
     }
     fn __reduce75<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt => ActionFn(156);
@@ -5230,11 +5083,10 @@ mod __parse__LExpr {
         (1, 45)
     }
     fn __reduce76<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt+, Alt => ActionFn(157);
@@ -5248,11 +5100,10 @@ mod __parse__LExpr {
         (2, 45)
     }
     fn __reduce77<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alts =  => ActionFn(437);
@@ -5263,11 +5114,10 @@ mod __parse__LExpr {
         (0, 46)
     }
     fn __reduce78<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alts = Alt+ => ActionFn(438);
@@ -5279,11 +5129,10 @@ mod __parse__LExpr {
         (1, 46)
     }
     fn __reduce79<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "=" => ActionFn(35);
@@ -5295,11 +5144,10 @@ mod __parse__LExpr {
         (1, 47)
     }
     fn __reduce80<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "+=" => ActionFn(36);
@@ -5311,11 +5159,10 @@ mod __parse__LExpr {
         (1, 47)
     }
     fn __reduce81<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "-=" => ActionFn(37);
@@ -5327,11 +5174,10 @@ mod __parse__LExpr {
         (1, 47)
     }
     fn __reduce82<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg = LowerId, "=", LExpr => ActionFn(71);
@@ -5346,11 +5192,10 @@ mod __parse__LExpr {
         (3, 48)
     }
     fn __reduce83<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg = LExpr => ActionFn(72);
@@ -5362,11 +5207,10 @@ mod __parse__LExpr {
         (1, 48)
     }
     fn __reduce84<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg? = CallArg => ActionFn(163);
@@ -5378,11 +5222,10 @@ mod __parse__LExpr {
         (1, 49)
     }
     fn __reduce85<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg? =  => ActionFn(164);
@@ -5393,11 +5236,10 @@ mod __parse__LExpr {
         (0, 49)
     }
     fn __reduce86<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor => ActionFn(82);
@@ -5409,11 +5251,10 @@ mod __parse__LExpr {
         (1, 50)
     }
     fn __reduce87<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor, "(", Sep<PatternField, ",">, ")" => ActionFn(83);
@@ -5429,11 +5270,10 @@ mod __parse__LExpr {
         (4, 50)
     }
     fn __reduce88<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId, ".", UpperId => ActionFn(80);
@@ -5448,11 +5288,10 @@ mod __parse__LExpr {
         (3, 51)
     }
     fn __reduce89<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId => ActionFn(81);
@@ -5464,11 +5303,10 @@ mod __parse__LExpr {
         (1, 51)
     }
     fn __reduce90<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, NEWLINE => ActionFn(8);
@@ -5482,11 +5320,10 @@ mod __parse__LExpr {
         (2, 52)
     }
     fn __reduce91<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(9);
@@ -5504,11 +5341,10 @@ mod __parse__LExpr {
         (6, 52)
     }
     fn __reduce92<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ",", ")", NEWLINE => ActionFn(199);
@@ -5526,11 +5362,10 @@ mod __parse__LExpr {
         (6, 52)
     }
     fn __reduce93<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ")", NEWLINE => ActionFn(200);
@@ -5547,11 +5382,10 @@ mod __parse__LExpr {
         (5, 52)
     }
     fn __reduce94<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl => ActionFn(129);
@@ -5563,11 +5397,10 @@ mod __parse__LExpr {
         (1, 53)
     }
     fn __reduce95<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl+, ConstructorDecl => ActionFn(130);
@@ -5581,11 +5414,10 @@ mod __parse__LExpr {
         (2, 53)
     }
     fn __reduce96<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr = Expr, "||", Expr6 => ActionFn(378);
@@ -5600,11 +5432,10 @@ mod __parse__LExpr {
         (3, 54)
     }
     fn __reduce97<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr = Expr6 => ActionFn(68);
@@ -5616,11 +5447,10 @@ mod __parse__LExpr {
         (1, 54)
     }
     fn __reduce98<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = "self" => ActionFn(39);
@@ -5632,11 +5462,10 @@ mod __parse__LExpr {
         (1, 55)
     }
     fn __reduce99<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = LowerId => ActionFn(40);
@@ -5648,11 +5477,10 @@ mod __parse__LExpr {
         (1, 55)
     }
     fn __reduce100<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = UpperId => ActionFn(41);
@@ -5664,11 +5492,10 @@ mod __parse__LExpr {
         (1, 55)
     }
     fn __reduce101<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = "(", Sep<ParenExpr, ",">, ")" => ActionFn(42);
@@ -5683,11 +5510,10 @@ mod __parse__LExpr {
         (3, 55)
     }
     fn __reduce102<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = IntLit => ActionFn(43);
@@ -5699,11 +5525,10 @@ mod __parse__LExpr {
         (1, 55)
     }
     fn __reduce103<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = StringLit => ActionFn(44);
@@ -5715,11 +5540,10 @@ mod __parse__LExpr {
         (1, 55)
     }
     fn __reduce104<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "[", LExpr, "]" => ActionFn(379);
@@ -5735,11 +5559,10 @@ mod __parse__LExpr {
         (4, 55)
     }
     fn __reduce105<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "(", Sep<CallArg, ",">, ")" => ActionFn(380);
@@ -5755,11 +5578,10 @@ mod __parse__LExpr {
         (4, 55)
     }
     fn __reduce106<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", LowerId => ActionFn(381);
@@ -5774,11 +5596,10 @@ mod __parse__LExpr {
         (3, 55)
     }
     fn __reduce107<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", UpperId => ActionFn(48);
@@ -5793,11 +5614,10 @@ mod __parse__LExpr {
         (3, 55)
     }
     fn __reduce108<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr1, "..", Expr0 => ActionFn(382);
@@ -5812,11 +5632,10 @@ mod __parse__LExpr {
         (3, 56)
     }
     fn __reduce109<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr0 => ActionFn(50);
@@ -5828,11 +5647,10 @@ mod __parse__LExpr {
         (1, 56)
     }
     fn __reduce110<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr2 = "!", Expr2 => ActionFn(383);
@@ -5846,11 +5664,10 @@ mod __parse__LExpr {
         (2, 57)
     }
     fn __reduce111<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr2 = Expr1 => ActionFn(52);
@@ -5862,11 +5679,10 @@ mod __parse__LExpr {
         (1, 57)
     }
     fn __reduce112<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr3, "*", Expr2 => ActionFn(384);
@@ -5881,11 +5697,10 @@ mod __parse__LExpr {
         (3, 58)
     }
     fn __reduce113<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr2 => ActionFn(54);
@@ -5897,11 +5712,10 @@ mod __parse__LExpr {
         (1, 58)
     }
     fn __reduce114<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "+", Expr3 => ActionFn(385);
@@ -5916,11 +5730,10 @@ mod __parse__LExpr {
         (3, 59)
     }
     fn __reduce115<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "-", Expr3 => ActionFn(386);
@@ -5935,11 +5748,10 @@ mod __parse__LExpr {
         (3, 59)
     }
     fn __reduce116<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr3 => ActionFn(57);
@@ -5951,11 +5763,10 @@ mod __parse__LExpr {
         (1, 59)
     }
     fn __reduce117<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "==", Expr4 => ActionFn(387);
@@ -5970,11 +5781,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce118<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "!=", Expr4 => ActionFn(388);
@@ -5989,11 +5799,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce119<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<", Expr4 => ActionFn(389);
@@ -6008,11 +5817,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce120<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">", Expr4 => ActionFn(390);
@@ -6027,11 +5835,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce121<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<=", Expr4 => ActionFn(391);
@@ -6046,11 +5853,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce122<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">=", Expr4 => ActionFn(392);
@@ -6065,11 +5871,10 @@ mod __parse__LExpr {
         (3, 60)
     }
     fn __reduce123<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr4 => ActionFn(64);
@@ -6081,11 +5886,10 @@ mod __parse__LExpr {
         (1, 60)
     }
     fn __reduce124<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr6, "&&", Expr5 => ActionFn(393);
@@ -6100,11 +5904,10 @@ mod __parse__LExpr {
         (3, 61)
     }
     fn __reduce125<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr5 => ActionFn(66);
@@ -6116,11 +5919,10 @@ mod __parse__LExpr {
         (1, 61)
     }
     fn __reduce126<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(394);
@@ -6148,11 +5950,10 @@ mod __parse__LExpr {
         (16, 62)
     }
     fn __reduce127<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(395);
@@ -6178,11 +5979,10 @@ mod __parse__LExpr {
         (14, 62)
     }
     fn __reduce128<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(396);
@@ -6209,11 +6009,10 @@ mod __parse__LExpr {
         (15, 62)
     }
     fn __reduce129<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(397);
@@ -6238,11 +6037,10 @@ mod __parse__LExpr {
         (13, 62)
     }
     fn __reduce130<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(398);
@@ -6268,11 +6066,10 @@ mod __parse__LExpr {
         (14, 62)
     }
     fn __reduce131<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(399);
@@ -6296,11 +6093,10 @@ mod __parse__LExpr {
         (12, 62)
     }
     fn __reduce132<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(400);
@@ -6326,11 +6122,10 @@ mod __parse__LExpr {
         (14, 62)
     }
     fn __reduce133<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(401);
@@ -6354,11 +6149,10 @@ mod __parse__LExpr {
         (12, 62)
     }
     fn __reduce134<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(402);
@@ -6383,11 +6177,10 @@ mod __parse__LExpr {
         (13, 62)
     }
     fn __reduce135<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(403);
@@ -6410,11 +6203,10 @@ mod __parse__LExpr {
         (11, 62)
     }
     fn __reduce136<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(404);
@@ -6438,11 +6230,10 @@ mod __parse__LExpr {
         (12, 62)
     }
     fn __reduce137<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(405);
@@ -6464,11 +6255,10 @@ mod __parse__LExpr {
         (10, 62)
     }
     fn __reduce138<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(406);
@@ -6502,11 +6292,10 @@ mod __parse__LExpr {
         (22, 62)
     }
     fn __reduce139<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(407);
@@ -6538,11 +6327,10 @@ mod __parse__LExpr {
         (20, 62)
     }
     fn __reduce140<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(408);
@@ -6575,11 +6363,10 @@ mod __parse__LExpr {
         (21, 62)
     }
     fn __reduce141<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(409);
@@ -6610,11 +6397,10 @@ mod __parse__LExpr {
         (19, 62)
     }
     fn __reduce142<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(410);
@@ -6646,11 +6432,10 @@ mod __parse__LExpr {
         (20, 62)
     }
     fn __reduce143<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(411);
@@ -6680,11 +6465,10 @@ mod __parse__LExpr {
         (18, 62)
     }
     fn __reduce144<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(412);
@@ -6715,11 +6499,10 @@ mod __parse__LExpr {
         (19, 62)
     }
     fn __reduce145<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(413);
@@ -6748,11 +6531,10 @@ mod __parse__LExpr {
         (17, 62)
     }
     fn __reduce146<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(414);
@@ -6782,11 +6564,10 @@ mod __parse__LExpr {
         (18, 62)
     }
     fn __reduce147<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(415);
@@ -6814,11 +6595,10 @@ mod __parse__LExpr {
         (16, 62)
     }
     fn __reduce148<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(416);
@@ -6847,11 +6627,10 @@ mod __parse__LExpr {
         (17, 62)
     }
     fn __reduce149<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(417);
@@ -6878,11 +6657,10 @@ mod __parse__LExpr {
         (15, 62)
     }
     fn __reduce150<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(418);
@@ -6914,11 +6692,10 @@ mod __parse__LExpr {
         (20, 62)
     }
     fn __reduce151<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(419);
@@ -6948,11 +6725,10 @@ mod __parse__LExpr {
         (18, 62)
     }
     fn __reduce152<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(420);
@@ -6983,11 +6759,10 @@ mod __parse__LExpr {
         (19, 62)
     }
     fn __reduce153<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(421);
@@ -7016,11 +6791,10 @@ mod __parse__LExpr {
         (17, 62)
     }
     fn __reduce154<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(422);
@@ -7050,11 +6824,10 @@ mod __parse__LExpr {
         (18, 62)
     }
     fn __reduce155<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(423);
@@ -7082,11 +6855,10 @@ mod __parse__LExpr {
         (16, 62)
     }
     fn __reduce156<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(424);
@@ -7115,11 +6887,10 @@ mod __parse__LExpr {
         (17, 62)
     }
     fn __reduce157<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(425);
@@ -7146,11 +6917,10 @@ mod __parse__LExpr {
         (15, 62)
     }
     fn __reduce158<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(426);
@@ -7178,11 +6948,10 @@ mod __parse__LExpr {
         (16, 62)
     }
     fn __reduce159<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(427);
@@ -7208,11 +6977,10 @@ mod __parse__LExpr {
         (14, 62)
     }
     fn __reduce160<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(428);
@@ -7239,11 +7007,10 @@ mod __parse__LExpr {
         (15, 62)
     }
     fn __reduce161<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(429);
@@ -7268,11 +7035,10 @@ mod __parse__LExpr {
         (13, 62)
     }
     fn __reduce162<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ImportDecl = "import", Sep<UpperId, ".">, NEWLINE => ActionFn(430);
@@ -7287,11 +7053,10 @@ mod __parse__LExpr {
         (3, 63)
     }
     fn __reduce163<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LExpr = Expr => ActionFn(431);
@@ -7303,11 +7068,10 @@ mod __parse__LExpr {
         (1, 64)
     }
     fn __reduce164<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LPat = Pat => ActionFn(432);
@@ -7319,11 +7083,10 @@ mod __parse__LExpr {
         (1, 65)
     }
     fn __reduce165<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt = Stmt => ActionFn(433);
@@ -7335,11 +7098,10 @@ mod __parse__LExpr {
         (1, 66)
     }
     fn __reduce166<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt* =  => ActionFn(106);
@@ -7350,11 +7112,10 @@ mod __parse__LExpr {
         (0, 67)
     }
     fn __reduce167<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt* = LStmt+ => ActionFn(107);
@@ -7366,11 +7127,10 @@ mod __parse__LExpr {
         (1, 67)
     }
     fn __reduce168<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt => ActionFn(152);
@@ -7382,11 +7142,10 @@ mod __parse__LExpr {
         (1, 68)
     }
     fn __reduce169<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt+, LStmt => ActionFn(153);
@@ -7400,11 +7159,10 @@ mod __parse__LExpr {
         (2, 68)
     }
     fn __reduce170<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmts =  => ActionFn(443);
@@ -7415,11 +7173,10 @@ mod __parse__LExpr {
         (0, 69)
     }
     fn __reduce171<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmts = LStmt+ => ActionFn(444);
@@ -7431,11 +7188,10 @@ mod __parse__LExpr {
         (1, 69)
     }
     fn __reduce172<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE* =  => ActionFn(90);
@@ -7446,11 +7202,10 @@ mod __parse__LExpr {
         (0, 70)
     }
     fn __reduce173<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE* = NEWLINE+ => ActionFn(91);
@@ -7462,11 +7217,10 @@ mod __parse__LExpr {
         (1, 70)
     }
     fn __reduce174<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE => ActionFn(179);
@@ -7478,11 +7232,10 @@ mod __parse__LExpr {
         (1, 71)
     }
     fn __reduce175<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE+, NEWLINE => ActionFn(180);
@@ -7496,11 +7249,10 @@ mod __parse__LExpr {
         (2, 71)
     }
     fn __reduce176<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NamedField = LowerId, ":", Type => ActionFn(12);
@@ -7515,11 +7267,10 @@ mod __parse__LExpr {
         (3, 72)
     }
     fn __reduce177<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NamedFields = (<NamedField> NEWLINE)+ => ActionFn(11);
@@ -7531,11 +7282,10 @@ mod __parse__LExpr {
         (1, 73)
     }
     fn __reduce178<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr = LowerId, "=", LExpr => ActionFn(69);
@@ -7550,11 +7300,10 @@ mod __parse__LExpr {
         (3, 74)
     }
     fn __reduce179<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr = LExpr => ActionFn(70);
@@ -7566,11 +7315,10 @@ mod __parse__LExpr {
         (1, 74)
     }
     fn __reduce180<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr? = ParenExpr => ActionFn(158);
@@ -7582,11 +7330,10 @@ mod __parse__LExpr {
         (1, 75)
     }
     fn __reduce181<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr? =  => ActionFn(159);
@@ -7597,11 +7344,10 @@ mod __parse__LExpr {
         (0, 75)
     }
     fn __reduce182<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = LowerId => ActionFn(74);
@@ -7613,11 +7359,10 @@ mod __parse__LExpr {
         (1, 76)
     }
     fn __reduce183<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = ConstrPattern => ActionFn(75);
@@ -7629,11 +7374,10 @@ mod __parse__LExpr {
         (1, 76)
     }
     fn __reduce184<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = "(", Sep<PatternField, ",">, ")" => ActionFn(76);
@@ -7648,11 +7392,10 @@ mod __parse__LExpr {
         (3, 76)
     }
     fn __reduce185<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = "_" => ActionFn(77);
@@ -7664,11 +7407,10 @@ mod __parse__LExpr {
         (1, 76)
     }
     fn __reduce186<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = StringLit => ActionFn(78);
@@ -7680,11 +7422,10 @@ mod __parse__LExpr {
         (1, 76)
     }
     fn __reduce187<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = StringLit, LowerId => ActionFn(79);
@@ -7698,11 +7439,10 @@ mod __parse__LExpr {
         (2, 76)
     }
     fn __reduce188<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField = LowerId, "=", LPat => ActionFn(84);
@@ -7717,11 +7457,10 @@ mod __parse__LExpr {
         (3, 77)
     }
     fn __reduce189<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField = LPat => ActionFn(85);
@@ -7733,11 +7472,10 @@ mod __parse__LExpr {
         (1, 77)
     }
     fn __reduce190<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField? = PatternField => ActionFn(168);
@@ -7749,11 +7487,10 @@ mod __parse__LExpr {
         (1, 78)
     }
     fn __reduce191<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField? =  => ActionFn(169);
@@ -7764,11 +7501,10 @@ mod __parse__LExpr {
         (0, 78)
     }
     fn __reduce192<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField = LowerId, ":", Type => ActionFn(18);
@@ -7783,11 +7519,10 @@ mod __parse__LExpr {
         (3, 79)
     }
     fn __reduce193<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField = Type => ActionFn(19);
@@ -7799,11 +7534,10 @@ mod __parse__LExpr {
         (1, 79)
     }
     fn __reduce194<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField? = RecordTypeField => ActionFn(142);
@@ -7815,11 +7549,10 @@ mod __parse__LExpr {
         (1, 80)
     }
     fn __reduce195<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField? =  => ActionFn(143);
@@ -7830,11 +7563,10 @@ mod __parse__LExpr {
         (0, 80)
     }
     fn __reduce196<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = LowerId, ":", Type => ActionFn(252);
@@ -7849,11 +7581,10 @@ mod __parse__LExpr {
         (3, 81)
     }
     fn __reduce197<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> =  => ActionFn(253);
@@ -7864,11 +7595,10 @@ mod __parse__LExpr {
         (0, 81)
     }
     fn __reduce198<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type => ActionFn(254);
@@ -7884,11 +7614,10 @@ mod __parse__LExpr {
         (4, 81)
     }
     fn __reduce199<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(255);
@@ -7900,11 +7629,10 @@ mod __parse__LExpr {
         (1, 81)
     }
     fn __reduce200<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(439);
@@ -7916,11 +7644,10 @@ mod __parse__LExpr {
         (1, 82)
     }
     fn __reduce201<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> =  => ActionFn(440);
@@ -7931,11 +7658,10 @@ mod __parse__LExpr {
         (0, 82)
     }
     fn __reduce202<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(441);
@@ -7949,11 +7675,10 @@ mod __parse__LExpr {
         (2, 82)
     }
     fn __reduce203<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(442);
@@ -7965,11 +7690,10 @@ mod __parse__LExpr {
         (1, 82)
     }
     fn __reduce204<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(449);
@@ -7981,11 +7705,10 @@ mod __parse__LExpr {
         (1, 83)
     }
     fn __reduce205<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> =  => ActionFn(450);
@@ -7996,11 +7719,10 @@ mod __parse__LExpr {
         (0, 83)
     }
     fn __reduce206<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(451);
@@ -8014,11 +7736,10 @@ mod __parse__LExpr {
         (2, 83)
     }
     fn __reduce207<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(452);
@@ -8030,11 +7751,10 @@ mod __parse__LExpr {
         (1, 83)
     }
     fn __reduce208<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = PatternField => ActionFn(453);
@@ -8046,11 +7766,10 @@ mod __parse__LExpr {
         (1, 84)
     }
     fn __reduce209<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> =  => ActionFn(454);
@@ -8061,11 +7780,10 @@ mod __parse__LExpr {
         (0, 84)
     }
     fn __reduce210<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+, PatternField => ActionFn(455);
@@ -8079,11 +7797,10 @@ mod __parse__LExpr {
         (2, 84)
     }
     fn __reduce211<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+ => ActionFn(456);
@@ -8095,11 +7812,10 @@ mod __parse__LExpr {
         (1, 84)
     }
     fn __reduce212<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(457);
@@ -8111,11 +7827,10 @@ mod __parse__LExpr {
         (1, 85)
     }
     fn __reduce213<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> =  => ActionFn(458);
@@ -8126,11 +7841,10 @@ mod __parse__LExpr {
         (0, 85)
     }
     fn __reduce214<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(459);
@@ -8144,11 +7858,10 @@ mod __parse__LExpr {
         (2, 85)
     }
     fn __reduce215<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(460);
@@ -8160,11 +7873,10 @@ mod __parse__LExpr {
         (1, 85)
     }
     fn __reduce216<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = Type => ActionFn(463);
@@ -8176,11 +7888,10 @@ mod __parse__LExpr {
         (1, 86)
     }
     fn __reduce217<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> =  => ActionFn(464);
@@ -8191,11 +7902,10 @@ mod __parse__LExpr {
         (0, 86)
     }
     fn __reduce218<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+, Type => ActionFn(465);
@@ -8209,11 +7919,10 @@ mod __parse__LExpr {
         (2, 86)
     }
     fn __reduce219<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+ => ActionFn(466);
@@ -8225,11 +7934,10 @@ mod __parse__LExpr {
         (1, 86)
     }
     fn __reduce220<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = UpperId => ActionFn(467);
@@ -8241,11 +7949,10 @@ mod __parse__LExpr {
         (1, 87)
     }
     fn __reduce221<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> =  => ActionFn(468);
@@ -8256,11 +7963,10 @@ mod __parse__LExpr {
         (0, 87)
     }
     fn __reduce222<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+, UpperId => ActionFn(469);
@@ -8274,11 +7980,10 @@ mod __parse__LExpr {
         (2, 87)
     }
     fn __reduce223<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+ => ActionFn(470);
@@ -8290,11 +7995,10 @@ mod __parse__LExpr {
         (1, 87)
     }
     fn __reduce224<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = UpperId => ActionFn(471);
@@ -8306,11 +8010,10 @@ mod __parse__LExpr {
         (1, 88)
     }
     fn __reduce225<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> =  => ActionFn(472);
@@ -8321,11 +8024,10 @@ mod __parse__LExpr {
         (0, 88)
     }
     fn __reduce226<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+, UpperId => ActionFn(473);
@@ -8339,11 +8041,10 @@ mod __parse__LExpr {
         (2, 88)
     }
     fn __reduce227<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+ => ActionFn(474);
@@ -8355,11 +8056,10 @@ mod __parse__LExpr {
         (1, 88)
     }
     fn __reduce228<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, ":", Type, "=", LExpr, NEWLINE => ActionFn(206);
@@ -8378,11 +8078,10 @@ mod __parse__LExpr {
         (7, 89)
     }
     fn __reduce229<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, "=", LExpr, NEWLINE => ActionFn(207);
@@ -8399,11 +8098,10 @@ mod __parse__LExpr {
         (5, 89)
     }
     fn __reduce230<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(218);
@@ -8428,11 +8126,10 @@ mod __parse__LExpr {
         (13, 89)
     }
     fn __reduce231<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(219);
@@ -8451,11 +8148,10 @@ mod __parse__LExpr {
         (7, 89)
     }
     fn __reduce232<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(220);
@@ -8481,11 +8177,10 @@ mod __parse__LExpr {
         (14, 89)
     }
     fn __reduce233<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(221);
@@ -8505,11 +8200,10 @@ mod __parse__LExpr {
         (8, 89)
     }
     fn __reduce234<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, AssignOp, LExpr, NEWLINE => ActionFn(26);
@@ -8525,11 +8219,10 @@ mod __parse__LExpr {
         (4, 89)
     }
     fn __reduce235<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, NEWLINE => ActionFn(27);
@@ -8543,11 +8236,10 @@ mod __parse__LExpr {
         (2, 89)
     }
     fn __reduce236<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "match", LExpr, ":", NEWLINE, INDENT, Alts, DEDENT => ActionFn(28);
@@ -8566,11 +8258,10 @@ mod __parse__LExpr {
         (7, 89)
     }
     fn __reduce237<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "for", LowerId, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(29);
@@ -8591,11 +8282,10 @@ mod __parse__LExpr {
         (9, 89)
     }
     fn __reduce238<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(30);
@@ -8614,11 +8304,10 @@ mod __parse__LExpr {
         (7, 89)
     }
     fn __reduce239<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "return", LExpr, NEWLINE => ActionFn(31);
@@ -8633,11 +8322,10 @@ mod __parse__LExpr {
         (3, 89)
     }
     fn __reduce240<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = TypeDecl => ActionFn(445);
@@ -8649,11 +8337,10 @@ mod __parse__LExpr {
         (1, 90)
     }
     fn __reduce241<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, TypeDecl => ActionFn(446);
@@ -8667,11 +8354,10 @@ mod __parse__LExpr {
         (2, 90)
     }
     fn __reduce242<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = FunDecl => ActionFn(447);
@@ -8683,11 +8369,10 @@ mod __parse__LExpr {
         (1, 90)
     }
     fn __reduce243<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, FunDecl => ActionFn(448);
@@ -8701,11 +8386,10 @@ mod __parse__LExpr {
         (2, 90)
     }
     fn __reduce244<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl* =  => ActionFn(92);
@@ -8716,11 +8400,10 @@ mod __parse__LExpr {
         (0, 91)
     }
     fn __reduce245<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl* = TopDecl+ => ActionFn(93);
@@ -8732,11 +8415,10 @@ mod __parse__LExpr {
         (1, 91)
     }
     fn __reduce246<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl => ActionFn(177);
@@ -8748,11 +8430,10 @@ mod __parse__LExpr {
         (1, 92)
     }
     fn __reduce247<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl+, TopDecl => ActionFn(178);
@@ -8766,11 +8447,10 @@ mod __parse__LExpr {
         (2, 92)
     }
     fn __reduce248<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecls =  => ActionFn(461);
@@ -8781,11 +8461,10 @@ mod __parse__LExpr {
         (0, 93)
     }
     fn __reduce249<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecls = TopDecl+ => ActionFn(462);
@@ -8797,11 +8476,10 @@ mod __parse__LExpr {
         (1, 93)
     }
     fn __reduce250<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = UpperId => ActionFn(15);
@@ -8813,11 +8491,10 @@ mod __parse__LExpr {
         (1, 94)
     }
     fn __reduce251<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = UpperId, "[", Sep<Type, ",">, "]" => ActionFn(16);
@@ -8833,11 +8510,10 @@ mod __parse__LExpr {
         (4, 94)
     }
     fn __reduce252<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = "(", Sep<RecordTypeField, ",">, ")" => ActionFn(17);
@@ -8852,11 +8528,10 @@ mod __parse__LExpr {
         (3, 94)
     }
     fn __reduce253<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type? = Type => ActionFn(137);
@@ -8868,11 +8543,10 @@ mod __parse__LExpr {
         (1, 95)
     }
     fn __reduce254<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type? =  => ActionFn(138);
@@ -8883,11 +8557,10 @@ mod __parse__LExpr {
         (0, 95)
     }
     fn __reduce255<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeConstrs = ConstructorDecl+ => ActionFn(7);
@@ -8899,11 +8572,10 @@ mod __parse__LExpr {
         (1, 96)
     }
     fn __reduce256<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDecl = "type", UpperId, TypeParams, TypeDeclRhs => ActionFn(436);
@@ -8919,11 +8591,10 @@ mod __parse__LExpr {
         (4, 97)
     }
     fn __reduce257<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, TypeConstrs, DEDENT => ActionFn(3);
@@ -8940,11 +8611,10 @@ mod __parse__LExpr {
         (5, 98)
     }
     fn __reduce258<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(4);
@@ -8961,11 +8631,10 @@ mod __parse__LExpr {
         (5, 98)
     }
     fn __reduce259<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeParams =  => ActionFn(5);
@@ -8976,11 +8645,10 @@ mod __parse__LExpr {
         (0, 99)
     }
     fn __reduce260<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeParams = "[", Sep<UpperId, ",">, "]" => ActionFn(6);
@@ -8995,11 +8663,10 @@ mod __parse__LExpr {
         (3, 99)
     }
     fn __reduce261<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UnnamedFields = UnnamedFields, ",", Type => ActionFn(13);
@@ -9014,11 +8681,10 @@ mod __parse__LExpr {
         (3, 100)
     }
     fn __reduce262<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UnnamedFields = Type => ActionFn(14);
@@ -9030,11 +8696,10 @@ mod __parse__LExpr {
         (1, 100)
     }
     fn __reduce263<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UpperId? = UpperId => ActionFn(173);
@@ -9046,11 +8711,10 @@ mod __parse__LExpr {
         (1, 101)
     }
     fn __reduce264<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UpperId? =  => ActionFn(174);
@@ -9061,11 +8725,10 @@ mod __parse__LExpr {
         (0, 101)
     }
     fn __reduce266<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // __TopDecls = TopDecls => ActionFn(1);
@@ -9098,25 +8761,25 @@ mod __parse__TopDecls {
     extern crate alloc;
     use super::__ToTriple;
     #[allow(dead_code)]
-    pub(crate) enum __Symbol<'input>
+    pub(crate) enum __Symbol<>
      {
-        Variant0(Token<'input>),
-        Variant1(core::option::Option<Token<'input>>),
+        Variant0(Token),
+        Variant1(core::option::Option<Token>),
         Variant2(Type),
         Variant3(core::option::Option<Type>),
-        Variant4((Token<'input>, Vec<Type>, Token<'input>)),
-        Variant5(core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>),
+        Variant4((Token, Vec<Type>, Token)),
+        Variant5(core::option::Option<(Token, Vec<Type>, Token)>),
         Variant6((L<Expr>, Vec<L<Stmt>>)),
         Variant7(alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>),
         Variant8(Vec<L<Stmt>>),
         Variant9(core::option::Option<Vec<L<Stmt>>>),
-        Variant10((Token<'input>, core::option::Option<Token<'input>>)),
-        Variant11(core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>),
-        Variant12((Token<'input>, Type)),
-        Variant13(alloc::vec::Vec<(Token<'input>, Type)>),
+        Variant10((Token, core::option::Option<Token>)),
+        Variant11(core::option::Option<(Token, core::option::Option<Token>)>),
+        Variant12((Token, Type)),
+        Variant13(alloc::vec::Vec<(Token, Type)>),
         Variant14(CallArg),
         Variant15(alloc::vec::Vec<CallArg>),
-        Variant16(core::option::Option<(Token<'input>, Type)>),
+        Variant16(core::option::Option<(Token, Type)>),
         Variant17((SmolStr, Type)),
         Variant18(alloc::vec::Vec<(SmolStr, Type)>),
         Variant19((Option<SmolStr>, L<Expr>)),
@@ -9126,7 +8789,7 @@ mod __parse__TopDecls {
         Variant23(Named<Type>),
         Variant24(alloc::vec::Vec<Named<Type>>),
         Variant25(alloc::vec::Vec<Type>),
-        Variant26(alloc::vec::Vec<Token<'input>>),
+        Variant26(alloc::vec::Vec<Token>),
         Variant27(Loc),
         Variant28(Alt),
         Variant29(alloc::vec::Vec<Alt>),
@@ -9149,13 +8812,13 @@ mod __parse__TopDecls {
         Variant46(Pat),
         Variant47(core::option::Option<(Option<SmolStr>, L<Pat>)>),
         Variant48(core::option::Option<Named<Type>>),
-        Variant49(Vec<(Token<'input>, Type)>),
+        Variant49(Vec<(Token, Type)>),
         Variant50(Vec<CallArg>),
         Variant51(Vec<(Option<SmolStr>, L<Expr>)>),
         Variant52(Vec<(Option<SmolStr>, L<Pat>)>),
         Variant53(Vec<Named<Type>>),
         Variant54(Vec<Type>),
-        Variant55(Vec<Token<'input>>),
+        Variant55(Vec<Token>),
         Variant56(Stmt),
         Variant57(L<TopDecl>),
         Variant58(alloc::vec::Vec<L<TopDecl>>),
@@ -11724,33 +11387,32 @@ mod __parse__TopDecls {
         }).collect()
     }
     fn __expected_tokens_from_states<
-        'input,
     >(
         __states: &[i16],
-        _: core::marker::PhantomData<(&'input ())>,
+        _: core::marker::PhantomData<()>,
     ) -> alloc::vec::Vec<alloc::string::String>
     {
         __TERMINAL.iter().enumerate().filter_map(|(index, terminal)| {
-            if __accepts(None, __states, Some(index), core::marker::PhantomData::<(&())>) {
+            if __accepts(None, __states, Some(index), core::marker::PhantomData::<()>) {
                 Some(alloc::string::ToString::to_string(terminal))
             } else {
                 None
             }
         }).collect()
     }
-    struct __StateMachine<'input>
+    struct __StateMachine<>
     where 
     {
-        __phantom: core::marker::PhantomData<(&'input ())>,
+        __phantom: core::marker::PhantomData<()>,
     }
-    impl<'input> __state_machine::ParserDefinition for __StateMachine<'input>
+    impl<> __state_machine::ParserDefinition for __StateMachine<>
     where 
     {
         type Location = Loc;
         type Error = LexerError<Infallible>;
-        type Token = Token<'input>;
+        type Token = Token;
         type TokenIndex = usize;
-        type Symbol = __Symbol<'input>;
+        type Symbol = __Symbol<>;
         type Success = Vec<L<TopDecl>>;
         type StateIndex = i16;
         type Action = i16;
@@ -11769,7 +11431,7 @@ mod __parse__TopDecls {
 
         #[inline]
         fn token_to_index(&self, token: &Self::Token) -> Option<usize> {
-            __token_to_integer(token, core::marker::PhantomData::<(&())>)
+            __token_to_integer(token, core::marker::PhantomData::<()>)
         }
 
         #[inline]
@@ -11793,7 +11455,7 @@ mod __parse__TopDecls {
         }
 
         fn token_to_symbol(&self, token_index: usize, token: Self::Token) -> Self::Symbol {
-            __token_to_symbol(token_index, token, core::marker::PhantomData::<(&())>)
+            __token_to_symbol(token_index, token, core::marker::PhantomData::<()>)
         }
 
         fn expected_tokens(&self, state: i16) -> alloc::vec::Vec<alloc::string::String> {
@@ -11801,7 +11463,7 @@ mod __parse__TopDecls {
         }
 
         fn expected_tokens_from_states(&self, states: &[i16]) -> alloc::vec::Vec<alloc::string::String> {
-            __expected_tokens_from_states(states, core::marker::PhantomData::<(&())>)
+            __expected_tokens_from_states(states, core::marker::PhantomData::<()>)
         }
 
         #[inline]
@@ -11829,19 +11491,18 @@ mod __parse__TopDecls {
                 start_location,
                 states,
                 symbols,
-                core::marker::PhantomData::<(&())>,
+                core::marker::PhantomData::<()>,
             )
         }
 
         fn simulate_reduce(&self, action: i16) -> __state_machine::SimulatedReduce<Self> {
-            __simulate_reduce(action, core::marker::PhantomData::<(&())>)
+            __simulate_reduce(action, core::marker::PhantomData::<()>)
         }
     }
     fn __token_to_integer<
-        'input,
     >(
-        __token: &Token<'input>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __token: &Token,
+        _: core::marker::PhantomData<()>,
     ) -> Option<usize>
     {
         match *__token {
@@ -11895,12 +11556,11 @@ mod __parse__TopDecls {
         }
     }
     fn __token_to_symbol<
-        'input,
     >(
         __token_index: usize,
-        __token: Token<'input>,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> __Symbol<'input>
+        __token: Token,
+        _: core::marker::PhantomData<()>,
+    ) -> __Symbol<>
     {
         #[allow(clippy::manual_range_patterns)]match __token_index {
             0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40 | 41 | 42 | 43 | 44 | 45 => __Symbol::Variant0(__token),
@@ -11908,11 +11568,10 @@ mod __parse__TopDecls {
         }
     }
     fn __simulate_reduce<
-        'input,
     >(
         __reduce_index: i16,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> __state_machine::SimulatedReduce<__StateMachine<'input>>
+        _: core::marker::PhantomData<()>,
+    ) -> __state_machine::SimulatedReduce<__StateMachine<>>
     {
         match __reduce_index {
             0 => {
@@ -13529,31 +13188,29 @@ mod __parse__TopDecls {
 
         #[allow(dead_code)]
         pub fn parse<
-            'input,
-            __TOKEN: __ToTriple<'input, >,
+            __TOKEN: __ToTriple<>,
             __TOKENS: IntoIterator<Item=__TOKEN>,
         >(
             &self,
             __tokens0: __TOKENS,
-        ) -> Result<Vec<L<TopDecl>>, __lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>>
+        ) -> Result<Vec<L<TopDecl>>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
             let __tokens = __tokens0.into_iter();
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
             __state_machine::Parser::drive(
                 __StateMachine {
-                    __phantom: core::marker::PhantomData::<(&())>,
+                    __phantom: core::marker::PhantomData::<()>,
                 },
                 __tokens,
             )
         }
     }
     fn __accepts<
-        'input,
     >(
         __error_state: Option<i16>,
         __states: &[i16],
         __opt_integer: Option<usize>,
-        _: core::marker::PhantomData<(&'input ())>,
+        _: core::marker::PhantomData<()>,
     ) -> bool
     {
         let mut __states = __states.to_vec();
@@ -13567,7 +13224,7 @@ mod __parse__TopDecls {
             };
             if __action == 0 { return false; }
             if __action > 0 { return true; }
-            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<(&())>) {
+            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<()>) {
                 __state_machine::SimulatedReduce::Reduce {
                     states_to_pop, nonterminal_produced
                 } => (states_to_pop, nonterminal_produced),
@@ -13581,813 +13238,812 @@ mod __parse__TopDecls {
         }
     }
     fn __reduce<
-        'input,
     >(
         __action: i16,
         __lookahead_start: Option<&Loc>,
         __states: &mut alloc::vec::Vec<i16>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
-    ) -> Option<Result<Vec<L<TopDecl>>,__lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>>>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
+    ) -> Option<Result<Vec<L<TopDecl>>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
-                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             1 => {
-                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             2 => {
-                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             3 => {
-                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             4 => {
-                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             5 => {
-                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             6 => {
-                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             7 => {
-                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             8 => {
-                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             9 => {
-                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             10 => {
-                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             11 => {
-                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             12 => {
-                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             13 => {
-                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             14 => {
-                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             15 => {
-                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             16 => {
-                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             17 => {
-                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             18 => {
-                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             19 => {
-                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             20 => {
-                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             21 => {
-                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             22 => {
-                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             23 => {
-                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             24 => {
-                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             25 => {
-                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             26 => {
-                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             27 => {
-                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             28 => {
-                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             29 => {
-                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             30 => {
-                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             31 => {
-                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             32 => {
-                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             33 => {
-                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             34 => {
-                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             35 => {
-                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             36 => {
-                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             37 => {
-                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             38 => {
-                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             39 => {
-                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             40 => {
-                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             41 => {
-                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             42 => {
-                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             43 => {
-                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             44 => {
-                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             45 => {
-                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             46 => {
-                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             47 => {
-                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             48 => {
-                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             49 => {
-                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             50 => {
-                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             51 => {
-                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             52 => {
-                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             53 => {
-                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             54 => {
-                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             55 => {
-                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             56 => {
-                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             57 => {
-                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             58 => {
-                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             59 => {
-                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             60 => {
-                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             61 => {
-                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             62 => {
-                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             63 => {
-                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             64 => {
-                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             65 => {
-                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             66 => {
-                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             67 => {
-                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             68 => {
-                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             69 => {
-                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             70 => {
-                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             71 => {
-                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             72 => {
-                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             73 => {
-                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             74 => {
-                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             75 => {
-                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             76 => {
-                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             77 => {
-                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             78 => {
-                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             79 => {
-                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             80 => {
-                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             81 => {
-                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             82 => {
-                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             83 => {
-                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             84 => {
-                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             85 => {
-                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             86 => {
-                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             87 => {
-                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             88 => {
-                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             89 => {
-                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             90 => {
-                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             91 => {
-                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             92 => {
-                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             93 => {
-                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             94 => {
-                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             95 => {
-                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             96 => {
-                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             97 => {
-                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             98 => {
-                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             99 => {
-                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             100 => {
-                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             101 => {
-                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             102 => {
-                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             103 => {
-                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             104 => {
-                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             105 => {
-                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             106 => {
-                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             107 => {
-                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             108 => {
-                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             109 => {
-                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             110 => {
-                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             111 => {
-                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             112 => {
-                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             113 => {
-                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             114 => {
-                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             115 => {
-                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             116 => {
-                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             117 => {
-                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             118 => {
-                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             119 => {
-                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             120 => {
-                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             121 => {
-                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             122 => {
-                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             123 => {
-                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             124 => {
-                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             125 => {
-                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             126 => {
-                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             127 => {
-                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             128 => {
-                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             129 => {
-                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             130 => {
-                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             131 => {
-                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             132 => {
-                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             133 => {
-                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             134 => {
-                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             135 => {
-                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             136 => {
-                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             137 => {
-                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             138 => {
-                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             139 => {
-                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             140 => {
-                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             141 => {
-                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             142 => {
-                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             143 => {
-                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             144 => {
-                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             145 => {
-                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             146 => {
-                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             147 => {
-                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             148 => {
-                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             149 => {
-                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             150 => {
-                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             151 => {
-                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             152 => {
-                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             153 => {
-                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             154 => {
-                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             155 => {
-                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             156 => {
-                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             157 => {
-                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             158 => {
-                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             159 => {
-                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             160 => {
-                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             161 => {
-                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             162 => {
-                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             163 => {
-                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             164 => {
-                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             165 => {
-                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             166 => {
-                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             167 => {
-                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             168 => {
-                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             169 => {
-                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             170 => {
-                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             171 => {
-                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             172 => {
-                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             173 => {
-                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             174 => {
-                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             175 => {
-                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             176 => {
-                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             177 => {
-                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             178 => {
-                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             179 => {
-                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             180 => {
-                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             181 => {
-                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             182 => {
-                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             183 => {
-                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             184 => {
-                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             185 => {
-                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             186 => {
-                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             187 => {
-                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             188 => {
-                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             189 => {
-                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             190 => {
-                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             191 => {
-                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             192 => {
-                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             193 => {
-                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             194 => {
-                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             195 => {
-                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             196 => {
-                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             197 => {
-                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             198 => {
-                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             199 => {
-                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             200 => {
-                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             201 => {
-                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             202 => {
-                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             203 => {
-                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             204 => {
-                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             205 => {
-                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             206 => {
-                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             207 => {
-                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             208 => {
-                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             209 => {
-                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             210 => {
-                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             211 => {
-                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             212 => {
-                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             213 => {
-                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             214 => {
-                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             215 => {
-                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             216 => {
-                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             217 => {
-                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             218 => {
-                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             219 => {
-                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             220 => {
-                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             221 => {
-                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             222 => {
-                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             223 => {
-                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             224 => {
-                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             225 => {
-                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             226 => {
-                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             227 => {
-                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             228 => {
-                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             229 => {
-                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             230 => {
-                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             231 => {
-                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             232 => {
-                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             233 => {
-                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             234 => {
-                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             235 => {
-                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             236 => {
-                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             237 => {
-                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             238 => {
-                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             239 => {
-                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             240 => {
-                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             241 => {
-                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             242 => {
-                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             243 => {
-                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             244 => {
-                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             245 => {
-                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             246 => {
-                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             247 => {
-                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             248 => {
-                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             249 => {
-                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             250 => {
-                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             251 => {
-                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             252 => {
-                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             253 => {
-                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             254 => {
-                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             255 => {
-                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             256 => {
-                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             257 => {
-                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             258 => {
-                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             259 => {
-                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             260 => {
-                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             261 => {
-                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             262 => {
-                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             263 => {
-                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             264 => {
-                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             265 => {
-                __reduce265(__lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
+                __reduce265(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
             }
             266 => {
                 // __TopDecls = TopDecls => ActionFn(1);
@@ -14411,9 +14067,8 @@ mod __parse__TopDecls {
         panic!("symbol type mismatch")
     }
     fn __pop_Variant6<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (L<Expr>, Vec<L<Stmt>>), Loc)
      {
         match __symbols.pop() {
@@ -14422,9 +14077,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant19<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (Option<SmolStr>, L<Expr>), Loc)
      {
         match __symbols.pop() {
@@ -14433,9 +14087,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant21<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (Option<SmolStr>, L<Pat>), Loc)
      {
         match __symbols.pop() {
@@ -14444,9 +14097,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant17<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, (SmolStr, Type), Loc)
      {
         match __symbols.pop() {
@@ -14455,10 +14107,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant12<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, Type), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, Type), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant12(__v), __r)) => (__l, __v, __r),
@@ -14466,10 +14117,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant4<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, Vec<Type>, Token<'input>), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, Vec<Type>, Token), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant4(__v), __r)) => (__l, __v, __r),
@@ -14477,10 +14127,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant10<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, (Token<'input>, core::option::Option<Token<'input>>), Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Token, core::option::Option<Token>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant10(__v), __r)) => (__l, __v, __r),
@@ -14488,9 +14137,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant28<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Alt, Loc)
      {
         match __symbols.pop() {
@@ -14499,9 +14147,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant31<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, AssignOp, Loc)
      {
         match __symbols.pop() {
@@ -14510,9 +14157,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant14<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, CallArg, Loc)
      {
         match __symbols.pop() {
@@ -14521,9 +14167,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant33<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, ConstrPattern, Loc)
      {
         match __symbols.pop() {
@@ -14532,9 +14177,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant34<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Constructor, Loc)
      {
         match __symbols.pop() {
@@ -14543,9 +14187,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant35<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, ConstructorDecl, Loc)
      {
         match __symbols.pop() {
@@ -14554,9 +14197,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant37<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Expr, Loc)
      {
         match __symbols.pop() {
@@ -14565,9 +14207,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant40<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Expr>, Loc)
      {
         match __symbols.pop() {
@@ -14576,9 +14217,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant38<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<FunDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14587,9 +14227,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant39<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<ImportDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14598,9 +14237,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant41<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Pat>, Loc)
      {
         match __symbols.pop() {
@@ -14609,9 +14247,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant42<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<Stmt>, Loc)
      {
         match __symbols.pop() {
@@ -14620,9 +14257,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant57<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<TopDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14631,9 +14267,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant61<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, L<TypeDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14642,9 +14277,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant27<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Loc, Loc)
      {
         match __symbols.pop() {
@@ -14653,9 +14287,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant23<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Named<Type>, Loc)
      {
         match __symbols.pop() {
@@ -14664,9 +14297,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant46<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Pat, Loc)
      {
         match __symbols.pop() {
@@ -14675,9 +14307,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant56<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Stmt, Loc)
      {
         match __symbols.pop() {
@@ -14686,10 +14317,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant0<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Token<'input>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Token, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant0(__v), __r)) => (__l, __v, __r),
@@ -14697,9 +14327,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant2<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Type, Loc)
      {
         match __symbols.pop() {
@@ -14708,9 +14337,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant62<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, TypeDeclRhs, Loc)
      {
         match __symbols.pop() {
@@ -14719,9 +14347,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant51<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -14730,9 +14357,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant52<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -14741,9 +14367,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant44<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<(SmolStr, Type)>, Loc)
      {
         match __symbols.pop() {
@@ -14752,10 +14377,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant49<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Vec<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant49(__v), __r)) => (__l, __v, __r),
@@ -14763,9 +14387,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant30<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Alt>, Loc)
      {
         match __symbols.pop() {
@@ -14774,9 +14397,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant50<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -14785,9 +14407,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant60<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<ConstructorDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14796,9 +14417,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant8<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<L<Stmt>>, Loc)
      {
         match __symbols.pop() {
@@ -14807,9 +14427,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant59<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<L<TopDecl>>, Loc)
      {
         match __symbols.pop() {
@@ -14818,9 +14437,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant53<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -14829,9 +14447,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant63<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<SmolStr>, Loc)
      {
         match __symbols.pop() {
@@ -14840,10 +14457,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant55<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, Vec<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant55(__v), __r)) => (__l, __v, __r),
@@ -14851,9 +14467,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant54<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, Vec<Type>, Loc)
      {
         match __symbols.pop() {
@@ -14862,9 +14477,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant7<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc)
      {
         match __symbols.pop() {
@@ -14873,9 +14487,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant20<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -14884,9 +14497,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant22<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -14895,9 +14507,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant18<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc)
      {
         match __symbols.pop() {
@@ -14906,10 +14517,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant13<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant13(__v), __r)) => (__l, __v, __r),
@@ -14917,9 +14527,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant29<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Alt>, Loc)
      {
         match __symbols.pop() {
@@ -14928,9 +14537,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant15<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -14939,9 +14547,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant36<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)
      {
         match __symbols.pop() {
@@ -14950,9 +14557,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant43<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<L<Stmt>>, Loc)
      {
         match __symbols.pop() {
@@ -14961,9 +14567,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant58<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)
      {
         match __symbols.pop() {
@@ -14972,9 +14577,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant24<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -14983,10 +14587,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant26<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant26(__v), __r)) => (__l, __v, __r),
@@ -14994,9 +14597,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant25<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, alloc::vec::Vec<Type>, Loc)
      {
         match __symbols.pop() {
@@ -15005,9 +14607,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant45<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc)
      {
         match __symbols.pop() {
@@ -15016,9 +14617,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant47<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc)
      {
         match __symbols.pop() {
@@ -15027,10 +14627,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant16<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, Type)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, Type)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant16(__v), __r)) => (__l, __v, __r),
@@ -15038,10 +14637,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant5<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, Vec<Type>, Token)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant5(__v), __r)) => (__l, __v, __r),
@@ -15049,10 +14647,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant11<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<(Token, core::option::Option<Token>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant11(__v), __r)) => (__l, __v, __r),
@@ -15060,9 +14657,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant32<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<CallArg>, Loc)
      {
         match __symbols.pop() {
@@ -15071,9 +14667,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant48<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Named<Type>>, Loc)
      {
         match __symbols.pop() {
@@ -15082,10 +14677,9 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant1<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
-    ) -> (Loc, core::option::Option<Token<'input>>, Loc)
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, core::option::Option<Token>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant1(__v), __r)) => (__l, __v, __r),
@@ -15093,9 +14687,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant3<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Type>, Loc)
      {
         match __symbols.pop() {
@@ -15104,9 +14697,8 @@ mod __parse__TopDecls {
         }
     }
     fn __pop_Variant9<
-      'input,
     >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
     ) -> (Loc, core::option::Option<Vec<L<Stmt>>>, Loc)
      {
         match __symbols.pop() {
@@ -15115,11 +14707,10 @@ mod __parse__TopDecls {
         }
     }
     fn __reduce0<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ","? = "," => ActionFn(127);
@@ -15131,11 +14722,10 @@ mod __parse__TopDecls {
         (1, 0)
     }
     fn __reduce1<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ","? =  => ActionFn(128);
@@ -15146,11 +14736,10 @@ mod __parse__TopDecls {
         (0, 0)
     }
     fn __reduce2<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>) = ":", Type => ActionFn(113);
@@ -15164,11 +14753,10 @@ mod __parse__TopDecls {
         (2, 1)
     }
     fn __reduce3<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? = ":", Type => ActionFn(201);
@@ -15182,11 +14770,10 @@ mod __parse__TopDecls {
         (2, 2)
     }
     fn __reduce4<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? =  => ActionFn(112);
@@ -15197,11 +14784,10 @@ mod __parse__TopDecls {
         (0, 2)
     }
     fn __reduce5<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]") = "[", Sep<Type, ",">, "]" => ActionFn(110);
@@ -15216,11 +14802,10 @@ mod __parse__TopDecls {
         (3, 3)
     }
     fn __reduce6<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? = "[", Sep<Type, ",">, "]" => ActionFn(208);
@@ -15235,11 +14820,10 @@ mod __parse__TopDecls {
         (3, 4)
     }
     fn __reduce7<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? =  => ActionFn(109);
@@ -15250,11 +14834,10 @@ mod __parse__TopDecls {
         (0, 4)
     }
     fn __reduce8<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT) = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(105);
@@ -15273,11 +14856,10 @@ mod __parse__TopDecls {
         (7, 5)
     }
     fn __reduce9<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* =  => ActionFn(103);
@@ -15288,11 +14870,10 @@ mod __parse__TopDecls {
         (0, 6)
     }
     fn __reduce10<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(104);
@@ -15304,11 +14885,10 @@ mod __parse__TopDecls {
         (1, 6)
     }
     fn __reduce11<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(213);
@@ -15327,11 +14907,10 @@ mod __parse__TopDecls {
         (7, 7)
     }
     fn __reduce12<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(214);
@@ -15351,11 +14930,10 @@ mod __parse__TopDecls {
         (8, 7)
     }
     fn __reduce13<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT) = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(102);
@@ -15373,11 +14951,10 @@ mod __parse__TopDecls {
         (6, 8)
     }
     fn __reduce14<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(217);
@@ -15395,11 +14972,10 @@ mod __parse__TopDecls {
         (6, 9)
     }
     fn __reduce15<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? =  => ActionFn(101);
@@ -15410,11 +14986,10 @@ mod __parse__TopDecls {
         (0, 9)
     }
     fn __reduce16<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self", "," => ActionFn(197);
@@ -15428,11 +15003,10 @@ mod __parse__TopDecls {
         (2, 10)
     }
     fn __reduce17<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self" => ActionFn(198);
@@ -15444,11 +15018,10 @@ mod __parse__TopDecls {
         (1, 10)
     }
     fn __reduce18<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self", "," => ActionFn(222);
@@ -15462,11 +15035,10 @@ mod __parse__TopDecls {
         (2, 11)
     }
     fn __reduce19<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self" => ActionFn(223);
@@ -15478,11 +15050,10 @@ mod __parse__TopDecls {
         (1, 11)
     }
     fn __reduce20<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? =  => ActionFn(117);
@@ -15493,11 +15064,10 @@ mod __parse__TopDecls {
         (0, 11)
     }
     fn __reduce21<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",") = LowerId, ":", Type, "," => ActionFn(242);
@@ -15513,11 +15083,10 @@ mod __parse__TopDecls {
         (4, 12)
     }
     fn __reduce22<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* =  => ActionFn(149);
@@ -15528,11 +15097,10 @@ mod __parse__TopDecls {
         (0, 13)
     }
     fn __reduce23<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(150);
@@ -15544,11 +15112,10 @@ mod __parse__TopDecls {
         (1, 13)
     }
     fn __reduce24<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = LowerId, ":", Type, "," => ActionFn(244);
@@ -15564,11 +15131,10 @@ mod __parse__TopDecls {
         (4, 14)
     }
     fn __reduce25<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type, "," => ActionFn(245);
@@ -15585,11 +15151,10 @@ mod __parse__TopDecls {
         (5, 14)
     }
     fn __reduce26<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",") = CallArg, "," => ActionFn(167);
@@ -15603,11 +15168,10 @@ mod __parse__TopDecls {
         (2, 15)
     }
     fn __reduce27<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* =  => ActionFn(165);
@@ -15618,11 +15182,10 @@ mod __parse__TopDecls {
         (0, 16)
     }
     fn __reduce28<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(166);
@@ -15634,11 +15197,10 @@ mod __parse__TopDecls {
         (1, 16)
     }
     fn __reduce29<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = CallArg, "," => ActionFn(248);
@@ -15652,11 +15214,10 @@ mod __parse__TopDecls {
         (2, 17)
     }
     fn __reduce30<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = (<CallArg> ",")+, CallArg, "," => ActionFn(249);
@@ -15671,11 +15232,10 @@ mod __parse__TopDecls {
         (3, 17)
     }
     fn __reduce31<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>) = LowerId, ":", Type => ActionFn(115);
@@ -15690,11 +15250,10 @@ mod __parse__TopDecls {
         (3, 18)
     }
     fn __reduce32<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? = LowerId, ":", Type => ActionFn(243);
@@ -15709,11 +15268,10 @@ mod __parse__TopDecls {
         (3, 19)
     }
     fn __reduce33<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? =  => ActionFn(148);
@@ -15724,11 +15282,10 @@ mod __parse__TopDecls {
         (0, 19)
     }
     fn __reduce34<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE) = NamedField, NEWLINE => ActionFn(126);
@@ -15742,11 +15299,10 @@ mod __parse__TopDecls {
         (2, 20)
     }
     fn __reduce35<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = NamedField, NEWLINE => ActionFn(256);
@@ -15760,11 +15316,10 @@ mod __parse__TopDecls {
         (2, 21)
     }
     fn __reduce36<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = (<NamedField> NEWLINE)+, NamedField, NEWLINE => ActionFn(257);
@@ -15779,11 +15334,10 @@ mod __parse__TopDecls {
         (3, 21)
     }
     fn __reduce37<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",") = ParenExpr, "," => ActionFn(162);
@@ -15797,11 +15351,10 @@ mod __parse__TopDecls {
         (2, 22)
     }
     fn __reduce38<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* =  => ActionFn(160);
@@ -15812,11 +15365,10 @@ mod __parse__TopDecls {
         (0, 23)
     }
     fn __reduce39<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(161);
@@ -15828,11 +15380,10 @@ mod __parse__TopDecls {
         (1, 23)
     }
     fn __reduce40<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = ParenExpr, "," => ActionFn(258);
@@ -15846,11 +15397,10 @@ mod __parse__TopDecls {
         (2, 24)
     }
     fn __reduce41<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = (<ParenExpr> ",")+, ParenExpr, "," => ActionFn(259);
@@ -15865,11 +15415,10 @@ mod __parse__TopDecls {
         (3, 24)
     }
     fn __reduce42<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",") = PatternField, "," => ActionFn(172);
@@ -15883,11 +15432,10 @@ mod __parse__TopDecls {
         (2, 25)
     }
     fn __reduce43<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* =  => ActionFn(170);
@@ -15898,11 +15446,10 @@ mod __parse__TopDecls {
         (0, 26)
     }
     fn __reduce44<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* = (<PatternField> ",")+ => ActionFn(171);
@@ -15914,11 +15461,10 @@ mod __parse__TopDecls {
         (1, 26)
     }
     fn __reduce45<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = PatternField, "," => ActionFn(262);
@@ -15932,11 +15478,10 @@ mod __parse__TopDecls {
         (2, 27)
     }
     fn __reduce46<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = (<PatternField> ",")+, PatternField, "," => ActionFn(263);
@@ -15951,11 +15496,10 @@ mod __parse__TopDecls {
         (3, 27)
     }
     fn __reduce47<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",") = RecordTypeField, "," => ActionFn(146);
@@ -15969,11 +15513,10 @@ mod __parse__TopDecls {
         (2, 28)
     }
     fn __reduce48<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* =  => ActionFn(144);
@@ -15984,11 +15527,10 @@ mod __parse__TopDecls {
         (0, 29)
     }
     fn __reduce49<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(145);
@@ -16000,11 +15542,10 @@ mod __parse__TopDecls {
         (1, 29)
     }
     fn __reduce50<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = RecordTypeField, "," => ActionFn(266);
@@ -16018,11 +15559,10 @@ mod __parse__TopDecls {
         (2, 30)
     }
     fn __reduce51<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = (<RecordTypeField> ",")+, RecordTypeField, "," => ActionFn(267);
@@ -16037,11 +15577,10 @@ mod __parse__TopDecls {
         (3, 30)
     }
     fn __reduce52<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",") = Type, "," => ActionFn(141);
@@ -16055,11 +15594,10 @@ mod __parse__TopDecls {
         (2, 31)
     }
     fn __reduce53<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* =  => ActionFn(139);
@@ -16070,11 +15608,10 @@ mod __parse__TopDecls {
         (0, 32)
     }
     fn __reduce54<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* = (<Type> ",")+ => ActionFn(140);
@@ -16086,11 +15623,10 @@ mod __parse__TopDecls {
         (1, 32)
     }
     fn __reduce55<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = Type, "," => ActionFn(270);
@@ -16104,11 +15640,10 @@ mod __parse__TopDecls {
         (2, 33)
     }
     fn __reduce56<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = (<Type> ",")+, Type, "," => ActionFn(271);
@@ -16123,11 +15658,10 @@ mod __parse__TopDecls {
         (3, 33)
     }
     fn __reduce57<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",") = UpperId, "," => ActionFn(136);
@@ -16141,11 +15675,10 @@ mod __parse__TopDecls {
         (2, 34)
     }
     fn __reduce58<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* =  => ActionFn(134);
@@ -16156,11 +15689,10 @@ mod __parse__TopDecls {
         (0, 35)
     }
     fn __reduce59<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* = (<UpperId> ",")+ => ActionFn(135);
@@ -16172,11 +15704,10 @@ mod __parse__TopDecls {
         (1, 35)
     }
     fn __reduce60<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = UpperId, "," => ActionFn(274);
@@ -16190,11 +15721,10 @@ mod __parse__TopDecls {
         (2, 36)
     }
     fn __reduce61<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = (<UpperId> ",")+, UpperId, "," => ActionFn(275);
@@ -16209,11 +15739,10 @@ mod __parse__TopDecls {
         (3, 36)
     }
     fn __reduce62<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".") = UpperId, "." => ActionFn(121);
@@ -16227,11 +15756,10 @@ mod __parse__TopDecls {
         (2, 37)
     }
     fn __reduce63<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* =  => ActionFn(175);
@@ -16242,11 +15770,10 @@ mod __parse__TopDecls {
         (0, 38)
     }
     fn __reduce64<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* = (<UpperId> ".")+ => ActionFn(176);
@@ -16258,11 +15785,10 @@ mod __parse__TopDecls {
         (1, 38)
     }
     fn __reduce65<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = UpperId, "." => ActionFn(278);
@@ -16276,11 +15802,10 @@ mod __parse__TopDecls {
         (2, 39)
     }
     fn __reduce66<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = (<UpperId> ".")+, UpperId, "." => ActionFn(279);
@@ -16295,11 +15820,10 @@ mod __parse__TopDecls {
         (3, 39)
     }
     fn __reduce67<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? = UpperId, "." => ActionFn(280);
@@ -16313,11 +15837,10 @@ mod __parse__TopDecls {
         (2, 40)
     }
     fn __reduce68<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? =  => ActionFn(120);
@@ -16328,11 +15851,10 @@ mod __parse__TopDecls {
         (0, 40)
     }
     fn __reduce69<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // @L =  => ActionFn(133);
@@ -16343,11 +15865,10 @@ mod __parse__TopDecls {
         (0, 41)
     }
     fn __reduce70<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // @R =  => ActionFn(132);
@@ -16358,11 +15879,10 @@ mod __parse__TopDecls {
         (0, 42)
     }
     fn __reduce71<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(33);
@@ -16380,11 +15900,10 @@ mod __parse__TopDecls {
         (6, 43)
     }
     fn __reduce72<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", LStmt => ActionFn(34);
@@ -16399,11 +15918,10 @@ mod __parse__TopDecls {
         (3, 43)
     }
     fn __reduce73<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt* =  => ActionFn(98);
@@ -16414,11 +15932,10 @@ mod __parse__TopDecls {
         (0, 44)
     }
     fn __reduce74<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt* = Alt+ => ActionFn(99);
@@ -16430,11 +15947,10 @@ mod __parse__TopDecls {
         (1, 44)
     }
     fn __reduce75<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt => ActionFn(156);
@@ -16446,11 +15962,10 @@ mod __parse__TopDecls {
         (1, 45)
     }
     fn __reduce76<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt+, Alt => ActionFn(157);
@@ -16464,11 +15979,10 @@ mod __parse__TopDecls {
         (2, 45)
     }
     fn __reduce77<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alts =  => ActionFn(437);
@@ -16479,11 +15993,10 @@ mod __parse__TopDecls {
         (0, 46)
     }
     fn __reduce78<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Alts = Alt+ => ActionFn(438);
@@ -16495,11 +16008,10 @@ mod __parse__TopDecls {
         (1, 46)
     }
     fn __reduce79<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "=" => ActionFn(35);
@@ -16511,11 +16023,10 @@ mod __parse__TopDecls {
         (1, 47)
     }
     fn __reduce80<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "+=" => ActionFn(36);
@@ -16527,11 +16038,10 @@ mod __parse__TopDecls {
         (1, 47)
     }
     fn __reduce81<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // AssignOp = "-=" => ActionFn(37);
@@ -16543,11 +16053,10 @@ mod __parse__TopDecls {
         (1, 47)
     }
     fn __reduce82<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg = LowerId, "=", LExpr => ActionFn(71);
@@ -16562,11 +16071,10 @@ mod __parse__TopDecls {
         (3, 48)
     }
     fn __reduce83<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg = LExpr => ActionFn(72);
@@ -16578,11 +16086,10 @@ mod __parse__TopDecls {
         (1, 48)
     }
     fn __reduce84<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg? = CallArg => ActionFn(163);
@@ -16594,11 +16101,10 @@ mod __parse__TopDecls {
         (1, 49)
     }
     fn __reduce85<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // CallArg? =  => ActionFn(164);
@@ -16609,11 +16115,10 @@ mod __parse__TopDecls {
         (0, 49)
     }
     fn __reduce86<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor => ActionFn(82);
@@ -16625,11 +16130,10 @@ mod __parse__TopDecls {
         (1, 50)
     }
     fn __reduce87<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor, "(", Sep<PatternField, ",">, ")" => ActionFn(83);
@@ -16645,11 +16149,10 @@ mod __parse__TopDecls {
         (4, 50)
     }
     fn __reduce88<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId, ".", UpperId => ActionFn(80);
@@ -16664,11 +16167,10 @@ mod __parse__TopDecls {
         (3, 51)
     }
     fn __reduce89<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId => ActionFn(81);
@@ -16680,11 +16182,10 @@ mod __parse__TopDecls {
         (1, 51)
     }
     fn __reduce90<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, NEWLINE => ActionFn(8);
@@ -16698,11 +16199,10 @@ mod __parse__TopDecls {
         (2, 52)
     }
     fn __reduce91<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(9);
@@ -16720,11 +16220,10 @@ mod __parse__TopDecls {
         (6, 52)
     }
     fn __reduce92<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ",", ")", NEWLINE => ActionFn(199);
@@ -16742,11 +16241,10 @@ mod __parse__TopDecls {
         (6, 52)
     }
     fn __reduce93<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ")", NEWLINE => ActionFn(200);
@@ -16763,11 +16261,10 @@ mod __parse__TopDecls {
         (5, 52)
     }
     fn __reduce94<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl => ActionFn(129);
@@ -16779,11 +16276,10 @@ mod __parse__TopDecls {
         (1, 53)
     }
     fn __reduce95<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl+, ConstructorDecl => ActionFn(130);
@@ -16797,11 +16293,10 @@ mod __parse__TopDecls {
         (2, 53)
     }
     fn __reduce96<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr = Expr, "||", Expr6 => ActionFn(378);
@@ -16816,11 +16311,10 @@ mod __parse__TopDecls {
         (3, 54)
     }
     fn __reduce97<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr = Expr6 => ActionFn(68);
@@ -16832,11 +16326,10 @@ mod __parse__TopDecls {
         (1, 54)
     }
     fn __reduce98<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = "self" => ActionFn(39);
@@ -16848,11 +16341,10 @@ mod __parse__TopDecls {
         (1, 55)
     }
     fn __reduce99<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = LowerId => ActionFn(40);
@@ -16864,11 +16356,10 @@ mod __parse__TopDecls {
         (1, 55)
     }
     fn __reduce100<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = UpperId => ActionFn(41);
@@ -16880,11 +16371,10 @@ mod __parse__TopDecls {
         (1, 55)
     }
     fn __reduce101<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = "(", Sep<ParenExpr, ",">, ")" => ActionFn(42);
@@ -16899,11 +16389,10 @@ mod __parse__TopDecls {
         (3, 55)
     }
     fn __reduce102<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = IntLit => ActionFn(43);
@@ -16915,11 +16404,10 @@ mod __parse__TopDecls {
         (1, 55)
     }
     fn __reduce103<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = StringLit => ActionFn(44);
@@ -16931,11 +16419,10 @@ mod __parse__TopDecls {
         (1, 55)
     }
     fn __reduce104<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "[", LExpr, "]" => ActionFn(379);
@@ -16951,11 +16438,10 @@ mod __parse__TopDecls {
         (4, 55)
     }
     fn __reduce105<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "(", Sep<CallArg, ",">, ")" => ActionFn(380);
@@ -16971,11 +16457,10 @@ mod __parse__TopDecls {
         (4, 55)
     }
     fn __reduce106<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", LowerId => ActionFn(381);
@@ -16990,11 +16475,10 @@ mod __parse__TopDecls {
         (3, 55)
     }
     fn __reduce107<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", UpperId => ActionFn(48);
@@ -17009,11 +16493,10 @@ mod __parse__TopDecls {
         (3, 55)
     }
     fn __reduce108<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr1, "..", Expr0 => ActionFn(382);
@@ -17028,11 +16511,10 @@ mod __parse__TopDecls {
         (3, 56)
     }
     fn __reduce109<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr0 => ActionFn(50);
@@ -17044,11 +16526,10 @@ mod __parse__TopDecls {
         (1, 56)
     }
     fn __reduce110<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr2 = "!", Expr2 => ActionFn(383);
@@ -17062,11 +16543,10 @@ mod __parse__TopDecls {
         (2, 57)
     }
     fn __reduce111<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr2 = Expr1 => ActionFn(52);
@@ -17078,11 +16558,10 @@ mod __parse__TopDecls {
         (1, 57)
     }
     fn __reduce112<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr3, "*", Expr2 => ActionFn(384);
@@ -17097,11 +16576,10 @@ mod __parse__TopDecls {
         (3, 58)
     }
     fn __reduce113<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr2 => ActionFn(54);
@@ -17113,11 +16591,10 @@ mod __parse__TopDecls {
         (1, 58)
     }
     fn __reduce114<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "+", Expr3 => ActionFn(385);
@@ -17132,11 +16609,10 @@ mod __parse__TopDecls {
         (3, 59)
     }
     fn __reduce115<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "-", Expr3 => ActionFn(386);
@@ -17151,11 +16627,10 @@ mod __parse__TopDecls {
         (3, 59)
     }
     fn __reduce116<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr3 => ActionFn(57);
@@ -17167,11 +16642,10 @@ mod __parse__TopDecls {
         (1, 59)
     }
     fn __reduce117<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "==", Expr4 => ActionFn(387);
@@ -17186,11 +16660,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce118<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "!=", Expr4 => ActionFn(388);
@@ -17205,11 +16678,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce119<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<", Expr4 => ActionFn(389);
@@ -17224,11 +16696,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce120<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">", Expr4 => ActionFn(390);
@@ -17243,11 +16714,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce121<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<=", Expr4 => ActionFn(391);
@@ -17262,11 +16732,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce122<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">=", Expr4 => ActionFn(392);
@@ -17281,11 +16750,10 @@ mod __parse__TopDecls {
         (3, 60)
     }
     fn __reduce123<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr4 => ActionFn(64);
@@ -17297,11 +16765,10 @@ mod __parse__TopDecls {
         (1, 60)
     }
     fn __reduce124<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr6, "&&", Expr5 => ActionFn(393);
@@ -17316,11 +16783,10 @@ mod __parse__TopDecls {
         (3, 61)
     }
     fn __reduce125<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr5 => ActionFn(66);
@@ -17332,11 +16798,10 @@ mod __parse__TopDecls {
         (1, 61)
     }
     fn __reduce126<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(394);
@@ -17364,11 +16829,10 @@ mod __parse__TopDecls {
         (16, 62)
     }
     fn __reduce127<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(395);
@@ -17394,11 +16858,10 @@ mod __parse__TopDecls {
         (14, 62)
     }
     fn __reduce128<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(396);
@@ -17425,11 +16888,10 @@ mod __parse__TopDecls {
         (15, 62)
     }
     fn __reduce129<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(397);
@@ -17454,11 +16916,10 @@ mod __parse__TopDecls {
         (13, 62)
     }
     fn __reduce130<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(398);
@@ -17484,11 +16945,10 @@ mod __parse__TopDecls {
         (14, 62)
     }
     fn __reduce131<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(399);
@@ -17512,11 +16972,10 @@ mod __parse__TopDecls {
         (12, 62)
     }
     fn __reduce132<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(400);
@@ -17542,11 +17001,10 @@ mod __parse__TopDecls {
         (14, 62)
     }
     fn __reduce133<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(401);
@@ -17570,11 +17028,10 @@ mod __parse__TopDecls {
         (12, 62)
     }
     fn __reduce134<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(402);
@@ -17599,11 +17056,10 @@ mod __parse__TopDecls {
         (13, 62)
     }
     fn __reduce135<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(403);
@@ -17626,11 +17082,10 @@ mod __parse__TopDecls {
         (11, 62)
     }
     fn __reduce136<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(404);
@@ -17654,11 +17109,10 @@ mod __parse__TopDecls {
         (12, 62)
     }
     fn __reduce137<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(405);
@@ -17680,11 +17134,10 @@ mod __parse__TopDecls {
         (10, 62)
     }
     fn __reduce138<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(406);
@@ -17718,11 +17171,10 @@ mod __parse__TopDecls {
         (22, 62)
     }
     fn __reduce139<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(407);
@@ -17754,11 +17206,10 @@ mod __parse__TopDecls {
         (20, 62)
     }
     fn __reduce140<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(408);
@@ -17791,11 +17242,10 @@ mod __parse__TopDecls {
         (21, 62)
     }
     fn __reduce141<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(409);
@@ -17826,11 +17276,10 @@ mod __parse__TopDecls {
         (19, 62)
     }
     fn __reduce142<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(410);
@@ -17862,11 +17311,10 @@ mod __parse__TopDecls {
         (20, 62)
     }
     fn __reduce143<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(411);
@@ -17896,11 +17344,10 @@ mod __parse__TopDecls {
         (18, 62)
     }
     fn __reduce144<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(412);
@@ -17931,11 +17378,10 @@ mod __parse__TopDecls {
         (19, 62)
     }
     fn __reduce145<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(413);
@@ -17964,11 +17410,10 @@ mod __parse__TopDecls {
         (17, 62)
     }
     fn __reduce146<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(414);
@@ -17998,11 +17443,10 @@ mod __parse__TopDecls {
         (18, 62)
     }
     fn __reduce147<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(415);
@@ -18030,11 +17474,10 @@ mod __parse__TopDecls {
         (16, 62)
     }
     fn __reduce148<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(416);
@@ -18063,11 +17506,10 @@ mod __parse__TopDecls {
         (17, 62)
     }
     fn __reduce149<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(417);
@@ -18094,11 +17536,10 @@ mod __parse__TopDecls {
         (15, 62)
     }
     fn __reduce150<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(418);
@@ -18130,11 +17571,10 @@ mod __parse__TopDecls {
         (20, 62)
     }
     fn __reduce151<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(419);
@@ -18164,11 +17604,10 @@ mod __parse__TopDecls {
         (18, 62)
     }
     fn __reduce152<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(420);
@@ -18199,11 +17638,10 @@ mod __parse__TopDecls {
         (19, 62)
     }
     fn __reduce153<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(421);
@@ -18232,11 +17670,10 @@ mod __parse__TopDecls {
         (17, 62)
     }
     fn __reduce154<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(422);
@@ -18266,11 +17703,10 @@ mod __parse__TopDecls {
         (18, 62)
     }
     fn __reduce155<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(423);
@@ -18298,11 +17734,10 @@ mod __parse__TopDecls {
         (16, 62)
     }
     fn __reduce156<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(424);
@@ -18331,11 +17766,10 @@ mod __parse__TopDecls {
         (17, 62)
     }
     fn __reduce157<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(425);
@@ -18362,11 +17796,10 @@ mod __parse__TopDecls {
         (15, 62)
     }
     fn __reduce158<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(426);
@@ -18394,11 +17827,10 @@ mod __parse__TopDecls {
         (16, 62)
     }
     fn __reduce159<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(427);
@@ -18424,11 +17856,10 @@ mod __parse__TopDecls {
         (14, 62)
     }
     fn __reduce160<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(428);
@@ -18455,11 +17886,10 @@ mod __parse__TopDecls {
         (15, 62)
     }
     fn __reduce161<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(429);
@@ -18484,11 +17914,10 @@ mod __parse__TopDecls {
         (13, 62)
     }
     fn __reduce162<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ImportDecl = "import", Sep<UpperId, ".">, NEWLINE => ActionFn(430);
@@ -18503,11 +17932,10 @@ mod __parse__TopDecls {
         (3, 63)
     }
     fn __reduce163<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LExpr = Expr => ActionFn(431);
@@ -18519,11 +17947,10 @@ mod __parse__TopDecls {
         (1, 64)
     }
     fn __reduce164<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LPat = Pat => ActionFn(432);
@@ -18535,11 +17962,10 @@ mod __parse__TopDecls {
         (1, 65)
     }
     fn __reduce165<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt = Stmt => ActionFn(433);
@@ -18551,11 +17977,10 @@ mod __parse__TopDecls {
         (1, 66)
     }
     fn __reduce166<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt* =  => ActionFn(106);
@@ -18566,11 +17991,10 @@ mod __parse__TopDecls {
         (0, 67)
     }
     fn __reduce167<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt* = LStmt+ => ActionFn(107);
@@ -18582,11 +18006,10 @@ mod __parse__TopDecls {
         (1, 67)
     }
     fn __reduce168<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt => ActionFn(152);
@@ -18598,11 +18021,10 @@ mod __parse__TopDecls {
         (1, 68)
     }
     fn __reduce169<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt+, LStmt => ActionFn(153);
@@ -18616,11 +18038,10 @@ mod __parse__TopDecls {
         (2, 68)
     }
     fn __reduce170<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmts =  => ActionFn(443);
@@ -18631,11 +18052,10 @@ mod __parse__TopDecls {
         (0, 69)
     }
     fn __reduce171<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // LStmts = LStmt+ => ActionFn(444);
@@ -18647,11 +18067,10 @@ mod __parse__TopDecls {
         (1, 69)
     }
     fn __reduce172<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE* =  => ActionFn(90);
@@ -18662,11 +18081,10 @@ mod __parse__TopDecls {
         (0, 70)
     }
     fn __reduce173<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE* = NEWLINE+ => ActionFn(91);
@@ -18678,11 +18096,10 @@ mod __parse__TopDecls {
         (1, 70)
     }
     fn __reduce174<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE => ActionFn(179);
@@ -18694,11 +18111,10 @@ mod __parse__TopDecls {
         (1, 71)
     }
     fn __reduce175<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE+, NEWLINE => ActionFn(180);
@@ -18712,11 +18128,10 @@ mod __parse__TopDecls {
         (2, 71)
     }
     fn __reduce176<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NamedField = LowerId, ":", Type => ActionFn(12);
@@ -18731,11 +18146,10 @@ mod __parse__TopDecls {
         (3, 72)
     }
     fn __reduce177<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // NamedFields = (<NamedField> NEWLINE)+ => ActionFn(11);
@@ -18747,11 +18161,10 @@ mod __parse__TopDecls {
         (1, 73)
     }
     fn __reduce178<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr = LowerId, "=", LExpr => ActionFn(69);
@@ -18766,11 +18179,10 @@ mod __parse__TopDecls {
         (3, 74)
     }
     fn __reduce179<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr = LExpr => ActionFn(70);
@@ -18782,11 +18194,10 @@ mod __parse__TopDecls {
         (1, 74)
     }
     fn __reduce180<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr? = ParenExpr => ActionFn(158);
@@ -18798,11 +18209,10 @@ mod __parse__TopDecls {
         (1, 75)
     }
     fn __reduce181<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // ParenExpr? =  => ActionFn(159);
@@ -18813,11 +18223,10 @@ mod __parse__TopDecls {
         (0, 75)
     }
     fn __reduce182<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = LowerId => ActionFn(74);
@@ -18829,11 +18238,10 @@ mod __parse__TopDecls {
         (1, 76)
     }
     fn __reduce183<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = ConstrPattern => ActionFn(75);
@@ -18845,11 +18253,10 @@ mod __parse__TopDecls {
         (1, 76)
     }
     fn __reduce184<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = "(", Sep<PatternField, ",">, ")" => ActionFn(76);
@@ -18864,11 +18271,10 @@ mod __parse__TopDecls {
         (3, 76)
     }
     fn __reduce185<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = "_" => ActionFn(77);
@@ -18880,11 +18286,10 @@ mod __parse__TopDecls {
         (1, 76)
     }
     fn __reduce186<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = StringLit => ActionFn(78);
@@ -18896,11 +18301,10 @@ mod __parse__TopDecls {
         (1, 76)
     }
     fn __reduce187<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Pat = StringLit, LowerId => ActionFn(79);
@@ -18914,11 +18318,10 @@ mod __parse__TopDecls {
         (2, 76)
     }
     fn __reduce188<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField = LowerId, "=", LPat => ActionFn(84);
@@ -18933,11 +18336,10 @@ mod __parse__TopDecls {
         (3, 77)
     }
     fn __reduce189<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField = LPat => ActionFn(85);
@@ -18949,11 +18351,10 @@ mod __parse__TopDecls {
         (1, 77)
     }
     fn __reduce190<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField? = PatternField => ActionFn(168);
@@ -18965,11 +18366,10 @@ mod __parse__TopDecls {
         (1, 78)
     }
     fn __reduce191<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // PatternField? =  => ActionFn(169);
@@ -18980,11 +18380,10 @@ mod __parse__TopDecls {
         (0, 78)
     }
     fn __reduce192<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField = LowerId, ":", Type => ActionFn(18);
@@ -18999,11 +18398,10 @@ mod __parse__TopDecls {
         (3, 79)
     }
     fn __reduce193<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField = Type => ActionFn(19);
@@ -19015,11 +18413,10 @@ mod __parse__TopDecls {
         (1, 79)
     }
     fn __reduce194<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField? = RecordTypeField => ActionFn(142);
@@ -19031,11 +18428,10 @@ mod __parse__TopDecls {
         (1, 80)
     }
     fn __reduce195<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // RecordTypeField? =  => ActionFn(143);
@@ -19046,11 +18442,10 @@ mod __parse__TopDecls {
         (0, 80)
     }
     fn __reduce196<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = LowerId, ":", Type => ActionFn(252);
@@ -19065,11 +18460,10 @@ mod __parse__TopDecls {
         (3, 81)
     }
     fn __reduce197<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> =  => ActionFn(253);
@@ -19080,11 +18474,10 @@ mod __parse__TopDecls {
         (0, 81)
     }
     fn __reduce198<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type => ActionFn(254);
@@ -19100,11 +18493,10 @@ mod __parse__TopDecls {
         (4, 81)
     }
     fn __reduce199<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(255);
@@ -19116,11 +18508,10 @@ mod __parse__TopDecls {
         (1, 81)
     }
     fn __reduce200<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(439);
@@ -19132,11 +18523,10 @@ mod __parse__TopDecls {
         (1, 82)
     }
     fn __reduce201<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> =  => ActionFn(440);
@@ -19147,11 +18537,10 @@ mod __parse__TopDecls {
         (0, 82)
     }
     fn __reduce202<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(441);
@@ -19165,11 +18554,10 @@ mod __parse__TopDecls {
         (2, 82)
     }
     fn __reduce203<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(442);
@@ -19181,11 +18569,10 @@ mod __parse__TopDecls {
         (1, 82)
     }
     fn __reduce204<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(449);
@@ -19197,11 +18584,10 @@ mod __parse__TopDecls {
         (1, 83)
     }
     fn __reduce205<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> =  => ActionFn(450);
@@ -19212,11 +18598,10 @@ mod __parse__TopDecls {
         (0, 83)
     }
     fn __reduce206<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(451);
@@ -19230,11 +18615,10 @@ mod __parse__TopDecls {
         (2, 83)
     }
     fn __reduce207<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(452);
@@ -19246,11 +18630,10 @@ mod __parse__TopDecls {
         (1, 83)
     }
     fn __reduce208<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = PatternField => ActionFn(453);
@@ -19262,11 +18645,10 @@ mod __parse__TopDecls {
         (1, 84)
     }
     fn __reduce209<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> =  => ActionFn(454);
@@ -19277,11 +18659,10 @@ mod __parse__TopDecls {
         (0, 84)
     }
     fn __reduce210<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+, PatternField => ActionFn(455);
@@ -19295,11 +18676,10 @@ mod __parse__TopDecls {
         (2, 84)
     }
     fn __reduce211<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+ => ActionFn(456);
@@ -19311,11 +18691,10 @@ mod __parse__TopDecls {
         (1, 84)
     }
     fn __reduce212<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(457);
@@ -19327,11 +18706,10 @@ mod __parse__TopDecls {
         (1, 85)
     }
     fn __reduce213<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> =  => ActionFn(458);
@@ -19342,11 +18720,10 @@ mod __parse__TopDecls {
         (0, 85)
     }
     fn __reduce214<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(459);
@@ -19360,11 +18737,10 @@ mod __parse__TopDecls {
         (2, 85)
     }
     fn __reduce215<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(460);
@@ -19376,11 +18752,10 @@ mod __parse__TopDecls {
         (1, 85)
     }
     fn __reduce216<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = Type => ActionFn(463);
@@ -19392,11 +18767,10 @@ mod __parse__TopDecls {
         (1, 86)
     }
     fn __reduce217<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> =  => ActionFn(464);
@@ -19407,11 +18781,10 @@ mod __parse__TopDecls {
         (0, 86)
     }
     fn __reduce218<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+, Type => ActionFn(465);
@@ -19425,11 +18798,10 @@ mod __parse__TopDecls {
         (2, 86)
     }
     fn __reduce219<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+ => ActionFn(466);
@@ -19441,11 +18813,10 @@ mod __parse__TopDecls {
         (1, 86)
     }
     fn __reduce220<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = UpperId => ActionFn(467);
@@ -19457,11 +18828,10 @@ mod __parse__TopDecls {
         (1, 87)
     }
     fn __reduce221<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> =  => ActionFn(468);
@@ -19472,11 +18842,10 @@ mod __parse__TopDecls {
         (0, 87)
     }
     fn __reduce222<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+, UpperId => ActionFn(469);
@@ -19490,11 +18859,10 @@ mod __parse__TopDecls {
         (2, 87)
     }
     fn __reduce223<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+ => ActionFn(470);
@@ -19506,11 +18874,10 @@ mod __parse__TopDecls {
         (1, 87)
     }
     fn __reduce224<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = UpperId => ActionFn(471);
@@ -19522,11 +18889,10 @@ mod __parse__TopDecls {
         (1, 88)
     }
     fn __reduce225<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> =  => ActionFn(472);
@@ -19537,11 +18903,10 @@ mod __parse__TopDecls {
         (0, 88)
     }
     fn __reduce226<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+, UpperId => ActionFn(473);
@@ -19555,11 +18920,10 @@ mod __parse__TopDecls {
         (2, 88)
     }
     fn __reduce227<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+ => ActionFn(474);
@@ -19571,11 +18935,10 @@ mod __parse__TopDecls {
         (1, 88)
     }
     fn __reduce228<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, ":", Type, "=", LExpr, NEWLINE => ActionFn(206);
@@ -19594,11 +18957,10 @@ mod __parse__TopDecls {
         (7, 89)
     }
     fn __reduce229<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, "=", LExpr, NEWLINE => ActionFn(207);
@@ -19615,11 +18977,10 @@ mod __parse__TopDecls {
         (5, 89)
     }
     fn __reduce230<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(218);
@@ -19644,11 +19005,10 @@ mod __parse__TopDecls {
         (13, 89)
     }
     fn __reduce231<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(219);
@@ -19667,11 +19027,10 @@ mod __parse__TopDecls {
         (7, 89)
     }
     fn __reduce232<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(220);
@@ -19697,11 +19056,10 @@ mod __parse__TopDecls {
         (14, 89)
     }
     fn __reduce233<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(221);
@@ -19721,11 +19079,10 @@ mod __parse__TopDecls {
         (8, 89)
     }
     fn __reduce234<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, AssignOp, LExpr, NEWLINE => ActionFn(26);
@@ -19741,11 +19098,10 @@ mod __parse__TopDecls {
         (4, 89)
     }
     fn __reduce235<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, NEWLINE => ActionFn(27);
@@ -19759,11 +19115,10 @@ mod __parse__TopDecls {
         (2, 89)
     }
     fn __reduce236<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "match", LExpr, ":", NEWLINE, INDENT, Alts, DEDENT => ActionFn(28);
@@ -19782,11 +19137,10 @@ mod __parse__TopDecls {
         (7, 89)
     }
     fn __reduce237<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "for", LowerId, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(29);
@@ -19807,11 +19161,10 @@ mod __parse__TopDecls {
         (9, 89)
     }
     fn __reduce238<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(30);
@@ -19830,11 +19183,10 @@ mod __parse__TopDecls {
         (7, 89)
     }
     fn __reduce239<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Stmt = "return", LExpr, NEWLINE => ActionFn(31);
@@ -19849,11 +19201,10 @@ mod __parse__TopDecls {
         (3, 89)
     }
     fn __reduce240<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = TypeDecl => ActionFn(445);
@@ -19865,11 +19216,10 @@ mod __parse__TopDecls {
         (1, 90)
     }
     fn __reduce241<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, TypeDecl => ActionFn(446);
@@ -19883,11 +19233,10 @@ mod __parse__TopDecls {
         (2, 90)
     }
     fn __reduce242<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = FunDecl => ActionFn(447);
@@ -19899,11 +19248,10 @@ mod __parse__TopDecls {
         (1, 90)
     }
     fn __reduce243<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, FunDecl => ActionFn(448);
@@ -19917,11 +19265,10 @@ mod __parse__TopDecls {
         (2, 90)
     }
     fn __reduce244<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl* =  => ActionFn(92);
@@ -19932,11 +19279,10 @@ mod __parse__TopDecls {
         (0, 91)
     }
     fn __reduce245<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl* = TopDecl+ => ActionFn(93);
@@ -19948,11 +19294,10 @@ mod __parse__TopDecls {
         (1, 91)
     }
     fn __reduce246<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl => ActionFn(177);
@@ -19964,11 +19309,10 @@ mod __parse__TopDecls {
         (1, 92)
     }
     fn __reduce247<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl+, TopDecl => ActionFn(178);
@@ -19982,11 +19326,10 @@ mod __parse__TopDecls {
         (2, 92)
     }
     fn __reduce248<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecls =  => ActionFn(461);
@@ -19997,11 +19340,10 @@ mod __parse__TopDecls {
         (0, 93)
     }
     fn __reduce249<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TopDecls = TopDecl+ => ActionFn(462);
@@ -20013,11 +19355,10 @@ mod __parse__TopDecls {
         (1, 93)
     }
     fn __reduce250<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = UpperId => ActionFn(15);
@@ -20029,11 +19370,10 @@ mod __parse__TopDecls {
         (1, 94)
     }
     fn __reduce251<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = UpperId, "[", Sep<Type, ",">, "]" => ActionFn(16);
@@ -20049,11 +19389,10 @@ mod __parse__TopDecls {
         (4, 94)
     }
     fn __reduce252<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type = "(", Sep<RecordTypeField, ",">, ")" => ActionFn(17);
@@ -20068,11 +19407,10 @@ mod __parse__TopDecls {
         (3, 94)
     }
     fn __reduce253<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type? = Type => ActionFn(137);
@@ -20084,11 +19422,10 @@ mod __parse__TopDecls {
         (1, 95)
     }
     fn __reduce254<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // Type? =  => ActionFn(138);
@@ -20099,11 +19436,10 @@ mod __parse__TopDecls {
         (0, 95)
     }
     fn __reduce255<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeConstrs = ConstructorDecl+ => ActionFn(7);
@@ -20115,11 +19451,10 @@ mod __parse__TopDecls {
         (1, 96)
     }
     fn __reduce256<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDecl = "type", UpperId, TypeParams, TypeDeclRhs => ActionFn(436);
@@ -20135,11 +19470,10 @@ mod __parse__TopDecls {
         (4, 97)
     }
     fn __reduce257<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, TypeConstrs, DEDENT => ActionFn(3);
@@ -20156,11 +19490,10 @@ mod __parse__TopDecls {
         (5, 98)
     }
     fn __reduce258<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(4);
@@ -20177,11 +19510,10 @@ mod __parse__TopDecls {
         (5, 98)
     }
     fn __reduce259<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeParams =  => ActionFn(5);
@@ -20192,11 +19524,10 @@ mod __parse__TopDecls {
         (0, 99)
     }
     fn __reduce260<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // TypeParams = "[", Sep<UpperId, ",">, "]" => ActionFn(6);
@@ -20211,11 +19542,10 @@ mod __parse__TopDecls {
         (3, 99)
     }
     fn __reduce261<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UnnamedFields = UnnamedFields, ",", Type => ActionFn(13);
@@ -20230,11 +19560,10 @@ mod __parse__TopDecls {
         (3, 100)
     }
     fn __reduce262<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UnnamedFields = Type => ActionFn(14);
@@ -20246,11 +19575,10 @@ mod __parse__TopDecls {
         (1, 100)
     }
     fn __reduce263<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UpperId? = UpperId => ActionFn(173);
@@ -20262,11 +19590,10 @@ mod __parse__TopDecls {
         (1, 101)
     }
     fn __reduce264<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // UpperId? =  => ActionFn(174);
@@ -20277,11 +19604,10 @@ mod __parse__TopDecls {
         (0, 101)
     }
     fn __reduce265<
-        'input,
     >(
         __lookahead_start: Option<&Loc>,
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<'input>,Loc)>,
-        _: core::marker::PhantomData<(&'input ())>,
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
+        _: core::marker::PhantomData<()>,
     ) -> (usize, usize)
     {
         // __LExpr = LExpr => ActionFn(0);
@@ -20296,386 +19622,428 @@ mod __parse__TopDecls {
 #[allow(unused_imports)]
 pub use self::__parse__TopDecls::TopDeclsParser;
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action0<
-    'input,
->(
-    (_, __0, _): (Loc, L<Expr>, Loc),
-) -> L<Expr>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action0((_, __0, _): (Loc, L<Expr>, Loc)) -> L<Expr> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action1<
-    'input,
->(
-    (_, __0, _): (Loc, Vec<L<TopDecl>>, Loc),
-) -> Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action1((_, __0, _): (Loc, Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action2<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action2(
     (_, l, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, type_name, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, type_name, _): (Loc, Token, Loc),
     (_, type_params, _): (Loc, Vec<SmolStr>, Loc),
     (_, rhs, _): (Loc, TypeDeclRhs, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TypeDecl>
-{
-    L::new(l, r, TypeDecl {
+) -> L<TypeDecl> {
+    L::new(
+        l,
+        r,
+        TypeDecl {
             name: type_name.smol_str(),
             type_params,
             rhs,
-        })
+        },
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action3<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action3(
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, constrs, _): (Loc, Vec<ConstructorDecl>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> TypeDeclRhs
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> TypeDeclRhs {
     TypeDeclRhs::Sum(constrs)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action4<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action4(
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, named_fields, _): (Loc, Vec<(SmolStr, Type)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> TypeDeclRhs
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> TypeDeclRhs {
     TypeDeclRhs::Product(ConstructorFields::Named(named_fields))
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action5<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<SmolStr>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action5(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<SmolStr> {
     vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action6<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, params, _): (Loc, Vec<Token<'input>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Vec<SmolStr>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action6(
+    (_, _, _): (Loc, Token, Loc),
+    (_, params, _): (Loc, Vec<Token>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Vec<SmolStr> {
     params.into_iter().map(|id| id.smol_str()).collect()
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action7<
-    'input,
->(
-    (_, __0, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
-) -> Vec<ConstructorDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action7((_, __0, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)) -> Vec<ConstructorDecl> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action8<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> ConstructorDecl
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action8((_, name, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> ConstructorDecl {
     ConstructorDecl {
-            name: name.smol_str(),
-            fields: ConstructorFields::Empty
-        }
+        name: name.smol_str(),
+        fields: ConstructorFields::Empty,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action9<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action9(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, named_fields, _): (Loc, Vec<(SmolStr, Type)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> ConstructorDecl
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> ConstructorDecl {
     ConstructorDecl {
-            name: name.smol_str(),
-            fields: ConstructorFields::Named(named_fields),
-        }
+        name: name.smol_str(),
+        fields: ConstructorFields::Named(named_fields),
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action10<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action10(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<Type>, Loc),
-    (_, _, _): (Loc, core::option::Option<Token<'input>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> ConstructorDecl
-{
+    (_, _, _): (Loc, core::option::Option<Token>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> ConstructorDecl {
     ConstructorDecl {
-            name: name.smol_str(),
-            fields: ConstructorFields::Unnamed(fields),
-        }
+        name: name.smol_str(),
+        fields: ConstructorFields::Unnamed(fields),
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action11<
-    'input,
->(
-    (_, __0, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
-) -> Vec<(SmolStr, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action11((_, __0, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc)) -> Vec<(SmolStr, Type)> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action12<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action12(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, type_, _): (Loc, Type, Loc),
-) -> (SmolStr, Type)
-{
+) -> (SmolStr, Type) {
     (name.smol_str(), type_)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action13<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action13(
     (_, mut fields, _): (Loc, Vec<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, field, _): (Loc, Type, Loc),
-) -> Vec<Type>
-{
+) -> Vec<Type> {
     {
         fields.push(field);
         fields
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action14<
-    'input,
->(
-    (_, field, _): (Loc, Type, Loc),
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action14((_, field, _): (Loc, Type, Loc)) -> Vec<Type> {
     vec![field]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action15<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-) -> Type
-{
-    Type::Named(NamedType { name: name.smol_str(), args: vec![] })
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action15((_, name, _): (Loc, Token, Loc)) -> Type {
+    Type::Named(NamedType {
+        name: name.smol_str(),
+        args: vec![],
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action16<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action16(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, args, _): (Loc, Vec<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Type
-{
-    Type::Named(NamedType { name: name.smol_str(), args })
+    (_, _, _): (Loc, Token, Loc),
+) -> Type {
+    Type::Named(NamedType {
+        name: name.smol_str(),
+        args,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action17<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action17(
+    (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Type
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Type {
     Type::Record(fields)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action18<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action18(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, ty, _): (Loc, Type, Loc),
-) -> Named<Type>
-{
-    Named { name: Some(name.smol_str()), thing: ty }
+) -> Named<Type> {
+    Named {
+        name: Some(name.smol_str()),
+        thing: ty,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action19<
-    'input,
->(
-    (_, ty, _): (Loc, Type, Loc),
-) -> Named<Type>
-{
-    Named { name: None, thing: ty }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action19((_, ty, _): (Loc, Type, Loc)) -> Named<Type> {
+    Named {
+        name: None,
+        thing: ty,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action20<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action20(
     (_, l, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, type_name, _): (Loc, core::option::Option<Token<'input>>, Loc),
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, self_, _): (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    (_, params, _): (Loc, Vec<(Token<'input>, Type)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, type_name, _): (Loc, core::option::Option<Token>, Loc),
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, self_, _): (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    (_, params, _): (Loc, Vec<(Token, Type)>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, return_ty, _): (Loc, core::option::Option<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, body_l, _): (Loc, Loc, Loc),
     (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, body_r, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
-    L::new(l, r, FunDecl {
+) -> L<FunDecl> {
+    L::new(
+        l,
+        r,
+        FunDecl {
             type_name: type_name.map(|t| t.smol_str()),
             name: name.smol_str(),
             type_params: vec![],
             predicates: vec![],
             self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+            params: params
+                .into_iter()
+                .map(|(name, ty)| (name.smol_str(), ty))
+                .collect(),
             return_ty,
             body: L::new(body_l, body_r, body),
-        })
+        },
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action21<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action21(
     (_, l, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, type_name, _): (Loc, core::option::Option<Token<'input>>, Loc),
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, type_params, _): (Loc, Vec<Token<'input>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, predicates, _): (Loc, core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, self_, _): (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    (_, params, _): (Loc, Vec<(Token<'input>, Type)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, type_name, _): (Loc, core::option::Option<Token>, Loc),
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, type_params, _): (Loc, Vec<Token>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, predicates, _): (Loc, core::option::Option<(Token, Vec<Type>, Token)>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, self_, _): (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    (_, params, _): (Loc, Vec<(Token, Type)>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, return_ty, _): (Loc, core::option::Option<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, body_l, _): (Loc, Loc, Loc),
     (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, body_r, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
-    L::new(l, r, FunDecl {
+) -> L<FunDecl> {
+    L::new(
+        l,
+        r,
+        FunDecl {
             type_name: type_name.map(|t| t.smol_str()),
             name: name.smol_str(),
             type_params: type_params.into_iter().map(|t| t.smol_str()).collect(),
             predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
             self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+            params: params
+                .into_iter()
+                .map(|(name, ty)| (name.smol_str(), ty))
+                .collect(),
             return_ty,
             body: L::new(body_l, body_r, body),
-        })
+        },
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action22<
-    'input,
->(
-    (_, stmts, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-) -> Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action22((_, stmts, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
     stmts
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action23<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action23(
     (_, l, _): (Loc, Loc, Loc),
     (_, stmt, _): (Loc, Stmt, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Stmt>
-{
+) -> L<Stmt> {
     L::new(l, r, stmt)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action24<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action24(
+    (_, _, _): (Loc, Token, Loc),
     (_, lhs, _): (Loc, L<Pat>, Loc),
     (_, ty, _): (Loc, core::option::Option<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, rhs, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::Let(LetStatement { lhs, ty, rhs })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action25<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action25(
+    (_, _, _): (Loc, Token, Loc),
     (_, cond, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, then_, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, mut branches, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
     (_, else_branch, _): (Loc, core::option::Option<Vec<L<Stmt>>>, Loc),
-) -> Stmt
-{
+) -> Stmt {
     {
         branches.insert(0, (cond, then_));
         Stmt::If(IfStatement {
@@ -20685,324 +20053,333 @@ fn __action25<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action26<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action26(
     (_, lhs, _): (Loc, L<Expr>, Loc),
     (_, op, _): (Loc, AssignOp, Loc),
     (_, rhs, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
-    Stmt::Assign(AssignStatement {
-            lhs,
-            rhs,
-            op,
-        })
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
+    Stmt::Assign(AssignStatement { lhs, rhs, op })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action27<
-    'input,
->(
-    (_, expr, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action27((_, expr, _): (Loc, L<Expr>, Loc), (_, _, _): (Loc, Token, Loc)) -> Stmt {
     Stmt::Expr(expr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action28<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action28(
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, alts, _): (Loc, Vec<Alt>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::Match(MatchStatement {
-            scrutinee: expr,
-            alts,
-        })
+        scrutinee: expr,
+        alts,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action29<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, id, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action29(
+    (_, _, _): (Loc, Token, Loc),
+    (_, id, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, statements, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::For(ForStatement {
-            var: id.smol_str(),
-            ty: None,
-            expr,
-            body: statements,
-        })
+        var: id.smol_str(),
+        ty: None,
+        expr,
+        body: statements,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action30<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action30(
+    (_, _, _): (Loc, Token, Loc),
     (_, cond, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, statements, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::While(WhileStatement {
-            cond,
-            body:statements,
-        })
+        cond,
+        body: statements,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action31<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action31(
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::Return(expr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action32<
-    'input,
->(
-    (_, __0, _): (Loc, alloc::vec::Vec<Alt>, Loc),
-) -> Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action32((_, __0, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action33<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action33(
     (_, pattern, _): (Loc, L<Pat>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, stmts, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Alt
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Alt {
     Alt {
-            pattern,
-            guard: None,
-            rhs: stmts,
-        }
+        pattern,
+        guard: None,
+        rhs: stmts,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action34<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action34(
     (_, pattern, _): (Loc, L<Pat>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, stmt, _): (Loc, L<Stmt>, Loc),
-) -> Alt
-{
+) -> Alt {
     Alt {
-            pattern,
-            guard: None,
-            rhs: vec![stmt],
-        }
+        pattern,
+        guard: None,
+        rhs: vec![stmt],
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action35<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> AssignOp
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action35((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::Eq
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action36<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> AssignOp
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action36((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::PlusEq
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action37<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> AssignOp
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action37((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::MinusEq
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action38<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action38(
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Expr>
-{
+) -> L<Expr> {
     L::new(l, r, expr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action39<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action39((_, __0, _): (Loc, Token, Loc)) -> Expr {
     Expr::Self_
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action40<
-    'input,
->(
-    (_, id, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action40((_, id, _): (Loc, Token, Loc)) -> Expr {
     Expr::Var(id.smol_str())
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action41<
-    'input,
->(
-    (_, id, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action41((_, id, _): (Loc, Token, Loc)) -> Expr {
     Expr::UpperVar(id.smol_str())
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action42<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action42(
+    (_, _, _): (Loc, Token, Loc),
     (_, mut exprs, _): (Loc, Vec<(Option<SmolStr>, L<Expr>)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Expr {
     {
         match exprs.len() {
             0 => Expr::Record(vec![]),
             1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.thing,
-            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, thing: Box::new(expr) }).collect()),
+            _ => Expr::Record(
+                exprs
+                    .into_iter()
+                    .map(|(name, expr)| Named {
+                        name: name,
+                        thing: Box::new(expr),
+                    })
+                    .collect(),
+            ),
         }
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action43<
-    'input,
->(
-    (_, int, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
-    Expr::Int(i32::from_str_radix(int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text)))
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action43((_, int, _): (Loc, Token, Loc)) -> Expr {
+    Expr::Int(
+        i32::from_str_radix(&int.text, 10)
+            .unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text)),
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action44<
-    'input,
->(
-    (_, string, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action44((_, string, _): (Loc, Token, Loc)) -> Expr {
     Expr::String(parse_string_parts(&string.text[1..string.text.len() - 1]))
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action45<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action45(
     (_, l, _): (Loc, Loc, Loc),
     (_, array, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, index, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Expr {
     Expr::ArrayIndex(ArrayIndexExpr {
-            array: Box::new(L::new(l, r, array)),
-            index: Box::new(index),
-        })
+        array: Box::new(L::new(l, r, array)),
+        index: Box::new(index),
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action46<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action46(
     (_, l, _): (Loc, Loc, Loc),
     (_, fun, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, args, _): (Loc, Vec<CallArg>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Expr {
     Expr::Call(CallExpr {
-            fun: Box::new(L::new(l, r, fun)),
-            args,
-        })
+        fun: Box::new(L::new(l, r, fun)),
+        args,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action47<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action47(
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, field, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    (_, _, _): (Loc, Token, Loc),
+    (_, field, _): (Loc, Token, Loc),
+) -> Expr {
     Expr::FieldSelect(FieldSelectExpr {
-            object: Box::new(L::new(l, r, expr)),
-            field: field.smol_str(),
-        })
+        object: Box::new(L::new(l, r, expr)),
+        field: field.smol_str(),
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action48<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action48(
     (_, expr, _): (Loc, Expr, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, constr, _): (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    (_, _, _): (Loc, Token, Loc),
+    (_, constr, _): (Loc, Token, Loc),
+) -> Expr {
     {
         match expr {
             Expr::UpperVar(ty) => Expr::ConstrSelect(ConstrSelectExpr {
@@ -21015,621 +20392,652 @@ fn __action48<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action49<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action49(
     (_, l1, _): (Loc, Loc, Loc),
     (_, from, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, to, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::Range(RangeExpr {
-            from: Box::new(L::new(l1, r1, from)),
-            to: Box::new(L::new(l2, r2, to)),
-            inclusive: false,
-        })
+        from: Box::new(L::new(l1, r1, from)),
+        to: Box::new(L::new(l2, r2, to)),
+        inclusive: false,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action50<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action50((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action51<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action51(
+    (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> Expr
-{
-    Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(l, r, expr)) })
+) -> Expr {
+    Expr::UnOp(UnOpExpr {
+        op: UnOp::Not,
+        expr: Box::new(L::new(l, r, expr)),
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action52<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action52((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action53<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action53(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Multiply,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Multiply,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action54<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action54((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action55<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action55(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Add,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Add,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action56<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action56(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Subtract,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Subtract,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action57<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action57((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action58<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action58(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Equal,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Equal,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action59<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action59(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::NotEqual,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::NotEqual,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action60<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action60(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Lt,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Lt,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action61<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action61(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Gt,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Gt,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action62<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action62(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::LtEq,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::LtEq,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action63<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action63(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::GtEq,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::GtEq,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action64<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action64((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action65<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action65(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::And,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::And,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action66<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action66((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action67<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action67(
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
     (_, right, _): (Loc, Expr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
-            op: BinOp::Or,
-        })
+        left: Box::new(L::new(l1, r1, left)),
+        right: Box::new(L::new(l2, r2, right)),
+        op: BinOp::Or,
+    })
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action68<
-    'input,
->(
-    (_, __0, _): (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action68((_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action69<
-    'input,
->(
-    (_, id, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action69(
+    (_, id, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
-) -> (Option<SmolStr>, L<Expr>)
-{
+) -> (Option<SmolStr>, L<Expr>) {
     (Some(id.smol_str()), expr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action70<
-    'input,
->(
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> (Option<SmolStr>, L<Expr>)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action70((_, expr, _): (Loc, L<Expr>, Loc)) -> (Option<SmolStr>, L<Expr>) {
     (None, expr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action71<
-    'input,
->(
-    (_, name, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action71(
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
-) -> CallArg
-{
+) -> CallArg {
     CallArg {
-            name: Some(name.smol_str()),
-            expr,
-        }
+        name: Some(name.smol_str()),
+        expr,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action72<
-    'input,
->(
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> CallArg
-{
-    CallArg {
-            name: None,
-            expr,
-        }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action72((_, expr, _): (Loc, L<Expr>, Loc)) -> CallArg {
+    CallArg { name: None, expr }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action73<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action73(
     (_, l, _): (Loc, Loc, Loc),
     (_, pat, _): (Loc, Pat, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Pat>
-{
+) -> L<Pat> {
     L::new(l, r, pat)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action74<
-    'input,
->(
-    (_, id, _): (Loc, Token<'input>, Loc),
-) -> Pat
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action74((_, id, _): (Loc, Token, Loc)) -> Pat {
     Pat::Var(id.smol_str())
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action75<
-    'input,
->(
-    (_, constr, _): (Loc, ConstrPattern, Loc),
-) -> Pat
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action75((_, constr, _): (Loc, ConstrPattern, Loc)) -> Pat {
     Pat::Constr(constr)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action76<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action76(
+    (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Pat
-{
-    Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect())
+    (_, _, _): (Loc, Token, Loc),
+) -> Pat {
+    Pat::Record(
+        fields
+            .into_iter()
+            .map(|(name, pat)| Named {
+                name,
+                thing: Box::new(pat),
+            })
+            .collect(),
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action77<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> Pat
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action77((_, __0, _): (Loc, Token, Loc)) -> Pat {
     Pat::Ignore
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action78<
-    'input,
->(
-    (_, str, _): (Loc, Token<'input>, Loc),
-) -> Pat
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action78((_, str, _): (Loc, Token, Loc)) -> Pat {
     Pat::Str(str.text[1..str.text.len() - 1].to_string())
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action79<
-    'input,
->(
-    (_, str, _): (Loc, Token<'input>, Loc),
-    (_, id, _): (Loc, Token<'input>, Loc),
-) -> Pat
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action79((_, str, _): (Loc, Token, Loc), (_, id, _): (Loc, Token, Loc)) -> Pat {
     Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str())
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action80<
-    'input,
->(
-    (_, type_, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, constr, _): (Loc, Token<'input>, Loc),
-) -> Constructor
-{
-    Constructor { type_: type_.smol_str(), constr: Some(constr.smol_str()) }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action80(
+    (_, type_, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, constr, _): (Loc, Token, Loc),
+) -> Constructor {
+    Constructor {
+        type_: type_.smol_str(),
+        constr: Some(constr.smol_str()),
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action81<
-    'input,
->(
-    (_, type_, _): (Loc, Token<'input>, Loc),
-) -> Constructor
-{
-    Constructor { type_: type_.smol_str(), constr: None }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action81((_, type_, _): (Loc, Token, Loc)) -> Constructor {
+    Constructor {
+        type_: type_.smol_str(),
+        constr: None,
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action82<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action82((_, constr, _): (Loc, Constructor, Loc)) -> ConstrPattern {
+    ConstrPattern {
+        constr,
+        fields: vec![],
+    }
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action83(
     (_, constr, _): (Loc, Constructor, Loc),
-) -> ConstrPattern
-{
-    ConstrPattern { constr, fields: vec![] }
-}
-
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action83<
-    'input,
->(
-    (_, constr, _): (Loc, Constructor, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> ConstrPattern
-{
-    ConstrPattern { constr, fields: fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect() }
+    (_, _, _): (Loc, Token, Loc),
+) -> ConstrPattern {
+    ConstrPattern {
+        constr,
+        fields: fields
+            .into_iter()
+            .map(|(name, pat)| Named {
+                name,
+                thing: Box::new(pat),
+            })
+            .collect(),
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action84<
-    'input,
->(
-    (_, id, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action84(
+    (_, id, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, pat, _): (Loc, L<Pat>, Loc),
-) -> (Option<SmolStr>, L<Pat>)
-{
+) -> (Option<SmolStr>, L<Pat>) {
     (Some(id.smol_str()), pat)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action85<
-    'input,
->(
-    (_, pat, _): (Loc, L<Pat>, Loc),
-) -> (Option<SmolStr>, L<Pat>)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action85((_, pat, _): (Loc, L<Pat>, Loc)) -> (Option<SmolStr>, L<Pat>) {
     (None, pat)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action86<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action86(
     (_, l, _): (Loc, Loc, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, path, _): (Loc, Vec<Token<'input>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, path, _): (Loc, Vec<Token>, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<ImportDecl>
-{
-    L::new(l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() })
+) -> L<ImportDecl> {
+    L::new(
+        l,
+        r,
+        ImportDecl {
+            path: path.into_iter().map(|t| t.smol_str()).collect(),
+        },
+    )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action87<
-    'input,
->(
-    (_, __0, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action87((_, __0, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action88<
-    'input,
->(
-    (_, _, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action88(
+    (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, type_decl, _): (Loc, L<TypeDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     L::new(l, r, TopDecl::Type(type_decl))
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action89<
-    'input,
->(
-    (_, _, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action89(
+    (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, fun_decl, _): (Loc, L<FunDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     L::new(l, r, TopDecl::Fun(fun_decl))
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action90<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action90(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action91<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action91((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action92<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action92(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<L<TopDecl>> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action93<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action93((_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> alloc::vec::Vec<L<TopDecl>> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action94<
-    'input,
->(
-    (_, mut v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    (_, e, _): (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action94(
+    (_, mut v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+    (_, e, _): (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     match e {
         None => v,
         Some(e) => {
@@ -21639,14 +21047,15 @@ fn __action94<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action95<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action95(
     (_, mut v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     (_, e, _): (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     match e {
         None => v,
         Some(e) => {
@@ -21656,14 +21065,15 @@ fn __action95<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action96<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action96(
     (_, mut v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
     (_, e, _): (Loc, core::option::Option<CallArg>, Loc),
-) -> Vec<CallArg>
-{
+) -> Vec<CallArg> {
     match e {
         None => v,
         Some(e) => {
@@ -21673,14 +21083,15 @@ fn __action96<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action97<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action97(
     (_, mut v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     (_, e, _): (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     match e {
         None => v,
         Some(e) => {
@@ -21690,194 +21101,185 @@ fn __action97<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action98<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action98(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Alt> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action99<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
-) -> alloc::vec::Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action99((_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> alloc::vec::Vec<Alt> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action100<
-    'input,
->(
-    (_, __0, _): (Loc, Vec<L<Stmt>>, Loc),
-) -> core::option::Option<Vec<L<Stmt>>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action100((_, __0, _): (Loc, Vec<L<Stmt>>, Loc)) -> core::option::Option<Vec<L<Stmt>>> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action101<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Vec<L<Stmt>>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action101(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Vec<L<Stmt>>> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action102<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action102(
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, __0, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Vec<L<Stmt>>
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> Vec<L<Stmt>> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action103<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action103(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action104<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action104(
     (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action105<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action105(
+    (_, _, _): (Loc, Token, Loc),
     (_, __0, _): (Loc, L<Expr>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> (L<Expr>, Vec<L<Stmt>>)
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> (L<Expr>, Vec<L<Stmt>>) {
     (__0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action106<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action106(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<L<Stmt>> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action107<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-) -> alloc::vec::Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action107((_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> alloc::vec::Vec<L<Stmt>> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action108<
-    'input,
->(
-    (_, __0, _): (Loc, (Token<'input>, Vec<Type>, Token<'input>), Loc),
-) -> core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action108(
+    (_, __0, _): (Loc, (Token, Vec<Type>, Token), Loc),
+) -> core::option::Option<(Token, Vec<Type>, Token)> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action109<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action109(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>
-{
+) -> core::option::Option<(Token, Vec<Type>, Token)> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action110<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action110(
+    (_, __0, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, Vec<Type>, Loc),
-    (_, __2, _): (Loc, Token<'input>, Loc),
-) -> (Token<'input>, Vec<Type>, Token<'input>)
-{
+    (_, __2, _): (Loc, Token, Loc),
+) -> (Token, Vec<Type>, Token) {
     (__0, __1, __2)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action111<
-    'input,
->(
-    (_, __0, _): (Loc, Type, Loc),
-) -> core::option::Option<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action111((_, __0, _): (Loc, Type, Loc)) -> core::option::Option<Type> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action112<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action112(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Type> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action113<
-    'input,
->(
-    (_, _, _): (Loc, Token<'input>, Loc),
-    (_, __0, _): (Loc, Type, Loc),
-) -> Type
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action113((_, _, _): (Loc, Token, Loc), (_, __0, _): (Loc, Type, Loc)) -> Type {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action114<
-    'input,
->(
-    (_, mut v, _): (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-    (_, e, _): (Loc, core::option::Option<(Token<'input>, Type)>, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action114(
+    (_, mut v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+    (_, e, _): (Loc, core::option::Option<(Token, Type)>, Loc),
+) -> Vec<(Token, Type)> {
     match e {
         None => v,
         Some(e) => {
@@ -21887,90 +21289,90 @@ fn __action114<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action115<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action115(
+    (_, __0, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, Type, Loc),
-) -> (Token<'input>, Type)
-{
+) -> (Token, Type) {
     (__0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action116<
-    'input,
->(
-    (_, __0, _): (Loc, (Token<'input>, core::option::Option<Token<'input>>), Loc),
-) -> core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action116(
+    (_, __0, _): (Loc, (Token, core::option::Option<Token>), Loc),
+) -> core::option::Option<(Token, core::option::Option<Token>)> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action117<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action117(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>
-{
+) -> core::option::Option<(Token, core::option::Option<Token>)> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action118<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-    (_, __1, _): (Loc, core::option::Option<Token<'input>>, Loc),
-) -> (Token<'input>, core::option::Option<Token<'input>>)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action118(
+    (_, __0, _): (Loc, Token, Loc),
+    (_, __1, _): (Loc, core::option::Option<Token>, Loc),
+) -> (Token, core::option::Option<Token>) {
     (__0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action119<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action119((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action120<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action120(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action121<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Token<'input>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action121((_, __0, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> Token {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action122<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action122(
     (_, mut v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     (_, e, _): (Loc, core::option::Option<Named<Type>>, Loc),
-) -> Vec<Named<Type>>
-{
+) -> Vec<Named<Type>> {
     match e {
         None => v,
         Some(e) => {
@@ -21980,14 +21382,15 @@ fn __action122<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action123<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action123(
     (_, mut v, _): (Loc, alloc::vec::Vec<Type>, Loc),
     (_, e, _): (Loc, core::option::Option<Type>, Loc),
-) -> Vec<Type>
-{
+) -> Vec<Type> {
     match e {
         None => v,
         Some(e) => {
@@ -21997,88 +21400,95 @@ fn __action123<
     }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action124<
-    'input,
->(
-    (_, __0, _): (Loc, (SmolStr, Type), Loc),
-) -> alloc::vec::Vec<(SmolStr, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action124((_, __0, _): (Loc, (SmolStr, Type), Loc)) -> alloc::vec::Vec<(SmolStr, Type)> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action125<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action125(
     (_, v, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
     (_, e, _): (Loc, (SmolStr, Type), Loc),
-) -> alloc::vec::Vec<(SmolStr, Type)>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<(SmolStr, Type)> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action126<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action126(
     (_, __0, _): (Loc, (SmolStr, Type), Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> (SmolStr, Type)
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> (SmolStr, Type) {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action127<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action127((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action128<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action128(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action129<
-    'input,
->(
-    (_, __0, _): (Loc, ConstructorDecl, Loc),
-) -> alloc::vec::Vec<ConstructorDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action129((_, __0, _): (Loc, ConstructorDecl, Loc)) -> alloc::vec::Vec<ConstructorDecl> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action130<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action130(
     (_, v, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
     (_, e, _): (Loc, ConstructorDecl, Loc),
-) -> alloc::vec::Vec<ConstructorDecl>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<ConstructorDecl> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action131<
-    'input,
->(
-    (_, mut v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    (_, e, _): (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action131(
+    (_, mut v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+    (_, e, _): (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     match e {
         None => v,
         Some(e) => {
@@ -22088,12320 +21498,8117 @@ fn __action131<
     }
 }
 
-fn __action132<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Loc
-{
+fn __action132(__lookbehind: &Loc, __lookahead: &Loc) -> Loc {
     *__lookbehind
 }
 
-fn __action133<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Loc
-{
+fn __action133(__lookbehind: &Loc, __lookahead: &Loc) -> Loc {
     *__lookahead
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action134<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action134(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action135<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action135((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action136<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Token<'input>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action136((_, __0, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> Token {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action137<
-    'input,
->(
-    (_, __0, _): (Loc, Type, Loc),
-) -> core::option::Option<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action137((_, __0, _): (Loc, Type, Loc)) -> core::option::Option<Type> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action138<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action138(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Type> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action139<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action139(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Type> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action140<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Type>, Loc),
-) -> alloc::vec::Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action140((_, v, _): (Loc, alloc::vec::Vec<Type>, Loc)) -> alloc::vec::Vec<Type> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action141<
-    'input,
->(
-    (_, __0, _): (Loc, Type, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Type
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action141((_, __0, _): (Loc, Type, Loc), (_, _, _): (Loc, Token, Loc)) -> Type {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action142<
-    'input,
->(
-    (_, __0, _): (Loc, Named<Type>, Loc),
-) -> core::option::Option<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action142((_, __0, _): (Loc, Named<Type>, Loc)) -> core::option::Option<Named<Type>> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action143<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action143(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Named<Type>> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action144<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action144(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Named<Type>> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action145<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action145(
     (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-) -> alloc::vec::Vec<Named<Type>>
-{
+) -> alloc::vec::Vec<Named<Type>> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action146<
-    'input,
->(
-    (_, __0, _): (Loc, Named<Type>, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> Named<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action146((_, __0, _): (Loc, Named<Type>, Loc), (_, _, _): (Loc, Token, Loc)) -> Named<Type> {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action147<
-    'input,
->(
-    (_, __0, _): (Loc, (Token<'input>, Type), Loc),
-) -> core::option::Option<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action147((_, __0, _): (Loc, (Token, Type), Loc)) -> core::option::Option<(Token, Type)> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action148<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action148(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<(Token, Type)> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action149<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action149(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<(Token, Type)> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action150<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action150(
+    (_, v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+) -> alloc::vec::Vec<(Token, Type)> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action151<
-    'input,
->(
-    (_, __0, _): (Loc, (Token<'input>, Type), Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> (Token<'input>, Type)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action151(
+    (_, __0, _): (Loc, (Token, Type), Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> (Token, Type) {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action152<
-    'input,
->(
-    (_, __0, _): (Loc, L<Stmt>, Loc),
-) -> alloc::vec::Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action152((_, __0, _): (Loc, L<Stmt>, Loc)) -> alloc::vec::Vec<L<Stmt>> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action153<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action153(
     (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
     (_, e, _): (Loc, L<Stmt>, Loc),
-) -> alloc::vec::Vec<L<Stmt>>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<L<Stmt>> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action154<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action154(
     (_, __0, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action155<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action155(
     (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
     (_, e, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action156<
-    'input,
->(
-    (_, __0, _): (Loc, Alt, Loc),
-) -> alloc::vec::Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action156((_, __0, _): (Loc, Alt, Loc)) -> alloc::vec::Vec<Alt> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action157<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action157(
     (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
     (_, e, _): (Loc, Alt, Loc),
-) -> alloc::vec::Vec<Alt>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<Alt> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action158<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action158(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
-) -> core::option::Option<(Option<SmolStr>, L<Expr>)>
-{
+) -> core::option::Option<(Option<SmolStr>, L<Expr>)> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action159<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action159(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> core::option::Option<(Option<SmolStr>, L<Expr>)>
-{
+) -> core::option::Option<(Option<SmolStr>, L<Expr>)> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action160<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action160(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action161<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action161(
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action162<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action162(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> (Option<SmolStr>, L<Expr>)
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> (Option<SmolStr>, L<Expr>) {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action163<
-    'input,
->(
-    (_, __0, _): (Loc, CallArg, Loc),
-) -> core::option::Option<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action163((_, __0, _): (Loc, CallArg, Loc)) -> core::option::Option<CallArg> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action164<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action164(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<CallArg> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action165<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action165(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<CallArg> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action166<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
-) -> alloc::vec::Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action166((_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc)) -> alloc::vec::Vec<CallArg> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action167<
-    'input,
->(
-    (_, __0, _): (Loc, CallArg, Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> CallArg
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action167((_, __0, _): (Loc, CallArg, Loc), (_, _, _): (Loc, Token, Loc)) -> CallArg {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action168<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action168(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
-) -> core::option::Option<(Option<SmolStr>, L<Pat>)>
-{
+) -> core::option::Option<(Option<SmolStr>, L<Pat>)> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action169<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action169(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> core::option::Option<(Option<SmolStr>, L<Pat>)>
-{
+) -> core::option::Option<(Option<SmolStr>, L<Pat>)> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action170<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action170(
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action171<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action171(
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action172<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action172(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
-    (_, _, _): (Loc, Token<'input>, Loc),
-) -> (Option<SmolStr>, L<Pat>)
-{
+    (_, _, _): (Loc, Token, Loc),
+) -> (Option<SmolStr>, L<Pat>) {
     __0
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action173<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action173((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
     Some(__0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action174<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action174(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
     None
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action175<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action175(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action176<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action176((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
     v
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action177<
-    'input,
->(
-    (_, __0, _): (Loc, L<TopDecl>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action177((_, __0, _): (Loc, L<TopDecl>, Loc)) -> alloc::vec::Vec<L<TopDecl>> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action178<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action178(
     (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
     (_, e, _): (Loc, L<TopDecl>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<L<TopDecl>> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action179<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action179((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action180<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    (_, e, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
-    { let mut v = v; v.push(e); v }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action180(
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+    (_, e, _): (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action181<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action181((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action182<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    (_, e, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
-    { let mut v = v; v.push(e); v }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action182(
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+    (_, e, _): (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action183<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action183(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action184<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action184(
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     (_, e, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action185<
-    'input,
->(
-    (_, __0, _): (Loc, CallArg, Loc),
-) -> alloc::vec::Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action185((_, __0, _): (Loc, CallArg, Loc)) -> alloc::vec::Vec<CallArg> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action186<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action186(
     (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
     (_, e, _): (Loc, CallArg, Loc),
-) -> alloc::vec::Vec<CallArg>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<CallArg> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action187<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action187(
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action188<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action188(
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     (_, e, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action189<
-    'input,
->(
-    (_, __0, _): (Loc, (Token<'input>, Type), Loc),
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action189((_, __0, _): (Loc, (Token, Type), Loc)) -> alloc::vec::Vec<(Token, Type)> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action190<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-    (_, e, _): (Loc, (Token<'input>, Type), Loc),
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
-    { let mut v = v; v.push(e); v }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action190(
+    (_, v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+    (_, e, _): (Loc, (Token, Type), Loc),
+) -> alloc::vec::Vec<(Token, Type)> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action191<
-    'input,
->(
-    (_, __0, _): (Loc, Named<Type>, Loc),
-) -> alloc::vec::Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action191((_, __0, _): (Loc, Named<Type>, Loc)) -> alloc::vec::Vec<Named<Type>> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action192<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action192(
     (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     (_, e, _): (Loc, Named<Type>, Loc),
-) -> alloc::vec::Vec<Named<Type>>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<Named<Type>> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action193<
-    'input,
->(
-    (_, __0, _): (Loc, Type, Loc),
-) -> alloc::vec::Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action193((_, __0, _): (Loc, Type, Loc)) -> alloc::vec::Vec<Type> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action194<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action194(
     (_, v, _): (Loc, alloc::vec::Vec<Type>, Loc),
     (_, e, _): (Loc, Type, Loc),
-) -> alloc::vec::Vec<Type>
-{
-    { let mut v = v; v.push(e); v }
+) -> alloc::vec::Vec<Type> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action195<
-    'input,
->(
-    (_, __0, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action195((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes, clippy::just_underscores_and_digits)]
-fn __action196<
-    'input,
->(
-    (_, v, _): (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    (_, e, _): (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
-    { let mut v = v; v.push(e); v }
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action196(
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+    (_, e, _): (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
+    {
+        let mut v = v;
+        v.push(e);
+        v
+    }
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action197<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> (Token<'input>, core::option::Option<Token<'input>>)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action197(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> (Token, core::option::Option<Token>) {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action127(
-        __1,
-    );
+    let __temp0 = __action127(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action118(
-        __0,
-        __temp0,
-    )
+    __action118(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action198<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-) -> (Token<'input>, core::option::Option<Token<'input>>)
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action198(__0: (Loc, Token, Loc)) -> (Token, core::option::Option<Token>) {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action128(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action128(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action118(
-        __0,
-        __temp0,
-    )
+    __action118(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action199<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action199(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<Type>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-) -> ConstructorDecl
-{
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+) -> ConstructorDecl {
     let __start0 = __3.0;
     let __end0 = __3.2;
-    let __temp0 = __action127(
-        __3,
-    );
+    let __temp0 = __action127(__3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action10(
-        __0,
-        __1,
-        __2,
-        __temp0,
-        __4,
-        __5,
-    )
+    __action10(__0, __1, __2, __temp0, __4, __5)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action200<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action200(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<Type>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-) -> ConstructorDecl
-{
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+) -> ConstructorDecl {
     let __start0 = __2.2;
     let __end0 = __3.0;
-    let __temp0 = __action128(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action128(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action10(
-        __0,
-        __1,
-        __2,
-        __temp0,
-        __3,
-        __4,
-    )
+    __action10(__0, __1, __2, __temp0, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action201<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Type, Loc),
-) -> core::option::Option<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action201(__0: (Loc, Token, Loc), __1: (Loc, Type, Loc)) -> core::option::Option<Type> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action113(
-        __0,
-        __1,
-    );
+    let __temp0 = __action113(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action111(
-        __temp0,
-    )
+    __action111(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action202<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action202(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action201(
-        __8,
-        __9,
-    );
+    let __temp0 = __action201(__8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action20(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
         __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action203<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action203(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action112(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action112(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action20(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
         __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action204<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action204(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, core::option::Option<(Token, Vec<Type>, Token)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __12.0;
     let __end0 = __13.2;
-    let __temp0 = __action201(
-        __12,
-        __13,
-    );
+    let __temp0 = __action201(__12, __13);
     let __temp0 = (__start0, __temp0, __end0);
     __action21(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp0,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __14, __15, __16,
+        __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action205<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action205(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, core::option::Option<(Token, Vec<Type>, Token)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __11.2;
     let __end0 = __12.0;
-    let __temp0 = __action112(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action112(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action21(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp0,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action206<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action206(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Type, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, L<Expr>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    __6: (Loc, Token, Loc),
+) -> Stmt {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action201(
-        __2,
-        __3,
-    );
+    let __temp0 = __action201(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action24(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-    )
+    __action24(__0, __1, __temp0, __4, __5, __6)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action207<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action207(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, L<Expr>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    __4: (Loc, Token, Loc),
+) -> Stmt {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action112(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action112(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action24(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-    )
+    __action24(__0, __1, __temp0, __2, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action208<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action208(
+    __0: (Loc, Token, Loc),
     __1: (Loc, Vec<Type>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> core::option::Option<(Token<'input>, Vec<Type>, Token<'input>)>
-{
+    __2: (Loc, Token, Loc),
+) -> core::option::Option<(Token, Vec<Type>, Token)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action110(
-        __0,
-        __1,
-        __2,
-    );
+    let __temp0 = __action110(__0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action108(
-        __temp0,
-    )
+    __action108(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action209<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action209(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __7.0;
     let __end0 = __9.2;
-    let __temp0 = __action208(
-        __7,
-        __8,
-        __9,
-    );
+    let __temp0 = __action208(__7, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action204(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
+        __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15, __16, __17,
+        __18, __19, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action210<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action210(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action109(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action109(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action204(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action211<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action211(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __7.0;
     let __end0 = __9.2;
-    let __temp0 = __action208(
-        __7,
-        __8,
-        __9,
-    );
+    let __temp0 = __action208(__7, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action205(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15, __16, __17,
+        __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action212<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action212(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (
+        Loc,
+        core::option::Option<(Token, core::option::Option<Token>)>,
+        Loc,
+    ),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action109(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action109(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action205(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action213<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action213(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
+    __6: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     let __start0 = __0.0;
     let __end0 = __6.2;
-    let __temp0 = __action105(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-    );
+    let __temp0 = __action105(__0, __1, __2, __3, __4, __5, __6);
     let __temp0 = (__start0, __temp0, __end0);
-    __action154(
-        __temp0,
-    )
+    __action154(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action214<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action214(
     __0: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, L<Expr>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<L<Stmt>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>
-{
+    __7: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     let __start0 = __1.0;
     let __end0 = __7.2;
-    let __temp0 = __action105(
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-    );
+    let __temp0 = __action105(__1, __2, __3, __4, __5, __6, __7);
     let __temp0 = (__start0, __temp0, __end0);
-    __action155(
-        __0,
-        __temp0,
-    )
+    __action155(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action215<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action215(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, core::option::Option<Vec<L<Stmt>>>, Loc),
-) -> Stmt
-{
+) -> Stmt {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action103(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action103(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action25(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __7,
-    )
+    __action25(__0, __1, __2, __3, __4, __5, __6, __temp0, __7)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action216<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action216(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
     __8: (Loc, core::option::Option<Vec<L<Stmt>>>, Loc),
-) -> Stmt
-{
+) -> Stmt {
     let __start0 = __7.0;
     let __end0 = __7.2;
-    let __temp0 = __action104(
-        __7,
-    );
+    let __temp0 = __action104(__7);
     let __temp0 = (__start0, __temp0, __end0);
-    __action25(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-        __8,
-    )
+    __action25(__0, __1, __2, __3, __4, __5, __6, __temp0, __8)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action217<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action217(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
     __4: (Loc, Vec<L<Stmt>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-) -> core::option::Option<Vec<L<Stmt>>>
-{
+    __5: (Loc, Token, Loc),
+) -> core::option::Option<Vec<L<Stmt>>> {
     let __start0 = __0.0;
     let __end0 = __5.2;
-    let __temp0 = __action102(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-    );
+    let __temp0 = __action102(__0, __1, __2, __3, __4, __5);
     let __temp0 = (__start0, __temp0, __end0);
-    __action100(
-        __temp0,
-    )
+    __action100(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action218<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action218(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    __12: (Loc, Token, Loc),
+) -> Stmt {
     let __start0 = __7.0;
     let __end0 = __12.2;
-    let __temp0 = __action217(
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-    );
+    let __temp0 = __action217(__7, __8, __9, __10, __11, __12);
     let __temp0 = (__start0, __temp0, __end0);
-    __action215(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-    )
+    __action215(__0, __1, __2, __3, __4, __5, __6, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action219<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action219(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    __6: (Loc, Token, Loc),
+) -> Stmt {
     let __start0 = __6.2;
     let __end0 = __6.2;
-    let __temp0 = __action101(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action101(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action215(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __temp0,
-    )
+    __action215(__0, __1, __2, __3, __4, __5, __6, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action220<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action220(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-) -> Stmt
-{
+    __13: (Loc, Token, Loc),
+) -> Stmt {
     let __start0 = __8.0;
     let __end0 = __13.2;
-    let __temp0 = __action217(
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-    );
+    let __temp0 = __action217(__8, __9, __10, __11, __12, __13);
     let __temp0 = (__start0, __temp0, __end0);
-    __action216(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-    )
+    __action216(__0, __1, __2, __3, __4, __5, __6, __7, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action221<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action221(
+    __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
     __5: (Loc, Vec<L<Stmt>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-) -> Stmt
-{
+) -> Stmt {
     let __start0 = __7.2;
     let __end0 = __7.2;
-    let __temp0 = __action101(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action101(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action216(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-    )
+    __action216(__0, __1, __2, __3, __4, __5, __6, __7, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action222<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action222(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> core::option::Option<(Token, core::option::Option<Token>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action197(
-        __0,
-        __1,
-    );
+    let __temp0 = __action197(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action116(
-        __temp0,
-    )
+    __action116(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action223<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-) -> core::option::Option<(Token<'input>, core::option::Option<Token<'input>>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action223(
+    __0: (Loc, Token, Loc),
+) -> core::option::Option<(Token, core::option::Option<Token>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action198(
-        __0,
-    );
+    let __temp0 = __action198(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action116(
-        __temp0,
-    )
+    __action116(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action224<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action224(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __6.2;
-    let __temp0 = __action222(
-        __5,
-        __6,
-    );
+    let __temp0 = __action222(__5, __6);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action225<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action225(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __5.2;
-    let __temp0 = __action223(
-        __5,
-    );
+    let __temp0 = __action223(__5);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
+        __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action226<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action226(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __4.2;
     let __end0 = __5.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action227<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action227(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __6.2;
-    let __temp0 = __action222(
-        __5,
-        __6,
-    );
+    let __temp0 = __action222(__5, __6);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action228<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action228(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __5.2;
-    let __temp0 = __action223(
-        __5,
-    );
+    let __temp0 = __action223(__5);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
+        __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action229<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action229(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Loc, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
     __12: (Loc, Loc, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __4.2;
     let __end0 = __5.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __temp0,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
+        __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action230<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action230(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Type, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
     __21: (Loc, Vec<L<Stmt>>, Loc),
     __22: (Loc, Loc, Loc),
-    __23: (Loc, Token<'input>, Loc),
+    __23: (Loc, Token, Loc),
     __24: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __12.2;
-    let __temp0 = __action222(
-        __11,
-        __12,
-    );
+    let __temp0 = __action222(__11, __12);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
-        __24,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22, __23, __24,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action231<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action231(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __11.2;
-    let __temp0 = __action223(
-        __11,
-    );
+    let __temp0 = __action223(__11);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action232<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action232(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action233<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action233(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action222(
-        __8,
-        __9,
-    );
+    let __temp0 = __action222(__8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action234<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action234(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __8.2;
-    let __temp0 = __action223(
-        __8,
-    );
+    let __temp0 = __action223(__8);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14, __15,
+        __16, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action235<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action235(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action236<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action236(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __12.2;
-    let __temp0 = __action222(
-        __11,
-        __12,
-    );
+    let __temp0 = __action222(__11, __12);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action237<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action237(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __11.2;
-    let __temp0 = __action223(
-        __11,
-    );
+    let __temp0 = __action223(__11);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action238<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action238(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action239<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action239(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action222(
-        __8,
-        __9,
-    );
+    let __temp0 = __action222(__8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action240<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action240(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __8.2;
-    let __temp0 = __action223(
-        __8,
-    );
+    let __temp0 = __action223(__8);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14, __15,
+        __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action241<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action241(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, core::option::Option<Token<'input>>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, core::option::Option<Token>, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action117(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action117(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp0,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
+        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action242<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action242(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
-    __3: (Loc, Token<'input>, Loc),
-) -> (Token<'input>, Type)
-{
+    __3: (Loc, Token, Loc),
+) -> (Token, Type) {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action115(
-        __0,
-        __1,
-        __2,
-    );
+    let __temp0 = __action115(__0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action151(
-        __temp0,
-        __3,
-    )
+    __action151(__temp0, __3)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action243<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action243(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
-) -> core::option::Option<(Token<'input>, Type)>
-{
+) -> core::option::Option<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action115(
-        __0,
-        __1,
-        __2,
-    );
+    let __temp0 = __action115(__0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action147(
-        __temp0,
-    )
+    __action147(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action244<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action244(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
-    __3: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
+    __3: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __3.2;
-    let __temp0 = __action242(
-        __0,
-        __1,
-        __2,
-        __3,
-    );
+    let __temp0 = __action242(__0, __1, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action189(
-        __temp0,
-    )
+    __action189(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action245<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action245(
+    __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Type, Loc),
-    __4: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Token<'input>, Type)>
-{
+    __4: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Token, Type)> {
     let __start0 = __1.0;
     let __end0 = __4.2;
-    let __temp0 = __action242(
-        __1,
-        __2,
-        __3,
-        __4,
-    );
+    let __temp0 = __action242(__1, __2, __3, __4);
     let __temp0 = (__start0, __temp0, __end0);
-    __action190(
-        __0,
-        __temp0,
-    )
+    __action190(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action246<
-    'input,
->(
-    __0: (Loc, core::option::Option<(Token<'input>, Type)>, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action246(__0: (Loc, core::option::Option<(Token, Type)>, Loc)) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action149(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action149(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action114(
-        __temp0,
-        __0,
-    )
+    __action114(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action247<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-    __1: (Loc, core::option::Option<(Token<'input>, Type)>, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action247(
+    __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+    __1: (Loc, core::option::Option<(Token, Type)>, Loc),
+) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action150(
-        __0,
-    );
+    let __temp0 = __action150(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action114(
-        __temp0,
-        __1,
-    )
+    __action114(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action248<
-    'input,
->(
-    __0: (Loc, CallArg, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action248(__0: (Loc, CallArg, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action167(
-        __0,
-        __1,
-    );
+    let __temp0 = __action167(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action185(
-        __temp0,
-    )
+    __action185(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action249<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action249(
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, CallArg, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<CallArg>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<CallArg> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action167(
-        __1,
-        __2,
-    );
+    let __temp0 = __action167(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action186(
-        __0,
-        __temp0,
-    )
+    __action186(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action250<
-    'input,
->(
-    __0: (Loc, core::option::Option<CallArg>, Loc),
-) -> Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action250(__0: (Loc, core::option::Option<CallArg>, Loc)) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action165(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action165(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action96(
-        __temp0,
-        __0,
-    )
+    __action96(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action251<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action251(
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, core::option::Option<CallArg>, Loc),
-) -> Vec<CallArg>
-{
+) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action166(
-        __0,
-    );
+    let __temp0 = __action166(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action96(
-        __temp0,
-        __1,
-    )
+    __action96(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action252<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action252(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action243(
-        __0,
-        __1,
-        __2,
-    );
+    let __temp0 = __action243(__0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action246(
-        __temp0,
-    )
+    __action246(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action253<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action253(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Token, Type)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action148(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action148(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action246(
-        __temp0,
-    )
+    __action246(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action254<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action254(
+    __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Type, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+) -> Vec<(Token, Type)> {
     let __start0 = __1.0;
     let __end0 = __3.2;
-    let __temp0 = __action243(
-        __1,
-        __2,
-        __3,
-    );
+    let __temp0 = __action243(__1, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action247(
-        __0,
-        __temp0,
-    )
+    __action247(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action255<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<(Token<'input>, Type)>, Loc),
-) -> Vec<(Token<'input>, Type)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action255(__0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc)) -> Vec<(Token, Type)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action148(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action148(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action247(
-        __0,
-        __temp0,
-    )
+    __action247(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action256<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action256(
     __0: (Loc, (SmolStr, Type), Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(SmolStr, Type)>
-{
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(SmolStr, Type)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action126(
-        __0,
-        __1,
-    );
+    let __temp0 = __action126(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action124(
-        __temp0,
-    )
+    __action124(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action257<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action257(
     __0: (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
     __1: (Loc, (SmolStr, Type), Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(SmolStr, Type)>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(SmolStr, Type)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action126(
-        __1,
-        __2,
-    );
+    let __temp0 = __action126(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action125(
-        __0,
-        __temp0,
-    )
+    __action125(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action258<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action258(
     __0: (Loc, (Option<SmolStr>, L<Expr>), Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action162(
-        __0,
-        __1,
-    );
+    let __temp0 = __action162(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action187(
-        __temp0,
-    )
+    __action187(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action259<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action259(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Expr>), Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action162(
-        __1,
-        __2,
-    );
+    let __temp0 = __action162(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action188(
-        __0,
-        __temp0,
-    )
+    __action188(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action260<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action260(
     __0: (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action160(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action160(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action97(
-        __temp0,
-        __0,
-    )
+    __action97(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action261<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action261(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action161(
-        __0,
-    );
+    let __temp0 = __action161(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action97(
-        __temp0,
-        __1,
-    )
+    __action97(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action262<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action262(
     __0: (Loc, (Option<SmolStr>, L<Pat>), Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action172(
-        __0,
-        __1,
-    );
+    let __temp0 = __action172(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action183(
-        __temp0,
-    )
+    __action183(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action263<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action263(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Pat>), Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action172(
-        __1,
-        __2,
-    );
+    let __temp0 = __action172(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action184(
-        __0,
-        __temp0,
-    )
+    __action184(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action264<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action264(
     __0: (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action170(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action170(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action95(
-        __temp0,
-        __0,
-    )
+    __action95(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action265<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action265(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action171(
-        __0,
-    );
+    let __temp0 = __action171(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action95(
-        __temp0,
-        __1,
-    )
+    __action95(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action266<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action266(
     __0: (Loc, Named<Type>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Named<Type>>
-{
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action146(
-        __0,
-        __1,
-    );
+    let __temp0 = __action146(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action191(
-        __temp0,
-    )
+    __action191(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action267<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action267(
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, Named<Type>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Named<Type>>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Named<Type>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action146(
-        __1,
-        __2,
-    );
+    let __temp0 = __action146(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action192(
-        __0,
-        __temp0,
-    )
+    __action192(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action268<
-    'input,
->(
-    __0: (Loc, core::option::Option<Named<Type>>, Loc),
-) -> Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action268(__0: (Loc, core::option::Option<Named<Type>>, Loc)) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action144(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action144(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action122(
-        __temp0,
-        __0,
-    )
+    __action122(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action269<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action269(
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, core::option::Option<Named<Type>>, Loc),
-) -> Vec<Named<Type>>
-{
+) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action145(
-        __0,
-    );
+    let __temp0 = __action145(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action122(
-        __temp0,
-        __1,
-    )
+    __action122(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action270<
-    'input,
->(
-    __0: (Loc, Type, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action270(__0: (Loc, Type, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action141(
-        __0,
-        __1,
-    );
+    let __temp0 = __action141(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action193(
-        __temp0,
-    )
+    __action193(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action271<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action271(
     __0: (Loc, alloc::vec::Vec<Type>, Loc),
     __1: (Loc, Type, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Type>
-{
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Type> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action141(
-        __1,
-        __2,
-    );
+    let __temp0 = __action141(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action194(
-        __0,
-        __temp0,
-    )
+    __action194(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action272<
-    'input,
->(
-    __0: (Loc, core::option::Option<Type>, Loc),
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action272(__0: (Loc, core::option::Option<Type>, Loc)) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action139(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action139(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action123(
-        __temp0,
-        __0,
-    )
+    __action123(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action273<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action273(
     __0: (Loc, alloc::vec::Vec<Type>, Loc),
     __1: (Loc, core::option::Option<Type>, Loc),
-) -> Vec<Type>
-{
+) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action140(
-        __0,
-    );
+    let __temp0 = __action140(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action123(
-        __temp0,
-        __1,
-    )
+    __action123(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action274<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action274(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action136(
-        __0,
-        __1,
-    );
+    let __temp0 = __action136(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action195(
-        __temp0,
-    )
+    __action195(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action275<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action275(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action136(
-        __1,
-        __2,
-    );
+    let __temp0 = __action136(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action196(
-        __0,
-        __temp0,
-    )
+    __action196(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action276<
-    'input,
->(
-    __0: (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action276(__0: (Loc, core::option::Option<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action134(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action134(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action131(
-        __temp0,
-        __0,
-    )
+    __action131(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action277<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action277(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action135(
-        __0,
-    );
+    let __temp0 = __action135(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action131(
-        __temp0,
-        __1,
-    )
+    __action131(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action278<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action278(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action121(
-        __0,
-        __1,
-    );
+    let __temp0 = __action121(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action181(
-        __temp0,
-    )
+    __action181(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action279<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> alloc::vec::Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action279(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action121(
-        __1,
-        __2,
-    );
+    let __temp0 = __action121(__1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action182(
-        __0,
-        __temp0,
-    )
+    __action182(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action280<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> core::option::Option<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action280(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> core::option::Option<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action121(
-        __0,
-        __1,
-    );
+    let __temp0 = __action121(__0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action119(
-        __temp0,
-    )
+    __action119(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action281<
-    'input,
->(
-    __0: (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action281(__0: (Loc, core::option::Option<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action175(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action175(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action94(
-        __temp0,
-        __0,
-    )
+    __action94(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action282<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, core::option::Option<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action282(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action176(
-        __0,
-    );
+    let __temp0 = __action176(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action94(
-        __temp0,
-        __1,
-    )
+    __action94(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action283<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action283(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action224(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action284<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action284(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action224(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action285<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action285(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action225(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action286<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action286(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action225(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action287<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action287(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action226(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
         __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action288<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action288(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Type, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action226(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
         __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action289<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action289(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action227(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
         __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action290<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action290(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action227(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
         __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action291<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action291(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action228(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action292<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action292(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Loc, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
     __12: (Loc, Loc, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action228(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action293<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action293(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action229(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action294<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action294(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Loc, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
     __11: (Loc, Loc, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action229(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action295<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action295(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Vec<(Token, Type)>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Type, Loc),
-    __18: (Loc, Token<'input>, Loc),
-    __19: (Loc, Token<'input>, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
+    __19: (Loc, Token, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
     __22: (Loc, Vec<L<Stmt>>, Loc),
     __23: (Loc, Loc, Loc),
-    __24: (Loc, Token<'input>, Loc),
+    __24: (Loc, Token, Loc),
     __25: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action230(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
-        __24,
-        __25,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22, __23, __24, __25,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action296<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action296(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action230(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action297<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action297(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Type, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
     __21: (Loc, Vec<L<Stmt>>, Loc),
     __22: (Loc, Loc, Loc),
-    __23: (Loc, Token<'input>, Loc),
+    __23: (Loc, Token, Loc),
     __24: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action231(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
-        __24,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22, __23, __24,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action298<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action298(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action231(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action299<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action299(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action232(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action300<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action300(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action232(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action301<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action301(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action233(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action302<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action302(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action233(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action303<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action303(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action234(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action304<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action304(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action234(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action305<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action305(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action235(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action306<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action306(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action235(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action307<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action307(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Vec<(Token, Type)>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action236(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
-        __23,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action308<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action308(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action236(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action309<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action309(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action237(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
-        __22,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action310<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action310(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action237(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action311<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action311(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<Type>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action238(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __21,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action312<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action312(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Vec<Type>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action238(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action313<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action313(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action239(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action314<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action314(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action239(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action315<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action315(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action240(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action316<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action316(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action240(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action317<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action317(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<Token<'input>>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<Token>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(
-        __2,
-        __3,
-    );
+    let __temp0 = __action280(__2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action241(
-        __0,
-        __1,
-        __temp0,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
+        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action318<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action318(
     __0: (Loc, Loc, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<Token<'input>>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<Token>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action120(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action241(
-        __0,
-        __1,
-        __temp0,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
+        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action319<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action319(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action67(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action67(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action320<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action320(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, L<Expr>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    __4: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action45(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-    )
+    __action45(__temp0, __0, __1, __2, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action321<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action321(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Vec<CallArg>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    __4: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action46(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-    )
+    __action46(__temp0, __0, __1, __2, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action322<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action322(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action47(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-    )
+    __action47(__temp0, __0, __1, __2, __3)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action323<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action323(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action49(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action49(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action324<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Expr, Loc),
-    __2: (Loc, Loc, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action324(__0: (Loc, Token, Loc), __1: (Loc, Expr, Loc), __2: (Loc, Loc, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action51(
-        __0,
-        __temp0,
-        __1,
-        __2,
-    )
+    __action51(__0, __temp0, __1, __2)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action325<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action325(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action53(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action53(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action326<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action326(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action55(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action55(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action327<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action327(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action56(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action56(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action328<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action328(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action58(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action58(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action329<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action329(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action59(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action59(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action330<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action330(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action60(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action60(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action331<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action331(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action61(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action61(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action332<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action332(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action62(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action62(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action333<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action333(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action63(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action63(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action334<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action334(
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
-    __2: (Loc, Token<'input>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Expr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr
-{
+) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action65(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __temp1,
-        __3,
-        __4,
-    )
+    __action65(__temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action335<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action335(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action283(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp1,
-        __14,
-        __15,
-        __16,
-        __17,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
+        __14, __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action336<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action336(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action284(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp1,
-        __12,
-        __13,
-        __14,
-        __15,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
+        __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action337<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action337(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action285(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp1,
-        __13,
-        __14,
-        __15,
-        __16,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
+        __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action338<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action338(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Type, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
     __12: (Loc, Loc, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action286(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp1,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
         __14,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action339<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action339(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action287(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp1,
-        __12,
-        __13,
-        __14,
-        __15,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
+        __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action340<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action340(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<(Token, Type)>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Type, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
     __11: (Loc, Loc, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action288(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __temp1,
-        __10,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action341<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action341(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action289(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp1,
-        __12,
-        __13,
-        __14,
-        __15,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
+        __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action342<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action342(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
     __11: (Loc, Loc, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action290(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __temp1,
-        __10,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action343<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action343(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
     __12: (Loc, Loc, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action291(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp1,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
         __14,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action344<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action344(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<L<Stmt>>, Loc),
     __10: (Loc, Loc, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __8.2;
     let __end1 = __9.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action292(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __temp1,
-        __9,
-        __10,
-        __11,
-        __12,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp1, __9, __10, __11, __12,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action345<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action345(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
     __11: (Loc, Loc, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action293(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __temp1,
-        __10,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action346<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action346(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<(Token, Type)>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<L<Stmt>>, Loc),
     __9: (Loc, Loc, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __7.2;
     let __end1 = __8.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action294(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __temp1,
-        __8,
-        __9,
-        __10,
-        __11,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __temp1, __8, __9, __10, __11,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action347<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action347(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Type, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
     __21: (Loc, Loc, Loc),
-    __22: (Loc, Token<'input>, Loc),
+    __22: (Loc, Token, Loc),
     __23: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __19.2;
     let __end1 = __20.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action295(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __temp1,
-        __20,
-        __21,
-        __22,
-        __23,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __temp1, __20, __21, __22, __23,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action348<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action348(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action296(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp1,
-        __18,
-        __19,
-        __20,
-        __21,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action349<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action349(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
     __20: (Loc, Loc, Loc),
-    __21: (Loc, Token<'input>, Loc),
+    __21: (Loc, Token, Loc),
     __22: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __18.2;
     let __end1 = __19.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action297(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __temp1,
-        __19,
-        __20,
-        __21,
-        __22,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __temp1, __19, __20, __21, __22,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action350<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action350(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action298(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp1,
-        __17,
-        __18,
-        __19,
-        __20,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action351<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action351(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action299(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp1,
-        __18,
-        __19,
-        __20,
-        __21,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action352<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action352(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action300(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp1,
-        __16,
-        __17,
-        __18,
-        __19,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp1, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action353<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action353(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action301(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp1,
-        __17,
-        __18,
-        __19,
-        __20,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action354<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action354(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action302(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp1,
-        __15,
-        __16,
-        __17,
-        __18,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp1, __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action355<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action355(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action303(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp1,
-        __16,
-        __17,
-        __18,
-        __19,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp1, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action356<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action356(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action304(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp1,
-        __14,
-        __15,
-        __16,
-        __17,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
+        __14, __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action357<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action357(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action305(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp1,
-        __15,
-        __16,
-        __17,
-        __18,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp1, __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action358<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action358(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action306(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp1,
-        __13,
-        __14,
-        __15,
-        __16,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
+        __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action359<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action359(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
     __19: (Loc, Loc, Loc),
-    __20: (Loc, Token<'input>, Loc),
+    __20: (Loc, Token, Loc),
     __21: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action307(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp1,
-        __18,
-        __19,
-        __20,
-        __21,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action360<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action360(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action308(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp1,
-        __16,
-        __17,
-        __18,
-        __19,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp1, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action361<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action361(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
     __18: (Loc, Loc, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action309(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp1,
-        __17,
-        __18,
-        __19,
-        __20,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action362<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action362(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action310(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp1,
-        __15,
-        __16,
-        __17,
-        __18,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp1, __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action363<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action363(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
     __17: (Loc, Loc, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action311(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp1,
-        __16,
-        __17,
-        __18,
-        __19,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp1, __16, __17, __18, __19,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action364<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action364(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action312(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp1,
-        __14,
-        __15,
-        __16,
-        __17,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
+        __14, __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action365<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action365(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
     __16: (Loc, Loc, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action313(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp1,
-        __15,
-        __16,
-        __17,
-        __18,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp1, __15, __16, __17, __18,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action366<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action366(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action314(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp1,
-        __13,
-        __14,
-        __15,
-        __16,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
+        __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action367<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action367(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
     __15: (Loc, Loc, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action315(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp1,
-        __14,
-        __15,
-        __16,
-        __17,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
+        __14, __15, __16, __17,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action368<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action368(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
     __13: (Loc, Loc, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action316(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp1,
-        __12,
-        __13,
-        __14,
-        __15,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
+        __14, __15,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action369<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action369(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
     __14: (Loc, Loc, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action317(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp1,
-        __13,
-        __14,
-        __15,
-        __16,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
+        __14, __15, __16,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action370<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action370(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
     __12: (Loc, Loc, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Loc, Loc),
-) -> L<FunDecl>
-{
+) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action133(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action318(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp1,
-        __11,
-        __12,
-        __13,
+        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
         __14,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action371<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Vec<Token<'input>>, Loc),
-    __2: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action371(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Vec<Token>, Loc),
+    __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<ImportDecl>
-{
+) -> L<ImportDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action86(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-    )
+    __action86(__temp0, __0, __1, __2, __3)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action372<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Loc, Loc),
-) -> L<Expr>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action372(__0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action38(
-        __temp0,
-        __0,
-        __1,
-    )
+    __action38(__temp0, __0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action373<
-    'input,
->(
-    __0: (Loc, Pat, Loc),
-    __1: (Loc, Loc, Loc),
-) -> L<Pat>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action373(__0: (Loc, Pat, Loc), __1: (Loc, Loc, Loc)) -> L<Pat> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action73(
-        __temp0,
-        __0,
-        __1,
-    )
+    __action73(__temp0, __0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action374<
-    'input,
->(
-    __0: (Loc, Stmt, Loc),
-    __1: (Loc, Loc, Loc),
-) -> L<Stmt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action374(__0: (Loc, Stmt, Loc), __1: (Loc, Loc, Loc)) -> L<Stmt> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action23(
-        __temp0,
-        __0,
-        __1,
-    )
+    __action23(__temp0, __0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action375<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action375(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action88(
-        __0,
-        __temp0,
-        __1,
-        __2,
-    )
+    __action88(__0, __temp0, __1, __2)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action376<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action376(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<FunDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action89(
-        __0,
-        __temp0,
-        __1,
-        __2,
-    )
+    __action89(__0, __temp0, __1, __2)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action377<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action377(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<SmolStr>, Loc),
     __3: (Loc, TypeDeclRhs, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<TypeDecl>
-{
+) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action133(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action2(
-        __temp0,
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-    )
+    __action2(__temp0, __0, __1, __2, __3, __4)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action378<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action378(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action319(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action319(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action379<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action379(
     __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, L<Expr>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    __3: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action320(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __3,
-    )
+    __action320(__0, __temp0, __1, __2, __3)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action380<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action380(
     __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<CallArg>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+    __3: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action321(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __3,
-    )
+    __action321(__0, __temp0, __1, __2, __3)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action381<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action381(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Token, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action322(
-        __0,
-        __temp0,
-        __1,
-        __2,
-    )
+    __action322(__0, __temp0, __1, __2)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action382<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action382(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action323(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action323(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action383<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action383(__0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action324(
-        __0,
-        __1,
-        __temp0,
-    )
+    __action324(__0, __1, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action384<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action384(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action325(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action325(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action385<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action385(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action326(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action326(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action386<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action386(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action327(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action327(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action387<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action387(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action328(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action328(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action388<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action388(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action329(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action329(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action389<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action389(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action330(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action330(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action390<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action390(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action331(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action331(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action391<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action391(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action332(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action332(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action392<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action392(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action333(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action333(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action393<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action393(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action334(
-        __0,
-        __temp0,
-        __1,
-        __2,
-        __temp1,
-    )
+    __action334(__0, __temp0, __1, __2, __temp1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action394<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action394(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __15: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __14.2;
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action335(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp0,
-        __15,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
+        __15, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action395<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action395(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __13: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __12.2;
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action336(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp0,
-        __13,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action396<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action396(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __14: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __13.2;
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action337(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp0,
-        __14,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
         __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action397<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action397(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
     __7: (Loc, Type, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __12: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __11.2;
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action338(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp0,
-        __12,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action398<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action398(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Type, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __13: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __12.2;
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action339(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp0,
-        __13,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action399<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action399(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<(Token, Type)>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Type, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __11: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action340(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __11,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action400<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action400(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __13: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __12.2;
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action341(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp0,
-        __13,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action401<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action401(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __11: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action342(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __11,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action402<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action402(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __12: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __11.2;
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action343(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp0,
-        __12,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action403<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action403(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Vec<(Token, Type)>, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Vec<L<Stmt>>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __10: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __9.2;
     let __end0 = __10.0;
     let __start1 = __10.2;
     let __end1 = __10.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action344(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __temp0,
-        __10,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp0, __10, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action404<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action404(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<(Token, Type)>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Vec<L<Stmt>>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __11: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action345(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __temp0,
-        __11,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action405<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action405(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<(Token, Type)>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<L<Stmt>>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __9: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __8.2;
     let __end0 = __9.0;
     let __start1 = __9.2;
     let __end1 = __9.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action346(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __temp0,
-        __9,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp0, __9, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action406<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action406(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Type, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-    __19: (Loc, Token<'input>, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
+    __19: (Loc, Token, Loc),
     __20: (Loc, Vec<L<Stmt>>, Loc),
-    __21: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __21: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __20.2;
     let __end0 = __21.0;
     let __start1 = __21.2;
     let __end1 = __21.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action347(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __20,
-        __temp0,
-        __21,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __20, __temp0, __21, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action407<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action407(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
-    __19: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __19: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __18.2;
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action348(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __temp0,
-        __19,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __temp0, __19, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action408<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action408(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Type, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-    __18: (Loc, Token<'input>, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
+    __18: (Loc, Token, Loc),
     __19: (Loc, Vec<L<Stmt>>, Loc),
-    __20: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __20: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __19.2;
     let __end0 = __20.0;
     let __start1 = __20.2;
     let __end1 = __20.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action349(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __19,
-        __temp0,
-        __20,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __19, __temp0, __20, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action409<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action409(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __18: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __17.2;
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action350(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp0,
-        __18,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __temp0, __18, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action410<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action410(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Type, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
-    __19: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __19: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __18.2;
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action351(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __temp0,
-        __19,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __temp0, __19, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action411<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action411(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __17: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __16.2;
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action352(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp0,
-        __17,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __temp0, __17, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action412<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action412(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Type, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __18: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __17.2;
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action353(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp0,
-        __18,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __temp0, __18, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action413<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action413(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __16: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __15.2;
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action354(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp0,
-        __16,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        __temp0, __16, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action414<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action414(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Type, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __17: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __16.2;
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action355(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp0,
-        __17,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __temp0, __17, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action415<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action415(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
     __10: (Loc, Type, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __15: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __14.2;
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action356(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp0,
-        __15,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
+        __15, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action416<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action416(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Type, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __16: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __15.2;
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action357(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp0,
-        __16,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        __temp0, __16, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action417<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action417(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
     __9: (Loc, Type, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __14: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __13.2;
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action358(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp0,
-        __14,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
         __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action418<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action418(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-    __17: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Vec<(Token, Type)>, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
+    __17: (Loc, Token, Loc),
     __18: (Loc, Vec<L<Stmt>>, Loc),
-    __19: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __19: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __18.2;
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action359(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __18,
-        __temp0,
-        __19,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __18, __temp0, __19, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action419<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action419(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __17: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __16.2;
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action360(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp0,
-        __17,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __temp0, __17, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action420<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action420(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-    __16: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Vec<(Token, Type)>, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
+    __16: (Loc, Token, Loc),
     __17: (Loc, Vec<L<Stmt>>, Loc),
-    __18: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __18: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __17.2;
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action361(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __17,
-        __temp0,
-        __18,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __17, __temp0, __18, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action421<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action421(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __16: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __15.2;
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action362(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp0,
-        __16,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        __temp0, __16, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action422<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action422(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
     __8: (Loc, Vec<Type>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-    __15: (Loc, Token<'input>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Vec<(Token, Type)>, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
+    __15: (Loc, Token, Loc),
     __16: (Loc, Vec<L<Stmt>>, Loc),
-    __17: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __17: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __16.2;
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action363(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __16,
-        __temp0,
-        __17,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        __temp0, __17, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action423<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action423(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
     __6: (Loc, Vec<Type>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __15: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __14.2;
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action364(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp0,
-        __15,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
+        __15, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action424<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-    __14: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action424(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Vec<(Token, Type)>, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
+    __14: (Loc, Token, Loc),
     __15: (Loc, Vec<L<Stmt>>, Loc),
-    __16: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __16: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __15.2;
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action365(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __15,
-        __temp0,
-        __16,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        __temp0, __16, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action425<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action425(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __14: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __13.2;
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action366(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp0,
-        __14,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
         __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action426<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-    __13: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action426(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Vec<(Token, Type)>, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
+    __13: (Loc, Token, Loc),
     __14: (Loc, Vec<L<Stmt>>, Loc),
-    __15: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __15: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __14.2;
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action367(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __14,
-        __temp0,
-        __15,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
+        __15, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action427<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action427(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Vec<(Token, Type)>, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
     __12: (Loc, Vec<L<Stmt>>, Loc),
-    __13: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __13: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __12.2;
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action368(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __temp0,
-        __13,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action428<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Token<'input>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Vec<Token<'input>>, Loc),
-    __6: (Loc, Token<'input>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
-    __11: (Loc, Token<'input>, Loc),
-    __12: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action428(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Token, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Vec<Token>, Loc),
+    __6: (Loc, Token, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Vec<(Token, Type)>, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
+    __11: (Loc, Token, Loc),
+    __12: (Loc, Token, Loc),
     __13: (Loc, Vec<L<Stmt>>, Loc),
-    __14: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __14: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __13.2;
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action369(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __12,
-        __13,
-        __temp0,
-        __14,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
         __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action429<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-    __3: (Loc, Vec<Token<'input>>, Loc),
-    __4: (Loc, Token<'input>, Loc),
-    __5: (Loc, Token<'input>, Loc),
-    __6: (Loc, Vec<(Token<'input>, Type)>, Loc),
-    __7: (Loc, Token<'input>, Loc),
-    __8: (Loc, Token<'input>, Loc),
-    __9: (Loc, Token<'input>, Loc),
-    __10: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action429(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+    __3: (Loc, Vec<Token>, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Token, Loc),
+    __6: (Loc, Vec<(Token, Type)>, Loc),
+    __7: (Loc, Token, Loc),
+    __8: (Loc, Token, Loc),
+    __9: (Loc, Token, Loc),
+    __10: (Loc, Token, Loc),
     __11: (Loc, Vec<L<Stmt>>, Loc),
-    __12: (Loc, Token<'input>, Loc),
-) -> L<FunDecl>
-{
+    __12: (Loc, Token, Loc),
+) -> L<FunDecl> {
     let __start0 = __11.2;
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(
-        &__start1,
-        &__end1,
-    );
+    let __temp1 = __action132(&__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action370(
-        __0,
-        __1,
-        __2,
-        __3,
-        __4,
-        __5,
-        __6,
-        __7,
-        __8,
-        __9,
-        __10,
-        __11,
-        __temp0,
-        __12,
-        __temp1,
+        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
     )
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action430<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Vec<Token<'input>>, Loc),
-    __2: (Loc, Token<'input>, Loc),
-) -> L<ImportDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action430(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Vec<Token>, Loc),
+    __2: (Loc, Token, Loc),
+) -> L<ImportDecl> {
     let __start0 = __2.2;
     let __end0 = __2.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action371(
-        __0,
-        __1,
-        __2,
-        __temp0,
-    )
+    __action371(__0, __1, __2, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action431<
-    'input,
->(
-    __0: (Loc, Expr, Loc),
-) -> L<Expr>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action431(__0: (Loc, Expr, Loc)) -> L<Expr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action372(
-        __0,
-        __temp0,
-    )
+    __action372(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action432<
-    'input,
->(
-    __0: (Loc, Pat, Loc),
-) -> L<Pat>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action432(__0: (Loc, Pat, Loc)) -> L<Pat> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action373(
-        __0,
-        __temp0,
-    )
+    __action373(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action433<
-    'input,
->(
-    __0: (Loc, Stmt, Loc),
-) -> L<Stmt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action433(__0: (Loc, Stmt, Loc)) -> L<Stmt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action374(
-        __0,
-        __temp0,
-    )
+    __action374(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action434<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action434(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action375(
-        __0,
-        __1,
-        __temp0,
-    )
+    __action375(__0, __1, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action435<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, L<FunDecl>, Loc),
-) -> L<TopDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action435(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action376(
-        __0,
-        __1,
-        __temp0,
-    )
+    __action376(__0, __1, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action436<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-    __1: (Loc, Token<'input>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action436(
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
     __2: (Loc, Vec<SmolStr>, Loc),
     __3: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl>
-{
+) -> L<TypeDecl> {
     let __start0 = __3.2;
     let __end0 = __3.2;
-    let __temp0 = __action132(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action132(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action377(
-        __0,
-        __1,
-        __2,
-        __3,
-        __temp0,
-    )
+    __action377(__0, __1, __2, __3, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action437<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action437(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action98(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action98(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action32(
-        __temp0,
-    )
+    __action32(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action438<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Alt>, Loc),
-) -> Vec<Alt>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action438(__0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action99(
-        __0,
-    );
+    let __temp0 = __action99(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action32(
-        __temp0,
-    )
+    __action32(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action439<
-    'input,
->(
-    __0: (Loc, CallArg, Loc),
-) -> Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action439(__0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action163(
-        __0,
-    );
+    let __temp0 = __action163(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action250(
-        __temp0,
-    )
+    __action250(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action440<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action440(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action164(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action164(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action250(
-        __temp0,
-    )
+    __action250(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action441<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action441(
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, CallArg, Loc),
-) -> Vec<CallArg>
-{
+) -> Vec<CallArg> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action163(
-        __1,
-    );
+    let __temp0 = __action163(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action251(
-        __0,
-        __temp0,
-    )
+    __action251(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action442<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
-) -> Vec<CallArg>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action442(__0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action164(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action164(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action251(
-        __0,
-        __temp0,
-    )
+    __action251(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action443<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action443(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action106(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action106(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action22(
-        __temp0,
-    )
+    __action22(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action444<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-) -> Vec<L<Stmt>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action444(__0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action107(
-        __0,
-    );
+    let __temp0 = __action107(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action22(
-        __temp0,
-    )
+    __action22(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action445<
-    'input,
->(
-    __0: (Loc, L<TypeDecl>, Loc),
-) -> L<TopDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action445(__0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action90(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action90(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action434(
-        __temp0,
-        __0,
-    )
+    __action434(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action446<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action446(
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
-) -> L<TopDecl>
-{
+) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action91(
-        __0,
-    );
+    let __temp0 = __action91(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action434(
-        __temp0,
-        __1,
-    )
+    __action434(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action447<
-    'input,
->(
-    __0: (Loc, L<FunDecl>, Loc),
-) -> L<TopDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action447(__0: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action90(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action90(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action435(
-        __temp0,
-        __0,
-    )
+    __action435(__temp0, __0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action448<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, L<FunDecl>, Loc),
-) -> L<TopDecl>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action448(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action91(
-        __0,
-    );
+    let __temp0 = __action91(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action435(
-        __temp0,
-        __1,
-    )
+    __action435(__temp0, __1)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action449<
-    'input,
->(
-    __0: (Loc, (Option<SmolStr>, L<Expr>), Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action449(__0: (Loc, (Option<SmolStr>, L<Expr>), Loc)) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action158(
-        __0,
-    );
+    let __temp0 = __action158(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action260(
-        __temp0,
-    )
+    __action260(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action450<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action450(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action159(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action159(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action260(
-        __temp0,
-    )
+    __action260(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action451<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action451(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Expr>), Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action158(
-        __1,
-    );
+    let __temp0 = __action158(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action261(
-        __0,
-        __temp0,
-    )
+    __action261(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action452<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action452(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Expr>)>
-{
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action159(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action159(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action261(
-        __0,
-        __temp0,
-    )
+    __action261(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action453<
-    'input,
->(
-    __0: (Loc, (Option<SmolStr>, L<Pat>), Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action453(__0: (Loc, (Option<SmolStr>, L<Pat>), Loc)) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action168(
-        __0,
-    );
+    let __temp0 = __action168(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action264(
-        __temp0,
-    )
+    __action264(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action454<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action454(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action169(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action169(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action264(
-        __temp0,
-    )
+    __action264(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action455<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action455(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Pat>), Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action168(
-        __1,
-    );
+    let __temp0 = __action168(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action265(
-        __0,
-        __temp0,
-    )
+    __action265(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action456<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action456(
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
-) -> Vec<(Option<SmolStr>, L<Pat>)>
-{
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action169(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action169(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action265(
-        __0,
-        __temp0,
-    )
+    __action265(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action457<
-    'input,
->(
-    __0: (Loc, Named<Type>, Loc),
-) -> Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action457(__0: (Loc, Named<Type>, Loc)) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action142(
-        __0,
-    );
+    let __temp0 = __action142(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action268(
-        __temp0,
-    )
+    __action268(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action458<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action458(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Named<Type>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action143(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action143(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action268(
-        __temp0,
-    )
+    __action268(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action459<
-    'input,
->(
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action459(
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, Named<Type>, Loc),
-) -> Vec<Named<Type>>
-{
+) -> Vec<Named<Type>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action142(
-        __1,
-    );
+    let __temp0 = __action142(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action269(
-        __0,
-        __temp0,
-    )
+    __action269(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action460<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-) -> Vec<Named<Type>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action460(__0: (Loc, alloc::vec::Vec<Named<Type>>, Loc)) -> Vec<Named<Type>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action143(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action143(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action269(
-        __0,
-        __temp0,
-    )
+    __action269(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action461<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action461(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action92(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action92(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action87(
-        __temp0,
-    )
+    __action87(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action462<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> Vec<L<TopDecl>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action462(__0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action93(
-        __0,
-    );
+    let __temp0 = __action93(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action87(
-        __temp0,
-    )
+    __action87(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action463<
-    'input,
->(
-    __0: (Loc, Type, Loc),
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action463(__0: (Loc, Type, Loc)) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action137(
-        __0,
-    );
+    let __temp0 = __action137(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action272(
-        __temp0,
-    )
+    __action272(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action464<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action464(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Type> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action138(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action138(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action272(
-        __temp0,
-    )
+    __action272(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action465<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Type>, Loc),
-    __1: (Loc, Type, Loc),
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action465(__0: (Loc, alloc::vec::Vec<Type>, Loc), __1: (Loc, Type, Loc)) -> Vec<Type> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action137(
-        __1,
-    );
+    let __temp0 = __action137(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action273(
-        __0,
-        __temp0,
-    )
+    __action273(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action466<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Type>, Loc),
-) -> Vec<Type>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action466(__0: (Loc, alloc::vec::Vec<Type>, Loc)) -> Vec<Type> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action138(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action138(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action273(
-        __0,
-        __temp0,
-    )
+    __action273(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action467<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action467(__0: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action173(
-        __0,
-    );
+    let __temp0 = __action173(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action276(
-        __temp0,
-    )
+    __action276(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action468<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action468(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action174(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action174(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action276(
-        __temp0,
-    )
+    __action276(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action469<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action469(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action173(
-        __1,
-    );
+    let __temp0 = __action173(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action277(
-        __0,
-        __temp0,
-    )
+    __action277(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action470<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action470(__0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action174(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action174(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action277(
-        __0,
-        __temp0,
-    )
+    __action277(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action471<
-    'input,
->(
-    __0: (Loc, Token<'input>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action471(__0: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action173(
-        __0,
-    );
+    let __temp0 = __action173(__0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action281(
-        __temp0,
-    )
+    __action281(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action472<
-    'input,
->(
-    __lookbehind: &Loc,
-    __lookahead: &Loc,
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action472(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action174(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action174(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action281(
-        __temp0,
-    )
+    __action281(__temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action473<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-    __1: (Loc, Token<'input>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action473(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action173(
-        __1,
-    );
+    let __temp0 = __action173(__1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action282(
-        __0,
-        __temp0,
-    )
+    __action282(__0, __temp0)
 }
 
-#[allow(clippy::too_many_arguments, clippy::needless_lifetimes,
-    clippy::just_underscores_and_digits)]
-fn __action474<
-    'input,
->(
-    __0: (Loc, alloc::vec::Vec<Token<'input>>, Loc),
-) -> Vec<Token<'input>>
-{
+#[allow(
+    clippy::too_many_arguments,
+    clippy::needless_lifetimes,
+    clippy::just_underscores_and_digits
+)]
+fn __action474(__0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action174(
-        &__start0,
-        &__end0,
-    );
+    let __temp0 = __action174(&__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action282(
-        __0,
-        __temp0,
-    )
+    __action282(__0, __temp0)
 }
 #[allow(clippy::type_complexity, dead_code)]
 
-pub  trait __ToTriple<'input, >
-{
-    fn to_triple(value: Self) -> Result<(Loc,Token<'input>,Loc), __lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>>;
+pub trait __ToTriple {
+    fn to_triple(
+        value: Self,
+    ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>;
 }
 
-impl<'input, > __ToTriple<'input, > for (Loc, Token<'input>, Loc)
-{
-    fn to_triple(value: Self) -> Result<(Loc,Token<'input>,Loc), __lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>> {
+impl __ToTriple for (Loc, Token, Loc) {
+    fn to_triple(
+        value: Self,
+    ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
+    {
         Ok(value)
     }
 }
-impl<'input, > __ToTriple<'input, > for Result<(Loc, Token<'input>, Loc), LexerError<Infallible>>
-{
-    fn to_triple(value: Self) -> Result<(Loc,Token<'input>,Loc), __lalrpop_util::ParseError<Loc, Token<'input>, LexerError<Infallible>>> {
+impl __ToTriple for Result<(Loc, Token, Loc), LexerError<Infallible>> {
+    fn to_triple(
+        value: Self,
+    ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
+    {
         match value {
             Ok(v) => Ok(v),
             Err(error) => Err(__lalrpop_util::ParseError::User { error }),

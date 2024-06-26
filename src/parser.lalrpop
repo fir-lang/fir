@@ -10,13 +10,13 @@ use std::convert::Infallible;
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
 
-grammar<'input>;
+grammar;
 
 extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token<'input> {
+    enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
@@ -339,7 +339,7 @@ Expr: Expr = {
     },
 
     <int:IntLit> =>
-        Expr::Int(i32::from_str_radix(int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
+        Expr::Int(i32::from_str_radix(&int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
 
     <string:StringLit> =>
         Expr::String(parse_string_parts(&string.text[1..string.text.len() - 1])),

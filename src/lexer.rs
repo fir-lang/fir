@@ -1,6 +1,7 @@
 use crate::token::*;
 
 use lexgen_util::Loc;
+use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
 struct LexerState {
@@ -135,7 +136,7 @@ pub fn lex(src: &str) -> Vec<(Loc, Token, Loc)> {
                 l,
                 Token {
                     kind: t,
-                    text: &src[l.byte_idx..r.byte_idx],
+                    text: SmolStr::new(&src[l.byte_idx..r.byte_idx]),
                 },
                 r,
             )

@@ -24,7 +24,7 @@ pub fn main() {
     let file = &args[1];
     let contents = std::fs::read_to_string(file).unwrap();
 
-    let tokens: Vec<(Loc, Token, Loc)> = scan(&lex(&contents));
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(&contents));
     let parser = TopDeclsParser::new();
     let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(tokens).unwrap();
 
@@ -56,7 +56,7 @@ pub fn run_wasm(pgm: &str, input: &str) {
     clear_interpreter_output();
     clear_program_output();
 
-    let tokens: Vec<(Loc, Token, Loc)> = scan(&lex(pgm));
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
     let parser = TopDeclsParser::new();
     let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(tokens).unwrap();
 
