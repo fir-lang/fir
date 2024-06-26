@@ -1,20 +1,47 @@
 use crate::interpolation::StringPart;
 
-use lexgen_util::Loc;
+use std::rc::Rc;
+
 use smol_str::SmolStr;
 
 /// Things with location information.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct L<T> {
-    pub start: Loc,
-    #[allow(unused)]
-    pub end: Loc,
+    pub loc: Loc,
     pub thing: T,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Loc {
+    pub module: Rc<str>,
+    pub line_start: u16,
+    pub col_start: u16,
+    pub byte_offset_start: u32,
+    pub line_end: u16,
+    pub col_end: u16,
+    pub byte_offset_end: u32,
+}
+
+impl Loc {
+    pub fn from_lexgen(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc) -> Self {
+        Loc {
+            module: module.clone(),
+            line_start: start.line as u16,
+            col_start: start.col as u16,
+            byte_offset_start: start.byte_idx as u32,
+            line_end: end.line as u16,
+            col_end: end.col as u16,
+            byte_offset_end: end.byte_idx as u32,
+        }
+    }
+}
+
 impl<T> L<T> {
-    pub fn new(start: Loc, end: Loc, thing: T) -> Self {
-        L { start, end, thing }
+    pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, thing: T) -> Self {
+        L {
+            loc: Loc::from_lexgen(module, start, end),
+            thing,
+        }
     }
 }
 

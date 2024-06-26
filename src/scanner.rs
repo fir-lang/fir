@@ -143,7 +143,7 @@ mod tests {
     use indoc::indoc;
 
     fn scan_wo_locs(input: &str) -> Vec<TokenKind> {
-        scan(&crate::lexer::lex(input))
+        scan(crate::lexer::lex(input))
             .into_iter()
             .map(|(_, t, _)| t.kind)
             .collect()

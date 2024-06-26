@@ -1,9 +1,9 @@
+use crate::ast::Loc;
 use crate::interpreter::*;
 
 use std::io::Write;
 
 use bytemuck::cast_slice;
-use lexgen_util::Loc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BuiltinFun {
@@ -44,7 +44,7 @@ pub fn call_builtin_fun<W: Write>(
     heap: &mut Heap,
     fun: &BuiltinFun,
     args: Vec<u64>,
-    loc: Loc,
+    loc: &Loc,
 ) -> u64 {
     match fun {
         BuiltinFun::Panic => {

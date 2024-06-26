@@ -6,11 +6,12 @@ use crate::token::{TokenKind, Token};
 use crate::interpolation::parse_string_parts;
 
 use std::convert::Infallible;
+use std::rc::Rc;
 
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
 
-grammar;
+grammar<'a>(module: &'a Rc<str>);
 
 extern {
     type Location = Loc;
@@ -90,7 +91,7 @@ Sep<T, S>: Vec<T> = {
 
 TypeDecl: L<TypeDecl> = {
     <l:@L> "type" <type_name:UpperId> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
-        L::new(l, r, TypeDecl {
+        L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
             rhs,
@@ -187,7 +188,7 @@ FunDecl: L<FunDecl> = {
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
             <return_ty:(":" <Type>)?>
             "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
-        L::new(l, r, FunDecl {
+        L::new(module, l, r, FunDecl {
             type_name: type_name.map(|t| t.smol_str()),
             name: name.smol_str(),
             type_params: vec![],
@@ -195,7 +196,7 @@ FunDecl: L<FunDecl> = {
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
-            body: L::new(body_l, body_r, body),
+            body: L::new(module, body_l, body_r, body),
         }),
 
     // With type params and potentially preds.
@@ -205,7 +206,7 @@ FunDecl: L<FunDecl> = {
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
             <return_ty:(":" <Type>)?>
             "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
-        L::new(l, r, FunDecl {
+        L::new(module, l, r, FunDecl {
             type_name: type_name.map(|t| t.smol_str()),
             name: name.smol_str(),
             type_params: type_params.into_iter().map(|t| t.smol_str()).collect(),
@@ -213,7 +214,7 @@ FunDecl: L<FunDecl> = {
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
-            body: L::new(body_l, body_r, body),
+            body: L::new(module, body_l, body_r, body),
         }),
 }
 
@@ -229,7 +230,7 @@ LStmts: Vec<L<Stmt>> = {
 }
 
 LStmt: L<Stmt> = {
-    <l:@L> <stmt:Stmt> <r:@R> => L::new(l, r, stmt),
+    <l:@L> <stmt:Stmt> <r:@R> => L::new(module, l, r, stmt),
 }
 
 Stmt: Stmt = {
@@ -316,7 +317,7 @@ AssignOp: AssignOp = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 pub LExpr: L<Expr> = {
-    <l:@L> <expr:Expr> <r:@R> => L::new(l, r, expr),
+    <l:@L> <expr:Expr> <r:@R> => L::new(module, l, r, expr),
 }
 
 Expr: Expr = {
@@ -342,23 +343,23 @@ Expr: Expr = {
         Expr::Int(i32::from_str_radix(&int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
 
     <string:StringLit> =>
-        Expr::String(parse_string_parts(&string.text[1..string.text.len() - 1])),
+        Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1])),
 
     <l:@L> <array:Expr> <r:@R> "[" <index:LExpr> "]" =>
         Expr::ArrayIndex(ArrayIndexExpr {
-            array: Box::new(L::new(l, r, array)),
+            array: Box::new(L::new(module, l, r, array)),
             index: Box::new(index),
         }),
 
     <l:@L> <fun:Expr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
         Expr::Call(CallExpr {
-            fun: Box::new(L::new(l, r, fun)),
+            fun: Box::new(L::new(module, l, r, fun)),
             args,
         }),
 
     <l:@L> <expr:Expr> <r:@R> "." <field:LowerId> =>
         Expr::FieldSelect(FieldSelectExpr {
-            object: Box::new(L::new(l, r, expr)),
+            object: Box::new(L::new(module, l, r, expr)),
             field: field.smol_str(),
         }),
 
@@ -377,21 +378,21 @@ Expr: Expr = {
     #[assoc(side = "left")]
     <l1:@L> <from:Expr> <r1:@R> ".." <l2:@L> <to:Expr> <r2:@R> =>
         Expr::Range(RangeExpr {
-            from: Box::new(L::new(l1, r1, from)),
-            to: Box::new(L::new(l2, r2, to)),
+            from: Box::new(L::new(module, l1, r1, from)),
+            to: Box::new(L::new(module, l2, r2, to)),
             inclusive: false,
         }),
 
     #[precedence(level = "2")]
     "!" <l:@L> <expr:Expr> <r:@R> =>
-        Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(l, r, expr)) }),
+        Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
     #[assoc(side = "left")]
     <l1:@L> <left:Expr> <r1:@R> "*" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Multiply,
         }),
 
@@ -399,15 +400,15 @@ Expr: Expr = {
     #[assoc(side = "left")]
     <l1:@L> <left:Expr> <r1:@R> "+" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Add,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> "-" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Subtract,
         }),
 
@@ -415,43 +416,43 @@ Expr: Expr = {
     #[assoc(side = "left")]
     <l1:@L> <left:Expr> <r1:@R> "==" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Equal,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> "!=" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::NotEqual,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> "<" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Lt,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> ">" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Gt,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> "<=" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::LtEq,
         }),
 
     <l1:@L> <left:Expr> <r1:@R> ">=" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::GtEq,
         }),
 
@@ -459,8 +460,8 @@ Expr: Expr = {
     #[assoc(side = "left")]
     <l1:@L> <left:Expr> <r1:@R> "&&" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::And,
         }),
 
@@ -468,8 +469,8 @@ Expr: Expr = {
     #[assoc(side = "left")]
     <l1:@L> <left:Expr> <r1:@R> "||" <l2:@L> <right:Expr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
-            left: Box::new(L::new(l1, r1, left)),
-            right: Box::new(L::new(l2, r2, right)),
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Or,
         }),
 }
@@ -503,7 +504,7 @@ CallArg: CallArg = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 LPat: L<Pat> = {
-    <l:@L> <pat:Pat> <r:@R> => L::new(l, r, pat),
+    <l:@L> <pat:Pat> <r:@R> => L::new(module, l, r, pat),
 }
 
 Pat: Pat = {
@@ -553,7 +554,7 @@ PatternField: (Option<SmolStr>, L<Pat>) = {
 
 ImportDecl: L<ImportDecl> = {
     <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R>=>
-        L::new(l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
+        L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -568,8 +569,8 @@ pub TopDecls: Vec<L<TopDecl>> = {
 
 TopDecl: L<TopDecl> = {
     NEWLINE* <l:@L> <type_decl:TypeDecl> <r:@R> =>
-        L::new(l, r, TopDecl::Type(type_decl)),
+        L::new(module, l, r, TopDecl::Type(type_decl)),
 
     NEWLINE* <l:@L> <fun_decl:FunDecl> <r:@R> =>
-        L::new(l, r, TopDecl::Fun(fun_decl)),
+        L::new(module, l, r, TopDecl::Fun(fun_decl)),
 }

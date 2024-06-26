@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.20.2"
-// sha3: e2b4f1dbc42b98fb06fc9297f5751e89e092f45892b13636693fb6bc82759598
+// sha3: f72bde9e4c1806c8e53fb7b1133900ffa4d2975b0e4baa6238f96c38ba8516da
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -8,6 +8,7 @@ use crate::token::{Token, TokenKind};
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
 use std::convert::Infallible;
+use std::rc::Rc;
 #[allow(unused_extern_crates)]
 extern crate lalrpop_util as __lalrpop_util;
 #[allow(unused_imports)]
@@ -23,6 +24,7 @@ mod __parse__LExpr {
     use crate::token::{TokenKind, Token};
     use crate::interpolation::parse_string_parts;
     use std::convert::Infallible;
+    use std::rc::Rc;
     use lexgen_util::{LexerError, Loc};
     use smol_str::SmolStr;
     #[allow(unused_extern_crates)]
@@ -508,25 +510,27 @@ mod __parse__LExpr {
         }).collect()
     }
     fn __expected_tokens_from_states<
+        'a,
     >(
         __states: &[i16],
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> alloc::vec::Vec<alloc::string::String>
     {
         __TERMINAL.iter().enumerate().filter_map(|(index, terminal)| {
-            if __accepts(None, __states, Some(index), core::marker::PhantomData::<()>) {
+            if __accepts(None, __states, Some(index), core::marker::PhantomData::<(&())>) {
                 Some(alloc::string::ToString::to_string(terminal))
             } else {
                 None
             }
         }).collect()
     }
-    struct __StateMachine<>
+    struct __StateMachine<'a>
     where 
     {
-        __phantom: core::marker::PhantomData<()>,
+        module: &'a Rc<str>,
+        __phantom: core::marker::PhantomData<(&'a ())>,
     }
-    impl<> __state_machine::ParserDefinition for __StateMachine<>
+    impl<'a> __state_machine::ParserDefinition for __StateMachine<'a>
     where 
     {
         type Location = Loc;
@@ -552,7 +556,7 @@ mod __parse__LExpr {
 
         #[inline]
         fn token_to_index(&self, token: &Self::Token) -> Option<usize> {
-            __token_to_integer(token, core::marker::PhantomData::<()>)
+            __token_to_integer(token, core::marker::PhantomData::<(&())>)
         }
 
         #[inline]
@@ -576,7 +580,7 @@ mod __parse__LExpr {
         }
 
         fn token_to_symbol(&self, token_index: usize, token: Self::Token) -> Self::Symbol {
-            __token_to_symbol(token_index, token, core::marker::PhantomData::<()>)
+            __token_to_symbol(token_index, token, core::marker::PhantomData::<(&())>)
         }
 
         fn expected_tokens(&self, state: i16) -> alloc::vec::Vec<alloc::string::String> {
@@ -584,7 +588,7 @@ mod __parse__LExpr {
         }
 
         fn expected_tokens_from_states(&self, states: &[i16]) -> alloc::vec::Vec<alloc::string::String> {
-            __expected_tokens_from_states(states, core::marker::PhantomData::<()>)
+            __expected_tokens_from_states(states, core::marker::PhantomData::<(&())>)
         }
 
         #[inline]
@@ -608,22 +612,24 @@ mod __parse__LExpr {
             symbols: &mut alloc::vec::Vec<__state_machine::SymbolTriple<Self>>,
         ) -> Option<__state_machine::ParseResult<Self>> {
             __reduce(
+                self.module,
                 action,
                 start_location,
                 states,
                 symbols,
-                core::marker::PhantomData::<()>,
+                core::marker::PhantomData::<(&())>,
             )
         }
 
         fn simulate_reduce(&self, action: i16) -> __state_machine::SimulatedReduce<Self> {
-            __simulate_reduce(action, core::marker::PhantomData::<()>)
+            __simulate_reduce(action, core::marker::PhantomData::<(&())>)
         }
     }
     fn __token_to_integer<
+        'a,
     >(
         __token: &Token,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<usize>
     {
         match *__token {
@@ -677,10 +683,11 @@ mod __parse__LExpr {
         }
     }
     fn __token_to_symbol<
+        'a,
     >(
         __token_index: usize,
         __token: Token,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> __Symbol<>
     {
         #[allow(clippy::manual_range_patterns)]match __token_index {
@@ -689,10 +696,11 @@ mod __parse__LExpr {
         }
     }
     fn __simulate_reduce<
+        'a,
     >(
         __reduce_index: i16,
-        _: core::marker::PhantomData<()>,
-    ) -> __state_machine::SimulatedReduce<__StateMachine<>>
+        _: core::marker::PhantomData<(&'a ())>,
+    ) -> __state_machine::SimulatedReduce<__StateMachine<'a>>
     {
         match __reduce_index {
             0 => {
@@ -2309,10 +2317,12 @@ mod __parse__LExpr {
 
         #[allow(dead_code)]
         pub fn parse<
-            __TOKEN: __ToTriple<>,
+            'a,
+            __TOKEN: __ToTriple<'a, >,
             __TOKENS: IntoIterator<Item=__TOKEN>,
         >(
             &self,
+            module: &'a Rc<str>,
             __tokens0: __TOKENS,
         ) -> Result<L<Expr>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
@@ -2320,18 +2330,20 @@ mod __parse__LExpr {
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
             __state_machine::Parser::drive(
                 __StateMachine {
-                    __phantom: core::marker::PhantomData::<()>,
+                    module,
+                    __phantom: core::marker::PhantomData::<(&())>,
                 },
                 __tokens,
             )
         }
     }
     fn __accepts<
+        'a,
     >(
         __error_state: Option<i16>,
         __states: &[i16],
         __opt_integer: Option<usize>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> bool
     {
         let mut __states = __states.to_vec();
@@ -2345,7 +2357,7 @@ mod __parse__LExpr {
             };
             if __action == 0 { return false; }
             if __action > 0 { return true; }
-            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<()>) {
+            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<(&())>) {
                 __state_machine::SimulatedReduce::Reduce {
                     states_to_pop, nonterminal_produced
                 } => (states_to_pop, nonterminal_produced),
@@ -2359,820 +2371,822 @@ mod __parse__LExpr {
         }
     }
     fn __reduce<
+        'a,
     >(
+        module: &'a Rc<str>,
         __action: i16,
         __lookahead_start: Option<&Loc>,
         __states: &mut alloc::vec::Vec<i16>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<Result<L<Expr>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
-                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce0(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             1 => {
-                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce1(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             2 => {
-                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce2(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             3 => {
-                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce3(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             4 => {
-                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce4(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             5 => {
-                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce5(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             6 => {
-                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce6(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             7 => {
-                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce7(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             8 => {
-                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce8(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             9 => {
-                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce9(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             10 => {
-                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce10(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             11 => {
-                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce11(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             12 => {
-                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce12(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             13 => {
-                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce13(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             14 => {
-                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce14(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             15 => {
-                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce15(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             16 => {
-                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce16(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             17 => {
-                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce17(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             18 => {
-                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce18(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             19 => {
-                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce19(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             20 => {
-                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce20(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             21 => {
-                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce21(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             22 => {
-                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce22(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             23 => {
-                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce23(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             24 => {
-                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce24(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             25 => {
-                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce25(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             26 => {
-                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce26(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             27 => {
-                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce27(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             28 => {
-                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce28(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             29 => {
-                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce29(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             30 => {
-                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce30(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             31 => {
-                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce31(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             32 => {
-                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce32(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             33 => {
-                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce33(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             34 => {
-                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce34(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             35 => {
-                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce35(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             36 => {
-                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce36(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             37 => {
-                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce37(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             38 => {
-                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce38(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             39 => {
-                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce39(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             40 => {
-                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce40(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             41 => {
-                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce41(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             42 => {
-                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce42(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             43 => {
-                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce43(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             44 => {
-                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce44(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             45 => {
-                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce45(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             46 => {
-                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce46(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             47 => {
-                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce47(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             48 => {
-                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce48(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             49 => {
-                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce49(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             50 => {
-                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce50(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             51 => {
-                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce51(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             52 => {
-                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce52(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             53 => {
-                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce53(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             54 => {
-                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce54(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             55 => {
-                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce55(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             56 => {
-                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce56(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             57 => {
-                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce57(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             58 => {
-                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce58(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             59 => {
-                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce59(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             60 => {
-                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce60(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             61 => {
-                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce61(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             62 => {
-                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce62(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             63 => {
-                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce63(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             64 => {
-                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce64(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             65 => {
-                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce65(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             66 => {
-                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce66(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             67 => {
-                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce67(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             68 => {
-                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce68(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             69 => {
-                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce69(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             70 => {
-                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce70(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             71 => {
-                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce71(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             72 => {
-                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce72(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             73 => {
-                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce73(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             74 => {
-                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce74(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             75 => {
-                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce75(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             76 => {
-                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce76(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             77 => {
-                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce77(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             78 => {
-                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce78(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             79 => {
-                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce79(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             80 => {
-                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce80(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             81 => {
-                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce81(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             82 => {
-                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce82(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             83 => {
-                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce83(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             84 => {
-                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce84(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             85 => {
-                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce85(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             86 => {
-                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce86(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             87 => {
-                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce87(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             88 => {
-                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce88(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             89 => {
-                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce89(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             90 => {
-                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce90(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             91 => {
-                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce91(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             92 => {
-                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce92(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             93 => {
-                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce93(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             94 => {
-                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce94(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             95 => {
-                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce95(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             96 => {
-                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce96(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             97 => {
-                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce97(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             98 => {
-                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce98(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             99 => {
-                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce99(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             100 => {
-                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce100(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             101 => {
-                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce101(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             102 => {
-                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce102(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             103 => {
-                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce103(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             104 => {
-                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce104(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             105 => {
-                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce105(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             106 => {
-                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce106(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             107 => {
-                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce107(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             108 => {
-                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce108(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             109 => {
-                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce109(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             110 => {
-                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce110(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             111 => {
-                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce111(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             112 => {
-                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce112(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             113 => {
-                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce113(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             114 => {
-                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce114(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             115 => {
-                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce115(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             116 => {
-                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce116(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             117 => {
-                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce117(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             118 => {
-                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce118(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             119 => {
-                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce119(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             120 => {
-                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce120(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             121 => {
-                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce121(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             122 => {
-                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce122(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             123 => {
-                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce123(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             124 => {
-                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce124(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             125 => {
-                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce125(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             126 => {
-                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce126(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             127 => {
-                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce127(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             128 => {
-                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce128(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             129 => {
-                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce129(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             130 => {
-                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce130(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             131 => {
-                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce131(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             132 => {
-                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce132(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             133 => {
-                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce133(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             134 => {
-                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce134(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             135 => {
-                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce135(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             136 => {
-                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce136(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             137 => {
-                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce137(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             138 => {
-                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce138(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             139 => {
-                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce139(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             140 => {
-                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce140(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             141 => {
-                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce141(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             142 => {
-                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce142(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             143 => {
-                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce143(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             144 => {
-                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce144(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             145 => {
-                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce145(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             146 => {
-                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce146(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             147 => {
-                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce147(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             148 => {
-                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce148(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             149 => {
-                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce149(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             150 => {
-                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce150(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             151 => {
-                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce151(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             152 => {
-                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce152(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             153 => {
-                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce153(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             154 => {
-                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce154(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             155 => {
-                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce155(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             156 => {
-                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce156(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             157 => {
-                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce157(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             158 => {
-                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce158(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             159 => {
-                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce159(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             160 => {
-                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce160(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             161 => {
-                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce161(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             162 => {
-                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce162(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             163 => {
-                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce163(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             164 => {
-                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce164(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             165 => {
-                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce165(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             166 => {
-                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce166(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             167 => {
-                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce167(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             168 => {
-                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce168(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             169 => {
-                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce169(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             170 => {
-                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce170(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             171 => {
-                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce171(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             172 => {
-                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce172(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             173 => {
-                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce173(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             174 => {
-                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce174(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             175 => {
-                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce175(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             176 => {
-                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce176(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             177 => {
-                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce177(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             178 => {
-                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce178(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             179 => {
-                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce179(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             180 => {
-                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce180(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             181 => {
-                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce181(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             182 => {
-                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce182(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             183 => {
-                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce183(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             184 => {
-                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce184(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             185 => {
-                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce185(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             186 => {
-                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce186(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             187 => {
-                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce187(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             188 => {
-                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce188(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             189 => {
-                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce189(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             190 => {
-                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce190(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             191 => {
-                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce191(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             192 => {
-                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce192(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             193 => {
-                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce193(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             194 => {
-                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce194(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             195 => {
-                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce195(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             196 => {
-                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce196(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             197 => {
-                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce197(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             198 => {
-                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce198(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             199 => {
-                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce199(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             200 => {
-                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce200(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             201 => {
-                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce201(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             202 => {
-                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce202(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             203 => {
-                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce203(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             204 => {
-                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce204(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             205 => {
-                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce205(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             206 => {
-                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce206(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             207 => {
-                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce207(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             208 => {
-                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce208(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             209 => {
-                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce209(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             210 => {
-                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce210(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             211 => {
-                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce211(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             212 => {
-                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce212(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             213 => {
-                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce213(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             214 => {
-                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce214(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             215 => {
-                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce215(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             216 => {
-                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce216(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             217 => {
-                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce217(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             218 => {
-                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce218(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             219 => {
-                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce219(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             220 => {
-                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce220(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             221 => {
-                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce221(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             222 => {
-                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce222(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             223 => {
-                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce223(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             224 => {
-                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce224(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             225 => {
-                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce225(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             226 => {
-                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce226(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             227 => {
-                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce227(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             228 => {
-                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce228(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             229 => {
-                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce229(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             230 => {
-                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce230(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             231 => {
-                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce231(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             232 => {
-                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce232(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             233 => {
-                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce233(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             234 => {
-                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce234(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             235 => {
-                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce235(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             236 => {
-                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce236(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             237 => {
-                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce237(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             238 => {
-                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce238(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             239 => {
-                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce239(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             240 => {
-                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce240(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             241 => {
-                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce241(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             242 => {
-                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce242(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             243 => {
-                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce243(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             244 => {
-                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce244(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             245 => {
-                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce245(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             246 => {
-                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce246(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             247 => {
-                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce247(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             248 => {
-                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce248(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             249 => {
-                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce249(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             250 => {
-                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce250(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             251 => {
-                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce251(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             252 => {
-                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce252(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             253 => {
-                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce253(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             254 => {
-                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce254(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             255 => {
-                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce255(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             256 => {
-                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce256(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             257 => {
-                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce257(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             258 => {
-                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce258(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             259 => {
-                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce259(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             260 => {
-                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce260(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             261 => {
-                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce261(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             262 => {
-                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce262(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             263 => {
-                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce263(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             264 => {
-                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce264(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             265 => {
                 // __LExpr = LExpr => ActionFn(0);
                 let __sym0 = __pop_Variant40(__symbols);
                 let __start = __sym0.0;
                 let __end = __sym0.2;
-                let __nt = super::__action0::<>(__sym0);
+                let __nt = super::__action0::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
             266 => {
-                __reduce266(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce266(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             _ => panic!("invalid action code {}", __action)
         };
@@ -3828,39 +3842,45 @@ mod __parse__LExpr {
         }
     }
     fn __reduce0<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ","? = "," => ActionFn(127);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action127::<>(__sym0);
+        let __nt = super::__action127::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 0)
     }
     fn __reduce1<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ","? =  => ActionFn(128);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action128::<>(&__start, &__end);
+        let __nt = super::__action128::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 0)
     }
     fn __reduce2<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>) = ":", Type => ActionFn(113);
@@ -3869,15 +3889,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action113::<>(__sym0, __sym1);
+        let __nt = super::__action113::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 1)
     }
     fn __reduce3<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? = ":", Type => ActionFn(201);
@@ -3886,29 +3908,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action201::<>(__sym0, __sym1);
+        let __nt = super::__action201::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (2, 2)
     }
     fn __reduce4<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? =  => ActionFn(112);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action112::<>(&__start, &__end);
+        let __nt = super::__action112::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (0, 2)
     }
     fn __reduce5<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]") = "[", Sep<Type, ",">, "]" => ActionFn(110);
@@ -3918,15 +3944,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action110::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action110::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (3, 3)
     }
     fn __reduce6<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? = "[", Sep<Type, ",">, "]" => ActionFn(208);
@@ -3936,29 +3964,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action208::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action208::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 4)
     }
     fn __reduce7<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? =  => ActionFn(109);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action109::<>(&__start, &__end);
+        let __nt = super::__action109::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (0, 4)
     }
     fn __reduce8<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT) = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(105);
@@ -3972,44 +4004,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action105::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action105::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (7, 5)
     }
     fn __reduce9<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* =  => ActionFn(103);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action103::<>(&__start, &__end);
+        let __nt = super::__action103::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (0, 6)
     }
     fn __reduce10<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(104);
         let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action104::<>(__sym0);
+        let __nt = super::__action104::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (1, 6)
     }
     fn __reduce11<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(213);
@@ -4023,15 +4061,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action213::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action213::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (7, 7)
     }
     fn __reduce12<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(214);
@@ -4046,15 +4086,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0;
         let __end = __sym7.2;
-        let __nt = super::__action214::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action214::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (8, 7)
     }
     fn __reduce13<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT) = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(102);
@@ -4067,15 +4109,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action102::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action102::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (6, 8)
     }
     fn __reduce14<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(217);
@@ -4088,29 +4132,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action217::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action217::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (6, 9)
     }
     fn __reduce15<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? =  => ActionFn(101);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action101::<>(&__start, &__end);
+        let __nt = super::__action101::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (0, 9)
     }
     fn __reduce16<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self", "," => ActionFn(197);
@@ -4119,30 +4167,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action197::<>(__sym0, __sym1);
+        let __nt = super::__action197::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (2, 10)
     }
     fn __reduce17<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self" => ActionFn(198);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action198::<>(__sym0);
+        let __nt = super::__action198::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 10)
     }
     fn __reduce18<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self", "," => ActionFn(222);
@@ -4151,44 +4203,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action222::<>(__sym0, __sym1);
+        let __nt = super::__action222::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (2, 11)
     }
     fn __reduce19<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self" => ActionFn(223);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action223::<>(__sym0);
+        let __nt = super::__action223::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (1, 11)
     }
     fn __reduce20<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? =  => ActionFn(117);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action117::<>(&__start, &__end);
+        let __nt = super::__action117::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (0, 11)
     }
     fn __reduce21<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",") = LowerId, ":", Type, "," => ActionFn(242);
@@ -4199,44 +4257,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action242::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action242::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (4, 12)
     }
     fn __reduce22<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* =  => ActionFn(149);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action149::<>(&__start, &__end);
+        let __nt = super::__action149::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (0, 13)
     }
     fn __reduce23<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(150);
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action150::<>(__sym0);
+        let __nt = super::__action150::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (1, 13)
     }
     fn __reduce24<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = LowerId, ":", Type, "," => ActionFn(244);
@@ -4247,15 +4311,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action244::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action244::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (4, 14)
     }
     fn __reduce25<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type, "," => ActionFn(245);
@@ -4267,15 +4333,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action245::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action245::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (5, 14)
     }
     fn __reduce26<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",") = CallArg, "," => ActionFn(167);
@@ -4284,44 +4352,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action167::<>(__sym0, __sym1);
+        let __nt = super::__action167::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (2, 15)
     }
     fn __reduce27<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* =  => ActionFn(165);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action165::<>(&__start, &__end);
+        let __nt = super::__action165::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (0, 16)
     }
     fn __reduce28<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(166);
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action166::<>(__sym0);
+        let __nt = super::__action166::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (1, 16)
     }
     fn __reduce29<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = CallArg, "," => ActionFn(248);
@@ -4330,15 +4404,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action248::<>(__sym0, __sym1);
+        let __nt = super::__action248::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (2, 17)
     }
     fn __reduce30<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = (<CallArg> ",")+, CallArg, "," => ActionFn(249);
@@ -4348,15 +4424,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action249::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action249::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (3, 17)
     }
     fn __reduce31<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>) = LowerId, ":", Type => ActionFn(115);
@@ -4366,15 +4444,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action115::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action115::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (3, 18)
     }
     fn __reduce32<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? = LowerId, ":", Type => ActionFn(243);
@@ -4384,29 +4464,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action243::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action243::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (3, 19)
     }
     fn __reduce33<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? =  => ActionFn(148);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action148::<>(&__start, &__end);
+        let __nt = super::__action148::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (0, 19)
     }
     fn __reduce34<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE) = NamedField, NEWLINE => ActionFn(126);
@@ -4415,15 +4499,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action126::<>(__sym0, __sym1);
+        let __nt = super::__action126::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (2, 20)
     }
     fn __reduce35<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = NamedField, NEWLINE => ActionFn(256);
@@ -4432,15 +4518,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action256::<>(__sym0, __sym1);
+        let __nt = super::__action256::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (2, 21)
     }
     fn __reduce36<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = (<NamedField> NEWLINE)+, NamedField, NEWLINE => ActionFn(257);
@@ -4450,15 +4538,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action257::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action257::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (3, 21)
     }
     fn __reduce37<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",") = ParenExpr, "," => ActionFn(162);
@@ -4467,44 +4557,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action162::<>(__sym0, __sym1);
+        let __nt = super::__action162::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (2, 22)
     }
     fn __reduce38<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* =  => ActionFn(160);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action160::<>(&__start, &__end);
+        let __nt = super::__action160::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (0, 23)
     }
     fn __reduce39<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(161);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action161::<>(__sym0);
+        let __nt = super::__action161::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (1, 23)
     }
     fn __reduce40<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = ParenExpr, "," => ActionFn(258);
@@ -4513,15 +4609,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action258::<>(__sym0, __sym1);
+        let __nt = super::__action258::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (2, 24)
     }
     fn __reduce41<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = (<ParenExpr> ",")+, ParenExpr, "," => ActionFn(259);
@@ -4531,15 +4629,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action259::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action259::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (3, 24)
     }
     fn __reduce42<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",") = PatternField, "," => ActionFn(172);
@@ -4548,44 +4648,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action172::<>(__sym0, __sym1);
+        let __nt = super::__action172::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (2, 25)
     }
     fn __reduce43<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* =  => ActionFn(170);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action170::<>(&__start, &__end);
+        let __nt = super::__action170::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (0, 26)
     }
     fn __reduce44<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* = (<PatternField> ",")+ => ActionFn(171);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action171::<>(__sym0);
+        let __nt = super::__action171::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 26)
     }
     fn __reduce45<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = PatternField, "," => ActionFn(262);
@@ -4594,15 +4700,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action262::<>(__sym0, __sym1);
+        let __nt = super::__action262::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 27)
     }
     fn __reduce46<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = (<PatternField> ",")+, PatternField, "," => ActionFn(263);
@@ -4612,15 +4720,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action263::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action263::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (3, 27)
     }
     fn __reduce47<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",") = RecordTypeField, "," => ActionFn(146);
@@ -4629,44 +4739,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action146::<>(__sym0, __sym1);
+        let __nt = super::__action146::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (2, 28)
     }
     fn __reduce48<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* =  => ActionFn(144);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action144::<>(&__start, &__end);
+        let __nt = super::__action144::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (0, 29)
     }
     fn __reduce49<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(145);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action145::<>(__sym0);
+        let __nt = super::__action145::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 29)
     }
     fn __reduce50<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = RecordTypeField, "," => ActionFn(266);
@@ -4675,15 +4791,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action266::<>(__sym0, __sym1);
+        let __nt = super::__action266::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (2, 30)
     }
     fn __reduce51<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = (<RecordTypeField> ",")+, RecordTypeField, "," => ActionFn(267);
@@ -4693,15 +4811,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action267::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action267::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (3, 30)
     }
     fn __reduce52<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",") = Type, "," => ActionFn(141);
@@ -4710,44 +4830,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action141::<>(__sym0, __sym1);
+        let __nt = super::__action141::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 31)
     }
     fn __reduce53<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* =  => ActionFn(139);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action139::<>(&__start, &__end);
+        let __nt = super::__action139::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (0, 32)
     }
     fn __reduce54<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* = (<Type> ",")+ => ActionFn(140);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action140::<>(__sym0);
+        let __nt = super::__action140::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (1, 32)
     }
     fn __reduce55<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = Type, "," => ActionFn(270);
@@ -4756,15 +4882,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action270::<>(__sym0, __sym1);
+        let __nt = super::__action270::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (2, 33)
     }
     fn __reduce56<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = (<Type> ",")+, Type, "," => ActionFn(271);
@@ -4774,15 +4902,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action271::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action271::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (3, 33)
     }
     fn __reduce57<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",") = UpperId, "," => ActionFn(136);
@@ -4791,44 +4921,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action136::<>(__sym0, __sym1);
+        let __nt = super::__action136::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 34)
     }
     fn __reduce58<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* =  => ActionFn(134);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action134::<>(&__start, &__end);
+        let __nt = super::__action134::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 35)
     }
     fn __reduce59<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* = (<UpperId> ",")+ => ActionFn(135);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action135::<>(__sym0);
+        let __nt = super::__action135::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 35)
     }
     fn __reduce60<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = UpperId, "," => ActionFn(274);
@@ -4837,15 +4973,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action274::<>(__sym0, __sym1);
+        let __nt = super::__action274::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 36)
     }
     fn __reduce61<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = (<UpperId> ",")+, UpperId, "," => ActionFn(275);
@@ -4855,15 +4993,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action275::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action275::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 36)
     }
     fn __reduce62<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".") = UpperId, "." => ActionFn(121);
@@ -4872,44 +5012,50 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action121::<>(__sym0, __sym1);
+        let __nt = super::__action121::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 37)
     }
     fn __reduce63<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* =  => ActionFn(175);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action175::<>(&__start, &__end);
+        let __nt = super::__action175::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 38)
     }
     fn __reduce64<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* = (<UpperId> ".")+ => ActionFn(176);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action176::<>(__sym0);
+        let __nt = super::__action176::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 38)
     }
     fn __reduce65<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = UpperId, "." => ActionFn(278);
@@ -4918,15 +5064,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action278::<>(__sym0, __sym1);
+        let __nt = super::__action278::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 39)
     }
     fn __reduce66<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = (<UpperId> ".")+, UpperId, "." => ActionFn(279);
@@ -4936,15 +5084,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action279::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action279::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 39)
     }
     fn __reduce67<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? = UpperId, "." => ActionFn(280);
@@ -4953,57 +5103,65 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action280::<>(__sym0, __sym1);
+        let __nt = super::__action280::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (2, 40)
     }
     fn __reduce68<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? =  => ActionFn(120);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action120::<>(&__start, &__end);
+        let __nt = super::__action120::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 40)
     }
     fn __reduce69<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // @L =  => ActionFn(133);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action133::<>(&__start, &__end);
+        let __nt = super::__action133::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (0, 41)
     }
     fn __reduce70<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // @R =  => ActionFn(132);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action132::<>(&__start, &__end);
+        let __nt = super::__action132::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (0, 42)
     }
     fn __reduce71<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(33);
@@ -5016,15 +5174,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action33::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action33::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (6, 43)
     }
     fn __reduce72<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", LStmt => ActionFn(34);
@@ -5034,59 +5194,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action34::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action34::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (3, 43)
     }
     fn __reduce73<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt* =  => ActionFn(98);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action98::<>(&__start, &__end);
+        let __nt = super::__action98::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (0, 44)
     }
     fn __reduce74<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt* = Alt+ => ActionFn(99);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action99::<>(__sym0);
+        let __nt = super::__action99::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (1, 44)
     }
     fn __reduce75<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt => ActionFn(156);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action156::<>(__sym0);
+        let __nt = super::__action156::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (1, 45)
     }
     fn __reduce76<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt+, Alt => ActionFn(157);
@@ -5095,89 +5263,101 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action157::<>(__sym0, __sym1);
+        let __nt = super::__action157::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (2, 45)
     }
     fn __reduce77<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alts =  => ActionFn(437);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action437::<>(&__start, &__end);
+        let __nt = super::__action437::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (0, 46)
     }
     fn __reduce78<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alts = Alt+ => ActionFn(438);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action438::<>(__sym0);
+        let __nt = super::__action438::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (1, 46)
     }
     fn __reduce79<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "=" => ActionFn(35);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action35::<>(__sym0);
+        let __nt = super::__action35::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce80<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "+=" => ActionFn(36);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action36::<>(__sym0);
+        let __nt = super::__action36::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce81<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "-=" => ActionFn(37);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action37::<>(__sym0);
+        let __nt = super::__action37::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce82<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg = LowerId, "=", LExpr => ActionFn(71);
@@ -5187,74 +5367,84 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action71::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action71::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (3, 48)
     }
     fn __reduce83<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg = LExpr => ActionFn(72);
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action72::<>(__sym0);
+        let __nt = super::__action72::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (1, 48)
     }
     fn __reduce84<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg? = CallArg => ActionFn(163);
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action163::<>(__sym0);
+        let __nt = super::__action163::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (1, 49)
     }
     fn __reduce85<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg? =  => ActionFn(164);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action164::<>(&__start, &__end);
+        let __nt = super::__action164::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (0, 49)
     }
     fn __reduce86<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor => ActionFn(82);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action82::<>(__sym0);
+        let __nt = super::__action82::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (1, 50)
     }
     fn __reduce87<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor, "(", Sep<PatternField, ",">, ")" => ActionFn(83);
@@ -5265,15 +5455,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action83::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action83::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (4, 50)
     }
     fn __reduce88<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId, ".", UpperId => ActionFn(80);
@@ -5283,30 +5475,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action80::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action80::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (3, 51)
     }
     fn __reduce89<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId => ActionFn(81);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action81::<>(__sym0);
+        let __nt = super::__action81::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (1, 51)
     }
     fn __reduce90<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, NEWLINE => ActionFn(8);
@@ -5315,15 +5511,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action8::<>(__sym0, __sym1);
+        let __nt = super::__action8::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (2, 52)
     }
     fn __reduce91<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(9);
@@ -5336,15 +5534,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action9::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action9::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (6, 52)
     }
     fn __reduce92<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ",", ")", NEWLINE => ActionFn(199);
@@ -5357,15 +5557,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action199::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action199::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (6, 52)
     }
     fn __reduce93<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ")", NEWLINE => ActionFn(200);
@@ -5377,30 +5579,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action200::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action200::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (5, 52)
     }
     fn __reduce94<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl => ActionFn(129);
         let __sym0 = __pop_Variant35(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action129::<>(__sym0);
+        let __nt = super::__action129::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (1, 53)
     }
     fn __reduce95<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl+, ConstructorDecl => ActionFn(130);
@@ -5409,15 +5615,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action130::<>(__sym0, __sym1);
+        let __nt = super::__action130::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (2, 53)
     }
     fn __reduce96<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr = Expr, "||", Expr6 => ActionFn(378);
@@ -5427,75 +5635,85 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action378::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action378::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 54)
     }
     fn __reduce97<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr = Expr6 => ActionFn(68);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action68::<>(__sym0);
+        let __nt = super::__action68::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 54)
     }
     fn __reduce98<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = "self" => ActionFn(39);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action39::<>(__sym0);
+        let __nt = super::__action39::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce99<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = LowerId => ActionFn(40);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action40::<>(__sym0);
+        let __nt = super::__action40::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce100<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = UpperId => ActionFn(41);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action41::<>(__sym0);
+        let __nt = super::__action41::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce101<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = "(", Sep<ParenExpr, ",">, ")" => ActionFn(42);
@@ -5505,45 +5723,51 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action42::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action42::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce102<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = IntLit => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action43::<>(__sym0);
+        let __nt = super::__action43::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce103<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = StringLit => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action44::<>(__sym0);
+        let __nt = super::__action44::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce104<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "[", LExpr, "]" => ActionFn(379);
@@ -5554,15 +5778,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action379::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action379::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (4, 55)
     }
     fn __reduce105<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "(", Sep<CallArg, ",">, ")" => ActionFn(380);
@@ -5573,15 +5799,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action380::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action380::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (4, 55)
     }
     fn __reduce106<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", LowerId => ActionFn(381);
@@ -5591,15 +5819,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action381::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action381::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce107<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", UpperId => ActionFn(48);
@@ -5609,15 +5839,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action48::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action48::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce108<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr1, "..", Expr0 => ActionFn(382);
@@ -5627,30 +5859,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action382::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action382::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 56)
     }
     fn __reduce109<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr0 => ActionFn(50);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action50::<>(__sym0);
+        let __nt = super::__action50::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 56)
     }
     fn __reduce110<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr2 = "!", Expr2 => ActionFn(383);
@@ -5659,30 +5895,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action383::<>(__sym0, __sym1);
+        let __nt = super::__action383::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (2, 57)
     }
     fn __reduce111<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr2 = Expr1 => ActionFn(52);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action52::<>(__sym0);
+        let __nt = super::__action52::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 57)
     }
     fn __reduce112<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr3, "*", Expr2 => ActionFn(384);
@@ -5692,30 +5932,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action384::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action384::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 58)
     }
     fn __reduce113<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr2 => ActionFn(54);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action54::<>(__sym0);
+        let __nt = super::__action54::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 58)
     }
     fn __reduce114<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "+", Expr3 => ActionFn(385);
@@ -5725,15 +5969,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action385::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action385::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 59)
     }
     fn __reduce115<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "-", Expr3 => ActionFn(386);
@@ -5743,30 +5989,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action386::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action386::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 59)
     }
     fn __reduce116<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr3 => ActionFn(57);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action57::<>(__sym0);
+        let __nt = super::__action57::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 59)
     }
     fn __reduce117<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "==", Expr4 => ActionFn(387);
@@ -5776,15 +6026,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action387::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action387::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce118<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "!=", Expr4 => ActionFn(388);
@@ -5794,15 +6046,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action388::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action388::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce119<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<", Expr4 => ActionFn(389);
@@ -5812,15 +6066,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action389::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action389::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce120<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">", Expr4 => ActionFn(390);
@@ -5830,15 +6086,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action390::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action390::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce121<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<=", Expr4 => ActionFn(391);
@@ -5848,15 +6106,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action391::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action391::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce122<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">=", Expr4 => ActionFn(392);
@@ -5866,30 +6126,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action392::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action392::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce123<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr4 => ActionFn(64);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action64::<>(__sym0);
+        let __nt = super::__action64::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 60)
     }
     fn __reduce124<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr6, "&&", Expr5 => ActionFn(393);
@@ -5899,30 +6163,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action393::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action393::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 61)
     }
     fn __reduce125<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr5 => ActionFn(66);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action66::<>(__sym0);
+        let __nt = super::__action66::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 61)
     }
     fn __reduce126<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(394);
@@ -5945,15 +6213,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action394::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action394::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce127<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(395);
@@ -5974,15 +6244,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action395::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action395::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce128<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(396);
@@ -6004,15 +6276,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action396::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action396::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce129<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(397);
@@ -6032,15 +6306,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action397::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action397::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce130<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(398);
@@ -6061,15 +6337,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action398::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action398::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce131<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(399);
@@ -6088,15 +6366,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action399::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action399::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce132<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(400);
@@ -6117,15 +6397,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action400::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action400::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce133<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(401);
@@ -6144,15 +6426,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action401::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action401::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce134<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(402);
@@ -6172,15 +6456,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action402::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action402::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce135<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(403);
@@ -6198,15 +6484,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym10.2;
-        let __nt = super::__action403::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
+        let __nt = super::__action403::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (11, 62)
     }
     fn __reduce136<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(404);
@@ -6225,15 +6513,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action404::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action404::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce137<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(405);
@@ -6250,15 +6540,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym9.2;
-        let __nt = super::__action405::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action405::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (10, 62)
     }
     fn __reduce138<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(406);
@@ -6287,15 +6579,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym21.2;
-        let __nt = super::__action406::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20, __sym21);
+        let __nt = super::__action406::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20, __sym21);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (22, 62)
     }
     fn __reduce139<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(407);
@@ -6322,15 +6616,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action407::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action407::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce140<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(408);
@@ -6358,15 +6654,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym20.2;
-        let __nt = super::__action408::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20);
+        let __nt = super::__action408::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (21, 62)
     }
     fn __reduce141<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(409);
@@ -6392,15 +6690,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action409::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action409::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce142<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(410);
@@ -6427,15 +6727,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action410::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action410::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce143<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(411);
@@ -6460,15 +6762,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action411::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action411::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce144<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(412);
@@ -6494,15 +6798,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action412::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action412::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce145<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(413);
@@ -6526,15 +6832,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action413::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action413::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce146<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(414);
@@ -6559,15 +6867,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action414::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action414::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce147<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(415);
@@ -6590,15 +6900,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action415::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action415::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce148<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(416);
@@ -6622,15 +6934,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action416::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action416::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce149<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(417);
@@ -6652,15 +6966,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action417::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action417::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce150<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(418);
@@ -6687,15 +7003,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action418::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action418::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce151<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(419);
@@ -6720,15 +7038,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action419::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action419::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce152<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(420);
@@ -6754,15 +7074,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action420::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action420::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce153<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(421);
@@ -6786,15 +7108,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action421::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action421::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce154<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(422);
@@ -6819,15 +7143,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action422::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action422::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce155<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(423);
@@ -6850,15 +7176,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action423::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action423::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce156<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(424);
@@ -6882,15 +7210,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action424::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action424::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce157<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(425);
@@ -6912,15 +7242,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action425::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action425::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce158<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(426);
@@ -6943,15 +7275,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action426::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action426::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce159<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(427);
@@ -6972,15 +7306,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action427::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action427::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce160<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(428);
@@ -7002,15 +7338,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action428::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action428::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce161<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(429);
@@ -7030,15 +7368,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action429::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action429::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce162<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ImportDecl = "import", Sep<UpperId, ".">, NEWLINE => ActionFn(430);
@@ -7048,104 +7388,118 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action430::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action430::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (3, 63)
     }
     fn __reduce163<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LExpr = Expr => ActionFn(431);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action431::<>(__sym0);
+        let __nt = super::__action431::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 64)
     }
     fn __reduce164<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LPat = Pat => ActionFn(432);
         let __sym0 = __pop_Variant46(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action432::<>(__sym0);
+        let __nt = super::__action432::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant41(__nt), __end));
         (1, 65)
     }
     fn __reduce165<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt = Stmt => ActionFn(433);
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action433::<>(__sym0);
+        let __nt = super::__action433::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 66)
     }
     fn __reduce166<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt* =  => ActionFn(106);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action106::<>(&__start, &__end);
+        let __nt = super::__action106::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (0, 67)
     }
     fn __reduce167<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt* = LStmt+ => ActionFn(107);
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action107::<>(__sym0);
+        let __nt = super::__action107::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (1, 67)
     }
     fn __reduce168<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt => ActionFn(152);
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action152::<>(__sym0);
+        let __nt = super::__action152::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (1, 68)
     }
     fn __reduce169<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt+, LStmt => ActionFn(153);
@@ -7154,88 +7508,100 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action153::<>(__sym0, __sym1);
+        let __nt = super::__action153::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (2, 68)
     }
     fn __reduce170<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmts =  => ActionFn(443);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action443::<>(&__start, &__end);
+        let __nt = super::__action443::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (0, 69)
     }
     fn __reduce171<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmts = LStmt+ => ActionFn(444);
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action444::<>(__sym0);
+        let __nt = super::__action444::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (1, 69)
     }
     fn __reduce172<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE* =  => ActionFn(90);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action90::<>(&__start, &__end);
+        let __nt = super::__action90::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 70)
     }
     fn __reduce173<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE* = NEWLINE+ => ActionFn(91);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action91::<>(__sym0);
+        let __nt = super::__action91::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 70)
     }
     fn __reduce174<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE => ActionFn(179);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action179::<>(__sym0);
+        let __nt = super::__action179::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 71)
     }
     fn __reduce175<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE+, NEWLINE => ActionFn(180);
@@ -7244,15 +7610,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action180::<>(__sym0, __sym1);
+        let __nt = super::__action180::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 71)
     }
     fn __reduce176<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NamedField = LowerId, ":", Type => ActionFn(12);
@@ -7262,30 +7630,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action12::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action12::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (3, 72)
     }
     fn __reduce177<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NamedFields = (<NamedField> NEWLINE)+ => ActionFn(11);
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action11::<>(__sym0);
+        let __nt = super::__action11::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 73)
     }
     fn __reduce178<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr = LowerId, "=", LExpr => ActionFn(69);
@@ -7295,89 +7667,101 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action69::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action69::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (3, 74)
     }
     fn __reduce179<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr = LExpr => ActionFn(70);
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action70::<>(__sym0);
+        let __nt = super::__action70::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (1, 74)
     }
     fn __reduce180<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr? = ParenExpr => ActionFn(158);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action158::<>(__sym0);
+        let __nt = super::__action158::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (1, 75)
     }
     fn __reduce181<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr? =  => ActionFn(159);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action159::<>(&__start, &__end);
+        let __nt = super::__action159::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (0, 75)
     }
     fn __reduce182<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = LowerId => ActionFn(74);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action74::<>(__sym0);
+        let __nt = super::__action74::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce183<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = ConstrPattern => ActionFn(75);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action75::<>(__sym0);
+        let __nt = super::__action75::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce184<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = "(", Sep<PatternField, ",">, ")" => ActionFn(76);
@@ -7387,45 +7771,51 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action76::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action76::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (3, 76)
     }
     fn __reduce185<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = "_" => ActionFn(77);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action77::<>(__sym0);
+        let __nt = super::__action77::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce186<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = StringLit => ActionFn(78);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action78::<>(__sym0);
+        let __nt = super::__action78::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce187<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = StringLit, LowerId => ActionFn(79);
@@ -7434,15 +7824,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action79::<>(__sym0, __sym1);
+        let __nt = super::__action79::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (2, 76)
     }
     fn __reduce188<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField = LowerId, "=", LPat => ActionFn(84);
@@ -7452,59 +7844,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action84::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action84::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (3, 77)
     }
     fn __reduce189<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField = LPat => ActionFn(85);
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action85::<>(__sym0);
+        let __nt = super::__action85::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (1, 77)
     }
     fn __reduce190<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField? = PatternField => ActionFn(168);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action168::<>(__sym0);
+        let __nt = super::__action168::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (1, 78)
     }
     fn __reduce191<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField? =  => ActionFn(169);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action169::<>(&__start, &__end);
+        let __nt = super::__action169::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (0, 78)
     }
     fn __reduce192<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField = LowerId, ":", Type => ActionFn(18);
@@ -7514,59 +7914,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action18::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action18::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (3, 79)
     }
     fn __reduce193<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField = Type => ActionFn(19);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action19::<>(__sym0);
+        let __nt = super::__action19::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (1, 79)
     }
     fn __reduce194<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField? = RecordTypeField => ActionFn(142);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action142::<>(__sym0);
+        let __nt = super::__action142::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (1, 80)
     }
     fn __reduce195<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField? =  => ActionFn(143);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action143::<>(&__start, &__end);
+        let __nt = super::__action143::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (0, 80)
     }
     fn __reduce196<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = LowerId, ":", Type => ActionFn(252);
@@ -7576,29 +7984,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action252::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action252::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (3, 81)
     }
     fn __reduce197<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> =  => ActionFn(253);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action253::<>(&__start, &__end);
+        let __nt = super::__action253::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (0, 81)
     }
     fn __reduce198<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type => ActionFn(254);
@@ -7609,59 +8021,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action254::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action254::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (4, 81)
     }
     fn __reduce199<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(255);
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action255::<>(__sym0);
+        let __nt = super::__action255::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 81)
     }
     fn __reduce200<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(439);
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action439::<>(__sym0);
+        let __nt = super::__action439::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 82)
     }
     fn __reduce201<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> =  => ActionFn(440);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action440::<>(&__start, &__end);
+        let __nt = super::__action440::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (0, 82)
     }
     fn __reduce202<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(441);
@@ -7670,59 +8090,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action441::<>(__sym0, __sym1);
+        let __nt = super::__action441::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (2, 82)
     }
     fn __reduce203<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(442);
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action442::<>(__sym0);
+        let __nt = super::__action442::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 82)
     }
     fn __reduce204<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(449);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action449::<>(__sym0);
+        let __nt = super::__action449::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (1, 83)
     }
     fn __reduce205<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> =  => ActionFn(450);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action450::<>(&__start, &__end);
+        let __nt = super::__action450::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (0, 83)
     }
     fn __reduce206<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(451);
@@ -7731,59 +8159,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action451::<>(__sym0, __sym1);
+        let __nt = super::__action451::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 83)
     }
     fn __reduce207<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(452);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action452::<>(__sym0);
+        let __nt = super::__action452::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (1, 83)
     }
     fn __reduce208<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = PatternField => ActionFn(453);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action453::<>(__sym0);
+        let __nt = super::__action453::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 84)
     }
     fn __reduce209<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> =  => ActionFn(454);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action454::<>(&__start, &__end);
+        let __nt = super::__action454::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (0, 84)
     }
     fn __reduce210<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+, PatternField => ActionFn(455);
@@ -7792,59 +8228,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action455::<>(__sym0, __sym1);
+        let __nt = super::__action455::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (2, 84)
     }
     fn __reduce211<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+ => ActionFn(456);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action456::<>(__sym0);
+        let __nt = super::__action456::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 84)
     }
     fn __reduce212<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(457);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action457::<>(__sym0);
+        let __nt = super::__action457::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (1, 85)
     }
     fn __reduce213<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> =  => ActionFn(458);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action458::<>(&__start, &__end);
+        let __nt = super::__action458::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (0, 85)
     }
     fn __reduce214<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(459);
@@ -7853,59 +8297,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action459::<>(__sym0, __sym1);
+        let __nt = super::__action459::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (2, 85)
     }
     fn __reduce215<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(460);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action460::<>(__sym0);
+        let __nt = super::__action460::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (1, 85)
     }
     fn __reduce216<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = Type => ActionFn(463);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action463::<>(__sym0);
+        let __nt = super::__action463::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 86)
     }
     fn __reduce217<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> =  => ActionFn(464);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action464::<>(&__start, &__end);
+        let __nt = super::__action464::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (0, 86)
     }
     fn __reduce218<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+, Type => ActionFn(465);
@@ -7914,59 +8366,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action465::<>(__sym0, __sym1);
+        let __nt = super::__action465::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (2, 86)
     }
     fn __reduce219<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+ => ActionFn(466);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action466::<>(__sym0);
+        let __nt = super::__action466::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 86)
     }
     fn __reduce220<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = UpperId => ActionFn(467);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action467::<>(__sym0);
+        let __nt = super::__action467::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 87)
     }
     fn __reduce221<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> =  => ActionFn(468);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action468::<>(&__start, &__end);
+        let __nt = super::__action468::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (0, 87)
     }
     fn __reduce222<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+, UpperId => ActionFn(469);
@@ -7975,59 +8435,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action469::<>(__sym0, __sym1);
+        let __nt = super::__action469::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 87)
     }
     fn __reduce223<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+ => ActionFn(470);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action470::<>(__sym0);
+        let __nt = super::__action470::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 87)
     }
     fn __reduce224<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = UpperId => ActionFn(471);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action471::<>(__sym0);
+        let __nt = super::__action471::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 88)
     }
     fn __reduce225<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> =  => ActionFn(472);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action472::<>(&__start, &__end);
+        let __nt = super::__action472::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (0, 88)
     }
     fn __reduce226<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+, UpperId => ActionFn(473);
@@ -8036,30 +8504,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action473::<>(__sym0, __sym1);
+        let __nt = super::__action473::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 88)
     }
     fn __reduce227<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+ => ActionFn(474);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action474::<>(__sym0);
+        let __nt = super::__action474::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 88)
     }
     fn __reduce228<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, ":", Type, "=", LExpr, NEWLINE => ActionFn(206);
@@ -8073,15 +8545,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action206::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action206::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce229<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, "=", LExpr, NEWLINE => ActionFn(207);
@@ -8093,15 +8567,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action207::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action207::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (5, 89)
     }
     fn __reduce230<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(218);
@@ -8121,15 +8597,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action218::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action218::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (13, 89)
     }
     fn __reduce231<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(219);
@@ -8143,15 +8621,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action219::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action219::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce232<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(220);
@@ -8172,15 +8652,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action220::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action220::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (14, 89)
     }
     fn __reduce233<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(221);
@@ -8195,15 +8677,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym7.2;
-        let __nt = super::__action221::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action221::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (8, 89)
     }
     fn __reduce234<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, AssignOp, LExpr, NEWLINE => ActionFn(26);
@@ -8214,15 +8698,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action26::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action26::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (4, 89)
     }
     fn __reduce235<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, NEWLINE => ActionFn(27);
@@ -8231,15 +8717,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action27::<>(__sym0, __sym1);
+        let __nt = super::__action27::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (2, 89)
     }
     fn __reduce236<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "match", LExpr, ":", NEWLINE, INDENT, Alts, DEDENT => ActionFn(28);
@@ -8253,15 +8741,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action28::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action28::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce237<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "for", LowerId, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(29);
@@ -8277,15 +8767,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym8.2;
-        let __nt = super::__action29::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action29::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (9, 89)
     }
     fn __reduce238<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(30);
@@ -8299,15 +8791,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action30::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action30::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce239<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "return", LExpr, NEWLINE => ActionFn(31);
@@ -8317,30 +8811,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action31::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action31::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (3, 89)
     }
     fn __reduce240<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = TypeDecl => ActionFn(445);
         let __sym0 = __pop_Variant61(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action445::<>(__sym0);
+        let __nt = super::__action445::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 90)
     }
     fn __reduce241<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, TypeDecl => ActionFn(446);
@@ -8349,30 +8847,34 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action446::<>(__sym0, __sym1);
+        let __nt = super::__action446::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (2, 90)
     }
     fn __reduce242<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = FunDecl => ActionFn(447);
         let __sym0 = __pop_Variant38(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action447::<>(__sym0);
+        let __nt = super::__action447::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 90)
     }
     fn __reduce243<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, FunDecl => ActionFn(448);
@@ -8381,59 +8883,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action448::<>(__sym0, __sym1);
+        let __nt = super::__action448::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (2, 90)
     }
     fn __reduce244<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl* =  => ActionFn(92);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action92::<>(&__start, &__end);
+        let __nt = super::__action92::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (0, 91)
     }
     fn __reduce245<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl* = TopDecl+ => ActionFn(93);
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action93::<>(__sym0);
+        let __nt = super::__action93::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 91)
     }
     fn __reduce246<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl => ActionFn(177);
         let __sym0 = __pop_Variant57(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action177::<>(__sym0);
+        let __nt = super::__action177::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 92)
     }
     fn __reduce247<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl+, TopDecl => ActionFn(178);
@@ -8442,59 +8952,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action178::<>(__sym0, __sym1);
+        let __nt = super::__action178::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (2, 92)
     }
     fn __reduce248<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecls =  => ActionFn(461);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action461::<>(&__start, &__end);
+        let __nt = super::__action461::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (0, 93)
     }
     fn __reduce249<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecls = TopDecl+ => ActionFn(462);
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action462::<>(__sym0);
+        let __nt = super::__action462::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 93)
     }
     fn __reduce250<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = UpperId => ActionFn(15);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action15::<>(__sym0);
+        let __nt = super::__action15::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (1, 94)
     }
     fn __reduce251<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = UpperId, "[", Sep<Type, ",">, "]" => ActionFn(16);
@@ -8505,15 +9023,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action16::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action16::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (4, 94)
     }
     fn __reduce252<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = "(", Sep<RecordTypeField, ",">, ")" => ActionFn(17);
@@ -8523,59 +9043,67 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action17::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action17::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (3, 94)
     }
     fn __reduce253<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type? = Type => ActionFn(137);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action137::<>(__sym0);
+        let __nt = super::__action137::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (1, 95)
     }
     fn __reduce254<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type? =  => ActionFn(138);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action138::<>(&__start, &__end);
+        let __nt = super::__action138::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (0, 95)
     }
     fn __reduce255<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeConstrs = ConstructorDecl+ => ActionFn(7);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action7::<>(__sym0);
+        let __nt = super::__action7::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 96)
     }
     fn __reduce256<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDecl = "type", UpperId, TypeParams, TypeDeclRhs => ActionFn(436);
@@ -8586,15 +9114,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action436::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action436::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (4, 97)
     }
     fn __reduce257<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, TypeConstrs, DEDENT => ActionFn(3);
@@ -8606,15 +9136,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action3::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action3::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (5, 98)
     }
     fn __reduce258<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(4);
@@ -8626,29 +9158,33 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action4::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action4::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (5, 98)
     }
     fn __reduce259<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeParams =  => ActionFn(5);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action5::<>(&__start, &__end);
+        let __nt = super::__action5::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (0, 99)
     }
     fn __reduce260<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeParams = "[", Sep<UpperId, ",">, "]" => ActionFn(6);
@@ -8658,15 +9194,17 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action6::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action6::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (3, 99)
     }
     fn __reduce261<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UnnamedFields = UnnamedFields, ",", Type => ActionFn(13);
@@ -8676,66 +9214,74 @@ mod __parse__LExpr {
         let __sym0 = __pop_Variant54(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action13::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action13::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (3, 100)
     }
     fn __reduce262<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UnnamedFields = Type => ActionFn(14);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action14::<>(__sym0);
+        let __nt = super::__action14::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 100)
     }
     fn __reduce263<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UpperId? = UpperId => ActionFn(173);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action173::<>(__sym0);
+        let __nt = super::__action173::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 101)
     }
     fn __reduce264<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UpperId? =  => ActionFn(174);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action174::<>(&__start, &__end);
+        let __nt = super::__action174::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 101)
     }
     fn __reduce266<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // __TopDecls = TopDecls => ActionFn(1);
         let __sym0 = __pop_Variant59(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action1::<>(__sym0);
+        let __nt = super::__action1::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 103)
     }
@@ -8751,6 +9297,7 @@ mod __parse__TopDecls {
     use crate::token::{TokenKind, Token};
     use crate::interpolation::parse_string_parts;
     use std::convert::Infallible;
+    use std::rc::Rc;
     use lexgen_util::{LexerError, Loc};
     use smol_str::SmolStr;
     #[allow(unused_extern_crates)]
@@ -11387,25 +11934,27 @@ mod __parse__TopDecls {
         }).collect()
     }
     fn __expected_tokens_from_states<
+        'a,
     >(
         __states: &[i16],
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> alloc::vec::Vec<alloc::string::String>
     {
         __TERMINAL.iter().enumerate().filter_map(|(index, terminal)| {
-            if __accepts(None, __states, Some(index), core::marker::PhantomData::<()>) {
+            if __accepts(None, __states, Some(index), core::marker::PhantomData::<(&())>) {
                 Some(alloc::string::ToString::to_string(terminal))
             } else {
                 None
             }
         }).collect()
     }
-    struct __StateMachine<>
+    struct __StateMachine<'a>
     where 
     {
-        __phantom: core::marker::PhantomData<()>,
+        module: &'a Rc<str>,
+        __phantom: core::marker::PhantomData<(&'a ())>,
     }
-    impl<> __state_machine::ParserDefinition for __StateMachine<>
+    impl<'a> __state_machine::ParserDefinition for __StateMachine<'a>
     where 
     {
         type Location = Loc;
@@ -11431,7 +11980,7 @@ mod __parse__TopDecls {
 
         #[inline]
         fn token_to_index(&self, token: &Self::Token) -> Option<usize> {
-            __token_to_integer(token, core::marker::PhantomData::<()>)
+            __token_to_integer(token, core::marker::PhantomData::<(&())>)
         }
 
         #[inline]
@@ -11455,7 +12004,7 @@ mod __parse__TopDecls {
         }
 
         fn token_to_symbol(&self, token_index: usize, token: Self::Token) -> Self::Symbol {
-            __token_to_symbol(token_index, token, core::marker::PhantomData::<()>)
+            __token_to_symbol(token_index, token, core::marker::PhantomData::<(&())>)
         }
 
         fn expected_tokens(&self, state: i16) -> alloc::vec::Vec<alloc::string::String> {
@@ -11463,7 +12012,7 @@ mod __parse__TopDecls {
         }
 
         fn expected_tokens_from_states(&self, states: &[i16]) -> alloc::vec::Vec<alloc::string::String> {
-            __expected_tokens_from_states(states, core::marker::PhantomData::<()>)
+            __expected_tokens_from_states(states, core::marker::PhantomData::<(&())>)
         }
 
         #[inline]
@@ -11487,22 +12036,24 @@ mod __parse__TopDecls {
             symbols: &mut alloc::vec::Vec<__state_machine::SymbolTriple<Self>>,
         ) -> Option<__state_machine::ParseResult<Self>> {
             __reduce(
+                self.module,
                 action,
                 start_location,
                 states,
                 symbols,
-                core::marker::PhantomData::<()>,
+                core::marker::PhantomData::<(&())>,
             )
         }
 
         fn simulate_reduce(&self, action: i16) -> __state_machine::SimulatedReduce<Self> {
-            __simulate_reduce(action, core::marker::PhantomData::<()>)
+            __simulate_reduce(action, core::marker::PhantomData::<(&())>)
         }
     }
     fn __token_to_integer<
+        'a,
     >(
         __token: &Token,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<usize>
     {
         match *__token {
@@ -11556,10 +12107,11 @@ mod __parse__TopDecls {
         }
     }
     fn __token_to_symbol<
+        'a,
     >(
         __token_index: usize,
         __token: Token,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> __Symbol<>
     {
         #[allow(clippy::manual_range_patterns)]match __token_index {
@@ -11568,10 +12120,11 @@ mod __parse__TopDecls {
         }
     }
     fn __simulate_reduce<
+        'a,
     >(
         __reduce_index: i16,
-        _: core::marker::PhantomData<()>,
-    ) -> __state_machine::SimulatedReduce<__StateMachine<>>
+        _: core::marker::PhantomData<(&'a ())>,
+    ) -> __state_machine::SimulatedReduce<__StateMachine<'a>>
     {
         match __reduce_index {
             0 => {
@@ -13188,10 +13741,12 @@ mod __parse__TopDecls {
 
         #[allow(dead_code)]
         pub fn parse<
-            __TOKEN: __ToTriple<>,
+            'a,
+            __TOKEN: __ToTriple<'a, >,
             __TOKENS: IntoIterator<Item=__TOKEN>,
         >(
             &self,
+            module: &'a Rc<str>,
             __tokens0: __TOKENS,
         ) -> Result<Vec<L<TopDecl>>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
@@ -13199,18 +13754,20 @@ mod __parse__TopDecls {
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
             __state_machine::Parser::drive(
                 __StateMachine {
-                    __phantom: core::marker::PhantomData::<()>,
+                    module,
+                    __phantom: core::marker::PhantomData::<(&())>,
                 },
                 __tokens,
             )
         }
     }
     fn __accepts<
+        'a,
     >(
         __error_state: Option<i16>,
         __states: &[i16],
         __opt_integer: Option<usize>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> bool
     {
         let mut __states = __states.to_vec();
@@ -13224,7 +13781,7 @@ mod __parse__TopDecls {
             };
             if __action == 0 { return false; }
             if __action > 0 { return true; }
-            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<()>) {
+            let (__to_pop, __nt) = match __simulate_reduce(-(__action + 1), core::marker::PhantomData::<(&())>) {
                 __state_machine::SimulatedReduce::Reduce {
                     states_to_pop, nonterminal_produced
                 } => (states_to_pop, nonterminal_produced),
@@ -13238,819 +13795,821 @@ mod __parse__TopDecls {
         }
     }
     fn __reduce<
+        'a,
     >(
+        module: &'a Rc<str>,
         __action: i16,
         __lookahead_start: Option<&Loc>,
         __states: &mut alloc::vec::Vec<i16>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<Result<Vec<L<TopDecl>>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
-                __reduce0(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce0(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             1 => {
-                __reduce1(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce1(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             2 => {
-                __reduce2(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce2(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             3 => {
-                __reduce3(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce3(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             4 => {
-                __reduce4(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce4(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             5 => {
-                __reduce5(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce5(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             6 => {
-                __reduce6(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce6(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             7 => {
-                __reduce7(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce7(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             8 => {
-                __reduce8(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce8(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             9 => {
-                __reduce9(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce9(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             10 => {
-                __reduce10(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce10(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             11 => {
-                __reduce11(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce11(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             12 => {
-                __reduce12(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce12(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             13 => {
-                __reduce13(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce13(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             14 => {
-                __reduce14(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce14(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             15 => {
-                __reduce15(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce15(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             16 => {
-                __reduce16(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce16(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             17 => {
-                __reduce17(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce17(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             18 => {
-                __reduce18(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce18(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             19 => {
-                __reduce19(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce19(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             20 => {
-                __reduce20(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce20(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             21 => {
-                __reduce21(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce21(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             22 => {
-                __reduce22(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce22(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             23 => {
-                __reduce23(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce23(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             24 => {
-                __reduce24(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce24(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             25 => {
-                __reduce25(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce25(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             26 => {
-                __reduce26(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce26(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             27 => {
-                __reduce27(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce27(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             28 => {
-                __reduce28(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce28(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             29 => {
-                __reduce29(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce29(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             30 => {
-                __reduce30(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce30(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             31 => {
-                __reduce31(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce31(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             32 => {
-                __reduce32(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce32(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             33 => {
-                __reduce33(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce33(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             34 => {
-                __reduce34(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce34(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             35 => {
-                __reduce35(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce35(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             36 => {
-                __reduce36(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce36(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             37 => {
-                __reduce37(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce37(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             38 => {
-                __reduce38(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce38(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             39 => {
-                __reduce39(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce39(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             40 => {
-                __reduce40(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce40(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             41 => {
-                __reduce41(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce41(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             42 => {
-                __reduce42(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce42(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             43 => {
-                __reduce43(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce43(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             44 => {
-                __reduce44(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce44(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             45 => {
-                __reduce45(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce45(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             46 => {
-                __reduce46(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce46(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             47 => {
-                __reduce47(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce47(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             48 => {
-                __reduce48(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce48(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             49 => {
-                __reduce49(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce49(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             50 => {
-                __reduce50(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce50(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             51 => {
-                __reduce51(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce51(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             52 => {
-                __reduce52(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce52(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             53 => {
-                __reduce53(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce53(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             54 => {
-                __reduce54(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce54(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             55 => {
-                __reduce55(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce55(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             56 => {
-                __reduce56(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce56(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             57 => {
-                __reduce57(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce57(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             58 => {
-                __reduce58(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce58(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             59 => {
-                __reduce59(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce59(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             60 => {
-                __reduce60(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce60(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             61 => {
-                __reduce61(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce61(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             62 => {
-                __reduce62(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce62(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             63 => {
-                __reduce63(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce63(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             64 => {
-                __reduce64(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce64(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             65 => {
-                __reduce65(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce65(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             66 => {
-                __reduce66(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce66(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             67 => {
-                __reduce67(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce67(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             68 => {
-                __reduce68(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce68(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             69 => {
-                __reduce69(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce69(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             70 => {
-                __reduce70(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce70(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             71 => {
-                __reduce71(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce71(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             72 => {
-                __reduce72(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce72(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             73 => {
-                __reduce73(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce73(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             74 => {
-                __reduce74(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce74(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             75 => {
-                __reduce75(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce75(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             76 => {
-                __reduce76(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce76(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             77 => {
-                __reduce77(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce77(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             78 => {
-                __reduce78(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce78(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             79 => {
-                __reduce79(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce79(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             80 => {
-                __reduce80(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce80(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             81 => {
-                __reduce81(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce81(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             82 => {
-                __reduce82(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce82(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             83 => {
-                __reduce83(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce83(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             84 => {
-                __reduce84(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce84(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             85 => {
-                __reduce85(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce85(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             86 => {
-                __reduce86(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce86(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             87 => {
-                __reduce87(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce87(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             88 => {
-                __reduce88(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce88(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             89 => {
-                __reduce89(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce89(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             90 => {
-                __reduce90(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce90(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             91 => {
-                __reduce91(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce91(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             92 => {
-                __reduce92(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce92(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             93 => {
-                __reduce93(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce93(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             94 => {
-                __reduce94(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce94(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             95 => {
-                __reduce95(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce95(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             96 => {
-                __reduce96(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce96(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             97 => {
-                __reduce97(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce97(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             98 => {
-                __reduce98(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce98(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             99 => {
-                __reduce99(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce99(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             100 => {
-                __reduce100(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce100(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             101 => {
-                __reduce101(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce101(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             102 => {
-                __reduce102(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce102(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             103 => {
-                __reduce103(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce103(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             104 => {
-                __reduce104(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce104(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             105 => {
-                __reduce105(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce105(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             106 => {
-                __reduce106(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce106(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             107 => {
-                __reduce107(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce107(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             108 => {
-                __reduce108(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce108(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             109 => {
-                __reduce109(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce109(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             110 => {
-                __reduce110(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce110(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             111 => {
-                __reduce111(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce111(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             112 => {
-                __reduce112(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce112(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             113 => {
-                __reduce113(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce113(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             114 => {
-                __reduce114(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce114(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             115 => {
-                __reduce115(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce115(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             116 => {
-                __reduce116(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce116(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             117 => {
-                __reduce117(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce117(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             118 => {
-                __reduce118(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce118(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             119 => {
-                __reduce119(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce119(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             120 => {
-                __reduce120(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce120(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             121 => {
-                __reduce121(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce121(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             122 => {
-                __reduce122(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce122(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             123 => {
-                __reduce123(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce123(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             124 => {
-                __reduce124(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce124(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             125 => {
-                __reduce125(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce125(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             126 => {
-                __reduce126(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce126(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             127 => {
-                __reduce127(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce127(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             128 => {
-                __reduce128(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce128(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             129 => {
-                __reduce129(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce129(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             130 => {
-                __reduce130(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce130(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             131 => {
-                __reduce131(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce131(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             132 => {
-                __reduce132(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce132(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             133 => {
-                __reduce133(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce133(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             134 => {
-                __reduce134(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce134(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             135 => {
-                __reduce135(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce135(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             136 => {
-                __reduce136(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce136(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             137 => {
-                __reduce137(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce137(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             138 => {
-                __reduce138(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce138(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             139 => {
-                __reduce139(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce139(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             140 => {
-                __reduce140(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce140(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             141 => {
-                __reduce141(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce141(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             142 => {
-                __reduce142(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce142(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             143 => {
-                __reduce143(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce143(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             144 => {
-                __reduce144(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce144(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             145 => {
-                __reduce145(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce145(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             146 => {
-                __reduce146(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce146(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             147 => {
-                __reduce147(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce147(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             148 => {
-                __reduce148(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce148(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             149 => {
-                __reduce149(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce149(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             150 => {
-                __reduce150(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce150(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             151 => {
-                __reduce151(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce151(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             152 => {
-                __reduce152(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce152(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             153 => {
-                __reduce153(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce153(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             154 => {
-                __reduce154(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce154(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             155 => {
-                __reduce155(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce155(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             156 => {
-                __reduce156(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce156(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             157 => {
-                __reduce157(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce157(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             158 => {
-                __reduce158(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce158(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             159 => {
-                __reduce159(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce159(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             160 => {
-                __reduce160(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce160(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             161 => {
-                __reduce161(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce161(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             162 => {
-                __reduce162(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce162(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             163 => {
-                __reduce163(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce163(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             164 => {
-                __reduce164(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce164(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             165 => {
-                __reduce165(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce165(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             166 => {
-                __reduce166(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce166(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             167 => {
-                __reduce167(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce167(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             168 => {
-                __reduce168(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce168(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             169 => {
-                __reduce169(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce169(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             170 => {
-                __reduce170(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce170(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             171 => {
-                __reduce171(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce171(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             172 => {
-                __reduce172(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce172(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             173 => {
-                __reduce173(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce173(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             174 => {
-                __reduce174(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce174(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             175 => {
-                __reduce175(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce175(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             176 => {
-                __reduce176(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce176(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             177 => {
-                __reduce177(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce177(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             178 => {
-                __reduce178(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce178(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             179 => {
-                __reduce179(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce179(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             180 => {
-                __reduce180(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce180(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             181 => {
-                __reduce181(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce181(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             182 => {
-                __reduce182(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce182(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             183 => {
-                __reduce183(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce183(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             184 => {
-                __reduce184(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce184(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             185 => {
-                __reduce185(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce185(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             186 => {
-                __reduce186(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce186(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             187 => {
-                __reduce187(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce187(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             188 => {
-                __reduce188(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce188(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             189 => {
-                __reduce189(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce189(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             190 => {
-                __reduce190(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce190(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             191 => {
-                __reduce191(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce191(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             192 => {
-                __reduce192(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce192(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             193 => {
-                __reduce193(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce193(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             194 => {
-                __reduce194(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce194(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             195 => {
-                __reduce195(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce195(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             196 => {
-                __reduce196(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce196(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             197 => {
-                __reduce197(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce197(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             198 => {
-                __reduce198(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce198(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             199 => {
-                __reduce199(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce199(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             200 => {
-                __reduce200(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce200(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             201 => {
-                __reduce201(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce201(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             202 => {
-                __reduce202(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce202(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             203 => {
-                __reduce203(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce203(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             204 => {
-                __reduce204(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce204(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             205 => {
-                __reduce205(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce205(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             206 => {
-                __reduce206(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce206(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             207 => {
-                __reduce207(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce207(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             208 => {
-                __reduce208(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce208(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             209 => {
-                __reduce209(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce209(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             210 => {
-                __reduce210(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce210(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             211 => {
-                __reduce211(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce211(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             212 => {
-                __reduce212(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce212(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             213 => {
-                __reduce213(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce213(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             214 => {
-                __reduce214(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce214(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             215 => {
-                __reduce215(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce215(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             216 => {
-                __reduce216(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce216(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             217 => {
-                __reduce217(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce217(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             218 => {
-                __reduce218(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce218(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             219 => {
-                __reduce219(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce219(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             220 => {
-                __reduce220(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce220(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             221 => {
-                __reduce221(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce221(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             222 => {
-                __reduce222(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce222(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             223 => {
-                __reduce223(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce223(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             224 => {
-                __reduce224(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce224(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             225 => {
-                __reduce225(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce225(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             226 => {
-                __reduce226(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce226(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             227 => {
-                __reduce227(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce227(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             228 => {
-                __reduce228(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce228(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             229 => {
-                __reduce229(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce229(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             230 => {
-                __reduce230(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce230(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             231 => {
-                __reduce231(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce231(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             232 => {
-                __reduce232(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce232(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             233 => {
-                __reduce233(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce233(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             234 => {
-                __reduce234(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce234(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             235 => {
-                __reduce235(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce235(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             236 => {
-                __reduce236(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce236(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             237 => {
-                __reduce237(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce237(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             238 => {
-                __reduce238(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce238(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             239 => {
-                __reduce239(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce239(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             240 => {
-                __reduce240(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce240(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             241 => {
-                __reduce241(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce241(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             242 => {
-                __reduce242(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce242(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             243 => {
-                __reduce243(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce243(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             244 => {
-                __reduce244(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce244(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             245 => {
-                __reduce245(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce245(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             246 => {
-                __reduce246(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce246(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             247 => {
-                __reduce247(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce247(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             248 => {
-                __reduce248(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce248(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             249 => {
-                __reduce249(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce249(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             250 => {
-                __reduce250(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce250(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             251 => {
-                __reduce251(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce251(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             252 => {
-                __reduce252(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce252(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             253 => {
-                __reduce253(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce253(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             254 => {
-                __reduce254(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce254(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             255 => {
-                __reduce255(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce255(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             256 => {
-                __reduce256(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce256(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             257 => {
-                __reduce257(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce257(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             258 => {
-                __reduce258(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce258(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             259 => {
-                __reduce259(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce259(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             260 => {
-                __reduce260(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce260(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             261 => {
-                __reduce261(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce261(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             262 => {
-                __reduce262(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce262(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             263 => {
-                __reduce263(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce263(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             264 => {
-                __reduce264(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce264(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             265 => {
-                __reduce265(__lookahead_start, __symbols, core::marker::PhantomData::<()>)
+                __reduce265(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
             266 => {
                 // __TopDecls = TopDecls => ActionFn(1);
                 let __sym0 = __pop_Variant59(__symbols);
                 let __start = __sym0.0;
                 let __end = __sym0.2;
-                let __nt = super::__action1::<>(__sym0);
+                let __nt = super::__action1::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
             _ => panic!("invalid action code {}", __action)
@@ -14707,39 +15266,45 @@ mod __parse__TopDecls {
         }
     }
     fn __reduce0<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ","? = "," => ActionFn(127);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action127::<>(__sym0);
+        let __nt = super::__action127::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 0)
     }
     fn __reduce1<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ","? =  => ActionFn(128);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action128::<>(&__start, &__end);
+        let __nt = super::__action128::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 0)
     }
     fn __reduce2<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>) = ":", Type => ActionFn(113);
@@ -14748,15 +15313,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action113::<>(__sym0, __sym1);
+        let __nt = super::__action113::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 1)
     }
     fn __reduce3<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? = ":", Type => ActionFn(201);
@@ -14765,29 +15332,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action201::<>(__sym0, __sym1);
+        let __nt = super::__action201::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (2, 2)
     }
     fn __reduce4<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (":" <Type>)? =  => ActionFn(112);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action112::<>(&__start, &__end);
+        let __nt = super::__action112::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (0, 2)
     }
     fn __reduce5<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]") = "[", Sep<Type, ",">, "]" => ActionFn(110);
@@ -14797,15 +15368,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action110::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action110::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant4(__nt), __end));
         (3, 3)
     }
     fn __reduce6<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? = "[", Sep<Type, ",">, "]" => ActionFn(208);
@@ -14815,29 +15388,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action208::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action208::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (3, 4)
     }
     fn __reduce7<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("[" Sep<Type, ","> "]")? =  => ActionFn(109);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action109::<>(&__start, &__end);
+        let __nt = super::__action109::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant5(__nt), __end));
         (0, 4)
     }
     fn __reduce8<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT) = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(105);
@@ -14851,44 +15428,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action105::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action105::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant6(__nt), __end));
         (7, 5)
     }
     fn __reduce9<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* =  => ActionFn(103);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action103::<>(&__start, &__end);
+        let __nt = super::__action103::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (0, 6)
     }
     fn __reduce10<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)* = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(104);
         let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action104::<>(__sym0);
+        let __nt = super::__action104::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (1, 6)
     }
     fn __reduce11<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(213);
@@ -14902,15 +15485,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action213::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action213::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (7, 7)
     }
     fn __reduce12<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ = ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "elif", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(214);
@@ -14925,15 +15510,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant7(__symbols);
         let __start = __sym0.0;
         let __end = __sym7.2;
-        let __nt = super::__action214::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action214::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant7(__nt), __end));
         (8, 7)
     }
     fn __reduce13<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT) = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(102);
@@ -14946,15 +15533,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action102::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action102::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (6, 8)
     }
     fn __reduce14<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? = "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(217);
@@ -14967,29 +15556,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action217::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action217::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (6, 9)
     }
     fn __reduce15<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("else" ":" NEWLINE INDENT <LStmts> DEDENT)? =  => ActionFn(101);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action101::<>(&__start, &__end);
+        let __nt = super::__action101::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant9(__nt), __end));
         (0, 9)
     }
     fn __reduce16<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self", "," => ActionFn(197);
@@ -14998,30 +15591,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action197::<>(__sym0, __sym1);
+        let __nt = super::__action197::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (2, 10)
     }
     fn __reduce17<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?) = "self" => ActionFn(198);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action198::<>(__sym0);
+        let __nt = super::__action198::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant10(__nt), __end));
         (1, 10)
     }
     fn __reduce18<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self", "," => ActionFn(222);
@@ -15030,44 +15627,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action222::<>(__sym0, __sym1);
+        let __nt = super::__action222::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (2, 11)
     }
     fn __reduce19<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? = "self" => ActionFn(223);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action223::<>(__sym0);
+        let __nt = super::__action223::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (1, 11)
     }
     fn __reduce20<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ("self" ","?)? =  => ActionFn(117);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action117::<>(&__start, &__end);
+        let __nt = super::__action117::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant11(__nt), __end));
         (0, 11)
     }
     fn __reduce21<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",") = LowerId, ":", Type, "," => ActionFn(242);
@@ -15078,44 +15681,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action242::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action242::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (4, 12)
     }
     fn __reduce22<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* =  => ActionFn(149);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action149::<>(&__start, &__end);
+        let __nt = super::__action149::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (0, 13)
     }
     fn __reduce23<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")* = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(150);
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action150::<>(__sym0);
+        let __nt = super::__action150::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (1, 13)
     }
     fn __reduce24<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = LowerId, ":", Type, "," => ActionFn(244);
@@ -15126,15 +15735,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action244::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action244::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (4, 14)
     }
     fn __reduce25<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<(<LowerId> ":" <Type>)> ",")+ = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type, "," => ActionFn(245);
@@ -15146,15 +15757,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action245::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action245::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant13(__nt), __end));
         (5, 14)
     }
     fn __reduce26<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",") = CallArg, "," => ActionFn(167);
@@ -15163,44 +15776,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action167::<>(__sym0, __sym1);
+        let __nt = super::__action167::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (2, 15)
     }
     fn __reduce27<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* =  => ActionFn(165);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action165::<>(&__start, &__end);
+        let __nt = super::__action165::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (0, 16)
     }
     fn __reduce28<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")* = (<CallArg> ",")+ => ActionFn(166);
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action166::<>(__sym0);
+        let __nt = super::__action166::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (1, 16)
     }
     fn __reduce29<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = CallArg, "," => ActionFn(248);
@@ -15209,15 +15828,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action248::<>(__sym0, __sym1);
+        let __nt = super::__action248::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (2, 17)
     }
     fn __reduce30<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<CallArg> ",")+ = (<CallArg> ",")+, CallArg, "," => ActionFn(249);
@@ -15227,15 +15848,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action249::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action249::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant15(__nt), __end));
         (3, 17)
     }
     fn __reduce31<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>) = LowerId, ":", Type => ActionFn(115);
@@ -15245,15 +15868,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action115::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action115::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant12(__nt), __end));
         (3, 18)
     }
     fn __reduce32<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? = LowerId, ":", Type => ActionFn(243);
@@ -15263,29 +15888,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action243::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action243::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (3, 19)
     }
     fn __reduce33<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<LowerId> ":" <Type>)? =  => ActionFn(148);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action148::<>(&__start, &__end);
+        let __nt = super::__action148::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant16(__nt), __end));
         (0, 19)
     }
     fn __reduce34<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE) = NamedField, NEWLINE => ActionFn(126);
@@ -15294,15 +15923,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action126::<>(__sym0, __sym1);
+        let __nt = super::__action126::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (2, 20)
     }
     fn __reduce35<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = NamedField, NEWLINE => ActionFn(256);
@@ -15311,15 +15942,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action256::<>(__sym0, __sym1);
+        let __nt = super::__action256::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (2, 21)
     }
     fn __reduce36<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<NamedField> NEWLINE)+ = (<NamedField> NEWLINE)+, NamedField, NEWLINE => ActionFn(257);
@@ -15329,15 +15962,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action257::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action257::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant18(__nt), __end));
         (3, 21)
     }
     fn __reduce37<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",") = ParenExpr, "," => ActionFn(162);
@@ -15346,44 +15981,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action162::<>(__sym0, __sym1);
+        let __nt = super::__action162::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (2, 22)
     }
     fn __reduce38<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* =  => ActionFn(160);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action160::<>(&__start, &__end);
+        let __nt = super::__action160::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (0, 23)
     }
     fn __reduce39<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")* = (<ParenExpr> ",")+ => ActionFn(161);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action161::<>(__sym0);
+        let __nt = super::__action161::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (1, 23)
     }
     fn __reduce40<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = ParenExpr, "," => ActionFn(258);
@@ -15392,15 +16033,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action258::<>(__sym0, __sym1);
+        let __nt = super::__action258::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (2, 24)
     }
     fn __reduce41<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<ParenExpr> ",")+ = (<ParenExpr> ",")+, ParenExpr, "," => ActionFn(259);
@@ -15410,15 +16053,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action259::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action259::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant20(__nt), __end));
         (3, 24)
     }
     fn __reduce42<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",") = PatternField, "," => ActionFn(172);
@@ -15427,44 +16072,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action172::<>(__sym0, __sym1);
+        let __nt = super::__action172::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (2, 25)
     }
     fn __reduce43<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* =  => ActionFn(170);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action170::<>(&__start, &__end);
+        let __nt = super::__action170::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (0, 26)
     }
     fn __reduce44<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")* = (<PatternField> ",")+ => ActionFn(171);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action171::<>(__sym0);
+        let __nt = super::__action171::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (1, 26)
     }
     fn __reduce45<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = PatternField, "," => ActionFn(262);
@@ -15473,15 +16124,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action262::<>(__sym0, __sym1);
+        let __nt = super::__action262::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (2, 27)
     }
     fn __reduce46<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<PatternField> ",")+ = (<PatternField> ",")+, PatternField, "," => ActionFn(263);
@@ -15491,15 +16144,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action263::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action263::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant22(__nt), __end));
         (3, 27)
     }
     fn __reduce47<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",") = RecordTypeField, "," => ActionFn(146);
@@ -15508,44 +16163,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action146::<>(__sym0, __sym1);
+        let __nt = super::__action146::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (2, 28)
     }
     fn __reduce48<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* =  => ActionFn(144);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action144::<>(&__start, &__end);
+        let __nt = super::__action144::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (0, 29)
     }
     fn __reduce49<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")* = (<RecordTypeField> ",")+ => ActionFn(145);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action145::<>(__sym0);
+        let __nt = super::__action145::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (1, 29)
     }
     fn __reduce50<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = RecordTypeField, "," => ActionFn(266);
@@ -15554,15 +16215,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action266::<>(__sym0, __sym1);
+        let __nt = super::__action266::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (2, 30)
     }
     fn __reduce51<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<RecordTypeField> ",")+ = (<RecordTypeField> ",")+, RecordTypeField, "," => ActionFn(267);
@@ -15572,15 +16235,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action267::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action267::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant24(__nt), __end));
         (3, 30)
     }
     fn __reduce52<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",") = Type, "," => ActionFn(141);
@@ -15589,44 +16254,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action141::<>(__sym0, __sym1);
+        let __nt = super::__action141::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (2, 31)
     }
     fn __reduce53<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* =  => ActionFn(139);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action139::<>(&__start, &__end);
+        let __nt = super::__action139::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (0, 32)
     }
     fn __reduce54<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")* = (<Type> ",")+ => ActionFn(140);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action140::<>(__sym0);
+        let __nt = super::__action140::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (1, 32)
     }
     fn __reduce55<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = Type, "," => ActionFn(270);
@@ -15635,15 +16306,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action270::<>(__sym0, __sym1);
+        let __nt = super::__action270::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (2, 33)
     }
     fn __reduce56<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<Type> ",")+ = (<Type> ",")+, Type, "," => ActionFn(271);
@@ -15653,15 +16326,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action271::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action271::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant25(__nt), __end));
         (3, 33)
     }
     fn __reduce57<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",") = UpperId, "," => ActionFn(136);
@@ -15670,44 +16345,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action136::<>(__sym0, __sym1);
+        let __nt = super::__action136::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 34)
     }
     fn __reduce58<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* =  => ActionFn(134);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action134::<>(&__start, &__end);
+        let __nt = super::__action134::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 35)
     }
     fn __reduce59<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")* = (<UpperId> ",")+ => ActionFn(135);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action135::<>(__sym0);
+        let __nt = super::__action135::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 35)
     }
     fn __reduce60<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = UpperId, "," => ActionFn(274);
@@ -15716,15 +16397,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action274::<>(__sym0, __sym1);
+        let __nt = super::__action274::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 36)
     }
     fn __reduce61<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ",")+ = (<UpperId> ",")+, UpperId, "," => ActionFn(275);
@@ -15734,15 +16417,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action275::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action275::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 36)
     }
     fn __reduce62<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".") = UpperId, "." => ActionFn(121);
@@ -15751,44 +16436,50 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action121::<>(__sym0, __sym1);
+        let __nt = super::__action121::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant0(__nt), __end));
         (2, 37)
     }
     fn __reduce63<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* =  => ActionFn(175);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action175::<>(&__start, &__end);
+        let __nt = super::__action175::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 38)
     }
     fn __reduce64<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")* = (<UpperId> ".")+ => ActionFn(176);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action176::<>(__sym0);
+        let __nt = super::__action176::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 38)
     }
     fn __reduce65<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = UpperId, "." => ActionFn(278);
@@ -15797,15 +16488,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action278::<>(__sym0, __sym1);
+        let __nt = super::__action278::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 39)
     }
     fn __reduce66<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")+ = (<UpperId> ".")+, UpperId, "." => ActionFn(279);
@@ -15815,15 +16508,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action279::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action279::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (3, 39)
     }
     fn __reduce67<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? = UpperId, "." => ActionFn(280);
@@ -15832,57 +16527,65 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action280::<>(__sym0, __sym1);
+        let __nt = super::__action280::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (2, 40)
     }
     fn __reduce68<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // (<UpperId> ".")? =  => ActionFn(120);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action120::<>(&__start, &__end);
+        let __nt = super::__action120::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 40)
     }
     fn __reduce69<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // @L =  => ActionFn(133);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action133::<>(&__start, &__end);
+        let __nt = super::__action133::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (0, 41)
     }
     fn __reduce70<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // @R =  => ActionFn(132);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action132::<>(&__start, &__end);
+        let __nt = super::__action132::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant27(__nt), __end));
         (0, 42)
     }
     fn __reduce71<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(33);
@@ -15895,15 +16598,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action33::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action33::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (6, 43)
     }
     fn __reduce72<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt = LPat, ":", LStmt => ActionFn(34);
@@ -15913,59 +16618,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action34::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action34::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant28(__nt), __end));
         (3, 43)
     }
     fn __reduce73<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt* =  => ActionFn(98);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action98::<>(&__start, &__end);
+        let __nt = super::__action98::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (0, 44)
     }
     fn __reduce74<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt* = Alt+ => ActionFn(99);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action99::<>(__sym0);
+        let __nt = super::__action99::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (1, 44)
     }
     fn __reduce75<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt => ActionFn(156);
         let __sym0 = __pop_Variant28(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action156::<>(__sym0);
+        let __nt = super::__action156::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (1, 45)
     }
     fn __reduce76<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alt+ = Alt+, Alt => ActionFn(157);
@@ -15974,89 +16687,101 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action157::<>(__sym0, __sym1);
+        let __nt = super::__action157::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant29(__nt), __end));
         (2, 45)
     }
     fn __reduce77<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alts =  => ActionFn(437);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action437::<>(&__start, &__end);
+        let __nt = super::__action437::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (0, 46)
     }
     fn __reduce78<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Alts = Alt+ => ActionFn(438);
         let __sym0 = __pop_Variant29(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action438::<>(__sym0);
+        let __nt = super::__action438::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant30(__nt), __end));
         (1, 46)
     }
     fn __reduce79<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "=" => ActionFn(35);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action35::<>(__sym0);
+        let __nt = super::__action35::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce80<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "+=" => ActionFn(36);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action36::<>(__sym0);
+        let __nt = super::__action36::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce81<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // AssignOp = "-=" => ActionFn(37);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action37::<>(__sym0);
+        let __nt = super::__action37::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant31(__nt), __end));
         (1, 47)
     }
     fn __reduce82<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg = LowerId, "=", LExpr => ActionFn(71);
@@ -16066,74 +16791,84 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action71::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action71::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (3, 48)
     }
     fn __reduce83<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg = LExpr => ActionFn(72);
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action72::<>(__sym0);
+        let __nt = super::__action72::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant14(__nt), __end));
         (1, 48)
     }
     fn __reduce84<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg? = CallArg => ActionFn(163);
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action163::<>(__sym0);
+        let __nt = super::__action163::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (1, 49)
     }
     fn __reduce85<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // CallArg? =  => ActionFn(164);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action164::<>(&__start, &__end);
+        let __nt = super::__action164::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant32(__nt), __end));
         (0, 49)
     }
     fn __reduce86<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor => ActionFn(82);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action82::<>(__sym0);
+        let __nt = super::__action82::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (1, 50)
     }
     fn __reduce87<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstrPattern = Constructor, "(", Sep<PatternField, ",">, ")" => ActionFn(83);
@@ -16144,15 +16879,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action83::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action83::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant33(__nt), __end));
         (4, 50)
     }
     fn __reduce88<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId, ".", UpperId => ActionFn(80);
@@ -16162,30 +16899,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action80::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action80::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (3, 51)
     }
     fn __reduce89<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Constructor = UpperId => ActionFn(81);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action81::<>(__sym0);
+        let __nt = super::__action81::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant34(__nt), __end));
         (1, 51)
     }
     fn __reduce90<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, NEWLINE => ActionFn(8);
@@ -16194,15 +16935,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action8::<>(__sym0, __sym1);
+        let __nt = super::__action8::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (2, 52)
     }
     fn __reduce91<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(9);
@@ -16215,15 +16958,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action9::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action9::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (6, 52)
     }
     fn __reduce92<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ",", ")", NEWLINE => ActionFn(199);
@@ -16236,15 +16981,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym5.2;
-        let __nt = super::__action199::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
+        let __nt = super::__action199::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (6, 52)
     }
     fn __reduce93<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl = UpperId, "(", UnnamedFields, ")", NEWLINE => ActionFn(200);
@@ -16256,30 +17003,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action200::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action200::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant35(__nt), __end));
         (5, 52)
     }
     fn __reduce94<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl => ActionFn(129);
         let __sym0 = __pop_Variant35(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action129::<>(__sym0);
+        let __nt = super::__action129::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (1, 53)
     }
     fn __reduce95<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ConstructorDecl+ = ConstructorDecl+, ConstructorDecl => ActionFn(130);
@@ -16288,15 +17039,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action130::<>(__sym0, __sym1);
+        let __nt = super::__action130::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant36(__nt), __end));
         (2, 53)
     }
     fn __reduce96<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr = Expr, "||", Expr6 => ActionFn(378);
@@ -16306,75 +17059,85 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action378::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action378::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 54)
     }
     fn __reduce97<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr = Expr6 => ActionFn(68);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action68::<>(__sym0);
+        let __nt = super::__action68::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 54)
     }
     fn __reduce98<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = "self" => ActionFn(39);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action39::<>(__sym0);
+        let __nt = super::__action39::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce99<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = LowerId => ActionFn(40);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action40::<>(__sym0);
+        let __nt = super::__action40::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce100<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = UpperId => ActionFn(41);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action41::<>(__sym0);
+        let __nt = super::__action41::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce101<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = "(", Sep<ParenExpr, ",">, ")" => ActionFn(42);
@@ -16384,45 +17147,51 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action42::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action42::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce102<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = IntLit => ActionFn(43);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action43::<>(__sym0);
+        let __nt = super::__action43::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce103<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = StringLit => ActionFn(44);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action44::<>(__sym0);
+        let __nt = super::__action44::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 55)
     }
     fn __reduce104<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "[", LExpr, "]" => ActionFn(379);
@@ -16433,15 +17202,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action379::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action379::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (4, 55)
     }
     fn __reduce105<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, "(", Sep<CallArg, ",">, ")" => ActionFn(380);
@@ -16452,15 +17223,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action380::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action380::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (4, 55)
     }
     fn __reduce106<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", LowerId => ActionFn(381);
@@ -16470,15 +17243,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action381::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action381::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce107<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr0 = Expr0, ".", UpperId => ActionFn(48);
@@ -16488,15 +17263,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action48::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action48::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 55)
     }
     fn __reduce108<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr1, "..", Expr0 => ActionFn(382);
@@ -16506,30 +17283,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action382::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action382::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 56)
     }
     fn __reduce109<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr1 = Expr0 => ActionFn(50);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action50::<>(__sym0);
+        let __nt = super::__action50::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 56)
     }
     fn __reduce110<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr2 = "!", Expr2 => ActionFn(383);
@@ -16538,30 +17319,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action383::<>(__sym0, __sym1);
+        let __nt = super::__action383::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (2, 57)
     }
     fn __reduce111<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr2 = Expr1 => ActionFn(52);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action52::<>(__sym0);
+        let __nt = super::__action52::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 57)
     }
     fn __reduce112<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr3, "*", Expr2 => ActionFn(384);
@@ -16571,30 +17356,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action384::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action384::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 58)
     }
     fn __reduce113<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr3 = Expr2 => ActionFn(54);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action54::<>(__sym0);
+        let __nt = super::__action54::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 58)
     }
     fn __reduce114<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "+", Expr3 => ActionFn(385);
@@ -16604,15 +17393,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action385::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action385::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 59)
     }
     fn __reduce115<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr4, "-", Expr3 => ActionFn(386);
@@ -16622,30 +17413,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action386::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action386::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 59)
     }
     fn __reduce116<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr4 = Expr3 => ActionFn(57);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action57::<>(__sym0);
+        let __nt = super::__action57::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 59)
     }
     fn __reduce117<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "==", Expr4 => ActionFn(387);
@@ -16655,15 +17450,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action387::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action387::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce118<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "!=", Expr4 => ActionFn(388);
@@ -16673,15 +17470,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action388::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action388::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce119<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<", Expr4 => ActionFn(389);
@@ -16691,15 +17490,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action389::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action389::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce120<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">", Expr4 => ActionFn(390);
@@ -16709,15 +17510,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action390::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action390::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce121<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, "<=", Expr4 => ActionFn(391);
@@ -16727,15 +17530,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action391::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action391::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce122<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr5, ">=", Expr4 => ActionFn(392);
@@ -16745,30 +17550,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action392::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action392::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 60)
     }
     fn __reduce123<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr5 = Expr4 => ActionFn(64);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action64::<>(__sym0);
+        let __nt = super::__action64::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 60)
     }
     fn __reduce124<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr6, "&&", Expr5 => ActionFn(393);
@@ -16778,30 +17587,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action393::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action393::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (3, 61)
     }
     fn __reduce125<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Expr6 = Expr5 => ActionFn(66);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action66::<>(__sym0);
+        let __nt = super::__action66::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant37(__nt), __end));
         (1, 61)
     }
     fn __reduce126<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(394);
@@ -16824,15 +17637,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action394::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action394::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce127<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(395);
@@ -16853,15 +17668,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action395::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action395::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce128<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(396);
@@ -16883,15 +17700,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action396::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action396::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce129<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(397);
@@ -16911,15 +17730,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action397::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action397::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce130<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(398);
@@ -16940,15 +17761,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action398::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action398::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce131<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(399);
@@ -16967,15 +17790,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action399::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action399::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce132<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(400);
@@ -16996,15 +17821,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action400::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action400::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce133<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(401);
@@ -17023,15 +17850,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action401::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action401::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce134<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(402);
@@ -17051,15 +17880,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action402::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action402::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce135<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(403);
@@ -17077,15 +17908,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym10.2;
-        let __nt = super::__action403::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
+        let __nt = super::__action403::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (11, 62)
     }
     fn __reduce136<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(404);
@@ -17104,15 +17937,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym11.2;
-        let __nt = super::__action404::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
+        let __nt = super::__action404::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (12, 62)
     }
     fn __reduce137<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(405);
@@ -17129,15 +17964,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym9.2;
-        let __nt = super::__action405::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
+        let __nt = super::__action405::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (10, 62)
     }
     fn __reduce138<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(406);
@@ -17166,15 +18003,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym21.2;
-        let __nt = super::__action406::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20, __sym21);
+        let __nt = super::__action406::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20, __sym21);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (22, 62)
     }
     fn __reduce139<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(407);
@@ -17201,15 +18040,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action407::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action407::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce140<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(408);
@@ -17237,15 +18078,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym20.2;
-        let __nt = super::__action408::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20);
+        let __nt = super::__action408::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19, __sym20);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (21, 62)
     }
     fn __reduce141<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(409);
@@ -17271,15 +18114,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action409::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action409::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce142<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(410);
@@ -17306,15 +18151,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action410::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action410::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce143<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(411);
@@ -17339,15 +18186,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action411::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action411::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce144<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(412);
@@ -17373,15 +18222,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action412::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action412::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce145<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(413);
@@ -17405,15 +18256,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action413::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action413::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce146<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(414);
@@ -17438,15 +18291,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action414::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action414::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce147<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(415);
@@ -17469,15 +18324,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action415::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action415::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce148<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(416);
@@ -17501,15 +18358,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action416::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action416::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce149<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", ":", Type, "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(417);
@@ -17531,15 +18390,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action417::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action417::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce150<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(418);
@@ -17566,15 +18427,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym19.2;
-        let __nt = super::__action418::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
+        let __nt = super::__action418::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18, __sym19);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (20, 62)
     }
     fn __reduce151<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(419);
@@ -17599,15 +18462,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action419::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action419::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce152<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(420);
@@ -17633,15 +18498,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym18.2;
-        let __nt = super::__action420::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
+        let __nt = super::__action420::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17, __sym18);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (19, 62)
     }
     fn __reduce153<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(421);
@@ -17665,15 +18532,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action421::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action421::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce154<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(422);
@@ -17698,15 +18567,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym17.2;
-        let __nt = super::__action422::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
+        let __nt = super::__action422::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16, __sym17);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (18, 62)
     }
     fn __reduce155<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "[", Sep<Type, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(423);
@@ -17729,15 +18600,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action423::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action423::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce156<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(424);
@@ -17761,15 +18634,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym16.2;
-        let __nt = super::__action424::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
+        let __nt = super::__action424::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15, __sym16);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (17, 62)
     }
     fn __reduce157<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", ",", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(425);
@@ -17791,15 +18666,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action425::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action425::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce158<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(426);
@@ -17822,15 +18699,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym15.2;
-        let __nt = super::__action426::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
+        let __nt = super::__action426::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14, __sym15);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (16, 62)
     }
     fn __reduce159<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", "self", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(427);
@@ -17851,15 +18730,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action427::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action427::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (14, 62)
     }
     fn __reduce160<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", UpperId, ".", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(428);
@@ -17881,15 +18762,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym14.2;
-        let __nt = super::__action428::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
+        let __nt = super::__action428::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13, __sym14);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (15, 62)
     }
     fn __reduce161<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // FunDecl = "fn", LowerId, "[", Sep<UpperId, ",">, "]", "(", Sep<(<LowerId> ":" <Type>), ",">, ")", "=", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(429);
@@ -17909,15 +18792,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action429::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action429::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant38(__nt), __end));
         (13, 62)
     }
     fn __reduce162<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ImportDecl = "import", Sep<UpperId, ".">, NEWLINE => ActionFn(430);
@@ -17927,104 +18812,118 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action430::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action430::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant39(__nt), __end));
         (3, 63)
     }
     fn __reduce163<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LExpr = Expr => ActionFn(431);
         let __sym0 = __pop_Variant37(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action431::<>(__sym0);
+        let __nt = super::__action431::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 64)
     }
     fn __reduce164<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LPat = Pat => ActionFn(432);
         let __sym0 = __pop_Variant46(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action432::<>(__sym0);
+        let __nt = super::__action432::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant41(__nt), __end));
         (1, 65)
     }
     fn __reduce165<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt = Stmt => ActionFn(433);
         let __sym0 = __pop_Variant56(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action433::<>(__sym0);
+        let __nt = super::__action433::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant42(__nt), __end));
         (1, 66)
     }
     fn __reduce166<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt* =  => ActionFn(106);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action106::<>(&__start, &__end);
+        let __nt = super::__action106::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (0, 67)
     }
     fn __reduce167<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt* = LStmt+ => ActionFn(107);
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action107::<>(__sym0);
+        let __nt = super::__action107::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (1, 67)
     }
     fn __reduce168<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt => ActionFn(152);
         let __sym0 = __pop_Variant42(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action152::<>(__sym0);
+        let __nt = super::__action152::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (1, 68)
     }
     fn __reduce169<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmt+ = LStmt+, LStmt => ActionFn(153);
@@ -18033,88 +18932,100 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action153::<>(__sym0, __sym1);
+        let __nt = super::__action153::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant43(__nt), __end));
         (2, 68)
     }
     fn __reduce170<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmts =  => ActionFn(443);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action443::<>(&__start, &__end);
+        let __nt = super::__action443::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (0, 69)
     }
     fn __reduce171<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // LStmts = LStmt+ => ActionFn(444);
         let __sym0 = __pop_Variant43(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action444::<>(__sym0);
+        let __nt = super::__action444::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant8(__nt), __end));
         (1, 69)
     }
     fn __reduce172<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE* =  => ActionFn(90);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action90::<>(&__start, &__end);
+        let __nt = super::__action90::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (0, 70)
     }
     fn __reduce173<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE* = NEWLINE+ => ActionFn(91);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action91::<>(__sym0);
+        let __nt = super::__action91::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 70)
     }
     fn __reduce174<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE => ActionFn(179);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action179::<>(__sym0);
+        let __nt = super::__action179::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (1, 71)
     }
     fn __reduce175<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NEWLINE+ = NEWLINE+, NEWLINE => ActionFn(180);
@@ -18123,15 +19034,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action180::<>(__sym0, __sym1);
+        let __nt = super::__action180::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant26(__nt), __end));
         (2, 71)
     }
     fn __reduce176<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NamedField = LowerId, ":", Type => ActionFn(12);
@@ -18141,30 +19054,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action12::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action12::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant17(__nt), __end));
         (3, 72)
     }
     fn __reduce177<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // NamedFields = (<NamedField> NEWLINE)+ => ActionFn(11);
         let __sym0 = __pop_Variant18(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action11::<>(__sym0);
+        let __nt = super::__action11::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant44(__nt), __end));
         (1, 73)
     }
     fn __reduce178<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr = LowerId, "=", LExpr => ActionFn(69);
@@ -18174,89 +19091,101 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action69::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action69::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (3, 74)
     }
     fn __reduce179<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr = LExpr => ActionFn(70);
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action70::<>(__sym0);
+        let __nt = super::__action70::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant19(__nt), __end));
         (1, 74)
     }
     fn __reduce180<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr? = ParenExpr => ActionFn(158);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action158::<>(__sym0);
+        let __nt = super::__action158::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (1, 75)
     }
     fn __reduce181<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // ParenExpr? =  => ActionFn(159);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action159::<>(&__start, &__end);
+        let __nt = super::__action159::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant45(__nt), __end));
         (0, 75)
     }
     fn __reduce182<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = LowerId => ActionFn(74);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action74::<>(__sym0);
+        let __nt = super::__action74::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce183<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = ConstrPattern => ActionFn(75);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action75::<>(__sym0);
+        let __nt = super::__action75::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce184<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = "(", Sep<PatternField, ",">, ")" => ActionFn(76);
@@ -18266,45 +19195,51 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action76::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action76::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (3, 76)
     }
     fn __reduce185<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = "_" => ActionFn(77);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action77::<>(__sym0);
+        let __nt = super::__action77::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce186<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = StringLit => ActionFn(78);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action78::<>(__sym0);
+        let __nt = super::__action78::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (1, 76)
     }
     fn __reduce187<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Pat = StringLit, LowerId => ActionFn(79);
@@ -18313,15 +19248,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action79::<>(__sym0, __sym1);
+        let __nt = super::__action79::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant46(__nt), __end));
         (2, 76)
     }
     fn __reduce188<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField = LowerId, "=", LPat => ActionFn(84);
@@ -18331,59 +19268,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action84::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action84::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (3, 77)
     }
     fn __reduce189<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField = LPat => ActionFn(85);
         let __sym0 = __pop_Variant41(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action85::<>(__sym0);
+        let __nt = super::__action85::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant21(__nt), __end));
         (1, 77)
     }
     fn __reduce190<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField? = PatternField => ActionFn(168);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action168::<>(__sym0);
+        let __nt = super::__action168::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (1, 78)
     }
     fn __reduce191<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // PatternField? =  => ActionFn(169);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action169::<>(&__start, &__end);
+        let __nt = super::__action169::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant47(__nt), __end));
         (0, 78)
     }
     fn __reduce192<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField = LowerId, ":", Type => ActionFn(18);
@@ -18393,59 +19338,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action18::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action18::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (3, 79)
     }
     fn __reduce193<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField = Type => ActionFn(19);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action19::<>(__sym0);
+        let __nt = super::__action19::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant23(__nt), __end));
         (1, 79)
     }
     fn __reduce194<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField? = RecordTypeField => ActionFn(142);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action142::<>(__sym0);
+        let __nt = super::__action142::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (1, 80)
     }
     fn __reduce195<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // RecordTypeField? =  => ActionFn(143);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action143::<>(&__start, &__end);
+        let __nt = super::__action143::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant48(__nt), __end));
         (0, 80)
     }
     fn __reduce196<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = LowerId, ":", Type => ActionFn(252);
@@ -18455,29 +19408,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action252::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action252::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (3, 81)
     }
     fn __reduce197<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> =  => ActionFn(253);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action253::<>(&__start, &__end);
+        let __nt = super::__action253::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (0, 81)
     }
     fn __reduce198<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+, LowerId, ":", Type => ActionFn(254);
@@ -18488,59 +19445,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action254::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action254::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (4, 81)
     }
     fn __reduce199<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<(<LowerId> ":" <Type>), ","> = (<(<LowerId> ":" <Type>)> ",")+ => ActionFn(255);
         let __sym0 = __pop_Variant13(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action255::<>(__sym0);
+        let __nt = super::__action255::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant49(__nt), __end));
         (1, 81)
     }
     fn __reduce200<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = CallArg => ActionFn(439);
         let __sym0 = __pop_Variant14(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action439::<>(__sym0);
+        let __nt = super::__action439::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 82)
     }
     fn __reduce201<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> =  => ActionFn(440);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action440::<>(&__start, &__end);
+        let __nt = super::__action440::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (0, 82)
     }
     fn __reduce202<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+, CallArg => ActionFn(441);
@@ -18549,59 +19514,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action441::<>(__sym0, __sym1);
+        let __nt = super::__action441::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (2, 82)
     }
     fn __reduce203<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<CallArg, ","> = (<CallArg> ",")+ => ActionFn(442);
         let __sym0 = __pop_Variant15(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action442::<>(__sym0);
+        let __nt = super::__action442::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant50(__nt), __end));
         (1, 82)
     }
     fn __reduce204<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = ParenExpr => ActionFn(449);
         let __sym0 = __pop_Variant19(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action449::<>(__sym0);
+        let __nt = super::__action449::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (1, 83)
     }
     fn __reduce205<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> =  => ActionFn(450);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action450::<>(&__start, &__end);
+        let __nt = super::__action450::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (0, 83)
     }
     fn __reduce206<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+, ParenExpr => ActionFn(451);
@@ -18610,59 +19583,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action451::<>(__sym0, __sym1);
+        let __nt = super::__action451::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (2, 83)
     }
     fn __reduce207<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<ParenExpr, ","> = (<ParenExpr> ",")+ => ActionFn(452);
         let __sym0 = __pop_Variant20(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action452::<>(__sym0);
+        let __nt = super::__action452::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant51(__nt), __end));
         (1, 83)
     }
     fn __reduce208<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = PatternField => ActionFn(453);
         let __sym0 = __pop_Variant21(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action453::<>(__sym0);
+        let __nt = super::__action453::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 84)
     }
     fn __reduce209<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> =  => ActionFn(454);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action454::<>(&__start, &__end);
+        let __nt = super::__action454::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (0, 84)
     }
     fn __reduce210<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+, PatternField => ActionFn(455);
@@ -18671,59 +19652,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action455::<>(__sym0, __sym1);
+        let __nt = super::__action455::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (2, 84)
     }
     fn __reduce211<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<PatternField, ","> = (<PatternField> ",")+ => ActionFn(456);
         let __sym0 = __pop_Variant22(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action456::<>(__sym0);
+        let __nt = super::__action456::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant52(__nt), __end));
         (1, 84)
     }
     fn __reduce212<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = RecordTypeField => ActionFn(457);
         let __sym0 = __pop_Variant23(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action457::<>(__sym0);
+        let __nt = super::__action457::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (1, 85)
     }
     fn __reduce213<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> =  => ActionFn(458);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action458::<>(&__start, &__end);
+        let __nt = super::__action458::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (0, 85)
     }
     fn __reduce214<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+, RecordTypeField => ActionFn(459);
@@ -18732,59 +19721,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action459::<>(__sym0, __sym1);
+        let __nt = super::__action459::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (2, 85)
     }
     fn __reduce215<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<RecordTypeField, ","> = (<RecordTypeField> ",")+ => ActionFn(460);
         let __sym0 = __pop_Variant24(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action460::<>(__sym0);
+        let __nt = super::__action460::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant53(__nt), __end));
         (1, 85)
     }
     fn __reduce216<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = Type => ActionFn(463);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action463::<>(__sym0);
+        let __nt = super::__action463::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 86)
     }
     fn __reduce217<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> =  => ActionFn(464);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action464::<>(&__start, &__end);
+        let __nt = super::__action464::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (0, 86)
     }
     fn __reduce218<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+, Type => ActionFn(465);
@@ -18793,59 +19790,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action465::<>(__sym0, __sym1);
+        let __nt = super::__action465::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (2, 86)
     }
     fn __reduce219<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<Type, ","> = (<Type> ",")+ => ActionFn(466);
         let __sym0 = __pop_Variant25(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action466::<>(__sym0);
+        let __nt = super::__action466::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 86)
     }
     fn __reduce220<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = UpperId => ActionFn(467);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action467::<>(__sym0);
+        let __nt = super::__action467::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 87)
     }
     fn __reduce221<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> =  => ActionFn(468);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action468::<>(&__start, &__end);
+        let __nt = super::__action468::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (0, 87)
     }
     fn __reduce222<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+, UpperId => ActionFn(469);
@@ -18854,59 +19859,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action469::<>(__sym0, __sym1);
+        let __nt = super::__action469::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 87)
     }
     fn __reduce223<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, ","> = (<UpperId> ",")+ => ActionFn(470);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action470::<>(__sym0);
+        let __nt = super::__action470::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 87)
     }
     fn __reduce224<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = UpperId => ActionFn(471);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action471::<>(__sym0);
+        let __nt = super::__action471::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 88)
     }
     fn __reduce225<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> =  => ActionFn(472);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action472::<>(&__start, &__end);
+        let __nt = super::__action472::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (0, 88)
     }
     fn __reduce226<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+, UpperId => ActionFn(473);
@@ -18915,30 +19928,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action473::<>(__sym0, __sym1);
+        let __nt = super::__action473::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (2, 88)
     }
     fn __reduce227<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Sep<UpperId, "."> = (<UpperId> ".")+ => ActionFn(474);
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action474::<>(__sym0);
+        let __nt = super::__action474::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant55(__nt), __end));
         (1, 88)
     }
     fn __reduce228<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, ":", Type, "=", LExpr, NEWLINE => ActionFn(206);
@@ -18952,15 +19969,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action206::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action206::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce229<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "let", LPat, "=", LExpr, NEWLINE => ActionFn(207);
@@ -18972,15 +19991,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action207::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action207::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (5, 89)
     }
     fn __reduce230<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(218);
@@ -19000,15 +20021,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym12.2;
-        let __nt = super::__action218::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
+        let __nt = super::__action218::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (13, 89)
     }
     fn __reduce231<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(219);
@@ -19022,15 +20045,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action219::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action219::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce232<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+, "else", ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(220);
@@ -19051,15 +20076,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym13.2;
-        let __nt = super::__action220::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
+        let __nt = super::__action220::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8, __sym9, __sym10, __sym11, __sym12, __sym13);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (14, 89)
     }
     fn __reduce233<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "if", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT, ("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)+ => ActionFn(221);
@@ -19074,15 +20101,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym7.2;
-        let __nt = super::__action221::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
+        let __nt = super::__action221::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (8, 89)
     }
     fn __reduce234<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, AssignOp, LExpr, NEWLINE => ActionFn(26);
@@ -19093,15 +20122,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action26::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action26::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (4, 89)
     }
     fn __reduce235<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = LExpr, NEWLINE => ActionFn(27);
@@ -19110,15 +20141,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action27::<>(__sym0, __sym1);
+        let __nt = super::__action27::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (2, 89)
     }
     fn __reduce236<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "match", LExpr, ":", NEWLINE, INDENT, Alts, DEDENT => ActionFn(28);
@@ -19132,15 +20165,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action28::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action28::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce237<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "for", LowerId, "in", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(29);
@@ -19156,15 +20191,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym8.2;
-        let __nt = super::__action29::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
+        let __nt = super::__action29::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6, __sym7, __sym8);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (9, 89)
     }
     fn __reduce238<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "while", LExpr, ":", NEWLINE, INDENT, LStmts, DEDENT => ActionFn(30);
@@ -19178,15 +20215,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym6.2;
-        let __nt = super::__action30::<>(__sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
+        let __nt = super::__action30::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4, __sym5, __sym6);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (7, 89)
     }
     fn __reduce239<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Stmt = "return", LExpr, NEWLINE => ActionFn(31);
@@ -19196,30 +20235,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action31::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action31::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant56(__nt), __end));
         (3, 89)
     }
     fn __reduce240<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = TypeDecl => ActionFn(445);
         let __sym0 = __pop_Variant61(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action445::<>(__sym0);
+        let __nt = super::__action445::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 90)
     }
     fn __reduce241<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, TypeDecl => ActionFn(446);
@@ -19228,30 +20271,34 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action446::<>(__sym0, __sym1);
+        let __nt = super::__action446::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (2, 90)
     }
     fn __reduce242<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = FunDecl => ActionFn(447);
         let __sym0 = __pop_Variant38(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action447::<>(__sym0);
+        let __nt = super::__action447::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (1, 90)
     }
     fn __reduce243<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl = NEWLINE+, FunDecl => ActionFn(448);
@@ -19260,59 +20307,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant26(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action448::<>(__sym0, __sym1);
+        let __nt = super::__action448::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant57(__nt), __end));
         (2, 90)
     }
     fn __reduce244<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl* =  => ActionFn(92);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action92::<>(&__start, &__end);
+        let __nt = super::__action92::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (0, 91)
     }
     fn __reduce245<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl* = TopDecl+ => ActionFn(93);
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action93::<>(__sym0);
+        let __nt = super::__action93::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 91)
     }
     fn __reduce246<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl => ActionFn(177);
         let __sym0 = __pop_Variant57(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action177::<>(__sym0);
+        let __nt = super::__action177::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (1, 92)
     }
     fn __reduce247<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecl+ = TopDecl+, TopDecl => ActionFn(178);
@@ -19321,59 +20376,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym1.2;
-        let __nt = super::__action178::<>(__sym0, __sym1);
+        let __nt = super::__action178::<>(module, __sym0, __sym1);
         __symbols.push((__start, __Symbol::Variant58(__nt), __end));
         (2, 92)
     }
     fn __reduce248<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecls =  => ActionFn(461);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action461::<>(&__start, &__end);
+        let __nt = super::__action461::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (0, 93)
     }
     fn __reduce249<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TopDecls = TopDecl+ => ActionFn(462);
         let __sym0 = __pop_Variant58(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action462::<>(__sym0);
+        let __nt = super::__action462::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant59(__nt), __end));
         (1, 93)
     }
     fn __reduce250<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = UpperId => ActionFn(15);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action15::<>(__sym0);
+        let __nt = super::__action15::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (1, 94)
     }
     fn __reduce251<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = UpperId, "[", Sep<Type, ",">, "]" => ActionFn(16);
@@ -19384,15 +20447,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action16::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action16::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (4, 94)
     }
     fn __reduce252<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type = "(", Sep<RecordTypeField, ",">, ")" => ActionFn(17);
@@ -19402,59 +20467,67 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action17::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action17::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant2(__nt), __end));
         (3, 94)
     }
     fn __reduce253<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type? = Type => ActionFn(137);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action137::<>(__sym0);
+        let __nt = super::__action137::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (1, 95)
     }
     fn __reduce254<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // Type? =  => ActionFn(138);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action138::<>(&__start, &__end);
+        let __nt = super::__action138::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant3(__nt), __end));
         (0, 95)
     }
     fn __reduce255<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeConstrs = ConstructorDecl+ => ActionFn(7);
         let __sym0 = __pop_Variant36(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action7::<>(__sym0);
+        let __nt = super::__action7::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant60(__nt), __end));
         (1, 96)
     }
     fn __reduce256<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDecl = "type", UpperId, TypeParams, TypeDeclRhs => ActionFn(436);
@@ -19465,15 +20538,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym3.2;
-        let __nt = super::__action436::<>(__sym0, __sym1, __sym2, __sym3);
+        let __nt = super::__action436::<>(module, __sym0, __sym1, __sym2, __sym3);
         __symbols.push((__start, __Symbol::Variant61(__nt), __end));
         (4, 97)
     }
     fn __reduce257<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, TypeConstrs, DEDENT => ActionFn(3);
@@ -19485,15 +20560,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action3::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action3::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (5, 98)
     }
     fn __reduce258<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeDeclRhs = ":", NEWLINE, INDENT, NamedFields, DEDENT => ActionFn(4);
@@ -19505,29 +20582,33 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym4.2;
-        let __nt = super::__action4::<>(__sym0, __sym1, __sym2, __sym3, __sym4);
+        let __nt = super::__action4::<>(module, __sym0, __sym1, __sym2, __sym3, __sym4);
         __symbols.push((__start, __Symbol::Variant62(__nt), __end));
         (5, 98)
     }
     fn __reduce259<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeParams =  => ActionFn(5);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action5::<>(&__start, &__end);
+        let __nt = super::__action5::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (0, 99)
     }
     fn __reduce260<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // TypeParams = "[", Sep<UpperId, ",">, "]" => ActionFn(6);
@@ -19537,15 +20618,17 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action6::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action6::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant63(__nt), __end));
         (3, 99)
     }
     fn __reduce261<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UnnamedFields = UnnamedFields, ",", Type => ActionFn(13);
@@ -19555,66 +20638,74 @@ mod __parse__TopDecls {
         let __sym0 = __pop_Variant54(__symbols);
         let __start = __sym0.0;
         let __end = __sym2.2;
-        let __nt = super::__action13::<>(__sym0, __sym1, __sym2);
+        let __nt = super::__action13::<>(module, __sym0, __sym1, __sym2);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (3, 100)
     }
     fn __reduce262<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UnnamedFields = Type => ActionFn(14);
         let __sym0 = __pop_Variant2(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action14::<>(__sym0);
+        let __nt = super::__action14::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant54(__nt), __end));
         (1, 100)
     }
     fn __reduce263<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UpperId? = UpperId => ActionFn(173);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action173::<>(__sym0);
+        let __nt = super::__action173::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (1, 101)
     }
     fn __reduce264<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // UpperId? =  => ActionFn(174);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
-        let __nt = super::__action174::<>(&__start, &__end);
+        let __nt = super::__action174::<>(module, &__start, &__end);
         __symbols.push((__start, __Symbol::Variant1(__nt), __end));
         (0, 101)
     }
     fn __reduce265<
+        'a,
     >(
+        module: &'a Rc<str>,
         __lookahead_start: Option<&Loc>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
-        _: core::marker::PhantomData<()>,
+        _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
         // __LExpr = LExpr => ActionFn(0);
         let __sym0 = __pop_Variant40(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
-        let __nt = super::__action0::<>(__sym0);
+        let __nt = super::__action0::<>(module, __sym0);
         __symbols.push((__start, __Symbol::Variant40(__nt), __end));
         (1, 102)
     }
@@ -19622,30 +20713,34 @@ mod __parse__TopDecls {
 #[allow(unused_imports)]
 pub use self::__parse__TopDecls::TopDeclsParser;
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action0((_, __0, _): (Loc, L<Expr>, Loc)) -> L<Expr> {
+fn __action0<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Expr>, Loc)) -> L<Expr> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action1((_, __0, _): (Loc, Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
+fn __action1<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action2(
+fn __action2<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, Token, Loc),
@@ -19654,6 +20749,7 @@ fn __action2(
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TypeDecl> {
     L::new(
+        module,
         l,
         r,
         TypeDecl {
@@ -19664,12 +20760,14 @@ fn __action2(
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action3(
+fn __action3<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -19679,12 +20777,14 @@ fn __action3(
     TypeDeclRhs::Sum(constrs)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action4(
+fn __action4<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -19694,21 +20794,24 @@ fn __action4(
     TypeDeclRhs::Product(ConstructorFields::Named(named_fields))
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action5(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<SmolStr> {
+fn __action5<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<SmolStr> {
     vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action6(
+fn __action6<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, params, _): (Loc, Vec<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -19716,33 +20819,44 @@ fn __action6(
     params.into_iter().map(|id| id.smol_str()).collect()
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action7((_, __0, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)) -> Vec<ConstructorDecl> {
+fn __action7<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
+) -> Vec<ConstructorDecl> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action8((_, name, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> ConstructorDecl {
+fn __action8<'a>(
+    module: &'a Rc<str>,
+    (_, name, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> ConstructorDecl {
     ConstructorDecl {
         name: name.smol_str(),
         fields: ConstructorFields::Empty,
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action9(
+fn __action9<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -19756,12 +20870,14 @@ fn __action9(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action10(
+fn __action10<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<Type>, Loc),
@@ -19775,21 +20891,27 @@ fn __action10(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action11((_, __0, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc)) -> Vec<(SmolStr, Type)> {
+fn __action11<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
+) -> Vec<(SmolStr, Type)> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action12(
+fn __action12<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_, _): (Loc, Type, Loc),
@@ -19797,12 +20919,14 @@ fn __action12(
     (name.smol_str(), type_)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action13(
+fn __action13<'a>(
+    module: &'a Rc<str>,
     (_, mut fields, _): (Loc, Vec<Type>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, field, _): (Loc, Type, Loc),
@@ -19813,33 +20937,37 @@ fn __action13(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action14((_, field, _): (Loc, Type, Loc)) -> Vec<Type> {
+fn __action14<'a>(module: &'a Rc<str>, (_, field, _): (Loc, Type, Loc)) -> Vec<Type> {
     vec![field]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action15((_, name, _): (Loc, Token, Loc)) -> Type {
+fn __action15<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> Type {
     Type::Named(NamedType {
         name: name.smol_str(),
         args: vec![],
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action16(
+fn __action16<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, args, _): (Loc, Vec<Type>, Loc),
@@ -19851,12 +20979,14 @@ fn __action16(
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action17(
+fn __action17<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -19864,12 +20994,14 @@ fn __action17(
     Type::Record(fields)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action18(
+fn __action18<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, ty, _): (Loc, Type, Loc),
@@ -19880,24 +21012,27 @@ fn __action18(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action19((_, ty, _): (Loc, Type, Loc)) -> Named<Type> {
+fn __action19<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Type, Loc)) -> Named<Type> {
     Named {
         name: None,
         thing: ty,
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action20(
+fn __action20<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, core::option::Option<Token>, Loc),
@@ -19921,6 +21056,7 @@ fn __action20(
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<FunDecl> {
     L::new(
+        module,
         l,
         r,
         FunDecl {
@@ -19934,17 +21070,19 @@ fn __action20(
                 .map(|(name, ty)| (name.smol_str(), ty))
                 .collect(),
             return_ty,
-            body: L::new(body_l, body_r, body),
+            body: L::new(module, body_l, body_r, body),
         },
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action21(
+fn __action21<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, core::option::Option<Token>, Loc),
@@ -19972,6 +21110,7 @@ fn __action21(
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<FunDecl> {
     L::new(
+        module,
         l,
         r,
         FunDecl {
@@ -19985,39 +21124,47 @@ fn __action21(
                 .map(|(name, ty)| (name.smol_str(), ty))
                 .collect(),
             return_ty,
-            body: L::new(body_l, body_r, body),
+            body: L::new(module, body_l, body_r, body),
         },
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action22((_, stmts, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
+fn __action22<'a>(
+    module: &'a Rc<str>,
+    (_, stmts, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
+) -> Vec<L<Stmt>> {
     stmts
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action23(
+fn __action23<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, stmt, _): (Loc, Stmt, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<Stmt> {
-    L::new(l, r, stmt)
+    L::new(module, l, r, stmt)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action24(
+fn __action24<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, lhs, _): (Loc, L<Pat>, Loc),
     (_, ty, _): (Loc, core::option::Option<Type>, Loc),
@@ -20028,12 +21175,14 @@ fn __action24(
     Stmt::Let(LetStatement { lhs, ty, rhs })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action25(
+fn __action25<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, cond, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20053,12 +21202,14 @@ fn __action25(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action26(
+fn __action26<'a>(
+    module: &'a Rc<str>,
     (_, lhs, _): (Loc, L<Expr>, Loc),
     (_, op, _): (Loc, AssignOp, Loc),
     (_, rhs, _): (Loc, L<Expr>, Loc),
@@ -20067,21 +21218,28 @@ fn __action26(
     Stmt::Assign(AssignStatement { lhs, rhs, op })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action27((_, expr, _): (Loc, L<Expr>, Loc), (_, _, _): (Loc, Token, Loc)) -> Stmt {
+fn __action27<'a>(
+    module: &'a Rc<str>,
+    (_, expr, _): (Loc, L<Expr>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Stmt {
     Stmt::Expr(expr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action28(
+fn __action28<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20096,12 +21254,14 @@ fn __action28(
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action29(
+fn __action29<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, id, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20120,12 +21280,14 @@ fn __action29(
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action30(
+fn __action30<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, cond, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20140,12 +21302,14 @@ fn __action30(
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action31(
+fn __action31<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20153,21 +21317,24 @@ fn __action31(
     Stmt::Return(expr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action32((_, __0, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
+fn __action32<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action33(
+fn __action33<'a>(
+    module: &'a Rc<str>,
     (_, pattern, _): (Loc, L<Pat>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20182,12 +21349,14 @@ fn __action33(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action34(
+fn __action34<'a>(
+    module: &'a Rc<str>,
     (_, pattern, _): (Loc, L<Pat>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, stmt, _): (Loc, L<Stmt>, Loc),
@@ -20199,79 +21368,89 @@ fn __action34(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action35((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
+fn __action35<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::Eq
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action36((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
+fn __action36<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::PlusEq
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action37((_, __0, _): (Loc, Token, Loc)) -> AssignOp {
+fn __action37<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> AssignOp {
     AssignOp::MinusEq
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action38(
+fn __action38<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<Expr> {
-    L::new(l, r, expr)
+    L::new(module, l, r, expr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action39((_, __0, _): (Loc, Token, Loc)) -> Expr {
+fn __action39<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Expr {
     Expr::Self_
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action40((_, id, _): (Loc, Token, Loc)) -> Expr {
+fn __action40<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     Expr::Var(id.smol_str())
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action41((_, id, _): (Loc, Token, Loc)) -> Expr {
+fn __action41<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     Expr::UpperVar(id.smol_str())
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action42(
+fn __action42<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, mut exprs, _): (Loc, Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20293,33 +21472,40 @@ fn __action42(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action43((_, int, _): (Loc, Token, Loc)) -> Expr {
+fn __action43<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     Expr::Int(
         i32::from_str_radix(&int.text, 10)
             .unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text)),
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action44((_, string, _): (Loc, Token, Loc)) -> Expr {
-    Expr::String(parse_string_parts(&string.text[1..string.text.len() - 1]))
+fn __action44<'a>(module: &'a Rc<str>, (_, string, _): (Loc, Token, Loc)) -> Expr {
+    Expr::String(parse_string_parts(
+        module,
+        &string.text[1..string.text.len() - 1],
+    ))
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action45(
+fn __action45<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, array, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
@@ -20328,17 +21514,19 @@ fn __action45(
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
     Expr::ArrayIndex(ArrayIndexExpr {
-        array: Box::new(L::new(l, r, array)),
+        array: Box::new(L::new(module, l, r, array)),
         index: Box::new(index),
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action46(
+fn __action46<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, fun, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
@@ -20347,17 +21535,19 @@ fn __action46(
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
     Expr::Call(CallExpr {
-        fun: Box::new(L::new(l, r, fun)),
+        fun: Box::new(L::new(module, l, r, fun)),
         args,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action47(
+fn __action47<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
     (_, r, _): (Loc, Loc, Loc),
@@ -20365,17 +21555,19 @@ fn __action47(
     (_, field, _): (Loc, Token, Loc),
 ) -> Expr {
     Expr::FieldSelect(FieldSelectExpr {
-        object: Box::new(L::new(l, r, expr)),
+        object: Box::new(L::new(module, l, r, expr)),
         field: field.smol_str(),
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action48(
+fn __action48<'a>(
+    module: &'a Rc<str>,
     (_, expr, _): (Loc, Expr, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, constr, _): (Loc, Token, Loc),
@@ -20392,12 +21584,14 @@ fn __action48(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action49(
+fn __action49<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, from, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20407,27 +21601,30 @@ fn __action49(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::Range(RangeExpr {
-        from: Box::new(L::new(l1, r1, from)),
-        to: Box::new(L::new(l2, r2, to)),
+        from: Box::new(L::new(module, l1, r1, from)),
+        to: Box::new(L::new(module, l2, r2, to)),
         inclusive: false,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action50((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action50<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action51(
+fn __action51<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, expr, _): (Loc, Expr, Loc),
@@ -20435,25 +21632,28 @@ fn __action51(
 ) -> Expr {
     Expr::UnOp(UnOpExpr {
         op: UnOp::Not,
-        expr: Box::new(L::new(l, r, expr)),
+        expr: Box::new(L::new(module, l, r, expr)),
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action52((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action52<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action53(
+fn __action53<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20463,27 +21663,30 @@ fn __action53(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Multiply,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action54((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action54<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action55(
+fn __action55<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20493,18 +21696,20 @@ fn __action55(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Add,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action56(
+fn __action56<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20514,27 +21719,30 @@ fn __action56(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Subtract,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action57((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action57<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action58(
+fn __action58<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20544,18 +21752,20 @@ fn __action58(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Equal,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action59(
+fn __action59<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20565,18 +21775,20 @@ fn __action59(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::NotEqual,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action60(
+fn __action60<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20586,18 +21798,20 @@ fn __action60(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Lt,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action61(
+fn __action61<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20607,18 +21821,20 @@ fn __action61(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Gt,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action62(
+fn __action62<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20628,18 +21844,20 @@ fn __action62(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::LtEq,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action63(
+fn __action63<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20649,27 +21867,30 @@ fn __action63(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::GtEq,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action64((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action64<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action65(
+fn __action65<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20679,27 +21900,30 @@ fn __action65(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::And,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action66((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action66<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action67(
+fn __action67<'a>(
+    module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
     (_, left, _): (Loc, Expr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
@@ -20709,27 +21933,30 @@ fn __action67(
     (_, r2, _): (Loc, Loc, Loc),
 ) -> Expr {
     Expr::BinOp(BinOpExpr {
-        left: Box::new(L::new(l1, r1, left)),
-        right: Box::new(L::new(l2, r2, right)),
+        left: Box::new(L::new(module, l1, r1, left)),
+        right: Box::new(L::new(module, l2, r2, right)),
         op: BinOp::Or,
     })
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action68((_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action68<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action69(
+fn __action69<'a>(
+    module: &'a Rc<str>,
     (_, id, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
@@ -20737,21 +21964,27 @@ fn __action69(
     (Some(id.smol_str()), expr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action70((_, expr, _): (Loc, L<Expr>, Loc)) -> (Option<SmolStr>, L<Expr>) {
+fn __action70<'a>(
+    module: &'a Rc<str>,
+    (_, expr, _): (Loc, L<Expr>, Loc),
+) -> (Option<SmolStr>, L<Expr>) {
     (None, expr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action71(
+fn __action71<'a>(
+    module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
@@ -20762,52 +21995,59 @@ fn __action71(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action72((_, expr, _): (Loc, L<Expr>, Loc)) -> CallArg {
+fn __action72<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, L<Expr>, Loc)) -> CallArg {
     CallArg { name: None, expr }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action73(
+fn __action73<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, pat, _): (Loc, Pat, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<Pat> {
-    L::new(l, r, pat)
+    L::new(module, l, r, pat)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action74((_, id, _): (Loc, Token, Loc)) -> Pat {
+fn __action74<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Pat {
     Pat::Var(id.smol_str())
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action75((_, constr, _): (Loc, ConstrPattern, Loc)) -> Pat {
+fn __action75<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, ConstrPattern, Loc)) -> Pat {
     Pat::Constr(constr)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action76(
+fn __action76<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -20823,39 +22063,48 @@ fn __action76(
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action77((_, __0, _): (Loc, Token, Loc)) -> Pat {
+fn __action77<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Pat {
     Pat::Ignore
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action78((_, str, _): (Loc, Token, Loc)) -> Pat {
+fn __action78<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> Pat {
     Pat::Str(str.text[1..str.text.len() - 1].to_string())
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action79((_, str, _): (Loc, Token, Loc), (_, id, _): (Loc, Token, Loc)) -> Pat {
+fn __action79<'a>(
+    module: &'a Rc<str>,
+    (_, str, _): (Loc, Token, Loc),
+    (_, id, _): (Loc, Token, Loc),
+) -> Pat {
     Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str())
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action80(
+fn __action80<'a>(
+    module: &'a Rc<str>,
     (_, type_, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, constr, _): (Loc, Token, Loc),
@@ -20866,36 +22115,40 @@ fn __action80(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action81((_, type_, _): (Loc, Token, Loc)) -> Constructor {
+fn __action81<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> Constructor {
     Constructor {
         type_: type_.smol_str(),
         constr: None,
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action82((_, constr, _): (Loc, Constructor, Loc)) -> ConstrPattern {
+fn __action82<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Constructor, Loc)) -> ConstrPattern {
     ConstrPattern {
         constr,
         fields: vec![],
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action83(
+fn __action83<'a>(
+    module: &'a Rc<str>,
     (_, constr, _): (Loc, Constructor, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, fields, _): (Loc, Vec<(Option<SmolStr>, L<Pat>)>, Loc),
@@ -20913,12 +22166,14 @@ fn __action83(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action84(
+fn __action84<'a>(
+    module: &'a Rc<str>,
     (_, id, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, pat, _): (Loc, L<Pat>, Loc),
@@ -20926,21 +22181,27 @@ fn __action84(
     (Some(id.smol_str()), pat)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action85((_, pat, _): (Loc, L<Pat>, Loc)) -> (Option<SmolStr>, L<Pat>) {
+fn __action85<'a>(
+    module: &'a Rc<str>,
+    (_, pat, _): (Loc, L<Pat>, Loc),
+) -> (Option<SmolStr>, L<Pat>) {
     (None, pat)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action86(
+fn __action86<'a>(
+    module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, path, _): (Loc, Vec<Token>, Loc),
@@ -20948,6 +22209,7 @@ fn __action86(
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<ImportDecl> {
     L::new(
+        module,
         l,
         r,
         ImportDecl {
@@ -20956,85 +22218,113 @@ fn __action86(
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action87((_, __0, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
+fn __action87<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
+) -> Vec<L<TopDecl>> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action88(
+fn __action88<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, type_decl, _): (Loc, L<TypeDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TopDecl> {
-    L::new(l, r, TopDecl::Type(type_decl))
+    L::new(module, l, r, TopDecl::Type(type_decl))
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action89(
+fn __action89<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
     (_, fun_decl, _): (Loc, L<FunDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TopDecl> {
-    L::new(l, r, TopDecl::Fun(fun_decl))
+    L::new(module, l, r, TopDecl::Fun(fun_decl))
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action90(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
+fn __action90<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action91((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
+fn __action91<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+) -> alloc::vec::Vec<Token> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action92(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<L<TopDecl>> {
+fn __action92<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<L<TopDecl>> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action93((_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> alloc::vec::Vec<L<TopDecl>> {
+fn __action93<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
+) -> alloc::vec::Vec<L<TopDecl>> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action94(
+fn __action94<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, e, _): (Loc, core::option::Option<Token>, Loc),
 ) -> Vec<Token> {
@@ -21047,12 +22337,14 @@ fn __action94(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action95(
+fn __action95<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     (_, e, _): (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Pat>)> {
@@ -21065,12 +22357,14 @@ fn __action95(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action96(
+fn __action96<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
     (_, e, _): (Loc, core::option::Option<CallArg>, Loc),
 ) -> Vec<CallArg> {
@@ -21083,12 +22377,14 @@ fn __action96(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action97(
+fn __action97<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     (_, e, _): (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Expr>)> {
@@ -21101,48 +22397,68 @@ fn __action97(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action98(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Alt> {
+fn __action98<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Alt> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action99((_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> alloc::vec::Vec<Alt> {
+fn __action99<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
+) -> alloc::vec::Vec<Alt> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action100((_, __0, _): (Loc, Vec<L<Stmt>>, Loc)) -> core::option::Option<Vec<L<Stmt>>> {
+fn __action100<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Vec<L<Stmt>>, Loc),
+) -> core::option::Option<Vec<L<Stmt>>> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action101(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Vec<L<Stmt>>> {
+fn __action101<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Vec<L<Stmt>>> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action102(
+fn __action102<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -21153,32 +22469,41 @@ fn __action102(
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action103(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+fn __action103<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action104(
+fn __action104<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
 ) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action105(
+fn __action105<'a>(
+    module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, __0, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -21190,53 +22515,68 @@ fn __action105(
     (__0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action106(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<L<Stmt>> {
+fn __action106<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<L<Stmt>> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action107((_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> alloc::vec::Vec<L<Stmt>> {
+fn __action107<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
+) -> alloc::vec::Vec<L<Stmt>> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action108(
+fn __action108<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Token, Vec<Type>, Token), Loc),
 ) -> core::option::Option<(Token, Vec<Type>, Token)> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action109(
+fn __action109<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> core::option::Option<(Token, Vec<Type>, Token)> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action110(
+fn __action110<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, Vec<Type>, Loc),
     (_, __2, _): (Loc, Token, Loc),
@@ -21244,39 +22584,55 @@ fn __action110(
     (__0, __1, __2)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action111((_, __0, _): (Loc, Type, Loc)) -> core::option::Option<Type> {
+fn __action111<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Type, Loc),
+) -> core::option::Option<Type> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action112(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Type> {
+fn __action112<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Type> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action113((_, _, _): (Loc, Token, Loc), (_, __0, _): (Loc, Type, Loc)) -> Type {
+fn __action113<'a>(
+    module: &'a Rc<str>,
+    (_, _, _): (Loc, Token, Loc),
+    (_, __0, _): (Loc, Type, Loc),
+) -> Type {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action114(
+fn __action114<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
     (_, e, _): (Loc, core::option::Option<(Token, Type)>, Loc),
 ) -> Vec<(Token, Type)> {
@@ -21289,12 +22645,14 @@ fn __action114(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action115(
+fn __action115<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, Type, Loc),
@@ -21302,74 +22660,96 @@ fn __action115(
     (__0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action116(
+fn __action116<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Token, core::option::Option<Token>), Loc),
 ) -> core::option::Option<(Token, core::option::Option<Token>)> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action117(
+fn __action117<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> core::option::Option<(Token, core::option::Option<Token>)> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action118(
+fn __action118<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, Token, Loc),
     (_, __1, _): (Loc, core::option::Option<Token>, Loc),
 ) -> (Token, core::option::Option<Token>) {
     (__0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action119((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
+fn __action119<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Token, Loc),
+) -> core::option::Option<Token> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action120(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
+fn __action120<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Token> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action121((_, __0, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> Token {
+fn __action121<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Token {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action122(
+fn __action122<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     (_, e, _): (Loc, core::option::Option<Named<Type>>, Loc),
 ) -> Vec<Named<Type>> {
@@ -21382,12 +22762,14 @@ fn __action122(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action123(
+fn __action123<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<Type>, Loc),
     (_, e, _): (Loc, core::option::Option<Type>, Loc),
 ) -> Vec<Type> {
@@ -21400,21 +22782,27 @@ fn __action123(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action124((_, __0, _): (Loc, (SmolStr, Type), Loc)) -> alloc::vec::Vec<(SmolStr, Type)> {
+fn __action124<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, (SmolStr, Type), Loc),
+) -> alloc::vec::Vec<(SmolStr, Type)> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action125(
+fn __action125<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
     (_, e, _): (Loc, (SmolStr, Type), Loc),
 ) -> alloc::vec::Vec<(SmolStr, Type)> {
@@ -21425,51 +22813,68 @@ fn __action125(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action126(
+fn __action126<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (SmolStr, Type), Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (SmolStr, Type) {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action127((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
+fn __action127<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Token, Loc),
+) -> core::option::Option<Token> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action128(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
+fn __action128<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Token> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action129((_, __0, _): (Loc, ConstructorDecl, Loc)) -> alloc::vec::Vec<ConstructorDecl> {
+fn __action129<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, ConstructorDecl, Loc),
+) -> alloc::vec::Vec<ConstructorDecl> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action130(
+fn __action130<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
     (_, e, _): (Loc, ConstructorDecl, Loc),
 ) -> alloc::vec::Vec<ConstructorDecl> {
@@ -21480,12 +22885,14 @@ fn __action130(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action131(
+fn __action131<'a>(
+    module: &'a Rc<str>,
     (_, mut v, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, e, _): (Loc, core::option::Option<Token>, Loc),
 ) -> Vec<Token> {
@@ -21498,198 +22905,282 @@ fn __action131(
     }
 }
 
-fn __action132(__lookbehind: &Loc, __lookahead: &Loc) -> Loc {
+#[allow(unused_variables)]
+fn __action132<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Loc {
     *__lookbehind
 }
 
-fn __action133(__lookbehind: &Loc, __lookahead: &Loc) -> Loc {
+#[allow(unused_variables)]
+fn __action133<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Loc {
     *__lookahead
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action134(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
+fn __action134<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action135((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
+fn __action135<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+) -> alloc::vec::Vec<Token> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action136((_, __0, _): (Loc, Token, Loc), (_, _, _): (Loc, Token, Loc)) -> Token {
+fn __action136<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Token {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action137((_, __0, _): (Loc, Type, Loc)) -> core::option::Option<Type> {
+fn __action137<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Type, Loc),
+) -> core::option::Option<Type> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action138(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Type> {
+fn __action138<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Type> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action139(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Type> {
+fn __action139<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Type> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action140((_, v, _): (Loc, alloc::vec::Vec<Type>, Loc)) -> alloc::vec::Vec<Type> {
+fn __action140<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<Type>, Loc),
+) -> alloc::vec::Vec<Type> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action141((_, __0, _): (Loc, Type, Loc), (_, _, _): (Loc, Token, Loc)) -> Type {
+fn __action141<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Type, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Type {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action142((_, __0, _): (Loc, Named<Type>, Loc)) -> core::option::Option<Named<Type>> {
+fn __action142<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Named<Type>, Loc),
+) -> core::option::Option<Named<Type>> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action143(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Named<Type>> {
+fn __action143<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Named<Type>> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action144(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Named<Type>> {
+fn __action144<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Named<Type>> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action145(
+fn __action145<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
 ) -> alloc::vec::Vec<Named<Type>> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action146((_, __0, _): (Loc, Named<Type>, Loc), (_, _, _): (Loc, Token, Loc)) -> Named<Type> {
+fn __action146<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Named<Type>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> Named<Type> {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action147((_, __0, _): (Loc, (Token, Type), Loc)) -> core::option::Option<(Token, Type)> {
+fn __action147<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, (Token, Type), Loc),
+) -> core::option::Option<(Token, Type)> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action148(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<(Token, Type)> {
+fn __action148<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<(Token, Type)> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action149(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<(Token, Type)> {
+fn __action149<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<(Token, Type)> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action150(
+fn __action150<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
 ) -> alloc::vec::Vec<(Token, Type)> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action151(
+fn __action151<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Token, Type), Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (Token, Type) {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action152((_, __0, _): (Loc, L<Stmt>, Loc)) -> alloc::vec::Vec<L<Stmt>> {
+fn __action152<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, L<Stmt>, Loc),
+) -> alloc::vec::Vec<L<Stmt>> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action153(
+fn __action153<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
     (_, e, _): (Loc, L<Stmt>, Loc),
 ) -> alloc::vec::Vec<L<Stmt>> {
@@ -21700,23 +23191,27 @@ fn __action153(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action154(
+fn __action154<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
 ) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action155(
+fn __action155<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
     (_, e, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
 ) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
@@ -21727,21 +23222,24 @@ fn __action155(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action156((_, __0, _): (Loc, Alt, Loc)) -> alloc::vec::Vec<Alt> {
+fn __action156<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Alt, Loc)) -> alloc::vec::Vec<Alt> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action157(
+fn __action157<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
     (_, e, _): (Loc, Alt, Loc),
 ) -> alloc::vec::Vec<Alt> {
@@ -21752,218 +23250,285 @@ fn __action157(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action158(
+fn __action158<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
 ) -> core::option::Option<(Option<SmolStr>, L<Expr>)> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action159(
+fn __action159<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> core::option::Option<(Option<SmolStr>, L<Expr>)> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action160(
+fn __action160<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action161(
+fn __action161<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action162(
+fn __action162<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (Option<SmolStr>, L<Expr>) {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action163((_, __0, _): (Loc, CallArg, Loc)) -> core::option::Option<CallArg> {
+fn __action163<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, CallArg, Loc),
+) -> core::option::Option<CallArg> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action164(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<CallArg> {
+fn __action164<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<CallArg> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action165(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<CallArg> {
+fn __action165<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<CallArg> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action166((_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc)) -> alloc::vec::Vec<CallArg> {
+fn __action166<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
+) -> alloc::vec::Vec<CallArg> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action167((_, __0, _): (Loc, CallArg, Loc), (_, _, _): (Loc, Token, Loc)) -> CallArg {
+fn __action167<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, CallArg, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> CallArg {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action168(
+fn __action168<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
 ) -> core::option::Option<(Option<SmolStr>, L<Pat>)> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action169(
+fn __action169<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> core::option::Option<(Option<SmolStr>, L<Pat>)> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action170(
+fn __action170<'a>(
+    module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action171(
+fn __action171<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action172(
+fn __action172<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (Option<SmolStr>, L<Pat>) {
     __0
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action173((_, __0, _): (Loc, Token, Loc)) -> core::option::Option<Token> {
+fn __action173<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Token, Loc),
+) -> core::option::Option<Token> {
     Some(__0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action174(__lookbehind: &Loc, __lookahead: &Loc) -> core::option::Option<Token> {
+fn __action174<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> core::option::Option<Token> {
     None
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action175(__lookbehind: &Loc, __lookahead: &Loc) -> alloc::vec::Vec<Token> {
+fn __action175<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> alloc::vec::Vec<Token> {
     alloc::vec![]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action176((_, v, _): (Loc, alloc::vec::Vec<Token>, Loc)) -> alloc::vec::Vec<Token> {
+fn __action176<'a>(
+    module: &'a Rc<str>,
+    (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
+) -> alloc::vec::Vec<Token> {
     v
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action177((_, __0, _): (Loc, L<TopDecl>, Loc)) -> alloc::vec::Vec<L<TopDecl>> {
+fn __action177<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, L<TopDecl>, Loc),
+) -> alloc::vec::Vec<L<TopDecl>> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action178(
+fn __action178<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
     (_, e, _): (Loc, L<TopDecl>, Loc),
 ) -> alloc::vec::Vec<L<TopDecl>> {
@@ -21974,21 +23539,24 @@ fn __action178(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action179((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
+fn __action179<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action180(
+fn __action180<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, e, _): (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Token> {
@@ -21999,21 +23567,24 @@ fn __action180(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action181((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
+fn __action181<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action182(
+fn __action182<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, e, _): (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Token> {
@@ -22024,23 +23595,27 @@ fn __action182(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action183(
+fn __action183<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action184(
+fn __action184<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     (_, e, _): (Loc, (Option<SmolStr>, L<Pat>), Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
@@ -22051,21 +23626,27 @@ fn __action184(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action185((_, __0, _): (Loc, CallArg, Loc)) -> alloc::vec::Vec<CallArg> {
+fn __action185<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, CallArg, Loc),
+) -> alloc::vec::Vec<CallArg> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action186(
+fn __action186<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
     (_, e, _): (Loc, CallArg, Loc),
 ) -> alloc::vec::Vec<CallArg> {
@@ -22076,23 +23657,27 @@ fn __action186(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action187(
+fn __action187<'a>(
+    module: &'a Rc<str>,
     (_, __0, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action188(
+fn __action188<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     (_, e, _): (Loc, (Option<SmolStr>, L<Expr>), Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
@@ -22103,21 +23688,27 @@ fn __action188(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action189((_, __0, _): (Loc, (Token, Type), Loc)) -> alloc::vec::Vec<(Token, Type)> {
+fn __action189<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, (Token, Type), Loc),
+) -> alloc::vec::Vec<(Token, Type)> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action190(
+fn __action190<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
     (_, e, _): (Loc, (Token, Type), Loc),
 ) -> alloc::vec::Vec<(Token, Type)> {
@@ -22128,21 +23719,27 @@ fn __action190(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action191((_, __0, _): (Loc, Named<Type>, Loc)) -> alloc::vec::Vec<Named<Type>> {
+fn __action191<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Named<Type>, Loc),
+) -> alloc::vec::Vec<Named<Type>> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action192(
+fn __action192<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     (_, e, _): (Loc, Named<Type>, Loc),
 ) -> alloc::vec::Vec<Named<Type>> {
@@ -22153,21 +23750,24 @@ fn __action192(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action193((_, __0, _): (Loc, Type, Loc)) -> alloc::vec::Vec<Type> {
+fn __action193<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Type, Loc)) -> alloc::vec::Vec<Type> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action194(
+fn __action194<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Type>, Loc),
     (_, e, _): (Loc, Type, Loc),
 ) -> alloc::vec::Vec<Type> {
@@ -22178,21 +23778,24 @@ fn __action194(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action195((_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
+fn __action195<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
     alloc::vec![__0]
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action196(
+fn __action196<'a>(
+    module: &'a Rc<str>,
     (_, v, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, e, _): (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Token> {
@@ -22203,41 +23806,49 @@ fn __action196(
     }
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action197(
+fn __action197<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
 ) -> (Token, core::option::Option<Token>) {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action127(__1);
+    let __temp0 = __action127(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action118(__0, __temp0)
+    __action118(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action198(__0: (Loc, Token, Loc)) -> (Token, core::option::Option<Token>) {
+fn __action198<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+) -> (Token, core::option::Option<Token>) {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action128(&__start0, &__end0);
+    let __temp0 = __action128(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action118(__0, __temp0)
+    __action118(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action199(
+fn __action199<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<Type>, Loc),
@@ -22247,17 +23858,19 @@ fn __action199(
 ) -> ConstructorDecl {
     let __start0 = __3.0;
     let __end0 = __3.2;
-    let __temp0 = __action127(__3);
+    let __temp0 = __action127(module, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action10(__0, __1, __2, __temp0, __4, __5)
+    __action10(module, __0, __1, __2, __temp0, __4, __5)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action200(
+fn __action200<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<Type>, Loc),
@@ -22266,30 +23879,37 @@ fn __action200(
 ) -> ConstructorDecl {
     let __start0 = __2.2;
     let __end0 = __3.0;
-    let __temp0 = __action128(&__start0, &__end0);
+    let __temp0 = __action128(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action10(__0, __1, __2, __temp0, __3, __4)
+    __action10(module, __0, __1, __2, __temp0, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action201(__0: (Loc, Token, Loc), __1: (Loc, Type, Loc)) -> core::option::Option<Type> {
+fn __action201<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Type, Loc),
+) -> core::option::Option<Type> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action113(__0, __1);
+    let __temp0 = __action113(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action111(__temp0)
+    __action111(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action202(
+fn __action202<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22315,20 +23935,22 @@ fn __action202(
 ) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action201(__8, __9);
+    let __temp0 = __action201(module, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action20(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
-        __17,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action203(
+fn __action203<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22352,20 +23974,22 @@ fn __action203(
 ) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action112(&__start0, &__end0);
+    let __temp0 = __action112(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action20(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
-        __15,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13,
+        __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action204(
+fn __action204<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22395,20 +24019,22 @@ fn __action204(
 ) -> L<FunDecl> {
     let __start0 = __12.0;
     let __end0 = __13.2;
-    let __temp0 = __action201(__12, __13);
+    let __temp0 = __action201(module, __12, __13);
     let __temp0 = (__start0, __temp0, __end0);
     __action21(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __14, __15, __16,
-        __17, __18, __19, __20, __21,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __14, __15,
+        __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action205(
+fn __action205<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22436,20 +24062,22 @@ fn __action205(
 ) -> L<FunDecl> {
     let __start0 = __11.2;
     let __end0 = __12.0;
-    let __temp0 = __action112(&__start0, &__end0);
+    let __temp0 = __action112(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action21(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __13, __14,
-        __15, __16, __17, __18, __19,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __13,
+        __14, __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action206(
+fn __action206<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
     __2: (Loc, Token, Loc),
@@ -22460,17 +24088,19 @@ fn __action206(
 ) -> Stmt {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action201(__2, __3);
+    let __temp0 = __action201(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action24(__0, __1, __temp0, __4, __5, __6)
+    __action24(module, __0, __1, __temp0, __4, __5, __6)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action207(
+fn __action207<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Pat>, Loc),
     __2: (Loc, Token, Loc),
@@ -22479,34 +24109,38 @@ fn __action207(
 ) -> Stmt {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action112(&__start0, &__end0);
+    let __temp0 = __action112(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action24(__0, __1, __temp0, __2, __3, __4)
+    __action24(module, __0, __1, __temp0, __2, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action208(
+fn __action208<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Vec<Type>, Loc),
     __2: (Loc, Token, Loc),
 ) -> core::option::Option<(Token, Vec<Type>, Token)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action110(__0, __1, __2);
+    let __temp0 = __action110(module, __0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action108(__temp0)
+    __action108(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action209(
+fn __action209<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22538,20 +24172,22 @@ fn __action209(
 ) -> L<FunDecl> {
     let __start0 = __7.0;
     let __end0 = __9.2;
-    let __temp0 = __action208(__7, __8, __9);
+    let __temp0 = __action208(module, __7, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action204(
-        __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15, __16, __17,
-        __18, __19, __20, __21, __22, __23,
+        module, __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action210(
+fn __action210<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22580,20 +24216,22 @@ fn __action210(
 ) -> L<FunDecl> {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action109(&__start0, &__end0);
+    let __temp0 = __action109(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action204(
-        __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20,
+        module, __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action211(
+fn __action211<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22623,20 +24261,22 @@ fn __action211(
 ) -> L<FunDecl> {
     let __start0 = __7.0;
     let __end0 = __9.2;
-    let __temp0 = __action208(__7, __8, __9);
+    let __temp0 = __action208(module, __7, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action205(
-        __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15, __16, __17,
-        __18, __19, __20, __21,
+        module, __0, __1, __2, __3, __4, __5, __6, __temp0, __10, __11, __12, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action212(
+fn __action212<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22663,20 +24303,22 @@ fn __action212(
 ) -> L<FunDecl> {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action109(&__start0, &__end0);
+    let __temp0 = __action109(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action205(
-        __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18,
+        module, __0, __1, __2, __3, __4, __5, __6, __temp0, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action213(
+fn __action213<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22687,17 +24329,19 @@ fn __action213(
 ) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     let __start0 = __0.0;
     let __end0 = __6.2;
-    let __temp0 = __action105(__0, __1, __2, __3, __4, __5, __6);
+    let __temp0 = __action105(module, __0, __1, __2, __3, __4, __5, __6);
     let __temp0 = (__start0, __temp0, __end0);
-    __action154(__temp0)
+    __action154(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action214(
+fn __action214<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, L<Expr>, Loc),
@@ -22709,17 +24353,19 @@ fn __action214(
 ) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
     let __start0 = __1.0;
     let __end0 = __7.2;
-    let __temp0 = __action105(__1, __2, __3, __4, __5, __6, __7);
+    let __temp0 = __action105(module, __1, __2, __3, __4, __5, __6, __7);
     let __temp0 = (__start0, __temp0, __end0);
-    __action155(__0, __temp0)
+    __action155(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action215(
+fn __action215<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22731,17 +24377,19 @@ fn __action215(
 ) -> Stmt {
     let __start0 = __6.2;
     let __end0 = __7.0;
-    let __temp0 = __action103(&__start0, &__end0);
+    let __temp0 = __action103(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action25(__0, __1, __2, __3, __4, __5, __6, __temp0, __7)
+    __action25(module, __0, __1, __2, __3, __4, __5, __6, __temp0, __7)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action216(
+fn __action216<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22754,17 +24402,19 @@ fn __action216(
 ) -> Stmt {
     let __start0 = __7.0;
     let __end0 = __7.2;
-    let __temp0 = __action104(__7);
+    let __temp0 = __action104(module, __7);
     let __temp0 = (__start0, __temp0, __end0);
-    __action25(__0, __1, __2, __3, __4, __5, __6, __temp0, __8)
+    __action25(module, __0, __1, __2, __3, __4, __5, __6, __temp0, __8)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action217(
+fn __action217<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -22774,17 +24424,19 @@ fn __action217(
 ) -> core::option::Option<Vec<L<Stmt>>> {
     let __start0 = __0.0;
     let __end0 = __5.2;
-    let __temp0 = __action102(__0, __1, __2, __3, __4, __5);
+    let __temp0 = __action102(module, __0, __1, __2, __3, __4, __5);
     let __temp0 = (__start0, __temp0, __end0);
-    __action100(__temp0)
+    __action100(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action218(
+fn __action218<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22801,17 +24453,19 @@ fn __action218(
 ) -> Stmt {
     let __start0 = __7.0;
     let __end0 = __12.2;
-    let __temp0 = __action217(__7, __8, __9, __10, __11, __12);
+    let __temp0 = __action217(module, __7, __8, __9, __10, __11, __12);
     let __temp0 = (__start0, __temp0, __end0);
-    __action215(__0, __1, __2, __3, __4, __5, __6, __temp0)
+    __action215(module, __0, __1, __2, __3, __4, __5, __6, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action219(
+fn __action219<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22822,17 +24476,19 @@ fn __action219(
 ) -> Stmt {
     let __start0 = __6.2;
     let __end0 = __6.2;
-    let __temp0 = __action101(&__start0, &__end0);
+    let __temp0 = __action101(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action215(__0, __1, __2, __3, __4, __5, __6, __temp0)
+    __action215(module, __0, __1, __2, __3, __4, __5, __6, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action220(
+fn __action220<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22850,17 +24506,19 @@ fn __action220(
 ) -> Stmt {
     let __start0 = __8.0;
     let __end0 = __13.2;
-    let __temp0 = __action217(__8, __9, __10, __11, __12, __13);
+    let __temp0 = __action217(module, __8, __9, __10, __11, __12, __13);
     let __temp0 = (__start0, __temp0, __end0);
-    __action216(__0, __1, __2, __3, __4, __5, __6, __7, __temp0)
+    __action216(module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action221(
+fn __action221<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Expr>, Loc),
     __2: (Loc, Token, Loc),
@@ -22872,48 +24530,54 @@ fn __action221(
 ) -> Stmt {
     let __start0 = __7.2;
     let __end0 = __7.2;
-    let __temp0 = __action101(&__start0, &__end0);
+    let __temp0 = __action101(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action216(__0, __1, __2, __3, __4, __5, __6, __7, __temp0)
+    __action216(module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action222(
+fn __action222<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
 ) -> core::option::Option<(Token, core::option::Option<Token>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action197(__0, __1);
+    let __temp0 = __action197(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action116(__temp0)
+    __action116(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action223(
+fn __action223<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
 ) -> core::option::Option<(Token, core::option::Option<Token>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action198(__0);
+    let __temp0 = __action198(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action116(__temp0)
+    __action116(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action224(
+fn __action224<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22936,20 +24600,22 @@ fn __action224(
 ) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __6.2;
-    let __temp0 = __action222(__5, __6);
+    let __temp0 = __action222(module, __5, __6);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18,
+        module, __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action225(
+fn __action225<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -22971,20 +24637,22 @@ fn __action225(
 ) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __5.2;
-    let __temp0 = __action223(__5);
+    let __temp0 = __action223(module, __5);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
-        __16, __17,
+        module, __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action226(
+fn __action226<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23005,20 +24673,22 @@ fn __action226(
 ) -> L<FunDecl> {
     let __start0 = __4.2;
     let __end0 = __5.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action202(
-        __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16,
+        module, __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action227(
+fn __action227<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23039,19 +24709,22 @@ fn __action227(
 ) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __6.2;
-    let __temp0 = __action222(__5, __6);
+    let __temp0 = __action222(module, __5, __6);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        module, __0, __1, __2, __3, __4, __temp0, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action228(
+fn __action228<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23071,19 +24744,22 @@ fn __action228(
 ) -> L<FunDecl> {
     let __start0 = __5.0;
     let __end0 = __5.2;
-    let __temp0 = __action223(__5);
+    let __temp0 = __action223(module, __5);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        module, __0, __1, __2, __3, __4, __temp0, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action229(
+fn __action229<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23102,19 +24778,22 @@ fn __action229(
 ) -> L<FunDecl> {
     let __start0 = __4.2;
     let __end0 = __5.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action203(
-        __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        module, __0, __1, __2, __3, __4, __temp0, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action230(
+fn __action230<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23143,20 +24822,22 @@ fn __action230(
 ) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __12.2;
-    let __temp0 = __action222(__11, __12);
+    let __temp0 = __action222(module, __11, __12);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22, __23, __24,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21, __22, __23, __24,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action231(
+fn __action231<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23184,20 +24865,22 @@ fn __action231(
 ) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __11.2;
-    let __temp0 = __action223(__11);
+    let __temp0 = __action223(module, __11);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14, __15,
-        __16, __17, __18, __19, __20, __21, __22, __23,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action232(
+fn __action232<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23224,20 +24907,22 @@ fn __action232(
 ) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action209(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20, __21, __22,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action233(
+fn __action233<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23263,20 +24948,22 @@ fn __action233(
 ) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action222(__8, __9);
+    let __temp0 = __action222(module, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action234(
+fn __action234<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23301,20 +24988,22 @@ fn __action234(
 ) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __8.2;
-    let __temp0 = __action223(__8);
+    let __temp0 = __action223(module, __8);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14, __15,
-        __16, __17, __18, __19, __20,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action235(
+fn __action235<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23338,20 +25027,22 @@ fn __action235(
 ) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action210(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action236(
+fn __action236<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23378,20 +25069,22 @@ fn __action236(
 ) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __12.2;
-    let __temp0 = __action222(__11, __12);
+    let __temp0 = __action222(module, __11, __12);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __13, __14, __15,
+        __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action237(
+fn __action237<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23417,20 +25110,22 @@ fn __action237(
 ) -> L<FunDecl> {
     let __start0 = __11.0;
     let __end0 = __11.2;
-    let __temp0 = __action223(__11);
+    let __temp0 = __action223(module, __11);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14, __15,
-        __16, __17, __18, __19, __20, __21,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action238(
+fn __action238<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23455,20 +25150,22 @@ fn __action238(
 ) -> L<FunDecl> {
     let __start0 = __10.2;
     let __end0 = __11.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action211(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action239(
+fn __action239<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23492,20 +25189,22 @@ fn __action239(
 ) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __9.2;
-    let __temp0 = __action222(__8, __9);
+    let __temp0 = __action222(module, __8, __9);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action240(
+fn __action240<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23528,20 +25227,22 @@ fn __action240(
 ) -> L<FunDecl> {
     let __start0 = __8.0;
     let __end0 = __8.2;
-    let __temp0 = __action223(__8);
+    let __temp0 = __action223(module, __8);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14, __15,
-        __16, __17, __18,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action241(
+fn __action241<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, core::option::Option<Token>, Loc),
@@ -23563,20 +25264,22 @@ fn __action241(
 ) -> L<FunDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
-    let __temp0 = __action117(&__start0, &__end0);
+    let __temp0 = __action117(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action212(
-        __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __temp0, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action242(
+fn __action242<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
@@ -23584,34 +25287,38 @@ fn __action242(
 ) -> (Token, Type) {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action115(__0, __1, __2);
+    let __temp0 = __action115(module, __0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action151(__temp0, __3)
+    __action151(module, __temp0, __3)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action243(
+fn __action243<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
 ) -> core::option::Option<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action115(__0, __1, __2);
+    let __temp0 = __action115(module, __0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action147(__temp0)
+    __action147(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action244(
+fn __action244<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
@@ -23619,17 +25326,19 @@ fn __action244(
 ) -> alloc::vec::Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __3.2;
-    let __temp0 = __action242(__0, __1, __2, __3);
+    let __temp0 = __action242(module, __0, __1, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action189(__temp0)
+    __action189(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action245(
+fn __action245<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -23638,135 +25347,163 @@ fn __action245(
 ) -> alloc::vec::Vec<(Token, Type)> {
     let __start0 = __1.0;
     let __end0 = __4.2;
-    let __temp0 = __action242(__1, __2, __3, __4);
+    let __temp0 = __action242(module, __1, __2, __3, __4);
     let __temp0 = (__start0, __temp0, __end0);
-    __action190(__0, __temp0)
+    __action190(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action246(__0: (Loc, core::option::Option<(Token, Type)>, Loc)) -> Vec<(Token, Type)> {
+fn __action246<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, core::option::Option<(Token, Type)>, Loc),
+) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action149(&__start0, &__end0);
+    let __temp0 = __action149(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action114(__temp0, __0)
+    __action114(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action247(
+fn __action247<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
     __1: (Loc, core::option::Option<(Token, Type)>, Loc),
 ) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action150(__0);
+    let __temp0 = __action150(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action114(__temp0, __1)
+    __action114(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action248(__0: (Loc, CallArg, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<CallArg> {
+fn __action248<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, CallArg, Loc),
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action167(__0, __1);
+    let __temp0 = __action167(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action185(__temp0)
+    __action185(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action249(
+fn __action249<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, CallArg, Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<CallArg> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action167(__1, __2);
+    let __temp0 = __action167(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action186(__0, __temp0)
+    __action186(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action250(__0: (Loc, core::option::Option<CallArg>, Loc)) -> Vec<CallArg> {
+fn __action250<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, core::option::Option<CallArg>, Loc),
+) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action165(&__start0, &__end0);
+    let __temp0 = __action165(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action96(__temp0, __0)
+    __action96(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action251(
+fn __action251<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, core::option::Option<CallArg>, Loc),
 ) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action166(__0);
+    let __temp0 = __action166(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action96(__temp0, __1)
+    __action96(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action252(
+fn __action252<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Type, Loc),
 ) -> Vec<(Token, Type)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
-    let __temp0 = __action243(__0, __1, __2);
+    let __temp0 = __action243(module, __0, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action246(__temp0)
+    __action246(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action253(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Token, Type)> {
+fn __action253<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<(Token, Type)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action148(&__start0, &__end0);
+    let __temp0 = __action148(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action246(__temp0)
+    __action246(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action254(
+fn __action254<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -23774,443 +25511,520 @@ fn __action254(
 ) -> Vec<(Token, Type)> {
     let __start0 = __1.0;
     let __end0 = __3.2;
-    let __temp0 = __action243(__1, __2, __3);
+    let __temp0 = __action243(module, __1, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
-    __action247(__0, __temp0)
+    __action247(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action255(__0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc)) -> Vec<(Token, Type)> {
+fn __action255<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<(Token, Type)>, Loc),
+) -> Vec<(Token, Type)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action148(&__start0, &__end0);
+    let __temp0 = __action148(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action247(__0, __temp0)
+    __action247(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action256(
+fn __action256<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, (SmolStr, Type), Loc),
     __1: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(SmolStr, Type)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action126(__0, __1);
+    let __temp0 = __action126(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action124(__temp0)
+    __action124(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action257(
+fn __action257<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(SmolStr, Type)>, Loc),
     __1: (Loc, (SmolStr, Type), Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(SmolStr, Type)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action126(__1, __2);
+    let __temp0 = __action126(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action125(__0, __temp0)
+    __action125(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action258(
+fn __action258<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, (Option<SmolStr>, L<Expr>), Loc),
     __1: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action162(__0, __1);
+    let __temp0 = __action162(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action187(__temp0)
+    __action187(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action259(
+fn __action259<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Expr>), Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action162(__1, __2);
+    let __temp0 = __action162(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action188(__0, __temp0)
+    __action188(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action260(
+fn __action260<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action160(&__start0, &__end0);
+    let __temp0 = __action160(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action97(__temp0, __0)
+    __action97(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action261(
+fn __action261<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, core::option::Option<(Option<SmolStr>, L<Expr>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action161(__0);
+    let __temp0 = __action161(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action97(__temp0, __1)
+    __action97(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action262(
+fn __action262<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, (Option<SmolStr>, L<Pat>), Loc),
     __1: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action172(__0, __1);
+    let __temp0 = __action172(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action183(__temp0)
+    __action183(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action263(
+fn __action263<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Pat>), Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action172(__1, __2);
+    let __temp0 = __action172(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action184(__0, __temp0)
+    __action184(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action264(
+fn __action264<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action170(&__start0, &__end0);
+    let __temp0 = __action170(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action95(__temp0, __0)
+    __action95(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action265(
+fn __action265<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, core::option::Option<(Option<SmolStr>, L<Pat>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action171(__0);
+    let __temp0 = __action171(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action95(__temp0, __1)
+    __action95(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action266(
+fn __action266<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Named<Type>, Loc),
     __1: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action146(__0, __1);
+    let __temp0 = __action146(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action191(__temp0)
+    __action191(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action267(
+fn __action267<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, Named<Type>, Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Named<Type>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action146(__1, __2);
+    let __temp0 = __action146(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action192(__0, __temp0)
+    __action192(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action268(__0: (Loc, core::option::Option<Named<Type>>, Loc)) -> Vec<Named<Type>> {
+fn __action268<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, core::option::Option<Named<Type>>, Loc),
+) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action144(&__start0, &__end0);
+    let __temp0 = __action144(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action122(__temp0, __0)
+    __action122(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action269(
+fn __action269<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, core::option::Option<Named<Type>>, Loc),
 ) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action145(__0);
+    let __temp0 = __action145(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action122(__temp0, __1)
+    __action122(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action270(__0: (Loc, Type, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Type> {
+fn __action270<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Type, Loc),
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action141(__0, __1);
+    let __temp0 = __action141(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action193(__temp0)
+    __action193(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action271(
+fn __action271<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Type>, Loc),
     __1: (Loc, Type, Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Type> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action141(__1, __2);
+    let __temp0 = __action141(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action194(__0, __temp0)
+    __action194(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action272(__0: (Loc, core::option::Option<Type>, Loc)) -> Vec<Type> {
+fn __action272<'a>(module: &'a Rc<str>, __0: (Loc, core::option::Option<Type>, Loc)) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action139(&__start0, &__end0);
+    let __temp0 = __action139(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action123(__temp0, __0)
+    __action123(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action273(
+fn __action273<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Type>, Loc),
     __1: (Loc, core::option::Option<Type>, Loc),
 ) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action140(__0);
+    let __temp0 = __action140(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action123(__temp0, __1)
+    __action123(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action274(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
+fn __action274<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action136(__0, __1);
+    let __temp0 = __action136(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action195(__temp0)
+    __action195(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action275(
+fn __action275<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action136(__1, __2);
+    let __temp0 = __action136(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action196(__0, __temp0)
+    __action196(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action276(__0: (Loc, core::option::Option<Token>, Loc)) -> Vec<Token> {
+fn __action276<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action134(&__start0, &__end0);
+    let __temp0 = __action134(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action131(__temp0, __0)
+    __action131(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action277(
+fn __action277<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, core::option::Option<Token>, Loc),
 ) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action135(__0);
+    let __temp0 = __action135(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action131(__temp0, __1)
+    __action131(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action278(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> alloc::vec::Vec<Token> {
+fn __action278<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> alloc::vec::Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action121(__0, __1);
+    let __temp0 = __action121(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action181(__temp0)
+    __action181(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action279(
+fn __action279<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
 ) -> alloc::vec::Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __2.2;
-    let __temp0 = __action121(__1, __2);
+    let __temp0 = __action121(module, __1, __2);
     let __temp0 = (__start0, __temp0, __end0);
-    __action182(__0, __temp0)
+    __action182(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action280(__0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> core::option::Option<Token> {
+fn __action280<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> core::option::Option<Token> {
     let __start0 = __0.0;
     let __end0 = __1.2;
-    let __temp0 = __action121(__0, __1);
+    let __temp0 = __action121(module, __0, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action119(__temp0)
+    __action119(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action281(__0: (Loc, core::option::Option<Token>, Loc)) -> Vec<Token> {
+fn __action281<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, core::option::Option<Token>, Loc),
+) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action175(&__start0, &__end0);
+    let __temp0 = __action175(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action94(__temp0, __0)
+    __action94(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action282(
+fn __action282<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, core::option::Option<Token>, Loc),
 ) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action176(__0);
+    let __temp0 = __action176(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action94(__temp0, __1)
+    __action94(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action283(
+fn __action283<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24234,20 +26048,22 @@ fn __action283(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action224(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action284(
+fn __action284<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24269,20 +26085,22 @@ fn __action284(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action224(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action285(
+fn __action285<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24305,20 +26123,22 @@ fn __action285(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action225(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action286(
+fn __action286<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24339,20 +26159,22 @@ fn __action286(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action225(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action287(
+fn __action287<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24374,20 +26196,22 @@ fn __action287(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action226(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action288(
+fn __action288<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24407,20 +26231,22 @@ fn __action288(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action226(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action289(
+fn __action289<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24442,20 +26268,22 @@ fn __action289(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action227(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action290(
+fn __action290<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24475,20 +26303,22 @@ fn __action290(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action227(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action291(
+fn __action291<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24509,19 +26339,22 @@ fn __action291(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action228(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action292(
+fn __action292<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24540,19 +26373,22 @@ fn __action292(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action228(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action293(
+fn __action293<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24572,19 +26408,21 @@ fn __action293(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action229(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action294(
+fn __action294<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24602,19 +26440,21 @@ fn __action294(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action229(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action295(
+fn __action295<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24644,20 +26484,22 @@ fn __action295(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action230(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22, __23, __24, __25,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23, __24, __25,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action296(
+fn __action296<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24685,20 +26527,22 @@ fn __action296(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action230(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20, __21, __22, __23,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action297(
+fn __action297<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24727,20 +26571,22 @@ fn __action297(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action231(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22, __23, __24,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23, __24,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action298(
+fn __action298<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24767,20 +26613,22 @@ fn __action298(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action231(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20, __21, __22,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action299(
+fn __action299<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24808,20 +26656,22 @@ fn __action299(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action232(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22, __23,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action300(
+fn __action300<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24847,20 +26697,22 @@ fn __action300(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action232(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20, __21,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action301(
+fn __action301<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24887,20 +26739,22 @@ fn __action301(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action233(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action302(
+fn __action302<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24925,20 +26779,22 @@ fn __action302(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action233(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action303(
+fn __action303<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -24964,20 +26820,22 @@ fn __action303(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action234(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action304(
+fn __action304<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25001,20 +26859,22 @@ fn __action304(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action234(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action305(
+fn __action305<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25039,20 +26899,22 @@ fn __action305(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action235(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action306(
+fn __action306<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25075,20 +26937,22 @@ fn __action306(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action235(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action307(
+fn __action307<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25116,20 +26980,22 @@ fn __action307(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action236(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22, __23,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action308(
+fn __action308<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25155,20 +27021,22 @@ fn __action308(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action236(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20, __21,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action309(
+fn __action309<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25195,20 +27063,22 @@ fn __action309(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action237(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21, __22,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action310(
+fn __action310<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25233,20 +27103,22 @@ fn __action310(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action237(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __20,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action311(
+fn __action311<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25272,20 +27144,22 @@ fn __action311(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action238(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __21,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action312(
+fn __action312<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25309,20 +27183,22 @@ fn __action312(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action238(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action313(
+fn __action313<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25347,20 +27223,22 @@ fn __action313(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action239(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action314(
+fn __action314<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25383,20 +27261,22 @@ fn __action314(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action239(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action315(
+fn __action315<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25420,20 +27300,22 @@ fn __action315(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action240(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action316(
+fn __action316<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25455,20 +27337,22 @@ fn __action316(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action240(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action317(
+fn __action317<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25491,20 +27375,22 @@ fn __action317(
 ) -> L<FunDecl> {
     let __start0 = __2.0;
     let __end0 = __3.2;
-    let __temp0 = __action280(__2, __3);
+    let __temp0 = __action280(module, __2, __3);
     let __temp0 = (__start0, __temp0, __end0);
     __action241(
-        __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18,
+        module, __0, __1, __temp0, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action318(
+fn __action318<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25525,20 +27411,22 @@ fn __action318(
 ) -> L<FunDecl> {
     let __start0 = __1.2;
     let __end0 = __2.0;
-    let __temp0 = __action120(&__start0, &__end0);
+    let __temp0 = __action120(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
     __action241(
-        __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16,
+        module, __0, __1, __temp0, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action319(
+fn __action319<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25549,19 +27437,21 @@ fn __action319(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action67(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action67(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action320(
+fn __action320<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25570,17 +27460,19 @@ fn __action320(
 ) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action45(__temp0, __0, __1, __2, __3, __4)
+    __action45(module, __temp0, __0, __1, __2, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action321(
+fn __action321<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25589,17 +27481,19 @@ fn __action321(
 ) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action46(__temp0, __0, __1, __2, __3, __4)
+    __action46(module, __temp0, __0, __1, __2, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action322(
+fn __action322<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25607,17 +27501,19 @@ fn __action322(
 ) -> Expr {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action47(__temp0, __0, __1, __2, __3)
+    __action47(module, __temp0, __0, __1, __2, __3)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action323(
+fn __action323<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25628,32 +27524,40 @@ fn __action323(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action49(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action49(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action324(__0: (Loc, Token, Loc), __1: (Loc, Expr, Loc), __2: (Loc, Loc, Loc)) -> Expr {
+fn __action324<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Expr, Loc),
+    __2: (Loc, Loc, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action51(__0, __temp0, __1, __2)
+    __action51(module, __0, __temp0, __1, __2)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action325(
+fn __action325<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25664,19 +27568,21 @@ fn __action325(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action53(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action53(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action326(
+fn __action326<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25687,19 +27593,21 @@ fn __action326(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action55(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action55(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action327(
+fn __action327<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25710,19 +27618,21 @@ fn __action327(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action56(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action56(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action328(
+fn __action328<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25733,19 +27643,21 @@ fn __action328(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action58(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action58(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action329(
+fn __action329<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25756,19 +27668,21 @@ fn __action329(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action59(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action59(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action330(
+fn __action330<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25779,19 +27693,21 @@ fn __action330(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action60(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action60(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action331(
+fn __action331<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25802,19 +27718,21 @@ fn __action331(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action61(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action61(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action332(
+fn __action332<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25825,19 +27743,21 @@ fn __action332(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action62(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action62(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action333(
+fn __action333<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25848,19 +27768,21 @@ fn __action333(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action63(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action63(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action334(
+fn __action334<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
@@ -25871,19 +27793,21 @@ fn __action334(
     let __end0 = __0.0;
     let __start1 = __2.2;
     let __end1 = __3.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action65(__temp0, __0, __1, __2, __temp1, __3, __4)
+    __action65(module, __temp0, __0, __1, __2, __temp1, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action335(
+fn __action335<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25907,22 +27831,24 @@ fn __action335(
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action283(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
-        __14, __15, __16, __17,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __temp1, __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action336(
+fn __action336<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25944,22 +27870,24 @@ fn __action336(
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action284(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
-        __14, __15,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1,
+        __12, __13, __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action337(
+fn __action337<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -25982,22 +27910,24 @@ fn __action337(
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action285(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
-        __14, __15, __16,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12,
+        __temp1, __13, __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action338(
+fn __action338<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26018,22 +27948,24 @@ fn __action338(
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action286(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
-        __14,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11,
+        __12, __13, __14,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action339(
+fn __action339<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26055,22 +27987,24 @@ fn __action339(
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action287(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
-        __14, __15,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1,
+        __12, __13, __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action340(
+fn __action340<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26090,21 +28024,24 @@ fn __action340(
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action288(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11,
+        __12, __13,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action341(
+fn __action341<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26126,22 +28063,24 @@ fn __action341(
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action289(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
-        __14, __15,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1,
+        __12, __13, __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action342(
+fn __action342<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26161,21 +28100,24 @@ fn __action342(
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action290(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11,
+        __12, __13,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action343(
+fn __action343<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26196,22 +28138,24 @@ fn __action343(
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action291(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
-        __14,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11,
+        __12, __13, __14,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action344(
+fn __action344<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26230,21 +28174,24 @@ fn __action344(
     let __end0 = __0.0;
     let __start1 = __8.2;
     let __end1 = __9.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action292(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp1, __9, __10, __11, __12,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp1, __9, __10, __11,
+        __12,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action345(
+fn __action345<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26264,21 +28211,24 @@ fn __action345(
     let __end0 = __0.0;
     let __start1 = __9.2;
     let __end1 = __10.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action293(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11, __12, __13,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp1, __10, __11,
+        __12, __13,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action346(
+fn __action346<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26296,21 +28246,23 @@ fn __action346(
     let __end0 = __0.0;
     let __start1 = __7.2;
     let __end1 = __8.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action294(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __temp1, __8, __9, __10, __11,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __temp1, __8, __9, __10, __11,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action347(
+fn __action347<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26340,22 +28292,24 @@ fn __action347(
     let __end0 = __0.0;
     let __start1 = __19.2;
     let __end1 = __20.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action295(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __19, __temp1, __20, __21, __22, __23,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __19, __temp1, __20, __21, __22, __23,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action348(
+fn __action348<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26383,22 +28337,24 @@ fn __action348(
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action296(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __temp1, __18, __19, __20, __21,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action349(
+fn __action349<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26427,22 +28383,24 @@ fn __action349(
     let __end0 = __0.0;
     let __start1 = __18.2;
     let __end1 = __19.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action297(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __18, __temp1, __19, __20, __21, __22,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __18, __temp1, __19, __20, __21, __22,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action350(
+fn __action350<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26469,22 +28427,24 @@ fn __action350(
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action298(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __temp1, __17, __18, __19, __20,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action351(
+fn __action351<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26512,22 +28472,24 @@ fn __action351(
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action299(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __temp1, __18, __19, __20, __21,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action352(
+fn __action352<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26553,22 +28515,24 @@ fn __action352(
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action300(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __temp1, __16, __17, __18, __19,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __temp1, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action353(
+fn __action353<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26595,22 +28559,24 @@ fn __action353(
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action301(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __temp1, __17, __18, __19, __20,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action354(
+fn __action354<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26635,22 +28601,24 @@ fn __action354(
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action302(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __temp1, __15, __16, __17, __18,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __temp1, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action355(
+fn __action355<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26676,22 +28644,24 @@ fn __action355(
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action303(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __temp1, __16, __17, __18, __19,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __temp1, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action356(
+fn __action356<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26715,22 +28685,24 @@ fn __action356(
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action304(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
-        __14, __15, __16, __17,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __temp1, __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action357(
+fn __action357<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26755,22 +28727,24 @@ fn __action357(
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action305(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __temp1, __15, __16, __17, __18,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __temp1, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action358(
+fn __action358<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26793,22 +28767,24 @@ fn __action358(
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action306(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
-        __14, __15, __16,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12,
+        __temp1, __13, __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action359(
+fn __action359<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26836,22 +28812,24 @@ fn __action359(
     let __end0 = __0.0;
     let __start1 = __17.2;
     let __end1 = __18.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action307(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __17, __temp1, __18, __19, __20, __21,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __17, __temp1, __18, __19, __20, __21,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action360(
+fn __action360<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26877,22 +28855,24 @@ fn __action360(
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action308(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __temp1, __16, __17, __18, __19,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __temp1, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action361(
+fn __action361<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26919,22 +28899,24 @@ fn __action361(
     let __end0 = __0.0;
     let __start1 = __16.2;
     let __end1 = __17.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action309(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __16, __temp1, __17, __18, __19, __20,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __16, __temp1, __17, __18, __19, __20,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action362(
+fn __action362<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -26959,22 +28941,24 @@ fn __action362(
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action310(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __temp1, __15, __16, __17, __18,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __temp1, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action363(
+fn __action363<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27000,22 +28984,24 @@ fn __action363(
     let __end0 = __0.0;
     let __start1 = __15.2;
     let __end1 = __16.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action311(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __15, __temp1, __16, __17, __18, __19,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __15, __temp1, __16, __17, __18, __19,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action364(
+fn __action364<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27039,22 +29025,24 @@ fn __action364(
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action312(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
-        __14, __15, __16, __17,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __temp1, __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action365(
+fn __action365<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27079,22 +29067,24 @@ fn __action365(
     let __end0 = __0.0;
     let __start1 = __14.2;
     let __end1 = __15.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action313(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
-        __temp1, __15, __16, __17, __18,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __14, __temp1, __15, __16, __17, __18,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action366(
+fn __action366<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27117,22 +29107,24 @@ fn __action366(
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action314(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
-        __14, __15, __16,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12,
+        __temp1, __13, __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action367(
+fn __action367<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27156,22 +29148,24 @@ fn __action367(
     let __end0 = __0.0;
     let __start1 = __13.2;
     let __end1 = __14.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action315(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp1,
-        __14, __15, __16, __17,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13,
+        __temp1, __14, __15, __16, __17,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action368(
+fn __action368<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27193,22 +29187,24 @@ fn __action368(
     let __end0 = __0.0;
     let __start1 = __11.2;
     let __end1 = __12.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action316(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1, __12, __13,
-        __14, __15,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp1,
+        __12, __13, __14, __15,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action369(
+fn __action369<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27231,22 +29227,24 @@ fn __action369(
     let __end0 = __0.0;
     let __start1 = __12.2;
     let __end1 = __13.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action317(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp1, __13,
-        __14, __15, __16,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12,
+        __temp1, __13, __14, __15, __16,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action370(
+fn __action370<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27267,22 +29265,24 @@ fn __action370(
     let __end0 = __0.0;
     let __start1 = __10.2;
     let __end1 = __11.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action133(&__start1, &__end1);
+    let __temp1 = __action133(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action318(
-        __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11, __12, __13,
-        __14,
+        module, __temp0, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp1, __11,
+        __12, __13, __14,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action371(
+fn __action371<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Vec<Token>, Loc),
     __2: (Loc, Token, Loc),
@@ -27290,90 +29290,99 @@ fn __action371(
 ) -> L<ImportDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action86(__temp0, __0, __1, __2, __3)
+    __action86(module, __temp0, __0, __1, __2, __3)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action372(__0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
+fn __action372<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action38(__temp0, __0, __1)
+    __action38(module, __temp0, __0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action373(__0: (Loc, Pat, Loc), __1: (Loc, Loc, Loc)) -> L<Pat> {
+fn __action373<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc), __1: (Loc, Loc, Loc)) -> L<Pat> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action73(__temp0, __0, __1)
+    __action73(module, __temp0, __0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action374(__0: (Loc, Stmt, Loc), __1: (Loc, Loc, Loc)) -> L<Stmt> {
+fn __action374<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc), __1: (Loc, Loc, Loc)) -> L<Stmt> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action23(__temp0, __0, __1)
+    __action23(module, __temp0, __0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action375(
+fn __action375<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
     __2: (Loc, Loc, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action88(__0, __temp0, __1, __2)
+    __action88(module, __0, __temp0, __1, __2)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action376(
+fn __action376<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<FunDecl>, Loc),
     __2: (Loc, Loc, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action89(__0, __temp0, __1, __2)
+    __action89(module, __0, __temp0, __1, __2)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action377(
+fn __action377<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<SmolStr>, Loc),
@@ -27382,34 +29391,42 @@ fn __action377(
 ) -> L<TypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action133(&__start0, &__end0);
+    let __temp0 = __action133(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action2(__temp0, __0, __1, __2, __3, __4)
+    __action2(module, __temp0, __0, __1, __2, __3, __4)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action378(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action378<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action319(__0, __temp0, __1, __2, __temp1)
+    __action319(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action379(
+fn __action379<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, L<Expr>, Loc),
@@ -27417,17 +29434,19 @@ fn __action379(
 ) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action320(__0, __temp0, __1, __2, __3)
+    __action320(module, __0, __temp0, __1, __2, __3)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action380(
+fn __action380<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Expr, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<CallArg>, Loc),
@@ -27435,230 +29454,305 @@ fn __action380(
 ) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action321(__0, __temp0, __1, __2, __3)
+    __action321(module, __0, __temp0, __1, __2, __3)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action381(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Token, Loc)) -> Expr {
+fn __action381<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Token, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action322(__0, __temp0, __1, __2)
+    __action322(module, __0, __temp0, __1, __2)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action382(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action382<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action323(__0, __temp0, __1, __2, __temp1)
+    __action323(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action383(__0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action383<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action324(__0, __1, __temp0)
+    __action324(module, __0, __1, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action384(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action384<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action325(__0, __temp0, __1, __2, __temp1)
+    __action325(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action385(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action385<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action326(__0, __temp0, __1, __2, __temp1)
+    __action326(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action386(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action386<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action327(__0, __temp0, __1, __2, __temp1)
+    __action327(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action387(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action387<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action328(__0, __temp0, __1, __2, __temp1)
+    __action328(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action388(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action388<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action329(__0, __temp0, __1, __2, __temp1)
+    __action329(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action389(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action389<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action330(__0, __temp0, __1, __2, __temp1)
+    __action330(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action390(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action390<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action331(__0, __temp0, __1, __2, __temp1)
+    __action331(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action391(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action391<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action332(__0, __temp0, __1, __2, __temp1)
+    __action332(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action392(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action392<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action333(__0, __temp0, __1, __2, __temp1)
+    __action333(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action393(__0: (Loc, Expr, Loc), __1: (Loc, Token, Loc), __2: (Loc, Expr, Loc)) -> Expr {
+fn __action393<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Expr, Loc),
+    __1: (Loc, Token, Loc),
+    __2: (Loc, Expr, Loc),
+) -> Expr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
     let __end1 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
-    __action334(__0, __temp0, __1, __2, __temp1)
+    __action334(module, __0, __temp0, __1, __2, __temp1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action394(
+fn __action394<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27680,22 +29774,24 @@ fn __action394(
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action335(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
-        __15, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp0, __15, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action395(
+fn __action395<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27715,21 +29811,24 @@ fn __action395(
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action336(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action396(
+fn __action396<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27750,22 +29849,24 @@ fn __action396(
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action337(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
-        __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0,
+        __14, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action397(
+fn __action397<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27784,21 +29885,24 @@ fn __action397(
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action338(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action398(
+fn __action398<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27818,21 +29922,24 @@ fn __action398(
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action339(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action399(
+fn __action399<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27850,21 +29957,23 @@ fn __action399(
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action340(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action400(
+fn __action400<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27884,21 +29993,24 @@ fn __action400(
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action341(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action401(
+fn __action401<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27916,21 +30028,23 @@ fn __action401(
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action342(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action402(
+fn __action402<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27949,21 +30063,24 @@ fn __action402(
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action343(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action403(
+fn __action403<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -27980,21 +30097,23 @@ fn __action403(
     let __end0 = __10.0;
     let __start1 = __10.2;
     let __end1 = __10.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action344(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp0, __10, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __temp0, __10, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action404(
+fn __action404<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28012,21 +30131,23 @@ fn __action404(
     let __end0 = __11.0;
     let __start1 = __11.2;
     let __end1 = __11.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action345(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __temp0, __11, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action405(
+fn __action405<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28042,21 +30163,23 @@ fn __action405(
     let __end0 = __9.0;
     let __start1 = __9.2;
     let __end1 = __9.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action346(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp0, __9, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __temp0, __9, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action406(
+fn __action406<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28084,22 +30207,24 @@ fn __action406(
     let __end0 = __21.0;
     let __start1 = __21.2;
     let __end1 = __21.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action347(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __20, __temp0, __21, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __20, __temp0, __21, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action407(
+fn __action407<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28125,22 +30250,24 @@ fn __action407(
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action348(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __temp0, __19, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __temp0, __19, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action408(
+fn __action408<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28167,22 +30294,24 @@ fn __action408(
     let __end0 = __20.0;
     let __start1 = __20.2;
     let __end1 = __20.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action349(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __19, __temp0, __20, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __19, __temp0, __20, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action409(
+fn __action409<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28207,22 +30336,24 @@ fn __action409(
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action350(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __temp0, __18, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp0, __18, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action410(
+fn __action410<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28248,22 +30379,24 @@ fn __action410(
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action351(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __temp0, __19, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __temp0, __19, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action411(
+fn __action411<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28287,22 +30420,24 @@ fn __action411(
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action352(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __temp0, __17, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp0, __17, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action412(
+fn __action412<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28327,22 +30462,24 @@ fn __action412(
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action353(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __temp0, __18, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp0, __18, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action413(
+fn __action413<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28365,22 +30502,24 @@ fn __action413(
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action354(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
-        __temp0, __16, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp0, __16, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action414(
+fn __action414<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28404,22 +30543,24 @@ fn __action414(
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action355(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __temp0, __17, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp0, __17, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action415(
+fn __action415<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28441,22 +30582,24 @@ fn __action415(
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action356(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
-        __15, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp0, __15, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action416(
+fn __action416<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28479,22 +30622,24 @@ fn __action416(
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action357(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
-        __temp0, __16, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp0, __16, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action417(
+fn __action417<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28515,22 +30660,24 @@ fn __action417(
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action358(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
-        __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0,
+        __14, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action418(
+fn __action418<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28556,22 +30703,24 @@ fn __action418(
     let __end0 = __19.0;
     let __start1 = __19.2;
     let __end1 = __19.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action359(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __18, __temp0, __19, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __18, __temp0, __19, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action419(
+fn __action419<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28595,22 +30744,24 @@ fn __action419(
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action360(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __temp0, __17, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp0, __17, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action420(
+fn __action420<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28635,22 +30786,24 @@ fn __action420(
     let __end0 = __18.0;
     let __start1 = __18.2;
     let __end1 = __18.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action361(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __17, __temp0, __18, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __17, __temp0, __18, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action421(
+fn __action421<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28673,22 +30826,24 @@ fn __action421(
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action362(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
-        __temp0, __16, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp0, __16, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action422(
+fn __action422<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28712,22 +30867,24 @@ fn __action422(
     let __end0 = __17.0;
     let __start1 = __17.2;
     let __end1 = __17.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action363(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15, __16,
-        __temp0, __17, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __16, __temp0, __17, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action423(
+fn __action423<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28749,22 +30906,24 @@ fn __action423(
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action364(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
-        __15, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp0, __15, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action424(
+fn __action424<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28787,22 +30946,24 @@ fn __action424(
     let __end0 = __16.0;
     let __start1 = __16.2;
     let __end1 = __16.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action365(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __15,
-        __temp0, __16, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __15, __temp0, __16, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action425(
+fn __action425<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28823,22 +30984,24 @@ fn __action425(
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action366(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
-        __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0,
+        __14, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action426(
+fn __action426<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28860,22 +31023,24 @@ fn __action426(
     let __end0 = __15.0;
     let __start1 = __15.2;
     let __end1 = __15.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action367(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14, __temp0,
-        __15, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __14,
+        __temp0, __15, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action427(
+fn __action427<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28895,21 +31060,24 @@ fn __action427(
     let __end0 = __13.0;
     let __start1 = __13.2;
     let __end1 = __13.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action368(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __temp0, __13,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action428(
+fn __action428<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28930,22 +31098,24 @@ fn __action428(
     let __end0 = __14.0;
     let __start1 = __14.2;
     let __end1 = __14.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action369(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0, __14,
-        __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __12, __13, __temp0,
+        __14, __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action429(
+fn __action429<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
@@ -28964,106 +31134,121 @@ fn __action429(
     let __end0 = __12.0;
     let __start1 = __12.2;
     let __end1 = __12.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action132(&__start1, &__end1);
+    let __temp1 = __action132(module, &__start1, &__end1);
     let __temp1 = (__start1, __temp1, __end1);
     __action370(
-        __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12, __temp1,
+        module, __0, __1, __2, __3, __4, __5, __6, __7, __8, __9, __10, __11, __temp0, __12,
+        __temp1,
     )
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action430(
+fn __action430<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Vec<Token>, Loc),
     __2: (Loc, Token, Loc),
 ) -> L<ImportDecl> {
     let __start0 = __2.2;
     let __end0 = __2.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action371(__0, __1, __2, __temp0)
+    __action371(module, __0, __1, __2, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action431(__0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action431<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action372(__0, __temp0)
+    __action372(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action432(__0: (Loc, Pat, Loc)) -> L<Pat> {
+fn __action432<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action373(__0, __temp0)
+    __action373(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action433(__0: (Loc, Stmt, Loc)) -> L<Stmt> {
+fn __action433<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action374(__0, __temp0)
+    __action374(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action434(
+fn __action434<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action375(__0, __1, __temp0)
+    __action375(module, __0, __1, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action435(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
+fn __action435<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, L<FunDecl>, Loc),
+) -> L<TopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action376(__0, __1, __temp0)
+    __action376(module, __0, __1, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action436(
+fn __action436<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Vec<SmolStr>, Loc),
@@ -29071,532 +31256,613 @@ fn __action436(
 ) -> L<TypeDecl> {
     let __start0 = __3.2;
     let __end0 = __3.2;
-    let __temp0 = __action132(&__start0, &__end0);
+    let __temp0 = __action132(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action377(__0, __1, __2, __3, __temp0)
+    __action377(module, __0, __1, __2, __3, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action437(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
+fn __action437<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action98(&__start0, &__end0);
+    let __temp0 = __action98(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action32(__temp0)
+    __action32(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action438(__0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
+fn __action438<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action99(__0);
+    let __temp0 = __action99(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action32(__temp0)
+    __action32(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action439(__0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
+fn __action439<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action163(__0);
+    let __temp0 = __action163(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action250(__temp0)
+    __action250(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action440(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
+fn __action440<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action164(&__start0, &__end0);
+    let __temp0 = __action164(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action250(__temp0)
+    __action250(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action441(
+fn __action441<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
     __1: (Loc, CallArg, Loc),
 ) -> Vec<CallArg> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action163(__1);
+    let __temp0 = __action163(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action251(__0, __temp0)
+    __action251(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action442(__0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
+fn __action442<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action164(&__start0, &__end0);
+    let __temp0 = __action164(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action251(__0, __temp0)
+    __action251(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action443(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
+fn __action443<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action106(&__start0, &__end0);
+    let __temp0 = __action106(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action22(__temp0)
+    __action22(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action444(__0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
+fn __action444<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action107(__0);
+    let __temp0 = __action107(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action22(__temp0)
+    __action22(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action445(__0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
+fn __action445<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action90(&__start0, &__end0);
+    let __temp0 = __action90(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action434(__temp0, __0)
+    __action434(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action446(
+fn __action446<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
     __1: (Loc, L<TypeDecl>, Loc),
 ) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action91(__0);
+    let __temp0 = __action91(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action434(__temp0, __1)
+    __action434(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action447(__0: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
+fn __action447<'a>(module: &'a Rc<str>, __0: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __temp0 = __action90(&__start0, &__end0);
+    let __temp0 = __action90(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action435(__temp0, __0)
+    __action435(module, __temp0, __0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action448(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, L<FunDecl>, Loc)) -> L<TopDecl> {
+fn __action448<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, L<FunDecl>, Loc),
+) -> L<TopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action91(__0);
+    let __temp0 = __action91(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action435(__temp0, __1)
+    __action435(module, __temp0, __1)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action449(__0: (Loc, (Option<SmolStr>, L<Expr>), Loc)) -> Vec<(Option<SmolStr>, L<Expr>)> {
+fn __action449<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, (Option<SmolStr>, L<Expr>), Loc),
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action158(__0);
+    let __temp0 = __action158(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action260(__temp0)
+    __action260(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action450(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Option<SmolStr>, L<Expr>)> {
+fn __action450<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action159(&__start0, &__end0);
+    let __temp0 = __action159(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action260(__temp0)
+    __action260(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action451(
+fn __action451<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Expr>), Loc),
 ) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action158(__1);
+    let __temp0 = __action158(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action261(__0, __temp0)
+    __action261(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action452(
+fn __action452<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Expr>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Expr>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action159(&__start0, &__end0);
+    let __temp0 = __action159(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action261(__0, __temp0)
+    __action261(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action453(__0: (Loc, (Option<SmolStr>, L<Pat>), Loc)) -> Vec<(Option<SmolStr>, L<Pat>)> {
+fn __action453<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, (Option<SmolStr>, L<Pat>), Loc),
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action168(__0);
+    let __temp0 = __action168(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action264(__temp0)
+    __action264(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action454(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<(Option<SmolStr>, L<Pat>)> {
+fn __action454<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action169(&__start0, &__end0);
+    let __temp0 = __action169(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action264(__temp0)
+    __action264(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action455(
+fn __action455<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
     __1: (Loc, (Option<SmolStr>, L<Pat>), Loc),
 ) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action168(__1);
+    let __temp0 = __action168(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action265(__0, __temp0)
+    __action265(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action456(
+fn __action456<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<(Option<SmolStr>, L<Pat>)>, Loc),
 ) -> Vec<(Option<SmolStr>, L<Pat>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action169(&__start0, &__end0);
+    let __temp0 = __action169(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action265(__0, __temp0)
+    __action265(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action457(__0: (Loc, Named<Type>, Loc)) -> Vec<Named<Type>> {
+fn __action457<'a>(module: &'a Rc<str>, __0: (Loc, Named<Type>, Loc)) -> Vec<Named<Type>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action142(__0);
+    let __temp0 = __action142(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action268(__temp0)
+    __action268(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action458(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Named<Type>> {
+fn __action458<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Named<Type>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action143(&__start0, &__end0);
+    let __temp0 = __action143(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action268(__temp0)
+    __action268(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action459(
+fn __action459<'a>(
+    module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
     __1: (Loc, Named<Type>, Loc),
 ) -> Vec<Named<Type>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action142(__1);
+    let __temp0 = __action142(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action269(__0, __temp0)
+    __action269(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action460(__0: (Loc, alloc::vec::Vec<Named<Type>>, Loc)) -> Vec<Named<Type>> {
+fn __action460<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
+) -> Vec<Named<Type>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action143(&__start0, &__end0);
+    let __temp0 = __action143(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action269(__0, __temp0)
+    __action269(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action461(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
+fn __action461<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action92(&__start0, &__end0);
+    let __temp0 = __action92(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action87(__temp0)
+    __action87(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action462(__0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
+fn __action462<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
+) -> Vec<L<TopDecl>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action93(__0);
+    let __temp0 = __action93(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action87(__temp0)
+    __action87(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action463(__0: (Loc, Type, Loc)) -> Vec<Type> {
+fn __action463<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> Vec<Type> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action137(__0);
+    let __temp0 = __action137(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action272(__temp0)
+    __action272(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action464(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Type> {
+fn __action464<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Type> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action138(&__start0, &__end0);
+    let __temp0 = __action138(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action272(__temp0)
+    __action272(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action465(__0: (Loc, alloc::vec::Vec<Type>, Loc), __1: (Loc, Type, Loc)) -> Vec<Type> {
+fn __action465<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Type>, Loc),
+    __1: (Loc, Type, Loc),
+) -> Vec<Type> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action137(__1);
+    let __temp0 = __action137(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action273(__0, __temp0)
+    __action273(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action466(__0: (Loc, alloc::vec::Vec<Type>, Loc)) -> Vec<Type> {
+fn __action466<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Type>, Loc)) -> Vec<Type> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action138(&__start0, &__end0);
+    let __temp0 = __action138(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action273(__0, __temp0)
+    __action273(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action467(__0: (Loc, Token, Loc)) -> Vec<Token> {
+fn __action467<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action173(__0);
+    let __temp0 = __action173(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action276(__temp0)
+    __action276(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action468(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
+fn __action468<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action174(&__start0, &__end0);
+    let __temp0 = __action174(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action276(__temp0)
+    __action276(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action469(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, Token, Loc)) -> Vec<Token> {
+fn __action469<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, Token, Loc),
+) -> Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action173(__1);
+    let __temp0 = __action173(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action277(__0, __temp0)
+    __action277(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action470(__0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
+fn __action470<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action174(&__start0, &__end0);
+    let __temp0 = __action174(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action277(__0, __temp0)
+    __action277(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action471(__0: (Loc, Token, Loc)) -> Vec<Token> {
+fn __action471<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Vec<Token> {
     let __start0 = __0.0;
     let __end0 = __0.2;
-    let __temp0 = __action173(__0);
+    let __temp0 = __action173(module, __0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action281(__temp0)
+    __action281(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action472(__lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
+fn __action472<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Token> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
-    let __temp0 = __action174(&__start0, &__end0);
+    let __temp0 = __action174(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action281(__temp0)
+    __action281(module, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action473(__0: (Loc, alloc::vec::Vec<Token>, Loc), __1: (Loc, Token, Loc)) -> Vec<Token> {
+fn __action473<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<Token>, Loc),
+    __1: (Loc, Token, Loc),
+) -> Vec<Token> {
     let __start0 = __1.0;
     let __end0 = __1.2;
-    let __temp0 = __action173(__1);
+    let __temp0 = __action173(module, __1);
     let __temp0 = (__start0, __temp0, __end0);
-    __action282(__0, __temp0)
+    __action282(module, __0, __temp0)
 }
 
+#[allow(unused_variables)]
 #[allow(
     clippy::too_many_arguments,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action474(__0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
+fn __action474<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc)) -> Vec<Token> {
     let __start0 = __0.2;
     let __end0 = __0.2;
-    let __temp0 = __action174(&__start0, &__end0);
+    let __temp0 = __action174(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    __action282(__0, __temp0)
+    __action282(module, __0, __temp0)
 }
 #[allow(clippy::type_complexity, dead_code)]
 
-pub trait __ToTriple {
+pub trait __ToTriple<'a> {
     fn to_triple(
         value: Self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>;
 }
 
-impl __ToTriple for (Loc, Token, Loc) {
+impl<'a> __ToTriple<'a> for (Loc, Token, Loc) {
     fn to_triple(
         value: Self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
@@ -29604,7 +31870,7 @@ impl __ToTriple for (Loc, Token, Loc) {
         Ok(value)
     }
 }
-impl __ToTriple for Result<(Loc, Token, Loc), LexerError<Infallible>> {
+impl<'a> __ToTriple<'a> for Result<(Loc, Token, Loc), LexerError<Infallible>> {
     fn to_triple(
         value: Self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>

@@ -26,7 +26,7 @@ pub fn main() {
 
     let tokens: Vec<(Loc, Token, Loc)> = scan(lex(&contents));
     let parser = TopDeclsParser::new();
-    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(tokens).unwrap();
+    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(&("TODO".into()), tokens).unwrap();
 
     let input = &args[2];
     let mut w = std::io::stdout();
@@ -58,7 +58,7 @@ pub fn run_wasm(pgm: &str, input: &str) {
 
     let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
     let parser = TopDeclsParser::new();
-    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(tokens).unwrap();
+    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(&("TODO".into()), tokens).unwrap();
 
     let mut w = WasmOutput;
     interpreter::run(&mut w, decls, input.trim());

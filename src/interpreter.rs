@@ -12,7 +12,7 @@ mod init;
 use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
-use crate::ast::{self, L};
+use crate::ast::{self, Loc, L};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
@@ -21,7 +21,6 @@ use std::cmp::Ordering;
 use std::io::Write;
 
 use bytemuck::cast_slice_mut;
-use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
@@ -33,7 +32,23 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
 
     // Find the main function.
     let main_fun = pgm.top_level_funs.get("main").unwrap();
-    call(w, &pgm, &mut heap, main_fun, vec![input], Loc::default());
+    call(
+        w,
+        &pgm,
+        &mut heap,
+        main_fun,
+        vec![input],
+        // TODO: main function location
+        &Loc {
+            module: "".into(),
+            line_start: 0,
+            col_start: 0,
+            byte_offset_start: 0,
+            line_end: 0,
+            col_end: 0,
+            byte_offset_end: 0,
+        },
+    );
 }
 
 macro_rules! generate_ty_tags {
@@ -350,7 +365,7 @@ fn call<W: Write>(
     heap: &mut Heap,
     fun: &Fun,
     args: Vec<u64>,
-    loc: Loc,
+    loc: &Loc,
 ) -> u64 {
     match &fun.kind {
         FunKind::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
@@ -365,7 +380,7 @@ fn call_method<W: Write>(
     receiver: u64,
     method: &SmolStr,
     mut args: Vec<u64>,
-    loc: Loc,
+    loc: &Loc,
 ) -> u64 {
     let tag = heap[receiver];
     let fun = pgm.associated_funs[tag as usize]
@@ -381,7 +396,7 @@ fn call_source_fun<W: Write>(
     heap: &mut Heap,
     fun: &ast::FunDecl,
     args: Vec<u64>,
-    loc: Loc,
+    loc: &Loc,
 ) -> u64 {
     assert_eq!(
         fun.num_params(),
@@ -419,7 +434,7 @@ fn allocate_object_from_names<W: Write>(
     ty: &SmolStr,
     constr_name: Option<SmolStr>,
     args: &[ast::CallArg],
-    loc: Loc,
+    loc: &Loc,
 ) -> u64 {
     let ty_con = pgm
         .ty_cons
@@ -519,7 +534,7 @@ fn exec<W: Write>(
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = eval(w, pgm, heap, locals, rhs);
                 if !test_pattern(pgm, heap, lhs, val) {
-                    panic!("Pattern binding at {} failed", LocDisplay(stmt.start));
+                    panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc));
                 }
                 bind_pattern(pgm, heap, locals, lhs, val);
                 val
@@ -574,7 +589,7 @@ fn exec<W: Write>(
 
             ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op }) => {
                 let rhs = eval(w, pgm, heap, locals, rhs);
-                assign(w, pgm, heap, locals, lhs, rhs, *op, stmt.start);
+                assign(w, pgm, heap, locals, lhs, rhs, *op, &stmt.loc);
                 rhs
             }
 
@@ -667,7 +682,7 @@ fn eval<W: Write>(
             Some(value) => *value,
             None => match pgm.top_level_funs.get(var) {
                 Some(top_fun) => heap.allocate_top_fun(top_fun.idx),
-                None => panic!("{}: unbound variable: {}", LocDisplay(expr.start), var),
+                None => panic!("{}: unbound variable: {}", LocDisplay(&expr.loc), var),
             },
         },
 
@@ -685,8 +700,10 @@ fn eval<W: Write>(
             let fields = pgm.get_tag_fields(object_tag);
             match fields {
                 Fields::Unnamed(_) => panic!(
-                    "FieldSelect of {} with unnamed fields, field = {} ({:?})",
-                    object_tag, field, expr.start,
+                    "FieldSelect of {} with unnamed fields, field = {} ({})",
+                    object_tag,
+                    field,
+                    LocDisplay(&expr.loc),
                 ),
                 Fields::Named(fields) => {
                     let (field_idx, _) = fields
@@ -732,7 +749,7 @@ fn eval<W: Write>(
                                 .iter()
                                 .map(|arg| eval(w, pgm, heap, locals, &arg.expr))
                                 .collect();
-                            return call(w, pgm, heap, fun, arg_values, expr.start);
+                            return call(w, pgm, heap, fun, arg_values, &expr.loc);
                         }
                         None => eval(w, pgm, heap, locals, fun),
                     },
@@ -755,7 +772,7 @@ fn eval<W: Write>(
                                 ty,
                                 Some(field.clone()),
                                 args,
-                                expr.start,
+                                &expr.loc,
                             );
                         } else {
                             // Handle `Type.associatedFunction`.
@@ -773,7 +790,7 @@ fn eval<W: Write>(
                                 .map(|arg| eval(w, pgm, heap, locals, &arg.expr))
                                 .collect();
 
-                            return call(w, pgm, heap, fun, args, expr.start);
+                            return call(w, pgm, heap, fun, args, &expr.loc);
                         }
                     }
 
@@ -784,7 +801,7 @@ fn eval<W: Write>(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Object with tag {} doesn't have field or method {:?}",
-                                LocDisplay(expr.start),
+                                LocDisplay(&expr.loc),
                                 object_tag,
                                 field
                             )
@@ -794,12 +811,12 @@ fn eval<W: Write>(
                         .map(|arg| eval(w, pgm, heap, locals, &arg.expr))
                         .collect();
                     args.insert(0, object);
-                    return call(w, pgm, heap, fun, args, expr.start);
+                    return call(w, pgm, heap, fun, args, &expr.loc);
                 }
 
                 ast::Expr::UpperVar(ty) => {
                     return allocate_object_from_names(
-                        w, pgm, heap, locals, ty, None, args, expr.start,
+                        w, pgm, heap, locals, ty, None, args, &expr.loc,
                     );
                 }
 
@@ -829,7 +846,7 @@ fn eval<W: Write>(
                         assert!(arg.name.is_none());
                         arg_values.push(eval(w, pgm, heap, locals, &arg.expr));
                     }
-                    call(w, pgm, heap, top_fun, arg_values, expr.start)
+                    call(w, pgm, heap, top_fun, arg_values, &expr.loc)
                 }
 
                 ASSOC_FUN_TYPE_TAG => {
@@ -852,15 +869,8 @@ fn eval<W: Write>(
                     StringPart::Expr(expr) => {
                         let part_val = eval(w, pgm, heap, locals, expr);
                         // Call toStr
-                        let part_str_val = call_method(
-                            w,
-                            pgm,
-                            heap,
-                            part_val,
-                            &"toStr".into(),
-                            vec![],
-                            expr.start,
-                        );
+                        let part_str_val =
+                            call_method(w, pgm, heap, part_val, &"toStr".into(), vec![], &expr.loc);
                         assert_eq!(heap[part_str_val], STR_TYPE_TAG);
                         let part_bytes = heap.str_bytes(part_str_val);
                         bytes.extend(part_bytes);
@@ -881,27 +891,27 @@ fn eval<W: Write>(
                 ast::BinOp::Subtract => "__sub",
                 ast::BinOp::Multiply => "__mul",
                 ast::BinOp::Equal => {
-                    let eq = eq(w, pgm, heap, left, right, expr.start);
+                    let eq = eq(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(eq);
                 }
                 ast::BinOp::NotEqual => {
-                    let eq = eq(w, pgm, heap, left, right, expr.start);
+                    let eq = eq(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(!eq);
                 }
                 ast::BinOp::Lt => {
-                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(matches!(ord, Ordering::Less));
                 }
                 ast::BinOp::Gt => {
-                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(matches!(ord, Ordering::Greater));
                 }
                 ast::BinOp::LtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(matches!(ord, Ordering::Less | Ordering::Equal));
                 }
                 ast::BinOp::GtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, expr.start);
+                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
                     return pgm.bool_alloc(matches!(ord, Ordering::Greater | Ordering::Equal));
                 }
                 ast::BinOp::And => "__and",
@@ -915,7 +925,7 @@ fn eval<W: Write>(
                 left,
                 &method_name.into(),
                 vec![right],
-                expr.start,
+                &expr.loc,
             )
         }
 
@@ -994,7 +1004,7 @@ fn assign<W: Write>(
     lhs: &ast::L<ast::Expr>,
     val: u64,
     op: ast::AssignOp,
-    loc: Loc,
+    loc: &Loc,
 ) {
     match &lhs.thing {
         ast::Expr::Var(var) => match op {
@@ -1024,7 +1034,7 @@ fn assign<W: Write>(
             };
             heap[object + 1 + field_idx] = new_val;
         }
-        _ => todo!("Assign statement with fancy LHS at {:?}", lhs.start),
+        _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
 }
 
@@ -1034,7 +1044,7 @@ fn cmp<W: Write>(
     heap: &mut Heap,
     val1: u64,
     val2: u64,
-    loc: Loc,
+    loc: &Loc,
 ) -> Ordering {
     let ret = call_method(w, pgm, heap, val1, &"__cmp".into(), vec![val2], loc);
     let ret_tag = heap[ret];
@@ -1059,7 +1069,7 @@ fn cmp<W: Write>(
     }
 }
 
-fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: Loc) -> bool {
+fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: &Loc) -> bool {
     let ret = call_method(w, pgm, heap, val1, &"__eq".into(), vec![val2], loc);
     let ret_tag = heap[ret];
 
@@ -1317,7 +1327,7 @@ fn bind_pattern(
     }
 }
 
-fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: Loc) -> String {
+fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
     use std::fmt::Write;
 
     let mut s = String::new();
@@ -1367,10 +1377,10 @@ fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: Loc) -> String {
     s
 }
 
-struct LocDisplay(Loc);
+struct LocDisplay<'a>(&'a Loc);
 
-impl std::fmt::Display for LocDisplay {
+impl<'a> std::fmt::Display for LocDisplay<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.0.line + 1, self.0.col + 1)
+        write!(f, "{}:{}", self.0.line_start + 1, self.0.col_start + 1)
     }
 }
