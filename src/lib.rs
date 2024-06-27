@@ -1,5 +1,6 @@
 mod ast;
 mod collections;
+mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
@@ -15,22 +16,39 @@ use scanner::scan;
 use token::Token;
 
 use std::io::Write;
+use std::path::Path;
 
 use lexgen_util::Loc;
+use smol_str::SmolStr;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 pub fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let file = &args[1];
-    let contents = std::fs::read_to_string(file).unwrap();
 
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(&contents));
-    let parser = TopDeclsParser::new();
-    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(&("TODO".into()), tokens).unwrap();
+    let file_path = Path::new(&args[1]); // "examples/Foo.fir"
+    let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
+    let root_path = file_path.parent().unwrap(); // "examples/"
+
+    let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
+    let module = import_resolver::resolve_imports(root_path.to_str().unwrap(), module);
 
     let input = &args[2];
     let mut w = std::io::stdout();
-    interpreter::run(&mut w, decls, input);
+    interpreter::run(&mut w, module, input);
+}
+
+fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
+        panic!(
+            "Unable to read file {} for module module {}: {}",
+            path.as_ref().to_string_lossy(),
+            module,
+            err
+        )
+    });
+    let tokens = scan(crate::lexer::lex(&contents));
+    let parser = TopDeclsParser::new();
+    parser.parse(&(module.as_str().into()), tokens).unwrap()
 }
 
 #[wasm_bindgen]

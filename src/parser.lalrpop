@@ -573,4 +573,7 @@ TopDecl: L<TopDecl> = {
 
     NEWLINE* <l:@L> <fun_decl:FunDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Fun(fun_decl)),
+
+    NEWLINE* <l:@L> <import_decl:ImportDecl> <r:@R> =>
+        L::new(module, l, r, TopDecl::Import(import_decl)),
 }
