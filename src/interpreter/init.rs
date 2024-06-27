@@ -4,23 +4,6 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
     let mut ty_cons: Map<SmolStr, TyCon> = Default::default();
 
     ty_cons.insert(
-        SmolStr::new("Bool"),
-        TyCon {
-            value_constrs: vec![
-                ValCon {
-                    name: Some(SmolStr::new("False")),
-                    fields: Fields::Unnamed(0),
-                },
-                ValCon {
-                    name: Some(SmolStr::new("True")),
-                    fields: Fields::Unnamed(0),
-                },
-            ],
-            type_tag: FALSE_TYPE_TAG,
-        },
-    );
-
-    ty_cons.insert(
         SmolStr::new("I32"),
         TyCon {
             value_constrs: vec![],
@@ -125,7 +108,11 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
                         type_tag: next_type_tag,
                     },
                 );
-                assert!(old.is_none());
+                assert!(
+                    old.is_none(),
+                    "Type constructor {} defined multiple times",
+                    name
+                );
                 next_type_tag += named_constrs.len() as u64;
             }
 

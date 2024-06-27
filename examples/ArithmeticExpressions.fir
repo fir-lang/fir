@@ -3,6 +3,8 @@
 #
 # Takes the program code as the first command line argument.
 
+import Prelude
+
 fn main(pgm: Str) =
     let pgmStringView = pgm.substr(0, pgm.len())
     printStr(eval(parse(pgmStringView)).toStr())
@@ -117,10 +119,3 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     let rest = rest.substr(1, rest.len())
 
     (arg = arg, rest = rest)
-
-# For now, this needs to be defined somewhere in the program. We will remove this once we have a
-# prelude.
-type Ordering:
-    Less
-    Equal
-    Greater

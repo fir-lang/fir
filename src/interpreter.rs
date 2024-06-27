@@ -66,8 +66,6 @@ macro_rules! generate_ty_tags {
 
 #[rustfmt::skip]
 generate_ty_tags!(
-    FALSE_TYPE_TAG,
-    TRUE_TYPE_TAG,
     I32_TYPE_TAG,
     STR_TYPE_TAG,
     STR_VIEW_TYPE_TAG,
@@ -103,6 +101,10 @@ struct Pgm {
 
     /// Same as `top_level_funs`, but indexed by the function index.
     top_level_funs_by_idx: Vec<Fun>,
+
+    // Some allocations and constructors used by the built-ins.
+    true_alloc: u64,
+    false_alloc: u64,
 }
 
 #[derive(Debug)]
@@ -305,7 +307,9 @@ impl Pgm {
             vec![Default::default(); next_type_tag as usize];
 
         for (ty_name, funs) in associated_funs {
-            let ty_con = ty_cons.get(&ty_name).unwrap();
+            let ty_con = ty_cons
+                .get(&ty_name)
+                .unwrap_or_else(|| panic!("Type not defined: {}", ty_name));
             let first_tag = ty_cons.get(&ty_name).unwrap().type_tag as usize;
             let n_constrs = ty_con.value_constrs.len();
             if n_constrs == 0 {
@@ -328,6 +332,21 @@ impl Pgm {
 
         let top_level_funs_by_idx = top_level_funs_vec.into_iter().map(|(_, f)| f).collect();
 
+        let bool_ty_con: &TyCon = ty_cons.get("Bool".into()).as_ref().unwrap();
+        assert_eq!(
+            bool_ty_con.value_constrs[0].name,
+            Some(SmolStr::new("False"))
+        );
+        assert_eq!(
+            bool_ty_con.value_constrs[1].name,
+            Some(SmolStr::new("True"))
+        );
+
+        let false_alloc = cons_by_tag[bool_ty_con.type_tag as usize].alloc.unwrap();
+        let true_alloc = cons_by_tag[bool_ty_con.type_tag as usize + 1]
+            .alloc
+            .unwrap();
+
         Pgm {
             ty_cons,
             cons_by_tag,
@@ -335,6 +354,8 @@ impl Pgm {
             associated_funs: associated_funs_vec,
             top_level_funs,
             top_level_funs_by_idx,
+            false_alloc,
+            true_alloc,
         }
     }
 
@@ -342,19 +363,11 @@ impl Pgm {
         &self.cons_by_tag[tag as usize].fields
     }
 
-    fn true_alloc(&self) -> u64 {
-        self.cons_by_tag[TRUE_TYPE_TAG as usize].alloc.unwrap()
-    }
-
-    fn false_alloc(&self) -> u64 {
-        self.cons_by_tag[FALSE_TYPE_TAG as usize].alloc.unwrap()
-    }
-
     fn bool_alloc(&self, b: bool) -> u64 {
         if b {
-            self.true_alloc()
+            self.true_alloc
         } else {
-            self.false_alloc()
+            self.false_alloc
         }
     }
 }
@@ -569,8 +582,8 @@ fn exec<W: Write>(
             }) => {
                 for (cond, stmts) in branches {
                     let cond = eval(w, pgm, heap, locals, cond);
-                    assert!(heap[cond] <= TRUE_TYPE_TAG);
-                    if heap[cond] == TRUE_TYPE_TAG {
+                    debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
+                    if cond == pgm.true_alloc {
                         match exec(w, pgm, heap, locals, stmts) {
                             ControlFlow::Next(val) => return_value = val,
                             ControlFlow::Return(val) => return ControlFlow::Return(val),
@@ -597,7 +610,8 @@ fn exec<W: Write>(
 
             ast::Stmt::While(ast::WhileStatement { cond, body }) => loop {
                 let cond = eval(w, pgm, heap, locals, cond);
-                if heap[cond] == FALSE_TYPE_TAG {
+                debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
+                if cond == pgm.false_alloc {
                     break 0; // FIXME: Return unit
                 }
                 match exec(w, pgm, heap, locals, body) {
@@ -931,10 +945,10 @@ fn eval<W: Write>(
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
             let val = eval(w, pgm, heap, locals, expr);
-            assert!(heap[val] <= TRUE_TYPE_TAG);
+            debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
 
             match op {
-                ast::UnOp::Not => pgm.bool_alloc(heap[val] == FALSE_TYPE_TAG),
+                ast::UnOp::Not => pgm.bool_alloc(val == pgm.false_alloc),
             }
         }
 
@@ -1071,10 +1085,8 @@ fn cmp<W: Write>(
 
 fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: &Loc) -> bool {
     let ret = call_method(w, pgm, heap, val1, &"__eq".into(), vec![val2], loc);
-    let ret_tag = heap[ret];
-
-    debug_assert!(matches!(ret_tag, TRUE_TYPE_TAG | FALSE_TYPE_TAG));
-    ret_tag == TRUE_TYPE_TAG
+    debug_assert!(ret == pgm.true_alloc || ret == pgm.false_alloc);
+    ret == pgm.true_alloc
 }
 
 // NB. Because we don't have a proper type system yet, this doesn't assume that the program is

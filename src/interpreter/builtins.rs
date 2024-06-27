@@ -340,13 +340,10 @@ pub fn call_builtin_fun<W: Write>(
             let b1 = args[0];
             let b2 = args[1];
 
-            debug_assert!(heap[b1] <= TRUE_TYPE_TAG, "{:?}", loc);
-            debug_assert!(heap[b2] <= TRUE_TYPE_TAG, "{:?}", loc);
+            debug_assert!(b1 == pgm.true_alloc || b1 == pgm.false_alloc, "{:?}", loc);
+            debug_assert!(b2 == pgm.true_alloc || b2 == pgm.false_alloc, "{:?}", loc);
 
-            let b1 = heap[b1];
-            let b2 = heap[b2];
-
-            pgm.bool_alloc(b1 == TRUE_TYPE_TAG && b2 == TRUE_TYPE_TAG)
+            pgm.bool_alloc(b1 == pgm.true_alloc && b2 == pgm.true_alloc)
         }
 
         BuiltinFun::BoolOr => {
@@ -355,13 +352,10 @@ pub fn call_builtin_fun<W: Write>(
             let b1 = args[0];
             let b2 = args[1];
 
-            debug_assert!(heap[b1] <= TRUE_TYPE_TAG, "{:?}", loc);
-            debug_assert!(heap[b2] <= TRUE_TYPE_TAG, "{:?}", loc);
+            debug_assert!(b1 == pgm.true_alloc || b1 == pgm.false_alloc, "{:?}", loc);
+            debug_assert!(b2 == pgm.true_alloc || b2 == pgm.false_alloc, "{:?}", loc);
 
-            let b1 = heap[b1];
-            let b2 = heap[b2];
-
-            pgm.bool_alloc(b1 == TRUE_TYPE_TAG || b2 == TRUE_TYPE_TAG)
+            pgm.bool_alloc(b1 == pgm.true_alloc || b2 == pgm.true_alloc)
         }
 
         BuiltinFun::BoolToStr => {
@@ -369,11 +363,9 @@ pub fn call_builtin_fun<W: Write>(
 
             let b = args[0];
 
-            debug_assert!(heap[b] <= TRUE_TYPE_TAG, "{:?}", loc);
+            debug_assert!(b == pgm.true_alloc || b == pgm.false_alloc, "{:?}", loc);
 
-            let b = heap[b];
-
-            heap.allocate_str(if b == 1 {
+            heap.allocate_str(if b == pgm.true_alloc {
                 "Bool.True".as_bytes()
             } else {
                 "Bool.False".as_bytes()
