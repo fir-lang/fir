@@ -7,6 +7,7 @@ syntax keyword firKeyword
     \ for
     \ if
     \ impl
+    \ import
     \ in
     \ let
     \ match
