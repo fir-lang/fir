@@ -195,8 +195,6 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
                 visit_stmt(&stmt.thing, records);
             }
         }
-
-        ast::Stmt::Return(expr) => visit_expr(&expr.thing, records),
     }
 }
 
@@ -276,5 +274,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             }
             records.insert(RecordShape::from_named_things(fields));
         }
+
+        ast::Expr::Return(expr) => visit_expr(&expr.thing, records),
     }
 }

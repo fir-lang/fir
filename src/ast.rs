@@ -159,7 +159,6 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStatement),
     While(WhileStatement),
-    Return(L<Expr>),
 }
 
 /// A let statement: `let x: T = expr`.
@@ -284,6 +283,8 @@ pub enum Expr {
     ArrayIndex(ArrayIndexExpr),
 
     Record(Vec<Named<Box<L<Expr>>>>),
+
+    Return(Box<L<Expr>>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

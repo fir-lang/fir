@@ -277,9 +277,6 @@ Stmt: Stmt = {
             body:statements,
         }),
 
-    "return" <expr:LExpr> NEWLINE =>
-        Stmt::Return(expr),
-
     // <fun:FunDecl> =>
     //     Stmt::LetFn(fun),
 }
@@ -473,6 +470,10 @@ Expr: Expr = {
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Or,
         }),
+
+    #[precedence(level = "8")]
+    "return" <expr:LExpr> =>
+        Expr::Return(Box::new(expr)),
 }
 
 ParenExpr: (Option<SmolStr>, L<Expr>) = {
