@@ -94,3 +94,44 @@ impl Write for WasmOutput {
         Ok(())
     }
 }
+
+#[test]
+fn parse_expr_1() {
+    let pgm = indoc::indoc! {"
+        match t():
+            X: 1
+    "};
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
+    let ast = crate::parser::LExprParser::new()
+        .parse(&"".into(), tokens)
+        .unwrap();
+    dbg!(ast);
+}
+
+#[test]
+fn parse_stmt_1() {
+    let pgm = indoc::indoc! {"
+        match t():
+            X: 1
+    "};
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
+    let ast = crate::parser::LStmtParser::new()
+        .parse(&"".into(), tokens)
+        .unwrap();
+    dbg!(ast);
+}
+
+#[test]
+fn parse_fn_1() {
+    let pgm = indoc::indoc! {"
+        fn asdf() =
+            let q = match t():
+                A.X: 1
+            q
+    "};
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
+    let ast = crate::parser::TopDeclsParser::new()
+        .parse(&"".into(), tokens)
+        .unwrap();
+    dbg!(ast);
+}

@@ -137,19 +137,6 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
         //         visit_stmt(stmt, records);
         //     }
         // }
-        ast::Stmt::Match(ast::MatchStatement { scrutinee, alts }) => {
-            visit_expr(&scrutinee.thing, records);
-            for alt in alts {
-                visit_pat(&alt.pattern.thing, records);
-                if let Some(guard) = &alt.guard {
-                    visit_expr(&guard.thing, records);
-                }
-                for stmt in &alt.rhs {
-                    visit_stmt(&stmt.thing, records);
-                }
-            }
-        }
-
         ast::Stmt::If(ast::IfStatement {
             branches,
             else_branch,
@@ -276,5 +263,18 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
         }
 
         ast::Expr::Return(expr) => visit_expr(&expr.thing, records),
+
+        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+            visit_expr(&scrutinee.thing, records);
+            for alt in alts {
+                visit_pat(&alt.pattern.thing, records);
+                if let Some(guard) = &alt.guard {
+                    visit_expr(&guard.thing, records);
+                }
+                for stmt in &alt.rhs {
+                    visit_stmt(&stmt.thing, records);
+                }
+            }
+        }
     }
 }

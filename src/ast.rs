@@ -153,7 +153,6 @@ impl FunDecl {
 pub enum Stmt {
     Let(LetStatement),
     // LetFn(FunDecl),
-    Match(MatchStatement),
     If(IfStatement),
     Assign(AssignStatement),
     Expr(L<Expr>),
@@ -170,8 +169,8 @@ pub struct LetStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MatchStatement {
-    pub scrutinee: L<Expr>,
+pub struct MatchExpr {
+    pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
 }
 
@@ -285,6 +284,8 @@ pub enum Expr {
     Record(Vec<Named<Box<L<Expr>>>>),
 
     Return(Box<L<Expr>>),
+
+    Match(MatchExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

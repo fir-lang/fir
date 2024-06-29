@@ -229,12 +229,15 @@ LStmts: Vec<L<Stmt>> = {
         stmts,
 }
 
-LStmt: L<Stmt> = {
+pub LStmt: L<Stmt> = {
     <l:@L> <stmt:Stmt> <r:@R> => L::new(module, l, r, stmt),
 }
 
 Stmt: Stmt = {
-    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LExpr> NEWLINE =>
+    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LInlineExpr> NEWLINE =>
+        Stmt::Let(LetStatement { lhs, ty, rhs }),
+
+    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LBlockExpr> =>
         Stmt::Let(LetStatement { lhs, ty, rhs }),
 
     "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
@@ -247,21 +250,18 @@ Stmt: Stmt = {
         })
     },
 
-    <lhs:LExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
+    <lhs:LInlineExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
         Stmt::Assign(AssignStatement {
             lhs,
             rhs,
             op,
         }),
 
-    <expr:LExpr> NEWLINE =>
-        Stmt::Expr(expr),
+    <l:@L> <expr:InlineExpr> <r:@R> NEWLINE =>
+        Stmt::Expr(L::new(module, l, r, expr)),
 
-    "match" <expr:LExpr> ":" NEWLINE INDENT <alts:Alts> DEDENT =>
-        Stmt::Match(MatchStatement {
-            scrutinee: expr,
-            alts,
-        }),
+    <l:@L> <expr:BlockExpr> <r:@R> =>
+        Stmt::Expr(L::new(module, l, r, expr)),
 
     "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
         Stmt::For(ForStatement {
@@ -318,6 +318,31 @@ pub LExpr: L<Expr> = {
 }
 
 Expr: Expr = {
+    <expr:InlineExpr> => expr,
+    <expr:BlockExpr>  => expr,
+}
+
+LBlockExpr: L<Expr> = {
+    <l:@L> <expr:BlockExpr> <r:@R> =>
+        L::new(module, l, r, expr),
+}
+
+// Block expressions are also statements, without a NEWLINE after them.
+BlockExpr: Expr = {
+    "match" <expr:LInlineExpr> ":" NEWLINE INDENT <alts:Alts> DEDENT =>
+        Expr::Match(MatchExpr {
+            scrutinee: Box::new(expr),
+            alts,
+        }),
+}
+
+LInlineExpr: L<Expr> = {
+    <l:@L> <expr:InlineExpr> <r:@R> =>
+        L::new(module, l, r, expr),
+}
+
+// Inline expressions can be made statements with a NEWLINE after them.
+InlineExpr: Expr = {
     #[precedence(level = "0")]
     "self" =>
         Expr::Self_,
@@ -342,25 +367,25 @@ Expr: Expr = {
     <string:StringLit> =>
         Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1])),
 
-    <l:@L> <array:Expr> <r:@R> "[" <index:LExpr> "]" =>
+    <l:@L> <array:InlineExpr> <r:@R> "[" <index:LExpr> "]" =>
         Expr::ArrayIndex(ArrayIndexExpr {
             array: Box::new(L::new(module, l, r, array)),
             index: Box::new(index),
         }),
 
-    <l:@L> <fun:Expr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
+    <l:@L> <fun:InlineExpr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
         Expr::Call(CallExpr {
             fun: Box::new(L::new(module, l, r, fun)),
             args,
         }),
 
-    <l:@L> <expr:Expr> <r:@R> "." <field:LowerId> =>
+    <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
         Expr::FieldSelect(FieldSelectExpr {
             object: Box::new(L::new(module, l, r, expr)),
             field: field.smol_str(),
         }),
 
-    <expr:Expr> "." <constr:UpperId> => {
+    <expr:InlineExpr> "." <constr:UpperId> => {
         match expr {
             Expr::UpperVar(ty) => Expr::ConstrSelect(ConstrSelectExpr {
                 ty,
@@ -373,7 +398,7 @@ Expr: Expr = {
 
     #[precedence(level = "1")]
     #[assoc(side = "left")]
-    <l1:@L> <from:Expr> <r1:@R> ".." <l2:@L> <to:Expr> <r2:@R> =>
+    <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
         Expr::Range(RangeExpr {
             from: Box::new(L::new(module, l1, r1, from)),
             to: Box::new(L::new(module, l2, r2, to)),
@@ -381,12 +406,12 @@ Expr: Expr = {
         }),
 
     #[precedence(level = "2")]
-    "!" <l:@L> <expr:Expr> <r:@R> =>
+    "!" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
     #[assoc(side = "left")]
-    <l1:@L> <left:Expr> <r1:@R> "*" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "*" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -395,14 +420,14 @@ Expr: Expr = {
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
-    <l1:@L> <left:Expr> <r1:@R> "+" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "+" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Add,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> "-" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "-" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -411,42 +436,42 @@ Expr: Expr = {
 
     #[precedence(level = "5")]
     #[assoc(side = "left")]
-    <l1:@L> <left:Expr> <r1:@R> "==" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "==" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Equal,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> "!=" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "!=" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::NotEqual,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> "<" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "<" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Lt,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> ">" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> ">" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Gt,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> "<=" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "<=" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::LtEq,
         }),
 
-    <l1:@L> <left:Expr> <r1:@R> ">=" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> ">=" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -455,7 +480,7 @@ Expr: Expr = {
 
     #[precedence(level = "6")]
     #[assoc(side = "left")]
-    <l1:@L> <left:Expr> <r1:@R> "&&" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -464,7 +489,7 @@ Expr: Expr = {
 
     #[precedence(level = "7")]
     #[assoc(side = "left")]
-    <l1:@L> <left:Expr> <r1:@R> "||" <l2:@L> <right:Expr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -472,7 +497,7 @@ Expr: Expr = {
         }),
 
     #[precedence(level = "8")]
-    "return" <expr:LExpr> =>
+    "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }
 

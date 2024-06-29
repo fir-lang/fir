@@ -562,29 +562,6 @@ fn exec<W: Write>(
                 val
             }
 
-            ast::Stmt::Match(ast::MatchStatement { scrutinee, alts }) => {
-                let scrut = val!(eval(w, pgm, heap, locals, scrutinee));
-                for ast::Alt {
-                    pattern,
-                    guard,
-                    rhs,
-                } in alts
-                {
-                    assert!(guard.is_none()); // TODO
-                    if test_pattern(pgm, heap, pattern, scrut) {
-                        bind_pattern(pgm, heap, locals, pattern, scrut);
-                        match exec(w, pgm, heap, locals, rhs) {
-                            ControlFlow::Val(val) => {
-                                return_value = val;
-                                continue 'next_stmt;
-                            }
-                            ControlFlow::Ret(val) => return ControlFlow::Ret(val),
-                        }
-                    }
-                }
-                panic!("Non-exhaustive pattern match");
-            }
-
             ast::Stmt::If(ast::IfStatement {
                 branches,
                 else_branch,
@@ -840,17 +817,7 @@ fn eval<W: Write>(
                     );
                 }
 
-                ast::Expr::ConstrSelect(_)
-                | ast::Expr::Call(_)
-                | ast::Expr::Int(_)
-                | ast::Expr::String(_)
-                | ast::Expr::Self_
-                | ast::Expr::BinOp(_)
-                | ast::Expr::UnOp(_)
-                | ast::Expr::ArrayIndex(_)
-                | ast::Expr::Record(_)
-                | ast::Expr::Range(_)
-                | ast::Expr::Return(_) => val!(eval(w, pgm, heap, locals, fun)),
+                _ => val!(eval(w, pgm, heap, locals, fun)),
             };
 
             match heap[fun] {
@@ -1020,6 +987,23 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Return(expr) => ControlFlow::Ret(val!(eval(w, pgm, heap, locals, expr))),
+
+        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+            let scrut = val!(eval(w, pgm, heap, locals, scrutinee));
+            for ast::Alt {
+                pattern,
+                guard,
+                rhs,
+            } in alts
+            {
+                assert!(guard.is_none()); // TODO
+                if test_pattern(pgm, heap, pattern, scrut) {
+                    bind_pattern(pgm, heap, locals, pattern, scrut);
+                    return exec(w, pgm, heap, locals, rhs);
+                }
+            }
+            panic!("Non-exhaustive pattern match");
+        }
     }
 }
 
