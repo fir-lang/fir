@@ -32836,7 +32836,7 @@ fn __action19<'a>(
 ) -> Named<Type> {
     Named {
         name: Some(name.smol_str()),
-        thing: ty,
+        node: ty,
     }
 }
 
@@ -32849,7 +32849,7 @@ fn __action19<'a>(
 fn __action20<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Type, Loc)) -> Named<Type> {
     Named {
         name: None,
-        thing: ty,
+        node: ty,
     }
 }
 
@@ -33355,13 +33355,13 @@ fn __action48<'a>(
     {
         match exprs.len() {
             0 => Expr::Record(vec![]),
-            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.thing,
+            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.node,
             _ => Expr::Record(
                 exprs
                     .into_iter()
                     .map(|(name, expr)| Named {
                         name: name,
-                        thing: Box::new(expr),
+                        node: Box::new(expr),
                     })
                     .collect(),
             ),
@@ -33978,7 +33978,7 @@ fn __action84<'a>(
             .into_iter()
             .map(|(name, pat)| Named {
                 name,
-                thing: Box::new(pat),
+                node: Box::new(pat),
             })
             .collect(),
     )
@@ -34115,7 +34115,7 @@ fn __action93<'a>(
             .into_iter()
             .map(|(name, pat)| Named {
                 name,
-                thing: Box::new(pat),
+                node: Box::new(pat),
             })
             .collect(),
     }

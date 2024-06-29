@@ -82,8 +82,8 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
             name,
             type_params: _,
             rhs,
-        } = match &decl.thing {
-            ast::TopDecl::Type(ty_decl) => &ty_decl.thing,
+        } = match &decl.node {
+            ast::TopDecl::Type(ty_decl) => &ty_decl.node,
             ast::TopDecl::Fun(_) => continue,
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
@@ -218,9 +218,9 @@ pub fn collect_funs(
     let mut associated_fun_indices: Map<SmolStr, u64> = Default::default();
 
     for decl in pgm {
-        let fun_decl: ast::FunDecl = match decl.thing {
+        let fun_decl: ast::FunDecl = match decl.node {
             ast::TopDecl::Type(_) => continue,
-            ast::TopDecl::Fun(fun_decl) => fun_decl.thing,
+            ast::TopDecl::Fun(fun_decl) => fun_decl.node,
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 

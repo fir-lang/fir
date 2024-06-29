@@ -8,7 +8,7 @@ use smol_str::SmolStr;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct L<T> {
     pub loc: Loc,
-    pub thing: T,
+    pub node: T,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,10 +37,10 @@ impl Loc {
 }
 
 impl<T> L<T> {
-    pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, thing: T) -> Self {
+    pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, node: T) -> Self {
         L {
             loc: Loc::from_lexgen(module, start, end),
-            thing,
+            node,
         }
     }
 }
@@ -114,7 +114,7 @@ pub struct NamedType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Named<T> {
     pub name: Option<SmolStr>,
-    pub thing: T,
+    pub node: T,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

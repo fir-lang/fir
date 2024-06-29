@@ -38,7 +38,7 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
         &mut heap,
         main_fun,
         vec![input],
-        // TODO: main function location
+        // `main` doesn't have a call site, called by the interpreter.
         &Loc {
             module: "".into(),
             line_start: 0,
@@ -51,21 +51,21 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     );
 }
 
-macro_rules! generate_ty_tags {
+macro_rules! generate_tags {
     ($($name:ident),* $(,)?) => {
-        generate_ty_tags!(@generate 0, $($name),*);
+        generate_tags!(@generate 0, $($name),*);
     };
 
     (@generate $index:expr, $name:ident $(, $rest:ident)*) => {
         const $name: u64 = $index;
-        generate_ty_tags!(@generate $index + 1, $($rest),*);
+        generate_tags!(@generate $index + 1, $($rest),*);
     };
 
     (@generate $index:expr,) => {};
 }
 
 #[rustfmt::skip]
-generate_ty_tags!(
+generate_tags!(
     I32_TYPE_TAG,
     STR_TYPE_TAG,
     STR_VIEW_TYPE_TAG,
@@ -442,7 +442,7 @@ fn call_source_fun<W: Write>(
         arg_idx += 1;
     }
 
-    match exec(w, pgm, heap, &mut locals, &fun.body.thing) {
+    match exec(w, pgm, heap, &mut locals, &fun.body.node) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => val,
     }
 }
@@ -552,7 +552,7 @@ fn exec<W: Write>(
     let mut return_value: u64 = 0;
 
     for stmt in stmts {
-        return_value = match &stmt.thing {
+        return_value = match &stmt.node {
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, rhs));
                 match try_bind_pat(pgm, heap, lhs, val) {
@@ -587,7 +587,7 @@ fn exec<W: Write>(
                 expr,
                 body,
             }) => {
-                let (from, to, inclusive) = match &expr.thing {
+                let (from, to, inclusive) = match &expr.node {
                     ast::Expr::Range(ast::RangeExpr {
                         from,
                         to,
@@ -648,7 +648,7 @@ fn eval<W: Write>(
     locals: &mut Map<SmolStr, u64>,
     expr: &L<ast::Expr>,
 ) -> ControlFlow {
-    match &expr.thing {
+    match &expr.node {
         ast::Expr::Var(var) => match locals.get(var) {
             Some(value) => ControlFlow::Val(*value),
             None => match pgm.top_level_funs.get(var) {
@@ -711,7 +711,7 @@ fn eval<W: Write>(
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             // See if `fun` is a method or function and avoid tear-off allocations for
             // performance (and also because we don't support method tear-offs right now).
-            let fun: u64 = match &fun.thing {
+            let fun: u64 = match &fun.node {
                 ast::Expr::Var(var) => match locals.get(var) {
                     Some(val) => *val,
                     None => match pgm.top_level_funs.get(var) {
@@ -729,7 +729,7 @@ fn eval<W: Write>(
                 },
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    if let ast::Expr::UpperVar(ty) = &object.thing {
+                    if let ast::Expr::UpperVar(ty) = &object.node {
                         let ty_con = pgm
                             .ty_cons
                             .get(ty)
@@ -929,16 +929,16 @@ fn eval<W: Write>(
 
                 let mut names: Vec<SmolStr> = exprs
                     .iter()
-                    .map(|ast::Named { name, thing: _ }| name.as_ref().unwrap().clone())
+                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
                     .collect();
                 names.sort();
 
                 for (name_idx, name_) in names.iter().enumerate() {
                     let expr = exprs
                         .iter()
-                        .find_map(|ast::Named { name, thing }| {
+                        .find_map(|ast::Named { name, node }| {
                             if name.as_ref().unwrap() == name_ {
-                                Some(thing)
+                                Some(node)
                             } else {
                                 None
                             }
@@ -949,8 +949,8 @@ fn eval<W: Write>(
                     heap[record + (name_idx as u64) + 1] = value;
                 }
             } else {
-                for (idx, ast::Named { name: _, thing }) in exprs.iter().enumerate() {
-                    let value = val!(eval(w, pgm, heap, locals, thing));
+                for (idx, ast::Named { name: _, node }) in exprs.iter().enumerate() {
+                    let value = val!(eval(w, pgm, heap, locals, node));
                     heap[record + (idx as u64) + 1] = value;
                 }
             }
@@ -1010,7 +1010,7 @@ fn assign<W: Write>(
     op: ast::AssignOp,
     loc: &Loc,
 ) -> ControlFlow {
-    match &lhs.thing {
+    match &lhs.node {
         ast::Expr::Var(var) => match op {
             ast::AssignOp::Eq => {
                 let old = locals.insert(var.clone(), val);
@@ -1099,7 +1099,7 @@ fn try_bind_field_pats(
             for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_value = heap[value + (field_pat_idx as u64) + 1];
                 assert!(field_pat.name.is_none());
-                let map = try_bind_pat(pgm, heap, &field_pat.thing, field_value)?;
+                let map = try_bind_pat(pgm, heap, &field_pat.node, field_value)?;
                 ret.extend(map.into_iter());
             }
         }
@@ -1118,7 +1118,7 @@ fn try_bind_field_pats(
                 let map = try_bind_pat(
                     pgm,
                     heap,
-                    &field_pat.thing,
+                    &field_pat.node,
                     heap[value + 1 + field_idx as u64],
                 )?;
                 ret.extend(map.into_iter());
@@ -1140,7 +1140,7 @@ fn try_bind_pat(
     pattern: &L<ast::Pat>,
     value: u64,
 ) -> Option<Map<SmolStr, u64>> {
-    match &pattern.thing {
+    match &pattern.node {
         ast::Pat::Var(var) => {
             let mut map: Map<SmolStr, u64> = Default::default();
             map.insert(var.clone(), value);

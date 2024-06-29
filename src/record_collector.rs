@@ -43,9 +43,9 @@ pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> Set<RecordShape> {
     let mut records: Set<RecordShape> = Default::default();
 
     for decl in pgm {
-        match &decl.thing {
-            ast::TopDecl::Type(ty_decl) => visit_ty_decl(&ty_decl.thing, &mut records),
-            ast::TopDecl::Fun(fun_decl) => visit_fun_decl(&fun_decl.thing, &mut records),
+        match &decl.node {
+            ast::TopDecl::Type(ty_decl) => visit_ty_decl(&ty_decl.node, &mut records),
+            ast::TopDecl::Fun(fun_decl) => visit_fun_decl(&fun_decl.node, &mut records),
             ast::TopDecl::Import(_) => panic!("Import declaration in record collector"),
         }
     }
@@ -75,8 +75,8 @@ fn visit_fun_decl(fun_decl: &ast::FunDecl, records: &mut Set<RecordShape>) {
         visit_ty(return_ty, records);
     }
 
-    for stmt in &fun_decl.body.thing {
-        visit_stmt(&stmt.thing, records);
+    for stmt in &fun_decl.body.node {
+        visit_stmt(&stmt.node, records);
     }
 }
 
@@ -109,11 +109,11 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
 fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
     match stmt {
         ast::Stmt::Let(ast::LetStatement { lhs, ty, rhs }) => {
-            visit_pat(&lhs.thing, records);
+            visit_pat(&lhs.node, records);
             if let Some(ty) = ty {
                 visit_ty(ty, records);
             }
-            visit_expr(&rhs.thing, records);
+            visit_expr(&rhs.node, records);
         }
 
         // ast::Statement::LetFn(ast::FunDecl {
@@ -138,11 +138,11 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
         //     }
         // }
         ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op: _ }) => {
-            visit_expr(&lhs.thing, records);
-            visit_expr(&rhs.thing, records);
+            visit_expr(&lhs.node, records);
+            visit_expr(&rhs.node, records);
         }
 
-        ast::Stmt::Expr(expr) => visit_expr(&expr.thing, records),
+        ast::Stmt::Expr(expr) => visit_expr(&expr.node, records),
 
         ast::Stmt::For(ast::ForStatement {
             var: _,
@@ -153,16 +153,16 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
             if let Some(ty) = ty {
                 visit_ty(ty, records);
             }
-            visit_expr(&expr.thing, records);
+            visit_expr(&expr.node, records);
             for stmt in body {
-                visit_stmt(&stmt.thing, records);
+                visit_stmt(&stmt.node, records);
             }
         }
 
         ast::Stmt::While(ast::WhileStatement { cond, body }) => {
-            visit_expr(&cond.thing, records);
+            visit_expr(&cond.node, records);
             for stmt in body {
-                visit_stmt(&stmt.thing, records);
+                visit_stmt(&stmt.node, records);
             }
         }
     }
@@ -174,20 +174,20 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
 
         ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
             for field in fields {
-                visit_pat(&field.thing.thing, records);
+                visit_pat(&field.node.node, records);
             }
         }
 
         ast::Pat::Record(fields) => {
             for field in fields {
-                visit_pat(&field.thing.thing, records);
+                visit_pat(&field.node.node, records);
             }
             records.insert(RecordShape::from_named_things(fields));
         }
 
         ast::Pat::Or(pat1, pat2) => {
-            visit_pat(&pat1.thing, records);
-            visit_pat(&pat2.thing, records);
+            visit_pat(&pat1.node, records);
+            visit_pat(&pat2.node, records);
         }
     }
 }
@@ -200,23 +200,21 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             for part in parts {
                 match part {
                     crate::interpolation::StringPart::Str(_) => {}
-                    crate::interpolation::StringPart::Expr(expr) => {
-                        visit_expr(&expr.thing, records)
-                    }
+                    crate::interpolation::StringPart::Expr(expr) => visit_expr(&expr.node, records),
                 }
             }
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
-            visit_expr(&object.thing, records);
+            visit_expr(&object.node, records);
         }
 
         ast::Expr::ConstrSelect(_) => {}
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            visit_expr(&fun.thing, records);
+            visit_expr(&fun.node, records);
             for arg in args {
-                visit_expr(&arg.expr.thing, records);
+                visit_expr(&arg.expr.node, records);
             }
         }
 
@@ -225,42 +223,42 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             to,
             inclusive: _,
         }) => {
-            visit_expr(&from.thing, records);
-            visit_expr(&to.thing, records);
+            visit_expr(&from.node, records);
+            visit_expr(&to.node, records);
         }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
-            visit_expr(&left.thing, records);
-            visit_expr(&right.thing, records);
+            visit_expr(&left.node, records);
+            visit_expr(&right.node, records);
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
-            visit_expr(&expr.thing, records);
+            visit_expr(&expr.node, records);
         }
 
         ast::Expr::ArrayIndex(ast::ArrayIndexExpr { array, index }) => {
-            visit_expr(&array.thing, records);
-            visit_expr(&index.thing, records);
+            visit_expr(&array.node, records);
+            visit_expr(&index.node, records);
         }
 
         ast::Expr::Record(fields) => {
             for field in fields {
-                visit_expr(&field.thing.thing, records);
+                visit_expr(&field.node.node, records);
             }
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Expr::Return(expr) => visit_expr(&expr.thing, records),
+        ast::Expr::Return(expr) => visit_expr(&expr.node, records),
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            visit_expr(&scrutinee.thing, records);
+            visit_expr(&scrutinee.node, records);
             for alt in alts {
-                visit_pat(&alt.pattern.thing, records);
+                visit_pat(&alt.pattern.node, records);
                 if let Some(guard) = &alt.guard {
-                    visit_expr(&guard.thing, records);
+                    visit_expr(&guard.node, records);
                 }
                 for stmt in &alt.rhs {
-                    visit_stmt(&stmt.thing, records);
+                    visit_stmt(&stmt.node, records);
                 }
             }
         }
@@ -270,14 +268,14 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             else_branch,
         }) => {
             for (expr, stmts) in branches {
-                visit_expr(&expr.thing, records);
+                visit_expr(&expr.node, records);
                 for stmt in stmts {
-                    visit_stmt(&stmt.thing, records);
+                    visit_stmt(&stmt.node, records);
                 }
             }
             if let Some(else_branch) = else_branch {
                 for stmt in else_branch {
-                    visit_stmt(&stmt.thing, records);
+                    visit_stmt(&stmt.node, records);
                 }
             }
         }

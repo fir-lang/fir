@@ -26,11 +26,11 @@ fn resolve_imports_(
     imported_modules: &mut Set<SmolStr>,
 ) {
     for decl in module {
-        match &decl.thing {
+        match &decl.node {
             ast::TopDecl::Type(_) | ast::TopDecl::Fun(_) => new_module.push(decl),
             ast::TopDecl::Import(import) => {
-                assert_eq!(import.thing.path.len(), 1, "TODO: Import with long path");
-                let import_path = &import.thing.path[0];
+                assert_eq!(import.node.path.len(), 1, "TODO: Import with long path");
+                let import_path = &import.node.path[0];
                 if imported_modules.contains(import_path) {
                     continue;
                 }
