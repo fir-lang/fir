@@ -555,7 +555,7 @@ fn exec<W: Write>(
         return_value = match &stmt.thing {
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, rhs));
-                match try_bind_pattern(pgm, heap, lhs, val) {
+                match try_bind_pat(pgm, heap, lhs, val) {
                     Some(binds) => locals.extend(binds.into_iter()),
                     None => panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc)),
                 }
@@ -973,7 +973,7 @@ fn eval<W: Write>(
             } in alts
             {
                 assert!(guard.is_none()); // TODO
-                if let Some(binds) = try_bind_pattern(pgm, heap, pattern, scrut) {
+                if let Some(binds) = try_bind_pat(pgm, heap, pattern, scrut) {
                     locals.extend(binds.into_iter());
                     return exec(w, pgm, heap, locals, rhs);
                 }
@@ -1080,7 +1080,7 @@ fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc
     ret == pgm.true_alloc
 }
 
-fn try_bind_field_patterns(
+fn try_bind_field_pats(
     pgm: &Pgm,
     heap: &mut Heap,
     constr_fields: &Fields,
@@ -1099,7 +1099,7 @@ fn try_bind_field_patterns(
             for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_value = heap[value + (field_pat_idx as u64) + 1];
                 assert!(field_pat.name.is_none());
-                let map = try_bind_pattern(pgm, heap, &field_pat.thing, field_value)?;
+                let map = try_bind_pat(pgm, heap, &field_pat.thing, field_value)?;
                 ret.extend(map.into_iter());
             }
         }
@@ -1115,7 +1115,7 @@ fn try_bind_field_patterns(
                     .iter()
                     .find(|field| field.name.as_ref().unwrap() == field_name)
                     .unwrap();
-                let map = try_bind_pattern(
+                let map = try_bind_pat(
                     pgm,
                     heap,
                     &field_pat.thing,
@@ -1134,7 +1134,7 @@ fn try_bind_field_patterns(
 ///
 /// `heap` argument is `mut` to be able to allocate `StrView`s in string prefix patterns. In the
 /// compiled version `StrView`s will be allocated on stack.
-fn try_bind_pattern(
+fn try_bind_pat(
     pgm: &Pgm,
     heap: &mut Heap,
     pattern: &L<ast::Pat>,
@@ -1191,13 +1191,13 @@ fn try_bind_pattern(
             }
 
             let fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_patterns(pgm, heap, fields, field_pats, value)
+            try_bind_field_pats(pgm, heap, fields, field_pats, value)
         }
 
         ast::Pat::Record(fields) => {
             let value_tag = heap[value];
             let value_fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_patterns(pgm, heap, value_fields, fields, value)
+            try_bind_field_pats(pgm, heap, value_fields, fields, value)
         }
 
         ast::Pat::Str(str) => {
@@ -1236,6 +1236,16 @@ fn try_bind_pattern(
             } else {
                 None
             }
+        }
+
+        ast::Pat::Or(pat1, pat2) => {
+            if let Some(binds) = try_bind_pat(pgm, heap, pat1, value) {
+                return Some(binds);
+            }
+            if let Some(binds) = try_bind_pat(pgm, heap, pat2, value) {
+                return Some(binds);
+            }
+            None
         }
     }
 }

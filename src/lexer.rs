@@ -70,6 +70,7 @@ lexgen::lexer! {
         "*" = TokenKind::Star,
         "!" = TokenKind::Exclamation,
         "&&" = TokenKind::AmpAmp,
+        "|" = TokenKind::Pipe,
         "||" = TokenKind::PipePipe,
         "<" = TokenKind::LAngle,
         "<=" = TokenKind::LAngleEq,

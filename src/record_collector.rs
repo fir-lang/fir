@@ -184,6 +184,11 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
             }
             records.insert(RecordShape::from_named_things(fields));
         }
+
+        ast::Pat::Or(pat1, pat2) => {
+            visit_pat(&pat1.thing, records);
+            visit_pat(&pat2.thing, records);
+        }
     }
 }
 

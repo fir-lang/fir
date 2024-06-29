@@ -41,6 +41,7 @@ extern {
         "!" => Token { kind: TokenKind::Exclamation, .. },
         "!=" => Token { kind: TokenKind::ExclamationEq, .. },
         "&&" => Token { kind: TokenKind::AmpAmp, .. },
+        "|" => Token { kind: TokenKind::Pipe, .. },
         "||" => Token { kind: TokenKind::PipePipe, .. },
         "<" => Token { kind: TokenKind::LAngle, .. },
         "<=" => Token { kind: TokenKind::LAngleEq, .. },
@@ -534,6 +535,7 @@ LPat: L<Pat> = {
 }
 
 Pat: Pat = {
+    #[precedence(level = "0")]
     <id:LowerId> => Pat::Var(id.smol_str()),
 
     <constr:ConstrPattern> => Pat::Constr(constr),
@@ -546,6 +548,15 @@ Pat: Pat = {
     <str:StringLit> => Pat::Str(str.text[1..str.text.len() - 1].to_string()),
 
     <str:StringLit> <id:LowerId> => Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str()),
+
+    #[precedence(level = "1")]
+    #[assoc(side = "right")]
+    <l1:@L> <p1:Pat> <r1:@R> "|" <l2:@L> <p2:Pat> <r2:@L> => {
+        Pat::Or(
+            Box::new(L::new(module, l1, r1, p1)),
+            Box::new(L::new(module, l2, r2, p2)),
+        )
+    }
 }
 
 Constructor: Constructor = {

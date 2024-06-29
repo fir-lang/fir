@@ -68,6 +68,7 @@ pub enum TokenKind {
     Star,
     Exclamation,
     AmpAmp,
+    Pipe,
     PipePipe,
     LAngle,
     LAngleEq,

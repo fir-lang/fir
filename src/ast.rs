@@ -197,6 +197,9 @@ pub enum Pat {
 
     /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
     StrPfx(String, SmolStr),
+
+    /// Or pattern: `<pat1> | <pat2>`.
+    Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
