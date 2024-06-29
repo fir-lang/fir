@@ -555,10 +555,10 @@ fn exec<W: Write>(
         return_value = match &stmt.thing {
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, rhs));
-                if !test_pattern(pgm, heap, lhs, val) {
-                    panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc));
+                match try_bind_pattern(pgm, heap, lhs, val) {
+                    Some(binds) => locals.extend(binds.into_iter()),
+                    None => panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc)),
                 }
-                bind_pattern(pgm, heap, locals, lhs, val);
                 val
             }
 
@@ -973,8 +973,8 @@ fn eval<W: Write>(
             } in alts
             {
                 assert!(guard.is_none()); // TODO
-                if test_pattern(pgm, heap, pattern, scrut) {
-                    bind_pattern(pgm, heap, locals, pattern, scrut);
+                if let Some(binds) = try_bind_pattern(pgm, heap, pattern, scrut) {
+                    locals.extend(binds.into_iter());
                     return exec(w, pgm, heap, locals, rhs);
                 }
             }
@@ -1080,14 +1080,74 @@ fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc
     ret == pgm.true_alloc
 }
 
-// NB. Because we don't have a proper type system yet, this doesn't assume that the program is
-// well-typed and check the constructor tag even when matching a product type.
-//
-// TODO: It would be simpler to clone the env before `bind_pattern` and restore it if binding
-// fails.
-fn test_pattern(pgm: &Pgm, heap: &Heap, pattern: &L<ast::Pat>, value: u64) -> bool {
+fn try_bind_field_patterns(
+    pgm: &Pgm,
+    heap: &mut Heap,
+    constr_fields: &Fields,
+    field_pats: &[ast::Named<Box<L<ast::Pat>>>],
+    value: u64,
+) -> Option<Map<SmolStr, u64>> {
+    let mut ret: Map<SmolStr, u64> = Default::default();
+
+    match constr_fields {
+        Fields::Unnamed(arity) => {
+            assert_eq!(
+                *arity,
+                field_pats.len() as u32,
+                "Pattern number of fields doesn't match value number of fields"
+            );
+            for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
+                let field_value = heap[value + (field_pat_idx as u64) + 1];
+                assert!(field_pat.name.is_none());
+                let map = try_bind_pattern(pgm, heap, &field_pat.thing, field_value)?;
+                ret.extend(map.into_iter());
+            }
+        }
+
+        Fields::Named(field_tys) => {
+            assert_eq!(
+                field_tys.len(),
+                field_pats.len(),
+                "Pattern number of fields doesn't match value number of fields"
+            );
+            for (field_idx, field_name) in field_tys.iter().enumerate() {
+                let field_pat = field_pats
+                    .iter()
+                    .find(|field| field.name.as_ref().unwrap() == field_name)
+                    .unwrap();
+                let map = try_bind_pattern(
+                    pgm,
+                    heap,
+                    &field_pat.thing,
+                    heap[value + 1 + field_idx as u64],
+                )?;
+                ret.extend(map.into_iter());
+            }
+        }
+    }
+
+    Some(ret)
+}
+
+/// Tries to match a pattern. On successful match, returns a map with variables bound in the
+/// pattern. On failure returns `None`.
+///
+/// `heap` argument is `mut` to be able to allocate `StrView`s in string prefix patterns. In the
+/// compiled version `StrView`s will be allocated on stack.
+fn try_bind_pattern(
+    pgm: &Pgm,
+    heap: &mut Heap,
+    pattern: &L<ast::Pat>,
+    value: u64,
+) -> Option<Map<SmolStr, u64>> {
     match &pattern.thing {
-        ast::Pat::Var(_) | ast::Pat::Ignore => true,
+        ast::Pat::Var(var) => {
+            let mut map: Map<SmolStr, u64> = Default::default();
+            map.insert(var.clone(), value);
+            Some(map)
+        }
+
+        ast::Pat::Ignore => Some(Default::default()),
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
@@ -1104,7 +1164,7 @@ fn test_pattern(pgm: &Pgm, heap: &Heap, pattern: &L<ast::Pat>, value: u64) -> bo
                     "  value tag = {}, ty con first tag = {}, ty con last tag = {}",
                     value_tag, ty_con_first_tag, ty_con_last_tag
                 );
-                return false;
+                return None;
             }
 
             let constr_idx = match constr {
@@ -1120,64 +1180,24 @@ fn test_pattern(pgm: &Pgm, heap: &Heap, pattern: &L<ast::Pat>, value: u64) -> bo
                 None => {
                     if ty_con_first_tag != ty_con_last_tag {
                         eprintln!("TYPE ERROR");
-                        return false;
+                        return None;
                     }
                     0
                 }
             };
 
             if value_tag != ty_con.type_tag + (constr_idx as u64) {
-                return false;
+                return None;
             }
 
             let fields = pgm.get_tag_fields(value_tag);
-            test_field_patterns(pgm, heap, fields, field_pats, value)
+            try_bind_field_patterns(pgm, heap, fields, field_pats, value)
         }
 
         ast::Pat::Record(fields) => {
-            assert!(!fields.is_empty());
             let value_tag = heap[value];
             let value_fields = pgm.get_tag_fields(value_tag);
-
-            match value_fields {
-                Fields::Unnamed(arity) => {
-                    for i in 0..*arity {
-                        if !test_pattern(
-                            pgm,
-                            heap,
-                            &fields[i as usize].thing,
-                            heap[value + 1 + (i as u64)],
-                        ) {
-                            return false;
-                        }
-                    }
-                }
-
-                Fields::Named(names) => {
-                    for (field_idx, field_name) in names.iter().enumerate() {
-                        let field_value = heap[value + 1 + (field_idx as u64)];
-                        let field_pattern = fields
-                            .iter()
-                            .find(|field| field.name.as_ref().unwrap() == field_name)
-                            .unwrap();
-                        if !test_pattern(pgm, heap, &field_pattern.thing, field_value) {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            true
-        }
-
-        ast::Pat::StrPfx(pfx, _var) => {
-            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
-            let value_bytes = if heap[value] == STR_TYPE_TAG {
-                heap.str_bytes(value)
-            } else {
-                heap.str_view_bytes(value)
-            };
-            value_bytes.starts_with(pfx.as_bytes())
+            try_bind_field_patterns(pgm, heap, value_fields, fields, value)
         }
 
         ast::Pat::Str(str) => {
@@ -1187,146 +1207,36 @@ fn test_pattern(pgm: &Pgm, heap: &Heap, pattern: &L<ast::Pat>, value: u64) -> bo
             } else {
                 heap.str_view_bytes(value)
             };
-            value_bytes == str.as_bytes()
-        }
-    }
-}
-
-fn test_field_patterns(
-    pgm: &Pgm,
-    heap: &Heap,
-    constr_fields: &Fields,
-    field_pats: &[ast::Named<Box<L<ast::Pat>>>],
-    value: u64,
-) -> bool {
-    match constr_fields {
-        Fields::Unnamed(arity) => {
-            assert_eq!(
-                *arity,
-                field_pats.len() as u32,
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
-                let field_value = heap[value + (field_pat_idx as u64) + 1];
-                assert!(field_pat.name.is_none());
-                if !test_pattern(pgm, heap, &field_pat.thing, field_value) {
-                    return false;
-                }
-            }
-        }
-
-        Fields::Named(field_tys) => {
-            assert_eq!(
-                field_tys.len(),
-                field_pats.len(),
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_idx, field_name) in field_tys.iter().enumerate() {
-                let field_pattern = field_pats
-                    .iter()
-                    .find(|field| field.name.as_ref().unwrap() == field_name)
-                    .unwrap();
-
-                if !test_pattern(
-                    pgm,
-                    heap,
-                    &field_pattern.thing,
-                    heap[value + 1 + field_idx as u64],
-                ) {
-                    return false;
-                }
-            }
-        }
-    }
-
-    true
-}
-
-fn bind_pattern(
-    pgm: &Pgm,
-    heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
-    pattern: &L<ast::Pat>,
-    value: u64,
-) {
-    match &pattern.thing {
-        ast::Pat::Var(var) => {
-            locals.insert(var.clone(), value);
-        }
-
-        ast::Pat::Constr(ast::ConstrPattern { constr, fields }) => {
-            if cfg!(debug_assertions) {
-                let ty = pgm.ty_cons.get(&constr.type_).unwrap();
-                let (first_tag, last_tag) = ty.tag_range();
-                assert!(first_tag <= heap[value] && heap[value] <= last_tag);
-            }
-            for (field_pattern_idx, field_pattern) in fields.iter().enumerate() {
-                let field_value = heap[value + 1 + (field_pattern_idx as u64)];
-                bind_pattern(pgm, heap, locals, &field_pattern.thing, field_value);
-            }
-        }
-
-        ast::Pat::Record(fields) => {
-            assert!(!fields.is_empty());
-            match fields[0].name {
-                Some(_) => {
-                    // <name> = <pattern>, where `name`s are the record field names. Record
-                    // shapes have ordered names, so sort the names first before looking up the
-                    // shape.
-                    // TODO: Do this before the interpreter to avoid repeating it.
-                    let mut patterns = fields.clone();
-                    patterns.sort_by(|field1, field2| {
-                        field1
-                            .name
-                            .as_ref()
-                            .unwrap()
-                            .cmp(field2.name.as_ref().unwrap())
-                    });
-
-                    if cfg!(debug_assertions) {
-                        let shape = RecordShape::from_named_things(&patterns);
-                        let type_tag = *pgm.record_ty_tags.get(&shape).unwrap();
-                        assert_eq!(type_tag, heap[value]);
-                    }
-
-                    for (pattern_idx, pattern) in patterns.iter().enumerate() {
-                        bind_pattern(
-                            pgm,
-                            heap,
-                            locals,
-                            &pattern.thing,
-                            heap[value + 1 + (pattern_idx as u64)],
-                        );
-                    }
-                }
-                None => {
-                    // TODO: Check shape
-                    for (pattern_idx, pattern) in fields.iter().enumerate() {
-                        bind_pattern(
-                            pgm,
-                            heap,
-                            locals,
-                            &pattern.thing,
-                            heap[value + 1 + (pattern_idx as u64)],
-                        );
-                    }
-                }
+            if value_bytes == str.as_bytes() {
+                Some(Default::default())
+            } else {
+                None
             }
         }
 
         ast::Pat::StrPfx(pfx, var) => {
-            let pfx_len = pfx.len();
-            let rest = if heap[value] == STR_TYPE_TAG {
-                let len = heap.str_bytes(value).len();
-                heap.allocate_str_view(value, pfx_len as u64, len as u64)
+            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
+            let value_bytes = if heap[value] == STR_TYPE_TAG {
+                heap.str_bytes(value)
             } else {
-                let len = heap.str_view_bytes(value).len();
-                heap.allocate_str_view_from_str_view(value, pfx_len as u64, len as u64)
+                heap.str_view_bytes(value)
             };
-            locals.insert(var.clone(), rest);
+            if value_bytes.starts_with(pfx.as_bytes()) {
+                let pfx_len = pfx.len();
+                let rest = if heap[value] == STR_TYPE_TAG {
+                    let len = heap.str_bytes(value).len();
+                    heap.allocate_str_view(value, pfx_len as u64, len as u64)
+                } else {
+                    let len = heap.str_view_bytes(value).len();
+                    heap.allocate_str_view_from_str_view(value, pfx_len as u64, len as u64)
+                };
+                let mut map: Map<SmolStr, u64> = Default::default();
+                map.insert(var.clone(), rest);
+                Some(map)
+            } else {
+                None
+            }
         }
-
-        ast::Pat::Ignore | ast::Pat::Str(_) => {}
     }
 }
 
