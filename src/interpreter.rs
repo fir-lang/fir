@@ -551,7 +551,7 @@ fn exec<W: Write>(
 ) -> ControlFlow {
     let mut return_value: u64 = 0;
 
-    'next_stmt: for stmt in stmts {
+    for stmt in stmts {
         return_value = match &stmt.thing {
             ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, rhs));
@@ -560,30 +560,6 @@ fn exec<W: Write>(
                 }
                 bind_pattern(pgm, heap, locals, lhs, val);
                 val
-            }
-
-            ast::Stmt::If(ast::IfStatement {
-                branches,
-                else_branch,
-            }) => {
-                for (cond, stmts) in branches {
-                    let cond = val!(eval(w, pgm, heap, locals, cond));
-                    debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
-                    if cond == pgm.true_alloc {
-                        match exec(w, pgm, heap, locals, stmts) {
-                            ControlFlow::Val(val) => return_value = val,
-                            ControlFlow::Ret(val) => return ControlFlow::Ret(val),
-                        }
-                        continue 'next_stmt;
-                    }
-                }
-                if let Some(else_branch) = else_branch {
-                    match exec(w, pgm, heap, locals, else_branch) {
-                        ControlFlow::Val(val) => return_value = val,
-                        ControlFlow::Ret(val) => return ControlFlow::Ret(val),
-                    }
-                }
-                return_value
             }
 
             ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op }) => {
@@ -1003,6 +979,23 @@ fn eval<W: Write>(
                 }
             }
             panic!("Non-exhaustive pattern match");
+        }
+
+        ast::Expr::If(ast::IfExpr {
+            branches,
+            else_branch,
+        }) => {
+            for (cond, stmts) in branches {
+                let cond = val!(eval(w, pgm, heap, locals, cond));
+                debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
+                if cond == pgm.true_alloc {
+                    return exec(w, pgm, heap, locals, stmts);
+                }
+            }
+            if let Some(else_branch) = else_branch {
+                return exec(w, pgm, heap, locals, else_branch);
+            }
+            ControlFlow::Val(0) // TODO: return unit
         }
     }
 }

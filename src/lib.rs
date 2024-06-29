@@ -134,4 +134,18 @@ fn parse_fn_1() {
         .parse(&"".into(), tokens)
         .unwrap();
     dbg!(ast);
+
+    let pgm = indoc::indoc! {"
+        fn asdf() =
+            let q = if A:
+                1
+            else:
+                2
+            q
+    "};
+    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
+    let ast = crate::parser::TopDeclsParser::new()
+        .parse(&"".into(), tokens)
+        .unwrap();
+    dbg!(ast);
 }

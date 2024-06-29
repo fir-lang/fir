@@ -137,23 +137,6 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
         //         visit_stmt(stmt, records);
         //     }
         // }
-        ast::Stmt::If(ast::IfStatement {
-            branches,
-            else_branch,
-        }) => {
-            for (expr, stmts) in branches {
-                visit_expr(&expr.thing, records);
-                for stmt in stmts {
-                    visit_stmt(&stmt.thing, records);
-                }
-            }
-            if let Some(else_branch) = else_branch {
-                for stmt in else_branch {
-                    visit_stmt(&stmt.thing, records);
-                }
-            }
-        }
-
         ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op: _ }) => {
             visit_expr(&lhs.thing, records);
             visit_expr(&rhs.thing, records);
@@ -272,6 +255,23 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
                     visit_expr(&guard.thing, records);
                 }
                 for stmt in &alt.rhs {
+                    visit_stmt(&stmt.thing, records);
+                }
+            }
+        }
+
+        ast::Expr::If(ast::IfExpr {
+            branches,
+            else_branch,
+        }) => {
+            for (expr, stmts) in branches {
+                visit_expr(&expr.thing, records);
+                for stmt in stmts {
+                    visit_stmt(&stmt.thing, records);
+                }
+            }
+            if let Some(else_branch) = else_branch {
+                for stmt in else_branch {
                     visit_stmt(&stmt.thing, records);
                 }
             }

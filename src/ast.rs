@@ -153,7 +153,6 @@ impl FunDecl {
 pub enum Stmt {
     Let(LetStatement),
     // LetFn(FunDecl),
-    If(IfStatement),
     Assign(AssignStatement),
     Expr(L<Expr>),
     For(ForStatement),
@@ -213,7 +212,7 @@ pub struct Constructor {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IfStatement {
+pub struct IfExpr {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
@@ -286,6 +285,8 @@ pub enum Expr {
     Return(Box<L<Expr>>),
 
     Match(MatchExpr),
+
+    If(IfExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -240,16 +240,6 @@ Stmt: Stmt = {
     "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LBlockExpr> =>
         Stmt::Let(LetStatement { lhs, ty, rhs }),
 
-    "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
-            <mut branches:("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)*>
-            <else_branch:("else" ":" NEWLINE INDENT <LStmts> DEDENT)?> => {
-        branches.insert(0, (cond, then_));
-        Stmt::If(IfStatement {
-            branches,
-            else_branch,
-        })
-    },
-
     <lhs:LInlineExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
         Stmt::Assign(AssignStatement {
             lhs,
@@ -334,6 +324,16 @@ BlockExpr: Expr = {
             scrutinee: Box::new(expr),
             alts,
         }),
+
+    "if" <cond:LExpr> ":" NEWLINE INDENT <then_:LStmts> DEDENT
+            <mut branches:("elif" <LExpr> ":" NEWLINE INDENT <LStmts> DEDENT)*>
+            <else_branch:("else" ":" NEWLINE INDENT <LStmts> DEDENT)?> => {
+        branches.insert(0, (cond, then_));
+        Expr::If(IfExpr {
+            branches,
+            else_branch,
+        })
+    },
 }
 
 LInlineExpr: L<Expr> = {
