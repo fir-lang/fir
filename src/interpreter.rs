@@ -31,7 +31,10 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     let input = heap.allocate_str(input.as_bytes());
 
     // Find the main function.
-    let main_fun = pgm.top_level_funs.get("main").unwrap();
+    let main_fun = pgm
+        .top_level_funs
+        .get("main")
+        .unwrap_or_else(|| panic!("main function not defined"));
     call(
         w,
         &pgm,
