@@ -12,7 +12,6 @@ expressive types and typeclasses to the masses.
 Some notable features are:
 
 - Statically typed:
-  - No runtime type checks or casts
   - Algebraic data types (ADTs) and pattern matching
   - Typeclasses (called traits)
   - Higher-kinded types
@@ -20,7 +19,7 @@ Some notable features are:
 
 - Indentation sensitive syntax
 
-- Compile-time monomorphisation.
+- Compile-time monomorphisation
 
   Runtime polymorphism is possible via trait objects. By default polymorphic
   code is monomorhised in compile time.
@@ -44,28 +43,49 @@ Some notable features are:
 
 - Coroutines
 
-# Goals and non-goals
+- Tail call elimination (explicit with a keyword)
 
-We want Fir to be your go-to programming language when you need types, with
-modern tooling (compiler, language server, documentation generator, formatter,
-build system, all in one executable), syntax, batteries-included approach to
-the standard libraries, and an expressive type system.
+# Goals
 
-# Current status and plans
+We want Fir to a productive programming language when you need static types,
+with modern tooling (compiler, language server, documentation generator,
+formatter, build system, all in one executable), syntax, batteries-included
+approach to the standard libraries, and an expressive type system.
+
+# Current status
 
 Currently only a simple interpreter is available. The interpreter does not have
 a type checker yet, it ignores all types.
 
-The goal is to bootstrap the language as quickly as possible. To that end, we
-only add features to the interpreter when the cost of implementing the feature
-in the interpreter is paid off by writing the bootstrapping compiler with that
-feature.
+# Development plan
 
-For example, implementing a type checker in the interpreter makes sense, as it
-will be difficult to write the bootstrapping compiler without a type checker.
+We want to bootstrap Fir as quickly as possible.
 
-As an example feature that we probably don't want: the interepreter currently
-doesn't have a garbage collector and it will probably not need a garbage
-collector. The interpreter only needs to be able to run bootstrapping compiler
-when compiling itself. 16 GB RAM (which I suspect most development PCs have
-these days) should be enough for this.
+To that end, only features that will help writing the bootstrapping compiler
+should be added to the interpreter, such as the type checker.
+
+Features that are not absolutely needed to run the bootstrapping compiler will
+be left to the bootstrapped compiler. For example, the interpreter does not
+need to have a garbage collector.
+
+Initially the compiler will only generate Wasm. In the long term we should have
+native backends as well.
+
+# Contributing
+
+If the design and goals sound interesting, this is a great time to start
+contributing to Fir.
+
+Currently we only have a simple interpreter that runs some simple programs, so
+the code is simple. If you are familiar with PL development than there should
+be nothing new or different.
+
+Some important tasks to be able to implement the bootstrapping compiler:
+
+- Implement a type checker in the interpreter:
+  [#7](https://github.com/fir-lang/fir/issues/7)
+
+- Implement tests: [#8](https://github.com/fir-lang/fir/issues/8)
+
+- Implement libraries needed for the bootstrapping compiler:
+  [#9](https://github.com/fir-lang/fir/issues/8)
