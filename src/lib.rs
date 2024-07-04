@@ -13,13 +13,14 @@ mod token;
 use lexer::lex;
 use parser::*;
 use scanner::scan;
-use token::Token;
 
+#[cfg(target_arch = "wasm32")]
 use std::io::Write;
 use std::path::Path;
 
-use lexgen_util::Loc;
 use smol_str::SmolStr;
+
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::wasm_bindgen;
 
 pub fn main() {
@@ -37,6 +38,7 @@ pub fn main() {
     interpreter::run(&mut w, module, input);
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
     let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
         panic!(
@@ -46,11 +48,17 @@ fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module 
             err
         )
     });
-    let tokens = scan(crate::lexer::lex(&contents));
+    let tokens = scan(lex(&contents));
     let parser = TopDeclsParser::new();
     parser.parse(&(module.as_str().into()), tokens).unwrap()
 }
 
+#[cfg(target_arch = "wasm32")]
+fn parse_file<P: AsRef<Path> + Clone>(_path: P, _module: &SmolStr) -> ast::Module {
+    panic!();
+}
+
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = console)]
@@ -69,21 +77,37 @@ extern "C" {
     fn clear_program_output();
 }
 
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen(js_name = "setupPanicHook")]
+pub fn setup_panic_hook() {
+    std::panic::set_hook(Box::new(hook_impl));
+}
+
+#[cfg(target_arch = "wasm32")]
+fn hook_impl(info: &std::panic::PanicInfo) {
+    add_interpreter_output("Panic:");
+    add_interpreter_output(&info.to_string());
+}
+
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen(js_name = "run")]
 pub fn run_wasm(pgm: &str, input: &str) {
     clear_interpreter_output();
     clear_program_output();
 
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
+    let tokens = scan(lex(pgm));
     let parser = TopDeclsParser::new();
-    let decls: Vec<ast::L<ast::TopDecl>> = parser.parse(&("TODO".into()), tokens).unwrap();
+    let module = parser.parse(&("FirWeb".into()), tokens).unwrap();
+    let module = import_resolver::resolve_imports("", module);
 
     let mut w = WasmOutput;
-    interpreter::run(&mut w, decls, input.trim());
+    interpreter::run(&mut w, module, input.trim());
 }
 
+#[cfg(target_arch = "wasm32")]
 struct WasmOutput;
 
+#[cfg(target_arch = "wasm32")]
 impl Write for WasmOutput {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         add_program_output(&String::from_utf8_lossy(buf));
@@ -95,57 +119,62 @@ impl Write for WasmOutput {
     }
 }
 
-#[test]
-fn parse_expr_1() {
-    let pgm = indoc::indoc! {"
-        match t():
-            X: 1
-    "};
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
-    let ast = crate::parser::LExprParser::new()
-        .parse(&"".into(), tokens)
-        .unwrap();
-    dbg!(ast);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-fn parse_stmt_1() {
-    let pgm = indoc::indoc! {"
-        match t():
-            X: 1
-    "};
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
-    let ast = crate::parser::LStmtParser::new()
-        .parse(&"".into(), tokens)
-        .unwrap();
-    dbg!(ast);
-}
+    #[test]
+    fn parse_expr_1() {
+        let pgm = indoc::indoc! {"
+            match t():
+                X: 1
+        "};
+        let tokens = scan(lex(pgm));
+        let ast = crate::parser::LExprParser::new()
+            .parse(&"".into(), tokens)
+            .unwrap();
+        dbg!(ast);
+    }
 
-#[test]
-fn parse_fn_1() {
-    let pgm = indoc::indoc! {"
-        fn asdf() =
-            let q = match t():
-                A.X: 1
-            q
-    "};
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
-    let ast = crate::parser::TopDeclsParser::new()
-        .parse(&"".into(), tokens)
-        .unwrap();
-    dbg!(ast);
+    #[test]
+    fn parse_stmt_1() {
+        let pgm = indoc::indoc! {"
+            match t():
+                X: 1
+        "};
+        let tokens = scan(lex(pgm));
+        let ast = crate::parser::LStmtParser::new()
+            .parse(&"".into(), tokens)
+            .unwrap();
+        dbg!(ast);
+    }
 
-    let pgm = indoc::indoc! {"
-        fn asdf() =
-            let q = if A:
-                1
-            else:
-                2
-            q
-    "};
-    let tokens: Vec<(Loc, Token, Loc)> = scan(lex(pgm));
-    let ast = crate::parser::TopDeclsParser::new()
-        .parse(&"".into(), tokens)
-        .unwrap();
-    dbg!(ast);
+    #[test]
+    fn parse_fn_1() {
+        let pgm = indoc::indoc! {"
+            fn asdf() =
+                let q = match t():
+                    A.X: 1
+                q
+        "};
+        let tokens = scan(lex(pgm));
+        let ast = crate::parser::TopDeclsParser::new()
+            .parse(&"".into(), tokens)
+            .unwrap();
+        dbg!(ast);
+
+        let pgm = indoc::indoc! {"
+            fn asdf() =
+                let q = if A:
+                    1
+                else:
+                    2
+                q
+        "};
+        let tokens = scan(lex(pgm));
+        let ast = crate::parser::TopDeclsParser::new()
+            .parse(&"".into(), tokens)
+            .unwrap();
+        dbg!(ast);
+    }
 }
