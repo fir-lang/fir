@@ -10,118 +10,123 @@ mod scanner;
 mod scope_map;
 mod token;
 
-use lexer::lex;
-use parser::*;
-use scanner::scan;
+#[cfg(not(target_arch = "wasm32"))]
+mod native {
+    use super::*;
 
-#[cfg(target_arch = "wasm32")]
-use std::io::Write;
-use std::path::Path;
+    use smol_str::SmolStr;
+    use std::path::Path;
 
-use smol_str::SmolStr;
+    pub fn main() {
+        let args: Vec<String> = std::env::args().collect();
 
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::wasm_bindgen;
+        let file_path = Path::new(&args[1]); // "examples/Foo.fir"
+        let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
+        let root_path = file_path.parent().unwrap(); // "examples/"
 
-pub fn main() {
-    let args: Vec<String> = std::env::args().collect();
+        let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
+        let module = import_resolver::resolve_imports(root_path.to_str().unwrap(), module);
 
-    let file_path = Path::new(&args[1]); // "examples/Foo.fir"
-    let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
-    let root_path = file_path.parent().unwrap(); // "examples/"
+        let input = &args[2];
+        let mut w = std::io::stdout();
+        interpreter::run(&mut w, module, input);
+    }
 
-    let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-    let module = import_resolver::resolve_imports(root_path.to_str().unwrap(), module);
-
-    let input = &args[2];
-    let mut w = std::io::stdout();
-    interpreter::run(&mut w, module, input);
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+        let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
+            panic!(
+                "Unable to read file {} for module module {}: {}",
+                path.as_ref().to_string_lossy(),
+                module,
+                err
+            )
+        });
+        let tokens = scanner::scan(lexer::lex(&contents));
+        let parser = parser::TopDeclsParser::new();
+        parser.parse(&(module.as_str().into()), tokens).unwrap()
+    }
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
-    let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
-        panic!(
-            "Unable to read file {} for module module {}: {}",
-            path.as_ref().to_string_lossy(),
-            module,
-            err
-        )
-    });
-    let tokens = scan(lex(&contents));
-    let parser = TopDeclsParser::new();
-    parser.parse(&(module.as_str().into()), tokens).unwrap()
-}
+pub use native::{main, parse_file};
 
 #[cfg(target_arch = "wasm32")]
-fn parse_file<P: AsRef<Path> + Clone>(_path: P, _module: &SmolStr) -> ast::Module {
-    panic!();
-}
+mod wasm {
+    use super::*;
 
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
+    use std::io::Write;
+    use std::path::Path;
 
-    #[wasm_bindgen(js_name = "addInterpreterOutput")]
-    fn add_interpreter_output(s: &str);
+    use smol_str::SmolStr;
+    use wasm_bindgen::prelude::wasm_bindgen;
 
-    #[wasm_bindgen(js_name = "clearInterpreterOutput")]
-    fn clear_interpreter_output();
-
-    #[wasm_bindgen(js_name = "addProgramOutput")]
-    fn add_program_output(s: &str);
-
-    #[wasm_bindgen(js_name = "clearProgramOutput")]
-    fn clear_program_output();
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(js_name = "setupPanicHook")]
-pub fn setup_panic_hook() {
-    std::panic::set_hook(Box::new(hook_impl));
-}
-
-#[cfg(target_arch = "wasm32")]
-fn hook_impl(info: &std::panic::PanicInfo) {
-    add_interpreter_output("Panic:");
-    add_interpreter_output(&info.to_string());
-}
-
-#[cfg(target_arch = "wasm32")]
-#[wasm_bindgen(js_name = "run")]
-pub fn run_wasm(pgm: &str, input: &str) {
-    clear_interpreter_output();
-    clear_program_output();
-
-    let tokens = scan(lex(pgm));
-    let parser = TopDeclsParser::new();
-    let module = parser.parse(&("FirWeb".into()), tokens).unwrap();
-    let module = import_resolver::resolve_imports("", module);
-
-    let mut w = WasmOutput;
-    interpreter::run(&mut w, module, input.trim());
-}
-
-#[cfg(target_arch = "wasm32")]
-struct WasmOutput;
-
-#[cfg(target_arch = "wasm32")]
-impl Write for WasmOutput {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        add_program_output(&String::from_utf8_lossy(buf));
-        Ok(buf.len())
+    pub fn parse_file<P: AsRef<Path> + Clone>(_path: P, _module: &SmolStr) -> ast::Module {
+        panic!();
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
+    #[wasm_bindgen]
+    extern "C" {
+        #[wasm_bindgen(js_namespace = console)]
+        fn log(s: &str);
+
+        #[wasm_bindgen(js_name = "addInterpreterOutput")]
+        fn add_interpreter_output(s: &str);
+
+        #[wasm_bindgen(js_name = "clearInterpreterOutput")]
+        fn clear_interpreter_output();
+
+        #[wasm_bindgen(js_name = "addProgramOutput")]
+        fn add_program_output(s: &str);
+
+        #[wasm_bindgen(js_name = "clearProgramOutput")]
+        fn clear_program_output();
+    }
+
+    #[wasm_bindgen(js_name = "setupPanicHook")]
+    pub fn setup_panic_hook() {
+        std::panic::set_hook(Box::new(hook_impl));
+    }
+
+    fn hook_impl(info: &std::panic::PanicInfo) {
+        add_interpreter_output("Panic:");
+        add_interpreter_output(&info.to_string());
+    }
+
+    #[wasm_bindgen(js_name = "run")]
+    pub fn run_wasm(pgm: &str, input: &str) {
+        clear_interpreter_output();
+        clear_program_output();
+
+        let tokens = scanner::scan(lexer::lex(pgm));
+        let parser = parser::TopDeclsParser::new();
+        let module = parser.parse(&("FirWeb".into()), tokens).unwrap();
+        let module = import_resolver::resolve_imports("", module);
+
+        let mut w = WasmOutput;
+        interpreter::run(&mut w, module, input.trim());
+    }
+
+    struct WasmOutput;
+
+    impl Write for WasmOutput {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            add_program_output(&String::from_utf8_lossy(buf));
+            Ok(buf.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
     }
 }
+
+#[cfg(target_arch = "wasm32")]
+pub use wasm::parse_file;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::lexer::lex;
+    use crate::scanner::scan;
 
     #[test]
     fn parse_expr_1() {
