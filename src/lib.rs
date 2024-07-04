@@ -59,9 +59,34 @@ mod wasm {
 
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
+    use web_sys::XmlHttpRequest;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(_path: P, _module: &SmolStr) -> ast::Module {
-        panic!();
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+        let path = path.as_ref().to_string_lossy();
+        match fetch_sync(&path) {
+            Some(contents) => {
+                let tokens = scanner::scan(lexer::lex(&contents));
+                let parser = parser::TopDeclsParser::new();
+                parser.parse(&(module.as_str().into()), tokens).unwrap()
+            }
+            None => {
+                panic!("Unable to fetch {}", path);
+            }
+        }
+    }
+
+    fn fetch_sync(url: &str) -> Option<String> {
+        let xhr = XmlHttpRequest::new().unwrap();
+        xhr.open_with_async("GET", url, false).unwrap(); // false makes it synchronous
+
+        xhr.send().unwrap();
+
+        if xhr.status() == Ok(200) {
+            let response_text = xhr.response_text().unwrap().unwrap();
+            Some(response_text)
+        } else {
+            None
+        }
     }
 
     #[wasm_bindgen]
