@@ -1,7 +1,5 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
-#
-# Takes the program code as the first command line argument.
 
 import Prelude
 

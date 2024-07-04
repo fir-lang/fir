@@ -14,7 +14,7 @@ mkdir -p $OUT_DIR
 
 wasm-pack build \
     --target web \
-    --debug \
+    --release \
     --out-dir target/wasm-pack \
     --no-pack \
     --no-typescript
