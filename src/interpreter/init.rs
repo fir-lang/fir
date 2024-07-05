@@ -194,11 +194,6 @@ pub fn collect_funs(
             "__eq" => BuiltinFun::I32Eq,
             "toStr" => BuiltinFun::I32ToStr,
         },
-        "Bool" => {
-            "__and" => BuiltinFun::BoolAnd,
-            "__or" => BuiltinFun::BoolOr,
-            "toStr" => BuiltinFun::BoolToStr,
-        },
         "StrView" => {
             "__eq" => BuiltinFun::StrViewEq,
             "substr" => BuiltinFun::StrViewSubstr,

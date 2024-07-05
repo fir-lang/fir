@@ -18,9 +18,6 @@ pub enum BuiltinFun {
     ArrayLen,
     ArrayNew,
     ArraySet,
-    BoolAnd,
-    BoolOr,
-    BoolToStr,
     I32Add,
     I32Cmp,
     I32Eq,
@@ -332,44 +329,6 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(heap[obj], I32_TYPE_TAG);
             let i = heap[obj + 1];
             heap.allocate_str(format!("{}", i as i32).as_bytes())
-        }
-
-        BuiltinFun::BoolAnd => {
-            debug_assert_eq!(args.len(), 2);
-
-            let b1 = args[0];
-            let b2 = args[1];
-
-            debug_assert!(b1 == pgm.true_alloc || b1 == pgm.false_alloc, "{:?}", loc);
-            debug_assert!(b2 == pgm.true_alloc || b2 == pgm.false_alloc, "{:?}", loc);
-
-            pgm.bool_alloc(b1 == pgm.true_alloc && b2 == pgm.true_alloc)
-        }
-
-        BuiltinFun::BoolOr => {
-            debug_assert_eq!(args.len(), 2);
-
-            let b1 = args[0];
-            let b2 = args[1];
-
-            debug_assert!(b1 == pgm.true_alloc || b1 == pgm.false_alloc, "{:?}", loc);
-            debug_assert!(b2 == pgm.true_alloc || b2 == pgm.false_alloc, "{:?}", loc);
-
-            pgm.bool_alloc(b1 == pgm.true_alloc || b2 == pgm.true_alloc)
-        }
-
-        BuiltinFun::BoolToStr => {
-            debug_assert_eq!(args.len(), 1);
-
-            let b = args[0];
-
-            debug_assert!(b == pgm.true_alloc || b == pgm.false_alloc, "{:?}", loc);
-
-            heap.allocate_str(if b == pgm.true_alloc {
-                "Bool.True".as_bytes()
-            } else {
-                "Bool.False".as_bytes()
-            })
         }
 
         BuiltinFun::StrViewEq => {

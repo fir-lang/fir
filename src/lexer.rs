@@ -79,7 +79,7 @@ lexgen::lexer! {
         "!=" = TokenKind::ExclamationEq,
 
         $$ascii_uppercase ($$ascii_alphanumeric | '_')* = TokenKind::UpperId,
-        $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+        ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
         // Literals
         '"' => |lexer| {
