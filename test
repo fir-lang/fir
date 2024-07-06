@@ -9,3 +9,5 @@ cargo fmt
 cargo build --all-targets
 cargo clippy --all-targets
 cargo test
+
+FIR_ROOT=`pwd` goldentests target/debug/fir tests '# '
