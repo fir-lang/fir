@@ -82,4 +82,6 @@ jobs:
         run: cargo install goldentests --features binary
 
       - name: Run tests
-        run: FIR_ROOT=${{ github.workspace }}
+        run: |
+          cargo build
+          FIR_ROOT=${{ github.workspace }} goldentests target/debug/fir tests '# '
