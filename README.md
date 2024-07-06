@@ -21,8 +21,8 @@ Some notable features are:
 
 - Compile-time monomorphisation
 
-  Runtime polymorphism is possible via trait objects. By default polymorphic
-  code is monomorhised in compile time.
+  Runtime polymorphism is possible via trait objects. By default, polymorphic
+  code is monomorphised at compile time.
 
   This allows efficient memory layout in types like `Vec`: `Vec[I32]` holds a
   memory with 32-bit integers, instead of a memory with pointers to boxed
@@ -47,9 +47,9 @@ Some notable features are:
 
 # Goals
 
-We want Fir to a productive programming language when you need static types,
+We want Fir to be a productive programming language when you need static types,
 with modern tooling (compiler, language server, documentation generator,
-formatter, build system, all in one executable), syntax, batteries-included
+formatter, build system, all in one executable), syntax, a batteries-included
 approach to the standard libraries, and an expressive type system.
 
 # Current status
