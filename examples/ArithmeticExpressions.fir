@@ -1,8 +1,6 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-import Prelude
-
 fn main(pgm: Str) =
     let pgmStringView = pgm.substr(0, pgm.len())
     printStr(eval(parse(pgmStringView)).toStr())

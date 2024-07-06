@@ -5,8 +5,6 @@
 # - Array.set(idx: U32, elem: T)     -- panics when writing OOB
 # - Array.get(idx: U32): T           -- panics when reading OOB or uninitialized element
 
-import Prelude
-
 type Vec[T]:
     data: Array[T]
     len: U32

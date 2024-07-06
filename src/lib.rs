@@ -18,6 +18,15 @@ mod native {
     use std::path::Path;
 
     pub fn main() {
+        let fir_root = match std::env::var("FIR_ROOT") {
+            Ok(s) => s,
+            Err(_) => {
+                eprintln!("Fir uses FIR_ROOT environment variable to find standard libraries.");
+                eprintln!("Please set FIR_ROOT to Fir git repo root.");
+                std::process::exit(1);
+            }
+        };
+
         let args: Vec<String> = std::env::args().collect();
 
         let file_path = Path::new(&args[1]); // "examples/Foo.fir"
@@ -25,9 +34,10 @@ mod native {
         let root_path = file_path.parent().unwrap(); // "examples/"
 
         let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-        let module = import_resolver::resolve_imports(root_path.to_str().unwrap(), module);
+        let module =
+            import_resolver::resolve_imports(&fir_root, root_path.to_str().unwrap(), module);
 
-        let input = &args[2];
+        let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
         let mut w = std::io::stdout();
         interpreter::run(&mut w, module, input);
     }
@@ -125,7 +135,7 @@ mod wasm {
         let tokens = scanner::scan(lexer::lex(pgm));
         let parser = parser::TopDeclsParser::new();
         let module = parser.parse(&("FirWeb".into()), tokens).unwrap();
-        let module = import_resolver::resolve_imports("", module);
+        let module = import_resolver::resolve_imports("fir", "", module);
 
         let mut w = WasmOutput;
         interpreter::run(&mut w, module, input.trim());
