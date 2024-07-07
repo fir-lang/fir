@@ -10,6 +10,52 @@ mod scanner;
 mod scope_map;
 mod token;
 
+use lexgen_util::Loc;
+use smol_str::SmolStr;
+
+fn lexgen_loc_string(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
+    format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
+}
+
+fn parse_module(module: &SmolStr, tokens: Vec<(Loc, token::Token, Loc)>) -> ast::Module {
+    let parser = parser::TopDeclsParser::new();
+    match parser.parse(&(module.as_str().into()), tokens) {
+        Ok(ast) => ast,
+        Err(err) => match err {
+            lalrpop_util::ParseError::InvalidToken { location } => {
+                panic!("Invalid token at {}", lexgen_loc_string(module, location));
+            }
+
+            lalrpop_util::ParseError::UnrecognizedEof {
+                location,
+                expected: _,
+            } => {
+                panic!("Unexpected EOF at {}", lexgen_loc_string(module, location));
+            }
+
+            lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
+                panic!(
+                    "Unexpected token {:?} at {}",
+                    token.1,
+                    lexgen_loc_string(module, token.0)
+                );
+            }
+
+            lalrpop_util::ParseError::ExtraToken { token } => {
+                panic!(
+                    "Extra token {:?} after parsing at {}",
+                    token.1,
+                    lexgen_loc_string(module, token.0)
+                );
+            }
+
+            lalrpop_util::ParseError::User { error } => {
+                panic!("Lexer error: {:?}", error)
+            }
+        },
+    }
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 mod native {
     use super::*;
@@ -52,8 +98,7 @@ mod native {
             )
         });
         let tokens = scanner::scan(lexer::lex(&contents));
-        let parser = parser::TopDeclsParser::new();
-        parser.parse(&(module.as_str().into()), tokens).unwrap()
+        parse_module(module, tokens)
     }
 }
 
@@ -76,8 +121,7 @@ mod wasm {
         match fetch_sync(&path) {
             Some(contents) => {
                 let tokens = scanner::scan(lexer::lex(&contents));
-                let parser = parser::TopDeclsParser::new();
-                parser.parse(&(module.as_str().into()), tokens).unwrap()
+                parse_module(module, tokens)
             }
             None => {
                 panic!("Unable to fetch {}", path);
@@ -133,8 +177,7 @@ mod wasm {
         clear_program_output();
 
         let tokens = scanner::scan(lexer::lex(pgm));
-        let parser = parser::TopDeclsParser::new();
-        let module = parser.parse(&("FirWeb".into()), tokens).unwrap();
+        let module = parse_module(&SmolStr::new("FirWeb"), tokens);
         let module = import_resolver::resolve_imports("fir", "", module);
 
         let mut w = WasmOutput;
