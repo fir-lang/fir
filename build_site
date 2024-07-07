@@ -21,3 +21,7 @@ wasm-pack build \
 
 cp target/wasm-pack/fir.js $OUT_DIR/fir.js
 cp target/wasm-pack/fir_bg.wasm $OUT_DIR/fir_bg.wasm
+
+# Copy standard library
+rm $OUT_DIR/fir/lib/*
+cp lib/* $OUT_DIR/fir/lib/
