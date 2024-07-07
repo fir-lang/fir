@@ -86,7 +86,13 @@ struct PgmTypes {
 }
 
 fn collect_types(module: &ast::Module) -> PgmTypes {
-    todo!()
+    let cons = collect_cons(module);
+    let (top_schemes, associated_schemes) = collect_schemes(module, &cons);
+    PgmTypes {
+        top_schemes,
+        associated_schemes,
+        cons,
+    }
 }
 
 fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
