@@ -42,6 +42,8 @@ enum Ty {
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
+    ///
+    /// Invariant: the vector is not empty.
     App(Id, Vec<Ty>),
 
     /// A record type, e.g. `(x: U32, y: U32)`.
@@ -132,6 +134,7 @@ fn collect_schemes(
             type_params,
             predicates,
             params,
+            return_ty,
             ..
         } = match &decl.node {
             ast::TopDecl::Type(_) => continue,
@@ -143,9 +146,99 @@ fn collect_schemes(
                 panic!("Import declaration in type checker")
             }
         };
+
+        // If associated function: check that the type exists.
+        if let Some(type_name) = type_name {
+            if !ty_cons.contains_key(&type_name.node) {
+                panic!(
+                    "Type {} of associated function at {} is not defined",
+                    type_name.node,
+                    loc_string(&decl.loc)
+                );
+            }
+        }
+
+        // Check duplicate type and term arguments.
+        let mut ty_arg_names: Set<Id> = Default::default();
+        for ty_arg_name in type_params {
+            let new = ty_arg_names.insert(ty_arg_name.node.clone());
+            if !new {
+                panic!(
+                    "Type parameter {} at {} is defined multiple times",
+                    ty_arg_name.node,
+                    loc_string(&ty_arg_name.loc)
+                );
+            }
+        }
+
+        let mut val_arg_names: Set<Id> = Default::default();
+        for val_arg_name in params {
+            let new = val_arg_names.insert(val_arg_name.0.clone());
+            if !new {
+                panic!(
+                    "Parameter {} at {} is defined multiple times",
+                    val_arg_name.0,
+                    loc_string(&decl.loc)
+                );
+            }
+        }
+
+        let quantified_vars: Vec<Id> = type_params.iter().map(|param| param.node.clone()).collect();
+
+        let preds: Vec<Ty> = predicates
+            .iter()
+            .map(|pred| convert_ast_ty(ty_cons, &pred.node, &pred.loc))
+            .collect();
+
+        let arg_tys: Vec<Ty> = params
+            .iter()
+            .map(|ty| convert_ast_ty(ty_cons, &ty.1.node, &ty.1.loc))
+            .collect();
+
+        let ret_ty = match return_ty {
+            Some(ret_ty) => convert_ast_ty(ty_cons, &ret_ty.node, &ret_ty.loc),
+            None => Ty::Record(Default::default()), // unit
+        };
+
+        let fun_ty = Ty::App(fun_ty_con(arg_tys.len() as u32), arg_tys);
+
+        let scheme = Scheme {
+            quantified_vars,
+            preds,
+            ty: fun_ty,
+        };
+
+        match type_name {
+            Some(ty_name) => {
+                let old = associated_schemes
+                    .entry(ty_name.node.clone())
+                    .or_default()
+                    .insert(name.node.clone(), scheme);
+
+                if old.is_some() {
+                    panic!(
+                        "Associated function {}.{} is defined multiple times at {}",
+                        ty_name.node,
+                        name.node,
+                        loc_string(&decl.loc)
+                    );
+                }
+            }
+            None => {
+                let old = top_schemes.insert(name.node.clone(), scheme);
+
+                if old.is_some() {
+                    panic!(
+                        "Function {} is defined multiple times at {}",
+                        name.node,
+                        loc_string(&decl.loc)
+                    );
+                }
+            }
+        }
     }
 
-    todo!()
+    (top_schemes, associated_schemes)
 }
 
 /// Convert an AST type to a type checking type.
@@ -165,14 +258,25 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
                     .map(|ty| convert_ast_ty(ty_cons, &ty.node, &ty.loc))
                     .collect();
 
-                Ty::App(name.clone(), args)
+                if args.is_empty() {
+                    Ty::Con(name.clone())
+                } else {
+                    Ty::App(name.clone(), args)
+                }
             }
             None => {
                 panic!("Unknown type {} at {}", name, loc_string(loc))
             }
         },
+
         ast::Type::Record(_) => todo!(),
     }
+}
+
+// TODO: Cache these.
+// TODO: These need to be added to `PgmTypes`.
+fn fun_ty_con(arity: u32) -> Id {
+    format!("#FUN_{}", arity).into()
 }
 
 fn loc_string(loc: &ast::Loc) -> String {
