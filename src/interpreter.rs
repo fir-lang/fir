@@ -105,9 +105,10 @@ struct Pgm {
     /// Same as `top_level_funs`, but indexed by the function index.
     top_level_funs_by_idx: Vec<Fun>,
 
-    // Some allocations and constructors used by the built-ins.
+    // Some allocations and type tags for the built-ins.
     true_alloc: u64,
     false_alloc: u64,
+    char_ty_tag: u64,
 }
 
 #[derive(Debug)]
@@ -359,6 +360,8 @@ impl Pgm {
             .alloc
             .unwrap();
 
+        let char_ty_tag = ty_cons.get("Char").as_ref().unwrap().type_tag;
+
         Pgm {
             ty_cons,
             cons_by_tag,
@@ -368,6 +371,7 @@ impl Pgm {
             top_level_funs_by_idx,
             false_alloc,
             true_alloc,
+            char_ty_tag,
         }
     }
 
@@ -1000,6 +1004,14 @@ fn eval<W: Write>(
             }
             ControlFlow::Val(0) // TODO: return unit
         }
+
+        ast::Expr::Char(char) => {
+            let i32 = heap.allocate_i32((*char as u32) as i32);
+            let alloc = heap.allocate(2);
+            heap[alloc] = pgm.char_ty_tag;
+            heap[alloc + 1] = i32;
+            ControlFlow::Val(alloc)
+        }
     }
 }
 
@@ -1249,6 +1261,15 @@ fn try_bind_pat(
                 return Some(binds);
             }
             None
+        }
+
+        ast::Pat::Char(char) => {
+            debug_assert_eq!(heap[value], pgm.char_ty_tag);
+            if heap[heap[value + 1] + 1] == u64::from(*char as u32) {
+                Some(Default::default())
+            } else {
+                None
+            }
         }
     }
 }

@@ -170,7 +170,11 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
 
 fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
     match pat {
-        ast::Pat::Var(_) | ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Var(_)
+        | ast::Pat::Ignore
+        | ast::Pat::Str(_)
+        | ast::Pat::StrPfx(_, _)
+        | ast::Pat::Char(_) => {}
 
         ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
             for field in fields {
@@ -194,7 +198,11 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
 
 fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
     match expr {
-        ast::Expr::Var(_) | ast::Expr::UpperVar(_) | ast::Expr::Int(_) | ast::Expr::Self_ => {}
+        ast::Expr::Var(_)
+        | ast::Expr::UpperVar(_)
+        | ast::Expr::Int(_)
+        | ast::Expr::Self_
+        | ast::Expr::Char(_) => {}
 
         ast::Expr::String(parts) => {
             for part in parts {

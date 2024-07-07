@@ -87,6 +87,8 @@ lexgen::lexer! {
         },
 
         ['0'-'9']+ = TokenKind::Int,
+
+        "'" (_ # '\'') "'" = TokenKind::Char,
     }
 
 

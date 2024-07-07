@@ -193,7 +193,11 @@ pub enum Pat {
     /// Underscore, aka. wildcard.
     Ignore,
 
+    /// Matches the string.
     Str(String),
+
+    /// Matches the character.
+    Char(char),
 
     /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
     StrPfx(String, SmolStr),
@@ -274,6 +278,8 @@ pub enum Expr {
     Int(i32),
 
     String(Vec<StringPart>),
+
+    Char(char),
 
     Self_,
 

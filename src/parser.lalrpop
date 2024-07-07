@@ -65,6 +65,7 @@ extern {
         "import" => Token { kind: TokenKind::Import, .. },
         IntLit => Token { kind: TokenKind::Int, .. },
         StringLit => Token { kind: TokenKind::String, .. },
+        CharLit => Token { kind: TokenKind::Char, .. },
     }
 }
 
@@ -368,6 +369,9 @@ InlineExpr: Expr = {
     <string:StringLit> =>
         Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1])),
 
+    <char:CharLit> =>
+        Expr::Char(char.text.chars().nth(1).unwrap()),
+
     <l:@L> <array:InlineExpr> <r:@R> "[" <index:LExpr> "]" =>
         Expr::ArrayIndex(ArrayIndexExpr {
             array: Box::new(L::new(module, l, r, array)),
@@ -546,6 +550,8 @@ Pat: Pat = {
     "_" => Pat::Ignore,
 
     <str:StringLit> => Pat::Str(str.text[1..str.text.len() - 1].to_string()),
+
+    <char:CharLit> => Pat::Char(char.text.chars().nth(1).unwrap()),
 
     <str:StringLit> <id:LowerId> => Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str()),
 
