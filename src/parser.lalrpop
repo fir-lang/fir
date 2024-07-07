@@ -85,6 +85,14 @@ Sep<T, S>: Vec<T> = {
     }
 };
 
+LUpperId: L<SmolStr> = {
+    <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.smol_str()),
+}
+
+LLowerId: L<SmolStr> = {
+    <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Type declarations
@@ -157,11 +165,15 @@ UnnamedFields: Vec<Type> = {
     <field:Type> => vec![field],
 }
 
+LType: L<Type> = {
+    <l:@L> <ty:Type> <r:@R> => L::new(module, l, r, ty),
+}
+
 Type: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
-    <name:UpperId> "[" <args:Sep<Type, ",">> "]" =>
+    <name:UpperId> "[" <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 
     "(" <fields:Sep<RecordTypeField, ",">> ")" =>
@@ -186,13 +198,13 @@ FunDecl: L<FunDecl> = {
     // TODO: comma parsing after `self` is not right.
 
     // Without type params and preds.
-    <l:@L> "fn" <type_name:(<UpperId> ".")?> <name:LowerId>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
-            <return_ty:(":" <Type>)?>
+    <l:@L> "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+            <return_ty:(":" <LType>)?>
             "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            type_name: type_name.map(|t| t.smol_str()),
-            name: name.smol_str(),
+            type_name,
+            name,
             type_params: vec![],
             predicates: vec![],
             self_: self_.is_some(),
@@ -202,16 +214,16 @@ FunDecl: L<FunDecl> = {
         }),
 
     // With type params and potentially preds.
-    <l:@L> "fn" <type_name:(<UpperId> ".")?> <name:LowerId>
-            "[" <type_params:Sep<UpperId, ",">> "]"
-            <predicates:("[" Sep<Type, ","> "]")?>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <Type>), ",">> ")"
-            <return_ty:(":" <Type>)?>
+    <l:@L> "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+            "[" <type_params:Sep<LUpperId, ",">> "]"
+            <predicates:("[" Sep<LType, ","> "]")?>
+            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+            <return_ty:(":" <LType>)?>
             "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            type_name: type_name.map(|t| t.smol_str()),
-            name: name.smol_str(),
-            type_params: type_params.into_iter().map(|t| t.smol_str()).collect(),
+            type_name,
+            name,
+            type_params,
             predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),

@@ -221,14 +221,16 @@ pub fn collect_funs(
 
         let old = match &fun_decl.type_name {
             Some(type_name) => {
-                let idx_entry = associated_fun_indices.entry(type_name.clone()).or_insert(0);
+                let idx_entry = associated_fun_indices
+                    .entry(type_name.node.clone())
+                    .or_insert(0);
                 let idx = *idx_entry;
                 *idx_entry += 1;
                 associated_funs
-                    .entry(type_name.clone())
+                    .entry(type_name.node.clone())
                     .or_default()
                     .insert(
-                        fun_decl.name.clone(),
+                        fun_decl.name.node.clone(),
                         Fun {
                             idx,
                             kind: FunKind::Source(fun_decl),
@@ -239,7 +241,7 @@ pub fn collect_funs(
             None => {
                 let idx = top_level_funs.len() as u64;
                 top_level_funs.insert(
-                    fun_decl.name.clone(),
+                    fun_decl.name.node.clone(),
                     Fun {
                         idx,
                         kind: FunKind::Source(fun_decl),

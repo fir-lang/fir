@@ -432,7 +432,7 @@ fn call_source_fun<W: Write>(
         args.len() as u32,
         "{}, fun: {}",
         LocDisplay(loc),
-        fun.name
+        fun.name.node
     );
 
     let mut locals: Map<SmolStr, u64> = Default::default();

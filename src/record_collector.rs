@@ -68,11 +68,11 @@ fn visit_ty_decl(ty_decl: &ast::TypeDecl, records: &mut Set<RecordShape>) {
 
 fn visit_fun_decl(fun_decl: &ast::FunDecl, records: &mut Set<RecordShape>) {
     for (_param_name, param_ty) in &fun_decl.params {
-        visit_ty(param_ty, records);
+        visit_ty(&param_ty.node, records);
     }
 
     if let Some(return_ty) = &fun_decl.return_ty {
-        visit_ty(return_ty, records);
+        visit_ty(&return_ty.node, records);
     }
 
     for stmt in &fun_decl.body.node {
@@ -97,7 +97,7 @@ fn visit_fields(fields: &ast::ConstructorFields, records: &mut Set<RecordShape>)
 fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
     match ty {
         ast::Type::Named(ast::NamedType { name: _, args }) => {
-            args.iter().for_each(|ty| visit_ty(ty, records))
+            args.iter().for_each(|ty| visit_ty(&ty.node, records))
         }
 
         ast::Type::Record(fields) => {

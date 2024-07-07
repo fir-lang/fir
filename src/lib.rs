@@ -9,6 +9,7 @@ mod record_collector;
 mod scanner;
 mod scope_map;
 mod token;
+mod type_checker;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
