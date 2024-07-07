@@ -14,12 +14,14 @@ impl std::ops::Index<u64> for Heap {
     type Output = u64;
 
     fn index(&self, index: u64) -> &Self::Output {
+        debug_assert!((index as usize) < self.hp);
         &self.values[index as usize]
     }
 }
 
 impl std::ops::IndexMut<u64> for Heap {
     fn index_mut(&mut self, index: u64) -> &mut Self::Output {
+        debug_assert!((index as usize) < self.hp);
         &mut self.values[index as usize]
     }
 }
