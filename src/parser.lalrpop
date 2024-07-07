@@ -168,8 +168,8 @@ Type: Type = {
 }
 
 RecordTypeField: Named<Type> = {
-    <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), thing: ty },
-    <ty:Type> => Named { name: None, thing: ty },
+    <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
+    <ty:Type> => Named { name: None, node: ty },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,8 +357,8 @@ InlineExpr: Expr = {
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
             0 => Expr::Record(vec![]),
-            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.thing,
-            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, thing: Box::new(expr) }).collect()),
+            1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.node,
+            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, node: Box::new(expr) }).collect()),
         }
     },
 
@@ -541,7 +541,7 @@ Pat: Pat = {
     <constr:ConstrPattern> => Pat::Constr(constr),
 
     "(" <fields:Sep<PatternField, ",">> ")" =>
-        Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect()),
+        Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect()),
 
     "_" => Pat::Ignore,
 
@@ -572,7 +572,7 @@ ConstrPattern: ConstrPattern = {
         ConstrPattern { constr, fields: vec![] },
 
     <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
-        ConstrPattern { constr, fields: fields.into_iter().map(|(name, pat)| Named { name, thing: Box::new(pat) }).collect() },
+        ConstrPattern { constr, fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect() },
 }
 
 PatternField: (Option<SmolStr>, L<Pat>) = {
