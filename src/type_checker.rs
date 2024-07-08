@@ -2,6 +2,10 @@
 
 use crate::ast;
 use crate::collections::{Map, Set};
+use crate::scope_map::ScopeMap;
+
+use std::cell::{Cell, RefCell};
+use std::rc::Rc;
 
 use smol_str::SmolStr;
 
@@ -28,16 +32,20 @@ struct Scheme {
 
     /// The generalized type.
     ty: Ty,
+
+    /// Source code location of the variable with this type scheme. This is used in error messages
+    /// and for debugging.
+    loc: ast::Loc,
 }
 
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id),
 
-    /// A type variable, e.g. `A` where `A` is not a constructor.
-    Var(Id),
+    /// A unification variable, created by a type scheme when instantiated.
+    Var(TyVarRef),
 
     /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
@@ -49,8 +57,72 @@ enum Ty {
     /// A record type, e.g. `(x: U32, y: U32)`.
     Record(Map<Id, Ty>),
 
-    /// Only in type schemes: a quantified variable.
+    /// Only in type schemes: a quantified type variable.
+    ///
+    /// Instantiation converts these into unification variables (`Ty::Var`).
     QVar(Id),
+}
+
+#[derive(Debug, Clone)]
+struct TyVarRef(Rc<TyVar>);
+
+#[derive(Debug, Clone)]
+struct TyVar {
+    /// Identity of the unification variable.
+    ///
+    /// This is used to compare unification variables for equality.
+    id: u32,
+
+    /// Depth of the scope the unification variable was craeted in.
+    level: Cell<u32>,
+
+    /// When unified with a type, this holds the type.
+    link: RefCell<Option<Ty>>,
+
+    /// Source code location of the type scheme that generated this type variable. This is used in
+    /// error messages and for debugging.
+    loc: ast::Loc,
+}
+
+impl TyVarRef {
+    fn id(&self) -> u32 {
+        self.0.id
+    }
+
+    fn level(&self) -> u32 {
+        self.0.level.get()
+    }
+
+    fn link(&self) -> Option<Ty> {
+        self.0.link.borrow().clone()
+    }
+
+    fn set_link(&self, ty: Ty) {
+        *self.0.link.borrow_mut() = Some(ty);
+    }
+
+    fn prune_level(&self, level: u32) {
+        let self_level = self.level();
+        self.0.level.set(std::cmp::min(level, self_level));
+    }
+}
+
+#[derive(Debug, Default)]
+struct TyVarGen {
+    next_id: u32,
+}
+
+impl TyVarGen {
+    fn new_var(&mut self, level: u32, loc: ast::Loc) -> TyVarRef {
+        let id = self.next_id;
+        self.next_id += 1;
+        TyVarRef(Rc::new(TyVar {
+            id,
+            level: Cell::new(level),
+            link: RefCell::new(None),
+            loc,
+        }))
+    }
 }
 
 /// A type constructor.
@@ -212,6 +284,7 @@ fn collect_schemes(
             quantified_vars,
             preds,
             ty: fun_ty,
+            loc: decl.loc.clone(),
         };
 
         match type_name {
@@ -292,4 +365,201 @@ fn loc_string(loc: &ast::Loc) -> String {
         loc.line_start + 1,
         loc.col_start + 1
     )
+}
+
+fn check_fun(fun: &ast::FunDecl, tys: &PgmTypes) {}
+
+impl Scheme {
+    fn instantiate(&self, level: u32, var_gen: &mut TyVarGen) -> (Vec<Ty>, Ty) {
+        // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
+        // handle shadowing here.
+
+        let var_map: Map<Id, TyVarRef> = self
+            .quantified_vars
+            .iter()
+            .map(|var| (var.clone(), var_gen.new_var(level, self.loc.clone())))
+            .collect();
+
+        let preds: Vec<Ty> = self
+            .preds
+            .iter()
+            .map(|pred| pred.subst_qvars(&var_map))
+            .collect();
+
+        let ty = self.ty.subst_qvars(&var_map);
+
+        (preds, ty)
+    }
+}
+
+impl Ty {
+    fn subst_qvars(&self, vars: &Map<Id, TyVarRef>) -> Ty {
+        match self {
+            Ty::Con(con) => Ty::Con(con.clone()),
+
+            Ty::Var(var) => Ty::Var(var.clone()),
+
+            Ty::App(ty, tys) => Ty::App(
+                ty.clone(),
+                tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
+            ),
+
+            Ty::Record(_) => todo!(),
+
+            Ty::QVar(id) => Ty::Var(vars.get(id).cloned().unwrap()),
+        }
+    }
+}
+
+fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
+    match (ty1, ty2) {
+        (Ty::Con(con1), Ty::Con(con2)) => {
+            if con1 != con2 {
+                panic!(
+                    "Unable to unify types {} and {} at {}",
+                    con1,
+                    con2,
+                    loc_string(loc)
+                )
+            }
+        }
+
+        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+            if con1 != con2 {
+                panic!(
+                    "Unable to unify types {} and {} at {}",
+                    con1,
+                    con2,
+                    loc_string(loc)
+                )
+            }
+
+            // Kinds should've been checked.
+            assert_eq!(args1.len(), args2.len());
+
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                unify(arg1, arg2, loc);
+            }
+        }
+
+        (Ty::QVar(_), _) | (_, Ty::QVar(_)) => {
+            panic!("QVar in unification at {}", loc_string(loc));
+        }
+
+        (Ty::Var(var1), Ty::Var(var2)) => {
+            if var1.id() == var2.id() {
+                return;
+            }
+
+            let var1_level = var1.level();
+            let var2_level = var2.level();
+
+            // We've normalized the types, so the links must be followed to the end.
+            debug_assert!(var1.link().is_none());
+            debug_assert!(var2.link().is_none());
+
+            // Links must increase in level so that we can follow them to find the level of the
+            // group.
+            if var1_level < var2_level {
+                link_var(&var1, &ty2);
+            } else {
+                link_var(&var2, &ty1);
+            }
+        }
+
+        (Ty::Var(var), ty2) => link_var(var, ty2),
+
+        (ty1, Ty::Var(var)) => link_var(var, ty1),
+
+        (ty1, ty2) => panic!(
+            "Unable to unify types {:?} and {:?} at {}",
+            ty1,
+            ty2,
+            loc_string(loc)
+        ),
+    }
+}
+
+fn link_var(var: &TyVarRef, ty: &Ty) {
+    // TODO: Occurs check.
+    prune_level(var.level(), ty);
+    var.set_link(ty.clone());
+}
+
+fn prune_level(max_level: u32, ty: &Ty) {
+    match ty {
+        Ty::Con(_) => {}
+
+        Ty::Var(var) => {
+            assert!(var.link().is_none());
+            var.prune_level(max_level);
+        }
+
+        Ty::App(_, tys) => {
+            for ty in tys {
+                prune_level(max_level, ty);
+            }
+        }
+
+        Ty::Record(_) => todo!(),
+
+        Ty::QVar(_) => panic!("QVar in prune_level"),
+    }
+}
+
+fn check_expr(
+    expr: &ast::L<ast::Expr>,
+    level: u32,
+    env: &mut ScopeMap<Id, Ty>,
+    var_gen: &mut TyVarGen,
+    tys: &PgmTypes,
+) -> (Vec<Ty>, Ty) {
+    match &expr.node {
+        ast::Expr::Var(var) => {
+            // Check if local.
+            if let Some(ty) = env.get(var) {
+                return (vec![], ty.clone());
+            }
+
+            if let Some(scheme) = tys.top_schemes.get(var) {
+                return scheme.instantiate(level, var_gen);
+            }
+
+            panic!("Unbound variable at {}", loc_string(&expr.loc));
+        }
+
+        ast::Expr::UpperVar(_) => todo!(),
+
+        ast::Expr::FieldSelect(_) => todo!(),
+
+        ast::Expr::ConstrSelect(_) => todo!(),
+
+        ast::Expr::Call(ast::CallExpr { fun: _, args: _ }) => {
+            todo!()
+        }
+
+        ast::Expr::Range(_) => todo!(),
+
+        ast::Expr::Int(_) => todo!(),
+
+        ast::Expr::String(_) => todo!(),
+
+        ast::Expr::Char(_) => todo!(),
+
+        ast::Expr::Self_ => todo!(),
+
+        ast::Expr::BinOp(_) => todo!(),
+
+        ast::Expr::UnOp(_) => todo!(),
+
+        ast::Expr::ArrayIndex(_) => todo!(),
+
+        ast::Expr::Record(_) => todo!(),
+
+        ast::Expr::Return(_) => todo!(),
+
+        ast::Expr::Match(_) => todo!(),
+
+        ast::Expr::If(_) => todo!(),
+    }
 }
