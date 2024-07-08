@@ -61,6 +61,12 @@ enum Ty {
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
     QVar(Id),
+
+    /// A function type, e.g. `Fn(U32): Str`.
+    Fun(Vec<Ty>, Box<Ty>),
+
+    /// A function type with named arguments, e.g. `Fn(x: U32, y: U32): Str`.
+    FunNamedArgs(Map<Id, Ty>, Box<Ty>),
 }
 
 #[derive(Debug, Clone)]
@@ -407,6 +413,18 @@ impl Ty {
             Ty::Record(_) => todo!(),
 
             Ty::QVar(id) => Ty::Var(vars.get(id).cloned().unwrap()),
+
+            Ty::Fun(args, ret) => Ty::Fun(
+                args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
+                Box::new(ret.subst_qvars(vars)),
+            ),
+
+            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
+                args.iter()
+                    .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
+                    .collect(),
+                Box::new(ret.subst_qvars(vars)),
+            ),
         }
     }
 }
@@ -482,11 +500,11 @@ fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
 
 fn link_var(var: &TyVarRef, ty: &Ty) {
     // TODO: Occurs check.
-    prune_level(var.level(), ty);
+    prune_level(ty, var.level());
     var.set_link(ty.clone());
 }
 
-fn prune_level(max_level: u32, ty: &Ty) {
+fn prune_level(ty: &Ty, max_level: u32) {
     match ty {
         Ty::Con(_) => {}
 
@@ -497,23 +515,63 @@ fn prune_level(max_level: u32, ty: &Ty) {
 
         Ty::App(_, tys) => {
             for ty in tys {
-                prune_level(max_level, ty);
+                prune_level(ty, max_level);
             }
         }
 
         Ty::Record(_) => todo!(),
 
         Ty::QVar(_) => panic!("QVar in prune_level"),
+
+        Ty::Fun(args, ret) => {
+            for arg in args {
+                prune_level(arg, max_level);
+            }
+            prune_level(&*ret, max_level);
+        }
+
+        Ty::FunNamedArgs(args, ret) => {
+            for (_, arg) in args {
+                prune_level(arg, max_level);
+            }
+            prune_level(&*ret, max_level);
+        }
     }
 }
 
-fn check_expr(
-    expr: &ast::L<ast::Expr>,
+// TODO: Level is the same as the length of `env`, maybe remove the parameter?
+fn check_stmt(
+    stmt: &ast::L<ast::Stmt>,
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
 ) -> (Vec<Ty>, Ty) {
+    match &stmt.node {
+        ast::Stmt::Let(_) => todo!(),
+
+        ast::Stmt::Assign(_) => todo!(),
+
+        ast::Stmt::Expr(_) => todo!(),
+
+        ast::Stmt::For(_) => todo!(),
+
+        ast::Stmt::While(_) => todo!(),
+    }
+}
+
+// TODO: When `expected_ty` is available should we unify with the expected type, or should the call
+// site do it?
+fn check_expr(
+    expr: &ast::L<ast::Expr>,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    env: &mut ScopeMap<Id, Ty>,
+    var_gen: &mut TyVarGen,
+    tys: &PgmTypes,
+) -> (Vec<Ty>, Ty) {
+    let mut preds: Vec<Ty> = vec![];
+
     match &expr.node {
         ast::Expr::Var(var) => {
             // Check if local.
@@ -534,8 +592,64 @@ fn check_expr(
 
         ast::Expr::ConstrSelect(_) => todo!(),
 
-        ast::Expr::Call(ast::CallExpr { fun: _, args: _ }) => {
-            todo!()
+        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+            let (fun_preds, fun_ty) = check_expr(fun, None, level, env, var_gen, tys);
+            preds.extend(fun_preds.into_iter());
+
+            match fun_ty {
+                Ty::Fun(param_tys, ret_ty) => {
+                    if param_tys.len() != args.len() {
+                        panic!(
+                            "{}: Function with arity {} is passed {} args",
+                            loc_string(&expr.loc),
+                            param_tys.len(),
+                            args.len()
+                        );
+                    }
+
+                    for arg in args {
+                        if arg.name.is_some() {
+                            panic!(
+                                "{}: Named argument applied to function that expects positional arguments",
+                                loc_string(&expr.loc),
+                            );
+                        }
+                    }
+
+                    let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
+                    for (param_ty, arg) in param_tys.iter().zip(args.iter()) {
+                        let (arg_preds, arg_ty) =
+                            check_expr(&arg.expr, Some(param_ty), level, env, var_gen, tys);
+                        preds.extend(arg_preds.into_iter());
+                        arg_tys.push(arg_ty);
+                    }
+
+                    for (param_ty, arg_ty) in param_tys.iter().zip(arg_tys.iter()) {
+                        unify(param_ty, arg_ty, &expr.loc);
+                    }
+
+                    (preds, *ret_ty)
+                }
+
+                Ty::FunNamedArgs(arg_tys, ret_ty) => {
+                    if arg_tys.len() != args.len() {
+                        panic!(
+                            "{}: Function with arity {} is passed {} args",
+                            loc_string(&expr.loc),
+                            arg_tys.len(),
+                            args.len()
+                        );
+                    }
+
+                    todo!()
+                }
+
+                _ => panic!(
+                    "{}: Function in function application is not a function: {:?}",
+                    loc_string(&expr.loc),
+                    fun_ty,
+                ),
+            }
         }
 
         ast::Expr::Range(_) => todo!(),

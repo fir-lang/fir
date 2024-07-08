@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.20.2"
-// sha3: 4e7423d70093e19e7cb7641cc68973c315dbc06015ffeb85fa82868193691e7c
+// sha3: 79af241fb4035cc9fc1f245c2506547325a8506f691694646e1f003f974bca0a
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -34958,7 +34958,7 @@ fn __action28<'a>(
     (_, rhs, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Stmt {
-    Stmt::Let(LetStatement { lhs, ty, rhs })
+    Stmt::Let(LetStmt { lhs, ty, rhs })
 }
 
 #[allow(unused_variables)]
@@ -34975,7 +34975,7 @@ fn __action29<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, rhs, _): (Loc, L<Expr>, Loc),
 ) -> Stmt {
-    Stmt::Let(LetStatement { lhs, ty, rhs })
+    Stmt::Let(LetStmt { lhs, ty, rhs })
 }
 
 #[allow(unused_variables)]
@@ -34991,7 +34991,7 @@ fn __action30<'a>(
     (_, rhs, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Stmt {
-    Stmt::Assign(AssignStatement { lhs, rhs, op })
+    Stmt::Assign(AssignStmt { lhs, rhs, op })
 }
 
 #[allow(unused_variables)]
@@ -35043,7 +35043,7 @@ fn __action33<'a>(
     (_, statements, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Stmt {
-    Stmt::For(ForStatement {
+    Stmt::For(ForStmt {
         var: id.smol_str(),
         ty: None,
         expr,
@@ -35067,7 +35067,7 @@ fn __action34<'a>(
     (_, statements, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Stmt {
-    Stmt::While(WhileStatement {
+    Stmt::While(WhileStmt {
         cond,
         body: statements,
     })

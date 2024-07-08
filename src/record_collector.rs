@@ -108,7 +108,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
 
 fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
     match stmt {
-        ast::Stmt::Let(ast::LetStatement { lhs, ty, rhs }) => {
+        ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             visit_pat(&lhs.node, records);
             if let Some(ty) = ty {
                 visit_ty(ty, records);
@@ -137,14 +137,14 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
         //         visit_stmt(stmt, records);
         //     }
         // }
-        ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op: _ }) => {
+        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
             visit_expr(&lhs.node, records);
             visit_expr(&rhs.node, records);
         }
 
         ast::Stmt::Expr(expr) => visit_expr(&expr.node, records),
 
-        ast::Stmt::For(ast::ForStatement {
+        ast::Stmt::For(ast::ForStmt {
             var: _,
             ty,
             expr,
@@ -159,7 +159,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
             }
         }
 
-        ast::Stmt::While(ast::WhileStatement { cond, body }) => {
+        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
             visit_expr(&cond.node, records);
             for stmt in body {
                 visit_stmt(&stmt.node, records);

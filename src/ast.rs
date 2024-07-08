@@ -151,17 +151,17 @@ impl FunDecl {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Stmt {
-    Let(LetStatement),
+    Let(LetStmt),
     // LetFn(FunDecl),
-    Assign(AssignStatement),
+    Assign(AssignStmt),
     Expr(L<Expr>),
-    For(ForStatement),
-    While(WhileStatement),
+    For(ForStmt),
+    While(WhileStmt),
 }
 
 /// A let statement: `let x: T = expr`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LetStatement {
+pub struct LetStmt {
     pub lhs: L<Pat>,
     pub ty: Option<Type>,
     pub rhs: L<Expr>,
@@ -226,7 +226,7 @@ pub struct IfExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AssignStatement {
+pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
     pub op: AssignOp,
@@ -240,7 +240,7 @@ pub enum AssignOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ForStatement {
+pub struct ForStmt {
     pub var: SmolStr,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
@@ -248,7 +248,7 @@ pub struct ForStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WhileStatement {
+pub struct WhileStmt {
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }

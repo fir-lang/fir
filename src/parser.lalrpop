@@ -249,13 +249,13 @@ pub LStmt: L<Stmt> = {
 
 Stmt: Stmt = {
     "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LInlineExpr> NEWLINE =>
-        Stmt::Let(LetStatement { lhs, ty, rhs }),
+        Stmt::Let(LetStmt { lhs, ty, rhs }),
 
     "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LBlockExpr> =>
-        Stmt::Let(LetStatement { lhs, ty, rhs }),
+        Stmt::Let(LetStmt { lhs, ty, rhs }),
 
     <lhs:LInlineExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
-        Stmt::Assign(AssignStatement {
+        Stmt::Assign(AssignStmt {
             lhs,
             rhs,
             op,
@@ -268,7 +268,7 @@ Stmt: Stmt = {
         Stmt::Expr(L::new(module, l, r, expr)),
 
     "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
-        Stmt::For(ForStatement {
+        Stmt::For(ForStmt {
             var: id.smol_str(),
             ty: None,
             expr,
@@ -276,7 +276,7 @@ Stmt: Stmt = {
         }),
 
     "while" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
-        Stmt::While(WhileStatement {
+        Stmt::While(WhileStmt {
             cond,
             body:statements,
         }),
