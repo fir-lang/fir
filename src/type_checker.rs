@@ -479,9 +479,9 @@ fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
             // Links must increase in level so that we can follow them to find the level of the
             // group.
             if var1_level < var2_level {
-                link_var(&var1, &ty2);
+                link_var(var1, ty2);
             } else {
-                link_var(&var2, &ty1);
+                link_var(var2, ty1);
             }
         }
 
@@ -527,21 +527,34 @@ fn prune_level(ty: &Ty, max_level: u32) {
             for arg in args {
                 prune_level(arg, max_level);
             }
-            prune_level(&*ret, max_level);
+            prune_level(ret, max_level);
         }
 
         Ty::FunNamedArgs(args, ret) => {
-            for (_, arg) in args {
+            for arg in args.values() {
                 prune_level(arg, max_level);
             }
-            prune_level(&*ret, max_level);
+            prune_level(ret, max_level);
         }
     }
+}
+
+fn check_stmts(
+    stmts: &[ast::L<ast::Stmt>],
+    expected_ty: Option<&Ty>,
+    return_ty: &Ty,
+    level: u32,
+    env: &mut ScopeMap<Id, Ty>,
+    var_gen: &mut TyVarGen,
+    tys: &PgmTypes,
+) -> (Vec<Ty>, Ty) {
+    todo!()
 }
 
 // TODO: Level is the same as the length of `env`, maybe remove the parameter?
 fn check_stmt(
     stmt: &ast::L<ast::Stmt>,
+    return_ty: &Ty,
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
@@ -565,6 +578,7 @@ fn check_stmt(
 fn check_expr(
     expr: &ast::L<ast::Expr>,
     expected_ty: Option<&Ty>,
+    return_ty: &Ty,
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
@@ -593,8 +607,8 @@ fn check_expr(
         ast::Expr::ConstrSelect(_) => todo!(),
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let (fun_preds, fun_ty) = check_expr(fun, None, level, env, var_gen, tys);
-            preds.extend(fun_preds.into_iter());
+            let (fun_preds, fun_ty) = check_expr(fun, None, return_ty, level, env, var_gen, tys);
+            preds.extend(fun_preds);
 
             match fun_ty {
                 Ty::Fun(param_tys, ret_ty) => {
@@ -618,8 +632,15 @@ fn check_expr(
 
                     let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
                     for (param_ty, arg) in param_tys.iter().zip(args.iter()) {
-                        let (arg_preds, arg_ty) =
-                            check_expr(&arg.expr, Some(param_ty), level, env, var_gen, tys);
+                        let (arg_preds, arg_ty) = check_expr(
+                            &arg.expr,
+                            Some(param_ty),
+                            return_ty,
+                            level,
+                            env,
+                            var_gen,
+                            tys,
+                        );
                         preds.extend(arg_preds.into_iter());
                         arg_tys.push(arg_ty);
                     }
@@ -631,17 +652,55 @@ fn check_expr(
                     (preds, *ret_ty)
                 }
 
-                Ty::FunNamedArgs(arg_tys, ret_ty) => {
-                    if arg_tys.len() != args.len() {
+                Ty::FunNamedArgs(param_tys, ret_ty) => {
+                    if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
                             loc_string(&expr.loc),
-                            arg_tys.len(),
+                            param_tys.len(),
                             args.len()
                         );
                     }
 
-                    todo!()
+                    for arg in args {
+                        if arg.name.is_none() {
+                            panic!(
+                                "{}: Positional argument applied to function that expects named arguments",
+                                loc_string(&expr.loc),
+                            );
+                        }
+                    }
+
+                    let param_names: Set<&SmolStr> = param_tys.keys().collect();
+                    let arg_names: Set<&SmolStr> =
+                        args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
+
+                    if param_names != arg_names {
+                        panic!(
+                            "{}: Function expects arguments with names {:?}, but passed {:?}",
+                            loc_string(&expr.loc),
+                            param_names,
+                            arg_names
+                        );
+                    }
+
+                    for arg in args {
+                        let arg_name: &SmolStr = arg.name.as_ref().unwrap();
+                        let param_ty: &Ty = param_tys.get(arg_name).unwrap();
+                        let (arg_preds, arg_ty) = check_expr(
+                            &arg.expr,
+                            Some(param_ty),
+                            return_ty,
+                            level,
+                            env,
+                            var_gen,
+                            tys,
+                        );
+                        preds.extend(arg_preds.into_iter());
+                        unify(&arg_ty, param_ty, &expr.loc);
+                    }
+
+                    (preds, *ret_ty)
                 }
 
                 _ => panic!(
@@ -654,11 +713,11 @@ fn check_expr(
 
         ast::Expr::Range(_) => todo!(),
 
-        ast::Expr::Int(_) => todo!(),
+        ast::Expr::Int(_) => (vec![], Ty::Con(SmolStr::new_static("I32"))),
 
-        ast::Expr::String(_) => todo!(),
+        ast::Expr::String(_) => (vec![], Ty::Con(SmolStr::new_static("Str"))),
 
-        ast::Expr::Char(_) => todo!(),
+        ast::Expr::Char(_) => (vec![], Ty::Con(SmolStr::new_static("Char"))),
 
         ast::Expr::Self_ => todo!(),
 
@@ -674,6 +733,50 @@ fn check_expr(
 
         ast::Expr::Match(_) => todo!(),
 
-        ast::Expr::If(_) => todo!(),
+        ast::Expr::If(ast::IfExpr {
+            branches,
+            else_branch,
+        }) => {
+            let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
+
+            for (cond, body) in branches {
+                let (cond_preds, cond_ty) = check_expr(
+                    cond,
+                    Some(&Ty::Con(SmolStr::new_static("Bool"))),
+                    return_ty,
+                    level,
+                    env,
+                    var_gen,
+                    tys,
+                );
+                unify(&cond_ty, &Ty::Con(SmolStr::new_static("Bool")), &expr.loc);
+                preds.extend(cond_preds);
+
+                let (body_preds, body_ty) =
+                    check_stmts(body, expected_ty, return_ty, level, env, var_gen, tys);
+                preds.extend(body_preds);
+
+                branch_tys.push(body_ty);
+            }
+
+            match else_branch {
+                Some(else_body) => {
+                    let (body_preds, body_ty) =
+                        check_stmts(else_body, expected_ty, return_ty, level, env, var_gen, tys);
+                    preds.extend(body_preds);
+                    branch_tys.push(body_ty);
+                }
+                None => {
+                    // A bit hacky: ensure that without an else branch the expression returns unit.
+                    branch_tys.push(Ty::Record(Default::default()));
+                }
+            }
+
+            for ty_pair in branch_tys.windows(2) {
+                unify(&ty_pair[0], &ty_pair[1], &expr.loc);
+            }
+
+            (preds, branch_tys.pop().unwrap())
+        }
     }
 }
