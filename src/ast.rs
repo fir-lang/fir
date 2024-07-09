@@ -108,7 +108,7 @@ pub enum Type {
 pub struct NamedType {
     #[allow(unused)]
     pub name: SmolStr,
-    pub args: Vec<Type>,
+    pub args: Vec<L<Type>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -120,25 +120,25 @@ pub struct Named<T> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunDecl {
     /// For associated functions, name of the type the function belongs.
-    pub type_name: Option<SmolStr>,
+    pub type_name: Option<L<SmolStr>>,
 
     /// Name of the function.
-    pub name: SmolStr,
+    pub name: L<SmolStr>,
 
     // TODO: Do we need to specify kinds?
     #[allow(unused)]
-    pub type_params: Vec<SmolStr>,
+    pub type_params: Vec<L<SmolStr>>,
 
     // Predicates in a separate list.
     #[allow(unused)]
-    pub predicates: Vec<Type>,
+    pub predicates: Vec<L<Type>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
 
-    pub params: Vec<(SmolStr, Type)>,
+    pub params: Vec<(SmolStr, L<Type>)>,
 
-    pub return_ty: Option<Type>,
+    pub return_ty: Option<L<Type>>,
 
     pub body: L<Vec<L<Stmt>>>,
 }
@@ -151,17 +151,17 @@ impl FunDecl {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Stmt {
-    Let(LetStatement),
+    Let(LetStmt),
     // LetFn(FunDecl),
-    Assign(AssignStatement),
+    Assign(AssignStmt),
     Expr(L<Expr>),
-    For(ForStatement),
-    While(WhileStatement),
+    For(ForStmt),
+    While(WhileStmt),
 }
 
 /// A let statement: `let x: T = expr`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct LetStatement {
+pub struct LetStmt {
     pub lhs: L<Pat>,
     pub ty: Option<Type>,
     pub rhs: L<Expr>,
@@ -226,7 +226,7 @@ pub struct IfExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AssignStatement {
+pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
     pub op: AssignOp,
@@ -240,7 +240,7 @@ pub enum AssignOp {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ForStatement {
+pub struct ForStmt {
     pub var: SmolStr,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
@@ -248,7 +248,7 @@ pub struct ForStatement {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct WhileStatement {
+pub struct WhileStmt {
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }

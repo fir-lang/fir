@@ -432,7 +432,7 @@ fn call_source_fun<W: Write>(
         args.len() as u32,
         "{}, fun: {}",
         LocDisplay(loc),
-        fun.name
+        fun.name.node
     );
 
     let mut locals: Map<SmolStr, u64> = Default::default();
@@ -560,7 +560,7 @@ fn exec<W: Write>(
 
     for stmt in stmts {
         return_value = match &stmt.node {
-            ast::Stmt::Let(ast::LetStatement { lhs, ty: _, rhs }) => {
+            ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, rhs));
                 match try_bind_pat(pgm, heap, lhs, val) {
                     Some(binds) => locals.extend(binds.into_iter()),
@@ -569,14 +569,14 @@ fn exec<W: Write>(
                 val
             }
 
-            ast::Stmt::Assign(ast::AssignStatement { lhs, rhs, op }) => {
+            ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
                 let rhs = val!(eval(w, pgm, heap, locals, rhs));
                 val!(assign(w, pgm, heap, locals, lhs, rhs, *op, &stmt.loc))
             }
 
             ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, expr)),
 
-            ast::Stmt::While(ast::WhileStatement { cond, body }) => loop {
+            ast::Stmt::While(ast::WhileStmt { cond, body }) => loop {
                 let cond = val!(eval(w, pgm, heap, locals, cond));
                 debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
                 if cond == pgm.false_alloc {
@@ -588,7 +588,7 @@ fn exec<W: Write>(
                 }
             },
 
-            ast::Stmt::For(ast::ForStatement {
+            ast::Stmt::For(ast::ForStmt {
                 var,
                 ty: _,
                 expr,
