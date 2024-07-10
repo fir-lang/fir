@@ -543,7 +543,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
             }
         }
 
-        Ty::Record(_) => todo!(),
+        Ty::Record(fields) => {
+            for field_ty in fields.values() {
+                prune_level(field_ty, max_level);
+            }
+        }
 
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
@@ -963,7 +967,17 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
             todo!()
         }
 
-        ast::Pat::Record(_) => todo!(),
+        ast::Pat::Record(fields) => Ty::Record(
+            fields
+                .iter()
+                .map(|named| {
+                    (
+                        named.name.as_ref().unwrap().clone(),
+                        infer_pat(&*named.node, level, var_gen, tys),
+                    )
+                })
+                .collect(),
+        ),
 
         ast::Pat::Str(_) | ast::Pat::StrPfx(_, _) => Ty::Con(SmolStr::new_static("Str")),
 
