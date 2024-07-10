@@ -141,11 +141,13 @@ impl TyVarGen {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TyCon {
     id: Id,
+    ty_params: Vec<Id>,
+}
 
-    /// Type constructor arity.
-    ///
-    /// Because all type variables have kind `*` we don't need the kind information.
-    arity: u32,
+impl TyCon {
+    fn arity(&self) -> u32 {
+        self.ty_params.len() as u32
+    }
 }
 
 struct RecordTyCon {}
@@ -202,7 +204,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
             ty_decl.node.name.clone(),
             TyCon {
                 id: ty_decl.node.name.clone(),
-                arity: ty_decl.node.type_params.len() as u32,
+                ty_params: ty_decl.node.type_params.clone(),
             },
         );
     }
@@ -273,20 +275,31 @@ fn collect_schemes(
             }
         }
 
-        let quantified_vars: Vec<Id> = type_params.iter().map(|param| param.node.clone()).collect();
+        let mut quantified_vars: Vec<Id> = vec![];
+
+        if let Some(ty_name) = type_name {
+            let con = ty_cons.get(&ty_name.node).unwrap();
+            quantified_vars.extend(con.ty_params.iter().cloned());
+        }
+
+        quantified_vars.extend(type_params.iter().map(|param| param.node.clone()));
+
+        let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
 
         let preds: Vec<Ty> = predicates
             .iter()
-            .map(|pred| convert_ast_ty(ty_cons, &pred.node, &pred.loc))
+            .map(|pred| convert_ast_ty(ty_cons, &quantified_vars_set, &pred.node, &pred.loc))
             .collect();
 
         let arg_tys: Vec<Ty> = params
             .iter()
-            .map(|ty| convert_ast_ty(ty_cons, &ty.1.node, &ty.1.loc))
+            .map(|ty| convert_ast_ty(ty_cons, &quantified_vars_set, &ty.1.node, &ty.1.loc))
             .collect();
 
         let ret_ty = match return_ty {
-            Some(ret_ty) => convert_ast_ty(ty_cons, &ret_ty.node, &ret_ty.loc),
+            Some(ret_ty) => {
+                convert_ast_ty(ty_cons, &quantified_vars_set, &ret_ty.node, &ret_ty.loc)
+            }
             None => Ty::unit(),
         };
 
@@ -333,22 +346,27 @@ fn collect_schemes(
 }
 
 /// Convert an AST type to a type checking type.
-fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
+fn convert_ast_ty(
+    ty_cons: &Map<Id, TyCon>,
+    quantified_tys: &Set<Id>,
+    ast_ty: &ast::Type,
+    loc: &ast::Loc,
+) -> Ty {
     match ast_ty {
         ast::Type::Named(ast::NamedType { name, args }) => match ty_cons.get(name) {
             Some(con) => {
-                if con.arity as usize != args.len() {
+                if con.arity() as usize != args.len() {
                     panic!(
                         "{}: Incorrect number of type arguments, expected {}, found {}",
                         loc_string(loc),
-                        con.arity,
+                        con.arity(),
                         args.len()
                     )
                 }
 
                 let args: Vec<Ty> = args
                     .iter()
-                    .map(|ty| convert_ast_ty(ty_cons, &ty.node, &ty.loc))
+                    .map(|ty| convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc))
                     .collect();
 
                 if args.is_empty() {
@@ -358,7 +376,11 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
                 }
             }
             None => {
-                panic!("{}: Unknown type {}", loc_string(loc), name)
+                if quantified_tys.contains(name) {
+                    Ty::QVar(name.clone())
+                } else {
+                    panic!("{}: Unknown type {}", loc_string(loc), name)
+                }
             }
         },
 
@@ -368,7 +390,7 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
                 .map(|named_ty| {
                     (
                         named_ty.name.as_ref().unwrap().clone(),
-                        convert_ast_ty(ty_cons, &named_ty.node, loc),
+                        convert_ast_ty(ty_cons, quantified_tys, &named_ty.node, loc),
                     )
                 })
                 .collect(),
@@ -585,15 +607,30 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 
     // TODO: Add type parameters to the env.
 
+    let mut quantified_vars: Set<Id> = Default::default();
+
+    // Add type parameters of the type to quantified vars.
+    if let Some(ty_name) = &fun.node.type_name {
+        let con = tys.cons.get(&ty_name.node).unwrap_or_else(|| {
+            panic!(
+                "{}: Unknown type {}",
+                loc_string(&ty_name.loc),
+                ty_name.node
+            )
+        });
+
+        quantified_vars.extend(con.ty_params.iter().cloned());
+    }
+
     for (param_name, param_ty) in &fun.node.params {
         env.bind(
             param_name.clone(),
-            convert_ast_ty(&tys.cons, &param_ty.node, &fun.loc),
+            convert_ast_ty(&tys.cons, &quantified_vars, &param_ty.node, &fun.loc),
         );
     }
 
     let ret_ty = match &fun.node.return_ty {
-        Some(ty) => convert_ast_ty(&tys.cons, &ty.node, &ty.loc),
+        Some(ty) => convert_ast_ty(&tys.cons, &quantified_vars, &ty.node, &ty.loc),
         None => Ty::Record(Default::default()),
     };
 
@@ -606,6 +643,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
         0,
         &mut env,
         &mut var_gen,
+        &quantified_vars,
         tys,
         &mut preds,
     );
@@ -618,6 +656,7 @@ fn check_stmts(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
+    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut Vec<Ty>,
 ) -> Ty {
@@ -632,6 +671,7 @@ fn check_stmts(
             level,
             env,
             var_gen,
+            quantified_vars,
             tys,
             preds,
         );
@@ -653,6 +693,7 @@ fn check_stmt(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
+    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut Vec<Ty>,
 ) -> Ty {
@@ -667,7 +708,7 @@ fn check_stmt(
             // Otherwise start with (2), using the given type as the expected type.
 
             let pat_expected_ty = match ty {
-                Some(ty) => convert_ast_ty(&tys.cons, &ty.node, &ty.loc),
+                Some(ty) => convert_ast_ty(&tys.cons, quantified_vars, &ty.node, &ty.loc),
                 None => infer_pat(lhs, level, var_gen, tys),
             };
 
@@ -679,6 +720,7 @@ fn check_stmt(
                 level + 1,
                 env,
                 var_gen,
+                quantified_vars,
                 tys,
                 preds,
             );
@@ -700,6 +742,7 @@ fn check_stmt(
             level,
             env,
             var_gen,
+            quantified_vars,
             tys,
             preds,
         ),
@@ -719,6 +762,7 @@ fn check_expr(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
+    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut Vec<Ty>,
 ) -> Ty {
@@ -745,7 +789,17 @@ fn check_expr(
         ast::Expr::ConstrSelect(_) => todo!(),
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
+            let fun_ty = check_expr(
+                fun,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            );
 
             match fun_ty {
                 Ty::Fun(param_tys, ret_ty) => {
@@ -776,6 +830,7 @@ fn check_expr(
                             level,
                             env,
                             var_gen,
+                            quantified_vars,
                             tys,
                             preds,
                         );
@@ -831,6 +886,7 @@ fn check_expr(
                             level,
                             env,
                             var_gen,
+                            quantified_vars,
                             tys,
                             preds,
                         );
@@ -890,6 +946,7 @@ fn check_expr(
                     level,
                     env,
                     var_gen,
+                    quantified_vars,
                     tys,
                     preds,
                 );
@@ -902,6 +959,7 @@ fn check_expr(
                     level,
                     env,
                     var_gen,
+                    quantified_vars,
                     tys,
                     preds,
                 );
@@ -918,6 +976,7 @@ fn check_expr(
                         level,
                         env,
                         var_gen,
+                        quantified_vars,
                         tys,
                         preds,
                     );
