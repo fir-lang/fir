@@ -339,8 +339,10 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
             Some(con) => {
                 if con.arity as usize != args.len() {
                     panic!(
-                        "Incorrect number of type arguments at {}, expected {} type arguments, found {}",
-                        loc_string(loc), con.arity, args.len()
+                        "{}: Incorrect number of type arguments, expected {}, found {}",
+                        loc_string(loc),
+                        con.arity,
+                        args.len()
                     )
                 }
 
@@ -356,11 +358,21 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
                 }
             }
             None => {
-                panic!("Unknown type {} at {}", name, loc_string(loc))
+                panic!("{}: Unknown type {}", loc_string(loc), name)
             }
         },
 
-        ast::Type::Record(_) => todo!(),
+        ast::Type::Record(fields) => Ty::Record(
+            fields
+                .iter()
+                .map(|named_ty| {
+                    (
+                        named_ty.name.as_ref().unwrap().clone(),
+                        convert_ast_ty(ty_cons, &named_ty.node, loc),
+                    )
+                })
+                .collect(),
+        ),
     }
 }
 
