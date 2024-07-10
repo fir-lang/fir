@@ -248,10 +248,10 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LInlineExpr> NEWLINE =>
+    "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
 
-    "let" <lhs:LPat> <ty:(":" <Type>)?> "=" <rhs:LBlockExpr> =>
+    "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LBlockExpr> =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
 
     <lhs:LInlineExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>

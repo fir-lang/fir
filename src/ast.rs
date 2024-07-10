@@ -163,7 +163,7 @@ pub enum Stmt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LetStmt {
     pub lhs: L<Pat>,
-    pub ty: Option<Type>,
+    pub ty: Option<L<Type>>,
     pub rhs: L<Expr>,
 }
 

@@ -111,7 +111,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             visit_pat(&lhs.node, records);
             if let Some(ty) = ty {
-                visit_ty(ty, records);
+                visit_ty(&ty.node, records);
             }
             visit_expr(&rhs.node, records);
         }
