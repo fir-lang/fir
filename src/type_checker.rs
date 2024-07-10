@@ -1,4 +1,4 @@
-#![allow(unused)]
+#![allow(unused, clippy::too_many_arguments)]
 
 use crate::ast;
 use crate::collections::{Map, Set};
@@ -67,6 +67,12 @@ enum Ty {
 
     /// A function type with named arguments, e.g. `Fn(x: U32, y: U32): Str`.
     FunNamedArgs(Map<Id, Ty>, Box<Ty>),
+}
+
+impl Ty {
+    fn unit() -> Ty {
+        Ty::Record(Default::default())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -281,7 +287,7 @@ fn collect_schemes(
 
         let ret_ty = match return_ty {
             Some(ret_ty) => convert_ast_ty(ty_cons, &ret_ty.node, &ret_ty.loc),
-            None => Ty::Record(Default::default()), // unit
+            None => Ty::unit(),
         };
 
         let fun_ty = Ty::App(fun_ty_con(arg_tys.len() as u32), arg_tys);
@@ -372,8 +378,6 @@ fn loc_string(loc: &ast::Loc) -> String {
         loc.col_start + 1
     )
 }
-
-fn check_fun(fun: &ast::FunDecl, tys: &PgmTypes) {}
 
 impl Scheme {
     fn instantiate(&self, level: u32, var_gen: &mut TyVarGen) -> (Vec<Ty>, Ty) {
@@ -498,6 +502,15 @@ fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
     }
 }
 
+/// When we have an expected type during type inference (i.e. we're in 'checking' mode), this
+/// unifies the expected type with the inferred type, and returns one of the types.
+fn unify_expected_ty(ty: Ty, expected_ty: Option<&Ty>, loc: &ast::Loc) -> Ty {
+    if let Some(expected_ty) = expected_ty {
+        unify(&ty, expected_ty, loc);
+    }
+    ty
+}
+
 fn link_var(var: &TyVarRef, ty: &Ty) {
     // TODO: Occurs check.
     prune_level(ty, var.level());
@@ -539,6 +552,38 @@ fn prune_level(ty: &Ty, max_level: u32) {
     }
 }
 
+fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
+    let mut var_gen = TyVarGen::default();
+    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+
+    // TODO: Add type parameters to the env.
+
+    for (param_name, param_ty) in &fun.node.params {
+        env.bind(
+            param_name.clone(),
+            convert_ast_ty(&tys.cons, &param_ty.node, &fun.loc),
+        );
+    }
+
+    let ret_ty = match &fun.node.return_ty {
+        Some(ty) => convert_ast_ty(&tys.cons, &ty.node, &ty.loc),
+        None => Ty::Record(Default::default()),
+    };
+
+    let mut preds: Vec<Ty> = vec![];
+
+    check_stmts(
+        &fun.node.body.node,
+        Some(&ret_ty),
+        &ret_ty,
+        0,
+        &mut env,
+        &mut var_gen,
+        tys,
+        &mut preds,
+    );
+}
+
 fn check_stmts(
     stmts: &[ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
@@ -547,25 +592,81 @@ fn check_stmts(
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
-) -> (Vec<Ty>, Ty) {
-    todo!()
+    preds: &mut Vec<Ty>,
+) -> Ty {
+    let num_stmts = stmts.len();
+    assert!(num_stmts != 0);
+    for (stmt_idx, stmt) in stmts.iter().enumerate() {
+        let last = stmt_idx == num_stmts - 1;
+        let stmt_ty = check_stmt(
+            stmt,
+            expected_ty,
+            return_ty,
+            level,
+            env,
+            var_gen,
+            tys,
+            preds,
+        );
+        if last {
+            if let Some(expected_ty) = expected_ty {
+                unify(&stmt_ty, expected_ty, &stmt.loc);
+            }
+            return stmt_ty;
+        }
+    }
+    panic!()
 }
 
 // TODO: Level is the same as the length of `env`, maybe remove the parameter?
 fn check_stmt(
     stmt: &ast::L<ast::Stmt>,
+    expected_ty: Option<&Ty>,
     return_ty: &Ty,
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
-) -> (Vec<Ty>, Ty) {
+    preds: &mut Vec<Ty>,
+) -> Ty {
     match &stmt.node {
-        ast::Stmt::Let(_) => todo!(),
+        ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
+            // When type of the LHS is not given:
+            //
+            // (1) Infer the pattern type.
+            // (2) Check the RHS using the inferred pattern type as the expected type.
+            // (3) Bind the pattern variables.
+            //
+            // Otherwise start with (2), using the given type as the expected type.
 
-        ast::Stmt::Assign(_) => todo!(),
+            let pat_expected_ty = match ty {
+                Some(ty) => convert_ast_ty(&tys.cons, &ty.node, &ty.loc),
+                None => infer_pat(lhs, level, var_gen, tys),
+            };
 
-        ast::Stmt::Expr(_) => todo!(),
+            env.enter();
+            let rhs_ty = check_expr(
+                rhs,
+                Some(&pat_expected_ty),
+                return_ty,
+                level + 1,
+                env,
+                var_gen,
+                tys,
+                preds,
+            );
+            env.exit();
+
+            unify(&rhs_ty, &pat_expected_ty, &rhs.loc);
+
+            bind_pat(lhs, env);
+
+            Ty::unit()
+        }
+
+        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => todo!(),
+
+        ast::Stmt::Expr(expr) => todo!(), // check_expr(expr, None
 
         ast::Stmt::For(_) => todo!(),
 
@@ -583,18 +684,19 @@ fn check_expr(
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
-) -> (Vec<Ty>, Ty) {
-    let mut preds: Vec<Ty> = vec![];
-
+    preds: &mut Vec<Ty>,
+) -> Ty {
     match &expr.node {
         ast::Expr::Var(var) => {
             // Check if local.
             if let Some(ty) = env.get(var) {
-                return (vec![], ty.clone());
+                return unify_expected_ty(ty.clone(), expected_ty, &expr.loc);
             }
 
             if let Some(scheme) = tys.top_schemes.get(var) {
-                return scheme.instantiate(level, var_gen);
+                let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
+                preds.extend(scheme_preds);
+                return unify_expected_ty(ty, expected_ty, &expr.loc);
             }
 
             panic!("Unbound variable at {}", loc_string(&expr.loc));
@@ -607,8 +709,7 @@ fn check_expr(
         ast::Expr::ConstrSelect(_) => todo!(),
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let (fun_preds, fun_ty) = check_expr(fun, None, return_ty, level, env, var_gen, tys);
-            preds.extend(fun_preds);
+            let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
 
             match fun_ty {
                 Ty::Fun(param_tys, ret_ty) => {
@@ -632,7 +733,7 @@ fn check_expr(
 
                     let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
                     for (param_ty, arg) in param_tys.iter().zip(args.iter()) {
-                        let (arg_preds, arg_ty) = check_expr(
+                        let arg_ty = check_expr(
                             &arg.expr,
                             Some(param_ty),
                             return_ty,
@@ -640,8 +741,8 @@ fn check_expr(
                             env,
                             var_gen,
                             tys,
+                            preds,
                         );
-                        preds.extend(arg_preds.into_iter());
                         arg_tys.push(arg_ty);
                     }
 
@@ -649,7 +750,7 @@ fn check_expr(
                         unify(param_ty, arg_ty, &expr.loc);
                     }
 
-                    (preds, *ret_ty)
+                    unify_expected_ty(*ret_ty, expected_ty, &expr.loc)
                 }
 
                 Ty::FunNamedArgs(param_tys, ret_ty) => {
@@ -687,7 +788,7 @@ fn check_expr(
                     for arg in args {
                         let arg_name: &SmolStr = arg.name.as_ref().unwrap();
                         let param_ty: &Ty = param_tys.get(arg_name).unwrap();
-                        let (arg_preds, arg_ty) = check_expr(
+                        let arg_ty = check_expr(
                             &arg.expr,
                             Some(param_ty),
                             return_ty,
@@ -695,12 +796,12 @@ fn check_expr(
                             env,
                             var_gen,
                             tys,
+                            preds,
                         );
-                        preds.extend(arg_preds.into_iter());
                         unify(&arg_ty, param_ty, &expr.loc);
                     }
 
-                    (preds, *ret_ty)
+                    unify_expected_ty(*ret_ty, expected_ty, &expr.loc)
                 }
 
                 _ => panic!(
@@ -713,11 +814,17 @@ fn check_expr(
 
         ast::Expr::Range(_) => todo!(),
 
-        ast::Expr::Int(_) => (vec![], Ty::Con(SmolStr::new_static("I32"))),
+        ast::Expr::Int(_) => {
+            unify_expected_ty(Ty::Con(SmolStr::new_static("I32")), expected_ty, &expr.loc)
+        }
 
-        ast::Expr::String(_) => (vec![], Ty::Con(SmolStr::new_static("Str"))),
+        ast::Expr::String(_) => {
+            unify_expected_ty(Ty::Con(SmolStr::new_static("Str")), expected_ty, &expr.loc)
+        }
 
-        ast::Expr::Char(_) => (vec![], Ty::Con(SmolStr::new_static("Char"))),
+        ast::Expr::Char(_) => {
+            unify_expected_ty(Ty::Con(SmolStr::new_static("Char")), expected_ty, &expr.loc)
+        }
 
         ast::Expr::Self_ => todo!(),
 
@@ -740,7 +847,7 @@ fn check_expr(
             let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
 
             for (cond, body) in branches {
-                let (cond_preds, cond_ty) = check_expr(
+                let cond_ty = check_expr(
                     cond,
                     Some(&Ty::Con(SmolStr::new_static("Bool"))),
                     return_ty,
@@ -748,35 +855,97 @@ fn check_expr(
                     env,
                     var_gen,
                     tys,
+                    preds,
                 );
                 unify(&cond_ty, &Ty::Con(SmolStr::new_static("Bool")), &expr.loc);
-                preds.extend(cond_preds);
 
-                let (body_preds, body_ty) =
-                    check_stmts(body, expected_ty, return_ty, level, env, var_gen, tys);
-                preds.extend(body_preds);
+                let body_ty = check_stmts(
+                    body,
+                    expected_ty,
+                    return_ty,
+                    level,
+                    env,
+                    var_gen,
+                    tys,
+                    preds,
+                );
 
                 branch_tys.push(body_ty);
             }
 
             match else_branch {
                 Some(else_body) => {
-                    let (body_preds, body_ty) =
-                        check_stmts(else_body, expected_ty, return_ty, level, env, var_gen, tys);
-                    preds.extend(body_preds);
+                    let body_ty = check_stmts(
+                        else_body,
+                        expected_ty,
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        tys,
+                        preds,
+                    );
                     branch_tys.push(body_ty);
                 }
                 None => {
                     // A bit hacky: ensure that without an else branch the expression returns unit.
-                    branch_tys.push(Ty::Record(Default::default()));
+                    branch_tys.push(Ty::unit());
                 }
             }
 
-            for ty_pair in branch_tys.windows(2) {
-                unify(&ty_pair[0], &ty_pair[1], &expr.loc);
+            // When expected type is available, unify with it for better errors.
+            match expected_ty {
+                Some(expected_ty) => {
+                    for ty in &branch_tys {
+                        unify(ty, expected_ty, &expr.loc);
+                    }
+                }
+                None => {
+                    for ty_pair in branch_tys.windows(2) {
+                        unify(&ty_pair[0], &ty_pair[1], &expr.loc);
+                    }
+                }
             }
 
-            (preds, branch_tys.pop().unwrap())
+            branch_tys.pop().unwrap()
         }
     }
 }
+
+fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &PgmTypes) -> Ty {
+    match &pat.node {
+        ast::Pat::Var(_) | ast::Pat::Ignore => Ty::Var(var_gen.new_var(level, pat.loc.clone())),
+
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: ast::Constructor { type_, constr },
+            fields,
+        }) => {
+            let ty_con = tys
+                .cons
+                .get(type_)
+                .unwrap_or_else(|| panic!("{}: Undefined type", loc_string(&pat.loc)));
+
+            // TODO: Add constructors to `TyCon`, check that the `constr` is valid.
+            // TODO: From patterns in `Constr` fields infer type parameters of the type.
+
+            todo!()
+        }
+
+        ast::Pat::Record(_) => todo!(),
+
+        ast::Pat::Str(_) | ast::Pat::StrPfx(_, _) => Ty::Con(SmolStr::new_static("Str")),
+
+        ast::Pat::Char(_) => Ty::Con(SmolStr::new_static("Char")),
+
+        ast::Pat::Or(pat1, pat2) => {
+            let pat1_ty = infer_pat(pat1, level, var_gen, tys);
+            let pat2_ty = infer_pat(pat2, level, var_gen, tys);
+            // TODO: To check pattern bind the same variables of same types.
+            // TODO: Any other checks here?
+            unify(&pat1_ty, &pat2_ty, &pat.loc);
+            pat1_ty
+        }
+    }
+}
+
+fn bind_pat(pat: &ast::L<ast::Pat>, env: &mut ScopeMap<Id, Ty>) {}
