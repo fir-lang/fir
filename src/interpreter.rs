@@ -28,7 +28,7 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     let pgm = Pgm::new(pgm, &mut heap);
 
     // Allocate command line arguments to be passed to the program.
-    let input = heap.allocate_str(input.as_bytes());
+    let input = heap.allocate_str(pgm.str_ty_tag, input.as_bytes());
 
     // Find the main function.
     let main_fun = pgm
@@ -69,10 +69,6 @@ macro_rules! generate_tags {
 
 #[rustfmt::skip]
 generate_tags!(
-    I32_TYPE_TAG,
-    STR_TYPE_TAG,
-    STR_VIEW_TYPE_TAG,
-    ARRAY_TYPE_TAG,
     CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
     TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
     ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
@@ -109,6 +105,10 @@ struct Pgm {
     true_alloc: u64,
     false_alloc: u64,
     char_ty_tag: u64,
+    str_ty_tag: u64,
+    str_view_ty_tag: u64,
+    i32_ty_tag: u64,
+    array_ty_tag: u64,
 }
 
 #[derive(Debug)]
@@ -361,6 +361,10 @@ impl Pgm {
             .unwrap();
 
         let char_ty_tag = ty_cons.get("Char").as_ref().unwrap().type_tag;
+        let str_ty_tag = ty_cons.get("Str").as_ref().unwrap().type_tag;
+        let str_view_ty_tag = ty_cons.get("StrView").as_ref().unwrap().type_tag;
+        let i32_ty_tag = ty_cons.get("I32").as_ref().unwrap().type_tag;
+        let array_ty_tag = ty_cons.get("Array").as_ref().unwrap().type_tag;
 
         Pgm {
             ty_cons,
@@ -372,6 +376,10 @@ impl Pgm {
             false_alloc,
             true_alloc,
             char_ty_tag,
+            str_ty_tag,
+            str_view_ty_tag,
+            i32_ty_tag,
+            array_ty_tag,
         }
     }
 
@@ -449,7 +457,7 @@ fn call_source_fun<W: Write>(
         arg_idx += 1;
     }
 
-    match exec(w, pgm, heap, &mut locals, &fun.body.node) {
+    match exec(w, pgm, heap, &mut locals, &fun.body.as_ref().unwrap().node) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => val,
     }
 }
@@ -606,16 +614,16 @@ fn exec<W: Write>(
                 };
 
                 let from = val!(eval(w, pgm, heap, locals, from));
-                debug_assert_eq!(heap[from], I32_TYPE_TAG);
+                debug_assert_eq!(heap[from], pgm.i32_ty_tag);
                 let from = heap[from + 1] as i32;
 
                 let to = val!(eval(w, pgm, heap, locals, to));
-                debug_assert_eq!(heap[to], I32_TYPE_TAG);
+                debug_assert_eq!(heap[to], pgm.i32_ty_tag);
                 let to = heap[to + 1] as i32;
 
                 if *inclusive {
                     for i in from..=to {
-                        let iter_value = heap.allocate_i32(i);
+                        let iter_value = heap.allocate_i32(pgm.i32_ty_tag, i);
                         locals.insert(var.clone(), iter_value);
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Val(_) => {}
@@ -627,7 +635,7 @@ fn exec<W: Write>(
                     }
                 } else {
                     for i in from..to {
-                        let iter_value = heap.allocate_i32(i);
+                        let iter_value = heap.allocate_i32(pgm.i32_ty_tag, i);
                         locals.insert(var.clone(), iter_value);
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Val(_) => {}
@@ -678,10 +686,10 @@ fn eval<W: Write>(
             let fields = pgm.get_tag_fields(object_tag);
             match fields {
                 Fields::Unnamed(_) => panic!(
-                    "FieldSelect of {} with unnamed fields, field = {} ({})",
+                    "{}: FieldSelect of {} with unnamed fields, field = {}",
+                    LocDisplay(&expr.loc),
                     object_tag,
                     field,
-                    LocDisplay(&expr.loc),
                 ),
                 Fields::Named(fields) => {
                     let (field_idx, _) = fields
@@ -830,7 +838,7 @@ fn eval<W: Write>(
             }
         }
 
-        ast::Expr::Int(i) => ControlFlow::Val(heap.allocate_i32(*i)),
+        ast::Expr::Int(i) => ControlFlow::Val(heap.allocate_i32(pgm.i32_ty_tag, *i)),
 
         ast::Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];
@@ -842,13 +850,13 @@ fn eval<W: Write>(
                         // Call toStr
                         let part_str_val =
                             call_method(w, pgm, heap, part_val, &"toStr".into(), vec![], &expr.loc);
-                        assert_eq!(heap[part_str_val], STR_TYPE_TAG);
+                        assert_eq!(heap[part_str_val], pgm.str_ty_tag);
                         let part_bytes = heap.str_bytes(part_str_val);
                         bytes.extend(part_bytes);
                     }
                 }
             }
-            ControlFlow::Val(heap.allocate_str(&bytes))
+            ControlFlow::Val(heap.allocate_str(pgm.str_ty_tag, &bytes))
         }
 
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
@@ -1006,7 +1014,7 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Char(char) => {
-            let i32 = heap.allocate_i32((*char as u32) as i32);
+            let i32 = heap.allocate_i32(pgm.i32_ty_tag, (*char as u32) as i32);
             let alloc = heap.allocate(2);
             heap[alloc] = pgm.char_ty_tag;
             heap[alloc + 1] = i32;
@@ -1216,8 +1224,8 @@ fn try_bind_pat(
         }
 
         ast::Pat::Str(str) => {
-            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
-            let value_bytes = if heap[value] == STR_TYPE_TAG {
+            debug_assert!(heap[value] == pgm.str_ty_tag || heap[value] == pgm.str_view_ty_tag);
+            let value_bytes = if heap[value] == pgm.str_ty_tag {
                 heap.str_bytes(value)
             } else {
                 heap.str_view_bytes(value)
@@ -1230,20 +1238,25 @@ fn try_bind_pat(
         }
 
         ast::Pat::StrPfx(pfx, var) => {
-            debug_assert!(matches!(heap[value], STR_TYPE_TAG | STR_VIEW_TYPE_TAG));
-            let value_bytes = if heap[value] == STR_TYPE_TAG {
+            debug_assert!(heap[value] == pgm.str_ty_tag || heap[value] == pgm.str_view_ty_tag);
+            let value_bytes = if heap[value] == pgm.str_ty_tag {
                 heap.str_bytes(value)
             } else {
                 heap.str_view_bytes(value)
             };
             if value_bytes.starts_with(pfx.as_bytes()) {
                 let pfx_len = pfx.len();
-                let rest = if heap[value] == STR_TYPE_TAG {
+                let rest = if heap[value] == pgm.str_ty_tag {
                     let len = heap.str_bytes(value).len();
-                    heap.allocate_str_view(value, pfx_len as u64, len as u64)
+                    heap.allocate_str_view(pgm.str_view_ty_tag, value, pfx_len as u64, len as u64)
                 } else {
                     let len = heap.str_view_bytes(value).len();
-                    heap.allocate_str_view_from_str_view(value, pfx_len as u64, len as u64)
+                    heap.allocate_str_view_from_str_view(
+                        pgm.str_view_ty_tag,
+                        value,
+                        pfx_len as u64,
+                        len as u64,
+                    )
                 };
                 let mut map: Map<SmolStr, u64> = Default::default();
                 map.insert(var.clone(), rest);
@@ -1328,6 +1341,12 @@ struct LocDisplay<'a>(&'a Loc);
 
 impl<'a> std::fmt::Display for LocDisplay<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:{}", self.0.line_start + 1, self.0.col_start + 1)
+        write!(
+            f,
+            "{}:{}:{}",
+            self.0.module,
+            self.0.line_start + 1,
+            self.0.col_start + 1
+        )
     }
 }

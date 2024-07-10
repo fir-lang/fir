@@ -13,6 +13,7 @@ pub struct L<T> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
+    /// Module file path, relative to the working directory.
     pub module: Rc<str>,
     pub line_start: u16,
     pub col_start: u16,
@@ -71,7 +72,7 @@ pub struct TypeDecl {
     pub type_params: Vec<SmolStr>,
 
     /// Constructors of the type.
-    pub rhs: TypeDeclRhs,
+    pub rhs: Option<TypeDeclRhs>,
 }
 
 /// Constructors of a type declaration.
@@ -140,7 +141,7 @@ pub struct FunDecl {
 
     pub return_ty: Option<L<Type>>,
 
-    pub body: L<Vec<L<Stmt>>>,
+    pub body: Option<L<Vec<L<Stmt>>>>,
 }
 
 impl FunDecl {

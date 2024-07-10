@@ -36,6 +36,7 @@ lexgen::lexer! {
         "jump" = TokenKind::Jump,
         "let" = TokenKind::Let,
         "match" = TokenKind::Match,
+        "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
         "self" = TokenKind::Self_,
         "trait" = TokenKind::Trait,

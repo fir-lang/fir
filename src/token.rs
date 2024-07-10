@@ -33,6 +33,7 @@ pub enum TokenKind {
     Jump,
     Let,
     Match,
+    Prim,
     Return,
     Self_,
     Trait,
