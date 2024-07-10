@@ -4,38 +4,6 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
     let mut ty_cons: Map<SmolStr, TyCon> = Default::default();
 
     ty_cons.insert(
-        SmolStr::new("I32"),
-        TyCon {
-            value_constrs: vec![],
-            type_tag: I32_TYPE_TAG,
-        },
-    );
-
-    ty_cons.insert(
-        SmolStr::new("Str"),
-        TyCon {
-            value_constrs: vec![],
-            type_tag: STR_TYPE_TAG,
-        },
-    );
-
-    ty_cons.insert(
-        SmolStr::new("StrView"),
-        TyCon {
-            value_constrs: vec![],
-            type_tag: STR_VIEW_TYPE_TAG,
-        },
-    );
-
-    ty_cons.insert(
-        SmolStr::new("Array"),
-        TyCon {
-            value_constrs: vec![],
-            type_tag: ARRAY_TYPE_TAG,
-        },
-    );
-
-    ty_cons.insert(
         SmolStr::new("#CONSTR"),
         TyCon {
             value_constrs: vec![],
@@ -89,7 +57,18 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
         };
 
         match rhs {
-            ast::TypeDeclRhs::Sum(named_constrs) => {
+            None => {
+                ty_cons.insert(
+                    name.clone(),
+                    TyCon {
+                        value_constrs: vec![],
+                        type_tag: next_type_tag,
+                    },
+                );
+                next_type_tag += 1;
+            }
+
+            Some(ast::TypeDeclRhs::Sum(named_constrs)) => {
                 let mut constrs: Vec<ValCon> = Vec::with_capacity(named_constrs.len());
                 for ast::ConstructorDecl {
                     name: constr_name,
@@ -116,7 +95,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
                 next_type_tag += named_constrs.len() as u64;
             }
 
-            ast::TypeDeclRhs::Product(fields) => {
+            Some(ast::TypeDeclRhs::Product(fields)) => {
                 let constrs: Vec<ValCon> = vec![ValCon {
                     name: Some(name.clone()),
                     fields: convert_constr_fields(fields),
@@ -140,19 +119,19 @@ pub fn collect_funs(
     pgm: Vec<L<ast::TopDecl>>,
 ) -> (Map<SmolStr, Fun>, Map<SmolStr, Map<SmolStr, Fun>>) {
     macro_rules! builtin_top_level_funs {
-            ($($fname:expr => $fkind:expr),* $(,)?) => {{
-                let mut map: Map<SmolStr, Fun> = Default::default();
-                #[allow(unused_assignments)] // idx is not read after the last increment
-                {
-                    let mut idx = 0;
-                    $(
-                        map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
-                        idx += 1;
-                    )*
-                }
-                map
-            }};
-        }
+        ($($fname:expr => $fkind:expr),* $(,)?) => {{
+            let mut map: Map<SmolStr, Fun> = Default::default();
+            #[allow(unused_assignments)] // idx is not read after the last increment
+            {
+                let mut idx = 0;
+                $(
+                    map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
+                    idx += 1;
+                )*
+            }
+            map
+        }};
+    }
 
     let mut top_level_funs: Map<SmolStr, Fun> = builtin_top_level_funs! {
         "print" => BuiltinFun::Print,
@@ -162,23 +141,23 @@ pub fn collect_funs(
     };
 
     macro_rules! builtin_associated_funs {
-            ($($type:expr => {$($fname:expr => $fkind:expr),* $(,)?}),* $(,)?) => {{
-                let mut map: Map<SmolStr, Map<SmolStr, Fun>> = Default::default();
-                #[allow(unused_assignments)] // idx is not read after the last increment
-                {
+        ($($type:expr => {$($fname:expr => $fkind:expr),* $(,)?}),* $(,)?) => {{
+            let mut map: Map<SmolStr, Map<SmolStr, Fun>> = Default::default();
+            #[allow(unused_assignments)] // idx is not read after the last increment
+            {
+                $(
+                    let mut fun_map: Map<SmolStr, Fun> = Default::default();
+                    let mut idx = 0;
                     $(
-                        let mut fun_map: Map<SmolStr, Fun> = Default::default();
-                        let mut idx = 0;
-                        $(
-                            fun_map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
-                            idx += 1;
-                        )*
-                        map.insert(SmolStr::new($type), fun_map);
+                        fun_map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
+                        idx += 1;
                     )*
-                }
-                map
-            }};
-        }
+                    map.insert(SmolStr::new($type), fun_map);
+                )*
+            }
+            map
+        }};
+    }
 
     let mut associated_funs: Map<SmolStr, Map<SmolStr, Fun>> = builtin_associated_funs! {
         "Str" => {
@@ -215,11 +194,17 @@ pub fn collect_funs(
     for decl in pgm {
         let fun_decl: ast::FunDecl = match decl.node {
             ast::TopDecl::Type(_) => continue,
-            ast::TopDecl::Fun(fun_decl) => fun_decl.node,
+            ast::TopDecl::Fun(fun_decl) => {
+                if fun_decl.node.body.is_none() {
+                    continue;
+                } else {
+                    fun_decl.node
+                }
+            }
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 
-        let old = match &fun_decl.type_name {
+        match &fun_decl.type_name {
             Some(type_name) => {
                 let idx_entry = associated_fun_indices
                     .entry(type_name.node.clone())
@@ -249,8 +234,6 @@ pub fn collect_funs(
                 )
             }
         };
-
-        assert!(old.is_none());
     }
 
     (top_level_funs, associated_funs)

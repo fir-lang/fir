@@ -290,7 +290,7 @@ fn collect_schemes(
             None => Ty::unit(),
         };
 
-        let fun_ty = Ty::App(fun_ty_con(arg_tys.len() as u32), arg_tys);
+        let fun_ty = Ty::Fun(arg_tys, Box::new(ret_ty));
 
         let scheme = Scheme {
             quantified_vars,
@@ -364,12 +364,6 @@ fn convert_ast_ty(ty_cons: &Map<Id, TyCon>, ast_ty: &ast::Type, loc: &ast::Loc) 
     }
 }
 
-// TODO: Cache these.
-// TODO: These need to be added to `PgmTypes`.
-fn fun_ty_con(arity: u32) -> Id {
-    format!("#FUN_{}", arity).into()
-}
-
 fn loc_string(loc: &ast::Loc) -> String {
     format!(
         "{}:{}:{}",
@@ -414,7 +408,12 @@ impl Ty {
                 tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
             ),
 
-            Ty::Record(_) => todo!(),
+            Ty::Record(fields) => Ty::Record(
+                fields
+                    .iter()
+                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
+                    .collect(),
+            ),
 
             Ty::QVar(id) => Ty::Var(vars.get(id).cloned().unwrap()),
 
@@ -585,7 +584,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut preds: Vec<Ty> = vec![];
 
     check_stmts(
-        &fun.node.body.node,
+        &fun.node.body.as_ref().unwrap().node,
         Some(&ret_ty),
         &ret_ty,
         0,
@@ -678,7 +677,16 @@ fn check_stmt(
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => todo!(),
 
-        ast::Stmt::Expr(expr) => todo!(), // check_expr(expr, None
+        ast::Stmt::Expr(expr) => check_expr(
+            expr,
+            expected_ty,
+            return_ty,
+            level,
+            env,
+            var_gen,
+            tys,
+            preds,
+        ),
 
         ast::Stmt::For(_) => todo!(),
 

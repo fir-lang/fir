@@ -55,12 +55,15 @@ pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> Set<RecordShape> {
 
 fn visit_ty_decl(ty_decl: &ast::TypeDecl, records: &mut Set<RecordShape>) {
     match &ty_decl.rhs {
-        ast::TypeDeclRhs::Sum(constrs) => {
+        None => {}
+
+        Some(ast::TypeDeclRhs::Sum(constrs)) => {
             for constr in constrs {
                 visit_fields(&constr.fields, records);
             }
         }
-        ast::TypeDeclRhs::Product(fields) => {
+
+        Some(ast::TypeDeclRhs::Product(fields)) => {
             visit_fields(fields, records);
         }
     }
@@ -75,8 +78,10 @@ fn visit_fun_decl(fun_decl: &ast::FunDecl, records: &mut Set<RecordShape>) {
         visit_ty(&return_ty.node, records);
     }
 
-    for stmt in &fun_decl.body.node {
-        visit_stmt(&stmt.node, records);
+    if let Some(body) = &fun_decl.body {
+        for stmt in &body.node {
+            visit_stmt(&stmt.node, records);
+        }
     }
 }
 

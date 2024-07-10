@@ -55,10 +55,10 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str(&mut self, string: &[u8]) -> u64 {
+    pub fn allocate_str(&mut self, ty_tag: u64, string: &[u8]) -> u64 {
         let size_words = string.len().div_ceil(8);
         let alloc = self.allocate(size_words + 2);
-        self[alloc] = STR_TYPE_TAG;
+        self[alloc] = ty_tag;
         self[alloc + 1] = string.len() as u64;
 
         let bytes_start_word = (alloc as usize) + 2;
@@ -85,9 +85,9 @@ impl Heap {
         &str_bytes[byte_start as usize..byte_end as usize]
     }
 
-    pub fn allocate_i32(&mut self, i: i32) -> u64 {
+    pub fn allocate_i32(&mut self, ty_tag: u64, i: i32) -> u64 {
         let alloc = self.allocate(2);
-        self[alloc] = I32_TYPE_TAG;
+        self[alloc] = ty_tag;
         self[alloc + 1] = (i as u32) as u64;
         alloc
     }
@@ -106,7 +106,13 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str_view(&mut self, string: u64, start_byte: u64, end_byte: u64) -> u64 {
+    pub fn allocate_str_view(
+        &mut self,
+        ty_tag: u64,
+        string: u64,
+        start_byte: u64,
+        end_byte: u64,
+    ) -> u64 {
         debug_assert!(
             start_byte <= end_byte,
             "start_byte={}, end_byte={}",
@@ -114,7 +120,7 @@ impl Heap {
             end_byte
         );
         let alloc = self.allocate(4);
-        self[alloc] = STR_VIEW_TYPE_TAG;
+        self[alloc] = ty_tag;
         self[alloc + 1] = start_byte;
         self[alloc + 2] = end_byte;
         self[alloc + 3] = string;
@@ -123,6 +129,7 @@ impl Heap {
 
     pub fn allocate_str_view_from_str_view(
         &mut self,
+        ty_tag: u64,
         str_view: u64,
         start_byte: u64,
         end_byte: u64,
@@ -141,16 +148,16 @@ impl Heap {
         assert!(str_view_start + end_byte <= str_view_end);
 
         let alloc = self.allocate(4);
-        self[alloc] = STR_VIEW_TYPE_TAG;
+        self[alloc] = ty_tag;
         self[alloc + 1] = str_view_start + start_byte;
         self[alloc + 2] = str_view_start + end_byte;
         self[alloc + 3] = str;
         alloc
     }
 
-    pub fn allocate_array(&mut self, cap: u64) -> u64 {
+    pub fn allocate_array(&mut self, ty_tag: u64, cap: u64) -> u64 {
         let alloc = self.allocate(2 + cap as usize);
-        self[alloc] = ARRAY_TYPE_TAG;
+        self[alloc] = ty_tag;
         self[alloc + 1] = cap;
         for i in 0..cap {
             self[alloc + 2 + i] = 0;

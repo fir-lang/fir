@@ -73,7 +73,7 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::PrintStr => {
             debug_assert_eq!(args.len(), 1);
             let str = args[0];
-            debug_assert_eq!(heap[str], STR_TYPE_TAG);
+            debug_assert_eq!(heap[str], pgm.str_ty_tag);
 
             let len_bytes = heap[str + 1];
             let len_words = len_bytes.div_ceil(8);
@@ -91,7 +91,7 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::PrintStrView => {
             debug_assert_eq!(args.len(), 1);
             let str = args[0];
-            debug_assert_eq!(heap[str], STR_VIEW_TYPE_TAG);
+            debug_assert_eq!(heap[str], pgm.str_ty_tag);
 
             let view_start = heap[str + 1];
             let view_end = heap[str + 2];
@@ -120,28 +120,28 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
 
             let cap = args[0];
-            debug_assert_eq!(heap[cap], I32_TYPE_TAG);
+            debug_assert_eq!(heap[cap], pgm.i32_ty_tag);
             let cap = heap[cap + 1];
-            heap.allocate_array(cap)
+            heap.allocate_array(pgm.array_ty_tag, cap)
         }
 
         BuiltinFun::ArrayLen => {
             debug_assert_eq!(args.len(), 1);
 
             let array = args[0];
-            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+            debug_assert_eq!(heap[array], pgm.array_ty_tag);
             let len = heap[array + 1];
-            heap.allocate_i32(len as i32)
+            heap.allocate_i32(pgm.i32_ty_tag, len as i32)
         }
 
         BuiltinFun::ArraySet => {
             debug_assert_eq!(args.len(), 3);
 
             let array = args[0];
-            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+            debug_assert_eq!(heap[array], pgm.array_ty_tag);
 
             let idx = args[1];
-            debug_assert_eq!(heap[idx], I32_TYPE_TAG);
+            debug_assert_eq!(heap[idx], pgm.i32_ty_tag);
 
             let elem = args[2];
 
@@ -157,10 +157,10 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 2);
 
             let array = args[0];
-            debug_assert_eq!(heap[array], ARRAY_TYPE_TAG);
+            debug_assert_eq!(heap[array], pgm.array_ty_tag);
 
             let idx = args[1];
-            debug_assert_eq!(heap[idx], I32_TYPE_TAG);
+            debug_assert_eq!(heap[idx], pgm.i32_ty_tag);
 
             let array_len = heap[array + 1];
             let idx = heap[idx + 1];
@@ -176,8 +176,8 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::StrLen => {
             debug_assert_eq!(args.len(), 1);
             let str = args[0];
-            debug_assert_eq!(heap[str], STR_TYPE_TAG);
-            heap.allocate_i32(heap[str + 1] as i32)
+            debug_assert_eq!(heap[str], pgm.str_ty_tag);
+            heap.allocate_i32(pgm.i32_ty_tag, heap[str + 1] as i32)
         }
 
         BuiltinFun::StrEq => {
@@ -186,8 +186,8 @@ pub fn call_builtin_fun<W: Write>(
             let str1 = args[0];
             let str2 = args[1];
 
-            debug_assert_eq!(heap[str1], STR_TYPE_TAG);
-            debug_assert_eq!(heap[str2], STR_TYPE_TAG);
+            debug_assert_eq!(heap[str1], pgm.str_ty_tag);
+            debug_assert_eq!(heap[str2], pgm.str_ty_tag);
 
             let str1_len = heap[str1 + 1];
             let str2_len = heap[str2 + 1];
@@ -215,9 +215,9 @@ pub fn call_builtin_fun<W: Write>(
             let byte_start = args[1];
             let byte_end = args[2];
 
-            debug_assert_eq!(heap[str], STR_TYPE_TAG);
-            debug_assert_eq!(heap[byte_start], I32_TYPE_TAG);
-            debug_assert_eq!(heap[byte_end], I32_TYPE_TAG);
+            debug_assert_eq!(heap[str], pgm.str_ty_tag);
+            debug_assert_eq!(heap[byte_start], pgm.i32_ty_tag);
+            debug_assert_eq!(heap[byte_end], pgm.i32_ty_tag);
 
             let str_len = heap[str + 1];
             let byte_start = heap[byte_start + 1];
@@ -235,7 +235,7 @@ pub fn call_builtin_fun<W: Write>(
                 panic!("String.substr start index larger than end index");
             }
 
-            heap.allocate_str_view(str, byte_start, byte_end)
+            heap.allocate_str_view(pgm.str_view_ty_tag, str, byte_start, byte_end)
         }
 
         BuiltinFun::I32Add => {
@@ -244,13 +244,13 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag);
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
 
-            heap.allocate_i32((i1 as i32) + (i2 as i32))
+            heap.allocate_i32(pgm.i32_ty_tag, (i1 as i32) + (i2 as i32))
         }
 
         BuiltinFun::I32Sub => {
@@ -259,13 +259,13 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag);
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
 
-            heap.allocate_i32((i1 as i32) - (i2 as i32))
+            heap.allocate_i32(pgm.i32_ty_tag, (i1 as i32) - (i2 as i32))
         }
 
         BuiltinFun::I32Mul => {
@@ -274,13 +274,13 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag);
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
 
-            heap.allocate_i32((i1 as i32) * (i2 as i32))
+            heap.allocate_i32(pgm.i32_ty_tag, (i1 as i32) * (i2 as i32))
         }
 
         BuiltinFun::I32Cmp => {
@@ -289,8 +289,8 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG);
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG);
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag);
 
             let ordering_ty_con = pgm.ty_cons.get("Ordering").unwrap_or_else(|| {
                 panic!("__cmp was called, but the Ordering type is not defined")
@@ -314,8 +314,8 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], I32_TYPE_TAG, "{}", LocDisplay(loc));
-            debug_assert_eq!(heap[i2], I32_TYPE_TAG, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag, "{}", LocDisplay(loc));
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
@@ -326,9 +326,9 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::I32ToStr => {
             debug_assert_eq!(args.len(), 1);
             let obj = args[0];
-            debug_assert_eq!(heap[obj], I32_TYPE_TAG);
+            debug_assert_eq!(heap[obj], pgm.i32_ty_tag);
             let i = heap[obj + 1];
-            heap.allocate_str(format!("{}", i as i32).as_bytes())
+            heap.allocate_str(pgm.str_ty_tag, format!("{}", i as i32).as_bytes())
         }
 
         BuiltinFun::StrViewEq => {
@@ -337,8 +337,8 @@ pub fn call_builtin_fun<W: Write>(
             let s1 = args[0];
             let s2 = args[1];
 
-            debug_assert_eq!(heap[s1], STR_VIEW_TYPE_TAG, "{:?}", loc);
-            debug_assert_eq!(heap[s2], STR_VIEW_TYPE_TAG, "{:?}", loc);
+            debug_assert_eq!(heap[s1], pgm.str_view_ty_tag, "{:?}", loc);
+            debug_assert_eq!(heap[s2], pgm.str_view_ty_tag, "{:?}", loc);
 
             let s1_start = heap[s1 + 1];
             let s1_end = heap[s1 + 2];
@@ -375,9 +375,9 @@ pub fn call_builtin_fun<W: Write>(
             let start = args[1];
             let end = args[2];
 
-            debug_assert_eq!(heap[s], STR_VIEW_TYPE_TAG, "{:?}", loc);
-            debug_assert_eq!(heap[start], I32_TYPE_TAG, "{:?}", loc);
-            debug_assert_eq!(heap[end], I32_TYPE_TAG, "{:?}", loc);
+            debug_assert_eq!(heap[s], pgm.str_view_ty_tag, "{:?}", loc);
+            debug_assert_eq!(heap[start], pgm.i32_ty_tag, "{:?}", loc);
+            debug_assert_eq!(heap[end], pgm.i32_ty_tag, "{:?}", loc);
 
             let start = heap[start + 1];
             let end = heap[end + 1];
@@ -405,17 +405,22 @@ pub fn call_builtin_fun<W: Write>(
                 panic!("StrView.substr start index larger than end index");
             }
 
-            heap.allocate_str_view(heap[s + 3], start + heap[s + 1], end + heap[s + 1])
+            heap.allocate_str_view(
+                pgm.str_view_ty_tag,
+                heap[s + 3],
+                start + heap[s + 1],
+                end + heap[s + 1],
+            )
         }
 
         BuiltinFun::StrViewLen => {
             debug_assert_eq!(args.len(), 1);
 
             let s = args[0];
-            debug_assert_eq!(heap[s], STR_VIEW_TYPE_TAG, "{:?}", loc);
+            debug_assert_eq!(heap[s], pgm.str_view_ty_tag, "{:?}", loc);
 
             let len = heap[s + 2] - heap[s + 1];
-            heap.allocate_i32(len as i32)
+            heap.allocate_i32(pgm.i32_ty_tag, len as i32)
         }
 
         BuiltinFun::StrViewStartsWith => {
@@ -424,8 +429,8 @@ pub fn call_builtin_fun<W: Write>(
             let s1 = args[0];
             let s2 = args[1];
 
-            debug_assert_eq!(heap[s1], STR_VIEW_TYPE_TAG);
-            debug_assert_eq!(heap[s2], STR_TYPE_TAG);
+            debug_assert_eq!(heap[s1], pgm.str_view_ty_tag);
+            debug_assert_eq!(heap[s2], pgm.str_ty_tag);
 
             let s1_start = heap[s1 + 1];
             let s1_end = heap[s1 + 2];
@@ -457,7 +462,7 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::StrViewIsEmpty => {
             debug_assert_eq!(args.len(), 1);
             let s = args[0];
-            debug_assert_eq!(heap[s], STR_VIEW_TYPE_TAG);
+            debug_assert_eq!(heap[s], pgm.str_view_ty_tag);
 
             let s_start = heap[s + 1];
             let s_end = heap[s + 2];
@@ -468,9 +473,9 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::StrViewToStr => {
             debug_assert_eq!(args.len(), 1);
             let s = args[0];
-            debug_assert_eq!(heap[s], STR_VIEW_TYPE_TAG);
+            debug_assert_eq!(heap[s], pgm.str_view_ty_tag);
             let str_view_bytes = heap.str_view_bytes(s).to_vec();
-            heap.allocate_str(&str_view_bytes)
+            heap.allocate_str(pgm.str_ty_tag, &str_view_bytes)
         }
     }
 }
