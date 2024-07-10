@@ -1,4 +1,4 @@
-#![allow(unused, clippy::too_many_arguments)]
+#![allow(clippy::too_many_arguments)]
 
 use crate::ast;
 use crate::collections::{Map, Set};
@@ -548,6 +548,18 @@ fn prune_level(ty: &Ty, max_level: u32) {
                 prune_level(arg, max_level);
             }
             prune_level(ret, max_level);
+        }
+    }
+}
+
+pub fn check_module(module: &ast::Module) {
+    let tys = collect_types(module);
+
+    for decl in module {
+        match &decl.node {
+            ast::TopDecl::Import(_) => panic!("Import declaration in type checker"),
+            ast::TopDecl::Type(_) => {}
+            ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
         }
     }
 }
