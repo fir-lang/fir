@@ -13,6 +13,7 @@ pub struct L<T> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
+    /// Module file path, relative to the working directory.
     pub module: Rc<str>,
     pub line_start: u16,
     pub col_start: u16,

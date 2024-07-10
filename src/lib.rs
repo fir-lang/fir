@@ -110,14 +110,22 @@ mod native {
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
-                "Unable to read file {} for module module {}: {}",
+                "Unable to read file {} for module {}: {}",
                 path.as_ref().to_string_lossy(),
                 module,
                 err
             )
         });
         let tokens = scanner::scan(lexer::lex(&contents));
-        parse_module(module, tokens)
+        parse_module(
+            &path
+                .as_ref()
+                .to_owned()
+                .to_string_lossy()
+                .to_string()
+                .into(),
+            tokens,
+        )
     }
 }
 
@@ -140,7 +148,7 @@ mod wasm {
         match fetch_sync(&path) {
             Some(contents) => {
                 let tokens = scanner::scan(lexer::lex(&contents));
-                parse_module(module, tokens)
+                parse_module(&path.to_string().into(), tokens)
             }
             None => {
                 panic!("Unable to fetch {}", path);
