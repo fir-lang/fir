@@ -221,13 +221,16 @@ fn collect_schemes(
 
     for decl in module {
         let ast::FunDecl {
-            type_name,
-            name,
-            type_params,
-            predicates,
-            params,
-            return_ty,
-            ..
+            sig:
+                ast::FunSig {
+                    self_,
+                    type_name,
+                    name,
+                    type_params,
+                    params,
+                    return_ty,
+                },
+            body: _,
         } = match &decl.node {
             ast::TopDecl::Type(_) => continue,
 
@@ -253,11 +256,11 @@ fn collect_schemes(
         // Check duplicate type and term arguments.
         let mut ty_arg_names: Set<Id> = Default::default();
         for ty_arg_name in type_params {
-            let new = ty_arg_names.insert(ty_arg_name.node.clone());
+            let new = ty_arg_names.insert(ty_arg_name.node.0.clone());
             if !new {
                 panic!(
                     "Type parameter {} at {} is defined multiple times",
-                    ty_arg_name.node,
+                    ty_arg_name.node.0,
                     loc_string(&ty_arg_name.loc)
                 );
             }
@@ -282,14 +285,18 @@ fn collect_schemes(
             quantified_vars.extend(con.ty_params.iter().cloned());
         }
 
-        quantified_vars.extend(type_params.iter().map(|param| param.node.clone()));
+        quantified_vars.extend(type_params.iter().map(|param| param.node.0.clone()));
 
         let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
 
+        /*
+        TODO
         let preds: Vec<Ty> = predicates
             .iter()
             .map(|pred| convert_ast_ty(ty_cons, &quantified_vars_set, &pred.node, &pred.loc))
             .collect();
+        */
+        let preds: Vec<Ty> = vec![];
 
         let arg_tys: Vec<Ty> = params
             .iter()
@@ -610,7 +617,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut quantified_vars: Set<Id> = Default::default();
 
     // Add type parameters of the type to quantified vars.
-    if let Some(ty_name) = &fun.node.type_name {
+    if let Some(ty_name) = &fun.node.sig.type_name {
         let con = tys.cons.get(&ty_name.node).unwrap_or_else(|| {
             panic!(
                 "{}: Unknown type {}",
@@ -622,14 +629,14 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
         quantified_vars.extend(con.ty_params.iter().cloned());
     }
 
-    for (param_name, param_ty) in &fun.node.params {
+    for (param_name, param_ty) in &fun.node.sig.params {
         env.bind(
             param_name.clone(),
             convert_ast_ty(&tys.cons, &quantified_vars, &param_ty.node, &fun.loc),
         );
     }
 
-    let ret_ty = match &fun.node.return_ty {
+    let ret_ty = match &fun.node.sig.return_ty {
         Some(ty) => convert_ast_ty(&tys.cons, &quantified_vars, &ty.node, &ty.loc),
         None => Ty::Record(Default::default()),
     };

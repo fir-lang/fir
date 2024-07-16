@@ -440,18 +440,18 @@ fn call_source_fun<W: Write>(
         args.len() as u32,
         "{}, fun: {}",
         LocDisplay(loc),
-        fun.name.node
+        fun.sig.name.node
     );
 
     let mut locals: Map<SmolStr, u64> = Default::default();
 
     let mut arg_idx: usize = 0;
-    if fun.self_ {
+    if fun.sig.self_ {
         locals.insert(SmolStr::new("self"), args[0]);
         arg_idx += 1;
     }
 
-    for (param_name, _param_type) in &fun.params {
+    for (param_name, _param_type) in &fun.sig.params {
         let old = locals.insert(param_name.clone(), args[arg_idx]);
         assert!(old.is_none());
         arg_idx += 1;

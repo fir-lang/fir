@@ -205,73 +205,51 @@ FunDecl: L<FunDecl> = {
 
     // TODO: comma parsing after `self` is not right.
 
-    // Without type params and preds.
-    <l:@L> "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?>
-            "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+    <l:@L> <sig:FunSig> "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            type_name,
-            name,
-            type_params: vec![],
-            predicates: vec![],
-            self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            return_ty,
+            sig,
             body: Some(L::new(module, body_l, body_r, body)),
         }),
 
-    // With type params and potentially preds.
-    <l:@L> "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
-            "[" <type_params:Sep<LUpperId, ",">> "]"
-            <predicates:("[" Sep<LType, ","> "]")?>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?>
-            "=" NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+    <l:@L> "prim" <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
-            type_name,
-            name,
-            type_params,
-            predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
-            self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            return_ty,
-            body: Some(L::new(module, body_l, body_r, body)),
+            sig,
+            body: None,
         }),
+}
 
+FunSig: FunSig = {
     // Without type params and preds.
-    <l:@L> "prim" "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+    "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?>
-            NEWLINE <r:@R> =>
-        L::new(module, l, r, FunDecl {
+            <return_ty:(":" <LType>)?> =>
+        FunSig {
             type_name,
             name,
             type_params: vec![],
-            predicates: vec![],
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
-            body: None,
-        }),
+        },
 
     // With type params and potentially preds.
-    <l:@L> "prim" "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
-            "[" <type_params:Sep<LUpperId, ",">> "]"
-            <predicates:("[" Sep<LType, ","> "]")?>
+    "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+            "[" <type_params:Sep<TyParamWithPreds, ",">> "]"
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?>
-            NEWLINE <r:@R> =>
-        L::new(module, l, r, FunDecl {
+            <return_ty:(":" <LType>)?> =>
+        FunSig {
             type_name,
             name,
             type_params,
-            predicates: predicates.map(|p| p.1).unwrap_or(vec![]),
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
-            body: None,
-        }),
+        },
+}
+
+TyParamWithPreds: L<(SmolStr, Vec<L<Type>>)> = {
+    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param.node.clone(), vec![])),
+    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param.node.clone(), tys)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

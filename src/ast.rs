@@ -118,35 +118,38 @@ pub struct Named<T> {
     pub node: T,
 }
 
+/// Type signature part of a function declaration, including name, type parameters, parameters,
+/// return type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FunDecl {
-    /// For associated functions, name of the type the function belongs.
+pub struct FunSig {
+    /// The type name in associated functions, e.g. in `fn X[T].f()` this is `X[T]`.
     pub type_name: Option<L<SmolStr>>,
 
-    /// Name of the function.
+    /// Name of the function, e.g. in `fn f()` this is `f`.
     pub name: L<SmolStr>,
 
-    // TODO: Do we need to specify kinds?
-    #[allow(unused)]
-    pub type_params: Vec<L<SmolStr>>,
-
-    // Predicates in a separate list.
-    #[allow(unused)]
-    pub predicates: Vec<L<Type>>,
+    /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
+    pub type_params: Vec<L<(SmolStr, Vec<L<Type>>)>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
 
+    /// Parameters of the function.
     pub params: Vec<(SmolStr, L<Type>)>,
 
+    /// Optional return type.
     pub return_ty: Option<L<Type>>,
+}
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunDecl {
+    pub sig: FunSig,
     pub body: Option<L<Vec<L<Stmt>>>>,
 }
 
 impl FunDecl {
     pub fn num_params(&self) -> u32 {
-        self.params.len() as u32 + if self.self_ { 1 } else { 0 }
+        self.sig.params.len() as u32 + if self.sig.self_ { 1 } else { 0 }
     }
 }
 
