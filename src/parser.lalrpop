@@ -219,28 +219,14 @@ FunDecl: L<FunDecl> = {
 }
 
 FunSig: FunSig = {
-    // Without type params and preds.
     "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+            <type_params:("[" <Sep<TyParamWithPreds, ",">> "]")?>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <return_ty:(":" <LType>)?> =>
         FunSig {
             type_name,
             name,
-            type_params: vec![],
-            self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            return_ty,
-        },
-
-    // With type params and potentially preds.
-    "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
-            "[" <type_params:Sep<TyParamWithPreds, ",">> "]"
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?> =>
-        FunSig {
-            type_name,
-            name,
-            type_params,
+            type_params: type_params.unwrap_or(vec![]),
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
