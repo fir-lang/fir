@@ -256,11 +256,11 @@ fn collect_schemes(
         // Check duplicate type and term arguments.
         let mut ty_arg_names: Set<Id> = Default::default();
         for ty_arg_name in type_params {
-            let new = ty_arg_names.insert(ty_arg_name.node.0.clone());
+            let new = ty_arg_names.insert(ty_arg_name.node.0.node.clone());
             if !new {
                 panic!(
                     "Type parameter {} at {} is defined multiple times",
-                    ty_arg_name.node.0,
+                    ty_arg_name.node.0.node,
                     loc_string(&ty_arg_name.loc)
                 );
             }
@@ -285,7 +285,7 @@ fn collect_schemes(
             quantified_vars.extend(con.ty_params.iter().cloned());
         }
 
-        quantified_vars.extend(type_params.iter().map(|param| param.node.0.clone()));
+        quantified_vars.extend(type_params.iter().map(|param| param.node.0.node.clone()));
 
         let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
 

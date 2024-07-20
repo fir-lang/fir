@@ -233,9 +233,9 @@ FunSig: FunSig = {
         },
 }
 
-TyParamWithPreds: L<(SmolStr, Vec<L<Type>>)> = {
-    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param.node.clone(), vec![])),
-    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param.node.clone(), tys)),
+TyParamWithPreds: L<(L<SmolStr>, Vec<L<Type>>)> = {
+    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
+    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

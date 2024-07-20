@@ -129,7 +129,7 @@ pub struct FunSig {
     pub name: L<SmolStr>,
 
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
-    pub type_params: Vec<L<(SmolStr, Vec<L<Type>>)>>,
+    pub type_params: Vec<L<(L<SmolStr>, Vec<L<Type>>)>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
