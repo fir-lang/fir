@@ -70,11 +70,11 @@ fn visit_ty_decl(ty_decl: &ast::TypeDecl, records: &mut Set<RecordShape>) {
 }
 
 fn visit_fun_decl(fun_decl: &ast::FunDecl, records: &mut Set<RecordShape>) {
-    for (_param_name, param_ty) in &fun_decl.params {
+    for (_param_name, param_ty) in &fun_decl.sig.params {
         visit_ty(&param_ty.node, records);
     }
 
-    if let Some(return_ty) = &fun_decl.return_ty {
+    if let Some(return_ty) = &fun_decl.sig.return_ty {
         visit_ty(&return_ty.node, records);
     }
 

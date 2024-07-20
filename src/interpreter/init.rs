@@ -204,7 +204,7 @@ pub fn collect_funs(
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 
-        match &fun_decl.type_name {
+        match &fun_decl.sig.type_name {
             Some(type_name) => {
                 let idx_entry = associated_fun_indices
                     .entry(type_name.node.clone())
@@ -215,7 +215,7 @@ pub fn collect_funs(
                     .entry(type_name.node.clone())
                     .or_default()
                     .insert(
-                        fun_decl.name.node.clone(),
+                        fun_decl.sig.name.node.clone(),
                         Fun {
                             idx,
                             kind: FunKind::Source(fun_decl),
@@ -226,7 +226,7 @@ pub fn collect_funs(
             None => {
                 let idx = top_level_funs.len() as u64;
                 top_level_funs.insert(
-                    fun_decl.name.node.clone(),
+                    fun_decl.sig.name.node.clone(),
                     Fun {
                         idx,
                         kind: FunKind::Source(fun_decl),
