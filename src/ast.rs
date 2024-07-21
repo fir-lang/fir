@@ -385,7 +385,7 @@ pub struct TraitDecl {
     pub name: L<SmolStr>,
 
     /// Type parameter of the trait, with bounds.
-    pub ty: L<(SmolStr, Vec<Type>)>,
+    pub ty: L<(SmolStr, Vec<L<Type>>)>,
 
     pub funs: Vec<L<FunSig>>,
 }

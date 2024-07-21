@@ -64,6 +64,8 @@ extern {
         "return" => Token { kind: TokenKind::Return, .. },
         "import" => Token { kind: TokenKind::Import, .. },
         "prim" => Token { kind: TokenKind::Prim, .. },
+        "trait" => Token { kind: TokenKind::Trait, .. },
+        "impl" => Token { kind: TokenKind::Impl, .. },
         IntLit => Token { kind: TokenKind::Int, .. },
         StringLit => Token { kind: TokenKind::String, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
@@ -216,6 +218,11 @@ FunDecl: L<FunDecl> = {
             sig,
             body: None,
         }),
+}
+
+LFunSig: L<FunSig> = {
+    <l:@L> <sig:FunSig> <r:@R> =>
+        L::new(module, l, r, sig),
 }
 
 FunSig: FunSig = {
@@ -614,8 +621,24 @@ PatternField: (Option<SmolStr>, L<Pat>) = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R>=>
+    <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R> =>
         L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Trait declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TraitDecl: L<TraitDecl> = {
+    <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
+            NEWLINE INDENT <funs:LFunSig*> <r:@R> =>
+        L::new(module, l, r, TraitDecl {
+            name,
+            ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
+            funs,
+        })
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
