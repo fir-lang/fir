@@ -371,9 +371,41 @@ pub enum BinOp {
 pub enum UnOp {
     Not,
 }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     /// Import path, e.g. `Fir.Prelude`.
     pub path: Vec<SmolStr>,
     // TODO: Imported thing list, renaming (`as`).
+}
+
+#[derive(Debug, Clone)]
+pub struct TraitDecl {
+    /// Trait name.
+    pub name: L<SmolStr>,
+
+    /// Type parameter of the trait, with bounds.
+    pub ty: L<(SmolStr, Vec<Type>)>,
+
+    pub funs: Vec<L<FunSig>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ImplDecl {
+    /// Type parameters of the type being implemented, with bounds. E.g. in
+    ///
+    /// ```ignore
+    /// impl[T: Debug + Foo] Debug[Vec[T]]: ...
+    /// ```
+    ///
+    /// this field will be `[(T, [Debug, Foo])]`.
+    pub context: Vec<L<(SmolStr, Vec<Type>)>>,
+
+    /// Name of the trait being implemented. In the example above, `Debug`.
+    pub trait_name: L<SmolStr>,
+
+    /// Type that implements the trait. In the example above, `Vec[T]`.
+    pub implementing_ty: Option<L<Type>>,
+
+    pub funs: Vec<L<FunDecl>>,
 }
