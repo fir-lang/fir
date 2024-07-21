@@ -643,6 +643,41 @@ TraitDecl: L<TraitDecl> = {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
+// Impl declarations
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Impl: L<ImplDecl> = {
+    <l:@L> "impl" <context:Context> <trait_name:LUpperId> "[" <implementing_ty:LType> "]"
+            NEWLINE INDENT <funs:FunDecl*> <r:@R> => {
+        let (trait_name, implementing_ty) = match implementing_ty.node {
+            Type::Named(NamedType { name, mut args }) => {
+                assert_eq!(args.len(), 1); // TODO
+                (name, args.pop().unwrap())
+            }
+            _ => panic!(), // TODO
+        };
+        L::new(module, l, r, ImplDecl {
+            context,
+            trait_name,
+            implementing_ty,
+            funs,
+        })
+    }
+}
+
+Context: Vec<L<(SmolStr, Vec<Type>)>> = {
+    => vec![],
+
+    "[" <tys:TypeWithBounds*> "]" => tys,
+}
+
+TypeWithBounds: L<(SmolStr, Vec<Type>)> = {
+    <l:@L> <ty:UpperId> ":" <bounds:Sep<Type, "+">> <r:@R> => L::new(module, l, r, (ty.smol_str(), bounds)),
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
 // Top-level declarations
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////

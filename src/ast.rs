@@ -402,10 +402,10 @@ pub struct ImplDecl {
     pub context: Vec<L<(SmolStr, Vec<Type>)>>,
 
     /// Name of the trait being implemented. In the example above, `Debug`.
-    pub trait_name: L<SmolStr>,
+    pub trait_name: SmolStr,
 
     /// Type that implements the trait. In the example above, `Vec[T]`.
-    pub implementing_ty: Option<L<Type>>,
+    pub implementing_ty: L<Type>,
 
     pub funs: Vec<L<FunDecl>>,
 }
