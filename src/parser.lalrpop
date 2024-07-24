@@ -78,6 +78,7 @@ extern {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Note: This allows trailing separator.
 Sep<T, S>: Vec<T> = {
     <mut v:(<T> S)*> <e:T?> => match e {
         None => v,
@@ -85,6 +86,14 @@ Sep<T, S>: Vec<T> = {
             v.push(e);
             v
         }
+    }
+};
+
+// Note: This doesn't allow trailing separator.
+Sep1<T, S>: Vec<T> = {
+    <e0:T> <mut v:(S <T>)*> => {
+        v.insert(0, e0);
+        v
     }
 };
 
@@ -633,7 +642,7 @@ ImportDecl: L<ImportDecl> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
-            NEWLINE INDENT <funs:LFunSig*> <r:@R> =>
+            NEWLINE INDENT <funs:LFunSig*> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
@@ -647,9 +656,9 @@ TraitDecl: L<TraitDecl> = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Impl: L<ImplDecl> = {
+ImplDecl: L<ImplDecl> = {
     <l:@L> "impl" <context:Context> <trait_name:LUpperId> "[" <implementing_ty:LType> "]"
-            NEWLINE INDENT <funs:FunDecl*> <r:@R> => {
+            NEWLINE INDENT <funs:FunDecl*> DEDENT <r:@R> => {
         let (trait_name, implementing_ty) = match implementing_ty.node {
             Type::Named(NamedType { name, mut args }) => {
                 assert_eq!(args.len(), 1); // TODO
@@ -673,7 +682,7 @@ Context: Vec<L<(SmolStr, Vec<Type>)>> = {
 }
 
 TypeWithBounds: L<(SmolStr, Vec<Type>)> = {
-    <l:@L> <ty:UpperId> ":" <bounds:Sep<Type, "+">> <r:@R> => L::new(module, l, r, (ty.smol_str(), bounds)),
+    <l:@L> <ty:UpperId> ":" <bounds:Sep1<Type, "+">> <r:@R> => L::new(module, l, r, (ty.smol_str(), bounds)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -695,4 +704,10 @@ TopDecl: L<TopDecl> = {
 
     NEWLINE* <l:@L> <import_decl:ImportDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Import(import_decl)),
+
+    NEWLINE* <l:@L> <trait_decl:TraitDecl> <r:@R> =>
+        L::new(module, l, r, TopDecl::Trait(trait_decl)),
+
+    NEWLINE* <l:@L> <impl_decl:ImplDecl> <r:@R> =>
+        L::new(module, l, r, TopDecl::Impl(impl_decl)),
 }
