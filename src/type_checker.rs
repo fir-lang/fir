@@ -39,7 +39,7 @@ struct Scheme {
 }
 
 /// A type checking type.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id),
@@ -75,10 +75,10 @@ impl Ty {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct TyVarRef(Rc<TyVar>);
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 struct TyVar {
     /// Identity of the unification variable.
     ///
@@ -141,7 +141,7 @@ impl TyVarGen {
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct TyCon {
     id: Id,
-    ty_params: Vec<Id>,
+    ty_params: Vec<(Id, Vec<Ty>)>,
 }
 
 impl TyCon {
@@ -184,31 +184,58 @@ fn collect_types(module: &ast::Module) -> PgmTypes {
 fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
     let mut cons: Map<Id, TyCon> = Default::default();
 
+    // Collect all type constructors first, then add bounds.
     for decl in module {
-        let ty_decl = match &decl.node {
-            ast::TopDecl::Type(ty) => ty,
+        let (ty_name, ty_params) = {
+            match &decl.node {
+                ast::TopDecl::Type(ty_decl) => {
+                    (ty_decl.node.name.clone(), ty_decl.node.type_params.clone())
+                }
 
-            ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
+                ast::TopDecl::Trait(trait_decl) => (
+                    trait_decl.node.name.node.clone(),
+                    vec![trait_decl.node.ty.node.0.clone()],
+                ),
 
-            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_cons"),
-
-            ast::TopDecl::Import(_) => {
-                // Imports should've been resolved at this point.
-                panic!("Import declaration in type checker")
+                ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
             }
         };
-
-        if cons.contains_key(&ty_decl.node.name) {
-            panic!("Type {} is defined multiple times", ty_decl.node.name);
-        }
-
-        cons.insert(
-            ty_decl.node.name.clone(),
+        let old = cons.insert(
+            ty_name.clone(),
             TyCon {
-                id: ty_decl.node.name.clone(),
-                ty_params: ty_decl.node.type_params.clone(),
+                id: ty_name.clone(),
+                ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
             },
         );
+        if old.is_some() {
+            panic!("Type {} is defined multiple times", ty_name);
+        }
+    }
+
+    // Add bounds.
+    for decl in module {
+        match &decl.node {
+            ast::TopDecl::Trait(trait_decl) => {
+                let bounds: Vec<Ty> = trait_decl
+                    .node
+                    .ty
+                    .node
+                    .1
+                    .iter()
+                    .map(|ty| convert_ast_ty(&cons, &Default::default(), &ty.node, &ty.loc))
+                    .collect();
+
+                let con = cons.get_mut(&trait_decl.node.name.node).unwrap();
+                assert_eq!(con.ty_params.len(), 1);
+
+                con.ty_params[0].1 = bounds;
+            }
+
+            ast::TopDecl::Type(_)
+            | ast::TopDecl::Fun(_)
+            | ast::TopDecl::Import(_)
+            | ast::TopDecl::Impl(_) => continue,
+        }
     }
 
     cons
@@ -288,7 +315,7 @@ fn collect_schemes(
 
         if let Some(ty_name) = type_name {
             let con = ty_cons.get(&ty_name.node).unwrap();
-            quantified_vars.extend(con.ty_params.iter().cloned());
+            quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
         }
 
         quantified_vars.extend(type_params.iter().map(|param| param.node.0.node.clone()));
@@ -634,7 +661,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
             )
         });
 
-        quantified_vars.extend(con.ty_params.iter().cloned());
+        quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
     }
 
     for (param_name, param_ty) in &fun.node.sig.params {
