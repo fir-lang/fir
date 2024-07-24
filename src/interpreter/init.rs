@@ -54,6 +54,8 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
             ast::TopDecl::Type(ty_decl) => &ty_decl.node,
             ast::TopDecl::Fun(_) => continue,
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
+            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_types"),
+            ast::TopDecl::Impl(_) => todo!("Impl block in collect_types"),
         };
 
         match rhs {
@@ -193,7 +195,8 @@ pub fn collect_funs(
 
     for decl in pgm {
         let fun_decl: ast::FunDecl = match decl.node {
-            ast::TopDecl::Type(_) => continue,
+            ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => continue,
+            ast::TopDecl::Impl(_) => todo!("Impl block in collect_funs"),
             ast::TopDecl::Fun(fun_decl) => {
                 if fun_decl.node.body.is_none() {
                     continue;

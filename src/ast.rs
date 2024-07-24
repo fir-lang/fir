@@ -59,6 +59,12 @@ pub enum TopDecl {
 
     /// An import declaration.
     Import(L<ImportDecl>),
+
+    /// A trait declaration.
+    Trait(L<TraitDecl>),
+
+    /// An `impl` block, implementing a trait or associated methods for a type.
+    Impl(L<ImplDecl>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
@@ -379,7 +385,7 @@ pub struct ImportDecl {
     // TODO: Imported thing list, renaming (`as`).
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TraitDecl {
     /// Trait name.
     pub name: L<SmolStr>,
@@ -390,7 +396,7 @@ pub struct TraitDecl {
     pub funs: Vec<L<FunSig>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplDecl {
     /// Type parameters of the type being implemented, with bounds. E.g. in
     ///

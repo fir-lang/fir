@@ -188,7 +188,9 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
         let ty_decl = match &decl.node {
             ast::TopDecl::Type(ty) => ty,
 
-            ast::TopDecl::Fun(_) => continue,
+            ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
+
+            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_cons"),
 
             ast::TopDecl::Import(_) => {
                 // Imports should've been resolved at this point.
@@ -235,6 +237,10 @@ fn collect_schemes(
             ast::TopDecl::Type(_) => continue,
 
             ast::TopDecl::Fun(f) => &f.node,
+
+            ast::TopDecl::Impl(_) => todo!("Impl block in collect_schemes"),
+
+            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_schemes"),
 
             ast::TopDecl::Import(_) => {
                 // Imports should've been resolved at this point.
@@ -601,8 +607,10 @@ pub fn check_module(module: &ast::Module) {
 
     for decl in module {
         match &decl.node {
-            ast::TopDecl::Import(_) => panic!("Import declaration in type checker"),
+            ast::TopDecl::Import(_) => panic!("Import declaration in check_module"),
             ast::TopDecl::Type(_) => {}
+            ast::TopDecl::Trait(_) => todo!("Trait declaration in check_module"),
+            ast::TopDecl::Impl(_) => todo!("Impl block in check_module"),
             ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
         }
     }

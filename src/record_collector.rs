@@ -46,6 +46,8 @@ pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> Set<RecordShape> {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => visit_ty_decl(&ty_decl.node, &mut records),
             ast::TopDecl::Fun(fun_decl) => visit_fun_decl(&fun_decl.node, &mut records),
+            ast::TopDecl::Trait(trait_decl) => visit_trait_decl(&trait_decl.node, &mut records),
+            ast::TopDecl::Impl(impl_decl) => visit_impl_decl(&impl_decl.node, &mut records),
             ast::TopDecl::Import(_) => panic!("Import declaration in record collector"),
         }
     }
@@ -70,18 +72,43 @@ fn visit_ty_decl(ty_decl: &ast::TypeDecl, records: &mut Set<RecordShape>) {
 }
 
 fn visit_fun_decl(fun_decl: &ast::FunDecl, records: &mut Set<RecordShape>) {
-    for (_param_name, param_ty) in &fun_decl.sig.params {
-        visit_ty(&param_ty.node, records);
-    }
-
-    if let Some(return_ty) = &fun_decl.sig.return_ty {
-        visit_ty(&return_ty.node, records);
-    }
+    visit_fun_sig(&fun_decl.sig, records);
 
     if let Some(body) = &fun_decl.body {
         for stmt in &body.node {
             visit_stmt(&stmt.node, records);
         }
+    }
+}
+
+fn visit_trait_decl(trait_decl: &ast::TraitDecl, records: &mut Set<RecordShape>) {
+    for ty in &trait_decl.ty.node.1 {
+        visit_ty(&ty.node, records);
+    }
+    for sig in &trait_decl.funs {
+        visit_fun_sig(&sig.node, records);
+    }
+}
+
+fn visit_impl_decl(impl_decl: &ast::ImplDecl, records: &mut Set<RecordShape>) {
+    for context_ty in &impl_decl.context {
+        for ty in &context_ty.node.1 {
+            visit_ty(ty, records);
+        }
+    }
+
+    for fun in &impl_decl.funs {
+        visit_fun_decl(&fun.node, records);
+    }
+}
+
+fn visit_fun_sig(sig: &ast::FunSig, records: &mut Set<RecordShape>) {
+    for (_param_name, param_ty) in &sig.params {
+        visit_ty(&param_ty.node, records);
+    }
+
+    if let Some(return_ty) = &sig.return_ty {
+        visit_ty(&return_ty.node, records);
     }
 }
 
