@@ -150,14 +150,6 @@ impl TyCon {
     }
 }
 
-struct RecordTyCon {}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum TyConArgs {
-    Unnamed { arity: u32 },
-    Named { names: Set<Id> },
-}
-
 /// Type constructors and types in the program.
 #[derive(Debug)]
 struct PgmTypes {
@@ -249,136 +241,131 @@ fn collect_schemes(
     let mut associated_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
 
     for decl in module {
-        let ast::FunDecl {
-            sig:
-                ast::FunSig {
-                    self_,
-                    type_name,
-                    name,
-                    type_params,
-                    params,
-                    return_ty,
-                },
-            body: _,
-        } = match &decl.node {
-            ast::TopDecl::Type(_) => continue,
+        match &decl.node {
+            ast::TopDecl::Fun(fun_decl) => {
+                let ast::FunDecl {
+                    sig:
+                        ast::FunSig {
+                            self_,
+                            type_name,
+                            name,
+                            type_params,
+                            params,
+                            return_ty,
+                        },
+                    body: _,
+                } = &fun_decl.node;
 
-            ast::TopDecl::Fun(f) => &f.node,
+                // If associated function: check that the type exists.
+                if let Some(type_name) = type_name {
+                    if !ty_cons.contains_key(&type_name.node) {
+                        panic!(
+                            "Type {} of associated function at {} is not defined",
+                            type_name.node,
+                            loc_string(&decl.loc)
+                        );
+                    }
+                }
 
-            ast::TopDecl::Impl(_) => todo!("Impl block in collect_schemes"),
+                // Check duplicate type and term arguments.
+                let mut ty_arg_names: Set<Id> = Default::default();
+                for ty_arg_name in type_params {
+                    let new = ty_arg_names.insert(ty_arg_name.node.0.node.clone());
+                    if !new {
+                        panic!(
+                            "Type parameter {} at {} is defined multiple times",
+                            ty_arg_name.node.0.node,
+                            loc_string(&ty_arg_name.loc)
+                        );
+                    }
+                }
 
-            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_schemes"),
+                let mut val_arg_names: Set<Id> = Default::default();
+                for val_arg_name in params {
+                    let new = val_arg_names.insert(val_arg_name.0.clone());
+                    if !new {
+                        panic!(
+                            "Parameter {} at {} is defined multiple times",
+                            val_arg_name.0,
+                            loc_string(&decl.loc)
+                        );
+                    }
+                }
 
-            ast::TopDecl::Import(_) => {
-                // Imports should've been resolved at this point.
-                panic!("Import declaration in type checker")
-            }
-        };
+                let mut quantified_vars: Vec<Id> = vec![];
 
-        // If associated function: check that the type exists.
-        if let Some(type_name) = type_name {
-            if !ty_cons.contains_key(&type_name.node) {
-                panic!(
-                    "Type {} of associated function at {} is not defined",
-                    type_name.node,
-                    loc_string(&decl.loc)
-                );
-            }
-        }
+                if let Some(ty_name) = type_name {
+                    let con = ty_cons.get(&ty_name.node).unwrap();
+                    quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
+                }
 
-        // Check duplicate type and term arguments.
-        let mut ty_arg_names: Set<Id> = Default::default();
-        for ty_arg_name in type_params {
-            let new = ty_arg_names.insert(ty_arg_name.node.0.node.clone());
-            if !new {
-                panic!(
-                    "Type parameter {} at {} is defined multiple times",
-                    ty_arg_name.node.0.node,
-                    loc_string(&ty_arg_name.loc)
-                );
-            }
-        }
+                quantified_vars.extend(type_params.iter().map(|param| param.node.0.node.clone()));
 
-        let mut val_arg_names: Set<Id> = Default::default();
-        for val_arg_name in params {
-            let new = val_arg_names.insert(val_arg_name.0.clone());
-            if !new {
-                panic!(
-                    "Parameter {} at {} is defined multiple times",
-                    val_arg_name.0,
-                    loc_string(&decl.loc)
-                );
-            }
-        }
+                let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
 
-        let mut quantified_vars: Vec<Id> = vec![];
+                /*
+                TODO
+                let preds: Vec<Ty> = predicates
+                    .iter()
+                    .map(|pred| convert_ast_ty(ty_cons, &quantified_vars_set, &pred.node, &pred.loc))
+                    .collect();
+                */
+                let preds: Vec<Ty> = vec![];
 
-        if let Some(ty_name) = type_name {
-            let con = ty_cons.get(&ty_name.node).unwrap();
-            quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
-        }
+                let arg_tys: Vec<Ty> = params
+                    .iter()
+                    .map(|ty| convert_ast_ty(ty_cons, &quantified_vars_set, &ty.1.node, &ty.1.loc))
+                    .collect();
 
-        quantified_vars.extend(type_params.iter().map(|param| param.node.0.node.clone()));
+                let ret_ty = match return_ty {
+                    Some(ret_ty) => {
+                        convert_ast_ty(ty_cons, &quantified_vars_set, &ret_ty.node, &ret_ty.loc)
+                    }
+                    None => Ty::unit(),
+                };
 
-        let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
+                let fun_ty = Ty::Fun(arg_tys, Box::new(ret_ty));
 
-        /*
-        TODO
-        let preds: Vec<Ty> = predicates
-            .iter()
-            .map(|pred| convert_ast_ty(ty_cons, &quantified_vars_set, &pred.node, &pred.loc))
-            .collect();
-        */
-        let preds: Vec<Ty> = vec![];
+                let scheme = Scheme {
+                    quantified_vars,
+                    preds,
+                    ty: fun_ty,
+                    loc: decl.loc.clone(),
+                };
 
-        let arg_tys: Vec<Ty> = params
-            .iter()
-            .map(|ty| convert_ast_ty(ty_cons, &quantified_vars_set, &ty.1.node, &ty.1.loc))
-            .collect();
+                match type_name {
+                    Some(ty_name) => {
+                        let old = associated_schemes
+                            .entry(ty_name.node.clone())
+                            .or_default()
+                            .insert(name.node.clone(), scheme);
 
-        let ret_ty = match return_ty {
-            Some(ret_ty) => {
-                convert_ast_ty(ty_cons, &quantified_vars_set, &ret_ty.node, &ret_ty.loc)
-            }
-            None => Ty::unit(),
-        };
+                        if old.is_some() {
+                            panic!(
+                                "Associated function {}.{} is defined multiple times at {}",
+                                ty_name.node,
+                                name.node,
+                                loc_string(&decl.loc)
+                            );
+                        }
+                    }
+                    None => {
+                        let old = top_schemes.insert(name.node.clone(), scheme);
 
-        let fun_ty = Ty::Fun(arg_tys, Box::new(ret_ty));
-
-        let scheme = Scheme {
-            quantified_vars,
-            preds,
-            ty: fun_ty,
-            loc: decl.loc.clone(),
-        };
-
-        match type_name {
-            Some(ty_name) => {
-                let old = associated_schemes
-                    .entry(ty_name.node.clone())
-                    .or_default()
-                    .insert(name.node.clone(), scheme);
-
-                if old.is_some() {
-                    panic!(
-                        "Associated function {}.{} is defined multiple times at {}",
-                        ty_name.node,
-                        name.node,
-                        loc_string(&decl.loc)
-                    );
+                        if old.is_some() {
+                            panic!(
+                                "Function {} is defined multiple times at {}",
+                                name.node,
+                                loc_string(&decl.loc)
+                            );
+                        }
+                    }
                 }
             }
-            None => {
-                let old = top_schemes.insert(name.node.clone(), scheme);
 
-                if old.is_some() {
-                    panic!(
-                        "Function {} is defined multiple times at {}",
-                        name.node,
-                        loc_string(&decl.loc)
-                    );
-                }
-            }
+            ast::TopDecl::Impl(_) => todo!(),
+
+            ast::TopDecl::Trait(_) | ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => continue,
         }
     }
 
@@ -826,7 +813,41 @@ fn check_expr(
 
         ast::Expr::UpperVar(_) => todo!(),
 
-        ast::Expr::FieldSelect(_) => todo!(),
+        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+            let object_ty = check_expr(
+                object,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            );
+
+            match object_ty {
+                Ty::Con(con) => todo!(),
+
+                Ty::App(con, _) => todo!(),
+
+                Ty::Record(fields) => match fields.get(field) {
+                    Some(field_ty) => field_ty.clone(),
+                    None => panic!(
+                        "{}: Record with fields {:?} does not have field {}",
+                        loc_string(&object.loc),
+                        fields.keys().collect::<Vec<_>>(),
+                        field
+                    ),
+                },
+
+                Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => panic!(
+                    "{}: Object in field selection does not have fields: {:?}",
+                    loc_string(&object.loc),
+                    object_ty
+                ),
+            }
+        }
 
         ast::Expr::ConstrSelect(_) => todo!(),
 
