@@ -31,6 +31,7 @@ struct Scheme {
     preds: Vec<Ty>,
 
     /// The generalized type.
+    // TODO: Should we have separate fields for arguments types and return type?
     ty: Ty,
 
     /// Source code location of the variable with this type scheme. This is used in error messages
@@ -157,7 +158,7 @@ struct TyCon {
 /// Types of methods and fields can refer to type parameters of the `TyCon`.
 #[derive(Debug, Clone)]
 enum TyConDetails {
-    Trait { methods: Map<SmolStr, Scheme> },
+    Trait { methods: Map<Id, Scheme> },
     Type { cons: Vec<ValCon> },
 }
 
@@ -295,10 +296,40 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     .map(|ty| convert_ast_ty(&cons, &Default::default(), &ty.node, &ty.loc))
                     .collect();
 
+                let trait_ty_params: Set<Id> =
+                    [trait_decl.node.ty.node.0.clone()].into_iter().collect();
+
+                let methods: Map<Id, Scheme> = trait_decl
+                    .node
+                    .funs
+                    .iter()
+                    .map(|sig| {
+                        let fun_ty_params: Vec<Id> = sig
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|param| param.node.0.node.clone())
+                            .collect();
+
+                        (
+                            sig.node.name.node.clone(),
+                            convert_fun_ty(
+                                &trait_ty_params,
+                                &fun_ty_params,
+                                &sig.node.params,
+                                &sig.node.return_ty,
+                                &sig.loc,
+                                &cons,
+                            ),
+                        )
+                    })
+                    .collect();
+
                 let con = cons.get_mut(&trait_decl.node.name.node).unwrap();
                 assert_eq!(con.ty_params.len(), 1);
 
                 con.ty_params[0].1 = bounds;
+                con.details = TyConDetails::Trait { methods };
             }
 
             ast::TopDecl::Fun(_) | ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => continue,
@@ -529,6 +560,47 @@ fn collect_schemes(
     }
 
     (top_schemes, associated_schemes)
+}
+
+/// Convert a function type to a `Scheme`.
+///
+/// - `ty_ty_params`: When converting associated functions or trait methods, type parameters of the type.
+/// - `fun_ty_params`: Type parameters of the function.
+fn convert_fun_ty(
+    ty_ty_params: &Set<Id>,
+    fun_ty_params: &[Id],
+    params: &[(SmolStr, ast::L<ast::Type>)],
+    return_ty: &Option<ast::L<ast::Type>>,
+    loc: &ast::Loc,
+    ty_cons: &Map<Id, TyCon>,
+) -> Scheme {
+    let quantified_vars: Vec<Id> = fun_ty_params.iter().cloned().collect();
+
+    // Quantified variables of both the function and the type.
+    let all_quantified_vars: Set<Id> = quantified_vars
+        .iter()
+        .chain(ty_ty_params.iter())
+        .cloned()
+        .collect();
+
+    let arg_tys: Vec<Ty> = params
+        .iter()
+        .map(|ty| convert_ast_ty(ty_cons, &all_quantified_vars, &ty.1.node, &ty.1.loc))
+        .collect();
+
+    let ret_ty = match return_ty {
+        Some(ret_ty) => convert_ast_ty(ty_cons, &all_quantified_vars, &ret_ty.node, &ret_ty.loc),
+        None => Ty::unit(),
+    };
+
+    let fun_ty = Ty::Fun(arg_tys, Box::new(ret_ty));
+
+    Scheme {
+        quantified_vars,
+        preds: vec![], // TODO
+        ty: fun_ty,
+        loc: loc.clone(),
+    }
 }
 
 /// Convert an AST type to a type checking type.
