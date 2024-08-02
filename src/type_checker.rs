@@ -142,6 +142,14 @@ impl TyVarGen {
 struct TyCon {
     id: Id,
     ty_params: Vec<(Id, Vec<Ty>)>,
+    kind: TyConKind,
+}
+
+/// A type constructor.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum TyConKind {
+    Trait,
+    Data,
 }
 
 impl TyCon {
@@ -178,29 +186,40 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
 
     // Collect all type constructors first, then add bounds.
     for decl in module {
-        let (ty_name, ty_params) = {
-            match &decl.node {
-                ast::TopDecl::Type(ty_decl) => {
-                    (ty_decl.node.name.clone(), ty_decl.node.type_params.clone())
+        match &decl.node {
+            ast::TopDecl::Type(ty_decl) => {
+                let ty_name = ty_decl.node.name.clone();
+                let ty_params = ty_decl.node.type_params.clone();
+                let old = cons.insert(
+                    ty_name.clone(),
+                    TyCon {
+                        id: ty_name.clone(),
+                        ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        kind: TyConKind::Data,
+                    },
+                );
+                if old.is_some() {
+                    panic!("Type {} is defined multiple times", ty_name);
                 }
-
-                ast::TopDecl::Trait(trait_decl) => (
-                    trait_decl.node.name.node.clone(),
-                    vec![trait_decl.node.ty.node.0.clone()],
-                ),
-
-                ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
             }
-        };
-        let old = cons.insert(
-            ty_name.clone(),
-            TyCon {
-                id: ty_name.clone(),
-                ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
-            },
-        );
-        if old.is_some() {
-            panic!("Type {} is defined multiple times", ty_name);
+
+            ast::TopDecl::Trait(trait_decl) => {
+                let ty_name = trait_decl.node.name.node.clone();
+                let ty_params = vec![trait_decl.node.ty.node.0.clone()];
+                let old = cons.insert(
+                    ty_name.clone(),
+                    TyCon {
+                        id: ty_name.clone(),
+                        ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        kind: TyConKind::Trait,
+                    },
+                );
+                if old.is_some() {
+                    panic!("Type {} is defined multiple times", ty_name);
+                }
+            }
+
+            ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
         }
     }
 
@@ -363,7 +382,48 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Impl(_) => todo!(),
+            ast::TopDecl::Impl(impl_decl) => {
+                let quantified_vars: Vec<Id> = impl_decl
+                    .node
+                    .context
+                    .iter()
+                    .map(|node| node.node.0.clone())
+                    .collect();
+
+                let mut preds: Vec<Ty> = vec![];
+
+                for ast::L {
+                    node: (ty, preds),
+                    loc: _,
+                } in impl_decl.node.context.iter()
+                {
+                    todo!()
+                }
+
+                match &impl_decl.node.ty.node {
+                    ast::Type::Named(ast::NamedType { name, args }) => {
+                        // Check if the type is trait.
+                        match ty_cons.get(name) {
+                            Some(TyCon {
+                                kind: TyConKind::Trait,
+                                ..
+                            }) => todo!(),
+
+                            Some(TyCon {
+                                kind: TyConKind::Data,
+                                ..
+                            }) => todo!(),
+
+                            None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), name),
+                        }
+                    }
+
+                    ast::Type::Record(_) => panic!(
+                        "{}: Record impl `impl` declaration",
+                        loc_string(&impl_decl.loc)
+                    ),
+                }
+            }
 
             ast::TopDecl::Trait(_) | ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => continue,
         }

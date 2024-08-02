@@ -657,32 +657,25 @@ TraitDecl: L<TraitDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_name:LUpperId> "[" <implementing_ty:LType> "]"
+    <l:@L> "impl" <context:Context> <ty:LType>
             NEWLINE INDENT <funs:FunDecl*> DEDENT <r:@R> => {
-        let (trait_name, implementing_ty) = match implementing_ty.node {
-            Type::Named(NamedType { name, mut args }) => {
-                assert_eq!(args.len(), 1); // TODO
-                (name, args.pop().unwrap())
-            }
-            _ => panic!(), // TODO
-        };
         L::new(module, l, r, ImplDecl {
             context,
-            trait_name,
-            implementing_ty,
+            ty,
             funs,
         })
     }
 }
 
-Context: Vec<L<(SmolStr, Vec<Type>)>> = {
+Context: Vec<L<(SmolStr, Vec<SmolStr>)>> = {
     => vec![],
 
     "[" <tys:TypeWithBounds*> "]" => tys,
 }
 
-TypeWithBounds: L<(SmolStr, Vec<Type>)> = {
-    <l:@L> <ty:UpperId> ":" <bounds:Sep1<Type, "+">> <r:@R> => L::new(module, l, r, (ty.smol_str(), bounds)),
+TypeWithBounds: L<(SmolStr, Vec<SmolStr>)> = {
+    <l:@L> <ty:UpperId> ":" <bounds:Sep1<UpperId, "+">> <r:@R> =>
+        L::new(module, l, r, (ty.smol_str(), bounds.into_iter().map(|id| id.smol_str()).collect())),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

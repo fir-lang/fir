@@ -93,7 +93,13 @@ fn visit_trait_decl(trait_decl: &ast::TraitDecl, records: &mut Set<RecordShape>)
 fn visit_impl_decl(impl_decl: &ast::ImplDecl, records: &mut Set<RecordShape>) {
     for context_ty in &impl_decl.context {
         for ty in &context_ty.node.1 {
-            visit_ty(ty, records);
+            visit_ty(
+                &ast::Type::Named(ast::NamedType {
+                    name: ty.clone(),
+                    args: vec![],
+                }),
+                records,
+            );
         }
     }
 

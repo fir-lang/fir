@@ -396,6 +396,7 @@ pub struct TraitDecl {
     pub funs: Vec<L<FunSig>>,
 }
 
+/// An `impl` block, implementing associated methods for a type, or a trait.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplDecl {
     /// Type parameters of the type being implemented, with bounds. E.g. in
@@ -405,13 +406,12 @@ pub struct ImplDecl {
     /// ```
     ///
     /// this field will be `[(T, [Debug, Foo])]`.
-    pub context: Vec<L<(SmolStr, Vec<Type>)>>,
+    pub context: Vec<L<(SmolStr, Vec<SmolStr>)>>,
 
-    /// Name of the trait being implemented. In the example above, `Debug`.
-    pub trait_name: SmolStr,
-
-    /// Type that implements the trait. In the example above, `Vec[T]`.
-    pub implementing_ty: L<Type>,
+    /// The type being implemented.
+    ///
+    /// This can be a trait (e.g. `Debug[Vec[T]]`) or a type (e.g. `Vec[T]`).
+    pub ty: L<Type>,
 
     pub funs: Vec<L<FunDecl>>,
 }
