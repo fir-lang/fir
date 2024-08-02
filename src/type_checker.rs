@@ -15,7 +15,7 @@ use smol_str::SmolStr;
 type Id = SmolStr;
 
 /// A type scheme.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Scheme {
     /// Generalized variables, e.g. `T` in the scheme for `fn id[T](a: T): T = a`.
     ///
@@ -138,18 +138,46 @@ impl TyVarGen {
 }
 
 /// A type constructor.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct TyCon {
+    /// Name of the type.
     id: Id,
+
+    /// Type parameters with bounds.
     ty_params: Vec<(Id, Vec<Ty>)>,
-    kind: TyConKind,
+
+    /// Methods for traits, constructor for sums, fields for products.
+    ///
+    /// Types can refer to `ty_params`.
+    details: TyConDetails,
 }
 
 /// A type constructor.
+///
+/// Types of methods and fields can refer to type parameters of the `TyCon`.
+#[derive(Debug, Clone)]
+enum TyConDetails {
+    Trait { methods: Map<SmolStr, Scheme> },
+    Type { cons: Vec<ValCon> },
+}
+
+impl TyConDetails {
+    fn placeholder() -> Self {
+        TyConDetails::Type { cons: vec![] }
+    }
+}
+
+/// A value constructor.
+#[derive(Debug, Clone)]
+struct ValCon {
+    name: SmolStr,
+    fields: ConFields,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum TyConKind {
-    Trait,
-    Data,
+enum ConFields {
+    Unnamed(Vec<Ty>),
+    Named(Map<SmolStr, Ty>),
 }
 
 impl TyCon {
@@ -184,7 +212,7 @@ fn collect_types(module: &ast::Module) -> PgmTypes {
 fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
     let mut cons: Map<Id, TyCon> = Default::default();
 
-    // Collect all type constructors first, then add bounds.
+    // Collect all type constructors first, then add bounds, fields, and methods.
     for decl in module {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
@@ -195,7 +223,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     TyCon {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
-                        kind: TyConKind::Data,
+                        details: TyConDetails::placeholder(),
                     },
                 );
                 if old.is_some() {
@@ -211,7 +239,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     TyCon {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
-                        kind: TyConKind::Trait,
+                        details: TyConDetails::placeholder(),
                     },
                 );
                 if old.is_some() {
@@ -223,9 +251,40 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
         }
     }
 
-    // Add bounds.
+    // Add bounds, fields, methods.
     for decl in module {
         match &decl.node {
+            ast::TopDecl::Type(ty_decl) => {
+                let ty_con = cons.get(&ty_decl.node.name).unwrap();
+
+                let details = match &ty_decl.node.rhs {
+                    Some(rhs) => match rhs {
+                        ast::TypeDeclRhs::Sum(sum_cons) => {
+                            let cons: Vec<ValCon> = sum_cons
+                                .iter()
+                                .map(|ast::ConstructorDecl { name, fields }| ValCon {
+                                    name: name.clone(),
+                                    fields: convert_fields(&ty_con, fields, &cons, &decl.loc),
+                                })
+                                .collect();
+
+                            TyConDetails::Type { cons }
+                        }
+
+                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type {
+                            cons: vec![ValCon {
+                                name: ty_decl.node.name.clone(),
+                                fields: convert_fields(&ty_con, fields, &cons, &decl.loc),
+                            }],
+                        },
+                    },
+
+                    None => TyConDetails::Type { cons: vec![] },
+                };
+
+                cons.get_mut(&ty_decl.node.name).unwrap().details = details;
+            }
+
             ast::TopDecl::Trait(trait_decl) => {
                 let bounds: Vec<Ty> = trait_decl
                     .node
@@ -242,14 +301,51 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                 con.ty_params[0].1 = bounds;
             }
 
-            ast::TopDecl::Type(_)
-            | ast::TopDecl::Fun(_)
-            | ast::TopDecl::Import(_)
-            | ast::TopDecl::Impl(_) => continue,
+            ast::TopDecl::Fun(_) | ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => continue,
         }
     }
 
     cons
+}
+
+fn convert_fields(
+    ty_con: &TyCon,
+    fields: &ast::ConstructorFields,
+    ty_cons: &Map<Id, TyCon>,
+    loc: &ast::Loc,
+) -> ConFields {
+    match fields {
+        ast::ConstructorFields::Empty => ConFields::Unnamed(vec![]),
+        ast::ConstructorFields::Named(named_fields) => ConFields::Named(
+            named_fields
+                .iter()
+                .map(|(name, ty)| {
+                    (
+                        name.clone(),
+                        convert_ast_ty(
+                            &ty_cons,
+                            &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
+                            ty,
+                            loc,
+                        ),
+                    )
+                })
+                .collect(),
+        ),
+        ast::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
+            fields
+                .iter()
+                .map(|ty| {
+                    convert_ast_ty(
+                        &ty_cons,
+                        &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
+                        ty,
+                        loc,
+                    )
+                })
+                .collect(),
+        ),
+    }
 }
 
 fn collect_schemes(
@@ -403,19 +499,22 @@ fn collect_schemes(
                 match &impl_decl.node.ty.node {
                     ast::Type::Named(ast::NamedType { name, args }) => {
                         // Check if the type is trait.
+
+                        /*
                         match ty_cons.get(name) {
                             Some(TyCon {
-                                kind: TyConKind::Trait,
+                                kind: TyConDetails::Trait,
                                 ..
                             }) => todo!(),
 
                             Some(TyCon {
-                                kind: TyConKind::Data,
+                                kind: TyConDetails::Type,
                                 ..
                             }) => todo!(),
 
                             None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), name),
                         }
+                        */
                     }
 
                     ast::Type::Record(_) => panic!(
@@ -887,9 +986,9 @@ fn check_expr(
             );
 
             match object_ty {
-                Ty::Con(con) => todo!(),
+                Ty::Con(_con) => todo!(),
 
-                Ty::App(con, _) => todo!(),
+                Ty::App(_con, _) => todo!(),
 
                 Ty::Record(fields) => match fields.get(field) {
                     Some(field_ty) => field_ty.clone(),
