@@ -79,6 +79,23 @@ impl Ty {
     fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         todo!()
     }
+
+    /// If the type is a unification variable, follow the links.
+    ///
+    /// Otherwise returns the original type.
+    fn normalize(&self) -> Ty {
+        match self {
+            Ty::Var(var_ref) => {
+                let link = match &*var_ref.0.link.borrow() {
+                    Some(link) => link.normalize(),
+                    None => return self.clone(),
+                };
+                var_ref.set_link(link.clone());
+                link
+            }
+            other => other.clone(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1221,7 +1238,48 @@ fn check_expr(
 
         ast::Expr::Self_ => todo!(),
 
-        ast::Expr::BinOp(_) => todo!(),
+        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
+            match op {
+                ast::BinOp::Add => {
+                    // [T: Add] (T, T): T
+                    let left_ty = check_expr(
+                        left,
+                        None,
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+
+                    let _right_ty = check_expr(
+                        right,
+                        Some(&left_ty),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+
+                    todo!()
+                }
+                ast::BinOp::Subtract => todo!(),
+                ast::BinOp::Equal => todo!(),
+                ast::BinOp::NotEqual => todo!(),
+                ast::BinOp::Multiply => todo!(),
+                ast::BinOp::Lt => todo!(),
+                ast::BinOp::Gt => todo!(),
+                ast::BinOp::LtEq => todo!(),
+                ast::BinOp::GtEq => todo!(),
+                ast::BinOp::And => todo!(),
+                ast::BinOp::Or => todo!(),
+            }
+        }
 
         ast::Expr::UnOp(_) => todo!(),
 
