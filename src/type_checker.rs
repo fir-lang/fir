@@ -74,6 +74,11 @@ impl Ty {
     fn unit() -> Ty {
         Ty::Record(Default::default())
     }
+
+    /// Substitute `ty` for `var` in `self`.
+    fn subst(&self, var: &Id, ty: &Ty) -> Ty {
+        todo!()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1057,10 +1062,10 @@ fn check_expr(
                 preds,
             );
 
-            match object_ty {
-                Ty::Con(_con) => todo!(),
+            let ty = match object_ty {
+                Ty::Con(con) => check_field_select(&con, &[], field, &expr.loc, tys),
 
-                Ty::App(_con, _) => todo!(),
+                Ty::App(con, args) => check_field_select(&con, &args, field, &expr.loc, tys),
 
                 Ty::Record(fields) => match fields.get(field) {
                     Some(field_ty) => field_ty.clone(),
@@ -1077,7 +1082,9 @@ fn check_expr(
                     loc_string(&object.loc),
                     object_ty
                 ),
-            }
+            };
+
+            unify_expected_ty(ty, expected_ty, &expr.loc)
         }
 
         ast::Expr::ConstrSelect(_) => todo!(),
@@ -1298,6 +1305,72 @@ fn check_expr(
 
             branch_tys.pop().unwrap()
         }
+    }
+}
+
+fn check_field_select(
+    ty_con: &Id,
+    ty_args: &[Ty],
+    field: &Id,
+    loc: &ast::Loc,
+    tys: &PgmTypes,
+) -> Ty {
+    let ty_con = tys.cons.get(ty_con).unwrap();
+    assert_eq!(ty_con.ty_params.len(), ty_args.len());
+
+    match &ty_con.details {
+        TyConDetails::Trait { methods: _ } => {
+            // Stand-alone `trait.method` can't work, we need to look at the arguments.
+            // Ignore this for now, we probably won't need it.
+            todo!(
+                "{}: FieldSelect expression selecting a trait method without receiver",
+                loc_string(loc)
+            );
+        }
+
+        TyConDetails::Type { cons } => match cons.len() {
+            0 => panic!(
+                "{}: BUG: Value with void type {}",
+                loc_string(loc),
+                ty_con.id,
+            ),
+
+            1 => {
+                let con = &cons[0];
+                match &con.fields {
+                    ConFields::Unnamed(_) => panic!(
+                        "{}: Type {} does not have named field {}",
+                        loc_string(loc),
+                        ty_con.id,
+                        field
+                    ),
+                    ConFields::Named(fields) => match fields.get(field) {
+                        Some(field_ty) => {
+                            let mut field_ty = field_ty.clone();
+                            for ((ty_param, _bounds), ty_arg) in
+                                ty_con.ty_params.iter().zip(ty_args.iter())
+                            {
+                                field_ty = field_ty.subst(ty_param, ty_arg);
+                            }
+                            field_ty
+                        }
+                        None => panic!(
+                            "{}: Type {} does not have field {}",
+                            loc_string(loc),
+                            ty_con.id,
+                            field
+                        ),
+                    },
+                }
+            }
+
+            _ => panic!(
+                "{}: Cannot select field {} of sum type {}",
+                loc_string(loc),
+                field,
+                ty_con.id,
+            ),
+        },
     }
 }
 
