@@ -235,12 +235,11 @@ LFunSig: L<FunSig> = {
 }
 
 FunSig: FunSig = {
-    "fn" <type_name:(<LUpperId> ".")?> <name:LLowerId>
+    "fn" <name:LLowerId>
             <type_params:("[" <Sep<TyParamWithPreds, ",">> "]")?>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <return_ty:(":" <LType>)?> =>
         FunSig {
-            type_name,
             name,
             type_params: type_params.unwrap_or(vec![]),
             self_: self_.is_some(),
@@ -249,9 +248,9 @@ FunSig: FunSig = {
         },
 }
 
-TyParamWithPreds: L<(L<SmolStr>, Vec<L<Type>>)> = {
+TyParamWithPreds: L<(L<SmolStr>, Vec<L<SmolStr>>)> = {
     <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
-    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
+    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LUpperId, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

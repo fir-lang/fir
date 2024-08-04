@@ -17,18 +17,13 @@ type Id = SmolStr;
 /// A type scheme.
 #[derive(Debug, Clone)]
 struct Scheme {
-    /// Generalized variables, e.g. `T` in the scheme for `fn id[T](a: T): T = a`.
+    /// Generalized variables with predicates, e.g. `[T, [Eq]]` in the scheme for
+    /// `fn id[T: Eq](a: T): T = a`.
     ///
     /// `Vec` instead of `Set` as type arguments in explicit type applications are ordered.
     ///
     /// For now, all quantified variables have kind `*`.
-    quantified_vars: Vec<Id>,
-
-    /// Predicates, e.g. `Eq[T]` in the type scheme for
-    ///
-    ///   fn linearSearch[T][Eq[T]](vec: Vec[T], elem: T): Option[Usize] = ...
-    ///
-    preds: Vec<Ty>,
+    quantified_vars: Vec<(Id, Vec<Id>)>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -119,10 +114,10 @@ impl Ty {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct TyVarRef(Rc<TyVar>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct TyVar {
     /// Identity of the unification variable.
     ///
@@ -138,6 +133,20 @@ struct TyVar {
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
     loc: ast::Loc,
+}
+
+impl PartialEq for TyVar {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for TyVar {}
+
+impl std::hash::Hash for TyVar {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state)
+    }
 }
 
 impl TyVarRef {
@@ -227,6 +236,10 @@ enum ConFields {
 impl TyCon {
     fn arity(&self) -> u32 {
         self.ty_params.len() as u32
+    }
+
+    fn is_trait(&self) -> bool {
+        matches!(self.details, TyConDetails::Trait { .. })
     }
 }
 
@@ -347,18 +360,11 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     .funs
                     .iter()
                     .map(|sig| {
-                        let fun_ty_params: Vec<Id> = sig
-                            .node
-                            .type_params
-                            .iter()
-                            .map(|param| param.node.0.node.clone())
-                            .collect();
-
                         (
                             sig.node.name.node.clone(),
                             convert_fun_ty(
                                 &trait_ty_params,
-                                &fun_ty_params,
+                                &sig.node.type_params,
                                 &sig.node.params,
                                 &sig.node.return_ty,
                                 &sig.loc,
@@ -431,170 +437,69 @@ fn collect_schemes(
 
     for decl in module {
         match &decl.node {
-            ast::TopDecl::Fun(fun_decl) => {
-                let ast::FunDecl {
-                    sig:
-                        ast::FunSig {
-                            self_,
-                            type_name,
-                            name,
-                            type_params,
-                            params,
-                            return_ty,
-                        },
-                    body: _,
-                } = &fun_decl.node;
+            ast::TopDecl::Fun(ast::L {
+                node: ast::FunDecl { sig, body: _ },
+                loc,
+            }) => {
+                let scheme = convert_fun_ty(
+                    &Default::default(),
+                    &sig.type_params,
+                    &sig.params,
+                    &sig.return_ty,
+                    loc,
+                    ty_cons,
+                );
 
-                // If associated function: check that the type exists.
-                if let Some(type_name) = type_name {
-                    if !ty_cons.contains_key(&type_name.node) {
-                        panic!(
-                            "Type {} of associated function at {} is not defined",
-                            type_name.node,
-                            loc_string(&decl.loc)
-                        );
-                    }
-                }
-
-                // Check duplicate type and term arguments.
-                let mut ty_arg_names: Set<Id> = Default::default();
-                for ty_arg_name in type_params {
-                    let new = ty_arg_names.insert(ty_arg_name.node.0.node.clone());
-                    if !new {
-                        panic!(
-                            "Type parameter {} at {} is defined multiple times",
-                            ty_arg_name.node.0.node,
-                            loc_string(&ty_arg_name.loc)
-                        );
-                    }
-                }
-
-                let mut val_arg_names: Set<Id> = Default::default();
-                for val_arg_name in params {
-                    let new = val_arg_names.insert(val_arg_name.0.clone());
-                    if !new {
-                        panic!(
-                            "Parameter {} at {} is defined multiple times",
-                            val_arg_name.0,
-                            loc_string(&decl.loc)
-                        );
-                    }
-                }
-
-                let mut quantified_vars: Vec<Id> = vec![];
-
-                if let Some(ty_name) = type_name {
-                    let con = ty_cons.get(&ty_name.node).unwrap();
-                    quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
-                }
-
-                quantified_vars.extend(type_params.iter().map(|param| param.node.0.node.clone()));
-
-                let quantified_vars_set: Set<Id> = quantified_vars.iter().cloned().collect();
-
-                /*
-                TODO
-                let preds: Vec<Ty> = predicates
-                    .iter()
-                    .map(|pred| convert_ast_ty(ty_cons, &quantified_vars_set, &pred.node, &pred.loc))
-                    .collect();
-                */
-                let preds: Vec<Ty> = vec![];
-
-                let arg_tys: Vec<Ty> = params
-                    .iter()
-                    .map(|ty| convert_ast_ty(ty_cons, &quantified_vars_set, &ty.1.node, &ty.1.loc))
-                    .collect();
-
-                let ret_ty = match return_ty {
-                    Some(ret_ty) => {
-                        convert_ast_ty(ty_cons, &quantified_vars_set, &ret_ty.node, &ret_ty.loc)
-                    }
-                    None => Ty::unit(),
-                };
-
-                let fun_ty = Ty::Fun(arg_tys, Box::new(ret_ty));
-
-                let scheme = Scheme {
-                    quantified_vars,
-                    preds,
-                    ty: fun_ty,
-                    loc: decl.loc.clone(),
-                };
-
-                match type_name {
-                    Some(ty_name) => {
-                        let old = associated_schemes
-                            .entry(ty_name.node.clone())
-                            .or_default()
-                            .insert(name.node.clone(), scheme);
-
-                        if old.is_some() {
-                            panic!(
-                                "Associated function {}.{} is defined multiple times at {}",
-                                ty_name.node,
-                                name.node,
-                                loc_string(&decl.loc)
-                            );
-                        }
-                    }
-                    None => {
-                        let old = top_schemes.insert(name.node.clone(), scheme);
-
-                        if old.is_some() {
-                            panic!(
-                                "Function {} is defined multiple times at {}",
-                                name.node,
-                                loc_string(&decl.loc)
-                            );
-                        }
-                    }
+                let old = top_schemes.insert(sig.name.node.clone(), scheme);
+                if old.is_some() {
+                    panic!(
+                        "{}: Function {} is defined multiple times",
+                        loc_string(loc),
+                        sig.name.node
+                    );
                 }
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                let quantified_vars: Vec<Id> = impl_decl
+                // Which type to add the method to.
+                let ty_con: Id = match &impl_decl.node.ty.node {
+                    ast::Type::Named(ast::NamedType { name, args }) => {
+                        if ty_cons.get(name).unwrap().is_trait() {
+                            convert_ast_ty(
+                                ty_cons,
+                                &Default::default(),
+                                &args[0].node,
+                                &args[0].loc,
+                            )
+                            .con()
+                            .unwrap()
+                            .0
+                        } else {
+                            name.clone()
+                        }
+                    }
+                    ast::Type::Record(_) => {
+                        panic!("{}: Record type in impl block", loc_string(&impl_decl.loc))
+                    }
+                };
+
+                let ty_ty_params: Set<Id> = impl_decl
                     .node
                     .context
                     .iter()
-                    .map(|node| node.node.0.clone())
+                    .map(|ty| ty.node.0.clone())
                     .collect();
 
-                let mut preds: Vec<Ty> = vec![];
-
-                for ast::L {
-                    node: (ty, preds),
-                    loc: _,
-                } in impl_decl.node.context.iter()
-                {
-                    todo!()
-                }
-
-                match &impl_decl.node.ty.node {
-                    ast::Type::Named(ast::NamedType { name, args }) => {
-                        // Check if the type is trait.
-
-                        /*
-                        match ty_cons.get(name) {
-                            Some(TyCon {
-                                kind: TyConDetails::Trait,
-                                ..
-                            }) => todo!(),
-
-                            Some(TyCon {
-                                kind: TyConDetails::Type,
-                                ..
-                            }) => todo!(),
-
-                            None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), name),
-                        }
-                        */
-                    }
-
-                    ast::Type::Record(_) => panic!(
-                        "{}: Record impl `impl` declaration",
-                        loc_string(&impl_decl.loc)
-                    ),
+                for fun in &impl_decl.node.funs {
+                    let sig = &fun.node.sig;
+                    let scheme = convert_fun_ty(
+                        &ty_ty_params,
+                        &sig.type_params,
+                        &sig.params,
+                        &sig.return_ty,
+                        &fun.loc,
+                        ty_cons,
+                    );
                 }
             }
 
@@ -611,17 +516,27 @@ fn collect_schemes(
 /// - `fun_ty_params`: Type parameters of the function.
 fn convert_fun_ty(
     ty_ty_params: &Set<Id>,
-    fun_ty_params: &[Id],
+    fun_ty_params: &[ast::L<(ast::L<Id>, Vec<ast::L<Id>>)>],
     params: &[(SmolStr, ast::L<ast::Type>)],
     return_ty: &Option<ast::L<ast::Type>>,
     loc: &ast::Loc,
     ty_cons: &Map<Id, TyCon>,
 ) -> Scheme {
-    let quantified_vars: Vec<Id> = fun_ty_params.iter().cloned().collect();
+    /*
+    let quantified_vars: Vec<(Id, Vec<Ty>)> = fun_ty_params
+        .iter()
+        .map(
+            |ast::L {
+                 node: (ty, bounds),
+                 loc: _,
+             }| todo!(),
+        )
+        .collect();
 
     // Quantified variables of both the function and the type.
     let all_quantified_vars: Set<Id> = quantified_vars
         .iter()
+        .map(|(param, _bounds)| param)
         .chain(ty_ty_params.iter())
         .cloned()
         .collect();
@@ -640,10 +555,11 @@ fn convert_fun_ty(
 
     Scheme {
         quantified_vars,
-        preds: vec![], // TODO
         ty: fun_ty,
         loc: loc.clone(),
     }
+    */
+    todo!()
 }
 
 /// Convert an AST type to a type checking type.
@@ -710,25 +626,20 @@ fn loc_string(loc: &ast::Loc) -> String {
 
 impl Scheme {
     /// Instantiate the type scheme, return instantiated predicates and type.
-    fn instantiate(&self, level: u32, var_gen: &mut TyVarGen) -> (Vec<Ty>, Ty) {
+    fn instantiate(&self, level: u32, var_gen: &mut TyVarGen) -> (Map<TyVarRef, Set<Id>>, Ty) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
-        let var_map: Map<Id, TyVarRef> = self
-            .quantified_vars
-            .iter()
-            .map(|var| (var.clone(), var_gen.new_var(level, self.loc.clone())))
-            .collect();
+        let mut var_map: Map<Id, TyVarRef> = Default::default();
+        let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
 
-        let preds: Vec<Ty> = self
-            .preds
-            .iter()
-            .map(|pred| pred.subst_qvars(&var_map))
-            .collect();
+        for (var, bounds) in &self.quantified_vars {
+            let instantiated_var = var_gen.new_var(level, self.loc.clone());
+            var_map.insert(var.clone(), instantiated_var.clone());
+            preds.insert(instantiated_var.clone(), bounds.iter().cloned().collect());
+        }
 
-        let ty = self.ty.subst_qvars(&var_map);
-
-        (preds, ty)
+        (preds, self.ty.subst_qvars(&var_map))
     }
 }
 
@@ -913,19 +824,6 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 
     let mut quantified_vars: Set<Id> = Default::default();
 
-    // Add type parameters of the type to quantified vars.
-    if let Some(ty_name) = &fun.node.sig.type_name {
-        let con = tys.cons.get(&ty_name.node).unwrap_or_else(|| {
-            panic!(
-                "{}: Unknown type {}",
-                loc_string(&ty_name.loc),
-                ty_name.node
-            )
-        });
-
-        quantified_vars.extend(con.ty_params.iter().map(|(var, _bounds)| var.clone()));
-    }
-
     for (param_name, param_ty) in &fun.node.sig.params {
         env.bind(
             param_name.clone(),
@@ -938,7 +836,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
         None => Ty::Record(Default::default()),
     };
 
-    let mut preds: Vec<Ty> = vec![];
+    let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
 
     check_stmts(
         &fun.node.body.as_ref().unwrap().node,
@@ -962,7 +860,7 @@ fn check_stmts(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Vec<Ty>,
+    preds: &mut Map<TyVarRef, Set<Id>>,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -999,7 +897,7 @@ fn check_stmt(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Vec<Ty>,
+    preds: &mut Map<TyVarRef, Set<Id>>,
 ) -> Ty {
     match &stmt.node {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
@@ -1068,7 +966,7 @@ fn check_expr(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Vec<Ty>,
+    preds: &mut Map<TyVarRef, Set<Id>>,
 ) -> Ty {
     match &expr.node {
         ast::Expr::Var(var) => {

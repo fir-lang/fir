@@ -207,6 +207,16 @@ pub fn collect_funs(
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
         };
 
+        let idx = top_level_funs.len() as u64;
+        top_level_funs.insert(
+            fun_decl.sig.name.node.clone(),
+            Fun {
+                idx,
+                kind: FunKind::Source(fun_decl),
+            },
+        );
+
+        /*
         match &fun_decl.sig.type_name {
             Some(type_name) => {
                 let idx_entry = associated_fun_indices
@@ -237,6 +247,7 @@ pub fn collect_funs(
                 )
             }
         };
+        */
     }
 
     (top_level_funs, associated_funs)
