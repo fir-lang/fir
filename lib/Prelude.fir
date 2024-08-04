@@ -1,33 +1,77 @@
+# The `+` operator.
+trait Add[T]:
+    fn __add(self, other: T): T
+
+# The `-` operator.
+trait Sub[T]:
+    fn __sub(self, other: T): T
+
+# The `*` operator.
+trait Mul[T]:
+    fn __mul(self, other: T): T
+
+# The `/` operator.
+trait Div[T]:
+    fn __div(self, other: T): T
+
+# The `==` operator.
+trait Eq[T]:
+    fn __eq(self, other: T): Bool
+
+trait Ord[T]:
+    fn cmp(self, other: T): Ordering
+
 prim type Str
 
-prim fn Str.__eq(self, other: Str): Bool
-prim fn Str.len(self): I32
-prim fn Str.substr(self, byteStart: I32, byteEnd: I32): StrView
+impl Eq[Str]:
+    prim fn __eq(self, other: Str): Bool
+
+impl Str:
+    prim fn len(self): I32
+    prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
 
 prim type StrView
 
-prim fn StrView.__eq(self, other: StrView): Bool
-prim fn StrView.isEmpty(self): Bool
-prim fn StrView.len(self): I32
-prim fn StrView.startsWith(self, str: Str): Bool
-prim fn StrView.substr(self, byteStart: I32, byteEnd: I32): StrView
-prim fn StrView.toStr(self): Str
+impl Eq[StrView]:
+    prim fn __eq(self, other: StrView): Bool
+
+impl StrView:
+    prim fn StrView.isEmpty(self): Bool
+    prim fn StrView.len(self): I32
+    prim fn StrView.startsWith(self, str: Str): Bool
+    prim fn StrView.substr(self, byteStart: I32, byteEnd: I32): StrView
+    prim fn StrView.toStr(self): Str
 
 prim type I32
 
-prim fn I32.__add(self, other: I32): I32
-prim fn I32.__cmp(self, other: I32): Ordering
-prim fn I32.__eq(self, other: I32): Bool
-prim fn I32.__mul(self, other: I32): I32
-prim fn I32.__sub(self, other: I32): I32
-prim fn I32.toStr(self): Str
+impl Add[I32]:
+    prim fn __add(self, other: I32): I32
+
+impl Sub[I32]:
+    prim fn __sub(self, other: I32): I32
+
+impl Mul[I32]:
+    prim fn __mul(self, other: I32): I32
+
+impl Div[I32]:
+    prim fn __div(self, other: I32): I32
+
+impl Eq[I32]:
+    prim fn __eq(self, other: I32): I32
+
+impl Cmp[I32]:
+    prim fn cmp(self, other: I32): Ordering
+
+impl I32:
+    prim fn I32.toStr(self): Str
 
 prim type Array[T]
 
-prim fn Array.new(len: I32): Array[T]
-prim fn Array.len(self): I32
-prim fn Array.get(self, idx: I32): T
-prim fn Array.set(self, idx: I32, elem: T)
+impl[T] Array[T]:
+    prim fn new(len: I32): Array[T]
+    prim fn len(self): I32
+    prim fn get(self, idx: I32): T
+    prim fn set(self, idx: I32, elem: T): T
 
 prim fn printStr(s: Str)
 prim fn printStrView(s: StrView)
@@ -50,24 +94,26 @@ type Bool:
     False
     True
 
-fn Bool.__and(self, other: Bool): Bool =
-    match self:
-        Bool.False: Bool.False
-        Bool.True: other
+impl Bool:
+    fn __and(self, other: Bool): Bool =
+        match self:
+            Bool.False: Bool.False
+            Bool.True: other
 
-fn Bool.__or(self, other: Bool): Bool =
-    match self:
-        Bool.True: Bool.True
-        Bool.False: other
+    fn __or(self, other: Bool): Bool =
+        match self:
+            Bool.True: Bool.True
+            Bool.False: other
 
-fn Bool.toStr(self): Str =
-    match self:
-        Bool.True: "Bool.True"
-        Bool.False: "Bool.False"
+    fn toStr(self): Str =
+        match self:
+            Bool.True: "Bool.True"
+            Bool.False: "Bool.False"
 
 # TODO: We may want to allow unnamed fields: `type Char(U32)`.
 type Char:
     value: I32 # TODO: Switch to U32 when we have it.
 
-fn Char.__eq(self, other: Char): Bool =
-    self.value == other.value
+impl Eq[Char]:
+    fn __eq(self, other: Char): Bool =
+        self.value == other.value

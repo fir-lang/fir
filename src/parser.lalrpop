@@ -642,7 +642,7 @@ ImportDecl: L<ImportDecl> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
-            NEWLINE INDENT <funs:LFunSig*> DEDENT <r:@R> =>
+            NEWLINE INDENT <funs:Sep<LFunSig, NEWLINE>> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
@@ -657,7 +657,7 @@ TraitDecl: L<TraitDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <ty:LType>
+    <l:@L> "impl" <context:Context> <ty:LType> ":"
             NEWLINE INDENT <funs:FunDecl*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
@@ -674,6 +674,9 @@ Context: Vec<L<(SmolStr, Vec<SmolStr>)>> = {
 }
 
 TypeWithBounds: L<(SmolStr, Vec<SmolStr>)> = {
+    <l:@L> <ty:UpperId> <r:@R> =>
+        L::new(module, l, r, (ty.smol_str(), vec![])),
+
     <l:@L> <ty:UpperId> ":" <bounds:Sep1<UpperId, "+">> <r:@R> =>
         L::new(module, l, r, (ty.smol_str(), bounds.into_iter().map(|id| id.smol_str()).collect())),
 }

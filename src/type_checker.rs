@@ -96,6 +96,27 @@ impl Ty {
             other => other.clone(),
         }
     }
+
+    /// Get the type constructor of the type and the type arguments.
+    fn con(&self) -> Option<(Id, Vec<Ty>)> {
+        match self {
+            Ty::Con(con) => Some((con.clone(), vec![])),
+
+            Ty::App(con, args) => Some((con.clone(), args.clone())),
+
+            Ty::Var(_) | Ty::Record(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+                None
+            }
+        }
+    }
+
+    /// Split a function type into the argument and return types.
+    fn fun(&self) -> Option<(Vec<Ty>, Ty)> {
+        match self {
+            Ty::Fun(args, ret) => Some((args.clone(), (**ret).clone())),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -688,6 +709,7 @@ fn loc_string(loc: &ast::Loc) -> String {
 }
 
 impl Scheme {
+    /// Instantiate the type scheme, return instantiated predicates and type.
     fn instantiate(&self, level: u32, var_gen: &mut TyVarGen) -> (Vec<Ty>, Ty) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
@@ -1239,46 +1261,54 @@ fn check_expr(
         ast::Expr::Self_ => todo!(),
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
-            match op {
-                ast::BinOp::Add => {
-                    // [T: Add] (T, T): T
-                    let left_ty = check_expr(
-                        left,
-                        None,
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        quantified_vars,
-                        tys,
-                        preds,
-                    );
+            let method = match op {
+                ast::BinOp::Add => "__add",
+                ast::BinOp::Subtract => "__sub",
+                ast::BinOp::Equal => "__eq",
+                ast::BinOp::NotEqual => "__neq",
+                ast::BinOp::Multiply => "__mul",
+                ast::BinOp::Lt => "__lt",
+                ast::BinOp::Gt => "__gt",
+                ast::BinOp::LtEq => "__le",
+                ast::BinOp::GtEq => "__ge",
+                ast::BinOp::And => "__and",
+                ast::BinOp::Or => "__or",
+            };
 
-                    let _right_ty = check_expr(
-                        right,
-                        Some(&left_ty),
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        quantified_vars,
-                        tys,
-                        preds,
-                    );
+            let desugared = ast::L {
+                loc: expr.loc.clone(),
+                node: ast::Expr::Call(ast::CallExpr {
+                    fun: Box::new(ast::L {
+                        loc: left.loc.clone(),
+                        node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                            object: left.clone(),
+                            field: SmolStr::new_static(method),
+                        }),
+                    }),
+                    args: vec![
+                        ast::CallArg {
+                            name: None,
+                            expr: (**left).clone(),
+                        },
+                        ast::CallArg {
+                            name: None,
+                            expr: (**right).clone(),
+                        },
+                    ],
+                }),
+            };
 
-                    todo!()
-                }
-                ast::BinOp::Subtract => todo!(),
-                ast::BinOp::Equal => todo!(),
-                ast::BinOp::NotEqual => todo!(),
-                ast::BinOp::Multiply => todo!(),
-                ast::BinOp::Lt => todo!(),
-                ast::BinOp::Gt => todo!(),
-                ast::BinOp::LtEq => todo!(),
-                ast::BinOp::GtEq => todo!(),
-                ast::BinOp::And => todo!(),
-                ast::BinOp::Or => todo!(),
-            }
+            check_expr(
+                &desugared,
+                expected_ty,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            )
         }
 
         ast::Expr::UnOp(_) => todo!(),
