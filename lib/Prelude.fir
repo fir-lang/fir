@@ -59,7 +59,7 @@ impl Div[I32]:
 impl Eq[I32]:
     prim fn __eq(self, other: I32): I32
 
-impl Cmp[I32]:
+impl Ord[I32]:
     prim fn cmp(self, other: I32): Ordering
 
 impl I32:

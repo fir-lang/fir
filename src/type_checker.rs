@@ -464,7 +464,17 @@ fn collect_schemes(
                 // Which type to add the method to.
                 let ty_con: Id = match &impl_decl.node.ty.node {
                     ast::Type::Named(ast::NamedType { name, args }) => {
-                        if ty_cons.get(name).unwrap().is_trait() {
+                        if ty_cons
+                            .get(name)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Unknown type {}",
+                                    loc_string(&impl_decl.node.ty.loc),
+                                    name
+                                )
+                            })
+                            .is_trait()
+                        {
                             convert_ast_ty(
                                 ty_cons,
                                 &Default::default(),
