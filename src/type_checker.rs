@@ -510,6 +510,18 @@ fn collect_schemes(
                         &fun.loc,
                         ty_cons,
                     );
+                    let old = associated_schemes
+                        .entry(ty_con.clone())
+                        .or_default()
+                        .insert(fun.node.sig.name.node.clone(), scheme);
+                    if old.is_some() {
+                        panic!(
+                            "{}: Associated function {} for type {} is defined multiple times",
+                            loc_string(&fun.loc),
+                            fun.node.sig.name.node,
+                            ty_con
+                        );
+                    }
                 }
             }
 
