@@ -36,11 +36,11 @@ impl Eq[StrView]:
     prim fn __eq(self, other: StrView): Bool
 
 impl StrView:
-    prim fn StrView.isEmpty(self): Bool
-    prim fn StrView.len(self): I32
-    prim fn StrView.startsWith(self, str: Str): Bool
-    prim fn StrView.substr(self, byteStart: I32, byteEnd: I32): StrView
-    prim fn StrView.toStr(self): Str
+    prim fn isEmpty(self): Bool
+    prim fn len(self): I32
+    prim fn startsWith(self, str: Str): Bool
+    prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
+    prim fn toStr(self): Str
 
 prim type I32
 
@@ -63,7 +63,7 @@ impl Cmp[I32]:
     prim fn cmp(self, other: I32): Ordering
 
 impl I32:
-    prim fn I32.toStr(self): Str
+    prim fn toStr(self): Str
 
 prim type Array[T]
 

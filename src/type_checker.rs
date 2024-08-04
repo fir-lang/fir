@@ -522,14 +522,26 @@ fn convert_fun_ty(
     loc: &ast::Loc,
     ty_cons: &Map<Id, TyCon>,
 ) -> Scheme {
-    /*
-    let quantified_vars: Vec<(Id, Vec<Ty>)> = fun_ty_params
+    let quantified_vars: Vec<(Id, Vec<Id>)> = fun_ty_params
         .iter()
         .map(
             |ast::L {
                  node: (ty, bounds),
                  loc: _,
-             }| todo!(),
+             }| {
+                (
+                    ty.node.clone(),
+                    bounds
+                        .iter()
+                        .map(|bound| {
+                            if !ty_cons.contains_key(&bound.node) {
+                                panic!();
+                            }
+                            bound.node.clone()
+                        })
+                        .collect(),
+                )
+            },
         )
         .collect();
 
@@ -558,8 +570,6 @@ fn convert_fun_ty(
         ty: fun_ty,
         loc: loc.clone(),
     }
-    */
-    todo!()
 }
 
 /// Convert an AST type to a type checking type.
