@@ -673,6 +673,11 @@ impl Scheme {
 
         (preds, self.ty.subst_qvars(&var_map))
     }
+
+    /// Substitute `ty` for `var` in `self`.
+    fn subst(&self, var: &Id, ty: &Ty) -> Scheme {
+        todo!()
+    }
 }
 
 impl Ty {
@@ -1009,7 +1014,7 @@ fn check_expr(
 
             if let Some(scheme) = tys.top_schemes.get(var) {
                 let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
-                preds.extend(scheme_preds);
+                extend_preds(preds, scheme_preds);
                 return unify_expected_ty(ty, expected_ty, &expr.loc);
             }
 
@@ -1032,9 +1037,13 @@ fn check_expr(
             );
 
             let ty = match object_ty {
-                Ty::Con(con) => check_field_select(&con, &[], field, &expr.loc, tys),
+                Ty::Con(con) => {
+                    check_field_select(&con, &[], field, &expr.loc, tys, level, var_gen, preds)
+                }
 
-                Ty::App(con, args) => check_field_select(&con, &args, field, &expr.loc, tys),
+                Ty::App(con, args) => {
+                    check_field_select(&con, &args, field, &expr.loc, tys, level, var_gen, preds)
+                }
 
                 Ty::Record(fields) => match fields.get(field) {
                     Some(field_ty) => field_ty.clone(),
@@ -1332,7 +1341,36 @@ fn check_field_select(
     field: &Id,
     loc: &ast::Loc,
     tys: &PgmTypes,
+    level: u32,
+    var_gen: &mut TyVarGen,
+    preds: &mut Map<TyVarRef, Set<Id>>,
 ) -> Ty {
+    match select_field(ty_con, ty_args, field, loc, tys) {
+        Some(ty) => ty,
+        None => match select_method(ty_con, ty_args, field, tys) {
+            Some(scheme) => {
+                let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
+                extend_preds(preds, scheme_preds);
+                ty
+            }
+            None => panic!(
+                "{}: Type {} does not have field or method {}",
+                loc_string(loc),
+                ty_con,
+                field
+            ),
+        },
+    }
+}
+
+/// Try to select a field.
+fn select_field(
+    ty_con: &Id,
+    ty_args: &[Ty],
+    field: &Id,
+    loc: &ast::Loc,
+    tys: &PgmTypes,
+) -> Option<Ty> {
     let ty_con = tys.cons.get(ty_con).unwrap();
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
@@ -1347,21 +1385,12 @@ fn check_field_select(
         }
 
         TyConDetails::Type { cons } => match cons.len() {
-            0 => panic!(
-                "{}: BUG: Value with void type {}",
-                loc_string(loc),
-                ty_con.id,
-            ),
+            0 => None,
 
             1 => {
                 let con = &cons[0];
                 match &con.fields {
-                    ConFields::Unnamed(_) => panic!(
-                        "{}: Type {} does not have named field {}",
-                        loc_string(loc),
-                        ty_con.id,
-                        field
-                    ),
+                    ConFields::Unnamed(_) => None,
                     ConFields::Named(fields) => match fields.get(field) {
                         Some(field_ty) => {
                             let mut field_ty = field_ty.clone();
@@ -1370,26 +1399,31 @@ fn check_field_select(
                             {
                                 field_ty = field_ty.subst(ty_param, ty_arg);
                             }
-                            field_ty
+                            Some(field_ty)
                         }
-                        None => panic!(
-                            "{}: Type {} does not have field {}",
-                            loc_string(loc),
-                            ty_con.id,
-                            field
-                        ),
+                        None => None,
                     },
                 }
             }
 
-            _ => panic!(
-                "{}: Cannot select field {} of sum type {}",
-                loc_string(loc),
-                field,
-                ty_con.id,
-            ),
+            _ => None,
         },
     }
+}
+
+/// Try to select a method.
+fn select_method(ty_con: &Id, ty_args: &[Ty], field: &Id, tys: &PgmTypes) -> Option<Scheme> {
+    let ty_con = tys.cons.get(ty_con).unwrap();
+    assert_eq!(ty_con.ty_params.len(), ty_args.len());
+
+    let ty_methods = tys.associated_schemes.get(&ty_con.id)?;
+    let mut scheme = ty_methods.get(field)?.clone();
+
+    for (ty_param, ty_arg) in ty_con.ty_params.iter().zip(ty_args.iter()) {
+        scheme = scheme.subst(&ty_param.0, ty_arg);
+    }
+
+    Some(scheme)
 }
 
 fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &PgmTypes) -> Ty {
@@ -1439,3 +1473,9 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
 }
 
 fn bind_pat(pat: &ast::L<ast::Pat>, env: &mut ScopeMap<Id, Ty>) {}
+
+fn extend_preds(preds: &mut Map<TyVarRef, Set<Id>>, new_preds: Map<TyVarRef, Set<Id>>) {
+    for (ty_var, tys) in new_preds {
+        preds.entry(ty_var).or_default().extend(tys);
+    }
+}
