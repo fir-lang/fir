@@ -352,8 +352,11 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     .map(|ty| convert_ast_ty(&cons, &Default::default(), &ty.node, &ty.loc))
                     .collect();
 
-                let trait_ty_params: Set<Id> =
-                    [trait_decl.node.ty.node.0.clone()].into_iter().collect();
+                let self_ty_id = trait_decl.node.ty.node.0.clone();
+
+                let trait_ty_params: Set<Id> = [self_ty_id.clone()].into_iter().collect();
+
+                let self_ty = Ty::QVar(self_ty_id.clone());
 
                 let methods: Map<Id, Scheme> = trait_decl
                     .node
@@ -363,6 +366,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                         (
                             sig.node.name.node.clone(),
                             convert_fun_ty(
+                                if sig.node.self_ { Some(&self_ty) } else { None },
                                 &trait_ty_params,
                                 &sig.node.type_params,
                                 &sig.node.params,
@@ -442,6 +446,7 @@ fn collect_schemes(
                 loc,
             }) => {
                 let scheme = convert_fun_ty(
+                    None,
                     &Default::default(),
                     &sig.type_params,
                     &sig.params,
@@ -461,37 +466,15 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
+                let self_ty: Ty = convert_ast_ty(
+                    ty_cons,
+                    &Default::default(),
+                    &impl_decl.node.ty.node,
+                    &impl_decl.node.ty.loc,
+                );
+
                 // Which type to add the method to.
-                let ty_con: Id = match &impl_decl.node.ty.node {
-                    ast::Type::Named(ast::NamedType { name, args }) => {
-                        if ty_cons
-                            .get(name)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Unknown type {}",
-                                    loc_string(&impl_decl.node.ty.loc),
-                                    name
-                                )
-                            })
-                            .is_trait()
-                        {
-                            convert_ast_ty(
-                                ty_cons,
-                                &Default::default(),
-                                &args[0].node,
-                                &args[0].loc,
-                            )
-                            .con()
-                            .unwrap()
-                            .0
-                        } else {
-                            name.clone()
-                        }
-                    }
-                    ast::Type::Record(_) => {
-                        panic!("{}: Record type in impl block", loc_string(&impl_decl.loc))
-                    }
-                };
+                let ty_con: Id = self_ty.con().unwrap().0;
 
                 let ty_ty_params: Set<Id> = impl_decl
                     .node
@@ -503,6 +486,7 @@ fn collect_schemes(
                 for fun in &impl_decl.node.funs {
                     let sig = &fun.node.sig;
                     let scheme = convert_fun_ty(
+                        if sig.self_ { Some(&self_ty) } else { None },
                         &ty_ty_params,
                         &sig.type_params,
                         &sig.params,
@@ -537,6 +521,7 @@ fn collect_schemes(
 /// - `ty_ty_params`: When converting associated functions or trait methods, type parameters of the type.
 /// - `fun_ty_params`: Type parameters of the function.
 fn convert_fun_ty(
+    self_ty: Option<&Ty>,
     ty_ty_params: &Set<Id>,
     fun_ty_params: &[ast::L<(ast::L<Id>, Vec<ast::L<Id>>)>],
     params: &[(SmolStr, ast::L<ast::Type>)],
@@ -575,10 +560,18 @@ fn convert_fun_ty(
         .cloned()
         .collect();
 
-    let arg_tys: Vec<Ty> = params
-        .iter()
-        .map(|ty| convert_ast_ty(ty_cons, &all_quantified_vars, &ty.1.node, &ty.1.loc))
-        .collect();
+    let mut arg_tys: Vec<Ty> =
+        Vec::with_capacity(params.len() + if self_ty.is_some() { 0 } else { 0 });
+
+    if let Some(self_ty) = self_ty {
+        arg_tys.push(self_ty.clone());
+    }
+
+    arg_tys.extend(
+        params
+            .iter()
+            .map(|ty| convert_ast_ty(ty_cons, &all_quantified_vars, &ty.1.node, &ty.1.loc)),
+    );
 
     let ret_ty = match return_ty {
         Some(ret_ty) => convert_ast_ty(ty_cons, &all_quantified_vars, &ret_ty.node, &ret_ty.loc),
@@ -1083,6 +1076,8 @@ fn check_expr(
             match fun_ty {
                 Ty::Fun(param_tys, ret_ty) => {
                     if param_tys.len() != args.len() {
+                        dbg!(&param_tys);
+                        dbg!(&args);
                         panic!(
                             "{}: Function with arity {} is passed {} args",
                             loc_string(&expr.loc),
