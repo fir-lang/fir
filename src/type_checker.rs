@@ -1126,10 +1126,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         .map(|ty| ty.node.0.clone())
         .collect();
 
-    let (ty_con_id, mut ty_args) =
-        convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc)
-            .con()
-            .unwrap();
+    let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
+    let (ty_con_id, mut ty_args) = trait_ty.con().unwrap();
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap();
 
@@ -1207,7 +1205,41 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
             }
         }
     } else {
-        todo!()
+        for fun in &impl_.node.funs {
+            let fun_ty = convert_fun_ty(
+                Some(&trait_ty),
+                &quantified_tys,
+                &fun.node.sig.type_params,
+                &fun.node.sig.params,
+                &fun.node.sig.return_ty,
+                &fun.loc,
+                &tys.cons,
+            );
+
+            // Check the body.
+            if let Some(body) = &fun.node.body {
+                let ret_ty = match &fun.node.sig.return_ty {
+                    Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
+                    None => Ty::Record(Default::default()),
+                };
+
+                let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
+                let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+                let mut var_gen = TyVarGen::default();
+
+                check_stmts(
+                    &body.node,
+                    Some(&ret_ty),
+                    &ret_ty,
+                    0,
+                    &mut env,
+                    &mut var_gen,
+                    &quantified_tys,
+                    tys,
+                    &mut preds,
+                );
+            }
+        }
     }
 }
 

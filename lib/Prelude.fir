@@ -58,7 +58,7 @@ impl Div[I32]:
     prim fn __div(self, other: I32): I32
 
 impl Eq[I32]:
-    prim fn __eq(self, other: I32): I32
+    prim fn __eq(self, other: I32): Bool
 
 impl Ord[I32]:
     prim fn cmp(self, other: I32): Ordering
