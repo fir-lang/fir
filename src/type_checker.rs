@@ -723,7 +723,111 @@ impl Scheme {
 
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
     fn eq_modulo_alpha(&self, other: &Scheme) -> bool {
-        todo!()
+        if self.quantified_vars.len() != other.quantified_vars.len() {
+            return false;
+        }
+
+        // Map quantified variables to their indices.
+        let left_vars: Map<Id, u32> = self
+            .quantified_vars
+            .iter()
+            .enumerate()
+            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .collect();
+
+        let right_vars: Map<Id, u32> = other
+            .quantified_vars
+            .iter()
+            .enumerate()
+            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .collect();
+
+        ty_eq_modulo_alpha(&self.ty, &other.ty, &left_vars, &right_vars)
+    }
+}
+
+fn ty_eq_modulo_alpha(
+    ty1: &Ty,
+    ty2: &Ty,
+    ty1_qvars: &Map<Id, u32>,
+    ty2_qvars: &Map<Id, u32>,
+) -> bool {
+    match (ty1, ty2) {
+        (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
+
+        (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
+
+        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+            con1 == con2
+                && args1.len() == args2.len()
+                && args1
+                    .iter()
+                    .zip(args2.iter())
+                    .all(|(ty1, ty2)| ty_eq_modulo_alpha(ty1, ty2, ty1_qvars, ty2_qvars))
+        }
+
+        (Ty::Record(fields1), Ty::Record(fields2)) => {
+            let keys1: Set<&Id> = fields1.keys().collect();
+            let keys2: Set<&Id> = fields2.keys().collect();
+
+            if keys1 != keys2 {
+                return false;
+            }
+
+            for key in keys1 {
+                if !ty_eq_modulo_alpha(
+                    fields1.get(key).unwrap(),
+                    fields2.get(key).unwrap(),
+                    ty1_qvars,
+                    ty2_qvars,
+                ) {
+                    return false;
+                }
+            }
+
+            true
+        }
+
+        (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
+            let qvar1_idx = ty1_qvars.get(qvar1).unwrap();
+            let qvar2_idx = ty2_qvars.get(qvar2).unwrap();
+            qvar1_idx == qvar2_idx
+        }
+
+        (Ty::Fun(args1, ret1), Ty::Fun(args2, ret2)) => {
+            if args1.len() != args2.len() {
+                return false;
+            }
+
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                if !ty_eq_modulo_alpha(arg1, arg2, ty1_qvars, ty2_qvars) {
+                    return false;
+                }
+            }
+
+            ty_eq_modulo_alpha(ret1, ret2, ty1_qvars, ty2_qvars)
+        }
+
+        (Ty::FunNamedArgs(args1, ret1), Ty::FunNamedArgs(args2, ret2)) => {
+            let names1: Set<&Id> = args1.keys().collect();
+            let names2: Set<&Id> = args2.keys().collect();
+
+            if names1 != names2 {
+                return false;
+            }
+
+            for name in names1 {
+                let ty1 = args1.get(name).unwrap();
+                let ty2 = args2.get(name).unwrap();
+                if !ty_eq_modulo_alpha(ty1, ty2, ty1_qvars, ty2_qvars) {
+                    return false;
+                }
+            }
+
+            ty_eq_modulo_alpha(ret1, ret2, ty1_qvars, ty2_qvars)
+        }
+
+        _ => false,
     }
 }
 
