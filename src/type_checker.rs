@@ -1206,16 +1206,6 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         }
     } else {
         for fun in &impl_.node.funs {
-            let fun_ty = convert_fun_ty(
-                Some(&trait_ty),
-                &quantified_tys,
-                &fun.node.sig.type_params,
-                &fun.node.sig.params,
-                &fun.node.sig.return_ty,
-                &fun.loc,
-                &tys.cons,
-            );
-
             // Check the body.
             if let Some(body) = &fun.node.body {
                 let ret_ty = match &fun.node.sig.return_ty {
