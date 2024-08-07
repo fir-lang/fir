@@ -906,10 +906,20 @@ pub fn check_module(module: &ast::Module) {
 
     for decl in module {
         match &decl.node {
-            ast::TopDecl::Import(_) => panic!("Import declaration in check_module"),
+            ast::TopDecl::Import(_) => panic!(
+                "{}: Import declaration in check_module",
+                loc_string(&decl.loc)
+            ),
+
             ast::TopDecl::Type(_) => {}
-            ast::TopDecl::Trait(_) => todo!("Trait declaration in check_module"),
-            ast::TopDecl::Impl(_) => todo!("Impl block in check_module"),
+
+            ast::TopDecl::Trait(_) => todo!(
+                "{}: Trait declaration in check_module",
+                loc_string(&decl.loc)
+            ),
+
+            ast::TopDecl::Impl(_) => todo!("{}: Impl block in check_module", loc_string(&decl.loc)),
+
             ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
         }
     }
@@ -1315,7 +1325,63 @@ fn check_expr(
 
         ast::Expr::Return(_) => todo!(),
 
-        ast::Expr::Match(_) => todo!(),
+        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+            let scrut_ty = check_expr(
+                scrutinee,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            );
+
+            let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
+
+            for ast::Alt {
+                pattern,
+                guard,
+                rhs,
+            } in alts
+            {
+                let pat_ty = infer_pat(pattern, level, var_gen, tys);
+                unify(&pat_ty, &scrut_ty, &pattern.loc);
+
+                if let Some(guard) = guard {
+                    check_expr(
+                        guard,
+                        Some(&Ty::Con(SmolStr::new_static("Bool"))),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+                }
+
+                rhs_tys.push(check_stmts(
+                    rhs,
+                    None,
+                    return_ty,
+                    level,
+                    env,
+                    var_gen,
+                    quantified_vars,
+                    tys,
+                    preds,
+                ));
+            }
+
+            for tys in rhs_tys.windows(2) {
+                unify(&tys[0], &tys[1], &expr.loc);
+            }
+
+            rhs_tys.pop().unwrap()
+        }
 
         ast::Expr::If(ast::IfExpr {
             branches,

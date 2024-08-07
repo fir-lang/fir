@@ -29,6 +29,7 @@ impl Eq[Str]:
 impl Str:
     prim fn len(self): I32
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
+    prim fn toStrView(self): StrView
 
 prim type StrView
 
@@ -75,7 +76,7 @@ impl[T] Array[T]:
 
 prim fn printStr(s: Str)
 prim fn printStrView(s: StrView)
-prim fn panic(message: StrView)
+prim fn panic(msg: StrView)
 
 type Option[T]:
     None
