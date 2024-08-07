@@ -473,7 +473,7 @@ fn collect_schemes(
                     .map(|ty| ty.node.0.clone())
                     .collect();
 
-                let self_ty: Ty = convert_ast_ty(
+                let mut self_ty: Ty = convert_ast_ty(
                     ty_cons,
                     &ty_ty_params,
                     &impl_decl.node.ty.node,
@@ -496,9 +496,13 @@ fn collect_schemes(
                     }
 
                     // Add the associated method to the type rather than to the trait.
-                    let trait_arg = &ty_args[0];
-                    let (ty_con_id_, ty_args_) = trait_arg.con().unwrap_or_else(|| {
-                        panic!("{}: Trait type argument needs to be a type constructor, but it is {:?}", loc_string(&impl_decl.loc), trait_arg)
+                    self_ty = ty_args[0].clone();
+                    let (ty_con_id_, ty_args_) = self_ty.con().unwrap_or_else(|| {
+                        panic!(
+                            "{}: Trait type argument needs to be a type constructor, but it is {:?}",
+                            loc_string(&impl_decl.loc),
+                            self_ty
+                        )
                     });
                     ty_con_id = ty_con_id_;
                     ty_args = ty_args_;
@@ -1101,11 +1105,10 @@ fn check_expr(
                 preds,
             );
 
+            // TODO: Handle passing self when `fun` is a `FieldSelect`.
             match fun_ty {
                 Ty::Fun(param_tys, ret_ty) => {
                     if param_tys.len() != args.len() {
-                        dbg!(&param_tys);
-                        dbg!(&args);
                         panic!(
                             "{}: Function with arity {} is passed {} args",
                             loc_string(&expr.loc),
