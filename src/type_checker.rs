@@ -1086,7 +1086,6 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
     // TODO: Add type parameters to the env.
-
     let mut quantified_vars: Set<Id> = Default::default();
 
     for (param_name, param_ty) in &fun.node.sig.params {
@@ -1191,6 +1190,15 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                 let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                 let mut var_gen = TyVarGen::default();
 
+                env.bind(SmolStr::new_static("self"), implementing_ty.clone());
+
+                for (param_name, param_ty) in &fun.node.sig.params {
+                    env.bind(
+                        param_name.clone(),
+                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &fun.loc),
+                    );
+                }
+
                 check_stmts(
                     &body.node,
                     Some(&ret_ty),
@@ -1216,6 +1224,15 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                 let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
                 let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                 let mut var_gen = TyVarGen::default();
+
+                env.bind(SmolStr::new_static("self"), trait_ty.clone());
+
+                for (param_name, param_ty) in &fun.node.sig.params {
+                    env.bind(
+                        param_name.clone(),
+                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &fun.loc),
+                    );
+                }
 
                 check_stmts(
                     &body.node,
@@ -1363,7 +1380,7 @@ fn check_expr(
                 return unify_expected_ty(ty, expected_ty, &expr.loc);
             }
 
-            panic!("Unbound variable at {}", loc_string(&expr.loc));
+            panic!("{}: Unbound variable {}", loc_string(&expr.loc), var);
         }
 
         ast::Expr::UpperVar(_) => todo!(),
@@ -1543,7 +1560,10 @@ fn check_expr(
             unify_expected_ty(Ty::Con(SmolStr::new_static("Char")), expected_ty, &expr.loc)
         }
 
-        ast::Expr::Self_ => todo!(),
+        ast::Expr::Self_ => match env.get("self") {
+            Some(self_ty) => unify_expected_ty(self_ty.clone(), expected_ty, &expr.loc),
+            None => panic!("{}: Unbound self", loc_string(&expr.loc)),
+        },
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
