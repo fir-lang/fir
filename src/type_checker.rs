@@ -473,8 +473,36 @@ fn collect_schemes(
                     &impl_decl.node.ty.loc,
                 );
 
-                // Which type to add the method to.
-                let ty_con: Id = self_ty.con().unwrap().0;
+                let (mut ty_con_id, mut ty_args) = self_ty.con().unwrap();
+                let mut ty_con = match ty_cons.get(&ty_con_id) {
+                    Some(ty_con) => ty_con,
+                    None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
+                };
+
+                if ty_con.is_trait() {
+                    if ty_args.len() != 1 {
+                        panic!(
+                            "{}: Trait {} should have one type argument",
+                            loc_string(&impl_decl.loc),
+                            ty_con_id
+                        );
+                    }
+
+                    // Add the associated method to the type rather than to the trait.
+                    let trait_arg = &ty_args[0];
+                    let (ty_con_id_, ty_args_) = trait_arg.con().unwrap_or_else(|| {
+                        panic!("{}: Trait type argument needs to be a type constructor, but it is {:?}", loc_string(&impl_decl.loc), trait_arg)
+                    });
+                    ty_con_id = ty_con_id_;
+                    ty_args = ty_args_;
+
+                    ty_con = match ty_cons.get(&ty_con_id) {
+                        Some(ty_con) => ty_con,
+                        None => {
+                            panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id)
+                        }
+                    };
+                }
 
                 let ty_ty_params: Set<Id> = impl_decl
                     .node
@@ -495,7 +523,7 @@ fn collect_schemes(
                         ty_cons,
                     );
                     let old = associated_schemes
-                        .entry(ty_con.clone())
+                        .entry(ty_con_id.clone())
                         .or_default()
                         .insert(fun.node.sig.name.node.clone(), scheme);
                     if old.is_some() {
@@ -503,7 +531,7 @@ fn collect_schemes(
                             "{}: Associated function {} for type {} is defined multiple times",
                             loc_string(&fun.loc),
                             fun.node.sig.name.node,
-                            ty_con
+                            ty_con_id
                         );
                     }
                 }
