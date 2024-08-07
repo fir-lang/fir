@@ -73,8 +73,42 @@ impl Ty {
     /// Substitute `ty` for quantified `var` in `self`.
     fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
-            Ty::QVar(qvar) if qvar == var => ty.clone(),
-            _ => self.clone(),
+            Ty::Con(id) => Ty::Con(id.clone()),
+
+            Ty::Var(var) => Ty::Var(var.clone()),
+
+            Ty::App(var, tys) => Ty::App(
+                var.clone(),
+                tys.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+            ),
+
+            Ty::Record(fields) => Ty::Record(
+                fields
+                    .iter()
+                    .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
+                    .collect(),
+            ),
+
+            Ty::QVar(qvar) => {
+                if qvar == var {
+                    ty.clone()
+                } else {
+                    Ty::QVar(qvar.clone())
+                }
+            }
+
+            Ty::Fun(args, ret) => Ty::Fun(
+                args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                Box::new(ret.subst(var, ty)),
+            ),
+
+            Ty::FunNamedArgs(named_args, ret) => Ty::FunNamedArgs(
+                named_args
+                    .iter()
+                    .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
+                    .collect(),
+                Box::new(ret.subst(var, ty)),
+            ),
         }
     }
 
@@ -1138,9 +1172,13 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
             if !trait_method_ty.eq_modulo_alpha(&fun_ty) {
                 panic!(
-                    "{}: Trait method implementation of {} does not match the trait method type",
+                    "{}: Trait method implementation of {} does not match the trait method type
+                    Trait method type:          {:?}
+                    Implementation method type: {:?}",
                     loc_string(&fun.loc),
-                    fun_name
+                    fun_name,
+                    trait_method_ty,
+                    fun_ty
                 );
             }
 
