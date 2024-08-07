@@ -801,6 +801,43 @@ fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
 
         (ty1, Ty::Var(var)) => link_var(var, ty1),
 
+        (Ty::Record(fields1), Ty::Record(fields2)) => {
+            let keys1: Set<&Id> = fields1.keys().collect();
+            let keys2: Set<&Id> = fields2.keys().collect();
+
+            let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
+            let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
+
+            if !extras1.is_empty() {
+                panic!(
+                    "{}: Unable to unify records: extra keys: {:?}",
+                    loc_string(loc),
+                    extras1
+                );
+            }
+
+            if !extras2.is_empty() {
+                panic!(
+                    "{}: Unable to unify records: extra keys: {:?}",
+                    loc_string(loc),
+                    extras2
+                );
+            }
+
+            if keys1 != keys2 {
+                panic!(
+                    "{}: Unable to unify records: keys don't match",
+                    loc_string(loc)
+                );
+            }
+
+            for key in keys1 {
+                let ty1 = fields1.get(key).unwrap();
+                let ty2 = fields2.get(key).unwrap();
+                unify(ty1, ty2, loc);
+            }
+        }
+
         (ty1, ty2) => panic!(
             "Unable to unify types {:?} and {:?} at {}",
             ty1,
@@ -1250,16 +1287,10 @@ fn check_expr(
                             field: SmolStr::new_static(method),
                         }),
                     }),
-                    args: vec![
-                        ast::CallArg {
-                            name: None,
-                            expr: (**left).clone(),
-                        },
-                        ast::CallArg {
-                            name: None,
-                            expr: (**right).clone(),
-                        },
-                    ],
+                    args: vec![ast::CallArg {
+                        name: None,
+                        expr: (**right).clone(),
+                    }],
                 }),
             };
 
@@ -1377,7 +1408,20 @@ fn check_field_select(
             Some(scheme) => {
                 let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
                 extend_preds(preds, scheme_preds);
-                ty
+
+                // Type arguments of the receiver already substituted for type parameters in
+                // `select_method`. Drop 'self' argument.
+                match ty {
+                    Ty::Fun(mut args, ret) => {
+                        args.remove(0);
+                        Ty::Fun(args, ret)
+                    }
+                    _ => panic!(
+                        "{}: Type of method is not a function type: {:?}",
+                        loc_string(loc),
+                        ty
+                    ),
+                }
             }
             None => panic!(
                 "{}: Type {} does not have field or method {}",
