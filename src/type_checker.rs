@@ -466,9 +466,16 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
+                let ty_ty_params: Set<Id> = impl_decl
+                    .node
+                    .context
+                    .iter()
+                    .map(|ty| ty.node.0.clone())
+                    .collect();
+
                 let self_ty: Ty = convert_ast_ty(
                     ty_cons,
-                    &Default::default(),
+                    &ty_ty_params,
                     &impl_decl.node.ty.node,
                     &impl_decl.node.ty.loc,
                 );
@@ -503,13 +510,6 @@ fn collect_schemes(
                         }
                     };
                 }
-
-                let ty_ty_params: Set<Id> = impl_decl
-                    .node
-                    .context
-                    .iter()
-                    .map(|ty| ty.node.0.clone())
-                    .collect();
 
                 for fun in &impl_decl.node.funs {
                     let sig = &fun.node.sig;
