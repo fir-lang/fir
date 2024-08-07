@@ -496,7 +496,7 @@ fn collect_schemes(
                     }
 
                     // Add the associated method to the type rather than to the trait.
-                    self_ty = ty_args[0].clone();
+                    self_ty = ty_args.pop().unwrap();
                     let (ty_con_id_, ty_args_) = self_ty.con().unwrap_or_else(|| {
                         panic!(
                             "{}: Trait type argument needs to be a type constructor, but it is {:?}",
@@ -513,6 +513,8 @@ fn collect_schemes(
                             panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id)
                         }
                     };
+
+                    // TODO: Check that the method types match trait methods.
                 }
 
                 for fun in &impl_decl.node.funs {
@@ -701,6 +703,11 @@ impl Scheme {
 
     /// Substitute `ty` for `var` in `self`.
     fn subst(&self, var: &Id, ty: &Ty) -> Scheme {
+        todo!()
+    }
+
+    /// Compare two schemes for equality modulo alpha renaming of quantified types.
+    fn eq_modulo_alpha(&self, other: &Scheme) -> bool {
         todo!()
     }
 }
@@ -911,14 +918,10 @@ pub fn check_module(module: &ast::Module) {
                 loc_string(&decl.loc)
             ),
 
-            ast::TopDecl::Type(_) => {}
+            // Types and schemes added to `PgmTypes` by `collect_types`.
+            ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
 
-            ast::TopDecl::Trait(_) => todo!(
-                "{}: Trait declaration in check_module",
-                loc_string(&decl.loc)
-            ),
-
-            ast::TopDecl::Impl(_) => todo!("{}: Impl block in check_module", loc_string(&decl.loc)),
+            ast::TopDecl::Impl(impl_) => check_impl(impl_, &tys),
 
             ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
         }
@@ -947,17 +950,108 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 
     let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
 
-    check_stmts(
-        &fun.node.body.as_ref().unwrap().node,
-        Some(&ret_ty),
-        &ret_ty,
-        0,
-        &mut env,
-        &mut var_gen,
-        &quantified_vars,
-        tys,
-        &mut preds,
-    );
+    if let Some(body) = &fun.node.body.as_ref() {
+        check_stmts(
+            &body.node,
+            Some(&ret_ty),
+            &ret_ty,
+            0,
+            &mut env,
+            &mut var_gen,
+            &quantified_vars,
+            tys,
+            &mut preds,
+        );
+    }
+}
+
+fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
+    let quantified_tys: Set<Id> = impl_
+        .node
+        .context
+        .iter()
+        .map(|ty| ty.node.0.clone())
+        .collect();
+
+    let (ty_con_id, mut ty_args) =
+        convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc)
+            .con()
+            .unwrap();
+
+    let ty_con = tys.cons.get(&ty_con_id).unwrap();
+
+    if let TyConDetails::Trait {
+        methods: trait_methods,
+    } = &ty_con.details
+    {
+        // Check that the method types match trait method types, with the trait type parameter
+        // replaced by the implementing type.
+        assert_eq!(ty_args.len(), 1); // checked in the previous pass
+        assert_eq!(ty_con.ty_params.len(), 1); // checked in the previous pass
+
+        // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
+        let implementing_ty = ty_args.pop().unwrap();
+        let trait_ty_param = &ty_con.ty_params[0].0;
+
+        for fun in &impl_.node.funs {
+            let fun_name: &Id = &fun.node.sig.name.node;
+
+            let trait_method_ty = trait_methods.get(fun_name).unwrap_or_else(|| {
+                panic!(
+                    "{}: Trait {} does not have a method named {}",
+                    loc_string(&fun.loc),
+                    ty_con_id,
+                    fun_name
+                )
+            });
+
+            let trait_method_ty = trait_method_ty.subst(trait_ty_param, &implementing_ty);
+
+            let fun_ty = convert_fun_ty(
+                Some(&implementing_ty),
+                &quantified_tys,
+                &fun.node.sig.type_params,
+                &fun.node.sig.params,
+                &fun.node.sig.return_ty,
+                &fun.loc,
+                &tys.cons,
+            );
+
+            if !trait_method_ty.eq_modulo_alpha(&fun_ty) {
+                panic!(
+                    "{}: Trait method implementation of {} does not match the trait method type",
+                    loc_string(&fun.loc),
+                    fun_name
+                );
+            }
+
+            // Check the body.
+            if let Some(body) = &fun.node.body {
+                let ret_ty = match &fun.node.sig.return_ty {
+                    Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
+                    None => Ty::Record(Default::default()),
+                };
+
+                let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
+                let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+                let mut var_gen = TyVarGen::default();
+
+                check_stmts(
+                    &body.node,
+                    Some(&ret_ty),
+                    &ret_ty,
+                    0,
+                    &mut env,
+                    &mut var_gen,
+                    &quantified_tys,
+                    tys,
+                    &mut preds,
+                );
+            }
+        }
+    } else {
+        todo!()
+    }
 }
 
 fn check_stmts(
@@ -1608,7 +1702,9 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
     }
 }
 
-fn bind_pat(pat: &ast::L<ast::Pat>, env: &mut ScopeMap<Id, Ty>) {}
+fn bind_pat(pat: &ast::L<ast::Pat>, env: &mut ScopeMap<Id, Ty>) {
+    todo!()
+}
 
 fn extend_preds(preds: &mut Map<TyVarRef, Set<Id>>, new_preds: Map<TyVarRef, Set<Id>>) {
     for (ty_var, tys) in new_preds {
