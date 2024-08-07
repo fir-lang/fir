@@ -70,9 +70,12 @@ impl Ty {
         Ty::Record(Default::default())
     }
 
-    /// Substitute `ty` for `var` in `self`.
+    /// Substitute `ty` for quantified `var` in `self`.
     fn subst(&self, var: &Id, ty: &Ty) -> Ty {
-        todo!()
+        match self {
+            Ty::QVar(qvar) if qvar == var => ty.clone(),
+            _ => self.clone(),
+        }
     }
 
     /// If the type is a unification variable, follow the links.
@@ -701,9 +704,21 @@ impl Scheme {
         (preds, self.ty.subst_qvars(&var_map))
     }
 
-    /// Substitute `ty` for `var` in `self`.
-    fn subst(&self, var: &Id, ty: &Ty) -> Scheme {
-        todo!()
+    /// Substitute `ty` for quantified `var` in `self`.
+    fn subst(&self, var: &Id, ty: &Ty, _loc: &ast::Loc) -> Scheme {
+        // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
+        // but in associated functions and trait methods it can also be a type parameter of the
+        // trait/type. For now we use the same subst method for both.
+        Scheme {
+            quantified_vars: self
+                .quantified_vars
+                .iter()
+                .filter(|(var_, _bounds)| var_ != var)
+                .cloned()
+                .collect(),
+            ty: self.ty.subst(var, ty),
+            loc: self.loc.clone(),
+        }
     }
 
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
@@ -1005,7 +1020,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                 )
             });
 
-            let trait_method_ty = trait_method_ty.subst(trait_ty_param, &implementing_ty);
+            let trait_method_ty = trait_method_ty.subst(trait_ty_param, &implementing_ty, &fun.loc);
 
             let fun_ty = convert_fun_ty(
                 Some(&implementing_ty),
@@ -1564,7 +1579,7 @@ fn check_field_select(
 ) -> Ty {
     match select_field(ty_con, ty_args, field, loc, tys) {
         Some(ty) => ty,
-        None => match select_method(ty_con, ty_args, field, tys) {
+        None => match select_method(ty_con, ty_args, field, tys, loc) {
             Some(scheme) => {
                 let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
                 extend_preds(preds, scheme_preds);
@@ -1642,7 +1657,13 @@ fn select_field(
 }
 
 /// Try to select a method.
-fn select_method(ty_con: &Id, ty_args: &[Ty], field: &Id, tys: &PgmTypes) -> Option<Scheme> {
+fn select_method(
+    ty_con: &Id,
+    ty_args: &[Ty],
+    field: &Id,
+    tys: &PgmTypes,
+    loc: &ast::Loc,
+) -> Option<Scheme> {
     let ty_con = tys.cons.get(ty_con).unwrap();
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
@@ -1650,7 +1671,7 @@ fn select_method(ty_con: &Id, ty_args: &[Ty], field: &Id, tys: &PgmTypes) -> Opt
     let mut scheme = ty_methods.get(field)?.clone();
 
     for (ty_param, ty_arg) in ty_con.ty_params.iter().zip(ty_args.iter()) {
-        scheme = scheme.subst(&ty_param.0, ty_arg);
+        scheme = scheme.subst(&ty_param.0, ty_arg, loc);
     }
 
     Some(scheme)
