@@ -59,6 +59,12 @@ pub enum TopDecl {
 
     /// An import declaration.
     Import(L<ImportDecl>),
+
+    /// A trait declaration.
+    Trait(L<TraitDecl>),
+
+    /// An `impl` block, implementing a trait or associated methods for a type.
+    Impl(L<ImplDecl>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
@@ -68,7 +74,6 @@ pub struct TypeDecl {
     pub name: SmolStr,
 
     /// Type parameters, e.g. `[T]`.
-    #[allow(unused)]
     pub type_params: Vec<SmolStr>,
 
     /// Constructors of the type.
@@ -122,14 +127,11 @@ pub struct Named<T> {
 /// return type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunSig {
-    /// The type name in associated functions, e.g. in `fn X[T].f()` this is `X[T]`.
-    pub type_name: Option<L<SmolStr>>,
-
     /// Name of the function, e.g. in `fn f()` this is `f`.
     pub name: L<SmolStr>,
 
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
-    pub type_params: Vec<L<(L<SmolStr>, Vec<L<Type>>)>>,
+    pub type_params: Vec<L<(L<SmolStr>, Vec<L<SmolStr>>)>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
@@ -371,9 +373,41 @@ pub enum BinOp {
 pub enum UnOp {
     Not,
 }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     /// Import path, e.g. `Fir.Prelude`.
     pub path: Vec<SmolStr>,
     // TODO: Imported thing list, renaming (`as`).
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraitDecl {
+    /// Trait name.
+    pub name: L<SmolStr>,
+
+    /// Type parameter of the trait, with bounds.
+    pub ty: L<(SmolStr, Vec<L<Type>>)>,
+
+    pub funs: Vec<L<FunSig>>,
+}
+
+/// An `impl` block, implementing associated methods for a type, or a trait.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImplDecl {
+    /// Type parameters of the type being implemented, with bounds. E.g. in
+    ///
+    /// ```ignore
+    /// impl[T: Debug + Foo] Debug[Vec[T]]: ...
+    /// ```
+    ///
+    /// this field will be `[(T, [Debug, Foo])]`.
+    pub context: Vec<L<(SmolStr, Vec<SmolStr>)>>,
+
+    /// The type being implemented.
+    ///
+    /// This can be a trait (e.g. `Debug[Vec[T]]`) or a type (e.g. `Vec[T]`).
+    pub ty: L<Type>,
+
+    pub funs: Vec<L<FunDecl>>,
 }

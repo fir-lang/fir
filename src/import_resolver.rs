@@ -64,7 +64,10 @@ fn resolve_imports_(
 ) {
     for decl in module {
         match &decl.node {
-            ast::TopDecl::Type(_) | ast::TopDecl::Fun(_) => new_module.push(decl),
+            ast::TopDecl::Type(_)
+            | ast::TopDecl::Fun(_)
+            | ast::TopDecl::Trait(_)
+            | ast::TopDecl::Impl(_) => new_module.push(decl),
             ast::TopDecl::Import(import) => {
                 let path = &import.node.path;
 
