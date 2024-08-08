@@ -74,7 +74,6 @@ pub struct TypeDecl {
     pub name: SmolStr,
 
     /// Type parameters, e.g. `[T]`.
-    #[allow(unused)]
     pub type_params: Vec<SmolStr>,
 
     /// Constructors of the type.

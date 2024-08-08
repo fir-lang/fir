@@ -358,7 +358,16 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                                 .iter()
                                 .map(|ast::ConstructorDecl { name, fields }| ValCon {
                                     name: name.clone(),
-                                    fields: convert_fields(&ty_con, fields, &cons, &decl.loc),
+                                    fields: convert_fields(
+                                        &ty_con
+                                            .ty_params
+                                            .iter()
+                                            .map(|(id, _)| id.clone())
+                                            .collect(),
+                                        fields,
+                                        &cons,
+                                        &decl.loc,
+                                    ),
                                 })
                                 .collect();
 
@@ -368,7 +377,12 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                         ast::TypeDeclRhs::Product(fields) => TyConDetails::Type {
                             cons: vec![ValCon {
                                 name: ty_decl.node.name.clone(),
-                                fields: convert_fields(&ty_con, fields, &cons, &decl.loc),
+                                fields: convert_fields(
+                                    &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
+                                    fields,
+                                    &cons,
+                                    &decl.loc,
+                                ),
                             }],
                         },
                     },
@@ -430,7 +444,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
 }
 
 fn convert_fields(
-    ty_con: &TyCon,
+    ty_params: &Set<Id>,
     fields: &ast::ConstructorFields,
     ty_cons: &Map<Id, TyCon>,
     loc: &ast::Loc,
@@ -440,35 +454,20 @@ fn convert_fields(
         ast::ConstructorFields::Named(named_fields) => ConFields::Named(
             named_fields
                 .iter()
-                .map(|(name, ty)| {
-                    (
-                        name.clone(),
-                        convert_ast_ty(
-                            &ty_cons,
-                            &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
-                            ty,
-                            loc,
-                        ),
-                    )
-                })
+                .map(|(name, ty)| (name.clone(), convert_ast_ty(&ty_cons, ty_params, ty, loc)))
                 .collect(),
         ),
         ast::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
             fields
                 .iter()
-                .map(|ty| {
-                    convert_ast_ty(
-                        &ty_cons,
-                        &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
-                        ty,
-                        loc,
-                    )
-                })
+                .map(|ty| convert_ast_ty(&ty_cons, ty_params, ty, loc))
                 .collect(),
         ),
     }
 }
 
+// NB. For now top schemes include product constructors and associated schemes include sum
+// constructors.
 fn collect_schemes(
     module: &ast::Module,
     ty_cons: &Map<Id, TyCon>,
@@ -580,7 +579,91 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Trait(_) | ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => continue,
+            ast::TopDecl::Type(ty_decl) => {
+                let rhs = match &ty_decl.node.rhs {
+                    Some(rhs) => rhs,
+                    None => continue,
+                };
+
+                let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
+
+                let ret = if ty_vars.is_empty() {
+                    Ty::Con(ty_decl.node.name.clone())
+                } else {
+                    Ty::App(
+                        ty_decl.node.name.clone(),
+                        ty_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|ty_var| Ty::QVar(ty_var.clone()))
+                            .collect(),
+                    )
+                };
+
+                match rhs {
+                    ast::TypeDeclRhs::Sum(cons) => {
+                        for con in cons {
+                            let fields = &con.fields;
+                            // TODO: loc should be con loc, add loc to cons
+                            let ty = match convert_fields(&ty_vars, fields, ty_cons, &ty_decl.loc) {
+                                ConFields::Unnamed(tys) => Ty::Fun(tys, Box::new(ret.clone())),
+                                ConFields::Named(tys) => {
+                                    Ty::FunNamedArgs(tys, Box::new(ret.clone()))
+                                }
+                            };
+                            let scheme = Scheme {
+                                quantified_vars: ty_decl
+                                    .node
+                                    .type_params
+                                    .iter()
+                                    .map(|ty_param| (ty_param.clone(), vec![]))
+                                    .collect(),
+                                ty,
+                                loc: ty_decl.loc.clone(), // TODO: use con loc
+                            };
+                            let old = associated_schemes
+                                .entry(ty_decl.node.name.clone())
+                                .or_default()
+                                .insert(con.name.clone(), scheme);
+                            if old.is_some() {
+                                panic!(
+                                    "{}: Constructor {}.{} is defined multiple times",
+                                    loc_string(&ty_decl.loc), // TODO: use con loc
+                                    ty_decl.node.name,
+                                    con.name,
+                                );
+                            }
+                        }
+                    }
+                    ast::TypeDeclRhs::Product(fields) => {
+                        let ty = match convert_fields(&ty_vars, fields, ty_cons, &ty_decl.loc) {
+                            ConFields::Unnamed(tys) => Ty::Fun(tys, Box::new(ret.clone())),
+                            ConFields::Named(tys) => Ty::FunNamedArgs(tys, Box::new(ret.clone())),
+                        };
+                        let scheme = Scheme {
+                            quantified_vars: ty_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|ty_param| (ty_param.clone(), vec![]))
+                                .collect(),
+                            ty,
+                            loc: ty_decl.loc.clone(), // TODO: use con loc
+                        };
+                        let old = top_schemes.insert(ty_decl.node.name.clone(), scheme);
+                        if old.is_some() {
+                            panic!(
+                                "{}: Constructor {} is defined multiple times",
+                                loc_string(&ty_decl.loc), // TODO: use con loc
+                                ty_decl.node.name,
+                            );
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Trait(_) | ast::TopDecl::Import(_) => continue,
         }
     }
 
