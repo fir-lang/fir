@@ -1874,103 +1874,110 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
                 .get(type_)
                 .unwrap_or_else(|| panic!("{}: Undefined type", loc_string(&pat.loc)));
 
-            match &ty_con.details {
-                TyConDetails::Trait { .. } => panic!(
-                    "{}: Type constructor {} is a trait",
-                    loc_string(&pat.loc),
-                    type_
-                ),
-                TyConDetails::Type { cons } => match constr {
-                    Some(constr) => todo!(),
+            let val_con = {
+                match &ty_con.details {
+                    TyConDetails::Trait { .. } => panic!(
+                        "{}: Type constructor {} is a trait",
+                        loc_string(&pat.loc),
+                        type_
+                    ),
 
-                    None => {
-                        if cons.len() != 1 {
-                            panic!(
+                    TyConDetails::Type { cons } => match constr {
+                        Some(pat_constr) => match cons.iter().find(|con| &con.name == pat_constr) {
+                            Some(con) => con,
+                            None => panic!(
+                                "{}: Type {} does not have a constructor named {}",
+                                loc_string(&pat.loc),
+                                type_,
+                                pat_constr
+                            ),
+                        },
+                        None => {
+                            if cons.len() != 1 {
+                                panic!(
                                     "{}: Type {} is a sum type, but pattern does not have a constructor",
                                     loc_string(&pat.loc),
                                     type_
                                 );
-                        }
-
-                        let con_fields = &cons[0].fields;
-
-                        match con_fields {
-                            ConFields::Unnamed(con_field_tys) => {
-                                for pat_field in pat_fields {
-                                    if pat_field.name.is_some() {
-                                        panic!(
-                                                "{}: {}.{} has no named fields, but the pattern has a named field",
-                                                loc_string(&pat.loc),
-                                                type_,
-                                                &cons[0].name
-                                            );
-                                    }
-                                }
-
-                                if con_field_tys.len() != pat_fields.len() {
-                                    panic!(
-                                            "{}: {}.{} has {} named fields, but the pattern has {} fields",
-                                            loc_string(&pat.loc),
-                                            type_,
-                                            &cons[0].name,
-                                            con_field_tys.len(),
-                                            pat_fields.len(),
-                                        );
-                                }
-
-                                for (pat_field, con_field_ty) in
-                                    pat_fields.iter().zip(con_field_tys.iter())
-                                {
-                                    let pat_field_ty =
-                                        infer_pat(&pat_field.node, level, var_gen, tys);
-                                    unify(&pat_field_ty, con_field_ty, &pat.loc);
-                                }
                             }
 
-                            ConFields::Named(con_field_tys) => {
-                                for pat_field in pat_fields {
-                                    if pat_field.name.is_none() {
-                                        panic!(
-                                                "{}: {}.{} has named fields, but the pattern has an unnamed field",
-                                                loc_string(&pat.loc),
-                                                type_,
-                                                &cons[0].name
-                                            );
-                                    }
-                                }
-
-                                let con_field_ids: Set<&Id> = con_field_tys.keys().collect();
-                                let pat_field_ids: Set<&Id> = pat_fields
-                                    .iter()
-                                    .map(|named_pat| named_pat.name.as_ref().unwrap())
-                                    .collect();
-
-                                if con_field_ids != pat_field_ids {
-                                    panic!(
-                                        "{}: {}.{} has named fields {:?}, but pattern matches {:?}",
-                                        loc_string(&pat.loc),
-                                        type_,
-                                        &cons[0].name,
-                                        con_field_ids,
-                                        pat_field_ids,
-                                    );
-                                }
-
-                                for pat_field in pat_fields {
-                                    let pat_field_name = pat_field.name.as_ref().unwrap();
-                                    let pat_expected_ty =
-                                        con_field_tys.get(pat_field_name).unwrap();
-                                    let pat_field_ty =
-                                        infer_pat(&pat_field.node, level, var_gen, tys);
-                                    unify(&pat_field_ty, pat_expected_ty, &pat.loc);
-                                }
-                            }
+                            &cons[0]
                         }
+                    },
+                }
+            };
 
-                        todo!()
+            let con_fields = &val_con.fields;
+
+            match con_fields {
+                ConFields::Unnamed(con_field_tys) => {
+                    for pat_field in pat_fields {
+                        if pat_field.name.is_some() {
+                            panic!(
+                                "{}: {}.{} has no named fields, but the pattern has a named field",
+                                loc_string(&pat.loc),
+                                type_,
+                                &val_con.name
+                            );
+                        }
                     }
-                },
+
+                    if con_field_tys.len() != pat_fields.len() {
+                        panic!(
+                            "{}: {}.{} has {} named fields, but the pattern has {} fields",
+                            loc_string(&pat.loc),
+                            type_,
+                            &val_con.name,
+                            con_field_tys.len(),
+                            pat_fields.len(),
+                        );
+                    }
+
+                    for (pat_field, con_field_ty) in pat_fields.iter().zip(con_field_tys.iter()) {
+                        let pat_field_ty = infer_pat(&pat_field.node, level, var_gen, tys);
+                        unify(&pat_field_ty, con_field_ty, &pat.loc);
+                    }
+                }
+
+                ConFields::Named(con_field_tys) => {
+                    for pat_field in pat_fields {
+                        if pat_field.name.is_none() {
+                            panic!(
+                                "{}: {}.{} has named fields, but the pattern has an unnamed field",
+                                loc_string(&pat.loc),
+                                type_,
+                                &val_con.name
+                            );
+                        }
+                    }
+
+                    let con_field_ids: Set<&Id> = con_field_tys.keys().collect();
+                    let pat_field_ids: Set<&Id> = pat_fields
+                        .iter()
+                        .map(|named_pat| named_pat.name.as_ref().unwrap())
+                        .collect();
+
+                    if con_field_ids != pat_field_ids {
+                        panic!(
+                            "{}: {}.{} has named fields {:?}, but pattern matches {:?}",
+                            loc_string(&pat.loc),
+                            type_,
+                            &val_con.name,
+                            con_field_ids,
+                            pat_field_ids,
+                        );
+                    }
+
+                    for pat_field in pat_fields {
+                        let pat_field_name = pat_field.name.as_ref().unwrap();
+                        let pat_expected_ty = con_field_tys.get(pat_field_name).unwrap();
+                        let pat_field_ty = infer_pat(&pat_field.node, level, var_gen, tys);
+                        unify(&pat_field_ty, pat_expected_ty, &pat.loc);
+                    }
+                }
             }
+
+            todo!()
         }
 
         ast::Pat::Record(fields) => Ty::Record(
