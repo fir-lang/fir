@@ -423,21 +423,21 @@ fn convert_fields(
     fields: &ast::ConstructorFields,
     ty_cons: &Map<Id, TyCon>,
     loc: &ast::Loc,
-) -> ConFields {
+) -> Option<ConFields> {
     match fields {
-        ast::ConstructorFields::Empty => ConFields::Unnamed(vec![]),
-        ast::ConstructorFields::Named(named_fields) => ConFields::Named(
+        ast::ConstructorFields::Empty => None,
+        ast::ConstructorFields::Named(named_fields) => Some(ConFields::Named(
             named_fields
                 .iter()
                 .map(|(name, ty)| (name.clone(), convert_ast_ty(&ty_cons, ty_params, ty, loc)))
                 .collect(),
-        ),
-        ast::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
+        )),
+        ast::ConstructorFields::Unnamed(fields) => Some(ConFields::Unnamed(
             fields
                 .iter()
                 .map(|ty| convert_ast_ty(&ty_cons, ty_params, ty, loc))
                 .collect(),
-        ),
+        )),
     }
 }
 
@@ -582,8 +582,11 @@ fn collect_schemes(
                             let fields = &con.fields;
                             // TODO: loc should be con loc, add loc to cons
                             let ty = match convert_fields(&ty_vars, fields, ty_cons, &ty_decl.loc) {
-                                ConFields::Unnamed(tys) => Ty::Fun(tys, Box::new(ret.clone())),
-                                ConFields::Named(tys) => {
+                                None => ret.clone(),
+                                Some(ConFields::Unnamed(tys)) => {
+                                    Ty::Fun(tys, Box::new(ret.clone()))
+                                }
+                                Some(ConFields::Named(tys)) => {
                                     Ty::FunNamedArgs(tys, Box::new(ret.clone()))
                                 }
                             };
@@ -613,8 +616,11 @@ fn collect_schemes(
                     }
                     ast::TypeDeclRhs::Product(fields) => {
                         let ty = match convert_fields(&ty_vars, fields, ty_cons, &ty_decl.loc) {
-                            ConFields::Unnamed(tys) => Ty::Fun(tys, Box::new(ret.clone())),
-                            ConFields::Named(tys) => Ty::FunNamedArgs(tys, Box::new(ret.clone())),
+                            None => ret,
+                            Some(ConFields::Unnamed(tys)) => Ty::Fun(tys, Box::new(ret.clone())),
+                            Some(ConFields::Named(tys)) => {
+                                Ty::FunNamedArgs(tys, Box::new(ret.clone()))
+                            }
                         };
                         let scheme = Scheme {
                             quantified_vars: ty_decl
