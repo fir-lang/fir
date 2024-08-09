@@ -1421,7 +1421,11 @@ fn check_stmt(
             Ty::unit()
         }
 
-        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => todo!(),
+        ast::Stmt::Assign(ast::AssignStmt {
+            lhs: _,
+            rhs: _,
+            op: _,
+        }) => todo!(),
 
         ast::Stmt::Expr(expr) => check_expr(
             expr,
@@ -1514,7 +1518,30 @@ fn check_expr(
             unify_expected_ty(ty, expected_ty, &expr.loc)
         }
 
-        ast::Expr::ConstrSelect(_) => todo!(),
+        ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
+            let scheme = tys
+                .associated_schemes
+                .get(ty)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{}: Type {} is not in type environment",
+                        loc_string(&expr.loc),
+                        ty
+                    )
+                })
+                .get(constr)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{}: Type {} does not have the constructor {}",
+                        loc_string(&expr.loc),
+                        ty,
+                        constr
+                    )
+                });
+            let (con_preds, ty) = scheme.instantiate(level, var_gen);
+            extend_preds(preds, con_preds);
+            ty
+        }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             let fun_ty = check_expr(
