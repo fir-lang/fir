@@ -248,20 +248,13 @@ struct TyCon {
 #[derive(Debug, Clone)]
 enum TyConDetails {
     Trait { methods: Map<Id, Scheme> },
-    Type { cons: Vec<ValCon> },
+    Type { cons: Vec<Id> },
 }
 
 impl TyConDetails {
     fn placeholder() -> Self {
         TyConDetails::Type { cons: vec![] }
     }
-}
-
-/// A value constructor.
-#[derive(Debug, Clone)]
-struct ValCon {
-    name: SmolStr,
-    fields: ConFields,
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
@@ -356,36 +349,16 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
-                            let cons: Vec<ValCon> = sum_cons
+                            let cons: Vec<Id> = sum_cons
                                 .iter()
-                                .map(|ast::ConstructorDecl { name, fields }| ValCon {
-                                    name: name.clone(),
-                                    fields: convert_fields(
-                                        &ty_con
-                                            .ty_params
-                                            .iter()
-                                            .map(|(id, _)| id.clone())
-                                            .collect(),
-                                        fields,
-                                        &cons,
-                                        &decl.loc,
-                                    ),
-                                })
+                                .map(|ast::ConstructorDecl { name, fields: _ }| name.clone())
                                 .collect();
 
                             TyConDetails::Type { cons }
                         }
 
-                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type {
-                            cons: vec![ValCon {
-                                name: ty_decl.node.name.clone(),
-                                fields: convert_fields(
-                                    &ty_con.ty_params.iter().map(|(id, _)| id.clone()).collect(),
-                                    fields,
-                                    &cons,
-                                    &decl.loc,
-                                ),
-                            }],
+                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type {
+                            cons: vec![ty_decl.node.name.clone()],
                         },
                     },
 
@@ -821,6 +794,18 @@ impl Scheme {
         }
 
         (preds, self.ty.subst_qvars(&var_map))
+    }
+
+    fn instantiate_with_tys(&self, tys: &[Ty]) -> Ty {
+        assert_eq!(tys.len(), self.quantified_vars.len());
+
+        let mut ty = self.ty.clone();
+        for ((quantified_var, bounds), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
+            assert!(bounds.is_empty());
+            ty = ty.subst(quantified_var, ty_);
+        }
+
+        ty
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
@@ -1928,24 +1913,14 @@ fn select_field(
         }
 
         TyConDetails::Type { cons } => match cons.len() {
-            0 => None,
-
             1 => {
-                let con = &cons[0];
-                match &con.fields {
-                    ConFields::Unnamed(_) => None,
-                    ConFields::Named(fields) => match fields.get(field) {
-                        Some(field_ty) => {
-                            let mut field_ty = field_ty.clone();
-                            for ((ty_param, _bounds), ty_arg) in
-                                ty_con.ty_params.iter().zip(ty_args.iter())
-                            {
-                                field_ty = field_ty.subst(ty_param, ty_arg);
-                            }
-                            Some(field_ty)
-                        }
-                        None => None,
-                    },
+                let con_name = &cons[0];
+                let con_scheme = tys.top_schemes.get(con_name)?;
+                let con_ty = con_scheme.instantiate_with_tys(ty_args);
+
+                match con_ty {
+                    Ty::FunNamedArgs(fields, _) => Some(fields.get(field)?.clone()),
+                    _ => None,
                 }
             }
 
