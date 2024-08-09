@@ -1393,7 +1393,7 @@ fn check_stmt(
 
             let pat_expected_ty = match ty {
                 Some(ty) => convert_ast_ty(&tys.cons, quantified_vars, &ty.node, &ty.loc),
-                None => infer_pat(lhs, level, var_gen, tys),
+                None => check_pat(lhs, level, env, var_gen, tys),
             };
 
             env.enter();
@@ -1412,7 +1412,9 @@ fn check_stmt(
 
             unify(&rhs_ty, &pat_expected_ty, &rhs.loc);
 
-            bind_pat(lhs, env);
+            let pat_ty = check_pat(lhs, level, env, var_gen, tys);
+
+            unify(&pat_ty, &rhs_ty, &lhs.loc);
 
             Ty::unit()
         }
@@ -1722,7 +1724,7 @@ fn check_expr(
                 rhs,
             } in alts
             {
-                let pat_ty = infer_pat(pattern, level, var_gen, tys);
+                let pat_ty = check_pat(pattern, level, env, var_gen, tys);
                 unify(&pat_ty, &scrut_ty, &pattern.loc);
 
                 if let Some(guard) = guard {
@@ -1944,7 +1946,14 @@ fn select_method(
     Some(scheme)
 }
 
-fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &PgmTypes) -> Ty {
+/// Infer type of the pattern, add variables bound by the pattern to `env`.
+fn check_pat(
+    pat: &ast::L<ast::Pat>,
+    level: u32,
+    env: &mut ScopeMap<Id, Ty>,
+    var_gen: &mut TyVarGen,
+    tys: &PgmTypes,
+) -> Ty {
     match &pat.node {
         ast::Pat::Var(_) | ast::Pat::Ignore => Ty::Var(var_gen.new_var(level, pat.loc.clone())),
 
@@ -2017,7 +2026,7 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
                     }
 
                     for (pat_field, con_field_ty) in pat_fields.iter().zip(con_field_tys.iter()) {
-                        let pat_field_ty = infer_pat(&pat_field.node, level, var_gen, tys);
+                        let pat_field_ty = check_pat(&pat_field.node, level, env, var_gen, tys);
                         unify(&pat_field_ty, con_field_ty, &pat.loc);
                     }
                 }
@@ -2054,7 +2063,7 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
                     for pat_field in pat_fields {
                         let pat_field_name = pat_field.name.as_ref().unwrap();
                         let pat_expected_ty = con_field_tys.get(pat_field_name).unwrap();
-                        let pat_field_ty = infer_pat(&pat_field.node, level, var_gen, tys);
+                        let pat_field_ty = check_pat(&pat_field.node, level, env, var_gen, tys);
                         unify(&pat_field_ty, pat_expected_ty, &pat.loc);
                     }
                 }
@@ -2069,7 +2078,7 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
                 .map(|named| {
                     (
                         named.name.as_ref().unwrap().clone(),
-                        infer_pat(&*named.node, level, var_gen, tys),
+                        check_pat(&*named.node, level, env, var_gen, tys),
                     )
                 })
                 .collect(),
@@ -2080,18 +2089,14 @@ fn infer_pat(pat: &ast::L<ast::Pat>, level: u32, var_gen: &mut TyVarGen, tys: &P
         ast::Pat::Char(_) => Ty::Con(SmolStr::new_static("Char")),
 
         ast::Pat::Or(pat1, pat2) => {
-            let pat1_ty = infer_pat(pat1, level, var_gen, tys);
-            let pat2_ty = infer_pat(pat2, level, var_gen, tys);
-            // TODO: To check pattern bind the same variables of same types.
+            let pat1_ty = check_pat(pat1, level, env, var_gen, tys);
+            let pat2_ty = check_pat(pat2, level, env, var_gen, tys);
+            // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
             unify(&pat1_ty, &pat2_ty, &pat.loc);
             pat1_ty
         }
     }
-}
-
-fn bind_pat(pat: &ast::L<ast::Pat>, env: &mut ScopeMap<Id, Ty>) {
-    todo!()
 }
 
 fn extend_preds(preds: &mut Map<TyVarRef, Set<Id>>, new_preds: Map<TyVarRef, Set<Id>>) {
