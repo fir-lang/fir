@@ -147,14 +147,6 @@ impl Ty {
         }
     }
 
-    /// Split a function type into the argument and return types.
-    fn fun(&self) -> Option<(Vec<Ty>, Ty)> {
-        match self.normalize() {
-            Ty::Fun(args, ret) => Some((args.clone(), (*ret).clone())),
-            _ => None,
-        }
-    }
-
     fn is_void(&self) -> bool {
         match self {
             Ty::Con(con) => con == &SmolStr::new_static("Void"),
@@ -358,8 +350,6 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
     for decl in module {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
-                let ty_con = cons.get(&ty_decl.node.name).unwrap();
-
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
@@ -506,7 +496,7 @@ fn collect_schemes(
                 );
 
                 let (mut ty_con_id, mut ty_args) = self_ty.con().unwrap();
-                let mut ty_con = match ty_cons.get(&ty_con_id) {
+                let ty_con = match ty_cons.get(&ty_con_id) {
                     Some(ty_con) => ty_con,
                     None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
                 };
@@ -522,7 +512,7 @@ fn collect_schemes(
 
                     // Add the associated method to the type rather than to the trait.
                     self_ty = ty_args.pop().unwrap();
-                    let (ty_con_id_, ty_args_) = self_ty.con().unwrap_or_else(|| {
+                    let (ty_con_id_, _) = self_ty.con().unwrap_or_else(|| {
                         panic!(
                             "{}: Trait type argument needs to be a type constructor, but it is {:?}",
                             loc_string(&impl_decl.loc),
@@ -530,14 +520,6 @@ fn collect_schemes(
                         )
                     });
                     ty_con_id = ty_con_id_;
-                    ty_args = ty_args_;
-
-                    ty_con = match ty_cons.get(&ty_con_id) {
-                        Some(ty_con) => ty_con,
-                        None => {
-                            panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id)
-                        }
-                    };
 
                     // TODO: Check that the method types match trait methods.
                 }
@@ -1188,7 +1170,7 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
     // TODO: Add type parameters to the env.
-    let mut quantified_vars: Set<Id> = Default::default();
+    let quantified_vars: Set<Id> = Default::default();
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.bind(
