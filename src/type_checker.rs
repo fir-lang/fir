@@ -2,6 +2,7 @@
 
 use crate::ast;
 use crate::collections::{Map, Set};
+use crate::interpolation::StringPart;
 use crate::scope_map::ScopeMap;
 
 use std::cell::{Cell, RefCell};
@@ -131,7 +132,7 @@ impl Ty {
 
     /// Get the type constructor of the type and the type arguments.
     pub fn con(&self) -> Option<(Id, Vec<Ty>)> {
-        match self {
+        match self.normalize() {
             Ty::Con(con) => Some((con.clone(), vec![])),
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
@@ -144,9 +145,16 @@ impl Ty {
 
     /// Split a function type into the argument and return types.
     fn fun(&self) -> Option<(Vec<Ty>, Ty)> {
-        match self {
-            Ty::Fun(args, ret) => Some((args.clone(), (**ret).clone())),
+        match self.normalize() {
+            Ty::Fun(args, ret) => Some((args.clone(), (*ret).clone())),
             _ => None,
+        }
+    }
+
+    fn is_void(&self) -> bool {
+        match self {
+            Ty::Con(con) => con == &SmolStr::new_static("Void"),
+            _ => false,
         }
     }
 }
@@ -980,7 +988,17 @@ impl Ty {
 }
 
 fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
-    match (ty1, ty2) {
+    let ty1 = ty1.normalize();
+    if ty1.is_void() {
+        return;
+    }
+
+    let ty2 = ty2.normalize();
+    if ty2.is_void() {
+        return;
+    }
+
+    match (&ty1, &ty2) {
         (Ty::Con(con1), Ty::Con(con2)) => {
             if con1 != con2 {
                 panic!(
@@ -1029,9 +1047,9 @@ fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
             // Links must increase in level so that we can follow them to find the level of the
             // group.
             if var1_level < var2_level {
-                link_var(var1, ty2);
+                link_var(var1, &ty2);
             } else {
-                link_var(var2, ty1);
+                link_var(var2, &ty1);
             }
         }
 
@@ -1650,7 +1668,28 @@ fn check_expr(
             unify_expected_ty(Ty::Con(SmolStr::new_static("I32")), expected_ty, &expr.loc)
         }
 
-        ast::Expr::String(_) => {
+        ast::Expr::String(parts) => {
+            let str_ty = Ty::Con(SmolStr::new_static("Str"));
+
+            for part in parts {
+                match part {
+                    StringPart::Str(_) => continue,
+                    StringPart::Expr(expr) => {
+                        check_expr(
+                            expr,
+                            Some(&str_ty),
+                            return_ty,
+                            level,
+                            env,
+                            var_gen,
+                            quantified_vars,
+                            tys,
+                            preds,
+                        );
+                    }
+                }
+            }
+
             unify_expected_ty(Ty::Con(SmolStr::new_static("Str")), expected_ty, &expr.loc)
         }
 

@@ -33,7 +33,8 @@ fn eval(term: Term): Value =
 
         Term.False: Value.Bool(Bool.False)
 
-        Term.If(cond, then, else_):
+        # TODO: Allow simplifying this as `Term.If(cond, then, else_)`.
+        Term.If(cond = cond, then = then, else_ = else_):
             match eval(cond):
                 Value.Bool(b):
                     if b:

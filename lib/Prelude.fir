@@ -21,6 +21,14 @@ trait Eq[T]:
 trait Ord[T]:
     fn cmp(self, other: T): Ordering
 
+# Just to be able to pass `Str` where `StrView` is expected.
+trait ToStrView[T]:
+    fn toStrView(self): StrView
+
+# The bottom type, e.g. return type of a function that doesn't return.
+# We may want to rename this later.
+prim type Void
+
 prim type Str
 
 impl Eq[Str]:
@@ -29,6 +37,8 @@ impl Eq[Str]:
 impl Str:
     prim fn len(self): I32
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
+
+impl ToStrView[Str]:
     prim fn toStrView(self): StrView
 
 prim type StrView
@@ -76,7 +86,7 @@ impl[T] Array[T]:
 
 prim fn printStr(s: Str)
 prim fn printStrView(s: StrView)
-prim fn panic(msg: StrView)
+prim fn panic[T: ToStrView](msg: T): Void
 
 type Option[T]:
     None
