@@ -1,4 +1,4 @@
-#![allow(clippy::too_many_arguments)]
+#![allow(clippy::mutable_key_type)]
 
 use crate::ast;
 use crate::collections::{Map, Set};
@@ -16,7 +16,7 @@ pub type Id = SmolStr;
 
 /// A type scheme.
 #[derive(Debug, Clone)]
-struct Scheme {
+pub struct Scheme {
     /// Generalized variables with predicates, e.g. `[T, [Eq]]` in the scheme for
     /// `fn id[T: Eq](a: T): T = a`.
     ///
@@ -429,13 +429,13 @@ fn convert_fields(
         ast::ConstructorFields::Named(named_fields) => Some(ConFields::Named(
             named_fields
                 .iter()
-                .map(|(name, ty)| (name.clone(), convert_ast_ty(&ty_cons, ty_params, ty, loc)))
+                .map(|(name, ty)| (name.clone(), convert_ast_ty(ty_cons, ty_params, ty, loc)))
                 .collect(),
         )),
         ast::ConstructorFields::Unnamed(fields) => Some(ConFields::Unnamed(
             fields
                 .iter()
-                .map(|ty| convert_ast_ty(&ty_cons, ty_params, ty, loc))
+                .map(|ty| convert_ast_ty(ty_cons, ty_params, ty, loc))
                 .collect(),
         )),
     }
@@ -696,7 +696,7 @@ fn convert_fun_ty(
         .collect();
 
     let mut arg_tys: Vec<Ty> =
-        Vec::with_capacity(params.len() + if self_ty.is_some() { 0 } else { 0 });
+        Vec::with_capacity(params.len() + if self_ty.is_some() { 1 } else { 0 });
 
     if let Some(self_ty) = self_ty {
         arg_tys.push(self_ty.clone());
@@ -2110,7 +2110,7 @@ fn check_pat(
                             })
                             .unwrap();
 
-                        let field_pat_ty = check_pat(&*field_pat, level, env, var_gen, tys);
+                        let field_pat_ty = check_pat(field_pat, level, env, var_gen, tys);
 
                         unify(&field_pat_ty, arg_ty, &pat.loc);
                     }
@@ -2132,7 +2132,7 @@ fn check_pat(
                 .map(|named| {
                     (
                         named.name.as_ref().unwrap().clone(),
-                        check_pat(&*named.node, level, env, var_gen, tys),
+                        check_pat(&named.node, level, env, var_gen, tys),
                     )
                 })
                 .collect(),

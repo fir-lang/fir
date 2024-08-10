@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+
 mod ast;
 mod collections;
 mod import_resolver;
@@ -74,21 +76,7 @@ mod native {
             }
         };
 
-        let mut args: Vec<String> = std::env::args().collect();
-
-        let check_types_idx = args
-            .iter()
-            .enumerate()
-            .find(|(_, arg)| *arg == "--check-types")
-            .map(|(arg_idx, _)| arg_idx);
-
-        let check_types = match check_types_idx {
-            Some(idx) => {
-                args.remove(idx);
-                true
-            }
-            None => false,
-        };
+        let args: Vec<String> = std::env::args().collect();
 
         let file_path = Path::new(&args[1]); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
