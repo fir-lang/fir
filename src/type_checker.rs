@@ -392,16 +392,20 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                     .node
                     .funs
                     .iter()
-                    .map(|sig| {
+                    .map(|fun| {
                         (
-                            sig.node.name.node.clone(),
+                            fun.node.sig.name.node.clone(),
                             convert_fun_ty(
-                                if sig.node.self_ { Some(&self_ty) } else { None },
+                                if fun.node.sig.self_ {
+                                    Some(&self_ty)
+                                } else {
+                                    None
+                                },
                                 &trait_ty_params,
-                                &sig.node.type_params,
-                                &sig.node.params,
-                                &sig.node.return_ty,
-                                &sig.loc,
+                                &fun.node.sig.type_params,
+                                &fun.node.sig.params,
+                                &fun.node.sig.return_ty,
+                                &fun.loc,
                                 &cons,
                             ),
                         )

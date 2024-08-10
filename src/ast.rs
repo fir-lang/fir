@@ -389,7 +389,7 @@ pub struct TraitDecl {
     /// Type parameter of the trait, with bounds.
     pub ty: L<(SmolStr, Vec<L<Type>>)>,
 
-    pub funs: Vec<L<FunSig>>,
+    pub funs: Vec<L<FunDecl>>,
 }
 
 /// An `impl` block, implementing associated methods for a type, or a trait.

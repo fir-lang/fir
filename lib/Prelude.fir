@@ -18,8 +18,31 @@ trait Div[T]:
 trait Eq[T]:
     fn __eq(self, other: T): Bool
 
+    fn __neq(self, other: T): Bool =
+        !self.__eq(other)
+
 trait Ord[T]:
     fn cmp(self, other: T): Ordering
+
+    fn __lt(self, other: T): Bool =
+        match self.cmp(other):
+            Ordering.Less: Bool.True
+            _: Bool.False
+
+    fn __le(self, other: T): Bool =
+        match self.cmp(other):
+            Ordering.Less | Ordering.Equal: Bool.True
+            _: Bool.False
+
+    fn __gt(self, other: T): Bool =
+        match self.cmp(other):
+            Ordering.Greater: Bool.True
+            _: Bool.False
+
+    fn __ge(self, other: T): Bool =
+        match self.cmp(other):
+            Ordering.Greater | Ordering.Equal: Bool.True
+            _: Bool.False
 
 # Just to be able to pass `Str` where `StrView` is expected.
 trait ToStrView[T]:

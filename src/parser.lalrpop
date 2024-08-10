@@ -222,7 +222,7 @@ FunDecl: L<FunDecl> = {
             body: Some(L::new(module, body_l, body_r, body)),
         }),
 
-    <l:@L> "prim" <sig:FunSig> NEWLINE <r:@R> =>
+    <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
             sig,
             body: None,
@@ -641,7 +641,7 @@ ImportDecl: L<ImportDecl> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
-            NEWLINE INDENT <funs:Sep<LFunSig, NEWLINE>> DEDENT <r:@R> =>
+            NEWLINE INDENT <funs:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),

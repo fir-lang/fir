@@ -85,8 +85,8 @@ fn visit_trait_decl(trait_decl: &ast::TraitDecl, records: &mut Set<RecordShape>)
     for ty in &trait_decl.ty.node.1 {
         visit_ty(&ty.node, records);
     }
-    for sig in &trait_decl.funs {
-        visit_fun_sig(&sig.node, records);
+    for fun in &trait_decl.funs {
+        visit_fun_decl(&fun.node, records);
     }
 }
 
