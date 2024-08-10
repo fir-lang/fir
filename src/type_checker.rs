@@ -1491,7 +1491,7 @@ fn check_expr(
                 preds,
             );
 
-            let ty = match object_ty {
+            let ty = match object_ty.normalize() {
                 Ty::Con(con) => {
                     check_field_select(&con, &[], field, &expr.loc, tys, level, var_gen, preds)
                 }
