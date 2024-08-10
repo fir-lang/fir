@@ -70,7 +70,7 @@ impl Value:
 fn parse(pgm: StrView): Term =
     let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
-        panic("Leftover code after parsing the program: \"$(rest)\"")
+        panic("Leftover code after parsing the program: \"$(rest.toStr())\"")
     term
 
 fn skipWhitespace(pgm: StrView): StrView =

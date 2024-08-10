@@ -1369,7 +1369,7 @@ fn check_stmts(
         let last = stmt_idx == num_stmts - 1;
         let stmt_ty = check_stmt(
             stmt,
-            expected_ty,
+            if last { expected_ty } else { None },
             return_ty,
             level,
             env,
@@ -1379,9 +1379,6 @@ fn check_stmts(
             preds,
         );
         if last {
-            if let Some(expected_ty) = expected_ty {
-                unify(&stmt_ty, expected_ty, &stmt.loc);
-            }
             return stmt_ty;
         }
     }
@@ -1447,7 +1444,31 @@ fn check_stmt(
 
         ast::Stmt::For(_) => todo!(),
 
-        ast::Stmt::While(_) => todo!(),
+        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
+            check_expr(
+                cond,
+                Some(&Ty::bool()),
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            );
+            check_stmts(
+                body,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            );
+            Ty::unit()
+        }
     }
 }
 
