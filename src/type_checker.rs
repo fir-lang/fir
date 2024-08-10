@@ -169,6 +169,8 @@ pub struct TyVar {
 
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
+    // TODO: We should make this a field/method of `Ty` and give all types locations.
+    #[allow(unused)]
     loc: ast::Loc,
 }
 
@@ -1378,23 +1380,14 @@ fn check_stmt(
 ) -> Ty {
     match &stmt.node {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
-            // When type of the LHS is not given:
-            //
-            // (1) Infer the pattern type.
-            // (2) Check the RHS using the inferred pattern type as the expected type.
-            // (3) Bind the pattern variables.
-            //
-            // Otherwise start with (2), using the given type as the expected type.
-
-            let pat_expected_ty = match ty {
-                Some(ty) => convert_ast_ty(&tys.cons, quantified_vars, &ty.node, &ty.loc),
-                None => check_pat(lhs, level, env, var_gen, tys),
-            };
+            let pat_expected_ty = ty.as_ref().map(|ast_ty| {
+                convert_ast_ty(&tys.cons, quantified_vars, &ast_ty.node, &ast_ty.loc)
+            });
 
             env.enter();
             let rhs_ty = check_expr(
                 rhs,
-                Some(&pat_expected_ty),
+                pat_expected_ty.as_ref(),
                 return_ty,
                 level + 1,
                 env,
@@ -1404,8 +1397,6 @@ fn check_stmt(
                 preds,
             );
             env.exit();
-
-            unify(&rhs_ty, &pat_expected_ty, &rhs.loc);
 
             let pat_ty = check_pat(lhs, level, env, var_gen, tys);
 
@@ -1967,7 +1958,13 @@ fn check_pat(
     tys: &PgmTypes,
 ) -> Ty {
     match &pat.node {
-        ast::Pat::Var(_) | ast::Pat::Ignore => Ty::Var(var_gen.new_var(level, pat.loc.clone())),
+        ast::Pat::Var(var) => {
+            let ty = Ty::Var(var_gen.new_var(level, pat.loc.clone()));
+            env.bind(var.clone(), ty.clone());
+            ty
+        }
+
+        ast::Pat::Ignore => Ty::Var(var_gen.new_var(level, pat.loc.clone())),
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
