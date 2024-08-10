@@ -12,7 +12,7 @@ use smol_str::SmolStr;
 // Syntax for type checking types.
 
 // Use AST id type for now to avoid a renaming pass.
-type Id = SmolStr;
+pub type Id = SmolStr;
 
 /// A type scheme.
 #[derive(Debug, Clone)]
@@ -36,7 +36,7 @@ struct Scheme {
 
 /// A type checking type.
 #[derive(Debug, Clone, PartialEq, Eq)]
-enum Ty {
+pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id),
 
@@ -130,7 +130,7 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    fn con(&self) -> Option<(Id, Vec<Ty>)> {
+    pub fn con(&self) -> Option<(Id, Vec<Ty>)> {
         match self {
             Ty::Con(con) => Some((con.clone(), vec![])),
 
@@ -152,10 +152,10 @@ impl Ty {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct TyVarRef(Rc<TyVar>);
+pub struct TyVarRef(Rc<TyVar>);
 
 #[derive(Debug, Clone)]
-struct TyVar {
+pub struct TyVar {
     /// Identity of the unification variable.
     ///
     /// This is used to compare unification variables for equality.
@@ -229,7 +229,7 @@ impl TyVarGen {
 
 /// A type constructor.
 #[derive(Debug, Clone)]
-struct TyCon {
+pub struct TyCon {
     /// Name of the type.
     id: Id,
 
@@ -270,22 +270,22 @@ impl TyCon {
         self.ty_params.len() as u32
     }
 
-    fn is_trait(&self) -> bool {
+    pub fn is_trait(&self) -> bool {
         matches!(self.details, TyConDetails::Trait { .. })
     }
 }
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
-struct PgmTypes {
+pub struct PgmTypes {
     /// Type schemes of top-level values.
-    top_schemes: Map<Id, Scheme>,
+    pub top_schemes: Map<Id, Scheme>,
 
     /// Type schemes of associated functions.
-    associated_schemes: Map<Id, Map<Id, Scheme>>,
+    pub associated_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type constructor details.
-    cons: Map<Id, TyCon>,
+    pub cons: Map<Id, TyCon>,
 }
 
 fn collect_types(module: &ast::Module) -> PgmTypes {
@@ -723,7 +723,7 @@ fn convert_fun_ty(
 }
 
 /// Convert an AST type to a type checking type.
-fn convert_ast_ty(
+pub fn convert_ast_ty(
     ty_cons: &Map<Id, TyCon>,
     quantified_tys: &Set<Id>,
     ast_ty: &ast::Type,
@@ -1137,7 +1137,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
     }
 }
 
-pub fn check_module(module: &ast::Module) {
+pub fn check_module(module: &ast::Module) -> PgmTypes {
     let tys = collect_types(module);
 
     for decl in module {
@@ -1155,6 +1155,8 @@ pub fn check_module(module: &ast::Module) {
             ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
         }
     }
+
+    tys
 }
 
 fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {

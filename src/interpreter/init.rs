@@ -1,4 +1,4 @@
-use crate::interpreter::*;
+use crate::{interpreter::*, type_checker::convert_ast_ty};
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
     let mut ty_cons: Map<SmolStr, TyCon> = Default::default();
@@ -52,10 +52,8 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
             rhs,
         } = match &decl.node {
             ast::TopDecl::Type(ty_decl) => &ty_decl.node,
-            ast::TopDecl::Fun(_) => continue,
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
-            ast::TopDecl::Trait(_) => todo!("Trait declaration in collect_types"),
-            ast::TopDecl::Impl(_) => todo!("Impl block in collect_types"),
+            ast::TopDecl::Fun(_) | ast::TopDecl::Trait(_) | ast::TopDecl::Impl(_) => continue,
         };
 
         match rhs {
@@ -119,6 +117,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
 
 pub fn collect_funs(
     pgm: Vec<L<ast::TopDecl>>,
+    tys: &PgmTypes,
 ) -> (Map<SmolStr, Fun>, Map<SmolStr, Map<SmolStr, Fun>>) {
     macro_rules! builtin_top_level_funs {
         ($($fname:expr => $fkind:expr),* $(,)?) => {{
@@ -191,63 +190,66 @@ pub fn collect_funs(
         },
     };
 
-    let mut associated_fun_indices: Map<SmolStr, u64> = Default::default();
-
     for decl in pgm {
-        let fun_decl: ast::FunDecl = match decl.node {
+        match decl.node {
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => continue,
-            ast::TopDecl::Impl(_) => todo!("Impl block in collect_funs"),
+
+            ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
+
             ast::TopDecl::Fun(fun_decl) => {
                 if fun_decl.node.body.is_none() {
+                    // Built-in function, should be added above.
                     continue;
-                } else {
-                    fun_decl.node
                 }
-            }
-            ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
-        };
 
-        let idx = top_level_funs.len() as u64;
-        top_level_funs.insert(
-            fun_decl.sig.name.node.clone(),
-            Fun {
-                idx,
-                kind: FunKind::Source(fun_decl),
-            },
-        );
-
-        /*
-        match &fun_decl.sig.type_name {
-            Some(type_name) => {
-                let idx_entry = associated_fun_indices
-                    .entry(type_name.node.clone())
-                    .or_insert(0);
-                let idx = *idx_entry;
-                *idx_entry += 1;
-                associated_funs
-                    .entry(type_name.node.clone())
-                    .or_default()
-                    .insert(
-                        fun_decl.sig.name.node.clone(),
-                        Fun {
-                            idx,
-                            kind: FunKind::Source(fun_decl),
-                        },
-                    )
-            }
-
-            None => {
                 let idx = top_level_funs.len() as u64;
                 top_level_funs.insert(
-                    fun_decl.sig.name.node.clone(),
+                    fun_decl.node.sig.name.node.clone(),
                     Fun {
                         idx,
-                        kind: FunKind::Source(fun_decl),
+                        kind: FunKind::Source(fun_decl.node),
                     },
-                )
+                );
             }
-        };
-        */
+
+            ast::TopDecl::Impl(impl_decl) => {
+                let ast_ty: &ast::Type = &impl_decl.node.ty.node;
+                let ty_vars: Set<Id> = impl_decl
+                    .node
+                    .context
+                    .iter()
+                    .map(|ty| ty.node.0.clone())
+                    .collect();
+                let ty = convert_ast_ty(&tys.cons, &ty_vars, ast_ty, &impl_decl.node.ty.loc);
+
+                // method_ty = type to add the method to.
+                let (mut method_ty, args) = ty.con().unwrap();
+                if tys.cons.get(&method_ty).unwrap().is_trait() {
+                    assert_eq!(args.len(), 1);
+                    let ty = &args[0];
+                    let (ty_con, _) = ty.con().unwrap();
+                    method_ty = ty_con;
+                }
+
+                for fun_decl in impl_decl.node.funs {
+                    if fun_decl.node.body.is_none() {
+                        // Built-in function, should be added above.
+                        continue;
+                    }
+
+                    associated_funs
+                        .entry(method_ty.clone())
+                        .or_default()
+                        .insert(
+                            fun_decl.node.sig.name.node.clone(),
+                            Fun {
+                                idx: 0, // TODO: Is this used?
+                                kind: FunKind::Source(fun_decl.node),
+                            },
+                        );
+                }
+            }
+        }
     }
 
     (top_level_funs, associated_funs)

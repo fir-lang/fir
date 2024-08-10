@@ -98,13 +98,11 @@ mod native {
         let module =
             import_resolver::resolve_imports(&fir_root, root_path.to_str().unwrap(), module);
 
-        if check_types {
-            type_checker::check_module(&module);
-        }
+        let tys = type_checker::check_module(&module);
 
         let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
         let mut w = std::io::stdout();
-        interpreter::run(&mut w, module, input);
+        interpreter::run(&mut w, module, input, &tys);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
