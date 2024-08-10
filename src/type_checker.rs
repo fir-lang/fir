@@ -71,6 +71,10 @@ impl Ty {
         Ty::Record(Default::default())
     }
 
+    fn bool() -> Ty {
+        Ty::Con(SmolStr::new_static("Bool"))
+    }
+
     /// Substitute `ty` for quantified `var` in `self`.
     fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
@@ -1747,7 +1751,19 @@ fn check_expr(
             )
         }
 
-        ast::Expr::UnOp(_) => todo!(),
+        ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => match op {
+            ast::UnOp::Not => check_expr(
+                expr,
+                Some(&Ty::bool()),
+                return_ty,
+                level,
+                env,
+                var_gen,
+                quantified_vars,
+                tys,
+                preds,
+            ),
+        },
 
         ast::Expr::ArrayIndex(_) => todo!(),
 
@@ -1782,7 +1798,7 @@ fn check_expr(
                 if let Some(guard) = guard {
                     check_expr(
                         guard,
-                        Some(&Ty::Con(SmolStr::new_static("Bool"))),
+                        Some(&Ty::bool()),
                         return_ty,
                         level,
                         env,
@@ -1822,7 +1838,7 @@ fn check_expr(
             for (cond, body) in branches {
                 let cond_ty = check_expr(
                     cond,
-                    Some(&Ty::Con(SmolStr::new_static("Bool"))),
+                    Some(&Ty::bool()),
                     return_ty,
                     level,
                     env,
@@ -1831,7 +1847,7 @@ fn check_expr(
                     tys,
                     preds,
                 );
-                unify(&cond_ty, &Ty::Con(SmolStr::new_static("Bool")), &expr.loc);
+                unify(&cond_ty, &Ty::bool(), &expr.loc);
 
                 let body_ty = check_stmts(
                     body,
