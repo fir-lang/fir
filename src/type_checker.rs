@@ -1169,8 +1169,13 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    // TODO: Add type parameters to the env.
-    let quantified_vars: Set<Id> = Default::default();
+    let quantified_vars: Set<Id> = fun
+        .node
+        .sig
+        .type_params
+        .iter()
+        .map(|param| param.node.0.node.clone())
+        .collect();
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.bind(
