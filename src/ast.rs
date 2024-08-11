@@ -11,6 +11,16 @@ pub struct L<T> {
     pub node: T,
 }
 
+impl<T> L<T> {
+    pub fn map<F>(self, f: F) -> Self
+    where
+        F: FnOnce(T) -> T,
+    {
+        let L { loc, node } = self;
+        L { loc, node: f(node) }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
@@ -59,6 +69,12 @@ pub enum TopDecl {
 
     /// An import declaration.
     Import(L<ImportDecl>),
+
+    /// A trait declaration.
+    Trait(L<TraitDecl>),
+
+    /// An `impl` block, implementing a trait or associated methods for a type.
+    Impl(L<ImplDecl>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
@@ -68,7 +84,6 @@ pub struct TypeDecl {
     pub name: SmolStr,
 
     /// Type parameters, e.g. `[T]`.
-    #[allow(unused)]
     pub type_params: Vec<SmolStr>,
 
     /// Constructors of the type.
@@ -107,7 +122,6 @@ pub enum Type {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
-    #[allow(unused)]
     pub name: SmolStr,
     pub args: Vec<L<Type>>,
 }
@@ -122,14 +136,11 @@ pub struct Named<T> {
 /// return type.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunSig {
-    /// The type name in associated functions, e.g. in `fn X[T].f()` this is `X[T]`.
-    pub type_name: Option<L<SmolStr>>,
-
     /// Name of the function, e.g. in `fn f()` this is `f`.
     pub name: L<SmolStr>,
 
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
-    pub type_params: Vec<L<(L<SmolStr>, Vec<L<Type>>)>>,
+    pub type_params: Vec<L<(L<SmolStr>, Vec<L<SmolStr>>)>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
@@ -371,9 +382,75 @@ pub enum BinOp {
 pub enum UnOp {
     Not,
 }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     /// Import path, e.g. `Fir.Prelude`.
     pub path: Vec<SmolStr>,
     // TODO: Imported thing list, renaming (`as`).
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TraitDecl {
+    /// Trait name.
+    pub name: L<SmolStr>,
+
+    /// Type parameter of the trait, with bounds.
+    pub ty: L<(SmolStr, Vec<L<Type>>)>,
+
+    pub funs: Vec<L<FunDecl>>,
+}
+
+/// An `impl` block, implementing associated methods for a type, or a trait.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ImplDecl {
+    /// Type parameters of the type being implemented, with bounds. E.g. in
+    ///
+    /// ```ignore
+    /// impl[T: Debug + Foo] Debug[Vec[T]]: ...
+    /// ```
+    ///
+    /// this field will be `[(T, [Debug, Foo])]`.
+    pub context: Vec<L<(SmolStr, Vec<SmolStr>)>>,
+
+    /// The type being implemented.
+    ///
+    /// This can be a trait (e.g. `Debug[Vec[T]]`) or a type (e.g. `Vec[T]`).
+    pub ty: L<Type>,
+
+    pub funs: Vec<L<FunDecl>>,
+}
+
+impl Type {
+    pub fn subst_var(&self, var: &SmolStr, ty: &Type) -> Type {
+        match ty {
+            Type::Named(NamedType { name, args }) => {
+                if name == var {
+                    assert!(args.is_empty());
+                    ty.clone()
+                } else {
+                    Type::Named(NamedType {
+                        name: name.clone(),
+                        args: args
+                            .iter()
+                            .map(|L { loc, node }| L {
+                                loc: loc.clone(),
+                                node: node.subst_var(var, ty),
+                            })
+                            .collect(),
+                    })
+                }
+            }
+
+            Type::Record(fields) => Type::Record(
+                fields
+                    .iter()
+                    .map(|Named { name, node }| Named {
+                        name: name.clone(),
+                        node: node.subst_var(var, ty),
+                    })
+                    .collect(),
+            ),
+        }
+    }
 }

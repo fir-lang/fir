@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments, clippy::type_complexity)]
+
 mod ast;
 mod collections;
 mod import_resolver;
@@ -9,6 +11,7 @@ mod record_collector;
 mod scanner;
 mod scope_map;
 mod token;
+mod type_checker;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
@@ -80,25 +83,35 @@ mod native {
         let root_path = file_path.parent().unwrap(); // "examples/"
 
         let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-        let module =
+        let mut module =
             import_resolver::resolve_imports(&fir_root, root_path.to_str().unwrap(), module);
+
+        let tys = type_checker::check_module(&mut module);
 
         let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
         let mut w = std::io::stdout();
-        interpreter::run(&mut w, module, input);
+        interpreter::run(&mut w, module, input, &tys);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
-                "Unable to read file {} for module module {}: {}",
+                "Unable to read file {} for module {}: {}",
                 path.as_ref().to_string_lossy(),
                 module,
                 err
             )
         });
         let tokens = scanner::scan(lexer::lex(&contents));
-        parse_module(module, tokens)
+        parse_module(
+            &path
+                .as_ref()
+                .to_owned()
+                .to_string_lossy()
+                .to_string()
+                .into(),
+            tokens,
+        )
     }
 }
 
@@ -121,7 +134,7 @@ mod wasm {
         match fetch_sync(&path) {
             Some(contents) => {
                 let tokens = scanner::scan(lexer::lex(&contents));
-                parse_module(module, tokens)
+                parse_module(&path.to_string().into(), tokens)
             }
             None => {
                 panic!("Unable to fetch {}", path);

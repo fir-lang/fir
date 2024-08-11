@@ -33,7 +33,8 @@ fn eval(term: Term): Value =
 
         Term.False: Value.Bool(Bool.False)
 
-        Term.If(cond, then, else_):
+        # TODO: Allow simplifying this as `Term.If(cond, then, else_)`.
+        Term.If(cond = cond, then = then, else_ = else_):
             match eval(cond):
                 Value.Bool(b):
                     if b:
@@ -60,10 +61,11 @@ fn eval(term: Term): Value =
                 Value.Bool(bool): panic("IsZero argument evaluated to bool $(bool)")
                 Value.Num(value): Value.Bool(value == 0)
 
-fn Value.toStr(self): Str =
-    match self:
-        Value.Bool(value): value.toStr()
-        Value.Num(value): value.toStr()
+impl Value:
+    fn toStr(self): Str =
+        match self:
+            Value.Bool(value): value.toStr()
+            Value.Num(value): value.toStr()
 
 fn parse(pgm: StrView): Term =
     let (term = term, rest = rest) = parseWithRest(pgm)

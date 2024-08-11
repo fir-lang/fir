@@ -28,6 +28,7 @@ pub enum TokenKind {
     Fn,
     For,
     If,
+    Impl,
     Import,
     In,
     Jump,
