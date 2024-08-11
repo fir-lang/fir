@@ -11,6 +11,16 @@ pub struct L<T> {
     pub node: T,
 }
 
+impl<T> L<T> {
+    pub fn map<F>(self, f: F) -> Self
+    where
+        F: FnOnce(T) -> T,
+    {
+        let L { loc, node } = self;
+        L { loc, node: f(node) }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
@@ -112,7 +122,6 @@ pub enum Type {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
-    #[allow(unused)]
     pub name: SmolStr,
     pub args: Vec<L<Type>>,
 }
@@ -410,4 +419,38 @@ pub struct ImplDecl {
     pub ty: L<Type>,
 
     pub funs: Vec<L<FunDecl>>,
+}
+
+impl Type {
+    pub fn subst_var(&self, var: &SmolStr, ty: &Type) -> Type {
+        match ty {
+            Type::Named(NamedType { name, args }) => {
+                if name == var {
+                    assert!(args.is_empty());
+                    ty.clone()
+                } else {
+                    Type::Named(NamedType {
+                        name: name.clone(),
+                        args: args
+                            .iter()
+                            .map(|L { loc, node }| L {
+                                loc: loc.clone(),
+                                node: node.subst_var(var, ty),
+                            })
+                            .collect(),
+                    })
+                }
+            }
+
+            Type::Record(fields) => Type::Record(
+                fields
+                    .iter()
+                    .map(|Named { name, node }| Named {
+                        name: name.clone(),
+                        node: node.subst_var(var, ty),
+                    })
+                    .collect(),
+            ),
+        }
+    }
 }

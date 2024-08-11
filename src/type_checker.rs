@@ -32,7 +32,7 @@ pub struct PgmTypes {
     pub cons: Map<Id, TyCon>,
 }
 
-pub fn check_module(module: &ast::Module) -> PgmTypes {
+pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     let tys = collect_types(module);
 
     for decl in module {
@@ -54,7 +54,7 @@ pub fn check_module(module: &ast::Module) -> PgmTypes {
     tys
 }
 
-fn collect_types(module: &ast::Module) -> PgmTypes {
+fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let cons = collect_cons(module);
     let (top_schemes, associated_schemes) = collect_schemes(module, &cons);
     PgmTypes {
@@ -64,11 +64,11 @@ fn collect_types(module: &ast::Module) -> PgmTypes {
     }
 }
 
-fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
+fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
     let mut cons: Map<Id, TyCon> = Default::default();
 
     // Collect all type constructors first, then add bounds, fields, and methods.
-    for decl in module {
+    for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 let ty_name = ty_decl.node.name.clone();
@@ -107,7 +107,7 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
     }
 
     // Add bounds, fields, methods.
-    for decl in module {
+    for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
                 let details = match &ty_decl.node.rhs {
@@ -148,14 +148,13 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
 
                 let self_ty = Ty::QVar(self_ty_id.clone());
 
-                let methods: Map<Id, Scheme> = trait_decl
+                let methods: Map<Id, TraitMethod> = trait_decl
                     .node
                     .funs
                     .iter()
                     .map(|fun| {
-                        (
-                            fun.node.sig.name.node.clone(),
-                            convert_fun_ty(
+                        (fun.node.sig.name.node.clone(), {
+                            let scheme = convert_fun_ty(
                                 if fun.node.sig.self_ {
                                     Some(&self_ty)
                                 } else {
@@ -167,8 +166,10 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
                                 &fun.node.sig.return_ty,
                                 &fun.loc,
                                 &cons,
-                            ),
-                        )
+                            );
+                            let fun_decl = fun.clone();
+                            TraitMethod { scheme, fun_decl }
+                        })
                     })
                     .collect();
 
@@ -180,6 +181,84 @@ fn collect_cons(module: &ast::Module) -> Map<Id, TyCon> {
             }
 
             ast::TopDecl::Fun(_) | ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => continue,
+        }
+    }
+
+    // Add default methods to impls.
+    //
+    // We don't need to type check default methods copied to impls, but for now we do. So replace
+    // the trait type parameter with the self type in the copied declarations.
+    for decl in module.iter_mut() {
+        let impl_decl = match &mut decl.node {
+            ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
+            _ => continue,
+        };
+
+        let quantified_tys: Set<Id> = impl_decl
+            .context
+            .iter()
+            .map(|ty| ty.node.0.clone())
+            .collect();
+
+        let ty = convert_ast_ty(
+            &cons,
+            &quantified_tys,
+            &impl_decl.ty.node,
+            &impl_decl.ty.loc,
+        );
+
+        let (con_id, args) = match ty.con() {
+            Some(con_and_args) => con_and_args,
+            None => continue,
+        };
+
+        let ty_con = cons.get(&con_id).unwrap();
+
+        let trait_methods = match &ty_con.details {
+            TyConDetails::Trait { methods } => methods,
+            TyConDetails::Type { .. } => continue,
+        };
+
+        assert_eq!(args.len(), 1);
+        assert_eq!(ty_con.ty_params.len(), 1);
+
+        let self_ast_ty = match &impl_decl.ty.node {
+            ast::Type::Named(ast::NamedType { name: _, args }) => {
+                assert_eq!(args.len(), 1);
+                args[0].node.clone()
+            }
+            ast::Type::Record(_) => panic!(), // can't happen
+        };
+
+        let trait_ty_param: Id = ty_con.ty_params[0].0.clone();
+
+        for (method, method_decl) in trait_methods {
+            if impl_decl
+                .funs
+                .iter()
+                .any(|fun| &fun.node.sig.name.node == method)
+            {
+                continue;
+            }
+
+            if method_decl.fun_decl.node.body.is_some() {
+                let mut fun_decl = method_decl.fun_decl.clone();
+                // TODO: For now we only replace trait type param with self in the signature, but
+                // we should do it in the entire declaration.
+                fun_decl.node.sig.params = fun_decl
+                    .node
+                    .sig
+                    .params
+                    .into_iter()
+                    .map(|(param, param_ty)| {
+                        (
+                            param,
+                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &self_ast_ty)),
+                        )
+                    })
+                    .collect();
+                impl_decl.funs.push(fun_decl);
+            }
         }
     }
 
@@ -458,7 +537,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         for fun in &impl_.node.funs {
             let fun_name: &Id = &fun.node.sig.name.node;
 
-            let trait_method_ty = trait_methods.get(fun_name).unwrap_or_else(|| {
+            let trait_method = trait_methods.get(fun_name).unwrap_or_else(|| {
                 panic!(
                     "{}: Trait {} does not have a method named {}",
                     loc_string(&fun.loc),
@@ -467,7 +546,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                 )
             });
 
-            let trait_method_ty = trait_method_ty.subst(trait_ty_param, &implementing_ty, &fun.loc);
+            let trait_method_ty =
+                trait_method
+                    .scheme
+                    .subst(trait_ty_param, &implementing_ty, &fun.loc);
 
             let fun_ty = convert_fun_ty(
                 Some(&implementing_ty),

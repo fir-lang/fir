@@ -83,10 +83,10 @@ mod native {
         let root_path = file_path.parent().unwrap(); // "examples/"
 
         let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-        let module =
+        let mut module =
             import_resolver::resolve_imports(&fir_root, root_path.to_str().unwrap(), module);
 
-        let tys = type_checker::check_module(&module);
+        let tys = type_checker::check_module(&mut module);
 
         let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
         let mut w = std::io::stdout();

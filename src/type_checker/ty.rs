@@ -110,8 +110,14 @@ pub struct TyCon {
 /// Types of methods and fields can refer to type parameters of the `TyCon`.
 #[derive(Debug, Clone)]
 pub(super) enum TyConDetails {
-    Trait { methods: Map<Id, Scheme> },
+    Trait { methods: Map<Id, TraitMethod> },
     Type { cons: Vec<Id> },
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct TraitMethod {
+    pub(super) scheme: Scheme,
+    pub(super) fun_decl: ast::L<ast::FunDecl>,
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
