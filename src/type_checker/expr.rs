@@ -326,7 +326,17 @@ pub(super) fn check_expr(
 
         ast::Expr::Record(_) => todo!(),
 
-        ast::Expr::Return(_) => todo!(),
+        ast::Expr::Return(expr) => check_expr(
+            expr,
+            Some(return_ty),
+            return_ty,
+            level,
+            env,
+            var_gen,
+            quantified_vars,
+            tys,
+            preds,
+        ),
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             let scrut_ty = check_expr(
