@@ -6,7 +6,9 @@ use crate::type_checker::expr::check_expr;
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::PgmTypes;
+use crate::type_checker::{loc_string, PgmTypes};
+
+use smol_str::SmolStr;
 
 pub(super) fn check_stmts(
     stmts: &[ast::L<ast::Stmt>],
@@ -80,11 +82,68 @@ fn check_stmt(
             Ty::unit()
         }
 
-        ast::Stmt::Assign(ast::AssignStmt {
-            lhs: _,
-            rhs: _,
-            op: _,
-        }) => todo!(),
+        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => match &lhs.node {
+            ast::Expr::Var(var) => {
+                let var_ty = env.get(var).cloned().unwrap_or_else(|| {
+                    panic!("{}: Unbound variable {}", loc_string(&lhs.loc), var)
+                });
+
+                let method = match op {
+                    ast::AssignOp::Eq => {
+                        check_expr(
+                            rhs,
+                            Some(&var_ty),
+                            return_ty,
+                            level,
+                            env,
+                            var_gen,
+                            quantified_vars,
+                            tys,
+                            preds,
+                        );
+                        return Ty::unit();
+                    }
+
+                    ast::AssignOp::PlusEq => "__add",
+
+                    ast::AssignOp::MinusEq => "__sub",
+                };
+
+                let desugared_rhs = ast::L {
+                    loc: rhs.loc.clone(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: rhs.loc.clone(),
+                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                object: Box::new(ast::L {
+                                    loc: stmt.loc.clone(),
+                                    node: ast::Expr::Var(var.clone()),
+                                }),
+                                field: SmolStr::new_static(method),
+                            }),
+                        }),
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: (*rhs).clone(),
+                        }],
+                    }),
+                };
+
+                check_expr(
+                    &desugared_rhs,
+                    expected_ty,
+                    return_ty,
+                    level,
+                    env,
+                    var_gen,
+                    quantified_vars,
+                    tys,
+                    preds,
+                )
+            }
+
+            _ => todo!("{}: Assignment with LHS: {:?}", loc_string(&lhs.loc), lhs),
+        },
 
         ast::Stmt::Expr(expr) => check_expr(
             expr,
