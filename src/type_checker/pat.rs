@@ -197,22 +197,16 @@ pub(super) fn check_pat(
 
         ast::Pat::Str(_) => {
             let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.insert(
-                pat_ty.clone(),
-                [SmolStr::new_static("ToStrView")].into_iter().collect(),
-            );
+            preds.insert(pat_ty.clone(), [Ty::to_str_view_id()].into_iter().collect());
             Ty::Var(pat_ty)
         }
 
         ast::Pat::StrPfx(_, var) => {
             // Pattern may be a `Str` or `StrView`, `var` will be `StrView`.
             let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.insert(
-                pat_ty.clone(),
-                [SmolStr::new_static("ToStrView")].into_iter().collect(),
-            );
+            preds.insert(pat_ty.clone(), [Ty::to_str_view_id()].into_iter().collect());
 
-            env.bind(var.clone(), Ty::Con(SmolStr::new_static("StrView")));
+            env.bind(var.clone(), Ty::Con(Ty::to_str_view_id()));
 
             Ty::Var(pat_ty)
         }

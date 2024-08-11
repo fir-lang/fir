@@ -298,6 +298,10 @@ impl Ty {
         Ty::Con(SmolStr::new_static("Bool"))
     }
 
+    pub(super) fn to_str_view_id() -> Id {
+        SmolStr::new_static("ToStrView")
+    }
+
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
