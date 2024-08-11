@@ -349,7 +349,7 @@ pub(super) fn check_expr(
                 rhs,
             } in alts
             {
-                let pat_ty = check_pat(pattern, level, env, var_gen, tys);
+                let pat_ty = check_pat(pattern, level, env, var_gen, tys, preds);
                 unify(&pat_ty, &scrut_ty, &pattern.loc);
 
                 if let Some(guard) = guard {

@@ -75,7 +75,7 @@ fn check_stmt(
             );
             env.exit();
 
-            let pat_ty = check_pat(lhs, level, env, var_gen, tys);
+            let pat_ty = check_pat(lhs, level, env, var_gen, tys, preds);
 
             unify(&pat_ty, &rhs_ty, &lhs.loc);
 

@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::collections::Set;
+use crate::collections::{Map, Set};
 use crate::scope_map::ScopeMap;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
@@ -14,6 +14,7 @@ pub(super) fn check_pat(
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
+    preds: &mut Map<TyVarRef, Set<Id>>,
 ) -> Ty {
     match &pat.node {
         ast::Pat::Var(var) => {
@@ -112,7 +113,8 @@ pub(super) fn check_pat(
                                 con_str
                             )
                         }
-                        let field_pat_ty = check_pat(&field_pat.node, level, env, var_gen, tys);
+                        let field_pat_ty =
+                            check_pat(&field_pat.node, level, env, var_gen, tys, preds);
                         unify(con_ty, &field_pat_ty, &pat.loc);
                     }
 
@@ -165,7 +167,7 @@ pub(super) fn check_pat(
                             })
                             .unwrap();
 
-                        let field_pat_ty = check_pat(field_pat, level, env, var_gen, tys);
+                        let field_pat_ty = check_pat(field_pat, level, env, var_gen, tys, preds);
 
                         unify(&field_pat_ty, arg_ty, &pat.loc);
                     }
@@ -187,19 +189,39 @@ pub(super) fn check_pat(
                 .map(|named| {
                     (
                         named.name.as_ref().unwrap().clone(),
-                        check_pat(&named.node, level, env, var_gen, tys),
+                        check_pat(&named.node, level, env, var_gen, tys, preds),
                     )
                 })
                 .collect(),
         ),
 
-        ast::Pat::Str(_) | ast::Pat::StrPfx(_, _) => Ty::Con(SmolStr::new_static("Str")),
+        ast::Pat::Str(_) => {
+            let pat_ty = var_gen.new_var(level, pat.loc.clone());
+            preds.insert(
+                pat_ty.clone(),
+                [SmolStr::new_static("ToStrView")].into_iter().collect(),
+            );
+            Ty::Var(pat_ty)
+        }
+
+        ast::Pat::StrPfx(_, var) => {
+            // Pattern may be a `Str` or `StrView`, `var` will be `StrView`.
+            let pat_ty = var_gen.new_var(level, pat.loc.clone());
+            preds.insert(
+                pat_ty.clone(),
+                [SmolStr::new_static("ToStrView")].into_iter().collect(),
+            );
+
+            env.bind(var.clone(), Ty::Con(SmolStr::new_static("StrView")));
+
+            Ty::Var(pat_ty)
+        }
 
         ast::Pat::Char(_) => Ty::Con(SmolStr::new_static("Char")),
 
         ast::Pat::Or(pat1, pat2) => {
-            let pat1_ty = check_pat(pat1, level, env, var_gen, tys);
-            let pat2_ty = check_pat(pat2, level, env, var_gen, tys);
+            let pat1_ty = check_pat(pat1, level, env, var_gen, tys, preds);
+            let pat2_ty = check_pat(pat2, level, env, var_gen, tys, preds);
             // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
             unify(&pat1_ty, &pat2_ty, &pat.loc);
