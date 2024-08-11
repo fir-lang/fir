@@ -230,15 +230,18 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::String(parts) => {
-            let str_ty = Ty::Con(SmolStr::new_static("Str"));
-
             for part in parts {
                 match part {
                     StringPart::Str(_) => continue,
                     StringPart::Expr(expr) => {
+                        let expr_var = var_gen.new_var(level, expr.loc.clone());
+                        preds.insert(
+                            expr_var.clone(),
+                            [Ty::to_str_view_id()].into_iter().collect(),
+                        );
                         check_expr(
                             expr,
-                            Some(&str_ty),
+                            Some(&Ty::Var(expr_var)),
                             return_ty,
                             level,
                             env,

@@ -66,6 +66,10 @@ impl ToStrView[Str]:
 
 prim type StrView
 
+impl ToStrView[StrView]:
+    fn toStrView(self): StrView =
+        self
+
 impl Eq[StrView]:
     prim fn __eq(self, other: StrView): Bool
 
@@ -77,6 +81,10 @@ impl StrView:
     prim fn toStr(self): Str
 
 prim type I32
+
+impl ToStrView[I32]:
+    fn toStrView(self): StrView =
+        self.toStr().toStrView()
 
 impl Add[I32]:
     prim fn __add(self, other: I32): I32
@@ -143,6 +151,10 @@ impl Bool:
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
+
+impl ToStrView[Bool]:
+    fn toStrView(self): StrView =
+        self.toStr().toStrView()
 
 # TODO: We may want to allow unnamed fields: `type Char(U32)`.
 type Char:

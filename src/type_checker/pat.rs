@@ -206,7 +206,7 @@ pub(super) fn check_pat(
             let pat_ty = var_gen.new_var(level, pat.loc.clone());
             preds.insert(pat_ty.clone(), [Ty::to_str_view_id()].into_iter().collect());
 
-            env.bind(var.clone(), Ty::Con(Ty::to_str_view_id()));
+            env.bind(var.clone(), Ty::str_view());
 
             Ty::Var(pat_ty)
         }
