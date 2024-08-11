@@ -406,14 +406,7 @@ impl Ty {
     /// Otherwise returns the original type.
     pub(super) fn normalize(&self) -> Ty {
         match self {
-            Ty::Var(var_ref) => {
-                let link = match &*var_ref.0.link.borrow() {
-                    Some(link) => link.normalize(),
-                    None => return self.clone(),
-                };
-                var_ref.set_link(link.clone());
-                link
-            }
+            Ty::Var(var_ref) => var_ref.normalize(),
             other => other.clone(),
         }
     }
@@ -474,6 +467,15 @@ impl TyVarRef {
         let self_level = self.level();
         self.0.level.set(std::cmp::min(level, self_level));
     }
+
+    pub(super) fn normalize(&self) -> Ty {
+        let link = match &*self.0.link.borrow() {
+            Some(link) => link.normalize(),
+            None => return Ty::Var(self.clone()),
+        };
+        self.set_link(link.clone());
+        link
+    }
 }
 
 impl TyVarGen {
@@ -496,6 +498,13 @@ impl TyCon {
 
     pub fn is_trait(&self) -> bool {
         matches!(self.details, TyConDetails::Trait { .. })
+    }
+
+    pub(super) fn as_trait(&self) -> &TraitDetails {
+        match &self.details {
+            TyConDetails::Trait(details) => details,
+            TyConDetails::Type(_) => panic!(),
+        }
     }
 }
 

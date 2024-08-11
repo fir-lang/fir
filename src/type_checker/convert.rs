@@ -5,6 +5,10 @@ use crate::type_checker::ty::*;
 
 use smol_str::SmolStr;
 
+/// Convert an AST type to type checking type.
+///
+/// `quantified_tys` are the type variables quantified in the context. These types will be
+/// converted to `Ty::QVar`.
 pub fn convert_ast_ty(
     ty_cons: &Map<Id, TyCon>,
     quantified_tys: &Set<Id>,

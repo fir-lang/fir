@@ -490,23 +490,35 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let quantified_vars: Set<Id> = fun
+    let quantified_vars: Map<Id, Set<Id>> = fun
         .node
         .sig
         .type_params
         .iter()
-        .map(|param| param.node.0.node.clone())
+        .map(|param| {
+            (
+                param.node.0.node.clone(),
+                param
+                    .node
+                    .1
+                    .iter()
+                    .map(|bound| bound.node.clone())
+                    .collect(),
+            )
+        })
         .collect();
+
+    let quantified_var_ids: Set<Id> = quantified_vars.keys().cloned().collect();
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.bind(
             param_name.clone(),
-            convert_ast_ty(&tys.cons, &quantified_vars, &param_ty.node, &fun.loc),
+            convert_ast_ty(&tys.cons, &quantified_var_ids, &param_ty.node, &fun.loc),
         );
     }
 
     let ret_ty = match &fun.node.sig.return_ty {
-        Some(ty) => convert_ast_ty(&tys.cons, &quantified_vars, &ty.node, &ty.loc),
+        Some(ty) => convert_ast_ty(&tys.cons, &quantified_var_ids, &ty.node, &ty.loc),
         None => Ty::Record(Default::default()),
     };
 
@@ -520,11 +532,13 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
             0,
             &mut env,
             &mut var_gen,
-            &quantified_vars,
+            &quantified_var_ids,
             tys,
             &mut preds,
         );
     }
+
+    resolve_preds(&quantified_vars, tys, &preds);
 }
 
 fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
@@ -624,6 +638,9 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                     tys,
                     &mut preds,
                 );
+
+                // TODO: Context
+                resolve_preds(&Default::default(), tys, &preds);
             }
         }
     } else {
@@ -659,6 +676,44 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                     tys,
                     &mut preds,
                 );
+
+                // TODO: Context
+                resolve_preds(&Default::default(), tys, &preds);
+            }
+        }
+    }
+}
+
+// TODO: Add locations to error messages.
+fn resolve_preds(context: &Map<Id, Set<Id>>, tys: &PgmTypes, preds: &Map<TyVarRef, Set<Id>>) {
+    for (var, traits) in preds {
+        let var_ty = var.normalize();
+        match var_ty {
+            Ty::Con(con) | Ty::App(con, _) => {
+                for trait_ in traits {
+                    let TraitDetails {
+                        implementing_tys, ..
+                    } = tys.cons.get(trait_).unwrap().as_trait();
+
+                    if !implementing_tys.contains(&con) {
+                        panic!("Type {} does not implement trait {}", con, trait_);
+                    }
+                }
+            }
+
+            Ty::QVar(var) => {
+                for trait_ in traits {
+                    if context.get(&var).map(|context| context.contains(trait_)) != Some(true) {
+                        panic!("Type variable {} does not implement trait {}", var, trait_);
+                    }
+                }
+            }
+
+            // TODO: Records can implement Debug, Eq, etc.
+            Ty::Var(_) | Ty::Record(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+                if let Some(trait_) = traits.iter().next() {
+                    panic!("Type {:?} does not implement trait {}", var_ty, trait_);
+                }
             }
         }
     }
