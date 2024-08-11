@@ -32,6 +32,12 @@ pub struct PgmTypes {
     pub cons: Map<Id, TyCon>,
 }
 
+/// Type check a module.
+///
+/// Updates trait implementation blocks with the default implementations of missing methods.
+///
+/// Returns schemes of top-level functions, associated functions (includes trait methods), and
+/// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     let tys = collect_types(module);
 
@@ -47,13 +53,17 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 
             ast::TopDecl::Impl(impl_) => check_impl(impl_, &tys),
 
-            ast::TopDecl::Fun(fun) => check_fun(fun, &tys),
+            ast::TopDecl::Fun(fun) => check_top_fun(fun, &tys),
         }
     }
 
     tys
 }
 
+/// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
+/// the program.
+///
+/// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let cons = collect_cons(module);
     let (top_schemes, associated_schemes) = collect_schemes(module, &cons);
@@ -486,7 +496,8 @@ fn collect_schemes(
     (top_schemes, associated_schemes)
 }
 
-fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
+/// Type check a top-level function.
+fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
@@ -541,6 +552,9 @@ fn check_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     resolve_preds(&quantified_vars, tys, &preds);
 }
 
+/// Type check an `impl` block.
+///
+/// The block may be for a trait implementation or for associated functions.
 fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
     let quantified_tys: Set<Id> = impl_
         .node
