@@ -324,7 +324,73 @@ pub(super) fn check_expr(
 
         ast::Expr::ArrayIndex(_) => todo!(),
 
-        ast::Expr::Record(_) => todo!(),
+        ast::Expr::Record(fields) => {
+            if fields.is_empty() {
+                return Ty::unit();
+            }
+
+            // TODO: For now only supporting named fields.
+            let mut field_names: Set<&Id> = Default::default();
+            for field in fields {
+                match &field.name {
+                    Some(name) => {
+                        if !field_names.insert(name) {
+                            panic!(
+                                "{}: Field name {} occurs multiple times in the record",
+                                loc_string(&expr.loc),
+                                name
+                            );
+                        }
+                    }
+                    None => panic!("{}: Unnamed record field", loc_string(&expr.loc)),
+                }
+            }
+
+            // To give better error messages use the field types in the expected type as expected
+            // types of the expr fields when possible.
+            let expected_fields = expected_ty.map(|expected_ty| match expected_ty.normalize() {
+                Ty::Record(expected_fields) => expected_fields,
+                other => panic!(
+                    "{}: Record expression expected to have type {:?}",
+                    loc_string(&expr.loc),
+                    other
+                ),
+            });
+
+            if let Some(expected_fields) = &expected_fields {
+                let expected_field_names: Set<&Id> = expected_fields.keys().collect();
+                if expected_field_names != field_names {
+                    panic!(
+                        "{}: Record expected to have fields {:?}, but it has fields {:?}",
+                        loc_string(&expr.loc),
+                        expected_field_names,
+                        field_names
+                    );
+                }
+            }
+
+            let mut record_ty: Map<Id, Ty> = Default::default();
+            for field in fields {
+                let field_name = field.name.as_ref().unwrap();
+                let expected_ty = expected_fields
+                    .as_ref()
+                    .map(|expected_fields| expected_fields.get(field_name).unwrap());
+                let field_ty = check_expr(
+                    &field.node,
+                    expected_ty,
+                    return_ty,
+                    level,
+                    env,
+                    var_gen,
+                    quantified_vars,
+                    tys,
+                    preds,
+                );
+                record_ty.insert(field_name.clone(), field_ty);
+            }
+
+            Ty::Record(record_ty)
+        }
 
         ast::Expr::Return(expr) => check_expr(
             expr,
