@@ -99,7 +99,7 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
             let (arg = arg, rest = rest) = parseArg(rest)
             return (term = Term.IsZero(arg), rest = rest)
         _:
-            panic("Invalid syntax: \"$(pgm)\"")
+            panic("Invalid syntax: \"$(pgm.toStr())\"")
 
 fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     # Skip "("
