@@ -593,7 +593,7 @@ fn select_field(
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
-        TyConDetails::Trait { methods: _ } => {
+        TyConDetails::Trait(_) => {
             // Stand-alone `trait.method` can't work, we need to look at the arguments.
             // Ignore this for now, we probably won't need it.
             todo!(
@@ -602,7 +602,7 @@ fn select_field(
             );
         }
 
-        TyConDetails::Type { cons } => match cons.len() {
+        TyConDetails::Type(TypeDetails { cons }) => match cons.len() {
             1 => {
                 let con_name = &cons[0];
                 let con_scheme = tys.top_schemes.get(con_name)?;

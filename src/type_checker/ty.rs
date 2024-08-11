@@ -110,14 +110,33 @@ pub struct TyCon {
 /// Types of methods and fields can refer to type parameters of the `TyCon`.
 #[derive(Debug, Clone)]
 pub(super) enum TyConDetails {
-    Trait { methods: Map<Id, TraitMethod> },
-    Type { cons: Vec<Id> },
+    Trait(TraitDetails),
+    Type(TypeDetails),
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct TraitDetails {
+    /// Methods of the trait, with optional default implementations.
+    pub(super) methods: Map<Id, TraitMethod>,
+
+    /// Types implementing the trait.
+    ///
+    /// For now we don't allow extra context in implementations, e.g.
+    /// `impl Debug[T] => Debug[Array[T]]` is not possible, and the implemenhting types can be a
+    /// set of type constructors.
+    pub(super) implementing_tys: Set<Id>,
 }
 
 #[derive(Debug, Clone)]
 pub(super) struct TraitMethod {
     pub(super) scheme: Scheme,
     pub(super) fun_decl: ast::L<ast::FunDecl>,
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct TypeDetails {
+    /// Value constructors of the type.
+    pub(super) cons: Vec<Id>,
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
@@ -482,6 +501,6 @@ impl TyCon {
 
 impl TyConDetails {
     pub(super) fn placeholder() -> Self {
-        TyConDetails::Type { cons: vec![] }
+        TyConDetails::Type(TypeDetails { cons: vec![] })
     }
 }

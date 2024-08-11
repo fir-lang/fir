@@ -42,7 +42,7 @@ pub(super) fn check_pat(
                         type_
                     ),
 
-                    TyConDetails::Type { cons: _ } => match constr {
+                    TyConDetails::Type(TypeDetails { cons: _ }) => match constr {
                         Some(constr) => (
                             tys.associated_schemes
                                 .get(&ty_con.id)

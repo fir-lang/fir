@@ -118,15 +118,15 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                                 .map(|ast::ConstructorDecl { name, fields: _ }| name.clone())
                                 .collect();
 
-                            TyConDetails::Type { cons }
+                            TyConDetails::Type(TypeDetails { cons })
                         }
 
-                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type {
+                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
                             cons: vec![ty_decl.node.name.clone()],
-                        },
+                        }),
                     },
 
-                    None => TyConDetails::Type { cons: vec![] },
+                    None => TyConDetails::Type(TypeDetails { cons: vec![] }),
                 };
 
                 cons.get_mut(&ty_decl.node.name).unwrap().details = details;
@@ -177,14 +177,17 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                 assert_eq!(con.ty_params.len(), 1);
 
                 con.ty_params[0].1 = bounds;
-                con.details = TyConDetails::Trait { methods };
+                con.details = TyConDetails::Trait(TraitDetails {
+                    methods,
+                    implementing_tys: Default::default(),
+                });
             }
 
             ast::TopDecl::Fun(_) | ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => continue,
         }
     }
 
-    // Add default methods to impls.
+    // Add default methods to impls, and populate the trait->implementing types map.
     //
     // We don't need to type check default methods copied to impls, but for now we do. So replace
     // the trait type parameter with the self type in the copied declarations.
@@ -207,20 +210,38 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             &impl_decl.ty.loc,
         );
 
-        let (con_id, args) = match ty.con() {
+        let (trait_con_id, args) = match ty.con() {
             Some(con_and_args) => con_and_args,
             None => continue,
         };
 
-        let ty_con = cons.get(&con_id).unwrap();
+        let trait_ty_con = cons.get_mut(&trait_con_id).unwrap();
 
-        let trait_methods = match &ty_con.details {
-            TyConDetails::Trait { methods } => methods,
+        let (trait_methods, trait_implementing_tys) = match &mut trait_ty_con.details {
+            TyConDetails::Trait(TraitDetails {
+                ref mut methods,
+                ref mut implementing_tys,
+            }) => (methods, implementing_tys),
             TyConDetails::Type { .. } => continue,
         };
 
         assert_eq!(args.len(), 1);
-        assert_eq!(ty_con.ty_params.len(), 1);
+        assert_eq!(trait_ty_con.ty_params.len(), 1);
+
+        // Type parameter of the trait, e.g. `T` in `trait Debug[T]: ...`.
+        let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
+
+        // Type constructor of the type implementing the trait.
+        let (self_ty_con, _) = args[0].con().unwrap();
+
+        if !trait_implementing_tys.insert(self_ty_con.clone()) {
+            panic!(
+                "{}: Trait {} is implemented for type {} multiple times",
+                loc_string(&decl.loc),
+                trait_con_id,
+                self_ty_con
+            );
+        }
 
         let self_ast_ty = match &impl_decl.ty.node {
             ast::Type::Named(ast::NamedType { name: _, args }) => {
@@ -229,8 +250,6 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             }
             ast::Type::Record(_) => panic!(), // can't happen
         };
-
-        let trait_ty_param: Id = ty_con.ty_params[0].0.clone();
 
         for (method, method_decl) in trait_methods {
             if impl_decl
@@ -521,9 +540,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap();
 
-    if let TyConDetails::Trait {
+    if let TyConDetails::Trait(TraitDetails {
         methods: trait_methods,
-    } = &ty_con.details
+        ..
+    }) = &ty_con.details
     {
         // Check that the method types match trait method types, with the trait type parameter
         // replaced by the implementing type.
