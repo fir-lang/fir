@@ -80,24 +80,29 @@ fn skipWhitespace(pgm: StrView): StrView =
 
 ## Parse the program, return the parsed term and the unparsed part of the program.
 fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
-    let pgm = skipWhitespace(pgm)
-
-    match pgm:
+    match skipWhitespace(pgm):
         "0" rest:
-            return (term = Term.Zero, rest = rest)
+            (term = Term.Zero, rest = rest)
         "true" rest:
-            return (term = Term.True, rest = rest)
+            (term = Term.True, rest = rest)
         "false" rest:
-            return (term = Term.False, rest = rest)
+            (term = Term.False, rest = rest)
         "succ" rest:
             let (arg = arg, rest = rest) = parseArg(rest)
-            return (term = Term.Succ(arg), rest = rest)
+            (term = Term.Succ(arg), rest = rest)
         "pred" rest:
             let (arg = arg, rest = rest) = parseArg(rest)
-            return (term = Term.Pred(arg), rest = rest)
+            (term = Term.Pred(arg), rest = rest)
         "iszero" rest:
             let (arg = arg, rest = rest) = parseArg(rest)
-            return (term = Term.IsZero(arg), rest = rest)
+            (term = Term.IsZero(arg), rest = rest)
+        "if" rest:
+            let (term = cond, rest = rest) = parseWithRest(rest)
+            let rest = expectKeyword(rest, "then".toStrView())
+            let (term = then, rest = rest) = parseWithRest(rest)
+            let rest = expectKeyword(rest, "else".toStrView())
+            let (term = else_, rest = rest) = parseWithRest(rest)
+            (term = Term.If(cond = cond, then = then, else_ = else_), rest = rest)
         _:
             panic("Invalid syntax: \"$(pgm)\"")
 
@@ -117,3 +122,9 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     let rest = rest.substr(1, rest.len())
 
     (arg = arg, rest = rest)
+
+fn expectKeyword(pgm: StrView, kw: StrView): StrView =
+    let pgm = skipWhitespace(pgm)
+    if !pgm.startsWith(kw.toStr()):
+        panic("Expected \"$(kw)\", found \"$(pgm)\"")
+    pgm.substr(kw.len(), pgm.len())

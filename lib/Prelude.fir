@@ -62,7 +62,8 @@ impl Str:
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
 
 impl ToStrView[Str]:
-    prim fn toStrView(self): StrView
+    fn toStrView(self): StrView =
+        self.substr(0, self.len())
 
 prim type StrView
 
@@ -76,7 +77,7 @@ impl Eq[StrView]:
 impl StrView:
     prim fn isEmpty(self): Bool
     prim fn len(self): I32
-    prim fn startsWith(self, str: Str): Bool
+    prim fn startsWith(self, str: Str): Bool    # TODO: Argument should be StrView
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
     prim fn toStr(self): Str
 
