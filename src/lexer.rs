@@ -4,13 +4,7 @@ use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
-struct LexerState {
-    /// When lexing interpolations, this holds the number of open left parens we've seen without a
-    /// closing pair. When this is zero and we see a closing paren, that ends the interpolation.
-    ///
-    /// Note: for now we don't allow strings in interpolations.
-    open_parens: u32,
-}
+struct LexerState {}
 
 lexgen::lexer! {
     pub Lexer(LexerState) -> TokenKind;
@@ -94,17 +88,13 @@ lexgen::lexer! {
     }
 
 
-    // Check nesting of `$(...)` parts. Parsing is done later.
     rule String {
-        "$(" => |lexer| {
-            lexer.state().open_parens = 0;
-            lexer.switch(LexerRule::Interpolation)
-        },
+        "`" => |lexer| lexer.switch(LexerRule::Interpolation),
 
         '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
 
         // Escaped interpolation start
-        "\\$(" => |lexer| lexer.continue_(),
+        "\\`" => |lexer| lexer.continue_(),
 
         // Escaped double quote
         '\\' '"' => |lexer| lexer.continue_(),
@@ -113,20 +103,9 @@ lexgen::lexer! {
     }
 
     rule Interpolation {
-        '(' => |lexer| {
-            lexer.state().open_parens += 1;
-            lexer.continue_()
-        },
+        "\\`" => |lexer| lexer.continue_(),
 
-        ')' => |lexer| {
-            match lexer.state().open_parens {
-                0 => lexer.switch(LexerRule::String),
-                _ => {
-                    lexer.state().open_parens -= 1;
-                    lexer.continue_()
-                }
-            }
-        },
+        "`" => |lexer| lexer.switch(LexerRule::String),
 
         _ => |lexer| lexer.continue_(),
     }

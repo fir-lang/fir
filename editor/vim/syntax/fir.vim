@@ -24,12 +24,12 @@ syntax match firDecNumber display "[0-9][0-9_]*"
 
 highlight default link firDecNumber firNumber
 
-
 syntax match firType "\<[A-Z][a-zA-Z0-9_']*\>"
 
 syntax cluster firStringContains contains=firInterpolation
 syntax region firString matchgroup=firStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell,@firStringContains
-syntax match firInterpolation contained "\$\(\w\+\|([^)]\+)\)" extend
+syntax match firInterpolation contained "`\([^`]\+\)`" extend
+
 
 highlight default link firKeyword Keyword
 highlight default link firLineComment Comment

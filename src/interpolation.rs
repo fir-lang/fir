@@ -44,8 +44,17 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
             continue;
         }
 
-        if char == '$' {
-            if let Some((lparen_idx, '(')) = chars.next() {
+        if char == '`' {
+            let start_byte = byte_idx;
+            let start_loc = Loc {
+                line: loc.line,
+                col: loc.col,
+                byte_idx: loc.byte_idx,
+            };
+
+            parts.push(StringPart::Str(s[str_part_start..byte_idx].to_string()));
+
+            for (byte_idx, char) in chars.by_ref() {
                 if char == '\n' {
                     loc.line += 1;
                     loc.col = 0;
@@ -55,60 +64,32 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
 
                 loc.byte_idx += char.len_utf8();
 
-                let lparen_loc = Loc {
-                    line: loc.line,
-                    col: loc.col,
-                    byte_idx: loc.byte_idx,
-                };
+                if escape {
+                    escape = false;
+                    continue;
+                }
 
-                parts.push(StringPart::Str(s[str_part_start..byte_idx].to_string()));
+                if char == '\\' {
+                    escape = true;
+                    continue;
+                }
 
-                let mut parens: u32 = 1;
-                for (byte_idx, char) in chars.by_ref() {
-                    if char == '\n' {
-                        loc.line += 1;
-                        loc.col = 0;
-                    } else {
-                        loc.col += 1;
+                if char == '`' {
+                    // Lex and parse interpolation.
+                    let interpolation = &s[start_byte + 1..byte_idx];
+                    let mut tokens: Vec<(Loc, Token, Loc)> = lex(interpolation);
+                    for (ref mut l, _, ref mut r) in &mut tokens {
+                        *l = update_loc(l, &start_loc);
+                        *r = update_loc(r, &start_loc);
                     }
-
-                    loc.byte_idx += char.len_utf8();
-
-                    if escape {
-                        escape = false;
-                        continue;
-                    }
-
-                    if char == '\\' {
-                        escape = true;
-                        continue;
-                    }
-
-                    if char == '(' {
-                        parens += 1;
-                        continue;
-                    }
-
-                    if char == ')' {
-                        parens -= 1;
-                        if parens == 0 {
-                            // Lex and parse interpolation.
-                            let interpolation = &s[lparen_idx + 1..byte_idx];
-                            let mut tokens: Vec<(Loc, Token, Loc)> = lex(interpolation);
-                            for (ref mut l, _, ref mut r) in &mut tokens {
-                                *l = update_loc(l, &lparen_loc);
-                                *r = update_loc(r, &lparen_loc);
-                            }
-                            let parser = LExprParser::new();
-                            let expr = match parser.parse(module, tokens) {
-                                Ok(expr) => expr,
-                                Err(err) => crate::report_parse_error(&SmolStr::new(module), err),
-                            };
-                            parts.push(StringPart::Expr(expr));
-                            str_part_start = byte_idx + 1;
-                            continue 'outer;
-                        }
-                    }
+                    let parser = LExprParser::new();
+                    let expr = match parser.parse(module, tokens) {
+                        Ok(expr) => expr,
+                        Err(err) => crate::report_parse_error(&SmolStr::new(module), err),
+                    };
+                    parts.push(StringPart::Expr(expr));
+                    str_part_start = byte_idx + 1;
+                    continue 'outer;
                 }
             }
         }
@@ -147,7 +128,7 @@ fn interpolation_parsing_1() {
 
 #[test]
 fn interpolation_parsing_2() {
-    let s = r#"abc $(a)"#;
+    let s = r#"abc `a`"#;
     let parts = parse_string_parts(&"test".into(), s, Loc::default());
     assert_eq!(parts.len(), 2);
     assert_eq!(parts[0], StringPart::Str("abc ".into()));

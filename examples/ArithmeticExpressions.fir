@@ -42,23 +42,23 @@ fn eval(term: Term): Value =
                     else:
                         eval(else_)
                 Value.Num(i):
-                    panic("If condition evaluated to number $(i)")
+                    panic("If condition evaluated to number `i`")
 
         Term.Zero: Value.Num(0)
 
         Term.Succ(term):
             match eval(term):
-                Value.Bool(bool): panic("Succ argument evaluated to bool $(bool)")
+                Value.Bool(bool): panic("Succ argument evaluated to bool `bool`")
                 Value.Num(value): Value.Num(value + 1)
 
         Term.Pred(term):
             match eval(term):
-                Value.Bool(bool): panic("Pred argument evaluated to bool $(bool)")
+                Value.Bool(bool): panic("Pred argument evaluated to bool `bool`")
                 Value.Num(value): Value.Num(value - 1)
 
         Term.IsZero(term):
             match eval(term):
-                Value.Bool(bool): panic("IsZero argument evaluated to bool $(bool)")
+                Value.Bool(bool): panic("IsZero argument evaluated to bool `bool`")
                 Value.Num(value): Value.Bool(value == 0)
 
 impl Value:
@@ -70,7 +70,7 @@ impl Value:
 fn parse(pgm: StrView): Term =
     let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
-        panic("Leftover code after parsing the program: \"$(rest)\"")
+        panic("Leftover code after parsing the program: \"`rest`\"")
     term
 
 fn skipWhitespace(pgm: StrView): StrView =
@@ -104,7 +104,7 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
             let (term = else_, rest = rest) = parseWithRest(rest)
             (term = Term.If(cond = cond, then = then, else_ = else_), rest = rest)
         _:
-            panic("Invalid syntax: \"$(pgm)\"")
+            panic("Invalid syntax: \"`pgm`\"")
 
 fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     # Skip "("
@@ -126,5 +126,5 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
 fn expectKeyword(pgm: StrView, kw: StrView): StrView =
     let pgm = skipWhitespace(pgm)
     if !pgm.startsWith(kw.toStr()):
-        panic("Expected \"$(kw)\", found \"$(pgm)\"")
+        panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
