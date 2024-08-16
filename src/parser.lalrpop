@@ -399,8 +399,10 @@ InlineExpr: Expr = {
     <int:IntLit> =>
         Expr::Int(i32::from_str_radix(&int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
 
-    <string:StringLit> =>
-        Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1])),
+    <l:@L> <string:StringLit> => {
+        let l = Loc { line: l.line, col: l.col + 1, byte_idx: l.byte_idx + 1 };
+        Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
+    },
 
     <char:CharLit> =>
         Expr::Char(char.text.chars().nth(1).unwrap()),

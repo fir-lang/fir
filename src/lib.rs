@@ -24,38 +24,49 @@ fn parse_module(module: &SmolStr, tokens: Vec<(Loc, token::Token, Loc)>) -> ast:
     let parser = parser::TopDeclsParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
-        Err(err) => match err {
-            lalrpop_util::ParseError::InvalidToken { location } => {
-                panic!("Invalid token at {}", lexgen_loc_string(module, location));
-            }
+        Err(err) => report_parse_error(module, err),
+    }
+}
 
-            lalrpop_util::ParseError::UnrecognizedEof {
-                location,
-                expected: _,
-            } => {
-                panic!("Unexpected EOF at {}", lexgen_loc_string(module, location));
-            }
+fn report_parse_error(
+    module: &SmolStr,
+    err: lalrpop_util::ParseError<
+        Loc,
+        token::Token,
+        lexgen_util::LexerError<std::convert::Infallible>,
+    >,
+) -> ! {
+    match err {
+        lalrpop_util::ParseError::InvalidToken { location } => {
+            panic!("Invalid token at {}", lexgen_loc_string(module, location));
+        }
 
-            lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
-                panic!(
-                    "Unexpected token {:?} at {}",
-                    token.1,
-                    lexgen_loc_string(module, token.0)
-                );
-            }
+        lalrpop_util::ParseError::UnrecognizedEof {
+            location,
+            expected: _,
+        } => {
+            panic!("Unexpected EOF at {}", lexgen_loc_string(module, location));
+        }
 
-            lalrpop_util::ParseError::ExtraToken { token } => {
-                panic!(
-                    "Extra token {:?} after parsing at {}",
-                    token.1,
-                    lexgen_loc_string(module, token.0)
-                );
-            }
+        lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
+            panic!(
+                "Unexpected token {:?} at {}",
+                token.1,
+                lexgen_loc_string(module, token.0)
+            );
+        }
 
-            lalrpop_util::ParseError::User { error } => {
-                panic!("Lexer error: {:?}", error)
-            }
-        },
+        lalrpop_util::ParseError::ExtraToken { token } => {
+            panic!(
+                "Extra token {:?} after parsing at {}",
+                token.1,
+                lexgen_loc_string(module, token.0)
+            );
+        }
+
+        lalrpop_util::ParseError::User { error } => {
+            panic!("Lexer error: {:?}", error)
+        }
     }
 }
 
