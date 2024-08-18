@@ -141,6 +141,8 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
         ast::Type::Record(fields) => {
             records.insert(RecordShape::from_named_things(fields));
         }
+
+        ast::Type::AssocType(ast::AssocType { ty, assoc_ty: _ }) => visit_ty(&ty.node, records),
     }
 }
 

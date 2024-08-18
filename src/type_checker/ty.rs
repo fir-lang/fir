@@ -60,6 +60,9 @@ pub enum Ty {
 
     /// A function type with named arguments, e.g. `Fn(x: U32, y: U32): Str`.
     FunNamedArgs(Map<Id, Ty>, Box<Ty>),
+
+    /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
+    AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -101,7 +104,8 @@ pub struct TyCon {
 
     /// Methods for traits, constructor for sums, fields for products.
     ///
-    /// Types can refer to `ty_params`.
+    /// Types can refer to `ty_params` and need to be substituted by the instantiated the types in
+    /// `ty_params` before use.
     pub(super) details: TyConDetails,
 }
 
@@ -110,7 +114,10 @@ pub struct TyCon {
 /// Types of methods and fields can refer to type parameters of the `TyCon`.
 #[derive(Debug, Clone)]
 pub(super) enum TyConDetails {
+    /// Type constructor is for a trait.
     Trait(TraitDetails),
+
+    /// Type constructor is for a product or sum type definition.
     Type(TypeDetails),
 }
 
@@ -364,6 +371,11 @@ impl Ty {
                     .collect(),
                 Box::new(ret.subst(var, ty)),
             ),
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst(var, ty)),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 
@@ -398,6 +410,11 @@ impl Ty {
                     .collect(),
                 Box::new(ret.subst_qvars(vars)),
             ),
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_qvars(vars)),
+                assoc_ty: assoc_ty.clone(),
+            },
         }
     }
 
@@ -418,9 +435,12 @@ impl Ty {
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
-            Ty::Var(_) | Ty::Record(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
-                None
-            }
+            Ty::Var(_)
+            | Ty::Record(_)
+            | Ty::QVar(_)
+            | Ty::Fun(_, _)
+            | Ty::FunNamedArgs(_, _)
+            | Ty::AssocTySelect { .. } => None,
         }
     }
 

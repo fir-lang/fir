@@ -258,7 +258,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                 assert_eq!(args.len(), 1);
                 args[0].node.clone()
             }
-            ast::Type::Record(_) => panic!(), // can't happen
+            ast::Type::Record(_) | ast::Type::AssocType { .. } => panic!(), // can't happen
         };
 
         for (method, method_decl) in trait_methods {
@@ -698,6 +698,12 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
     }
 }
 
+/// We currently don't allow a type constructor to implement a trait multiple times with different
+/// type arguments, e.g. `impl Debug[Vec[U32]]` and `impl Debug[Vec[Str]]` are not allowed at the
+/// same time.
+///
+/// With this restriction resolving predicates is just a matter of checking for
+/// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 // TODO: Add locations to error messages.
 fn resolve_preds(context: &Map<Id, Set<Id>>, tys: &PgmTypes, preds: &Map<TyVarRef, Set<Id>>) {
     for (var, traits) in preds {
@@ -724,7 +730,11 @@ fn resolve_preds(context: &Map<Id, Set<Id>>, tys: &PgmTypes, preds: &Map<TyVarRe
             }
 
             // TODO: Records can implement Debug, Eq, etc.
-            Ty::Var(_) | Ty::Record(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+            Ty::Var(_)
+            | Ty::Record(_)
+            | Ty::Fun(_, _)
+            | Ty::FunNamedArgs(_, _)
+            | Ty::AssocTySelect { .. } => {
                 if let Some(trait_) = traits.iter().next() {
                     panic!("Type {:?} does not implement trait {}", var_ty, trait_);
                 }

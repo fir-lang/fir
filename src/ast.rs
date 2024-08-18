@@ -1,3 +1,5 @@
+#![allow(clippy::enum_variant_names)]
+
 use crate::interpolation::StringPart;
 
 use std::rc::Rc;
@@ -116,8 +118,14 @@ pub enum ConstructorFields {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
+    /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
+
+    /// An anonymous record type, e.g. `{x: I32, y: I32}`.
     Record(Vec<Named<Type>>),
+
+    /// An associated type, e.g. `Self.Item`.
+    AssocType(AssocType),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -130,6 +138,15 @@ pub struct NamedType {
 pub struct Named<T> {
     pub name: Option<SmolStr>,
     pub node: T,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AssocType {
+    /// In `Self.Item`, `Self`.
+    pub ty: Box<L<Type>>,
+
+    /// In `Self.Item`, `Item`.
+    pub assoc_ty: SmolStr,
 }
 
 /// Type signature part of a function declaration, including name, type parameters, parameters,
@@ -451,6 +468,14 @@ impl Type {
                     })
                     .collect(),
             ),
+
+            Type::AssocType(AssocType { ty: ty_, assoc_ty }) => Type::AssocType(AssocType {
+                ty: Box::new(L {
+                    loc: ty_.loc.clone(),
+                    node: ty_.node.subst_var(var, ty),
+                }),
+                assoc_ty: assoc_ty.clone(),
+            }),
         }
     }
 }

@@ -170,5 +170,9 @@ fn prune_level(ty: &Ty, max_level: u32) {
             }
             prune_level(ret, max_level);
         }
+
+        Ty::AssocTySelect { ty, assoc_ty: _ } => {
+            prune_level(ty, max_level);
+        }
     }
 }
