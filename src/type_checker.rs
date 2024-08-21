@@ -160,26 +160,26 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
 
                 let methods: Map<Id, TraitMethod> = trait_decl
                     .node
-                    .funs
+                    .items
                     .iter()
-                    .map(|fun| {
-                        (fun.node.sig.name.node.clone(), {
+                    .filter_map(|item| match &item.node {
+                        ast::TraitDeclItem::AssocTy(_) => None,
+                        ast::TraitDeclItem::Fun(fun) => Some((fun.sig.name.node.clone(), {
                             let scheme = convert_fun_ty(
-                                if fun.node.sig.self_ {
-                                    Some(&self_ty)
-                                } else {
-                                    None
-                                },
+                                if fun.sig.self_ { Some(&self_ty) } else { None },
                                 &trait_ty_params,
-                                &fun.node.sig.type_params,
-                                &fun.node.sig.params,
-                                &fun.node.sig.return_ty,
-                                &fun.loc,
+                                &fun.sig.type_params,
+                                &fun.sig.params,
+                                &fun.sig.return_ty,
+                                &item.loc,
                                 &cons,
                             );
                             let fun_decl = fun.clone();
-                            TraitMethod { scheme, fun_decl }
-                        })
+                            TraitMethod {
+                                scheme,
+                                fun_decl: item.set_node(fun_decl),
+                            }
+                        })),
                     })
                     .collect();
 

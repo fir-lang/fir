@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.20.2"
-// sha3: 460a9bb05da1bb5ffe6e836079d306cd5ac0cd8d7c7be42888b5d636ab754a5b
+// sha3: 9cc8676b3370be1d1952cd311d0404c20f1b16c1ea8a25c958501faa36104fce
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -37080,7 +37080,10 @@ fn __action107<'a>(
                 bound_r,
                 (ty.smol_str(), bounds.unwrap_or(vec![])),
             ),
-            funs,
+            items: funs
+                .into_iter()
+                .map(|fun| fun.map(TraitDeclItem::Fun))
+                .collect(),
         },
     )
 }

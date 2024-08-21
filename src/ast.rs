@@ -13,16 +13,6 @@ pub struct L<T> {
     pub node: T,
 }
 
-impl<T> L<T> {
-    pub fn map<F>(self, f: F) -> Self
-    where
-        F: FnOnce(T) -> T,
-    {
-        let L { loc, node } = self;
-        L { loc, node: f(node) }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
@@ -35,6 +25,30 @@ pub struct Loc {
     pub byte_offset_end: u32,
 }
 
+impl<T> L<T> {
+    pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, node: T) -> Self {
+        L {
+            loc: Loc::from_lexgen(module, start, end),
+            node,
+        }
+    }
+
+    pub fn map<T2, F>(self, f: F) -> L<T2>
+    where
+        F: FnOnce(T) -> T2,
+    {
+        let L { loc, node } = self;
+        L { loc, node: f(node) }
+    }
+
+    pub fn set_node<T2>(&self, node: T2) -> L<T2> {
+        L {
+            loc: self.loc.clone(),
+            node,
+        }
+    }
+}
+
 impl Loc {
     pub fn from_lexgen(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc) -> Self {
         Loc {
@@ -45,15 +59,6 @@ impl Loc {
             line_end: end.line as u16,
             col_end: end.col as u16,
             byte_offset_end: end.byte_idx as u32,
-        }
-    }
-}
-
-impl<T> L<T> {
-    pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, node: T) -> Self {
-        L {
-            loc: Loc::from_lexgen(module, start, end),
-            node,
         }
     }
 }
@@ -415,7 +420,16 @@ pub struct TraitDecl {
     /// Type parameter of the trait, with bounds.
     pub ty: L<(SmolStr, Vec<L<Type>>)>,
 
-    pub funs: Vec<L<FunDecl>>,
+    pub items: Vec<L<TraitDeclItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TraitDeclItem {
+    /// An associated type, e.g. `type Item`.
+    AssocTy(SmolStr),
+
+    /// A method, potentially with a body (default implementation).
+    Fun(FunDecl),
 }
 
 /// An `impl` block, implementing associated methods for a type, or a trait.

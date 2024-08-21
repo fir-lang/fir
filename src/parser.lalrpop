@@ -647,7 +647,7 @@ TraitDecl: L<TraitDecl> = {
         L::new(module, l, r, TraitDecl {
             name,
             ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
-            funs,
+            items: funs.into_iter().map(|fun| fun.map(TraitDeclItem::Fun)).collect(),
         })
 }
 

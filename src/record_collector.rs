@@ -85,8 +85,15 @@ fn visit_trait_decl(trait_decl: &ast::TraitDecl, records: &mut Set<RecordShape>)
     for ty in &trait_decl.ty.node.1 {
         visit_ty(&ty.node, records);
     }
-    for fun in &trait_decl.funs {
-        visit_fun_decl(&fun.node, records);
+    for item in &trait_decl.items {
+        visit_trait_decl_item(&item.node, records);
+    }
+}
+
+fn visit_trait_decl_item(item: &ast::TraitDeclItem, records: &mut Set<RecordShape>) {
+    match item {
+        ast::TraitDeclItem::AssocTy(_) => {}
+        ast::TraitDeclItem::Fun(fun_decl) => visit_fun_decl(fun_decl, records),
     }
 }
 
