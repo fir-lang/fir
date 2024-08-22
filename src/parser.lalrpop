@@ -663,7 +663,7 @@ ImplDecl: L<ImplDecl> = {
         L::new(module, l, r, ImplDecl {
             context,
             ty,
-            funs,
+            items: funs.into_iter().map(|fun| fun.map(ImplDeclItem::Fun)).collect(),
         })
     }
 }

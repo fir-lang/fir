@@ -231,8 +231,13 @@ pub fn collect_funs(
                     method_ty = ty_con;
                 }
 
-                for fun_decl in impl_decl.node.funs {
-                    if fun_decl.node.body.is_none() {
+                for item in impl_decl.node.items {
+                    let fun_decl = match item.node {
+                        ast::ImplDeclItem::AssocTy(_) => continue,
+                        ast::ImplDeclItem::Fun(fun) => fun,
+                    };
+
+                    if fun_decl.body.is_none() {
                         // Built-in function, should be added above.
                         continue;
                     }
@@ -241,10 +246,10 @@ pub fn collect_funs(
                         .entry(method_ty.clone())
                         .or_default()
                         .insert(
-                            fun_decl.node.sig.name.node.clone(),
+                            fun_decl.sig.name.node.clone(),
                             Fun {
                                 idx: 0, // TODO: Is this used?
-                                kind: FunKind::Source(fun_decl.node),
+                                kind: FunKind::Source(fun_decl),
                             },
                         );
                 }

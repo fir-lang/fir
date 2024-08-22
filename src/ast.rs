@@ -449,7 +449,22 @@ pub struct ImplDecl {
     /// This can be a trait (e.g. `Debug[Vec[T]]`) or a type (e.g. `Vec[T]`).
     pub ty: L<Type>,
 
-    pub funs: Vec<L<FunDecl>>,
+    pub items: Vec<L<ImplDeclItem>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ImplDeclItem {
+    /// An associated type definition, e.g. `type Item = T`.
+    AssocTy(AssocTyDecl),
+
+    /// A function definition.
+    Fun(FunDecl),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AssocTyDecl {
+    pub name: SmolStr,
+    pub ty: Type,
 }
 
 impl Type {

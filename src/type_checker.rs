@@ -262,11 +262,10 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
         };
 
         for (method, method_decl) in trait_methods {
-            if impl_decl
-                .funs
-                .iter()
-                .any(|fun| &fun.node.sig.name.node == method)
-            {
+            if impl_decl.items.iter().any(|item| match &item.node {
+                ast::ImplDeclItem::AssocTy(_) => false,
+                ast::ImplDeclItem::Fun(fun) => &fun.sig.name.node == method,
+            }) {
                 continue;
             }
 
@@ -286,7 +285,8 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                         )
                     })
                     .collect();
-                impl_decl.funs.push(fun_decl);
+
+                impl_decl.items.push(fun_decl.map(ast::ImplDeclItem::Fun));
             }
         }
     }
@@ -373,26 +373,31 @@ fn collect_schemes(
                     // TODO: Check that the method types match trait methods.
                 }
 
-                for fun in &impl_decl.node.funs {
-                    let sig = &fun.node.sig;
+                for item in &impl_decl.node.items {
+                    let fun = match &item.node {
+                        ast::ImplDeclItem::AssocTy(_) => continue,
+                        ast::ImplDeclItem::Fun(fun) => fun,
+                    };
+
+                    let sig = &fun.sig;
                     let scheme = convert_fun_ty(
                         if sig.self_ { Some(&self_ty) } else { None },
                         &ty_ty_params,
                         &sig.type_params,
                         &sig.params,
                         &sig.return_ty,
-                        &fun.loc,
+                        &item.loc,
                         ty_cons,
                     );
                     let old = associated_schemes
                         .entry(ty_con_id.clone())
                         .or_default()
-                        .insert(fun.node.sig.name.node.clone(), scheme);
+                        .insert(fun.sig.name.node.clone(), scheme);
                     if old.is_some() {
                         panic!(
                             "{}: Associated function {} for type {} is defined multiple times",
-                            loc_string(&fun.loc),
-                            fun.node.sig.name.node,
+                            loc_string(&item.loc),
+                            fun.sig.name.node,
                             ty_con_id
                         );
                     }
@@ -582,13 +587,18 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         let implementing_ty = ty_args.pop().unwrap();
         let trait_ty_param = &ty_con.ty_params[0].0;
 
-        for fun in &impl_.node.funs {
-            let fun_name: &Id = &fun.node.sig.name.node;
+        for item in &impl_.node.items {
+            let fun = match &item.node {
+                ast::ImplDeclItem::AssocTy(_) => continue,
+                ast::ImplDeclItem::Fun(fun) => fun,
+            };
+
+            let fun_name: &Id = &fun.sig.name.node;
 
             let trait_method = trait_methods.get(fun_name).unwrap_or_else(|| {
                 panic!(
                     "{}: Trait {} does not have a method named {}",
-                    loc_string(&fun.loc),
+                    loc_string(&item.loc),
                     ty_con_id,
                     fun_name
                 )
@@ -597,15 +607,15 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
             let trait_method_ty =
                 trait_method
                     .scheme
-                    .subst(trait_ty_param, &implementing_ty, &fun.loc);
+                    .subst(trait_ty_param, &implementing_ty, &item.loc);
 
             let fun_ty = convert_fun_ty(
                 Some(&implementing_ty),
                 &quantified_tys,
-                &fun.node.sig.type_params,
-                &fun.node.sig.params,
-                &fun.node.sig.return_ty,
-                &fun.loc,
+                &fun.sig.type_params,
+                &fun.sig.params,
+                &fun.sig.return_ty,
+                &item.loc,
                 &tys.cons,
             );
 
@@ -614,7 +624,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                     "{}: Trait method implementation of {} does not match the trait method type
                     Trait method type:          {:?}
                     Implementation method type: {:?}",
-                    loc_string(&fun.loc),
+                    loc_string(&item.loc),
                     fun_name,
                     trait_method_ty,
                     fun_ty
@@ -622,8 +632,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
             }
 
             // Check the body.
-            if let Some(body) = &fun.node.body {
-                let ret_ty = match &fun.node.sig.return_ty {
+            if let Some(body) = &fun.body {
+                let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
@@ -634,10 +644,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
                 env.bind(SmolStr::new_static("self"), implementing_ty.clone());
 
-                for (param_name, param_ty) in &fun.node.sig.params {
+                for (param_name, param_ty) in &fun.sig.params {
                     env.bind(
                         param_name.clone(),
-                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &fun.loc),
+                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &item.loc),
                     );
                 }
 
@@ -658,10 +668,15 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
             }
         }
     } else {
-        for fun in &impl_.node.funs {
+        for item in &impl_.node.items {
+            let fun = match &item.node {
+                ast::ImplDeclItem::AssocTy(_) => continue,
+                ast::ImplDeclItem::Fun(fun) => fun,
+            };
+
             // Check the body.
-            if let Some(body) = &fun.node.body {
-                let ret_ty = match &fun.node.sig.return_ty {
+            if let Some(body) = &fun.body {
+                let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
@@ -672,10 +687,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
                 env.bind(SmolStr::new_static("self"), trait_ty.clone());
 
-                for (param_name, param_ty) in &fun.node.sig.params {
+                for (param_name, param_ty) in &fun.sig.params {
                     env.bind(
                         param_name.clone(),
-                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &fun.loc),
+                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &item.loc),
                     );
                 }
 

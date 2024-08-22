@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.20.2"
-// sha3: 9cc8676b3370be1d1952cd311d0404c20f1b16c1ea8a25c958501faa36104fce
+// sha3: 9e18d8b1dcb1ff838105d8a1fcf47195de08c17b4fbd721a8d84fa523de58983
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -37108,7 +37108,19 @@ fn __action108<'a>(
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<ImplDecl> {
     {
-        L::new(module, l, r, ImplDecl { context, ty, funs })
+        L::new(
+            module,
+            l,
+            r,
+            ImplDecl {
+                context,
+                ty,
+                items: funs
+                    .into_iter()
+                    .map(|fun| fun.map(ImplDeclItem::Fun))
+                    .collect(),
+            },
+        )
     }
 }
 
