@@ -117,7 +117,7 @@ fn visit_impl_decl(impl_decl: &ast::ImplDecl, records: &mut Set<RecordShape>) {
 
 fn visit_impl_decl_item(item: &ast::ImplDeclItem, records: &mut Set<RecordShape>) {
     match item {
-        ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name: _, ty }) => visit_ty(ty, records),
+        ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name: _, ty }) => visit_ty(&ty.node, records),
         ast::ImplDeclItem::Fun(fun_decl) => visit_fun_decl(fun_decl, records),
     }
 }

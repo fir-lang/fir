@@ -464,7 +464,7 @@ pub enum ImplDeclItem {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssocTyDecl {
     pub name: SmolStr,
-    pub ty: Type,
+    pub ty: L<Type>,
 }
 
 impl Type {

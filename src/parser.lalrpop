@@ -667,11 +667,11 @@ TraitDeclItem: L<TraitDeclItem> = {
 
 ImplDecl: L<ImplDecl> = {
     <l:@L> "impl" <context:Context> <ty:LType> ":"
-            NEWLINE INDENT <funs:FunDecl*> DEDENT <r:@R> => {
+            NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             ty,
-            items: funs.into_iter().map(|fun| fun.map(ImplDeclItem::Fun)).collect(),
+            items,
         })
     }
 }
@@ -688,6 +688,14 @@ TypeWithBounds: L<(SmolStr, Vec<SmolStr>)> = {
 
     <l:@L> <ty:UpperId> ":" <bounds:Sep1<UpperId, "+">> <r:@R> =>
         L::new(module, l, r, (ty.smol_str(), bounds.into_iter().map(|id| id.smol_str()).collect())),
+}
+
+ImplDeclItem: L<ImplDeclItem> = {
+    <l:@L> "type" <name:UpperId> "=" <ty:LType> <r:@R> =>
+        L::new(module, l, r, ImplDeclItem::AssocTy(AssocTyDecl { name: name.smol_str(), ty })),
+
+    <fun_decl:FunDecl> =>
+        fun_decl.map(ImplDeclItem::Fun),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
