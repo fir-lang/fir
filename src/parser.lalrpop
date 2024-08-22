@@ -643,12 +643,20 @@ ImportDecl: L<ImportDecl> = {
 
 TraitDecl: L<TraitDecl> = {
     <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
-            NEWLINE INDENT <funs:FunDecl+> DEDENT <r:@R> =>
+            NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
-            items: funs.into_iter().map(|fun| fun.map(TraitDeclItem::Fun)).collect(),
+            items,
         })
+}
+
+TraitDeclItem: L<TraitDeclItem> = {
+    <l:@L> "type" <name:UpperId> <r:@R> =>
+        L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str())),
+
+    <fun_decl:FunDecl> =>
+         fun_decl.map(TraitDeclItem::Fun),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
