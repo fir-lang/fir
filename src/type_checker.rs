@@ -10,8 +10,8 @@ mod unification;
 pub use convert::convert_ast_ty;
 use convert::{convert_fields, convert_fun_ty};
 use stmt::check_stmts;
-pub use ty::Id;
 use ty::*;
+pub use ty::{Id, TyArgs};
 
 use crate::ast;
 use crate::collections::{Map, Set};
@@ -88,6 +88,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                     TyCon {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        assoc_tys: Default::default(),
                         details: TyConDetails::placeholder(),
                     },
                 );
@@ -104,6 +105,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                     TyCon {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        assoc_tys: Default::default(),
                         details: TyConDetails::placeholder(),
                     },
                 );
@@ -213,16 +215,21 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             .map(|ty| ty.node.0.clone())
             .collect();
 
-        let ty = convert_ast_ty(
+        let impl_ty = convert_ast_ty(
             &cons,
             &quantified_tys,
             &impl_decl.ty.node,
             &impl_decl.ty.loc,
         );
 
-        let (trait_con_id, args) = match ty.con() {
+        let (trait_con_id, trait_con_args) = match impl_ty.con() {
             Some(con_and_args) => con_and_args,
             None => continue,
+        };
+
+        let trait_con_args = match trait_con_args {
+            TyArgs::Positional(args) => args,
+            TyArgs::Named(_) => panic!(), // can't happen, should be checked earlier?
         };
 
         let trait_ty_con = cons.get_mut(&trait_con_id).unwrap();
@@ -235,14 +242,14 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             TyConDetails::Type { .. } => continue,
         };
 
-        assert_eq!(args.len(), 1);
+        assert_eq!(trait_con_args.len(), 1);
         assert_eq!(trait_ty_con.ty_params.len(), 1);
 
         // Type parameter of the trait, e.g. `T` in `trait Debug[T]: ...`.
         let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
 
         // Type constructor of the type implementing the trait.
-        let (self_ty_con, _) = args[0].con().unwrap();
+        let (self_ty_con, _) = trait_con_args[0].con().unwrap();
 
         if !trait_implementing_tys.insert(self_ty_con.clone()) {
             panic!(
@@ -253,10 +260,14 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             );
         }
 
+        // The self type, e.g. in `Iterator[VecIter[T]]`, this is `VecIter[T]`. AST type instead of
+        // type checking type to be able to substitute the self type for the type parameter of the
+        // trait in default methods.
         let self_ast_ty = match &impl_decl.ty.node {
             ast::Type::Named(ast::NamedType { name: _, args }) => {
                 assert_eq!(args.len(), 1);
-                args[0].node.clone()
+                assert!(args[0].node.0.is_none()); // type parameter shouldn't be named
+                args[0].node.1.clone()
             }
             ast::Type::Record(_) | ast::Type::AssocType { .. } => panic!(), // can't happen
         };
@@ -281,7 +292,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                     .map(|(param, param_ty)| {
                         (
                             param,
-                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &self_ast_ty)),
+                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &self_ast_ty.node)),
                         )
                     })
                     .collect();
@@ -344,20 +355,19 @@ fn collect_schemes(
                     &impl_decl.node.ty.loc,
                 );
 
-                let (mut ty_con_id, mut ty_args) = self_ty.con().unwrap();
+                let (mut ty_con_id, ty_args) = self_ty.con().unwrap();
                 let ty_con = match ty_cons.get(&ty_con_id) {
                     Some(ty_con) => ty_con,
                     None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
                 };
 
                 if ty_con.is_trait() {
-                    if ty_args.len() != 1 {
-                        panic!(
-                            "{}: Trait {} should have one type argument",
-                            loc_string(&impl_decl.loc),
-                            ty_con_id
-                        );
-                    }
+                    let mut ty_args = match ty_args {
+                        TyArgs::Positional(args) => args,
+                        TyArgs::Named(_) => panic!(), // should've been checked in collect_cons
+                    };
+
+                    assert_eq!(ty_args.len(), 1); // should've been checked in collect_cons
 
                     // Add the associated method to the type rather than to the trait.
                     self_ty = ty_args.pop().unwrap();
@@ -417,12 +427,14 @@ fn collect_schemes(
                 } else {
                     Ty::App(
                         ty_decl.node.name.clone(),
-                        ty_decl
-                            .node
-                            .type_params
-                            .iter()
-                            .map(|ty_var| Ty::QVar(ty_var.clone()))
-                            .collect(),
+                        TyArgs::Positional(
+                            ty_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|ty_var| Ty::QVar(ty_var.clone()))
+                                .collect(),
+                        ),
                     )
                 };
 
@@ -445,7 +457,7 @@ fn collect_schemes(
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|ty_param| (ty_param.clone(), vec![]))
+                                    .map(|ty_param| (ty_param.clone(), Default::default()))
                                     .collect(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -477,7 +489,7 @@ fn collect_schemes(
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_param| (ty_param.clone(), vec![]))
+                                .map(|ty_param| (ty_param.clone(), Default::default()))
                                 .collect(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -506,22 +518,12 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let quantified_vars: Map<Id, Set<Id>> = fun
-        .node
-        .sig
-        .type_params
+    let scheme = tys.top_schemes.get(&fun.node.sig.name.node).unwrap();
+
+    let quantified_vars: Map<Id, Map<Id, Map<Id, Ty>>> = scheme
+        .quantified_vars
         .iter()
-        .map(|param| {
-            (
-                param.node.0.node.clone(),
-                param
-                    .node
-                    .1
-                    .iter()
-                    .map(|bound| bound.node.clone())
-                    .collect(),
-            )
-        })
+        .map(|(var, trait_map)| (var.clone(), trait_map.clone()))
         .collect();
 
     let quantified_var_ids: Set<Id> = quantified_vars.keys().cloned().collect();
@@ -538,7 +540,7 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
         None => Ty::Record(Default::default()),
     };
 
-    let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
+    let mut preds: PredSet = Default::default();
 
     if let Some(body) = &fun.node.body.as_ref() {
         check_stmts(
@@ -569,7 +571,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         .collect();
 
     let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
-    let (ty_con_id, mut ty_args) = trait_ty.con().unwrap();
+    let (ty_con_id, ty_args) = trait_ty.con().unwrap();
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap();
 
@@ -580,6 +582,11 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
     {
         // Check that the method types match trait method types, with the trait type parameter
         // replaced by the implementing type.
+        let mut ty_args = match ty_args {
+            TyArgs::Positional(ty_args) => ty_args,
+            TyArgs::Named(_) => panic!(),
+        };
+
         assert_eq!(ty_args.len(), 1); // checked in the previous pass
         assert_eq!(ty_con.ty_params.len(), 1); // checked in the previous pass
 
@@ -638,7 +645,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                     None => Ty::Record(Default::default()),
                 };
 
-                let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
+                let mut preds: PredSet = Default::default();
                 let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                 let mut var_gen = TyVarGen::default();
 
@@ -681,7 +688,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                     None => Ty::Record(Default::default()),
                 };
 
-                let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
+                let mut preds: PredSet = Default::default();
                 let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                 let mut var_gen = TyVarGen::default();
 
@@ -720,7 +727,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 // TODO: Add locations to error messages.
-fn resolve_preds(context: &Map<Id, Set<Id>>, tys: &PgmTypes, preds: &Map<TyVarRef, Set<Id>>) {
+fn resolve_preds(_context: &Map<Id, Map<Id, Map<Id, Ty>>>, _tys: &PgmTypes, _preds: &PredSet) {
+    /*
     for (var, traits) in preds {
         let var_ty = var.normalize();
         match var_ty {
@@ -756,6 +764,7 @@ fn resolve_preds(context: &Map<Id, Set<Id>>, tys: &PgmTypes, preds: &Map<TyVarRe
             }
         }
     }
+    */
 }
 
 fn loc_string(loc: &ast::Loc) -> String {

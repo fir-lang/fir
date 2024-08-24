@@ -41,6 +41,17 @@ impl<T> L<T> {
         L { loc, node: f(node) }
     }
 
+    pub fn map_as_ref<T2, F>(&self, f: F) -> L<T2>
+    where
+        F: FnOnce(&T) -> T2,
+    {
+        let L { loc, node } = &self;
+        L {
+            loc: loc.clone(),
+            node: f(node),
+        }
+    }
+
     pub fn set_node<T2>(&self, node: T2) -> L<T2> {
         L {
             loc: self.loc.clone(),
@@ -133,10 +144,18 @@ pub enum Type {
     AssocType(AssocType),
 }
 
+/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
+    /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     pub name: SmolStr,
-    pub args: Vec<L<Type>>,
+
+    /// Arguments and associated types of the tyep constructor. Examples:
+    ///
+    /// - In `I32`, `[]`.
+    /// - In `Vec[I32]`, `[(None, I32)]`.
+    /// - In `Iterator[Item = A]`, `[(Some(Item), A)]`.
+    pub args: Vec<L<(Option<SmolStr>, L<Type>)>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -162,7 +181,9 @@ pub struct FunSig {
     pub name: L<SmolStr>,
 
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
-    pub type_params: Vec<L<(L<SmolStr>, Vec<L<SmolStr>>)>>,
+    ///
+    /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
+    pub type_params: Vec<L<(L<SmolStr>, Vec<L<Type>>)>>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
@@ -479,10 +500,18 @@ impl Type {
                         name: name.clone(),
                         args: args
                             .iter()
-                            .map(|L { loc, node }| L {
-                                loc: loc.clone(),
-                                node: node.subst_var(var, ty),
-                            })
+                            .map(
+                                |L {
+                                     loc,
+                                     node: (name, ty_),
+                                 }| L {
+                                    loc: loc.clone(),
+                                    node: (
+                                        name.clone(),
+                                        ty_.map_as_ref(|ty__| ty__.subst_var(var, ty)),
+                                    ),
+                                },
+                            )
                             .collect(),
                     })
                 }

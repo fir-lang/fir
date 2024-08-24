@@ -27,16 +27,50 @@ pub fn convert_ast_ty(
                     )
                 }
 
-                let args: Vec<Ty> = args
-                    .iter()
-                    .map(|ty| convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc))
-                    .collect();
+                let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
+                let mut converted_named_args: Map<Id, Ty> = Default::default();
 
-                if args.is_empty() {
-                    Ty::Con(name.clone())
-                } else {
-                    Ty::App(name.clone(), args)
+                for ast::L {
+                    loc: _,
+                    node: (name, ty),
+                } in args
+                {
+                    let ty = convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc);
+                    match name {
+                        Some(name) => {
+                            let old = converted_named_args.insert(name.clone(), ty);
+                            if old.is_some() {
+                                panic!(
+                                    "{}: Associated type argument {} defined multiple times",
+                                    loc_string(loc),
+                                    name
+                                );
+                            }
+                        }
+                        None => {
+                            converted_args.push(ty);
+                        }
+                    }
                 }
+
+                if !converted_args.is_empty() && !converted_named_args.is_empty() {
+                    panic!(
+                        "{}: Type cannot have both associated and positional arguments",
+                        loc_string(loc),
+                    );
+                }
+
+                if converted_args.is_empty() && converted_named_args.is_empty() {
+                    return Ty::Con(con.id.clone());
+                }
+
+                let args = if converted_named_args.is_empty() {
+                    TyArgs::Positional(converted_args)
+                } else {
+                    TyArgs::Named(converted_named_args)
+                };
+
+                Ty::App(con.id.clone(), args)
             }
             None => {
                 if quantified_tys.contains(name) {
@@ -73,34 +107,92 @@ pub fn convert_ast_ty(
 pub(super) fn convert_fun_ty(
     self_ty: Option<&Ty>,
     ty_ty_params: &Set<Id>,
-    fun_ty_params: &[ast::L<(ast::L<Id>, Vec<ast::L<Id>>)>],
+    fun_ty_params: &[ast::L<(ast::L<Id>, Vec<ast::L<ast::Type>>)>],
     params: &[(SmolStr, ast::L<ast::Type>)],
     return_ty: &Option<ast::L<ast::Type>>,
     loc: &ast::Loc,
     ty_cons: &Map<Id, TyCon>,
 ) -> Scheme {
-    let quantified_vars: Vec<(Id, Vec<Id>)> = fun_ty_params
+    let quantified_ty_ids: Set<Id> = fun_ty_params
         .iter()
-        .map(
-            |ast::L {
-                 node: (ty, bounds),
-                 loc: _,
-             }| {
-                (
-                    ty.node.clone(),
-                    bounds
-                        .iter()
-                        .map(|bound| {
-                            if !ty_cons.contains_key(&bound.node) {
-                                panic!();
-                            }
-                            bound.node.clone()
-                        })
-                        .collect(),
-                )
-            },
-        )
+        .map(|ty_param| ty_param.node.0.node.clone())
         .collect();
+
+    let mut quantified_vars: Vec<(Id, Map<Id, Map<Id, Ty>>)> =
+        Vec::with_capacity(fun_ty_params.len());
+
+    for ast::L {
+        loc: _,
+        node: ty_param,
+    } in fun_ty_params
+    {
+        let mut trait_map: Map<Id, Map<Id, Ty>> = Default::default();
+
+        for bound in &ty_param.1 {
+            // Syntactically a bound should be in form: `Id[(Id = Ty),*]`.
+            // Parser is more permissive, we check the syntax here.
+            let (trait_id, assoc_tys) = match &bound.node {
+                ast::Type::Named(ast::NamedType { name, args })
+                    if args.iter().all(|arg| arg.node.0.is_some()) =>
+                {
+                    (
+                        name.clone(),
+                        args.iter()
+                            .map(|arg| {
+                                (
+                                    arg.node.0.as_ref().unwrap().clone(),
+                                    convert_ast_ty(
+                                        ty_cons,
+                                        &quantified_ty_ids,
+                                        &arg.node.1.node,
+                                        &arg.node.1.loc,
+                                    ),
+                                )
+                            })
+                            .collect(),
+                    )
+                }
+
+                _ => panic!("{}: Invalid predicate syntax", loc_string(&bound.loc)),
+            };
+
+            let trait_con = match ty_cons.get(&trait_id) {
+                Some(con) => con,
+                None => panic!(
+                    "{}: Type in bound {:?} is not a trait",
+                    loc_string(&bound.loc),
+                    trait_id
+                ),
+            };
+
+            if !trait_con.is_trait() {
+                panic!(
+                    "{}: Type {} is not a trait",
+                    loc_string(&bound.loc),
+                    trait_id
+                );
+            }
+
+            let old = trait_map.insert(trait_id.clone(), assoc_tys);
+            if old.is_some() {
+                panic!(
+                    "{}: Bound {} is defined multiple times",
+                    loc_string(&bound.loc),
+                    trait_id
+                );
+            }
+        }
+
+        if quantified_vars.iter().any(|(id, _)| id == &ty_param.0.node) {
+            panic!(
+                "{}: Type variable {} is listed multiple times",
+                loc_string(loc),
+                ty_param.0.node,
+            );
+        }
+
+        quantified_vars.push((ty_param.0.node.clone(), trait_map));
+    }
 
     // Quantified variables of both the function and the type.
     let all_quantified_vars: Set<Id> = quantified_vars

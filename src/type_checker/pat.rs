@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::Set;
 use crate::scope_map::ScopeMap;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
@@ -14,7 +14,7 @@ pub(super) fn check_pat(
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
-    preds: &mut Map<TyVarRef, Set<Id>>,
+    preds: &mut PredSet,
 ) -> Ty {
     match &pat.node {
         ast::Pat::Var(var) => {
@@ -78,8 +78,7 @@ pub(super) fn check_pat(
                 }
             };
 
-            let (con_preds, con_ty) = con_scheme.instantiate(level, var_gen);
-            assert!(con_preds.is_empty());
+            let con_ty = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
 
             match con_ty {
                 Ty::Con(_) => {
@@ -197,14 +196,28 @@ pub(super) fn check_pat(
 
         ast::Pat::Str(_) => {
             let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.insert(pat_ty.clone(), [Ty::to_str_view_id()].into_iter().collect());
+            preds.add(
+                Pred {
+                    ty_var: pat_ty.clone(),
+                    trait_: Ty::to_str_view_id(),
+                    assoc_tys: Default::default(),
+                },
+                &pat.loc,
+            );
             Ty::Var(pat_ty)
         }
 
         ast::Pat::StrPfx(_, var) => {
             // Pattern may be a `Str` or `StrView`, `var` will be `StrView`.
             let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.insert(pat_ty.clone(), [Ty::to_str_view_id()].into_iter().collect());
+            preds.add(
+                Pred {
+                    ty_var: pat_ty.clone(),
+                    trait_: Ty::to_str_view_id(),
+                    assoc_tys: Default::default(),
+                },
+                &pat.loc,
+            );
 
             env.bind(var.clone(), Ty::str_view());
 

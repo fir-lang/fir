@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::Set;
 use crate::scope_map::ScopeMap;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::check_expr;
@@ -19,7 +19,7 @@ pub(super) fn check_stmts(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Map<TyVarRef, Set<Id>>,
+    preds: &mut PredSet,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -53,7 +53,7 @@ fn check_stmt(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Map<TyVarRef, Set<Id>>,
+    preds: &mut PredSet,
 ) -> Ty {
     match &stmt.node {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {

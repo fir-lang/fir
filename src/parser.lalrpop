@@ -192,11 +192,21 @@ Type: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
-    <name:UpperId> "[" <args:Sep<LType, ",">> "]" =>
+    <name:UpperId> "[" <args:Sep<TypeArg, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 
     "(" <fields:Sep<RecordTypeField, ",">> ")" =>
         Type::Record(fields),
+}
+
+TypeArg: L<(Option<SmolStr>, L<Type>)> = {
+    <l:@L> <name:UpperId> "=" <ty:LType> <r:@R> =>
+        L::new(module, l, r, (Some(name.smol_str()), ty)),
+
+    <ty:LType> => {
+        let loc = ty.loc.clone();
+        L { loc, node: (None, ty) }
+    },
 }
 
 RecordTypeField: Named<Type> = {
@@ -248,9 +258,9 @@ FunSig: FunSig = {
         },
 }
 
-TyParamWithPreds: L<(L<SmolStr>, Vec<L<SmolStr>>)> = {
+TyParamWithPreds: L<(L<SmolStr>, Vec<L<Type>>)> = {
     <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
-    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LUpperId, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
+    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -652,7 +662,7 @@ TraitDecl: L<TraitDecl> = {
 }
 
 TraitDeclItem: L<TraitDeclItem> = {
-    <l:@L> "type" <name:UpperId> <r:@R> =>
+    <l:@L> "type" <name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str())),
 
     <fun_decl:FunDecl> =>

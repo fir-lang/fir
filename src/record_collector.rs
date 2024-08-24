@@ -148,9 +148,9 @@ fn visit_fields(fields: &ast::ConstructorFields, records: &mut Set<RecordShape>)
 
 fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
     match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => {
-            args.iter().for_each(|ty| visit_ty(&ty.node, records))
-        }
+        ast::Type::Named(ast::NamedType { name: _, args }) => args
+            .iter()
+            .for_each(|arg| visit_ty(&arg.node.1.node, records)),
 
         ast::Type::Record(fields) => {
             records.insert(RecordShape::from_named_things(fields));

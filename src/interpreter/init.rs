@@ -1,3 +1,4 @@
+use crate::type_checker::TyArgs;
 use crate::{interpreter::*, type_checker::convert_ast_ty};
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
@@ -225,6 +226,10 @@ pub fn collect_funs(
                 // method_ty = type to add the method to.
                 let (mut method_ty, args) = ty.con().unwrap();
                 if tys.cons.get(&method_ty).unwrap().is_trait() {
+                    let args = match args {
+                        TyArgs::Positional(args) => args,
+                        TyArgs::Named(_) => panic!(),
+                    };
                     assert_eq!(args.len(), 1);
                     let ty = &args[0];
                     let (ty_con, _) = ty.con().unwrap();

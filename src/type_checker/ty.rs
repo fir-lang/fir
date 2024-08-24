@@ -2,6 +2,7 @@
 
 use crate::ast;
 use crate::collections::{Map, Set};
+use crate::type_checker::loc_string;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -14,13 +15,24 @@ pub type Id = SmolStr;
 /// A type scheme.
 #[derive(Debug, Clone)]
 pub struct Scheme {
-    /// Generalized variables with predicates, e.g. `[T, [Eq]]` in the scheme for
-    /// `fn id[T: Eq](a: T): T = a`.
+    /// Generalized variables with predicates.
     ///
-    /// `Vec` instead of `Set` as type arguments in explicit type applications are ordered.
+    /// `Vec` instead of `Map` as type arguments in explicit type applications are ordered. A type
+    /// variable cannot appear multiple times in the `Vec`.
     ///
     /// For now, all quantified variables have kind `*`.
-    pub(super) quantified_vars: Vec<(Id, Vec<Id>)>,
+    ///
+    /// The bounds can refer to the associated types, e.g. `[A, I: Iterator[Item = A]]`.
+    ///
+    /// In the example `[A, I: Iterator[Item = A]]`, this field will be:
+    ///
+    /// ```ignore
+    /// [
+    ///     (A, {}),
+    ///     (I, {Iterator => {Item => A}})
+    /// ]
+    /// ```
+    pub(super) quantified_vars: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -40,12 +52,12 @@ pub enum Ty {
     /// A unification variable, created by a type scheme when instantiated.
     Var(TyVarRef),
 
-    /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
+    /// A type application, e.g. `Vec[U32]`, `Result[E, T]`, `Iterator[Item = A]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Id, Vec<Ty>),
+    App(Id, TyArgs),
 
     /// A record type, e.g. `(x: U32, y: U32)`.
     Record(Map<Id, Ty>),
@@ -65,6 +77,13 @@ pub enum Ty {
     AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TyArgs {
+    Positional(Vec<Ty>),
+    Named(Map<Id, Ty>),
+}
+
+/// A unification variable.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TyVarRef(Rc<TyVar>);
 
@@ -101,6 +120,10 @@ pub struct TyCon {
 
     /// Type parameters with bounds.
     pub(super) ty_params: Vec<(Id, Vec<Ty>)>,
+
+    /// Associated types. Currently these can't have bounds.
+    #[allow(unused)]
+    pub(super) assoc_tys: Set<Id>,
 
     /// Methods for traits, constructor for sums, fields for products.
     ///
@@ -154,26 +177,63 @@ pub(super) enum ConFields {
     Named(Map<SmolStr, Ty>),
 }
 
+/// A predicate, e.g. `I: Iterator[Item = A]`.
+#[derive(Debug, Clone)]
+pub(super) struct Pred {
+    /// Type variable constrained by the predicate.
+    ///
+    /// `I` in the example.
+    pub(super) ty_var: TyVarRef,
+
+    /// Trait of the predicate.
+    ///
+    /// `Iterator` in the example.
+    pub(super) trait_: Id,
+
+    /// Types of the associated types of the trait.
+    ///
+    /// Not all associated types need to be in the map.
+    ///
+    /// `{Item = A}`  in the exmaple.
+    pub(super) assoc_tys: Map<Id, Ty>,
+}
+
+/// A predicate set.
+#[derive(Debug, Default, Clone)]
+pub(super) struct PredSet {
+    /// Maps type variables to traits to associated types of the trait.
+    preds: Map<TyVarRef, Map<Id, Map<Id, Ty>>>,
+}
+
 impl Scheme {
     /// Instantiate the type scheme, return instantiated predicates and type.
     pub(super) fn instantiate(
         &self,
         level: u32,
         var_gen: &mut TyVarGen,
-    ) -> (Map<TyVarRef, Set<Id>>, Ty) {
+        preds: &mut PredSet,
+        loc: &ast::Loc,
+    ) -> Ty {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
         let mut var_map: Map<Id, TyVarRef> = Default::default();
-        let mut preds: Map<TyVarRef, Set<Id>> = Default::default();
 
         for (var, bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
             var_map.insert(var.clone(), instantiated_var.clone());
-            preds.insert(instantiated_var.clone(), bounds.iter().cloned().collect());
+
+            for (trait_, assoc_tys) in bounds {
+                let pred = Pred {
+                    ty_var: instantiated_var.clone(),
+                    trait_: trait_.clone(),
+                    assoc_tys: assoc_tys.clone(),
+                };
+                preds.add(pred, loc);
+            }
         }
 
-        (preds, self.ty.subst_qvars(&var_map))
+        self.ty.subst_qvars(&var_map)
     }
 
     pub(super) fn instantiate_with_tys(&self, tys: &[Ty]) -> Ty {
@@ -242,12 +302,43 @@ fn ty_eq_modulo_alpha(
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
         (Ty::App(con1, args1), Ty::App(con2, args2)) => {
-            con1 == con2
-                && args1.len() == args2.len()
-                && args1
-                    .iter()
-                    .zip(args2.iter())
-                    .all(|(ty1, ty2)| ty_eq_modulo_alpha(ty1, ty2, ty1_qvars, ty2_qvars))
+            if con1 != con2 {
+                return false;
+            }
+
+            match (args1, args2) {
+                (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
+                    args1.len() == args2.len()
+                        && args1
+                            .iter()
+                            .zip(args2.iter())
+                            .all(|(ty1, ty2)| ty_eq_modulo_alpha(ty1, ty2, ty1_qvars, ty2_qvars))
+                }
+
+                (TyArgs::Named(args1), TyArgs::Named(args2)) => {
+                    let names1: Set<&Id> = args1.keys().collect();
+                    let names2: Set<&Id> = args2.keys().collect();
+
+                    if names1 != names2 {
+                        return false;
+                    }
+
+                    for name in names1 {
+                        if !ty_eq_modulo_alpha(
+                            args1.get(name).unwrap(),
+                            args2.get(name).unwrap(),
+                            ty1_qvars,
+                            ty2_qvars,
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    true
+                }
+
+                _ => false,
+            }
         }
 
         (Ty::Record(fields1), Ty::Record(fields2)) => {
@@ -339,9 +430,18 @@ impl Ty {
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(var, tys) => Ty::App(
+            Ty::App(var, args) => Ty::App(
                 var.clone(),
-                tys.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                match args {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
+                            .collect(),
+                    ),
+                },
             ),
 
             Ty::Record(fields) => Ty::Record(
@@ -387,7 +487,16 @@ impl Ty {
 
             Ty::App(ty, tys) => Ty::App(
                 ty.clone(),
-                tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
+                match tys {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_qvars(vars)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
+                            .collect(),
+                    ),
+                },
             ),
 
             Ty::Record(fields) => Ty::Record(
@@ -429,9 +538,9 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self) -> Option<(Id, Vec<Ty>)> {
+    pub fn con(&self) -> Option<(Id, TyArgs)> {
         match self.normalize() {
-            Ty::Con(con) => Some((con.clone(), vec![])),
+            Ty::Con(con) => Some((con.clone(), TyArgs::empty())),
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
@@ -519,17 +628,58 @@ impl TyCon {
     pub fn is_trait(&self) -> bool {
         matches!(self.details, TyConDetails::Trait { .. })
     }
-
-    pub(super) fn as_trait(&self) -> &TraitDetails {
-        match &self.details {
-            TyConDetails::Trait(details) => details,
-            TyConDetails::Type(_) => panic!(),
-        }
-    }
 }
 
 impl TyConDetails {
     pub(super) fn placeholder() -> Self {
         TyConDetails::Type(TypeDetails { cons: vec![] })
+    }
+
+    pub(super) fn is_trait(&self) -> bool {
+        matches!(self, TyConDetails::Trait(_))
+    }
+}
+
+impl TyArgs {
+    pub(super) fn empty() -> Self {
+        TyArgs::Positional(vec![])
+    }
+}
+
+impl PredSet {
+    pub(super) fn add(&mut self, pred: Pred, loc: &ast::Loc) {
+        let Pred {
+            ty_var,
+            trait_,
+            assoc_tys,
+        } = pred;
+
+        let trait_map = self.preds.entry(ty_var.clone()).or_default();
+
+        // TODO: Give unification variables
+        let old = trait_map.insert(trait_.clone(), assoc_tys);
+        if old.is_some() {
+            panic!(
+                "{}: Type variable {:?} already has a constraint on trait {}",
+                loc_string(loc),
+                ty_var,
+                trait_
+            );
+        }
+    }
+
+    #[allow(unused)]
+    pub(super) fn into_preds(mut self) -> Vec<Pred> {
+        let mut preds: Vec<Pred> = vec![];
+        for (ty_var, trait_map) in self.preds.drain() {
+            for (trait_, assoc_tys) in trait_map {
+                preds.push(Pred {
+                    ty_var: ty_var.clone(),
+                    trait_,
+                    assoc_tys,
+                });
+            }
+        }
+        preds
     }
 }

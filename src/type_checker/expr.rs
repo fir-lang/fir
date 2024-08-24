@@ -19,7 +19,7 @@ pub(super) fn check_expr(
     var_gen: &mut TyVarGen,
     quantified_vars: &Set<Id>,
     tys: &PgmTypes,
-    preds: &mut Map<TyVarRef, Set<Id>>,
+    preds: &mut PredSet,
 ) -> Ty {
     match &expr.node {
         ast::Expr::Var(var) => {
@@ -29,8 +29,7 @@ pub(super) fn check_expr(
             }
 
             if let Some(scheme) = tys.top_schemes.get(var) {
-                let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
-                extend_preds(preds, scheme_preds);
+                let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
                 return unify_expected_ty(ty, expected_ty, &expr.loc);
             }
 
@@ -57,9 +56,17 @@ pub(super) fn check_expr(
                     check_field_select(&con, &[], field, &expr.loc, tys, level, var_gen, preds)
                 }
 
-                Ty::App(con, args) => {
-                    check_field_select(&con, &args, field, &expr.loc, tys, level, var_gen, preds)
-                }
+                Ty::App(con, args) => match args {
+                    TyArgs::Positional(args) => check_field_select(
+                        &con, &args, field, &expr.loc, tys, level, var_gen, preds,
+                    ),
+                    TyArgs::Named(_) => {
+                        // Associated type arguments are only allowed in traits, sothe `con` must
+                        // be a trait.
+                        assert!(tys.cons.get(&con).unwrap().details.is_trait());
+                        panic!("{}: Traits cannot have fields", loc_string(&object.loc))
+                    }
+                },
 
                 Ty::Record(fields) => match fields.get(field) {
                     Some(field_ty) => field_ty.clone(),
@@ -106,9 +113,7 @@ pub(super) fn check_expr(
                         constr
                     )
                 });
-            let (con_preds, ty) = scheme.instantiate(level, var_gen);
-            extend_preds(preds, con_preds);
-            ty
+            scheme.instantiate(level, var_gen, preds, &expr.loc)
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -240,9 +245,13 @@ pub(super) fn check_expr(
                     StringPart::Str(_) => continue,
                     StringPart::Expr(expr) => {
                         let expr_var = var_gen.new_var(level, expr.loc.clone());
-                        preds.insert(
-                            expr_var.clone(),
-                            [Ty::to_str_view_id()].into_iter().collect(),
+                        preds.add(
+                            Pred {
+                                ty_var: expr_var.clone(),
+                                trait_: Ty::to_str_view_id(),
+                                assoc_tys: Default::default(),
+                            },
+                            &expr.loc,
                         );
                         check_expr(
                             expr,
@@ -553,14 +562,13 @@ fn check_field_select(
     tys: &PgmTypes,
     level: u32,
     var_gen: &mut TyVarGen,
-    preds: &mut Map<TyVarRef, Set<Id>>,
+    preds: &mut PredSet,
 ) -> Ty {
     match select_field(ty_con, ty_args, field, loc, tys) {
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, field, tys, loc) {
             Some(scheme) => {
-                let (scheme_preds, ty) = scheme.instantiate(level, var_gen);
-                extend_preds(preds, scheme_preds);
+                let ty = scheme.instantiate(level, var_gen, preds, loc);
 
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.
@@ -643,10 +651,4 @@ fn select_method(
     }
 
     Some(scheme)
-}
-
-fn extend_preds(preds: &mut Map<TyVarRef, Set<Id>>, new_preds: Map<TyVarRef, Set<Id>>) {
-    for (ty_var, tys) in new_preds {
-        preds.entry(ty_var).or_default().extend(tys);
-    }
 }
