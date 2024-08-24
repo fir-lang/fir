@@ -160,6 +160,34 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
 
                 let self_ty = Ty::QVar(self_ty_id.clone());
 
+                // Bind assocaited types.
+                let assoc_tys: Vec<&Id> = trait_decl
+                    .node
+                    .items
+                    .iter()
+                    .filter_map(|item| match &item.node {
+                        ast::TraitDeclItem::AssocTy(ty) => Some(ty),
+                        ast::TraitDeclItem::Fun(_) => None,
+                    })
+                    .collect();
+
+                let mut old_tys: Vec<(Id, TyCon)> = vec![];
+
+                for assoc_ty in &assoc_tys {
+                    let old = cons.insert(
+                        (*assoc_ty).clone(),
+                        TyCon {
+                            id: (*assoc_ty).clone(),
+                            ty_params: vec![],
+                            assoc_tys: Default::default(),
+                            details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                        },
+                    );
+                    if let Some(old) = old {
+                        old_tys.push(((*assoc_ty).clone(), old));
+                    }
+                }
+
                 let methods: Map<Id, TraitMethod> = trait_decl
                     .node
                     .items
@@ -184,6 +212,14 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                         })),
                     })
                     .collect();
+
+                for assoc_ty in assoc_tys {
+                    cons.remove(assoc_ty);
+                }
+
+                for (old_ty, old_ty_con) in old_tys {
+                    cons.insert(old_ty, old_ty_con);
+                }
 
                 let con = cons.get_mut(&trait_decl.node.name.node).unwrap();
                 assert_eq!(con.ty_params.len(), 1);
