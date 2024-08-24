@@ -701,7 +701,7 @@ TypeWithBounds: L<(SmolStr, Vec<SmolStr>)> = {
 }
 
 ImplDeclItem: L<ImplDeclItem> = {
-    <l:@L> "type" <name:UpperId> "=" <ty:LType> <r:@R> =>
+    <l:@L> "type" <name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, ImplDeclItem::AssocTy(AssocTyDecl { name: name.smol_str(), ty })),
 
     <fun_decl:FunDecl> =>
