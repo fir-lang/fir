@@ -606,15 +606,6 @@ fn select_field(
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
-        TyConDetails::Trait(_) => {
-            // Stand-alone `trait.method` can't work, we need to look at the arguments.
-            // Ignore this for now, we probably won't need it.
-            todo!(
-                "{}: FieldSelect expression selecting a trait method without receiver",
-                loc_string(loc)
-            );
-        }
-
         TyConDetails::Type(TypeDetails { cons }) => match cons.len() {
             1 => {
                 let con_name = &cons[0];
@@ -629,6 +620,19 @@ fn select_field(
 
             _ => None,
         },
+
+        TyConDetails::Trait(_) => {
+            // Stand-alone `trait.method` can't work, we need to look at the arguments.
+            // Ignore this for now, we probably won't need it.
+            todo!(
+                "{}: FieldSelect expression selecting a trait method without receiver",
+                loc_string(loc)
+            );
+        }
+
+        TyConDetails::Synonym(_) => {
+            panic!("{}: Type synonym in select_field", loc_string(loc));
+        }
     }
 }
 

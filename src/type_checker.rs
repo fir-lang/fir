@@ -65,8 +65,8 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 ///
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
-    let cons = collect_cons(module);
-    let (top_schemes, associated_schemes) = collect_schemes(module, &cons);
+    let mut cons = collect_cons(module);
+    let (top_schemes, associated_schemes) = collect_schemes(module, &mut cons);
     PgmTypes {
         top_schemes,
         associated_schemes,
@@ -275,7 +275,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                 ref mut methods,
                 ref mut implementing_tys,
             }) => (methods, implementing_tys),
-            TyConDetails::Type { .. } => continue,
+            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => continue,
         };
 
         assert_eq!(trait_con_args.len(), 1);
@@ -341,11 +341,10 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
     cons
 }
 
-// NB. For now top schemes include product constructors and associated schemes include sum
-// constructors.
+// `ty_cons` is mut to be able to update it with associated types when checking traits.
 fn collect_schemes(
     module: &ast::Module,
-    ty_cons: &Map<Id, TyCon>,
+    ty_cons: &mut Map<Id, TyCon>,
 ) -> (Map<Id, Scheme>, Map<Id, Map<Id, Scheme>>) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
     let mut associated_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
@@ -397,6 +396,8 @@ fn collect_schemes(
                     None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
                 };
 
+                let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
+
                 if ty_con.is_trait() {
                     let mut ty_args = match ty_args {
                         TyArgs::Positional(args) => args,
@@ -415,6 +416,38 @@ fn collect_schemes(
                         )
                     });
                     ty_con_id = ty_con_id_;
+
+                    // TODO: To allow RHSs refer to associated types, bind associated types to
+                    // placeholder first, then as type synonyms to their RHSs.
+                    for item in &impl_decl.node.items {
+                        let (assoc_ty_id, ty) = match &item.node {
+                            ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) => (name, ty),
+                            ast::ImplDeclItem::Fun(_) => continue,
+                        };
+
+                        let ty_converted =
+                            convert_ast_ty(ty_cons, &ty_ty_params, &ty.node, &ty.loc);
+
+                        // TODO: Check that the type has kind `*`.
+                        let old = ty_cons.insert(
+                            assoc_ty_id.clone(),
+                            TyCon {
+                                id: assoc_ty_id.clone(),
+                                ty_params: vec![],
+                                assoc_tys: Default::default(),
+                                details: TyConDetails::Synonym(ty_converted),
+                            },
+                        );
+
+                        let old_overwritten = old_tys.insert(assoc_ty_id.clone(), old);
+                        if old_overwritten.is_some() {
+                            panic!(
+                                "{}: Associated type {} is defined multiple times",
+                                loc_string(&item.loc),
+                                assoc_ty_id
+                            );
+                        }
+                    }
 
                     // TODO: Check that the method types match trait methods.
                 }
@@ -446,6 +479,17 @@ fn collect_schemes(
                             fun.sig.name.node,
                             ty_con_id
                         );
+                    }
+                }
+
+                for (old_ty_id, old_ty_con) in old_tys {
+                    match old_ty_con {
+                        Some(ty_con) => {
+                            ty_cons.insert(old_ty_id, ty_con);
+                        }
+                        None => {
+                            ty_cons.remove(&old_ty_id);
+                        }
                     }
                 }
             }

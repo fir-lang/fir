@@ -142,6 +142,12 @@ pub(super) enum TyConDetails {
 
     /// Type constructor is for a product or sum type definition.
     Type(TypeDetails),
+
+    /// Type is a synonym to this other type.
+    ///
+    /// For now, type synonyms are not allowed to have type parameters, and the RHS needs to have
+    /// kind `*`.
+    Synonym(Ty),
 }
 
 #[derive(Debug, Clone)]

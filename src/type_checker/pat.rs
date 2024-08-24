@@ -36,12 +36,6 @@ pub(super) fn check_pat(
 
             let (con_scheme, con_str): (&Scheme, String) = {
                 match &ty_con.details {
-                    TyConDetails::Trait { .. } => panic!(
-                        "{}: Type constructor {} is a trait",
-                        loc_string(&pat.loc),
-                        type_
-                    ),
-
                     TyConDetails::Type(TypeDetails { cons: _ }) => match constr {
                         Some(constr) => (
                             tys.associated_schemes
@@ -75,6 +69,18 @@ pub(super) fn check_pat(
                             ty_con.id.to_string(),
                         ),
                     },
+
+                    TyConDetails::Trait { .. } => panic!(
+                        "{}: Type constructor {} is a trait",
+                        loc_string(&pat.loc),
+                        type_
+                    ),
+
+                    TyConDetails::Synonym(_) => panic!(
+                        "{}: Type constructor {} is a type synonym",
+                        loc_string(&pat.loc),
+                        type_
+                    ),
                 }
             };
 
