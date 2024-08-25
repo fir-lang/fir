@@ -39,7 +39,7 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
-    let tys = collect_types(module);
+    let mut tys = collect_types(module);
 
     for decl in module {
         match &decl.node {
@@ -51,7 +51,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
             // Types and schemes added to `PgmTypes` by `collect_types`.
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
 
-            ast::TopDecl::Impl(impl_) => check_impl(impl_, &tys),
+            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys),
 
             ast::TopDecl::Fun(fun) => check_top_fun(fun, &tys),
         }
@@ -171,7 +171,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                     })
                     .collect();
 
-                let mut old_tys: Vec<(Id, TyCon)> = vec![];
+                let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
 
                 for assoc_ty in &assoc_tys {
                     let old = cons.insert(
@@ -183,9 +183,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                             details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                         },
                     );
-                    if let Some(old) = old {
-                        old_tys.push(((*assoc_ty).clone(), old));
-                    }
+                    old_tys.insert((*assoc_ty).clone(), old);
                 }
 
                 let methods: Map<Id, TraitMethod> = trait_decl
@@ -213,12 +211,15 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
                     })
                     .collect();
 
-                for assoc_ty in assoc_tys {
-                    cons.remove(assoc_ty);
-                }
-
                 for (old_ty, old_ty_con) in old_tys {
-                    cons.insert(old_ty, old_ty_con);
+                    match old_ty_con {
+                        Some(ty_con) => {
+                            cons.insert(old_ty, ty_con);
+                        }
+                        None => {
+                            cons.remove(&old_ty);
+                        }
+                    }
                 }
 
                 let con = cons.get_mut(&trait_decl.node.name.node).unwrap();
@@ -417,37 +418,7 @@ fn collect_schemes(
                     });
                     ty_con_id = ty_con_id_;
 
-                    // TODO: To allow RHSs refer to associated types, bind associated types to
-                    // placeholder first, then as type synonyms to their RHSs.
-                    for item in &impl_decl.node.items {
-                        let (assoc_ty_id, ty) = match &item.node {
-                            ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) => (name, ty),
-                            ast::ImplDeclItem::Fun(_) => continue,
-                        };
-
-                        let ty_converted =
-                            convert_ast_ty(ty_cons, &ty_ty_params, &ty.node, &ty.loc);
-
-                        // TODO: Check that the type has kind `*`.
-                        let old = ty_cons.insert(
-                            assoc_ty_id.clone(),
-                            TyCon {
-                                id: assoc_ty_id.clone(),
-                                ty_params: vec![],
-                                assoc_tys: Default::default(),
-                                details: TyConDetails::Synonym(ty_converted),
-                            },
-                        );
-
-                        let old_overwritten = old_tys.insert(assoc_ty_id.clone(), old);
-                        if old_overwritten.is_some() {
-                            panic!(
-                                "{}: Associated type {} is defined multiple times",
-                                loc_string(&item.loc),
-                                assoc_ty_id
-                            );
-                        }
-                    }
+                    old_tys = bind_associated_types(impl_decl, &ty_ty_params, ty_cons);
 
                     // TODO: Check that the method types match trait methods.
                 }
@@ -482,16 +453,7 @@ fn collect_schemes(
                     }
                 }
 
-                for (old_ty_id, old_ty_con) in old_tys {
-                    match old_ty_con {
-                        Some(ty_con) => {
-                            ty_cons.insert(old_ty_id, ty_con);
-                        }
-                        None => {
-                            ty_cons.remove(&old_ty_id);
-                        }
-                    }
-                }
+                unbind_associated_types(old_tys, ty_cons);
             }
 
             ast::TopDecl::Type(ty_decl) => {
@@ -642,7 +604,9 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 /// Type check an `impl` block.
 ///
 /// The block may be for a trait implementation or for associated functions.
-fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
+///
+/// `tys` is `mut` to be able to add associated types before checking the methods.
+fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     let quantified_tys: Set<Id> = impl_
         .node
         .context
@@ -652,6 +616,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
     let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
     let (ty_con_id, ty_args) = trait_ty.con().unwrap();
+
+    // Bind associated types.
+    let old_tys: Map<Id, Option<TyCon>> =
+        bind_associated_types(impl_, &quantified_tys, &mut tys.cons);
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap();
 
@@ -675,12 +643,12 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
         let trait_ty_param = &ty_con.ty_params[0].0;
 
         for item in &impl_.node.items {
-            let fun = match &item.node {
+            let impl_fun = match &item.node {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun) => fun,
             };
 
-            let fun_name: &Id = &fun.sig.name.node;
+            let fun_name: &Id = &impl_fun.sig.name.node;
 
             let trait_method = trait_methods.get(fun_name).unwrap_or_else(|| {
                 panic!(
@@ -691,36 +659,39 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
                 )
             });
 
-            let trait_method_ty =
+            // Type of the method in the trait declaration, with `self` type substituted for the
+            // type implementing the trait.
+            let trait_fun_ty =
                 trait_method
                     .scheme
                     .subst(trait_ty_param, &implementing_ty, &item.loc);
 
-            let fun_ty = convert_fun_ty(
+            // Type of the method in the impl declaration.
+            let impl_fun_ty = convert_fun_ty(
                 Some(&implementing_ty),
                 &quantified_tys,
-                &fun.sig.type_params,
-                &fun.sig.params,
-                &fun.sig.return_ty,
+                &impl_fun.sig.type_params,
+                &impl_fun.sig.params,
+                &impl_fun.sig.return_ty,
                 &item.loc,
                 &tys.cons,
             );
 
-            if !trait_method_ty.eq_modulo_alpha(&fun_ty) {
+            if !trait_fun_ty.eq_modulo_alpha(&quantified_tys, &impl_fun_ty, &item.loc) {
                 panic!(
                     "{}: Trait method implementation of {} does not match the trait method type
                     Trait method type:          {:?}
                     Implementation method type: {:?}",
                     loc_string(&item.loc),
                     fun_name,
-                    trait_method_ty,
-                    fun_ty
+                    trait_fun_ty,
+                    impl_fun_ty
                 );
             }
 
             // Check the body.
-            if let Some(body) = &fun.body {
-                let ret_ty = match &fun.sig.return_ty {
+            if let Some(body) = &impl_fun.body {
+                let ret_ty = match &impl_fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
@@ -731,7 +702,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
 
                 env.bind(SmolStr::new_static("self"), implementing_ty.clone());
 
-                for (param_name, param_ty) in &fun.sig.params {
+                for (param_name, param_ty) in &impl_fun.sig.params {
                     env.bind(
                         param_name.clone(),
                         convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &item.loc),
@@ -798,6 +769,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &PgmTypes) {
             }
         }
     }
+
+    unbind_associated_types(old_tys, &mut tys.cons);
 }
 
 /// We currently don't allow a type constructor to implement a trait multiple times with different
@@ -845,6 +818,60 @@ fn resolve_preds(_context: &Map<Id, Map<Id, Map<Id, Ty>>>, _tys: &PgmTypes, _pre
         }
     }
     */
+}
+
+fn bind_associated_types(
+    impl_decl: &ast::L<ast::ImplDecl>,
+    quantified_tys: &Set<Id>,
+    ty_cons: &mut Map<Id, TyCon>,
+) -> Map<Id, Option<TyCon>> {
+    let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
+
+    // TODO: To allow RHSs refer to associated types, bind associated types to
+    // placeholder first, then as type synonyms to their RHSs.
+    for item in &impl_decl.node.items {
+        let (assoc_ty_id, ty) = match &item.node {
+            ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) => (name, ty),
+            ast::ImplDeclItem::Fun(_) => continue,
+        };
+
+        let ty_converted = convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc);
+
+        // TODO: Check that the type has kind `*`.
+        let old = ty_cons.insert(
+            assoc_ty_id.clone(),
+            TyCon {
+                id: assoc_ty_id.clone(),
+                ty_params: vec![],
+                assoc_tys: Default::default(),
+                details: TyConDetails::Synonym(ty_converted),
+            },
+        );
+
+        let old_overwritten = old_tys.insert(assoc_ty_id.clone(), old);
+        if old_overwritten.is_some() {
+            panic!(
+                "{}: Associated type {} is defined multiple times",
+                loc_string(&item.loc),
+                assoc_ty_id
+            );
+        }
+    }
+
+    old_tys
+}
+
+fn unbind_associated_types(old_tys: Map<Id, Option<TyCon>>, ty_cons: &mut Map<Id, TyCon>) {
+    for (old_ty_id, old_ty_con) in old_tys {
+        match old_ty_con {
+            Some(ty_con) => {
+                ty_cons.insert(old_ty_id, ty_con);
+            }
+            None => {
+                ty_cons.remove(&old_ty_id);
+            }
+        }
+    }
 }
 
 fn loc_string(loc: &ast::Loc) -> String {
