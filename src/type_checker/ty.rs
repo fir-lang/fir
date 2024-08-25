@@ -470,8 +470,8 @@ impl Ty {
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(var, args) => Ty::App(
-                var.clone(),
+            Ty::App(con, args) => Ty::App(
+                con.clone(),
                 match args {
                     TyArgs::Positional(tys) => {
                         TyArgs::Positional(tys.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect())

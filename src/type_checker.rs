@@ -618,10 +618,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     let (ty_con_id, ty_args) = trait_ty.con().unwrap();
 
     // Bind associated types.
-    let old_tys: Map<Id, Option<TyCon>> =
+    let mut old_tys: Map<Id, Option<TyCon>> =
         bind_associated_types(impl_, &quantified_tys, &mut tys.cons);
 
-    let ty_con = tys.cons.get(&ty_con_id).unwrap();
+    let ty_con = tys.cons.get(&ty_con_id).unwrap().clone();
 
     if let TyConDetails::Trait(TraitDetails {
         methods: trait_methods,
@@ -639,8 +639,28 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         assert_eq!(ty_con.ty_params.len(), 1); // checked in the previous pass
 
         // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
-        let implementing_ty = ty_args.pop().unwrap();
+        let mut implementing_ty = ty_args.pop().unwrap();
         let trait_ty_param = &ty_con.ty_params[0].0;
+
+        // Substitute opaque types for quantified types in `implementing_ty`.
+        for quantified_ty in &quantified_tys {
+            implementing_ty = implementing_ty.subst(quantified_ty, &Ty::Con(quantified_ty.clone()));
+            let old = tys.cons.insert(
+                quantified_ty.clone(),
+                TyCon {
+                    id: quantified_ty.clone(),
+                    ty_params: vec![],
+                    assoc_tys: Default::default(),
+                    details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                },
+            );
+            let old = old_tys.insert(quantified_ty.clone(), old);
+            assert!(
+                old.is_none(),
+                "{}: Associated type and type parameter in the same `impl`",
+                loc_string(&impl_.loc)
+            );
+        }
 
         for item in &impl_.node.items {
             let impl_fun = match &item.node {
