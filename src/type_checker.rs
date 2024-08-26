@@ -259,7 +259,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
             &impl_decl.ty.loc,
         );
 
-        let (trait_con_id, trait_con_args) = match impl_ty.con() {
+        let (trait_con_id, trait_con_args) = match impl_ty.con(&cons) {
             Some(con_and_args) => con_and_args,
             None => continue,
         };
@@ -286,7 +286,10 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
         let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
 
         // Type constructor of the type implementing the trait.
-        let (self_ty_con, _) = trait_con_args[0].con().unwrap();
+        // TODO: We are passing empty con map here to avoid borrow checking issues. This will fail
+        // when the trait arugment is a type synonym, which we should reject anyway, but with a
+        // proper error message.
+        let (self_ty_con, _) = trait_con_args[0].con(&Default::default()).unwrap();
 
         if !trait_implementing_tys.insert(self_ty_con.clone()) {
             panic!(
@@ -391,7 +394,7 @@ fn collect_schemes(
                     &impl_decl.node.ty.loc,
                 );
 
-                let (mut ty_con_id, ty_args) = self_ty.con().unwrap();
+                let (mut ty_con_id, ty_args) = self_ty.con(ty_cons).unwrap();
                 let ty_con = match ty_cons.get(&ty_con_id) {
                     Some(ty_con) => ty_con,
                     None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
@@ -409,7 +412,7 @@ fn collect_schemes(
 
                     // Add the associated method to the type rather than to the trait.
                     self_ty = ty_args.pop().unwrap();
-                    let (ty_con_id_, _) = self_ty.con().unwrap_or_else(|| {
+                    let (ty_con_id_, _) = self_ty.con(ty_cons).unwrap_or_else(|| {
                         panic!(
                             "{}: Trait type argument needs to be a type constructor, but it is {:?}",
                             loc_string(&impl_decl.loc),
@@ -615,7 +618,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         .collect();
 
     let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
-    let (ty_con_id, ty_args) = trait_ty.con().unwrap();
+    let (ty_con_id, ty_args) = trait_ty.con(&tys.cons).unwrap();
 
     // Bind associated types.
     let mut old_tys: Map<Id, Option<TyCon>> =

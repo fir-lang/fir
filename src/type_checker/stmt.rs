@@ -77,9 +77,9 @@ fn check_stmt(
 
             let pat_ty = check_pat(lhs, level, env, var_gen, tys, preds);
 
-            unify(&pat_ty, &rhs_ty, &lhs.loc);
+            unify(&pat_ty, &rhs_ty, &tys.cons, &lhs.loc);
 
-            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
+            unify_expected_ty(Ty::unit(), expected_ty, &tys.cons, &stmt.loc)
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
@@ -157,7 +157,7 @@ fn check_stmt(
                         preds,
                     );
 
-                    let lhs_ty: Ty = match object_ty.normalize() {
+                    let lhs_ty: Ty = match object_ty.normalize(&tys.cons) {
                         Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tys)
                             .unwrap_or_else(|| {
                                 panic!(
@@ -251,7 +251,7 @@ fn check_stmt(
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_string(&lhs.loc), lhs),
             }
 
-            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
+            unify_expected_ty(Ty::unit(), expected_ty, &tys.cons, &stmt.loc)
         }
 
         ast::Stmt::Expr(expr) => check_expr(
@@ -291,7 +291,7 @@ fn check_stmt(
                 tys,
                 preds,
             );
-            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
+            unify_expected_ty(Ty::unit(), expected_ty, &tys.cons, &stmt.loc)
         }
     }
 }

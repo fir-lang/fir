@@ -224,7 +224,7 @@ pub fn collect_funs(
                 let ty = convert_ast_ty(&tys.cons, &ty_vars, ast_ty, &impl_decl.node.ty.loc);
 
                 // method_ty = type to add the method to.
-                let (mut method_ty, args) = ty.con().unwrap();
+                let (mut method_ty, args) = ty.con(&tys.cons).unwrap();
                 if tys.cons.get(&method_ty).unwrap().is_trait() {
                     let args = match args {
                         TyArgs::Positional(args) => args,
@@ -232,7 +232,7 @@ pub fn collect_funs(
                     };
                     assert_eq!(args.len(), 1);
                     let ty = &args[0];
-                    let (ty_con, _) = ty.con().unwrap();
+                    let (ty_con, _) = ty.con(&Default::default()).unwrap();
                     method_ty = ty_con;
                 }
 

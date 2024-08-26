@@ -570,16 +570,23 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self) -> Ty {
+    pub(super) fn normalize(&self, cons: &Map<Id, TyCon>) -> Ty {
         match self {
-            Ty::Var(var_ref) => var_ref.normalize(),
-            other => other.clone(),
+            Ty::Var(var_ref) => var_ref.normalize(cons),
+            Ty::Con(con) => match cons.get(con) {
+                Some(ty_con) => match &ty_con.details {
+                    TyConDetails::Synonym(ty) => ty.clone(),
+                    TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
+                },
+                None => self.clone(),
+            },
+            _ => self.clone(),
         }
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self) -> Option<(Id, TyArgs)> {
-        match self.normalize() {
+    pub fn con(&self, cons: &Map<Id, TyCon>) -> Option<(Id, TyArgs)> {
+        match self.normalize(cons) {
             Ty::Con(con) => Some((con.clone(), TyArgs::empty())),
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
@@ -637,9 +644,9 @@ impl TyVarRef {
         self.0.level.set(std::cmp::min(level, self_level));
     }
 
-    pub(super) fn normalize(&self) -> Ty {
+    pub(super) fn normalize(&self, cons: &Map<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
-            Some(link) => link.normalize(),
+            Some(link) => link.normalize(cons),
             None => return Ty::Var(self.clone()),
         };
         self.set_link(link.clone());

@@ -120,7 +120,7 @@ pub(super) fn check_pat(
                         }
                         let field_pat_ty =
                             check_pat(&field_pat.node, level, env, var_gen, tys, preds);
-                        unify(con_ty, &field_pat_ty, &pat.loc);
+                        unify(con_ty, &field_pat_ty, &tys.cons, &pat.loc);
                     }
 
                     *ret
@@ -174,7 +174,7 @@ pub(super) fn check_pat(
 
                         let field_pat_ty = check_pat(field_pat, level, env, var_gen, tys, preds);
 
-                        unify(&field_pat_ty, arg_ty, &pat.loc);
+                        unify(&field_pat_ty, arg_ty, &tys.cons, &pat.loc);
                     }
 
                     *ret
@@ -237,7 +237,7 @@ pub(super) fn check_pat(
             let pat2_ty = check_pat(pat2, level, env, var_gen, tys, preds);
             // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
-            unify(&pat1_ty, &pat2_ty, &pat.loc);
+            unify(&pat1_ty, &pat2_ty, &tys.cons, &pat.loc);
             pat1_ty
         }
     }

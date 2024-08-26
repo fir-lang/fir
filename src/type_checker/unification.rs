@@ -1,15 +1,15 @@
 use crate::ast;
-use crate::collections::Set;
+use crate::collections::{Map, Set};
 use crate::type_checker::loc_string;
 use crate::type_checker::ty::*;
 
-pub(super) fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
-    let ty1 = ty1.normalize();
+pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &Map<Id, TyCon>, loc: &ast::Loc) {
+    let ty1 = ty1.normalize(cons);
     if ty1.is_void() {
         return;
     }
 
-    let ty2 = ty2.normalize();
+    let ty2 = ty2.normalize(cons);
     if ty2.is_void() {
         return;
     }
@@ -42,7 +42,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
                         panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_string(loc), con1)
                     }
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(arg1, arg2, loc);
+                        unify(arg1, arg2, cons, loc);
                     }
                 }
                 (TyArgs::Named(args1), TyArgs::Named(args2)) => {
@@ -53,7 +53,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
                     }
 
                     for key in keys1 {
-                        unify(args1.get(key).unwrap(), args2.get(key).unwrap(), loc);
+                        unify(args1.get(key).unwrap(), args2.get(key).unwrap(), cons, loc);
                     }
                 }
                 _ => {
@@ -125,7 +125,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
             for key in keys1 {
                 let ty1 = fields1.get(key).unwrap();
                 let ty2 = fields2.get(key).unwrap();
-                unify(ty1, ty2, loc);
+                unify(ty1, ty2, cons, loc);
             }
         }
 
@@ -140,9 +140,14 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, loc: &ast::Loc) {
 
 /// When we have an expected type during type inference (i.e. we're in 'checking' mode), this
 /// unifies the expected type with the inferred type, and returns one of the types.
-pub(super) fn unify_expected_ty(ty: Ty, expected_ty: Option<&Ty>, loc: &ast::Loc) -> Ty {
+pub(super) fn unify_expected_ty(
+    ty: Ty,
+    expected_ty: Option<&Ty>,
+    cons: &Map<Id, TyCon>,
+    loc: &ast::Loc,
+) -> Ty {
     if let Some(expected_ty) = expected_ty {
-        unify(&ty, expected_ty, loc);
+        unify(&ty, expected_ty, cons, loc);
     }
     ty
 }
