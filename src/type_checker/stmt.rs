@@ -2,10 +2,10 @@ use crate::ast;
 use crate::collections::Set;
 use crate::scope_map::ScopeMap;
 use crate::type_checker::convert::convert_ast_ty;
-use crate::type_checker::expr::check_expr;
+use crate::type_checker::expr::{check_expr, select_field};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
-use crate::type_checker::unification::unify;
+use crate::type_checker::unification::{unify, unify_expected_ty};
 use crate::type_checker::{loc_string, PgmTypes};
 
 use smol_str::SmolStr;
@@ -79,71 +79,180 @@ fn check_stmt(
 
             unify(&pat_ty, &rhs_ty, &lhs.loc);
 
-            Ty::unit()
+            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
         }
 
-        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => match &lhs.node {
-            ast::Expr::Var(var) => {
-                let var_ty = env.get(var).cloned().unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", loc_string(&lhs.loc), var)
-                });
+        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+            match &lhs.node {
+                ast::Expr::Var(var) => {
+                    let var_ty = env.get(var).cloned().unwrap_or_else(|| {
+                        panic!("{}: Unbound variable {}", loc_string(&lhs.loc), var)
+                    });
 
-                let method = match op {
-                    ast::AssignOp::Eq => {
-                        check_expr(
-                            rhs,
-                            Some(&var_ty),
-                            return_ty,
-                            level,
-                            env,
-                            var_gen,
-                            quantified_vars,
-                            tys,
-                            preds,
-                        );
-                        return Ty::unit();
-                    }
+                    let method = match op {
+                        ast::AssignOp::Eq => {
+                            check_expr(
+                                rhs,
+                                Some(&var_ty),
+                                return_ty,
+                                level,
+                                env,
+                                var_gen,
+                                quantified_vars,
+                                tys,
+                                preds,
+                            );
+                            return Ty::unit();
+                        }
 
-                    ast::AssignOp::PlusEq => "__add",
+                        ast::AssignOp::PlusEq => "__add",
 
-                    ast::AssignOp::MinusEq => "__sub",
-                };
+                        ast::AssignOp::MinusEq => "__sub",
+                    };
 
-                let desugared_rhs = ast::L {
-                    loc: rhs.loc.clone(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            loc: rhs.loc.clone(),
-                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                                object: Box::new(ast::L {
-                                    loc: stmt.loc.clone(),
-                                    node: ast::Expr::Var(var.clone()),
+                    // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
+                    let desugared_rhs = ast::L {
+                        loc: rhs.loc.clone(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: rhs.loc.clone(),
+                                node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                    object: Box::new(ast::L {
+                                        loc: stmt.loc.clone(),
+                                        node: ast::Expr::Var(var.clone()),
+                                    }),
+                                    field: SmolStr::new_static(method),
                                 }),
-                                field: SmolStr::new_static(method),
                             }),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: (*rhs).clone(),
+                            }],
                         }),
-                        args: vec![ast::CallArg {
-                            name: None,
-                            expr: (*rhs).clone(),
-                        }],
-                    }),
-                };
+                    };
 
-                check_expr(
-                    &desugared_rhs,
-                    expected_ty,
-                    return_ty,
-                    level,
-                    env,
-                    var_gen,
-                    quantified_vars,
-                    tys,
-                    preds,
-                )
+                    check_expr(
+                        &desugared_rhs,
+                        None,
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+                }
+
+                ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+                    let object_ty = check_expr(
+                        object,
+                        None,
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+
+                    let lhs_ty: Ty = match object_ty.normalize() {
+                        Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tys)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Type {} does not have field {}",
+                                    loc_string(&lhs.loc),
+                                    con,
+                                    field
+                                )
+                            }),
+
+                        Ty::App(con, args) => match args {
+                            TyArgs::Positional(args) => select_field(
+                                &con, &args, field, &lhs.loc, tys,
+                            )
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Type {} does not have field {}",
+                                    loc_string(&lhs.loc),
+                                    con,
+                                    field
+                                )
+                            }),
+                            TyArgs::Named(_) => panic!(),
+                        },
+
+                        Ty::Record(fields) => match fields.get(field) {
+                            Some(field_ty) => field_ty.clone(),
+                            None => panic!(
+                                "{}: Record with fields {:?} does not have field {}",
+                                loc_string(&object.loc),
+                                fields.keys().collect::<Vec<_>>(),
+                                field
+                            ),
+                        },
+
+                        _ => panic!(),
+                    };
+
+                    let method = match op {
+                        ast::AssignOp::Eq => {
+                            check_expr(
+                                rhs,
+                                Some(&lhs_ty),
+                                return_ty,
+                                level,
+                                env,
+                                var_gen,
+                                quantified_vars,
+                                tys,
+                                preds,
+                            );
+                            return Ty::unit();
+                        }
+
+                        ast::AssignOp::PlusEq => "__add",
+
+                        ast::AssignOp::MinusEq => "__sub",
+                    };
+
+                    // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
+                    let desugared_rhs = ast::L {
+                        loc: rhs.loc.clone(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: rhs.loc.clone(),
+                                node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                    object: Box::new(lhs.clone()),
+                                    field: SmolStr::new_static(method),
+                                }),
+                            }),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: (*rhs).clone(),
+                            }],
+                        }),
+                    };
+
+                    check_expr(
+                        &desugared_rhs,
+                        None,
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        quantified_vars,
+                        tys,
+                        preds,
+                    );
+                }
+
+                _ => todo!("{}: Assignment with LHS: {:?}", loc_string(&lhs.loc), lhs),
             }
 
-            _ => todo!("{}: Assignment with LHS: {:?}", loc_string(&lhs.loc), lhs),
-        },
+            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
+        }
 
         ast::Stmt::Expr(expr) => check_expr(
             expr,
@@ -182,7 +291,7 @@ fn check_stmt(
                 tys,
                 preds,
             );
-            Ty::unit()
+            unify_expected_ty(Ty::unit(), expected_ty, &stmt.loc)
         }
     }
 }

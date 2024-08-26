@@ -595,7 +595,7 @@ fn check_field_select(
 }
 
 /// Try to select a field.
-fn select_field(
+pub(super) fn select_field(
     ty_con: &Id,
     ty_args: &[Ty],
     field: &Id,

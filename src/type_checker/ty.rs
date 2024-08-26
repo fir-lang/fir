@@ -147,7 +147,7 @@ pub(super) enum TyConDetails {
     ///
     /// For now, type synonyms are not allowed to have type parameters, and the RHS needs to have
     /// kind `*`.
-    Synonym(Ty),
+    Synonym(#[allow(unused)] Ty),
 }
 
 #[derive(Debug, Clone)]
