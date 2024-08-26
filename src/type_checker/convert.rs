@@ -16,70 +16,73 @@ pub fn convert_ast_ty(
     loc: &ast::Loc,
 ) -> Ty {
     match ast_ty {
-        ast::Type::Named(ast::NamedType { name, args }) => match ty_cons.get(name) {
-            Some(con) => {
-                if con.arity() as usize != args.len() {
-                    panic!(
-                        "{}: Incorrect number of type arguments, expected {}, found {}",
-                        loc_string(loc),
-                        con.arity(),
-                        args.len()
-                    )
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            if quantified_tys.contains(name) {
+                if !args.is_empty() {
+                    panic!("{}: Incorrect number of type arguments to quantified type {}: {} (expected 0)", loc_string(loc), name, args.len());
                 }
+                return Ty::QVar(name.clone());
+            }
 
-                let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
-                let mut converted_named_args: Map<Id, Ty> = Default::default();
+            let con = match ty_cons.get(name) {
+                Some(con) => con,
+                None => panic!("{}: Unknown type {}", loc_string(loc), name),
+            };
+            if con.arity() as usize != args.len() {
+                panic!(
+                    "{}: Incorrect number of type arguments to {}, expected {}, found {}",
+                    loc_string(loc),
+                    name,
+                    con.arity(),
+                    args.len()
+                )
+            }
 
-                for ast::L {
-                    loc: _,
-                    node: (name, ty),
-                } in args
-                {
-                    let ty = convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc);
-                    match name {
-                        Some(name) => {
-                            let old = converted_named_args.insert(name.clone(), ty);
-                            if old.is_some() {
-                                panic!(
-                                    "{}: Associated type argument {} defined multiple times",
-                                    loc_string(loc),
-                                    name
-                                );
-                            }
-                        }
-                        None => {
-                            converted_args.push(ty);
+            let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
+            let mut converted_named_args: Map<Id, Ty> = Default::default();
+
+            for ast::L {
+                loc: _,
+                node: (name, ty),
+            } in args
+            {
+                let ty = convert_ast_ty(ty_cons, quantified_tys, &ty.node, &ty.loc);
+                match name {
+                    Some(name) => {
+                        let old = converted_named_args.insert(name.clone(), ty);
+                        if old.is_some() {
+                            panic!(
+                                "{}: Associated type argument {} defined multiple times",
+                                loc_string(loc),
+                                name
+                            );
                         }
                     }
-                }
-
-                if !converted_args.is_empty() && !converted_named_args.is_empty() {
-                    panic!(
-                        "{}: Type cannot have both associated and positional arguments",
-                        loc_string(loc),
-                    );
-                }
-
-                if converted_args.is_empty() && converted_named_args.is_empty() {
-                    return Ty::Con(con.id.clone());
-                }
-
-                let args = if converted_named_args.is_empty() {
-                    TyArgs::Positional(converted_args)
-                } else {
-                    TyArgs::Named(converted_named_args)
-                };
-
-                Ty::App(con.id.clone(), args)
-            }
-            None => {
-                if quantified_tys.contains(name) {
-                    Ty::QVar(name.clone())
-                } else {
-                    panic!("{}: Unknown type {}", loc_string(loc), name)
+                    None => {
+                        converted_args.push(ty);
+                    }
                 }
             }
-        },
+
+            if !converted_args.is_empty() && !converted_named_args.is_empty() {
+                panic!(
+                    "{}: Type cannot have both associated and positional arguments",
+                    loc_string(loc),
+                );
+            }
+
+            if converted_args.is_empty() && converted_named_args.is_empty() {
+                return Ty::Con(con.id.clone());
+            }
+
+            let args = if converted_named_args.is_empty() {
+                TyArgs::Positional(converted_args)
+            } else {
+                TyArgs::Named(converted_named_args)
+            };
+
+            Ty::App(con.id.clone(), args)
+        }
 
         ast::Type::Record(fields) => Ty::Record(
             fields
