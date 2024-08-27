@@ -43,45 +43,76 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            let object_ty = check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
-
-            let ty = match object_ty.normalize(&tys.cons) {
-                Ty::Con(con) => {
-                    check_field_select(&con, &[], field, &expr.loc, tys, level, var_gen, preds)
+            let ty = match &object.node {
+                ast::Expr::UpperVar(ty) => {
+                    let scheme = tys
+                        .associated_schemes
+                        .get(ty)
+                        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_string(&expr.loc), ty))
+                        .get(field)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Type {} does not have associated function {}",
+                                loc_string(&expr.loc),
+                                ty,
+                                field
+                            )
+                        });
+                    scheme.instantiate(level, var_gen, preds, &expr.loc)
                 }
 
-                Ty::App(con, args) => match args {
-                    TyArgs::Positional(args) => check_field_select(
-                        &con, &args, field, &expr.loc, tys, level, var_gen, preds,
-                    ),
-                    TyArgs::Named(_) => {
-                        // Associated type arguments are only allowed in traits, sothe `con` must
-                        // be a trait.
-                        assert!(tys.cons.get(&con).unwrap().details.is_trait());
-                        panic!("{}: Traits cannot have fields", loc_string(&object.loc))
+                _ => {
+                    let object_ty =
+                        check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
+
+                    match object_ty.normalize(&tys.cons) {
+                        Ty::Con(con) => check_field_select(
+                            &con,
+                            &[],
+                            field,
+                            &expr.loc,
+                            tys,
+                            level,
+                            var_gen,
+                            preds,
+                        ),
+
+                        Ty::App(con, args) => match args {
+                            TyArgs::Positional(args) => check_field_select(
+                                &con, &args, field, &expr.loc, tys, level, var_gen, preds,
+                            ),
+                            TyArgs::Named(_) => {
+                                // Associated type arguments are only allowed in traits, sothe `con` must
+                                // be a trait.
+                                assert!(tys.cons.get(&con).unwrap().details.is_trait());
+                                panic!("{}: Traits cannot have fields", loc_string(&object.loc))
+                            }
+                        },
+
+                        Ty::Record(fields) => match fields.get(field) {
+                            Some(field_ty) => field_ty.clone(),
+                            None => panic!(
+                                "{}: Record with fields {:?} does not have field {}",
+                                loc_string(&object.loc),
+                                fields.keys().collect::<Vec<_>>(),
+                                field
+                            ),
+                        },
+
+                        Ty::AssocTySelect { ty: _, assoc_ty: _ } => panic!(
+                            "{}: Associated type select in fiel select expr",
+                            loc_string(&object.loc)
+                        ),
+
+                        Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+                            panic!(
+                                "{}: Object in field selection does not have fields: {:?}",
+                                loc_string(&object.loc),
+                                object_ty
+                            )
+                        }
                     }
-                },
-
-                Ty::Record(fields) => match fields.get(field) {
-                    Some(field_ty) => field_ty.clone(),
-                    None => panic!(
-                        "{}: Record with fields {:?} does not have field {}",
-                        loc_string(&object.loc),
-                        fields.keys().collect::<Vec<_>>(),
-                        field
-                    ),
-                },
-
-                Ty::AssocTySelect { ty: _, assoc_ty: _ } => panic!(
-                    "{}: Associated type select in fiel select expr",
-                    loc_string(&object.loc)
-                ),
-
-                Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => panic!(
-                    "{}: Object in field selection does not have fields: {:?}",
-                    loc_string(&object.loc),
-                    object_ty
-                ),
+                }
             };
 
             unify_expected_ty(ty, expected_ty, &tys.cons, &expr.loc)
