@@ -219,7 +219,7 @@ pub fn collect_funs(
                     .node
                     .context
                     .iter()
-                    .map(|ty| ty.node.0.clone())
+                    .map(|ty| ty.node.0.node.clone())
                     .collect();
                 let ty = convert_ast_ty(&tys.cons, &ty_vars, ast_ty, &impl_decl.node.ty.loc);
 

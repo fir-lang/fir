@@ -249,7 +249,7 @@ fn collect_cons(module: &mut ast::Module) -> Map<Id, TyCon> {
         let quantified_tys: Set<Id> = impl_decl
             .context
             .iter()
-            .map(|ty| ty.node.0.clone())
+            .map(|ty| ty.node.0.node.clone())
             .collect();
 
         let impl_ty = convert_ast_ty(
@@ -384,7 +384,7 @@ fn collect_schemes(
                     .node
                     .context
                     .iter()
-                    .map(|ty| ty.node.0.clone())
+                    .map(|ty| ty.node.0.node.clone())
                     .collect();
 
                 let mut self_ty: Ty = convert_ast_ty(
@@ -614,7 +614,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         .node
         .context
         .iter()
-        .map(|ty| ty.node.0.clone())
+        .map(|ty| ty.node.0.node.clone())
         .collect();
 
     let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);

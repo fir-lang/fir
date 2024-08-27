@@ -246,21 +246,16 @@ LFunSig: L<FunSig> = {
 
 FunSig: FunSig = {
     "fn" <name:LLowerId>
-            <type_params:("[" <Sep<TyParamWithPreds, ",">> "]")?>
+            <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <return_ty:(":" <LType>)?> =>
         FunSig {
             name,
-            type_params: type_params.unwrap_or(vec![]),
+            type_params,
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
         },
-}
-
-TyParamWithPreds: L<(L<SmolStr>, Vec<L<Type>>)> = {
-    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
-    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,18 +681,16 @@ ImplDecl: L<ImplDecl> = {
     }
 }
 
-Context: Vec<L<(SmolStr, Vec<SmolStr>)>> = {
+//  type Context = Vec<L<(L<SmolStr>, Vec<L<Type>>)>>;
+Context: Context = {
     => vec![],
 
-    "[" <tys:TypeWithBounds*> "]" => tys,
+    "[" <tys:Sep<TypeWithBounds, ",">> "]" => tys,
 }
 
-TypeWithBounds: L<(SmolStr, Vec<SmolStr>)> = {
-    <l:@L> <ty:UpperId> <r:@R> =>
-        L::new(module, l, r, (ty.smol_str(), vec![])),
-
-    <l:@L> <ty:UpperId> ":" <bounds:Sep1<UpperId, "+">> <r:@R> =>
-        L::new(module, l, r, (ty.smol_str(), bounds.into_iter().map(|id| id.smol_str()).collect())),
+TypeWithBounds: L<(L<SmolStr>, Vec<L<Type>>)> = {
+    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
+    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ImplDeclItem: L<ImplDeclItem> = {

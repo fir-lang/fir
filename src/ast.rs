@@ -183,7 +183,7 @@ pub struct FunSig {
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
     ///
     /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
-    pub type_params: Vec<L<(L<SmolStr>, Vec<L<Type>>)>>,
+    pub type_params: Context,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
@@ -453,17 +453,16 @@ pub enum TraitDeclItem {
     Fun(FunDecl),
 }
 
+/// Type parameters of a function or `impl` block.
+///
+/// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
+pub type Context = Vec<L<(L<SmolStr>, Vec<L<Type>>)>>;
+
 /// An `impl` block, implementing associated methods for a type, or a trait.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplDecl {
-    /// Type parameters of the type being implemented, with bounds. E.g. in
-    ///
-    /// ```ignore
-    /// impl[T: Debug + Foo] Debug[Vec[T]]: ...
-    /// ```
-    ///
-    /// this field will be `[(T, [Debug, Foo])]`.
-    pub context: Vec<L<(SmolStr, Vec<SmolStr>)>>,
+    /// Type parameters of the type being implemented, with bounds.
+    pub context: Context,
 
     /// The type being implemented.
     ///
