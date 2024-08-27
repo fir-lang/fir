@@ -595,7 +595,6 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
             0,
             &mut env,
             &mut var_gen,
-            &quantified_var_ids,
             tys,
             &mut preds,
         );
@@ -608,7 +607,8 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 ///
 /// The block may be for a trait implementation or for associated functions.
 ///
-/// `tys` is `mut` to be able to add associated types before checking the methods.
+/// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
+/// checking the methods.
 fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     let quantified_tys: Set<Id> = impl_
         .node
@@ -620,9 +620,28 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
     let (ty_con_id, ty_args) = trait_ty.con(&tys.cons).unwrap();
 
+    // Bind trait type parameters.
+    let old_ty_params: Map<Id, Option<TyCon>> = quantified_tys
+        .iter()
+        .map(|ty_param| {
+            (
+                ty_param.clone(),
+                tys.cons.insert(
+                    ty_param.clone(),
+                    TyCon {
+                        id: ty_param.clone(),
+                        ty_params: vec![],
+                        assoc_tys: Default::default(),
+                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                    },
+                ),
+            )
+        })
+        .collect();
+
     // Bind associated types.
     let mut old_tys: Map<Id, Option<TyCon>> =
-        bind_associated_types(impl_, &quantified_tys, &mut tys.cons);
+        bind_associated_types(impl_, &Default::default(), &mut tys.cons);
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap().clone();
 
@@ -692,7 +711,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             // Type of the method in the impl declaration.
             let impl_fun_ty = convert_fun_ty(
                 Some(&implementing_ty),
-                &quantified_tys,
+                &Default::default(),
                 &impl_fun.sig.type_params,
                 &impl_fun.sig.params,
                 &impl_fun.sig.return_ty,
@@ -700,7 +719,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 &tys.cons,
             );
 
-            if !trait_fun_ty.eq_modulo_alpha(&quantified_tys, &impl_fun_ty, &item.loc) {
+            if !trait_fun_ty.eq_modulo_alpha(&Default::default(), &impl_fun_ty, &item.loc) {
                 panic!(
                     "{}: Trait method implementation of {} does not match the trait method type
                     Trait method type:          {:?}
@@ -715,7 +734,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             // Check the body.
             if let Some(body) = &impl_fun.body {
                 let ret_ty = match &impl_fun.sig.return_ty {
-                    Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
+                    Some(ty) => convert_ast_ty(&tys.cons, &Default::default(), &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
 
@@ -728,7 +747,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 for (param_name, param_ty) in &impl_fun.sig.params {
                     env.bind(
                         param_name.clone(),
-                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &item.loc),
+                        convert_ast_ty(&tys.cons, &Default::default(), &param_ty.node, &item.loc),
                     );
                 }
 
@@ -739,7 +758,6 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     0,
                     &mut env,
                     &mut var_gen,
-                    &quantified_tys,
                     tys,
                     &mut preds,
                 );
@@ -758,7 +776,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             // Check the body.
             if let Some(body) = &fun.body {
                 let ret_ty = match &fun.sig.return_ty {
-                    Some(ty) => convert_ast_ty(&tys.cons, &quantified_tys, &ty.node, &ty.loc),
+                    Some(ty) => convert_ast_ty(&tys.cons, &Default::default(), &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
 
@@ -771,7 +789,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 for (param_name, param_ty) in &fun.sig.params {
                     env.bind(
                         param_name.clone(),
-                        convert_ast_ty(&tys.cons, &quantified_tys, &param_ty.node, &item.loc),
+                        convert_ast_ty(&tys.cons, &Default::default(), &param_ty.node, &item.loc),
                     );
                 }
 
@@ -782,7 +800,6 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     0,
                     &mut env,
                     &mut var_gen,
-                    &quantified_tys,
                     tys,
                     &mut preds,
                 );
@@ -794,6 +811,17 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     }
 
     unbind_associated_types(old_tys, &mut tys.cons);
+
+    for (ty_param, old_ty_con) in old_ty_params {
+        match old_ty_con {
+            Some(ty_con) => {
+                tys.cons.insert(ty_param, ty_con);
+            }
+            None => {
+                tys.cons.remove(&ty_param);
+            }
+        }
+    }
 }
 
 /// We currently don't allow a type constructor to implement a trait multiple times with different

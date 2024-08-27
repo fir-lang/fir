@@ -17,7 +17,6 @@ pub(super) fn check_expr(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
-    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
@@ -39,17 +38,7 @@ pub(super) fn check_expr(
         ast::Expr::UpperVar(_) => todo!(),
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            let object_ty = check_expr(
-                object,
-                None,
-                return_ty,
-                level,
-                env,
-                var_gen,
-                quantified_vars,
-                tys,
-                preds,
-            );
+            let object_ty = check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
 
             let ty = match object_ty.normalize(&tys.cons) {
                 Ty::Con(con) => {
@@ -117,17 +106,7 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let fun_ty = check_expr(
-                fun,
-                None,
-                return_ty,
-                level,
-                env,
-                var_gen,
-                quantified_vars,
-                tys,
-                preds,
-            );
+            let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
 
             // TODO: Handle passing self when `fun` is a `FieldSelect`.
             match fun_ty {
@@ -159,7 +138,6 @@ pub(super) fn check_expr(
                             level,
                             env,
                             var_gen,
-                            quantified_vars,
                             tys,
                             preds,
                         );
@@ -215,7 +193,6 @@ pub(super) fn check_expr(
                             level,
                             env,
                             var_gen,
-                            quantified_vars,
                             tys,
                             preds,
                         );
@@ -263,7 +240,6 @@ pub(super) fn check_expr(
                             level,
                             env,
                             var_gen,
-                            quantified_vars,
                             tys,
                             preds,
                         );
@@ -330,7 +306,6 @@ pub(super) fn check_expr(
                 level,
                 env,
                 var_gen,
-                quantified_vars,
                 tys,
                 preds,
             )
@@ -344,7 +319,6 @@ pub(super) fn check_expr(
                 level,
                 env,
                 var_gen,
-                quantified_vars,
                 tys,
                 preds,
             ),
@@ -411,7 +385,6 @@ pub(super) fn check_expr(
                     level,
                     env,
                     var_gen,
-                    quantified_vars,
                     tys,
                     preds,
                 );
@@ -428,23 +401,12 @@ pub(super) fn check_expr(
             level,
             env,
             var_gen,
-            quantified_vars,
             tys,
             preds,
         ),
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let scrut_ty = check_expr(
-                scrutinee,
-                None,
-                return_ty,
-                level,
-                env,
-                var_gen,
-                quantified_vars,
-                tys,
-                preds,
-            );
+            let scrut_ty = check_expr(scrutinee, None, return_ty, level, env, var_gen, tys, preds);
 
             let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
@@ -465,22 +427,13 @@ pub(super) fn check_expr(
                         level,
                         env,
                         var_gen,
-                        quantified_vars,
                         tys,
                         preds,
                     );
                 }
 
                 rhs_tys.push(check_stmts(
-                    rhs,
-                    None,
-                    return_ty,
-                    level,
-                    env,
-                    var_gen,
-                    quantified_vars,
-                    tys,
-                    preds,
+                    rhs, None, return_ty, level, env, var_gen, tys, preds,
                 ));
             }
 
@@ -505,7 +458,6 @@ pub(super) fn check_expr(
                     level,
                     env,
                     var_gen,
-                    quantified_vars,
                     tys,
                     preds,
                 );
@@ -518,7 +470,6 @@ pub(super) fn check_expr(
                     level,
                     env,
                     var_gen,
-                    quantified_vars,
                     tys,
                     preds,
                 );
@@ -535,7 +486,6 @@ pub(super) fn check_expr(
                         level,
                         env,
                         var_gen,
-                        quantified_vars,
                         tys,
                         preds,
                     );

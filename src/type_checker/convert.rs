@@ -9,6 +9,8 @@ use smol_str::SmolStr;
 ///
 /// `quantified_tys` are the type variables quantified in the context. These types will be
 /// converted to `Ty::QVar`.
+// TODO: Remove `quantified_tys` argument, map types to `Ty`s (instead of `TyCon`s) in the
+// `ty_cons` argument.
 pub fn convert_ast_ty(
     ty_cons: &Map<Id, TyCon>,
     quantified_tys: &Set<Id>,
@@ -19,7 +21,12 @@ pub fn convert_ast_ty(
         ast::Type::Named(ast::NamedType { name, args }) => {
             if quantified_tys.contains(name) {
                 if !args.is_empty() {
-                    panic!("{}: Incorrect number of type arguments to quantified type {}: {} (expected 0)", loc_string(loc), name, args.len());
+                    panic!(
+                        "{}: Incorrect number of type arguments to quantified type {}: {} (expected 0)",
+                        loc_string(loc),
+                        name,
+                        args.len()
+                    );
                 }
                 return Ty::QVar(name.clone());
             }

@@ -63,8 +63,8 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &Map<Id, TyCon>, loc: &ast::Loc) {
             }
         }
 
-        (Ty::QVar(_), _) | (_, Ty::QVar(_)) => {
-            panic!("QVar in unification at {}", loc_string(loc));
+        (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
+            panic!("{}: QVar {} during unification", loc_string(loc), var);
         }
 
         (Ty::Var(var1), Ty::Var(var2)) => {

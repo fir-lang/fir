@@ -1,5 +1,4 @@
 use crate::ast;
-use crate::collections::Set;
 use crate::scope_map::ScopeMap;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};
@@ -17,7 +16,6 @@ pub(super) fn check_stmts(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
-    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
@@ -32,7 +30,6 @@ pub(super) fn check_stmts(
             level,
             env,
             var_gen,
-            quantified_vars,
             tys,
             preds,
         );
@@ -51,14 +48,13 @@ fn check_stmt(
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
-    quantified_vars: &Set<Id>,
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
     match &stmt.node {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             let pat_expected_ty = ty.as_ref().map(|ast_ty| {
-                convert_ast_ty(&tys.cons, quantified_vars, &ast_ty.node, &ast_ty.loc)
+                convert_ast_ty(&tys.cons, &Default::default(), &ast_ty.node, &ast_ty.loc)
             });
 
             env.enter();
@@ -69,7 +65,6 @@ fn check_stmt(
                 level + 1,
                 env,
                 var_gen,
-                quantified_vars,
                 tys,
                 preds,
             );
@@ -98,7 +93,6 @@ fn check_stmt(
                                 level,
                                 env,
                                 var_gen,
-                                quantified_vars,
                                 tys,
                                 preds,
                             );
@@ -138,24 +132,14 @@ fn check_stmt(
                         level,
                         env,
                         var_gen,
-                        quantified_vars,
                         tys,
                         preds,
                     );
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    let object_ty = check_expr(
-                        object,
-                        None,
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        quantified_vars,
-                        tys,
-                        preds,
-                    );
+                    let object_ty =
+                        check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
 
                     let lhs_ty: Ty = match object_ty.normalize(&tys.cons) {
                         Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tys)
@@ -205,7 +189,6 @@ fn check_stmt(
                                 level,
                                 env,
                                 var_gen,
-                                quantified_vars,
                                 tys,
                                 preds,
                             );
@@ -242,7 +225,6 @@ fn check_stmt(
                         level,
                         env,
                         var_gen,
-                        quantified_vars,
                         tys,
                         preds,
                     );
@@ -261,7 +243,6 @@ fn check_stmt(
             level,
             env,
             var_gen,
-            quantified_vars,
             tys,
             preds,
         ),
@@ -276,21 +257,10 @@ fn check_stmt(
                 level,
                 env,
                 var_gen,
-                quantified_vars,
                 tys,
                 preds,
             );
-            check_stmts(
-                body,
-                None,
-                return_ty,
-                level,
-                env,
-                var_gen,
-                quantified_vars,
-                tys,
-                preds,
-            );
+            check_stmts(body, None, return_ty, level, env, var_gen, tys, preds);
             unify_expected_ty(Ty::unit(), expected_ty, &tys.cons, &stmt.loc)
         }
     }
