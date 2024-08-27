@@ -35,7 +35,12 @@ pub(super) fn check_expr(
             panic!("{}: Unbound variable {}", loc_string(&expr.loc), var);
         }
 
-        ast::Expr::UpperVar(_) => todo!(),
+        ast::Expr::UpperVar(con) => {
+            let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
+                panic!("{}: Unknown constructor {}", loc_string(&expr.loc), con)
+            });
+            scheme.instantiate(level, var_gen, preds, &expr.loc)
+        }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object_ty = check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
