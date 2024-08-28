@@ -1,4 +1,4 @@
-pub use std::collections::hash_map::Entry;
+pub use crate::scope_map::ScopeMap;
 
 pub type Map<K, V> = fnv::FnvHashMap<K, V>;
 

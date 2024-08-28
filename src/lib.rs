@@ -87,21 +87,41 @@ mod native {
             }
         };
 
-        let args: Vec<String> = std::env::args().collect();
+        let mut typecheck = false;
+        let mut no_prelude = false;
+        let args: Vec<String> = std::env::args()
+            .filter(|arg| match arg.as_str() {
+                "--typecheck" => {
+                    typecheck = true;
+                    false
+                }
+                "--no-prelude" => {
+                    no_prelude = true;
+                    false
+                }
+                _ => true,
+            })
+            .collect();
 
         let file_path = Path::new(&args[1]); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
 
         let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
-        let mut module =
-            import_resolver::resolve_imports(&fir_root, root_path.to_str().unwrap(), module);
+        let mut module = import_resolver::resolve_imports(
+            &fir_root,
+            root_path.to_str().unwrap(),
+            module,
+            !no_prelude, // import_prelude
+        );
 
-        let tys = type_checker::check_module(&mut module);
+        let mut tys = type_checker::check_module(&mut module);
 
-        let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
-        let mut w = std::io::stdout();
-        interpreter::run(&mut w, module, input, &tys);
+        if !typecheck {
+            let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            let mut w = std::io::stdout();
+            interpreter::run(&mut w, module, input, &mut tys);
+        }
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
@@ -202,7 +222,7 @@ mod wasm {
 
         let tokens = scanner::scan(lexer::lex(pgm));
         let module = parse_module(&SmolStr::new("FirWeb"), tokens);
-        let module = import_resolver::resolve_imports("fir", "", module);
+        let module = import_resolver::resolve_imports("fir", "", module, true);
 
         let mut w = WasmOutput;
         interpreter::run(&mut w, module, input.trim());

@@ -1,9 +1,9 @@
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::{ScopeMap, Set};
 use crate::type_checker::loc_string;
 use crate::type_checker::ty::*;
 
-pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &Map<Id, TyCon>, loc: &ast::Loc) {
+pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::Loc) {
     let ty1 = ty1.normalize(cons);
     if ty1.is_void() {
         return;
@@ -143,7 +143,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &Map<Id, TyCon>, loc: &ast::Loc) {
 pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
-    cons: &Map<Id, TyCon>,
+    cons: &ScopeMap<Id, TyCon>,
     loc: &ast::Loc,
 ) -> Ty {
     if let Some(expected_ty) = expected_ty {

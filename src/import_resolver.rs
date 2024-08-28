@@ -15,7 +15,12 @@ use smol_str::SmolStr;
 ///
 /// Imports `Fir.Prelude` always. Any other import path needs to have one component and will be
 /// resolved to a file at the root.
-pub fn resolve_imports(fir_root: &str, module_root: &str, module: ast::Module) -> ast::Module {
+pub fn resolve_imports(
+    fir_root: &str,
+    module_root: &str,
+    module: ast::Module,
+    import_prelude: bool,
+) -> ast::Module {
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
     let mut imported_modules: Set<Vec<SmolStr>> = Default::default();
 
@@ -32,7 +37,7 @@ pub fn resolve_imports(fir_root: &str, module_root: &str, module: ast::Module) -
 
     // Import Prelude if it's not already imported.
     let prelude_path = prelude_module_path();
-    if !imported_modules.contains(&prelude_path) {
+    if import_prelude && !imported_modules.contains(&prelude_path) {
         let prelude_path_buf = module_path(fir_root.to_str().unwrap(), &PRELUDE);
         let prelude_module = crate::parse_file(&prelude_path_buf, &PRELUDE);
         imported_modules.insert(prelude_path);

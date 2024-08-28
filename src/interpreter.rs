@@ -16,7 +16,7 @@ use crate::ast::{self, Loc, L};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
-use crate::type_checker::{Id, PgmTypes};
+use crate::type_checker::PgmTypes;
 
 use std::cmp::Ordering;
 use std::io::Write;
@@ -24,7 +24,7 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str, tys: &PgmTypes) {
+pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str, tys: &mut PgmTypes) {
     let mut heap = Heap::new();
     let pgm = Pgm::new(pgm, &mut heap, tys);
 
@@ -248,7 +248,7 @@ macro_rules! val {
 }
 
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, tys: &PgmTypes) -> Pgm {
+    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, tys: &mut PgmTypes) -> Pgm {
         // Initialize `ty_cons`.
         let (ty_cons, mut next_type_tag): (Map<SmolStr, TyCon>, u64) = init::collect_types(&pgm);
 

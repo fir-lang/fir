@@ -1,7 +1,7 @@
 //! Syntax for type checking types.
 
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::{Map, ScopeMap, Set};
 use crate::type_checker::loc_string;
 
 use std::cell::{Cell, RefCell};
@@ -574,7 +574,7 @@ impl Ty {
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
-    pub(super) fn normalize(&self, cons: &Map<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
             Ty::Con(con) => match cons.get(con) {
@@ -589,7 +589,7 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &Map<Id, TyCon>) -> Option<(Id, TyArgs)> {
+    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, TyArgs)> {
         match self.normalize(cons) {
             Ty::Con(con) => Some((con.clone(), TyArgs::empty())),
 
@@ -648,7 +648,7 @@ impl TyVarRef {
         self.0.level.set(std::cmp::min(level, self_level));
     }
 
-    pub(super) fn normalize(&self, cons: &Map<Id, TyCon>) -> Ty {
+    pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
             Some(link) => link.normalize(cons),
             None => return Ty::Var(self.clone()),
@@ -672,6 +672,15 @@ impl TyVarGen {
 }
 
 impl TyCon {
+    pub(super) fn opaque(id: Id) -> TyCon {
+        TyCon {
+            id,
+            ty_params: vec![],
+            assoc_tys: Default::default(),
+            details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+        }
+    }
+
     pub(super) fn arity(&self) -> u32 {
         self.ty_params.len() as u32
     }

@@ -1,4 +1,4 @@
-use crate::type_checker::TyArgs;
+use crate::type_checker::{convert_and_bind_context, TyArgs, TyVarConversion};
 use crate::{interpreter::*, type_checker::convert_ast_ty};
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
@@ -118,7 +118,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
 
 pub fn collect_funs(
     pgm: Vec<L<ast::TopDecl>>,
-    tys: &PgmTypes,
+    tys: &mut PgmTypes,
 ) -> (Map<SmolStr, Fun>, Map<SmolStr, Map<SmolStr, Fun>>) {
     macro_rules! builtin_top_level_funs {
         ($($fname:expr => $fkind:expr),* $(,)?) => {{
@@ -214,18 +214,23 @@ pub fn collect_funs(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
+                // Convert impl type to find the type to add the method to.
                 let ast_ty: &ast::Type = &impl_decl.node.ty.node;
-                let ty_vars: Set<Id> = impl_decl
-                    .node
-                    .context
-                    .iter()
-                    .map(|ty| ty.node.0.node.clone())
-                    .collect();
-                let ty = convert_ast_ty(&tys.cons, &ty_vars, ast_ty, &impl_decl.node.ty.loc);
+
+                // Bind context types to make `convert_ast_ty` happy.
+                tys.tys.enter_scope();
+                convert_and_bind_context(
+                    &mut tys.tys,
+                    &impl_decl.node.context,
+                    TyVarConversion::ToOpaque, // does not matter
+                    &impl_decl.loc,
+                );
+
+                let ty = convert_ast_ty(&tys.tys, ast_ty, &impl_decl.node.ty.loc);
 
                 // method_ty = type to add the method to.
-                let (mut method_ty, args) = ty.con(&tys.cons).unwrap();
-                if tys.cons.get(&method_ty).unwrap().is_trait() {
+                let (mut method_ty, args) = ty.con(tys.tys.cons()).unwrap();
+                if tys.tys.get_con(&method_ty).unwrap().is_trait() {
                     let args = match args {
                         TyArgs::Positional(args) => args,
                         TyArgs::Named(_) => panic!(),
@@ -258,6 +263,8 @@ pub fn collect_funs(
                             },
                         );
                 }
+
+                tys.tys.enter_scope();
             }
         }
     }
