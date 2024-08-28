@@ -89,6 +89,7 @@ mod native {
 
         let mut typecheck = false;
         let mut no_prelude = false;
+        let mut no_backtrace = false;
         let args: Vec<String> = std::env::args()
             .filter(|arg| match arg.as_str() {
                 "--typecheck" => {
@@ -99,9 +100,25 @@ mod native {
                     no_prelude = true;
                     false
                 }
+                "--no-backtrace" => {
+                    no_backtrace = true;
+                    false
+                }
                 _ => true,
             })
             .collect();
+
+        if no_backtrace {
+            std::panic::set_hook(Box::new(|panic_info| {
+                if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+                    eprintln!("{}", s);
+                } else if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+                    eprintln!("{}", s);
+                } else {
+                    eprintln!("Weird panic payload in panic handler");
+                }
+            }));
+        }
 
         let file_path = Path::new(&args[1]); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"

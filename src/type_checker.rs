@@ -468,7 +468,7 @@ fn collect_schemes(
 
                 let (mut ty_con_id, ty_args) = self_ty.con(tys.cons()).unwrap();
                 let ty_con = match tys.get_con(&ty_con_id) {
-                    Some(ty_con) => ty_con,
+                    Some(ty_con) => ty_con.clone(),
                     None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
                 };
 
@@ -492,8 +492,6 @@ fn collect_schemes(
                     ty_con_id = ty_con_id_;
 
                     bind_associated_types(impl_decl, tys);
-
-                    // TODO: Check that the method types match trait methods.
                 }
 
                 for item in &impl_decl.node.items {
@@ -548,7 +546,7 @@ fn collect_schemes(
                     let old = associated_schemes
                         .entry(ty_con_id.clone())
                         .or_default()
-                        .insert(fun.sig.name.node.clone(), scheme);
+                        .insert(fun.sig.name.node.clone(), scheme.clone());
 
                     if old.is_some() {
                         panic!(
@@ -561,6 +559,51 @@ fn collect_schemes(
 
                     tys.exit_scope();
                     assert_eq!(tys.len_scopes(), 2); // top-level, impl
+
+                    // If this is a trait method, check that the type matches the method type in
+                    // the trait.
+                    if let TyConDetails::Trait(TraitDetails {
+                        methods: trait_methods,
+                        ..
+                    }) = &ty_con.details
+                    {
+                        let fun_name: &Id = &fun.sig.name.node;
+
+                        let trait_fun_scheme = &trait_methods
+                            .get(fun_name)
+                            .unwrap_or_else(|| {
+                                panic!(
+                                    "{}: Trait {} does not have a method named {}",
+                                    loc_string(&item.loc),
+                                    ty_con_id,
+                                    fun_name
+                                )
+                            })
+                            .scheme;
+
+                        let trait_ty_param = &ty_con.ty_params[0].0;
+
+                        // Type of the method in the trait declaration, with `self` type substituted for the
+                        // type implementing the trait.
+                        let trait_fun_scheme =
+                            trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
+
+                        if !trait_fun_scheme.eq_modulo_alpha(
+                            &Default::default(),
+                            &scheme,
+                            &item.loc,
+                        ) {
+                            panic!(
+                                "{}: Trait method implementation of {} does not match the trait method type
+                                Trait method type:          {:?}
+                                Implementation method type: {:?}",
+                                loc_string(&item.loc),
+                                fun_name,
+                                trait_fun_scheme,
+                                scheme
+                            );
+                        }
+                    }
                 }
             }
 
@@ -758,11 +801,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
     let ty_con = tys.tys.get_con(&ty_con_id).unwrap().clone();
 
-    if let TyConDetails::Trait(TraitDetails {
-        methods: trait_methods,
-        ..
-    }) = &ty_con.details
-    {
+    if ty_con.is_trait() {
         // Check that the method types match trait method types, with the trait type parameter
         // replaced by the implementing type.
         let mut ty_args = match ty_args {
@@ -775,7 +814,6 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
         // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
         let implementing_ty = ty_args.pop().unwrap();
-        let _trait_ty_param = &ty_con.ty_params[0].0;
 
         for item in &impl_.node.items {
             let fun = match &item.node {
@@ -792,65 +830,6 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 TyVarConversion::ToOpaque,
                 &impl_.loc,
             );
-
-            let fun_name: &Id = &fun.sig.name.node;
-
-            let _trait_method = trait_methods.get(fun_name).unwrap_or_else(|| {
-                panic!(
-                    "{}: Trait {} does not have a method named {}",
-                    loc_string(&item.loc),
-                    ty_con_id,
-                    fun_name
-                )
-            });
-
-            // TODO: Type comparison below is not right:
-            //
-            // - We should either have QVars on both sides, or replace them with opaque types in
-            //   the trait function type scheme.
-            //
-            // - We should allow using the RHS of associated types in the impl function. For
-            //   example, this should be accepted:
-            //
-            //       trait T[A]:
-            //           type X
-            //           fn f(self): X
-            //
-            //       impl T[C]:
-            //          type X = I32
-            //          fn f(self): I32 = ...
-
-            // Type of the method in the trait declaration, with `self` type substituted for the
-            // type implementing the trait.
-            /*
-            let trait_fun_ty =
-                trait_method
-                    .scheme
-                    .subst(trait_ty_param, &implementing_ty, &item.loc);
-
-            // Type of the method in the impl declaration.
-            let impl_fun_ty = convert_fun_ty(
-                Some(&implementing_ty),
-                &Default::default(),
-                &fun.sig.type_params,
-                &fun.sig.params,
-                &fun.sig.return_ty,
-                &item.loc,
-                &tys.cons,
-            );
-
-            if !trait_fun_ty.eq_modulo_alpha(&Default::default(), &impl_fun_ty, &item.loc) {
-                panic!(
-                    "{}: Trait method implementation of {} does not match the trait method type
-                    Trait method type:          {:?}
-                    Implementation method type: {:?}",
-                    loc_string(&item.loc),
-                    fun_name,
-                    trait_fun_ty,
-                    impl_fun_ty
-                );
-            }
-            */
 
             // Check the body.
             if let Some(body) = &fun.body {
