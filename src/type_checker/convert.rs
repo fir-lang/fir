@@ -3,8 +3,6 @@ use crate::collections::{Map, Set};
 use crate::type_checker::loc_string;
 use crate::type_checker::ty::*;
 
-use smol_str::SmolStr;
-
 /// Convert an AST type to type checking type.
 ///
 /// `quantified_tys` are the type variables quantified in the context. These types will be
@@ -117,8 +115,8 @@ pub fn convert_ast_ty(
 pub(super) fn convert_fun_ty(
     self_ty: Option<&Ty>,
     ty_ty_params: &Set<Id>,
-    fun_ty_params: &[ast::L<(ast::L<Id>, Vec<ast::L<ast::Type>>)>],
-    params: &[(SmolStr, ast::L<ast::Type>)],
+    fun_ty_params: &ast::Context,
+    params: &[(Id, ast::L<ast::Type>)],
     return_ty: &Option<ast::L<ast::Type>>,
     loc: &ast::Loc,
     ty_cons: &Map<Id, TyCon>,
