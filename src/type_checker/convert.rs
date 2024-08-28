@@ -108,6 +108,17 @@ pub fn convert_ast_ty(
     }
 }
 
+/*
+Variations of function types:
+
+Variation | Has type context | Has self type
+----------+------------------+---------------
+Top-level | No               | No
+Assoc     | Yes              | Yes (concrete)
+Trait     | Yes              | Yes (quantified)
+Impl      | Yes              | Yes (concrete)
+*/
+
 /// Convert a function type to a `Scheme`.
 ///
 /// - `ty_ty_params`: When converting associated functions or trait methods, type parameters of the type.
@@ -137,7 +148,7 @@ pub(super) fn convert_fun_ty(
         let mut trait_map: Map<Id, Map<Id, Ty>> = Default::default();
 
         for bound in &ty_param.1 {
-            // Syntactically a bound should be in form: `Id[(Id = Ty),*]`.
+            // Syntactically a bound should be in form: `Id ([(Id = Ty),*])?`.
             // Parser is more permissive, we check the syntax here.
             let (trait_id, assoc_tys) = match &bound.node {
                 ast::Type::Named(ast::NamedType { name, args })
@@ -258,4 +269,90 @@ pub(super) fn convert_fields(
                 .collect(),
         )),
     }
+}
+
+#[allow(unused)]
+pub(super) fn convert_context(
+    context_ast: &ast::Context,
+    quantified_tys: &Set<Id>,
+    ty_cons: &Map<Id, TyCon>,
+    loc: &ast::Loc,
+) -> Vec<(Id, Map<Id, Map<Id, Ty>>)> {
+    let mut context_converted: Vec<(Id, Map<Id, Map<Id, Ty>>)> =
+        Vec::with_capacity(context_ast.len());
+
+    for ast::L {
+        node: (ty_var, bounds),
+        loc: _,
+    } in context_ast
+    {
+        let mut trait_map: Map<Id, Map<Id, Ty>> = Default::default();
+
+        for bound in bounds {
+            // Syntactically a bound should be in form: `Id ([(Id = Ty),*])?`.
+            // Parser is more permissive, we check the syntax here.
+            let (trait_id, assoc_tys): (Id, Map<Id, Ty>) = match &bound.node {
+                ast::Type::Named(ast::NamedType { name, args })
+                    if args.iter().all(|arg| arg.node.0.is_some()) =>
+                {
+                    (
+                        name.clone(),
+                        args.iter()
+                            .map(|arg| {
+                                (
+                                    arg.node.0.as_ref().unwrap().clone(),
+                                    convert_ast_ty(
+                                        ty_cons,
+                                        &quantified_tys,
+                                        &arg.node.1.node,
+                                        &arg.node.1.loc,
+                                    ),
+                                )
+                            })
+                            .collect(),
+                    )
+                }
+
+                _ => panic!("{}: Invalid predicate syntax", loc_string(&bound.loc)),
+            };
+
+            let trait_con = match ty_cons.get(&trait_id) {
+                Some(con) => con,
+                None => panic!(
+                    "{}: Unknown type {} in bound",
+                    loc_string(&bound.loc),
+                    trait_id
+                ),
+            };
+
+            if !trait_con.is_trait() {
+                panic!(
+                    "{}: Type {} is not a trait",
+                    loc_string(&bound.loc),
+                    trait_id
+                );
+            }
+
+            let old = trait_map.insert(trait_id.clone(), assoc_tys);
+            if old.is_some() {
+                panic!(
+                    "{}: Bound {} is defined multiple times",
+                    loc_string(&bound.loc),
+                    trait_id
+                );
+            }
+        }
+
+        if context_converted.iter().any(|(var, _)| var == &ty_var.node) {
+            panic!(
+                "{}: Type variable {} is listed multiple times",
+                loc_string(loc),
+                ty_var.node,
+            );
+        }
+
+        context_converted.push((ty_var.node.clone(), trait_map));
+    }
+
+    context_converted
 }
