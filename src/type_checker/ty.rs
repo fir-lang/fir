@@ -546,7 +546,11 @@ impl Ty {
                     .collect(),
             ),
 
-            Ty::QVar(id) => Ty::Var(vars.get(id).cloned().unwrap()),
+            Ty::QVar(id) => Ty::Var(
+                vars.get(id)
+                    .cloned()
+                    .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
+            ),
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.subst_qvars(vars)).collect(),

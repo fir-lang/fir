@@ -14,7 +14,7 @@ use ty::*;
 pub use ty::{Id, TyArgs};
 
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::{Entry, Map, Set};
 use crate::scope_map::ScopeMap;
 
 use smol_str::SmolStr;
@@ -380,7 +380,7 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                let ty_ty_params: Set<Id> = impl_decl
+                let impl_ty_params: Set<Id> = impl_decl
                     .node
                     .context
                     .iter()
@@ -389,7 +389,7 @@ fn collect_schemes(
 
                 let mut self_ty: Ty = convert_ast_ty(
                     ty_cons,
-                    &ty_ty_params,
+                    &impl_ty_params,
                     &impl_decl.node.ty.node,
                     &impl_decl.node.ty.loc,
                 );
@@ -421,7 +421,7 @@ fn collect_schemes(
                     });
                     ty_con_id = ty_con_id_;
 
-                    old_tys = bind_associated_types(impl_decl, &ty_ty_params, ty_cons);
+                    bind_associated_types(impl_decl, &impl_ty_params, ty_cons, &mut old_tys);
 
                     // TODO: Check that the method types match trait methods.
                 }
@@ -435,7 +435,7 @@ fn collect_schemes(
                     let sig = &fun.sig;
                     let scheme = convert_fun_ty(
                         if sig.self_ { Some(&self_ty) } else { None },
-                        &ty_ty_params,
+                        &impl_ty_params,
                         &sig.type_params,
                         &sig.params,
                         &sig.return_ty,
@@ -610,38 +610,22 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &PgmTypes) {
 /// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
 /// checking the methods.
 fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
-    let quantified_tys: Set<Id> = impl_
-        .node
-        .context
-        .iter()
-        .map(|ty| ty.node.0.node.clone())
-        .collect();
-
-    let trait_ty = convert_ast_ty(&tys.cons, &quantified_tys, &impl_.node.ty.node, &impl_.loc);
-    let (ty_con_id, ty_args) = trait_ty.con(&tys.cons).unwrap();
+    // Types shadowed by trait of function type parameters, or by associated types.
+    let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
 
     // Bind trait type parameters.
-    let old_ty_params: Map<Id, Option<TyCon>> = quantified_tys
-        .iter()
-        .map(|ty_param| {
-            (
-                ty_param.clone(),
-                tys.cons.insert(
-                    ty_param.clone(),
-                    TyCon {
-                        id: ty_param.clone(),
-                        ty_params: vec![],
-                        assoc_tys: Default::default(),
-                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
-                    },
-                ),
-            )
-        })
-        .collect();
+    bind_context_types_(&impl_.node.context, &mut tys.cons, &mut old_tys);
+
+    let trait_ty = convert_ast_ty(
+        &tys.cons,
+        &Default::default(),
+        &impl_.node.ty.node,
+        &impl_.loc,
+    );
+    let (ty_con_id, ty_args) = trait_ty.con(&tys.cons).unwrap();
 
     // Bind associated types.
-    let mut old_tys: Map<Id, Option<TyCon>> =
-        bind_associated_types(impl_, &Default::default(), &mut tys.cons);
+    bind_associated_types(impl_, &Default::default(), &mut tys.cons, &mut old_tys);
 
     let ty_con = tys.cons.get(&ty_con_id).unwrap().clone();
 
@@ -661,36 +645,19 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         assert_eq!(ty_con.ty_params.len(), 1); // checked in the previous pass
 
         // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
-        let mut implementing_ty = ty_args.pop().unwrap();
+        let implementing_ty = ty_args.pop().unwrap();
         let trait_ty_param = &ty_con.ty_params[0].0;
 
-        // Substitute opaque types for quantified types in `implementing_ty`.
-        for quantified_ty in &quantified_tys {
-            implementing_ty = implementing_ty.subst(quantified_ty, &Ty::Con(quantified_ty.clone()));
-            let old = tys.cons.insert(
-                quantified_ty.clone(),
-                TyCon {
-                    id: quantified_ty.clone(),
-                    ty_params: vec![],
-                    assoc_tys: Default::default(),
-                    details: TyConDetails::Type(TypeDetails { cons: vec![] }),
-                },
-            );
-            let old = old_tys.insert(quantified_ty.clone(), old);
-            assert!(
-                old.is_none(),
-                "{}: Associated type and type parameter in the same `impl`",
-                loc_string(&impl_.loc)
-            );
-        }
-
         for item in &impl_.node.items {
-            let impl_fun = match &item.node {
+            let fun = match &item.node {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun) => fun,
             };
 
-            let fun_name: &Id = &impl_fun.sig.name.node;
+            // Bind function type parameters.
+            bind_context_types_(&fun.sig.type_params, &mut tys.cons, &mut old_tys);
+
+            let fun_name: &Id = &fun.sig.name.node;
 
             let trait_method = trait_methods.get(fun_name).unwrap_or_else(|| {
                 panic!(
@@ -700,6 +667,22 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     fun_name
                 )
             });
+
+            // TODO: Type comparison below is not right:
+            //
+            // - We should either have QVars on both sides, or replace them with opaque types in
+            //   the trait function type scheme.
+            //
+            // - We should allow using the RHS of associated types in the impl function. For
+            //   example, this should be accepted:
+            //
+            //       trait T[A]:
+            //           type X
+            //           fn f(self): X
+            //
+            //       impl T[C]:
+            //          type X = I32
+            //          fn f(self): I32 = ...
 
             // Type of the method in the trait declaration, with `self` type substituted for the
             // type implementing the trait.
@@ -712,9 +695,9 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             let impl_fun_ty = convert_fun_ty(
                 Some(&implementing_ty),
                 &Default::default(),
-                &impl_fun.sig.type_params,
-                &impl_fun.sig.params,
-                &impl_fun.sig.return_ty,
+                &fun.sig.type_params,
+                &fun.sig.params,
+                &fun.sig.return_ty,
                 &item.loc,
                 &tys.cons,
             );
@@ -732,8 +715,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             }
 
             // Check the body.
-            if let Some(body) = &impl_fun.body {
-                let ret_ty = match &impl_fun.sig.return_ty {
+            if let Some(body) = &fun.body {
+                let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.cons, &Default::default(), &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
                 };
@@ -744,7 +727,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 env.bind(SmolStr::new_static("self"), implementing_ty.clone());
 
-                for (param_name, param_ty) in &impl_fun.sig.params {
+                for (param_name, param_ty) in &fun.sig.params {
                     env.bind(
                         param_name.clone(),
                         convert_ast_ty(&tys.cons, &Default::default(), &param_ty.node, &item.loc),
@@ -772,6 +755,9 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun) => fun,
             };
+
+            // Bind function type parameters.
+            bind_context_types_(&fun.sig.type_params, &mut tys.cons, &mut old_tys);
 
             // Check the body.
             if let Some(body) = &fun.body {
@@ -810,9 +796,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    unbind_associated_types(old_tys, &mut tys.cons);
-
-    for (ty_param, old_ty_con) in old_ty_params {
+    for (ty_param, old_ty_con) in old_tys {
         match old_ty_con {
             Some(ty_con) => {
                 tys.cons.insert(ty_param, ty_con);
@@ -875,9 +859,8 @@ fn bind_associated_types(
     impl_decl: &ast::L<ast::ImplDecl>,
     quantified_tys: &Set<Id>,
     ty_cons: &mut Map<Id, TyCon>,
-) -> Map<Id, Option<TyCon>> {
-    let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
-
+    old_tys: &mut Map<Id, Option<TyCon>>,
+) {
     // TODO: To allow RHSs refer to associated types, bind associated types to
     // placeholder first, then as type synonyms to their RHSs.
     for item in &impl_decl.node.items {
@@ -908,8 +891,6 @@ fn bind_associated_types(
             );
         }
     }
-
-    old_tys
 }
 
 fn unbind_associated_types(old_tys: Map<Id, Option<TyCon>>, ty_cons: &mut Map<Id, TyCon>) {
@@ -920,6 +901,48 @@ fn unbind_associated_types(old_tys: Map<Id, Option<TyCon>>, ty_cons: &mut Map<Id
             }
             None => {
                 ty_cons.remove(&old_ty_id);
+            }
+        }
+    }
+}
+
+/*
+fn bind_context_types(
+    ty_context: &ast::Context,
+    fun_context: &ast::Context,
+    ty_cons: &mut Map<Id, TyCon>,
+) -> Map<Id, Option<TyCon>> {
+    let mut old_tys: Map<Id, Option<TyCon>> = Default::default();
+
+    // fun_context overrides types in ty_context.
+    bind_context_types_(ty_context, ty_cons, &mut old_tys);
+    bind_context_types_(fun_context, ty_cons, &mut old_tys);
+
+    old_tys
+}
+*/
+
+fn bind_context_types_(
+    context: &ast::Context,
+    ty_cons: &mut Map<Id, TyCon>,
+    old_tys: &mut Map<Id, Option<TyCon>>,
+) {
+    for ast::L {
+        node: (ty, _bounds),
+        ..
+    } in context
+    {
+        let con = TyCon {
+            id: ty.node.clone(),
+            ty_params: vec![],
+            assoc_tys: Default::default(),
+            details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+        };
+        let old_ty = ty_cons.insert(ty.node.clone(), con);
+        match old_tys.entry(ty.node.clone()) {
+            Entry::Occupied(_) => {}
+            Entry::Vacant(entry) => {
+                entry.insert(old_ty);
             }
         }
     }
