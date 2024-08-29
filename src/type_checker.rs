@@ -585,8 +585,13 @@ fn collect_schemes(
 
                         // Type of the method in the trait declaration, with `self` type substituted for the
                         // type implementing the trait.
-                        let trait_fun_scheme =
+                        let mut trait_fun_scheme =
                             trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
+
+                        // Also add quantified variables of `impl`.
+                        trait_fun_scheme
+                            .quantified_vars
+                            .splice(0..0, scheme.quantified_vars.iter().cloned());
 
                         if !trait_fun_scheme.eq_modulo_alpha(
                             tys.cons(),
