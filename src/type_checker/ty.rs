@@ -756,3 +756,112 @@ impl PredSet {
         preds
     }
 }
+
+use std::fmt;
+
+impl fmt::Display for Ty {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Ty::Con(id) => write!(f, "{}", id),
+
+            Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
+
+            Ty::App(id, args) => {
+                write!(f, "{}[", id)?;
+                match args {
+                    TyArgs::Positional(tys) => {
+                        for (i, ty) in tys.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{}", ty)?;
+                        }
+                    }
+                    TyArgs::Named(tys) => {
+                        for (i, (name, ty)) in tys.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{} = {}", name, ty)?;
+                        }
+                    }
+                }
+                write!(f, "]")
+            }
+
+            Ty::Record(fields) => {
+                write!(f, "(")?;
+                for (i, (name, ty)) in fields.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}: {}", name, ty)?;
+                }
+                write!(f, ")")
+            }
+
+            Ty::QVar(id) => write!(f, "'{}", id),
+
+            Ty::Fun(args, ret) => {
+                write!(f, "Fn(")?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", arg)?;
+                }
+                write!(f, "): {}", ret)
+            }
+
+            Ty::FunNamedArgs(args, ret) => {
+                write!(f, "Fn(")?;
+                for (i, (name, ty)) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}: {}", name, ty)?;
+                }
+                write!(f, "): {}", ret)
+            }
+
+            Ty::AssocTySelect { ty, assoc_ty } => {
+                write!(f, "{}.{}", ty, assoc_ty)
+            }
+        }
+    }
+}
+
+impl fmt::Display for Scheme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if !self.quantified_vars.is_empty() {
+            write!(f, "[")?;
+            for (i, (var, bounds)) in self.quantified_vars.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                write!(f, "{}", var)?;
+                if !bounds.is_empty() {
+                    write!(f, ": ")?;
+                    for (j, (trait_, assoc_tys)) in bounds.iter().enumerate() {
+                        if j > 0 {
+                            write!(f, " + ")?;
+                        }
+                        write!(f, "{}", trait_)?;
+                        if !assoc_tys.is_empty() {
+                            write!(f, "[")?;
+                            for (k, (assoc_ty, ty)) in assoc_tys.iter().enumerate() {
+                                if k > 0 {
+                                    write!(f, ", ")?;
+                                }
+                                write!(f, "{} = {}", assoc_ty, ty)?;
+                            }
+                            write!(f, "]")?;
+                        }
+                    }
+                }
+            }
+            write!(f, "] ")?;
+        }
+        write!(f, "{}", self.ty)
+    }
+}
