@@ -277,6 +277,7 @@ impl Scheme {
     /// places.
     pub(super) fn eq_modulo_alpha(
         &self,
+        cons: &ScopeMap<Id, TyCon>,
         extra_qvars: &Set<Id>,
         other: &Scheme,
         loc: &ast::Loc,
@@ -301,6 +302,7 @@ impl Scheme {
             .collect();
 
         ty_eq_modulo_alpha(
+            cons,
             extra_qvars,
             &self.ty,
             &other.ty,
@@ -312,6 +314,7 @@ impl Scheme {
 }
 
 fn ty_eq_modulo_alpha(
+    cons: &ScopeMap<Id, TyCon>,
     extra_qvars: &Set<Id>,
     ty1: &Ty,
     ty2: &Ty,
@@ -319,7 +322,7 @@ fn ty_eq_modulo_alpha(
     ty2_qvars: &Map<Id, u32>,
     loc: &ast::Loc,
 ) -> bool {
-    match (ty1, ty2) {
+    match (ty1.normalize(cons), ty2.normalize(cons)) {
         (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
 
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
@@ -333,7 +336,15 @@ fn ty_eq_modulo_alpha(
                 (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
                     args1.len() == args2.len()
                         && args1.iter().zip(args2.iter()).all(|(ty1, ty2)| {
-                            ty_eq_modulo_alpha(extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc)
+                            ty_eq_modulo_alpha(
+                                cons,
+                                extra_qvars,
+                                ty1,
+                                ty2,
+                                ty1_qvars,
+                                ty2_qvars,
+                                loc,
+                            )
                         })
                 }
 
@@ -347,6 +358,7 @@ fn ty_eq_modulo_alpha(
 
                     for name in names1 {
                         if !ty_eq_modulo_alpha(
+                            cons,
                             extra_qvars,
                             args1.get(name).unwrap(),
                             args2.get(name).unwrap(),
@@ -375,6 +387,7 @@ fn ty_eq_modulo_alpha(
 
             for key in keys1 {
                 if !ty_eq_modulo_alpha(
+                    cons,
                     extra_qvars,
                     fields1.get(key).unwrap(),
                     fields2.get(key).unwrap(),
@@ -390,17 +403,17 @@ fn ty_eq_modulo_alpha(
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
-            if qvar1 == qvar2 && extra_qvars.contains(qvar1) {
+            if qvar1 == qvar2 && extra_qvars.contains(&qvar1) {
                 return true;
             }
 
-            let qvar1_idx = ty1_qvars.get(qvar1).unwrap_or_else(|| {
+            let qvar1_idx = ty1_qvars.get(&qvar1).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_string(loc), qvar1, ty1_qvars, extra_qvars
                 )
             });
-            let qvar2_idx = ty2_qvars.get(qvar2).unwrap_or_else(|| {
+            let qvar2_idx = ty2_qvars.get(&qvar2).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_string(loc), qvar2, ty2_qvars, extra_qvars
@@ -415,12 +428,12 @@ fn ty_eq_modulo_alpha(
             }
 
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                if !ty_eq_modulo_alpha(extra_qvars, arg1, arg2, ty1_qvars, ty2_qvars, loc) {
+                if !ty_eq_modulo_alpha(cons, extra_qvars, arg1, arg2, ty1_qvars, ty2_qvars, loc) {
                     return false;
                 }
             }
 
-            ty_eq_modulo_alpha(extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         (Ty::FunNamedArgs(args1, ret1), Ty::FunNamedArgs(args2, ret2)) => {
@@ -434,12 +447,12 @@ fn ty_eq_modulo_alpha(
             for name in names1 {
                 let ty1 = args1.get(name).unwrap();
                 let ty2 = args2.get(name).unwrap();
-                if !ty_eq_modulo_alpha(extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc) {
+                if !ty_eq_modulo_alpha(cons, extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc) {
                     return false;
                 }
             }
 
-            ty_eq_modulo_alpha(extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         _ => false,

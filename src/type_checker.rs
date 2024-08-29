@@ -589,6 +589,7 @@ fn collect_schemes(
                             trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
 
                         if !trait_fun_scheme.eq_modulo_alpha(
+                            tys.cons(),
                             &Default::default(),
                             &scheme,
                             &item.loc,
