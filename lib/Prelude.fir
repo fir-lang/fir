@@ -50,7 +50,7 @@ trait ToStrView[T]:
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
-prim type Void
+type Void
 
 prim type Str
 

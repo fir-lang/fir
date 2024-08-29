@@ -15,4 +15,3 @@ impl T[A]:
         ()
 
 # args: --typecheck --no-prelude
-# expected stdout:

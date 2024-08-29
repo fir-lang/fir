@@ -21,4 +21,3 @@ impl Test[B]:
         123
 
 # args: --typecheck --no-prelude
-# expected stdout:

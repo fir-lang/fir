@@ -119,7 +119,7 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> "prim" "type" <type_name:UpperId> <type_params:TypeParams> NEWLINE <r:@R> =>
+    <l:@L> "prim"? "type" <type_name:UpperId> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,

@@ -7,4 +7,3 @@ fn test(): T[I32] =
     T(field = 123)
 
 # args: --typecheck --no-prelude
-# expected stdout:

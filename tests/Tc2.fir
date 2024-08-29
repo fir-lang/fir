@@ -11,4 +11,3 @@ impl T[A]:
         self.i
 
 # args: --typecheck --no-prelude
-# expected stdout:
