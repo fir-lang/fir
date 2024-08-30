@@ -1054,6 +1054,13 @@ fn assign<W: Write>(
                 let new_val = call_method(w, pgm, heap, *old_val, &"__sub".into(), vec![val], loc);
                 locals.insert(var.clone(), new_val);
             }
+            ast::AssignOp::StarEq => {
+                let old_val = locals.get(var).unwrap_or_else(|| {
+                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                });
+                let new_val = call_method(w, pgm, heap, *old_val, &"__mul".into(), vec![val], loc);
+                locals.insert(var.clone(), new_val);
+            }
         },
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, object));
@@ -1070,6 +1077,10 @@ fn assign<W: Write>(
                 ast::AssignOp::MinusEq => {
                     let field_value = heap[object + 1 + field_idx];
                     call_method(w, pgm, heap, field_value, &"__sub".into(), vec![val], loc)
+                }
+                ast::AssignOp::StarEq => {
+                    let field_value = heap[object + 1 + field_idx];
+                    call_method(w, pgm, heap, field_value, &"__mul".into(), vec![val], loc)
                 }
             };
             heap[object + 1 + field_idx] = new_val;

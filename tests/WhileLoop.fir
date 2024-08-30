@@ -1,7 +1,7 @@
 fn fac(n: I32): I32 =
     let ret = 1
     while n != 0:
-        ret = ret * n
+        ret *= n
         n -= 1
     ret
 

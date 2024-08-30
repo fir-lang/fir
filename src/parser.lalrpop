@@ -38,6 +38,7 @@ extern {
         "*" => Token { kind: TokenKind::Star, .. },
         "+=" => Token { kind: TokenKind::PlusEq, .. },
         "-=" => Token { kind: TokenKind::MinusEq, .. },
+        "*=" => Token { kind: TokenKind::StarEq, .. },
         "!" => Token { kind: TokenKind::Exclamation, .. },
         "!=" => Token { kind: TokenKind::ExclamationEq, .. },
         "&&" => Token { kind: TokenKind::AmpAmp, .. },
@@ -346,6 +347,7 @@ AssignOp: AssignOp = {
     "=" => AssignOp::Eq,
     "+=" => AssignOp::PlusEq,
     "-=" => AssignOp::MinusEq,
+    "*=" => AssignOp::StarEq,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

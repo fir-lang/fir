@@ -102,6 +102,8 @@ fn check_stmt(
                         ast::AssignOp::PlusEq => "__add",
 
                         ast::AssignOp::MinusEq => "__sub",
+
+                        ast::AssignOp::StarEq => "__mul",
                     };
 
                     // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
@@ -198,6 +200,8 @@ fn check_stmt(
                         ast::AssignOp::PlusEq => "__add",
 
                         ast::AssignOp::MinusEq => "__sub",
+
+                        ast::AssignOp::StarEq => "__mul",
                     };
 
                     // `lhs.__add(rhs)` or `lhs.__sub(rhs)`

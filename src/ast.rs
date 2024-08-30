@@ -295,6 +295,7 @@ pub enum AssignOp {
     Eq,
     PlusEq,
     MinusEq,
+    StarEq,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
