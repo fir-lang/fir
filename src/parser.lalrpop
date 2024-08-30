@@ -237,6 +237,17 @@ FunDecl: L<FunDecl> = {
             sig,
             body: None,
         }),
+
+    <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+        let L { loc, node } = rhs;
+        L::new(module, l, r, FunDecl {
+            sig,
+            body: Some(L {
+                loc: loc.clone(),
+                node:  vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }],
+            })
+        })
+    },
 }
 
 LFunSig: L<FunSig> = {
