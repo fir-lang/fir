@@ -1040,8 +1040,20 @@ fn assign<W: Write>(
                 let old = locals.insert(var.clone(), val);
                 assert!(old.is_some());
             }
-            ast::AssignOp::PlusEq => todo!(),
-            ast::AssignOp::MinusEq => todo!(),
+            ast::AssignOp::PlusEq => {
+                let old_val = locals.get(var).unwrap_or_else(|| {
+                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                });
+                let new_val = call_method(w, pgm, heap, *old_val, &"__add".into(), vec![val], loc);
+                locals.insert(var.clone(), new_val);
+            }
+            ast::AssignOp::MinusEq => {
+                let old_val = locals.get(var).unwrap_or_else(|| {
+                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                });
+                let new_val = call_method(w, pgm, heap, *old_val, &"__sub".into(), vec![val], loc);
+                locals.insert(var.clone(), new_val);
+            }
         },
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, object));
