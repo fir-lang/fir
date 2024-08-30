@@ -1,5 +1,6 @@
 #![allow(clippy::mutable_key_type)]
 
+mod apply;
 mod convert;
 mod expr;
 mod pat;
@@ -128,16 +129,16 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let details = match &ty_decl.node.rhs {
                     Some(rhs) => match rhs {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
-                            let cons: Vec<Id> = sum_cons
-                                .iter()
-                                .map(|ast::ConstructorDecl { name, fields: _ }| name.clone())
-                                .collect();
-
+                            let cons: Vec<ConShape> =
+                                sum_cons.iter().map(ConShape::from_ast).collect();
                             TyConDetails::Type(TypeDetails { cons })
                         }
 
-                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
-                            cons: vec![ty_decl.node.name.clone()],
+                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type(TypeDetails {
+                            cons: vec![ConShape {
+                                name: None,
+                                fields: ConFieldShape::from_ast(fields),
+                            }],
                         }),
                     },
 

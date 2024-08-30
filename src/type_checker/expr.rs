@@ -604,7 +604,7 @@ pub(super) fn select_field(
     match &ty_con.details {
         TyConDetails::Type(TypeDetails { cons }) => match cons.len() {
             1 => {
-                let con_name = &cons[0];
+                let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
                 let con_scheme = tys.top_schemes.get(con_name)?;
                 let con_ty = con_scheme.instantiate_with_tys(ty_args);
 

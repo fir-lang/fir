@@ -172,7 +172,19 @@ pub(super) struct TraitMethod {
 #[derive(Debug, Clone)]
 pub(super) struct TypeDetails {
     /// Value constructors of the type.
-    pub(super) cons: Vec<Id>,
+    pub(super) cons: Vec<ConShape>,
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct ConShape {
+    pub(super) name: Option<Id>,
+    pub(super) fields: ConFieldShape,
+}
+
+#[derive(Debug, Clone)]
+pub(super) enum ConFieldShape {
+    Unnamed(u32),
+    Named(Set<Id>),
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
@@ -180,7 +192,7 @@ pub(super) struct TypeDetails {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(super) enum ConFields {
     Unnamed(Vec<Ty>),
-    Named(Map<SmolStr, Ty>),
+    Named(Map<Id, Ty>),
 }
 
 /// A predicate, e.g. `I: Iterator[Item = A]`.
@@ -754,6 +766,28 @@ impl PredSet {
             }
         }
         preds
+    }
+}
+
+impl ConShape {
+    pub(super) fn from_ast(con: &ast::ConstructorDecl) -> ConShape {
+        let ast::ConstructorDecl { name, fields } = con;
+        ConShape {
+            name: Some(name.clone()),
+            fields: ConFieldShape::from_ast(fields),
+        }
+    }
+}
+
+impl ConFieldShape {
+    pub(super) fn from_ast(fields: &ast::ConstructorFields) -> ConFieldShape {
+        match fields {
+            ast::ConstructorFields::Empty => ConFieldShape::Unnamed(0),
+            ast::ConstructorFields::Unnamed(fields) => ConFieldShape::Unnamed(fields.len() as u32),
+            ast::ConstructorFields::Named(fields) => {
+                ConFieldShape::Named(fields.iter().map(|(k, _)| k.clone()).collect())
+            }
+        }
     }
 }
 

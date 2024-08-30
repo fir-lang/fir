@@ -130,10 +130,19 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
         }
 
         (ty1, ty2) => panic!(
-            "Unable to unify types {:?} and {:?} at {}",
+            "Unable to unify types
+             {} and
+             {} at
+             {}
+             (
+                {:?}
+                {:?}
+             )",
             ty1,
             ty2,
-            loc_string(loc)
+            loc_string(loc),
+            ty1,
+            ty2,
         ),
     }
 }
