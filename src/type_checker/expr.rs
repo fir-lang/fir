@@ -180,10 +180,6 @@ pub(super) fn check_expr(
                         arg_tys.push(arg_ty);
                     }
 
-                    for (param_ty, arg_ty) in param_tys.iter().zip(arg_tys.iter()) {
-                        unify(param_ty, arg_ty, tys.tys.cons(), &expr.loc);
-                    }
-
                     unify_expected_ty(*ret_ty, expected_ty, tys.tys.cons(), &expr.loc)
                 }
 
