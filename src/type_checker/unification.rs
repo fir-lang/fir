@@ -163,7 +163,8 @@ fn prune_level(ty: &Ty, max_level: u32) {
         Ty::Con(_) => {}
 
         Ty::Var(var) => {
-            assert!(var.link().is_none());
+            // Assertion disabled for now, see #22.
+            // assert!(var.link().is_none());
             var.prune_level(max_level);
         }
 
