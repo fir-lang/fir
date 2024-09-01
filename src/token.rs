@@ -66,6 +66,7 @@ pub enum TokenKind {
     MinusEq,
     StarEq,
     DotDot,
+    DotDotEq,
     Plus,
     Minus,
     Star,

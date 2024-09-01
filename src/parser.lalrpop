@@ -31,6 +31,7 @@ extern {
         "." => Token { kind: TokenKind::Dot, .. },
         "=" => Token { kind: TokenKind::Eq, .. },
         ".." => Token { kind: TokenKind::DotDot, .. },
+        "..=" => Token { kind: TokenKind::DotDotEq, .. },
         "_" => Token { kind: TokenKind::Underscore, .. },
         "==" => Token { kind: TokenKind::EqEq, .. },
         "+" => Token { kind: TokenKind::Plus, .. },
@@ -454,15 +455,6 @@ InlineExpr: Expr = {
         }
     },
 
-    #[precedence(level = "1")]
-    #[assoc(side = "left")]
-    <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
-        Expr::Range(RangeExpr {
-            from: Box::new(L::new(module, l1, r1, from)),
-            to: Box::new(L::new(module, l2, r2, to)),
-            inclusive: false,
-        }),
-
     #[precedence(level = "2")]
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
@@ -555,6 +547,22 @@ InlineExpr: Expr = {
         }),
 
     #[precedence(level = "8")]
+    #[assoc(side = "left")]
+    <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
+        Expr::Range(RangeExpr {
+            from: Box::new(L::new(module, l1, r1, from)),
+            to: Box::new(L::new(module, l2, r2, to)),
+            inclusive: false,
+        }),
+
+    <l1:@L> <from:InlineExpr> <r1:@R> "..=" <l2:@L> <to:InlineExpr> <r2:@R> =>
+        Expr::Range(RangeExpr {
+            from: Box::new(L::new(module, l1, r1, from)),
+            to: Box::new(L::new(module, l2, r2, to)),
+            inclusive: true,
+        }),
+
+    #[precedence(level = "9")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }

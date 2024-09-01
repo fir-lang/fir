@@ -251,7 +251,70 @@ fn check_stmt(
             preds,
         ),
 
-        ast::Stmt::For(_) => todo!(),
+        ast::Stmt::For(ast::ForStmt {
+            var,
+            ty,
+            expr,
+            body,
+        }) => {
+            let ty = ty
+                .as_ref()
+                .map(|ty| convert_ast_ty(&tys.tys, ty, &stmt.loc));
+
+            // Special case range expression. For now range expressions are only allowed in `for`
+            // loops, and the types of expression in the range start and end need to resolve to a
+            // type we know how to increment and compare (e.g. `I32` and other number types).
+            let item_ty: Ty = match &expr.node {
+                ast::Expr::Range(ast::RangeExpr {
+                    from,
+                    to,
+                    inclusive: _,
+                }) => {
+                    let from_ty = check_expr(
+                        from,
+                        ty.as_ref(),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        tys,
+                        preds,
+                    );
+
+                    let to_ty = check_expr(
+                        to,
+                        Some(&from_ty),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        tys,
+                        preds,
+                    );
+
+                    let to_ty = to_ty.normalize(tys.tys.cons());
+
+                    let known_ty = match &to_ty {
+                        Ty::Con(con) => con.as_ref() == "I32",
+                        _ => false,
+                    };
+
+                    if !known_ty {
+                        panic!("{}: Don't know how to iterate type {}", loc_string(&expr.loc), &to_ty);
+                    }
+
+                    to_ty
+                }
+
+                _ => panic!("{}: For now `for` loops can only have range expressions in the iterator position", loc_string(&expr.loc)),
+            };
+
+            env.enter();
+            env.insert(var.clone(), item_ty);
+            check_stmts(body, None, return_ty, level, env, var_gen, tys, preds);
+            env.exit();
+            unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &stmt.loc)
+        }
 
         ast::Stmt::While(ast::WhileStmt { cond, body }) => {
             check_expr(

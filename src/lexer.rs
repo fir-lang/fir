@@ -54,6 +54,7 @@ lexgen::lexer! {
         ":" = TokenKind::Colon,
         "\\" = TokenKind::Backslash,
         ".." = TokenKind::DotDot,
+        "..=" = TokenKind::DotDotEq,
         "_" = TokenKind::Underscore,
 
         // Operators

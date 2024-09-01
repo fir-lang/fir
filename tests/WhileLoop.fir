@@ -6,9 +6,11 @@ fn fac(n: I32): I32 =
     ret
 
 fn main(input: Str) =
+    printStr(fac(0).toStr())
     printStr(fac(5).toStr())
     printStr(fac(10).toStr())
 
 # expected stdout:
+# 1
 # 120
 # 3628800

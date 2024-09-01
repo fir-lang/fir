@@ -242,7 +242,12 @@ pub(super) fn check_expr(
             }
         }
 
-        ast::Expr::Range(_) => todo!(),
+        ast::Expr::Range(ast::RangeExpr { .. }) => {
+            panic!(
+                "{}: Range expressions are currently only allowed in `for` loops",
+                loc_string(&expr.loc)
+            );
+        }
 
         ast::Expr::Int(_) => unify_expected_ty(
             Ty::Con(SmolStr::new_static("I32")),
