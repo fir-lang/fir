@@ -713,6 +713,13 @@ impl TyCon {
     pub fn is_trait(&self) -> bool {
         matches!(self.details, TyConDetails::Trait { .. })
     }
+
+    pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
+        match &self.details {
+            TyConDetails::Trait(details) => Some(details),
+            _ => None,
+        }
+    }
 }
 
 impl TyConDetails {

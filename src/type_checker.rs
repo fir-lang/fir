@@ -1,4 +1,4 @@
-#![allow(clippy::mutable_key_type)]
+#![allow(clippy::mutable_key_type, clippy::for_kv_map)]
 
 mod apply;
 mod convert;
@@ -738,9 +738,33 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    for (var, _bounds) in &scheme.quantified_vars {
+    let mut old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
+
+    for (var, bounds) in &scheme.quantified_vars {
         tys.tys.insert_var(var.clone(), Ty::Con(var.clone()));
         tys.tys.insert_con(var.clone(), TyCon::opaque(var.clone()));
+
+        // Bind trait methods to the ty con.
+        old_assoc_schemes.insert(var.clone(), tys.associated_schemes.remove(var));
+
+        for (trait_, _assoc_tys) in bounds {
+            // It should be checked when converting the bounds that the ty cons are bound and
+            // traits.
+            let trait_ty_con = tys.tys.get_con(trait_).unwrap();
+            let trait_details = trait_ty_con.trait_details().unwrap();
+            for (method_id, method) in &trait_details.methods {
+                assert_eq!(trait_ty_con.ty_params.len(), 1);
+                let trait_ty_param = &trait_ty_con.ty_params[0];
+                let method_scheme =
+                    method
+                        .scheme
+                        .subst(&trait_ty_param.0, &Ty::Con(var.clone()), &fun.loc);
+                tys.associated_schemes
+                    .entry(var.clone())
+                    .or_default()
+                    .insert(method_id.clone(), method_scheme);
+            }
+        }
     }
 
     for (param_name, param_ty) in &fun.node.sig.params {
@@ -769,6 +793,8 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
             &mut preds,
         );
     }
+
+    unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
 
     tys.tys.exit_scope();
 
@@ -831,12 +857,14 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            convert_and_bind_context(
+            let bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
                 TyVarConversion::ToOpaque,
                 &impl_.loc,
             );
+
+            let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &fun.body {
@@ -873,6 +901,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 resolve_preds(&Default::default(), tys, &preds);
             }
 
+            unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
+
             tys.tys.exit_scope();
         }
     } else {
@@ -886,12 +916,14 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            convert_and_bind_context(
+            let bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
                 TyVarConversion::ToOpaque,
                 &item.loc,
             );
+
+            let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &fun.body {
@@ -927,6 +959,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 // TODO: Context
                 resolve_preds(&Default::default(), tys, &preds);
             }
+
+            unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
 
             tys.tys.exit_scope();
             assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
@@ -1005,6 +1039,55 @@ fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {
                 details: TyConDetails::Synonym(ty_converted),
             },
         );
+    }
+}
+
+fn bind_type_params(
+    params: &[(Id, Map<Id, Map<Id, Ty>>)],
+    tys: &mut PgmTypes,
+    loc: &ast::Loc,
+) -> Map<SmolStr, Option<Map<SmolStr, Scheme>>> {
+    let mut old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
+
+    for (var, bounds) in params {
+        old_assoc_schemes.insert(var.clone(), tys.associated_schemes.remove(var));
+
+        for (trait_, _assoc_tys) in bounds {
+            // It should be checked when converting the bounds that the ty cons are bound and
+            // traits.
+            let trait_ty_con = tys.tys.get_con(trait_).unwrap();
+            let trait_details = trait_ty_con.trait_details().unwrap();
+            for (method_id, method) in &trait_details.methods {
+                assert_eq!(trait_ty_con.ty_params.len(), 1);
+                let trait_ty_param = &trait_ty_con.ty_params[0];
+                let method_scheme =
+                    method
+                        .scheme
+                        .subst(&trait_ty_param.0, &Ty::Con(var.clone()), loc);
+                tys.associated_schemes
+                    .entry(var.clone())
+                    .or_default()
+                    .insert(method_id.clone(), method_scheme);
+            }
+        }
+    }
+
+    old_assoc_schemes
+}
+
+fn unbind_type_params(
+    old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>>,
+    assoc_schemes: &mut Map<Id, Map<Id, Scheme>>,
+) {
+    for (old_ty_con, old_assoc_schemes) in old_assoc_schemes {
+        match old_assoc_schemes {
+            Some(scheme) => {
+                assoc_schemes.insert(old_ty_con, scheme);
+            }
+            None => {
+                assoc_schemes.remove(&old_ty_con);
+            }
+        }
     }
 }
 
