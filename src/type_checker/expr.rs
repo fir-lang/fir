@@ -440,16 +440,19 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Return(expr) => check_expr(
-            expr,
-            Some(return_ty),
-            return_ty,
-            level,
-            env,
-            var_gen,
-            tys,
-            preds,
-        ),
+        ast::Expr::Return(expr) => {
+            check_expr(
+                expr,
+                Some(return_ty),
+                return_ty,
+                level,
+                env,
+                var_gen,
+                tys,
+                preds,
+            );
+            expected_ty.cloned().unwrap_or_else(Ty::unit)
+        }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             let scrut_ty = check_expr(scrutinee, None, return_ty, level, env, var_gen, tys, preds);
