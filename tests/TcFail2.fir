@@ -1,0 +1,13 @@
+prim type Str
+prim type I32
+
+type Bool:
+    False
+    True
+
+fn toStr(self): Str =
+    Bool.False
+
+# args: --typecheck --no-prelude --no-backtrace
+# expected exit status: 101
+# expected stderr: Unable to unify types Bool and Str at tests/TcFail2.fir:9:5

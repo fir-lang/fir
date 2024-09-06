@@ -39,7 +39,8 @@ pub(super) fn check_expr(
             let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
                 panic!("{}: Unknown constructor {}", loc_string(&expr.loc), con)
             });
-            scheme.instantiate(level, var_gen, preds, &expr.loc)
+            let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
+            unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
@@ -138,7 +139,8 @@ pub(super) fn check_expr(
                         constr
                     )
                 });
-            scheme.instantiate(level, var_gen, preds, &expr.loc)
+            let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
+            unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -367,7 +369,7 @@ pub(super) fn check_expr(
 
         ast::Expr::Record(fields) => {
             if fields.is_empty() {
-                return Ty::unit();
+                return unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &expr.loc);
             }
 
             // TODO: For now only supporting named fields.
@@ -430,7 +432,12 @@ pub(super) fn check_expr(
                 record_ty.insert(field_name.clone(), field_ty);
             }
 
-            Ty::Record(record_ty)
+            unify_expected_ty(
+                Ty::Record(record_ty),
+                expected_ty,
+                tys.tys.cons(),
+                &expr.loc,
+            )
         }
 
         ast::Expr::Return(expr) => check_expr(
@@ -480,7 +487,12 @@ pub(super) fn check_expr(
                 unify(&rhs_tys[0], &rhs_tys[1], tys.tys.cons(), &expr.loc);
             }
 
-            rhs_tys.pop().unwrap()
+            unify_expected_ty(
+                rhs_tys.pop().unwrap(),
+                expected_ty,
+                tys.tys.cons(),
+                &expr.loc,
+            )
         }
 
         ast::Expr::If(ast::IfExpr {
