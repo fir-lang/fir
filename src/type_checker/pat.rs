@@ -70,7 +70,7 @@ pub(super) fn check_pat(
                                                 for pat_field in pat_fields {
                                                     match &pat_field.name {
                                                         Some(pat_field_name) => {
-                                                            if names.contains(pat_field_name) {
+                                                            if !names.contains(pat_field_name) {
                                                                 panic!("{}: Constructor {} does not have named field {}", loc_string(&pat.loc), con_name, pat_field_name);
                                                             }
                                                             if !pat_field_names
