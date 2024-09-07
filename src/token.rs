@@ -81,11 +81,19 @@ pub enum TokenKind {
 
     // Literals
     String,
-    Int,
+    Int(IntKind),
     Char,
 
     // Virtual tokens, used to handle layout. Generatd by the scanner.
     Indent,
     Dedent,
     Newline,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntKind {
+    I8,
+    U8,
+    I32,
+    U32,
 }

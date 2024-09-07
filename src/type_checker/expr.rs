@@ -251,12 +251,20 @@ pub(super) fn check_expr(
             );
         }
 
-        ast::Expr::Int(_) => unify_expected_ty(
-            Ty::Con(SmolStr::new_static("I32")),
-            expected_ty,
-            tys.tys.cons(),
-            &expr.loc,
-        ),
+        ast::Expr::Int(int_expr) => {
+            let con = match int_expr {
+                ast::IntExpr::I8(_) => "I8",
+                ast::IntExpr::U8(_) => "U8",
+                ast::IntExpr::I32(_) => "I32",
+                ast::IntExpr::U32(_) => "U32",
+            };
+            unify_expected_ty(
+                Ty::Con(SmolStr::new_static(con)),
+                expected_ty,
+                tys.tys.cons(),
+                &expr.loc,
+            )
+        }
 
         ast::Expr::String(parts) => {
             for part in parts {

@@ -334,7 +334,7 @@ pub enum Expr {
     /// A range expression: `x .. y`.
     Range(RangeExpr),
 
-    Int(i32),
+    Int(IntExpr),
 
     String(Vec<StringPart>),
 
@@ -405,6 +405,14 @@ pub struct UnOpExpr {
 pub struct ArrayIndexExpr {
     pub array: Box<L<Expr>>,
     pub index: Box<L<Expr>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IntExpr {
+    I8(i8),
+    U8(u8),
+    I32(i32),
+    U32(u32),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -84,7 +84,14 @@ lexgen::lexer! {
             lexer.switch(LexerRule::String)
         },
 
-        ['0'-'9']+ = TokenKind::Int,
+        let int = ['0'-'9']+;
+
+        // TODO: We should probably leave defaulting to the type checker.
+        $int+ = TokenKind::Int(IntKind::I32),
+        $int+ "i32" = TokenKind::Int(IntKind::I32),
+        $int+ "u32" = TokenKind::Int(IntKind::U32),
+        $int+ "i8" = TokenKind::Int(IntKind::I8),
+        $int+ "u8" = TokenKind::Int(IntKind::U8),
 
         "'" (_ # '\'') "'" = TokenKind::Char,
     }

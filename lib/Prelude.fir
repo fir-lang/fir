@@ -1,3 +1,5 @@
+import Num
+
 # The `+` operator.
 trait Add[T]:
     fn __add(self, other: T): T
@@ -79,33 +81,6 @@ impl StrView:
     prim fn len(self): I32
     prim fn startsWith(self, str: Str): Bool    # TODO: Argument should be StrView
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
-    prim fn toStr(self): Str
-
-prim type I32
-
-impl ToStrView[I32]:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()
-
-impl Add[I32]:
-    prim fn __add(self, other: I32): I32
-
-impl Sub[I32]:
-    prim fn __sub(self, other: I32): I32
-
-impl Mul[I32]:
-    prim fn __mul(self, other: I32): I32
-
-impl Div[I32]:
-    prim fn __div(self, other: I32): I32
-
-impl Eq[I32]:
-    prim fn __eq(self, other: I32): Bool
-
-impl Ord[I32]:
-    prim fn cmp(self, other: I32): Ordering
-
-impl I32:
     prim fn toStr(self): Str
 
 prim type Array[T]

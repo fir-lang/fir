@@ -109,6 +109,9 @@ struct Pgm {
     str_ty_tag: u64,
     str_view_ty_tag: u64,
     i32_ty_tag: u64,
+    u32_ty_tag: u64,
+    i8_ty_tag: u64,
+    u8_ty_tag: u64,
     array_ty_tag: u64,
 }
 
@@ -365,6 +368,9 @@ impl Pgm {
         let str_ty_tag = ty_cons.get("Str").as_ref().unwrap().type_tag;
         let str_view_ty_tag = ty_cons.get("StrView").as_ref().unwrap().type_tag;
         let i32_ty_tag = ty_cons.get("I32").as_ref().unwrap().type_tag;
+        let u32_ty_tag = ty_cons.get("U32").as_ref().unwrap().type_tag;
+        let i8_ty_tag = ty_cons.get("I8").as_ref().unwrap().type_tag;
+        let u8_ty_tag = ty_cons.get("U8").as_ref().unwrap().type_tag;
         let array_ty_tag = ty_cons.get("Array").as_ref().unwrap().type_tag;
 
         Pgm {
@@ -380,6 +386,9 @@ impl Pgm {
             str_ty_tag,
             str_view_ty_tag,
             i32_ty_tag,
+            u32_ty_tag,
+            i8_ty_tag,
+            u8_ty_tag,
             array_ty_tag,
         }
     }
@@ -839,7 +848,12 @@ fn eval<W: Write>(
             }
         }
 
-        ast::Expr::Int(i) => ControlFlow::Val(heap.allocate_i32(pgm.i32_ty_tag, *i)),
+        ast::Expr::Int(i) => match i {
+            ast::IntExpr::I8(val) => ControlFlow::Val(heap.allocate_i8(pgm.i8_ty_tag, *val)),
+            ast::IntExpr::U8(val) => ControlFlow::Val(heap.allocate_u8(pgm.u8_ty_tag, *val)),
+            ast::IntExpr::I32(val) => ControlFlow::Val(heap.allocate_i32(pgm.i32_ty_tag, *val)),
+            ast::IntExpr::U32(val) => ControlFlow::Val(heap.allocate_u32(pgm.u32_ty_tag, *val)),
+        },
 
         ast::Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];

@@ -2,7 +2,7 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::token::{TokenKind, Token};
+use crate::token::*;
 use crate::interpolation::parse_string_parts;
 
 use std::convert::Infallible;
@@ -68,7 +68,7 @@ extern {
         "prim" => Token { kind: TokenKind::Prim, .. },
         "trait" => Token { kind: TokenKind::Trait, .. },
         "impl" => Token { kind: TokenKind::Impl, .. },
-        IntLit => Token { kind: TokenKind::Int, .. },
+        IntLit => Token { kind: TokenKind::Int { .. }, .. },
         StringLit => Token { kind: TokenKind::String, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
     }
@@ -415,8 +415,20 @@ InlineExpr: Expr = {
         }
     },
 
-    <int:IntLit> =>
-        Expr::Int(i32::from_str_radix(&int.text, 10).unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text))),
+    <int:IntLit> => {
+        let kind = match int.kind {
+            TokenKind::Int(int_kind) => int_kind,
+            _ => unreachable!(),
+        };
+        let str = &int.text;
+        let int = match kind {
+            IntKind::I8 => IntExpr::I8(i8::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", str, err))),
+            IntKind::U8 => IntExpr::U8(u8::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", str, err))),
+            IntKind::I32 => IntExpr::I32(i32::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", str, err))),
+            IntKind::U32 => IntExpr::U32(u32::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", str, err))),
+        };
+        Expr::Int(int)
+    },
 
     <l:@L> <string:StringLit> => {
         let l = Loc { line: l.line, col: l.col + 1, byte_idx: l.byte_idx + 1 };

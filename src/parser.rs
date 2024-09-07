@@ -1,10 +1,10 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 1a5c002e9fd9a99aac593c34304d7e03a416070a1e428bb91a502969531482e8
+// sha3: b10ce7f8e5c3e9966f52f9b14bd612435065d23f85abff16969e1a987c4fc453
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
-use crate::token::{Token, TokenKind};
+use crate::token::*;
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
 use std::convert::Infallible;
@@ -21,7 +21,7 @@ extern crate alloc;
 mod __parse__LExpr {
 
     use crate::ast::*;
-    use crate::token::{TokenKind, Token};
+    use crate::token::*;
     use crate::interpolation::parse_string_parts;
     use std::convert::Infallible;
     use std::rc::Rc;
@@ -1443,7 +1443,7 @@ mod __parse__LExpr {
             Token { kind: TokenKind::Prim, .. } if true => Some(47),
             Token { kind: TokenKind::Trait, .. } if true => Some(48),
             Token { kind: TokenKind::Impl, .. } if true => Some(49),
-            Token { kind: TokenKind::Int, .. } if true => Some(50),
+            Token { kind: TokenKind::Int { .. }, .. } if true => Some(50),
             Token { kind: TokenKind::String, .. } if true => Some(51),
             Token { kind: TokenKind::Char, .. } if true => Some(52),
             _ => None,
@@ -10950,7 +10950,7 @@ pub use self::__parse__LExpr::LExprParser;
 mod __parse__LStmt {
 
     use crate::ast::*;
-    use crate::token::{TokenKind, Token};
+    use crate::token::*;
     use crate::interpolation::parse_string_parts;
     use std::convert::Infallible;
     use std::rc::Rc;
@@ -12372,7 +12372,7 @@ mod __parse__LStmt {
             Token { kind: TokenKind::Prim, .. } if true => Some(47),
             Token { kind: TokenKind::Trait, .. } if true => Some(48),
             Token { kind: TokenKind::Impl, .. } if true => Some(49),
-            Token { kind: TokenKind::Int, .. } if true => Some(50),
+            Token { kind: TokenKind::Int { .. }, .. } if true => Some(50),
             Token { kind: TokenKind::String, .. } if true => Some(51),
             Token { kind: TokenKind::Char, .. } if true => Some(52),
             _ => None,
@@ -21879,7 +21879,7 @@ pub use self::__parse__LStmt::LStmtParser;
 mod __parse__TopDecls {
 
     use crate::ast::*;
-    use crate::token::{TokenKind, Token};
+    use crate::token::*;
     use crate::interpolation::parse_string_parts;
     use std::convert::Infallible;
     use std::rc::Rc;
@@ -24107,7 +24107,7 @@ mod __parse__TopDecls {
             Token { kind: TokenKind::Prim, .. } if true => Some(47),
             Token { kind: TokenKind::Trait, .. } if true => Some(48),
             Token { kind: TokenKind::Impl, .. } if true => Some(49),
-            Token { kind: TokenKind::Int, .. } if true => Some(50),
+            Token { kind: TokenKind::Int { .. }, .. } if true => Some(50),
             Token { kind: TokenKind::String, .. } if true => Some(51),
             Token { kind: TokenKind::Char, .. } if true => Some(52),
             _ => None,
@@ -34598,10 +34598,32 @@ fn __action58<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action59<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
-    Expr::Int(
-        i32::from_str_radix(&int.text, 10)
-            .unwrap_or_else(|_| panic!("Can't parse I32: {}", int.text)),
-    )
+    {
+        let kind = match int.kind {
+            TokenKind::Int(int_kind) => int_kind,
+            _ => unreachable!(),
+        };
+        let str = &int.text;
+        let int = match kind {
+            IntKind::I8 => IntExpr::I8(
+                i8::from_str_radix(str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", str, err)),
+            ),
+            IntKind::U8 => IntExpr::U8(
+                u8::from_str_radix(str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", str, err)),
+            ),
+            IntKind::I32 => IntExpr::I32(
+                i32::from_str_radix(str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", str, err)),
+            ),
+            IntKind::U32 => IntExpr::U32(
+                u32::from_str_radix(str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", str, err)),
+            ),
+        };
+        Expr::Int(int)
+    }
 }
 
 #[allow(unused_variables)]

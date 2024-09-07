@@ -18,12 +18,39 @@ pub enum BuiltinFun {
     ArrayLen,
     ArrayNew,
     ArraySet,
+
+    // I32
     I32Add,
     I32Cmp,
     I32Eq,
     I32Mul,
     I32Sub,
     I32ToStr,
+
+    // U32
+    U32Add,
+    U32Cmp,
+    U32Eq,
+    U32Mul,
+    U32Sub,
+    U32ToStr,
+
+    // I8
+    I8Add,
+    I8Cmp,
+    I8Eq,
+    I8Mul,
+    I8Sub,
+    I8ToStr,
+
+    // U8
+    U8Add,
+    U8Cmp,
+    U8Eq,
+    U8Mul,
+    U8Sub,
+    U8ToStr,
+
     StrEq,
     StrLen,
     StrSubstr,
@@ -329,6 +356,285 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(heap[obj], pgm.i32_ty_tag);
             let i = heap[obj + 1];
             heap.allocate_str(pgm.str_ty_tag, format!("{}", i as i32).as_bytes())
+        }
+
+        BuiltinFun::U32Add => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u32(pgm.u32_ty_tag, (u1 as u32) + (u2 as u32))
+        }
+
+        BuiltinFun::U32Sub => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u32(pgm.u32_ty_tag, (u1 as u32) - (u2 as u32))
+        }
+
+        BuiltinFun::U32Mul => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u32(pgm.u32_ty_tag, (u1 as u32) * (u2 as u32))
+        }
+
+        BuiltinFun::U32Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag);
+
+            let ordering_ty_con = pgm.ty_cons.get("Ordering").unwrap_or_else(|| {
+                panic!("__cmp was called, but the Ordering type is not defined")
+            });
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            let constr_name = match (u1 as u32).cmp(&(u2 as u32)) {
+                Ordering::Less => "Less",
+                Ordering::Equal => "Equal",
+                Ordering::Greater => "Greater",
+            };
+
+            heap.allocate_tag(ordering_ty_con.get_constr_with_tag(constr_name).0)
+        }
+
+        BuiltinFun::U32Eq => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag, "{}", LocDisplay(loc));
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            pgm.bool_alloc(u1 == u2)
+        }
+
+        BuiltinFun::U32ToStr => {
+            debug_assert_eq!(args.len(), 1);
+            let obj = args[0];
+            debug_assert_eq!(heap[obj], pgm.u32_ty_tag);
+            let u = heap[obj + 1];
+            heap.allocate_str(pgm.str_ty_tag, format!("{}", u as u32).as_bytes())
+        }
+
+        BuiltinFun::I8Add => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag);
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            heap.allocate_i8(pgm.i8_ty_tag, (i1 as i8) + (i2 as i8))
+        }
+
+        BuiltinFun::I8Sub => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag);
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            heap.allocate_i8(pgm.i8_ty_tag, (i1 as i8) - (i2 as i8))
+        }
+
+        BuiltinFun::I8Mul => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag);
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            heap.allocate_i8(pgm.i8_ty_tag, (i1 as i8) * (i2 as i8))
+        }
+
+        BuiltinFun::I8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag);
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag);
+
+            let ordering_ty_con = pgm.ty_cons.get("Ordering").unwrap_or_else(|| {
+                panic!("__cmp was called, but the Ordering type is not defined")
+            });
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            let constr_name = match (i1 as i8).cmp(&(i2 as i8)) {
+                Ordering::Less => "Less",
+                Ordering::Equal => "Equal",
+                Ordering::Greater => "Greater",
+            };
+
+            heap.allocate_tag(ordering_ty_con.get_constr_with_tag(constr_name).0)
+        }
+
+        BuiltinFun::I8Eq => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag, "{}", LocDisplay(loc));
+
+            let i1 = heap[i1 + 1];
+            let i2 = heap[i2 + 1];
+
+            pgm.bool_alloc(i1 == i2)
+        }
+
+        BuiltinFun::I8ToStr => {
+            debug_assert_eq!(args.len(), 1);
+            let obj = args[0];
+            debug_assert_eq!(heap[obj], pgm.i8_ty_tag);
+            let i = heap[obj + 1];
+            heap.allocate_str(pgm.str_ty_tag, format!("{}", i as i8).as_bytes())
+        }
+
+        BuiltinFun::U8Add => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u8(pgm.u8_ty_tag, (u1 as u8) + (u2 as u8))
+        }
+
+        BuiltinFun::U8Sub => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u8(pgm.u8_ty_tag, (u1 as u8) - (u2 as u8))
+        }
+
+        BuiltinFun::U8Mul => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag);
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            heap.allocate_u8(pgm.u8_ty_tag, (u1 as u8) * (u2 as u8))
+        }
+
+        BuiltinFun::U8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag);
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag);
+
+            let ordering_ty_con = pgm.ty_cons.get("Ordering").unwrap_or_else(|| {
+                panic!("__cmp was called, but the Ordering type is not defined")
+            });
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            let constr_name = match (u1 as u8).cmp(&(u2 as u8)) {
+                Ordering::Less => "Less",
+                Ordering::Equal => "Equal",
+                Ordering::Greater => "Greater",
+            };
+
+            heap.allocate_tag(ordering_ty_con.get_constr_with_tag(constr_name).0)
+        }
+
+        BuiltinFun::U8Eq => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag, "{}", LocDisplay(loc));
+
+            let u1 = heap[u1 + 1];
+            let u2 = heap[u2 + 1];
+
+            pgm.bool_alloc(u1 == u2)
+        }
+
+        BuiltinFun::U8ToStr => {
+            debug_assert_eq!(args.len(), 1);
+            let obj = args[0];
+            debug_assert_eq!(heap[obj], pgm.u8_ty_tag);
+            let u = heap[obj + 1];
+            heap.allocate_str(pgm.str_ty_tag, format!("{}", u as u8).as_bytes())
         }
 
         BuiltinFun::StrViewEq => {
