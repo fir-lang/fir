@@ -19,9 +19,12 @@ fn main(input: Str) =
     let a = T(i = 123).print
     let b = MyBool.True.print
     let c = MyBool.False.print
+    let d = Vec.withCapacity
     a()
     b()
     c()
+    d(10)
+    ()
 
 # expected stdout:
 # T(i = 123)

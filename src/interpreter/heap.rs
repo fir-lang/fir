@@ -127,12 +127,19 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_assoc_fun(&mut self, type_tag: u64, fun_idx: u64, receiver: u64) -> u64 {
-        let alloc = self.allocate(4);
+    pub fn allocate_assoc_fun(&mut self, type_tag: u64, fun_idx: u64) -> u64 {
+        let alloc = self.allocate(3);
         self[alloc] = ASSOC_FUN_TYPE_TAG;
         self[alloc + 1] = type_tag;
         self[alloc + 2] = fun_idx;
-        self[alloc + 3] = receiver;
+        alloc
+    }
+
+    pub fn allocate_method(&mut self, receiver: u64, fun_idx: u64) -> u64 {
+        let alloc = self.allocate(3);
+        self[alloc] = METHOD_TYPE_TAG;
+        self[alloc + 1] = receiver;
+        self[alloc + 2] = fun_idx;
         alloc
     }
 

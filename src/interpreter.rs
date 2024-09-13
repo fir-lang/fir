@@ -68,11 +68,13 @@ macro_rules! generate_tags {
     (@generate $index:expr,) => {};
 }
 
+// NB. If you update this make sure you update built-in `TyCon`s in `collect_types`.
 #[rustfmt::skip]
 generate_tags!(
     CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
     TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
     ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
+    METHOD_TYPE_TAG,    // Methdo closure, e.g. `x.toString`.
     FIRST_TYPE_TAG,     // First available type tag for user types.
 );
 
@@ -704,6 +706,14 @@ fn eval<W: Write>(
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+            if let ast::Expr::UpperVar(ty) = &object.node {
+                let ty_con = pgm.ty_cons.get(ty).unwrap();
+                let fun = pgm.associated_funs[ty_con.type_tag as usize]
+                    .get(field)
+                    .unwrap();
+                return ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx));
+            }
+
             let object = val!(eval(w, pgm, heap, locals, object));
             let object_tag = heap[object];
 
@@ -732,7 +742,7 @@ fn eval<W: Write>(
 
             // Must be a method.
             if let Some(method) = pgm.associated_funs[object_tag as usize].get(field) {
-                return ControlFlow::Val(heap.allocate_assoc_fun(object_tag, method.idx, object));
+                return ControlFlow::Val(heap.allocate_method(object, method.idx));
             };
 
             panic!(
@@ -871,7 +881,18 @@ fn eval<W: Write>(
                 ASSOC_FUN_TYPE_TAG => {
                     let ty_tag = heap[fun + 1];
                     let fun_tag = heap[fun + 2];
-                    let receiver = heap[fun + 3];
+                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
+                    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
+                    for arg in args {
+                        arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                    }
+                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, &expr.loc))
+                }
+
+                METHOD_TYPE_TAG => {
+                    let receiver = heap[fun + 1];
+                    let ty_tag = heap[receiver];
+                    let fun_tag = heap[fun + 2];
                     let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
                     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
                     arg_values.push(receiver);

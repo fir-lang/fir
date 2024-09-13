@@ -28,6 +28,14 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
         },
     );
 
+    ty_cons.insert(
+        SmolStr::new("#METHOD"),
+        TyCon {
+            value_constrs: vec![],
+            type_tag: METHOD_TYPE_TAG,
+        },
+    );
+
     let mut next_type_tag = FIRST_TYPE_TAG;
 
     fn convert_constr_fields(fields: &ast::ConstructorFields) -> Fields {
