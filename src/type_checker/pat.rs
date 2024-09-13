@@ -154,7 +154,9 @@ pub(super) fn check_pat(
                 }
             };
 
-            let con_ty = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
+            // We don't need to instantiate based on pattern types. If we don't have a term with
+            // the type the pattern will never match.
+            let (con_ty, _con_ty_args) = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
 
             // Apply argument pattern types to the function type.
             let pat_field_tys: Vec<ast::Named<Ty>> = pat_fields

@@ -3,6 +3,7 @@
 mod apply;
 mod convert;
 mod expr;
+mod instantiation;
 mod pat;
 mod stmt;
 mod ty;
@@ -11,9 +12,10 @@ mod unification;
 
 use convert::convert_fields;
 pub use convert::*;
+use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
-pub use ty::{Id, TyArgs};
+pub use ty::{Id, Ty, TyArgs};
 use ty_map::TyMap;
 
 use crate::ast;
@@ -44,7 +46,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_types(module);
 
     for decl in module {
-        match &decl.node {
+        match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
                 "{}: Import declaration in check_module",
                 loc_string(&decl.loc)
@@ -729,7 +731,7 @@ fn collect_schemes(
 }
 
 /// Type check a top-level function.
-fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
+fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
@@ -781,9 +783,9 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let mut preds: PredSet = Default::default();
 
-    if let Some(body) = &fun.node.body.as_ref() {
+    if let Some(body) = &mut fun.node.body.as_mut() {
         check_stmts(
-            &body.node,
+            &mut body.node,
             Some(&ret_ty),
             &ret_ty,
             0,
@@ -792,6 +794,10 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
             tys,
             &mut preds,
         );
+
+        for stmt in &mut body.node {
+            normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
+        }
     }
 
     unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
@@ -814,7 +820,7 @@ fn check_top_fun(fun: &ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 ///
 /// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
 /// checking the methods.
-fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
+fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
@@ -848,8 +854,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
         let implementing_ty = ty_args.pop().unwrap();
 
-        for item in &impl_.node.items {
-            let fun = match &item.node {
+        for item in &mut impl_.node.items {
+            let fun = match &mut item.node {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun) => fun,
             };
@@ -867,7 +873,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
-            if let Some(body) = &fun.body {
+            if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
@@ -887,7 +893,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 }
 
                 check_stmts(
-                    &body.node,
+                    &mut body.node,
                     Some(&ret_ty),
                     &ret_ty,
                     0,
@@ -896,6 +902,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     tys,
                     &mut preds,
                 );
+
+                for stmt in &mut body.node {
+                    normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
+                }
 
                 // TODO: Context
                 resolve_preds(&Default::default(), tys, &preds);
@@ -906,8 +916,8 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.exit_scope();
         }
     } else {
-        for item in &impl_.node.items {
-            let fun = match &item.node {
+        for item in &mut impl_.node.items {
+            let fun = match &mut item.node {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun) => fun,
             };
@@ -926,7 +936,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
-            if let Some(body) = &fun.body {
+            if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     None => Ty::Record(Default::default()),
@@ -946,7 +956,7 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 }
 
                 check_stmts(
-                    &body.node,
+                    &mut body.node,
                     Some(&ret_ty),
                     &ret_ty,
                     0,
@@ -955,6 +965,10 @@ fn check_impl(impl_: &ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     tys,
                     &mut preds,
                 );
+
+                for stmt in &mut body.node {
+                    normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
+                }
 
                 // TODO: Context
                 resolve_preds(&Default::default(), tys, &preds);

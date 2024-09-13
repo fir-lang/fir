@@ -553,7 +553,14 @@ fn allocate_object_from_tag<W: Write>(
             assert_eq!(*num_fields as usize, args.len());
             for arg in args {
                 assert!(arg.name.is_none());
-                arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                arg_values.push(val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc
+                )));
             }
         }
 
@@ -563,7 +570,7 @@ fn allocate_object_from_tag<W: Write>(
             let mut named_values: Map<SmolStr, u64> = Default::default();
             for arg in args {
                 let name = arg.name.as_ref().unwrap().clone();
-                let value = val!(eval(w, pgm, heap, locals, &arg.expr));
+                let value = val!(eval(w, pgm, heap, locals, &arg.expr.node, &arg.expr.loc));
                 let old = named_values.insert(name.clone(), value);
                 assert!(old.is_none());
             }
@@ -594,7 +601,7 @@ fn exec<W: Write>(
     for stmt in stmts {
         return_value = match &stmt.node {
             ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
-                let val = val!(eval(w, pgm, heap, locals, rhs));
+                let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
                 match try_bind_pat(pgm, heap, lhs, val) {
                     Some(binds) => locals.extend(binds.into_iter()),
                     None => panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc)),
@@ -603,14 +610,14 @@ fn exec<W: Write>(
             }
 
             ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
-                let rhs = val!(eval(w, pgm, heap, locals, rhs));
+                let rhs = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
                 val!(assign(w, pgm, heap, locals, lhs, rhs, *op, &stmt.loc))
             }
 
-            ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, expr)),
+            ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
 
             ast::Stmt::While(ast::WhileStmt { cond, body }) => loop {
-                let cond = val!(eval(w, pgm, heap, locals, cond));
+                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
                 debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
                 if cond == pgm.false_alloc {
                     break 0; // FIXME: Return unit
@@ -638,11 +645,11 @@ fn exec<W: Write>(
                     ),
                 };
 
-                let from = val!(eval(w, pgm, heap, locals, from));
+                let from = val!(eval(w, pgm, heap, locals, &from.node, &from.loc));
                 debug_assert_eq!(heap[from], pgm.i32_ty_tag);
                 let from = heap[from + 1] as i32;
 
-                let to = val!(eval(w, pgm, heap, locals, to));
+                let to = val!(eval(w, pgm, heap, locals, &to.node, &to.loc));
                 debug_assert_eq!(heap[to], pgm.i32_ty_tag);
                 let to = heap[to + 1] as i32;
 
@@ -686,14 +693,15 @@ fn eval<W: Write>(
     pgm: &Pgm,
     heap: &mut Heap,
     locals: &mut Map<SmolStr, u64>,
-    expr: &L<ast::Expr>,
+    expr: &ast::Expr,
+    loc: &Loc,
 ) -> ControlFlow {
-    match &expr.node {
+    match expr {
         ast::Expr::Var(var) => match locals.get(var) {
             Some(value) => ControlFlow::Val(*value),
             None => match pgm.top_level_funs.get(var) {
                 Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                None => panic!("{}: Unbound variable: {}", LocDisplay(&expr.loc), var),
+                None => panic!("{}: Unbound variable: {}", LocDisplay(loc), var),
             },
         },
 
@@ -714,7 +722,7 @@ fn eval<W: Write>(
                 return ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx));
             }
 
-            let object = val!(eval(w, pgm, heap, locals, object));
+            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
 
             // This could be a field of method selection. TOOD: Maybe type checker could elaborate?
@@ -747,7 +755,7 @@ fn eval<W: Write>(
 
             panic!(
                 "{}: Unable to select method or field {}",
-                LocDisplay(&expr.loc),
+                LocDisplay(loc),
                 field
             );
         }
@@ -783,13 +791,18 @@ fn eval<W: Write>(
                         Some(fun) => {
                             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
                             for arg in args {
-                                arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                                arg_values.push(val!(eval(
+                                    w,
+                                    pgm,
+                                    heap,
+                                    locals,
+                                    &arg.expr.node,
+                                    &arg.expr.loc
+                                )));
                             }
-                            return ControlFlow::Val(call(
-                                w, pgm, heap, fun, arg_values, &expr.loc,
-                            ));
+                            return ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc));
                         }
-                        None => val!(eval(w, pgm, heap, locals, fun)),
+                        None => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
                     },
                 },
 
@@ -810,7 +823,7 @@ fn eval<W: Write>(
                                 ty,
                                 Some(field.clone()),
                                 args,
-                                &expr.loc,
+                                loc,
                             );
                         } else {
                             // Handle `Type.associatedFunction`.
@@ -825,40 +838,52 @@ fn eval<W: Write>(
 
                             let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                             for arg in args {
-                                arg_vals.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                                arg_vals.push(val!(eval(
+                                    w,
+                                    pgm,
+                                    heap,
+                                    locals,
+                                    &arg.expr.node,
+                                    &arg.expr.loc
+                                )));
                             }
 
-                            return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, &expr.loc));
+                            return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                         }
                     }
 
-                    let object = val!(eval(w, pgm, heap, locals, object));
+                    let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
                     let object_tag = heap[object];
                     let fun = pgm.associated_funs[object_tag as usize]
                         .get(field)
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Object with tag {} doesn't have field or method {:?}",
-                                LocDisplay(&expr.loc),
+                                LocDisplay(loc),
                                 object_tag,
                                 field
                             )
                         });
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
-                        arg_vals.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                        arg_vals.push(val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &arg.expr.node,
+                            &arg.expr.loc
+                        )));
                     }
                     arg_vals.insert(0, object);
-                    return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, &expr.loc));
+                    return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
                 ast::Expr::UpperVar(ty) => {
-                    return allocate_object_from_names(
-                        w, pgm, heap, locals, ty, None, args, &expr.loc,
-                    );
+                    return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
                 }
 
-                _ => val!(eval(w, pgm, heap, locals, fun)),
+                _ => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
             };
 
             match heap[fun] {
@@ -873,9 +898,16 @@ fn eval<W: Write>(
                     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         assert!(arg.name.is_none());
-                        arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                        arg_values.push(val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &arg.expr.node,
+                            &arg.expr.loc
+                        )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, top_fun, arg_values, &expr.loc))
+                    ControlFlow::Val(call(w, pgm, heap, top_fun, arg_values, loc))
                 }
 
                 ASSOC_FUN_TYPE_TAG => {
@@ -884,22 +916,36 @@ fn eval<W: Write>(
                     let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
                     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
-                        arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                        arg_values.push(val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &arg.expr.node,
+                            &arg.expr.loc
+                        )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, &expr.loc))
+                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc))
                 }
 
                 METHOD_TYPE_TAG => {
                     let receiver = heap[fun + 1];
+                    let fun_idx = heap[fun + 2];
                     let ty_tag = heap[receiver];
-                    let fun_tag = heap[fun + 2];
-                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
+                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_idx as usize];
                     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
                     arg_values.push(receiver);
                     for arg in args {
-                        arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                        arg_values.push(val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &arg.expr.node,
+                            &arg.expr.loc
+                        )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, &expr.loc))
+                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc))
                 }
 
                 _ => panic!("Function evaluated to non-callable"),
@@ -919,7 +965,7 @@ fn eval<W: Write>(
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
-                        let part_val = val!(eval(w, pgm, heap, locals, expr));
+                        let part_val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
                         // Call toStr
                         let part_str_val =
                             call_method(w, pgm, heap, part_val, &"toStr".into(), vec![], &expr.loc);
@@ -935,37 +981,37 @@ fn eval<W: Write>(
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
-            let left = val!(eval(w, pgm, heap, locals, left));
-            let right = val!(eval(w, pgm, heap, locals, right));
+            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            let right = val!(eval(w, pgm, heap, locals, &right.node, &right.loc));
 
             let method_name = match op {
                 ast::BinOp::Add => "__add",
                 ast::BinOp::Subtract => "__sub",
                 ast::BinOp::Multiply => "__mul",
                 ast::BinOp::Equal => {
-                    let eq = eq(w, pgm, heap, left, right, &expr.loc);
+                    let eq = eq(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(pgm.bool_alloc(eq));
                 }
                 ast::BinOp::NotEqual => {
-                    let eq = eq(w, pgm, heap, left, right, &expr.loc);
+                    let eq = eq(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(pgm.bool_alloc(!eq));
                 }
                 ast::BinOp::Lt => {
-                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
+                    let ord = cmp(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(pgm.bool_alloc(matches!(ord, Ordering::Less)));
                 }
                 ast::BinOp::Gt => {
-                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
+                    let ord = cmp(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(pgm.bool_alloc(matches!(ord, Ordering::Greater)));
                 }
                 ast::BinOp::LtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
+                    let ord = cmp(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(
                         pgm.bool_alloc(matches!(ord, Ordering::Less | Ordering::Equal)),
                     );
                 }
                 ast::BinOp::GtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, &expr.loc);
+                    let ord = cmp(w, pgm, heap, left, right, loc);
                     return ControlFlow::Val(
                         pgm.bool_alloc(matches!(ord, Ordering::Greater | Ordering::Equal)),
                     );
@@ -981,12 +1027,12 @@ fn eval<W: Write>(
                 left,
                 &method_name.into(),
                 vec![right],
-                &expr.loc,
+                loc,
             ))
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
-            let val = val!(eval(w, pgm, heap, locals, expr));
+            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
             debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
 
             match op {
@@ -995,8 +1041,8 @@ fn eval<W: Write>(
         }
 
         ast::Expr::ArrayIndex(ast::ArrayIndexExpr { array, index }) => {
-            let array = val!(eval(w, pgm, heap, locals, array));
-            let index_boxed = val!(eval(w, pgm, heap, locals, index));
+            let array = val!(eval(w, pgm, heap, locals, &array.node, &array.loc));
+            let index_boxed = val!(eval(w, pgm, heap, locals, &index.node, &index.loc));
             let index = heap[index_boxed + 1];
             let array_len = heap[array + 1];
             if index >= array_len {
@@ -1033,12 +1079,12 @@ fn eval<W: Write>(
                         })
                         .unwrap();
 
-                    let value = val!(eval(w, pgm, heap, locals, expr));
+                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
                     heap[record + (name_idx as u64) + 1] = value;
                 }
             } else {
                 for (idx, ast::Named { name: _, node }) in exprs.iter().enumerate() {
-                    let value = val!(eval(w, pgm, heap, locals, node));
+                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
                     heap[record + (idx as u64) + 1] = value;
                 }
             }
@@ -1050,10 +1096,12 @@ fn eval<W: Write>(
             panic!("Interpreter only supports range expressions in for loops")
         }
 
-        ast::Expr::Return(expr) => ControlFlow::Ret(val!(eval(w, pgm, heap, locals, expr))),
+        ast::Expr::Return(expr) => {
+            ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
+        }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let scrut = val!(eval(w, pgm, heap, locals, scrutinee));
+            let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
             for ast::Alt {
                 pattern,
                 guard,
@@ -1074,7 +1122,7 @@ fn eval<W: Write>(
             else_branch,
         }) => {
             for (cond, stmts) in branches {
-                let cond = val!(eval(w, pgm, heap, locals, cond));
+                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
                 debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
                 if cond == pgm.true_alloc {
                     return exec(w, pgm, heap, locals, stmts);
@@ -1092,6 +1140,71 @@ fn eval<W: Write>(
             heap[alloc] = pgm.char_ty_tag;
             heap[alloc + 1] = i32;
             ControlFlow::Val(alloc)
+        }
+
+        ast::Expr::Instantiation(path, _tys) => {
+            // TODO: After monomorphisation seeing an instantiation node should be a bug.
+            match path {
+                ast::Path::TopLevel(var) => match pgm.top_level_funs.get(var) {
+                    Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
+                    None => match pgm.ty_cons.get(var) {
+                        Some(ty_con)
+                            if ty_con.value_constrs.len() == 1
+                                && ty_con.value_constrs[0].name.as_ref() == Some(var) =>
+                        {
+                            // TODO: Shouldn't the `name` be `None` above for products constructor
+                            // instantiations, like `Vec[I32]`?
+                            ControlFlow::Val(heap.allocate_constr(ty_con.type_tag))
+                        }
+                        _ => panic!("{}: Unbound variable {}", LocDisplay(loc), var),
+                    },
+                },
+
+                ast::Path::Associated(ty, id) => {
+                    let ty_con = pgm.ty_cons.get(ty).unwrap();
+
+                    // Could be constructor or associated function.
+                    let constr = ty_con
+                        .value_constrs
+                        .iter()
+                        .enumerate()
+                        .find(|(_constr_idx, constr)| constr.name.as_ref() == Some(id));
+
+                    if let Some((constr_idx, constr)) = constr {
+                        let tag = ty_con.type_tag + (constr_idx as u64);
+                        return ControlFlow::Val(if constr.fields.is_empty() {
+                            let addr = heap.allocate(1);
+                            heap[addr] = tag;
+                            addr
+                        } else {
+                            heap.allocate_constr(tag)
+                        });
+                    }
+
+                    // Associated function.
+                    if let Some(fun) = pgm.associated_funs[ty_con.type_tag as usize].get(id) {
+                        return ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx));
+                    }
+
+                    panic!()
+                }
+
+                ast::Path::Method(receiver, method) => {
+                    let receiver = val!(eval(w, pgm, heap, locals, receiver, loc));
+                    let receiver_tag = heap[receiver as u64];
+                    let fun = pgm.associated_funs[receiver_tag as usize]
+                        .get(method)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Receiver with tag {} does not have method {}",
+                                LocDisplay(loc),
+                                receiver_tag,
+                                method
+                            )
+                        });
+                    ControlFlow::Val(heap.allocate_method(receiver, fun.idx))
+                }
+            }
         }
     }
 }
@@ -1135,7 +1248,7 @@ fn assign<W: Write>(
             }
         },
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            let object = val!(eval(w, pgm, heap, locals, object));
+            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
             let object_con = &pgm.cons_by_tag[object_tag as usize];
             let object_fields = &object_con.fields;

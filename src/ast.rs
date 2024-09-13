@@ -357,6 +357,20 @@ pub enum Expr {
     Match(MatchExpr),
 
     If(IfExpr),
+
+    /// Instantiation of a polymorphic function.
+    ///
+    /// These nodes are introduced by the type checker as it instantiates polymorphic functions.
+    ///
+    /// Monomorphisation then replaces these nodes with references to monomorphised functions.
+    Instantiation(Path, Vec<crate::type_checker::Ty>),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Path {
+    TopLevel(SmolStr),
+    Associated(SmolStr, SmolStr),
+    Method(Box<Expr>, SmolStr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

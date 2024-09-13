@@ -83,10 +83,11 @@ pub enum TyArgs {
     Named(Map<Id, Ty>),
 }
 
-/// A unification variable.
+/// A reference to a unification variable.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TyVarRef(Rc<TyVar>);
 
+/// A unification variable.
 #[derive(Debug, Clone)]
 pub struct TyVar {
     /// Identity of the unification variable.
@@ -231,15 +232,17 @@ impl Scheme {
         var_gen: &mut TyVarGen,
         preds: &mut PredSet,
         loc: &ast::Loc,
-    ) -> Ty {
+    ) -> (Ty, Vec<TyVarRef>) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
         let mut var_map: Map<Id, TyVarRef> = Default::default();
+        let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         for (var, bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
             var_map.insert(var.clone(), instantiated_var.clone());
+            instantiations.push(instantiated_var.clone());
 
             for (trait_, assoc_tys) in bounds {
                 let pred = Pred {
@@ -251,7 +254,7 @@ impl Scheme {
             }
         }
 
-        self.ty.subst_qvars(&var_map)
+        (self.ty.subst_qvars(&var_map), instantiations)
     }
 
     pub(super) fn instantiate_with_tys(&self, tys: &[Ty]) -> Ty {

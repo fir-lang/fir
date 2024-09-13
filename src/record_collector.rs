@@ -335,5 +335,10 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
                 }
             }
         }
+
+        ast::Expr::Instantiation(_, _) => {
+            // No need to visit type-checking types here as those types need to come from elsewhere
+            // in the program, which we visit.
+        }
     }
 }

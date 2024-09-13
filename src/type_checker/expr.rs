@@ -11,7 +11,7 @@ use crate::type_checker::{loc_string, PgmTypes};
 use smol_str::SmolStr;
 
 pub(super) fn check_expr(
-    expr: &ast::L<ast::Expr>,
+    expr: &mut ast::L<ast::Expr>,
     expected_ty: Option<&Ty>,
     return_ty: &Ty,
     level: u32,
@@ -20,7 +20,7 @@ pub(super) fn check_expr(
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
-    match &expr.node {
+    match &mut expr.node {
         ast::Expr::Var(var) => {
             // Check if local.
             if let Some(ty) = env.get(var) {
@@ -28,7 +28,14 @@ pub(super) fn check_expr(
             }
 
             if let Some(scheme) = tys.top_schemes.get(var) {
-                let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
+                let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
+                // TODO: Do we need to distinguish top-levels from locals?
+                if !ty_args.is_empty() {
+                    expr.node = ast::Expr::Instantiation(
+                        ast::Path::TopLevel(var.clone()),
+                        ty_args.into_iter().map(Ty::Var).collect(),
+                    );
+                }
                 return unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc);
             }
 
@@ -39,12 +46,18 @@ pub(super) fn check_expr(
             let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
                 panic!("{}: Unknown constructor {}", loc_string(&expr.loc), con)
             });
-            let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
+            let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
+            if !ty_args.is_empty() {
+                expr.node = ast::Expr::Instantiation(
+                    ast::Path::TopLevel(con.clone()),
+                    ty_args.into_iter().map(Ty::Var).collect(),
+                );
+            }
             unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            let ty = match &object.node {
+            let ty = match &mut object.node {
                 ast::Expr::UpperVar(ty) => {
                     let scheme = tys
                         .associated_schemes
@@ -59,19 +72,31 @@ pub(super) fn check_expr(
                                 field
                             )
                         });
-                    scheme.instantiate(level, var_gen, preds, &expr.loc)
+                    let (method_ty, method_ty_args) =
+                        scheme.instantiate(level, var_gen, preds, &expr.loc);
+                    if !method_ty_args.is_empty() {
+                        expr.node = ast::Expr::Instantiation(
+                            ast::Path::Associated(ty.clone(), field.clone()),
+                            method_ty_args.into_iter().map(Ty::Var).collect(),
+                        );
+                    }
+                    method_ty
                 }
 
                 _ => {
                     let object_ty =
                         check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
 
+                    let field = field.clone();
+                    let expr_loc = expr.loc.clone();
+
                     match object_ty.normalize(tys.tys.cons()) {
                         Ty::Con(con) => check_field_select(
+                            expr,
                             &con,
                             &[],
-                            field,
-                            &expr.loc,
+                            &field,
+                            &expr_loc,
                             tys,
                             level,
                             var_gen,
@@ -80,7 +105,7 @@ pub(super) fn check_expr(
 
                         Ty::App(con, args) => match args {
                             TyArgs::Positional(args) => check_field_select(
-                                &con, &args, field, &expr.loc, tys, level, var_gen, preds,
+                                expr, &con, &args, &field, &expr_loc, tys, level, var_gen, preds,
                             ),
                             TyArgs::Named(_) => {
                                 // Associated type arguments are only allowed in traits, sothe `con` must
@@ -90,7 +115,7 @@ pub(super) fn check_expr(
                             }
                         },
 
-                        Ty::Record(fields) => match fields.get(field) {
+                        Ty::Record(fields) => match fields.get(&field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
@@ -115,7 +140,6 @@ pub(super) fn check_expr(
                     }
                 }
             };
-
             unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
@@ -139,8 +163,14 @@ pub(super) fn check_expr(
                         constr
                     )
                 });
-            let ty = scheme.instantiate(level, var_gen, preds, &expr.loc);
-            unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
+            let (con_ty, con_ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
+            if !con_ty_args.is_empty() {
+                expr.node = ast::Expr::Instantiation(
+                    ast::Path::Associated(ty.clone(), constr.clone()),
+                    con_ty_args.into_iter().map(Ty::Var).collect(),
+                );
+            }
+            unify_expected_ty(con_ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -158,7 +188,7 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    for arg in args {
+                    for arg in args.iter() {
                         if arg.name.is_some() {
                             panic!(
                                 "{}: Named argument applied to function that expects positional arguments",
@@ -168,9 +198,9 @@ pub(super) fn check_expr(
                     }
 
                     let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
-                    for (param_ty, arg) in param_tys.iter().zip(args.iter()) {
+                    for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
                         let arg_ty = check_expr(
-                            &arg.expr,
+                            &mut arg.expr,
                             Some(param_ty),
                             return_ty,
                             level,
@@ -195,7 +225,7 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    for arg in args {
+                    for arg in args.iter() {
                         if arg.name.is_none() {
                             panic!(
                                 "{}: Positional argument applied to function that expects named arguments",
@@ -221,7 +251,7 @@ pub(super) fn check_expr(
                         let arg_name: &SmolStr = arg.name.as_ref().unwrap();
                         let param_ty: &Ty = param_tys.get(arg_name).unwrap();
                         let arg_ty = check_expr(
-                            &arg.expr,
+                            &mut arg.expr,
                             Some(param_ty),
                             return_ty,
                             level,
@@ -331,7 +361,7 @@ pub(super) fn check_expr(
                 ast::BinOp::Or => "__or",
             };
 
-            let desugared = ast::L {
+            let mut desugared = ast::L {
                 loc: expr.loc.clone(),
                 node: ast::Expr::Call(ast::CallExpr {
                     fun: Box::new(ast::L {
@@ -349,7 +379,7 @@ pub(super) fn check_expr(
             };
 
             check_expr(
-                &desugared,
+                &mut desugared,
                 expected_ty,
                 return_ty,
                 level,
@@ -382,7 +412,7 @@ pub(super) fn check_expr(
 
             // TODO: For now only supporting named fields.
             let mut field_names: Set<&Id> = Default::default();
-            for field in fields {
+            for field in fields.iter() {
                 match &field.name {
                     Some(name) => {
                         if !field_names.insert(name) {
@@ -422,13 +452,13 @@ pub(super) fn check_expr(
             }
 
             let mut record_ty: Map<Id, Ty> = Default::default();
-            for field in fields {
+            for field in fields.iter_mut() {
                 let field_name = field.name.as_ref().unwrap();
                 let expected_ty = expected_fields
                     .as_ref()
                     .map(|expected_fields| expected_fields.get(field_name).unwrap());
                 let field_ty = check_expr(
-                    &field.node,
+                    &mut field.node,
                     expected_ty,
                     return_ty,
                     level,
@@ -575,10 +605,18 @@ pub(super) fn check_expr(
 
             branch_tys.pop().unwrap()
         }
+
+        ast::Expr::Instantiation(_, _) => {
+            panic!(
+                "{}: BUG: Instantiation in check_expr",
+                loc_string(&expr.loc)
+            );
+        }
     }
 }
 
 fn check_field_select(
+    object: &mut ast::L<ast::Expr>,
     ty_con: &Id,
     ty_args: &[Ty],
     field: &Id,
@@ -592,7 +630,14 @@ fn check_field_select(
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, field, tys, loc) {
             Some(scheme) => {
-                let ty = scheme.instantiate(level, var_gen, preds, loc);
+                let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, loc);
+                if !ty_args.is_empty() {
+                    let expr = std::mem::replace(&mut object.node, ast::Expr::Self_);
+                    object.node = ast::Expr::Instantiation(
+                        ast::Path::Method(Box::new(expr), field.clone()),
+                        ty_args.into_iter().map(Ty::Var).collect(),
+                    );
+                }
 
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.

@@ -562,6 +562,39 @@ impl Expr {
                     }
                 }
             }
+
+            Expr::Instantiation(path, tys) => {
+                match path {
+                    Path::TopLevel(id) => {
+                        buffer.push_str(id.as_str());
+                    }
+                    Path::Associated(ty, id) => {
+                        buffer.push_str(ty.as_str());
+                        buffer.push('.');
+                        buffer.push_str(id.as_str());
+                    }
+                    Path::Method(expr, id) => {
+                        let parens = expr_parens(expr);
+                        if parens {
+                            buffer.push('(');
+                        }
+                        expr.print(buffer, indent + 4);
+                        if parens {
+                            buffer.push(')');
+                        }
+                        buffer.push('.');
+                        buffer.push_str(id.as_str());
+                    }
+                }
+                buffer.push('[');
+                for (i, ty) in tys.iter().enumerate() {
+                    buffer.push_str(&ty.to_string());
+                    if i != tys.len() - 1 {
+                        buffer.push_str(", ");
+                    }
+                }
+                buffer.push(']');
+            }
         }
     }
 }

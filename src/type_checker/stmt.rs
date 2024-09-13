@@ -10,7 +10,7 @@ use crate::type_checker::{loc_string, PgmTypes};
 use smol_str::SmolStr;
 
 pub(super) fn check_stmts(
-    stmts: &[ast::L<ast::Stmt>],
+    stmts: &mut [ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
     return_ty: &Ty,
     level: u32,
@@ -21,7 +21,7 @@ pub(super) fn check_stmts(
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
-    for (stmt_idx, stmt) in stmts.iter().enumerate() {
+    for (stmt_idx, stmt) in stmts.iter_mut().enumerate() {
         let last = stmt_idx == num_stmts - 1;
         let stmt_ty = check_stmt(
             stmt,
@@ -42,7 +42,7 @@ pub(super) fn check_stmts(
 
 // TODO: Level is the same as the length of `env`, maybe remove the parameter?
 fn check_stmt(
-    stmt: &ast::L<ast::Stmt>,
+    stmt: &mut ast::L<ast::Stmt>,
     expected_ty: Option<&Ty>,
     return_ty: &Ty,
     level: u32,
@@ -51,7 +51,7 @@ fn check_stmt(
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
-    match &stmt.node {
+    match &mut stmt.node {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             let pat_expected_ty = ty
                 .as_ref()
@@ -78,7 +78,7 @@ fn check_stmt(
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
-            match &lhs.node {
+            match &mut lhs.node {
                 ast::Expr::Var(var) => {
                     let var_ty = env.get(var).cloned().unwrap_or_else(|| {
                         panic!("{}: Unbound variable {}", loc_string(&lhs.loc), var)
@@ -107,7 +107,7 @@ fn check_stmt(
                     };
 
                     // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
-                    let desugared_rhs = ast::L {
+                    let mut desugared_rhs = ast::L {
                         loc: rhs.loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
@@ -128,7 +128,7 @@ fn check_stmt(
                     };
 
                     check_expr(
-                        &desugared_rhs,
+                        &mut desugared_rhs,
                         None,
                         return_ty,
                         level,
@@ -205,7 +205,7 @@ fn check_stmt(
                     };
 
                     // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
-                    let desugared_rhs = ast::L {
+                    let mut desugared_rhs = ast::L {
                         loc: rhs.loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
@@ -223,7 +223,7 @@ fn check_stmt(
                     };
 
                     check_expr(
-                        &desugared_rhs,
+                        &mut desugared_rhs,
                         None,
                         return_ty,
                         level,
@@ -264,7 +264,7 @@ fn check_stmt(
             // Special case range expression. For now range expressions are only allowed in `for`
             // loops, and the types of expression in the range start and end need to resolve to a
             // type we know how to increment and compare (e.g. `I32` and other number types).
-            let item_ty: Ty = match &expr.node {
+            let item_ty: Ty = match &mut expr.node {
                 ast::Expr::Range(ast::RangeExpr {
                     from,
                     to,
