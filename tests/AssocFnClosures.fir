@@ -20,13 +20,21 @@ fn main(input: Str) =
     let b = MyBool.True.print
     let c = MyBool.False.print
     let d = Vec.withCapacity
+    let e = Option.Some
     a()
     b()
     c()
-    d(10)
-    ()
+
+    let vec = d(3)
+    printStr(vec.len.toStr())
+
+    match e("Hi"):
+        Option.None: panic("")
+        Option.Some(msg): printStr(msg)
 
 # expected stdout:
 # T(i = 123)
 # True
 # False
+# 0
+# Hi
