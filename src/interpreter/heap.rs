@@ -127,6 +127,15 @@ impl Heap {
         alloc
     }
 
+    pub fn allocate_assoc_fun(&mut self, type_tag: u64, fun_idx: u64, receiver: u64) -> u64 {
+        let alloc = self.allocate(4);
+        self[alloc] = ASSOC_FUN_TYPE_TAG;
+        self[alloc + 1] = type_tag;
+        self[alloc + 2] = fun_idx;
+        self[alloc + 3] = receiver;
+        alloc
+    }
+
     pub fn allocate_str_view(
         &mut self,
         ty_tag: u64,

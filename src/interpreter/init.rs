@@ -276,16 +276,15 @@ pub fn collect_funs(
                         continue;
                     }
 
-                    associated_funs
-                        .entry(method_ty.clone())
-                        .or_default()
-                        .insert(
-                            fun_decl.sig.name.node.clone(),
-                            Fun {
-                                idx: 0, // TODO: Is this used?
-                                kind: FunKind::Source(fun_decl),
-                            },
-                        );
+                    let fun_map = associated_funs.entry(method_ty.clone()).or_default();
+                    let fun_idx = fun_map.len();
+                    fun_map.insert(
+                        fun_decl.sig.name.node.clone(),
+                        Fun {
+                            idx: fun_idx as u64,
+                            kind: FunKind::Source(fun_decl),
+                        },
+                    );
                 }
 
                 tys.tys.enter_scope();

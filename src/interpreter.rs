@@ -96,6 +96,9 @@ struct Pgm {
     /// Associated functions, indexed by type tag, then function name.
     associated_funs: Vec<Map<SmolStr, Fun>>,
 
+    /// Associated functions, indexed by type tag, then function index.
+    associated_funs_by_idx: Vec<Vec<Fun>>,
+
     /// Top-level functions, indexed by function name.
     top_level_funs: Map<SmolStr, Fun>,
 
@@ -323,18 +326,27 @@ impl Pgm {
         let mut associated_funs_vec: Vec<Map<SmolStr, Fun>> =
             vec![Default::default(); next_type_tag as usize];
 
+        let mut associated_funs_by_idx: Vec<Vec<Fun>> =
+            vec![Default::default(); next_type_tag as usize];
+
         for (ty_name, funs) in associated_funs {
             let ty_con = ty_cons
                 .get(&ty_name)
                 .unwrap_or_else(|| panic!("Type not defined: {}", ty_name));
             let first_tag = ty_cons.get(&ty_name).unwrap().type_tag as usize;
             let n_constrs = ty_con.value_constrs.len();
+
+            let mut funs_as_vec: Vec<Fun> = funs.values().cloned().collect();
+            funs_as_vec.sort_by_key(|fun| fun.idx);
+
             if n_constrs == 0 {
                 // A built-in type with no constructor.
                 associated_funs_vec[first_tag] = funs;
+                associated_funs_by_idx[first_tag] = funs_as_vec;
             } else {
                 for tag in first_tag..first_tag + n_constrs {
                     associated_funs_vec[tag].clone_from(&funs);
+                    associated_funs_by_idx[tag] = funs_as_vec.clone();
                 }
             }
         }
@@ -378,6 +390,7 @@ impl Pgm {
             cons_by_tag,
             record_ty_tags,
             associated_funs: associated_funs_vec,
+            associated_funs_by_idx,
             top_level_funs,
             top_level_funs_by_idx,
             false_alloc,
@@ -678,7 +691,7 @@ fn eval<W: Write>(
             Some(value) => ControlFlow::Val(*value),
             None => match pgm.top_level_funs.get(var) {
                 Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                None => panic!("{}: unbound variable: {}", LocDisplay(&expr.loc), var),
+                None => panic!("{}: Unbound variable: {}", LocDisplay(&expr.loc), var),
             },
         },
 
@@ -693,23 +706,40 @@ fn eval<W: Write>(
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, object));
             let object_tag = heap[object];
+
+            // This could be a field of method selection. TOOD: Maybe type checker could elaborate?
+            // Check fields first.
             let fields = pgm.get_tag_fields(object_tag);
             match fields {
-                Fields::Unnamed(_) => panic!(
-                    "{}: FieldSelect of {} with unnamed fields, field = {}",
-                    LocDisplay(&expr.loc),
-                    object_tag,
-                    field,
-                ),
+                Fields::Unnamed(_) => {}
                 Fields::Named(fields) => {
-                    let (field_idx, _) = fields
-                        .iter()
-                        .enumerate()
-                        .find(|(_, field_)| *field_ == field)
-                        .unwrap();
-                    ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
+                    let field_idx =
+                        fields
+                            .iter()
+                            .enumerate()
+                            .find_map(|(field_idx, field_name)| {
+                                if field_name == field {
+                                    Some(field_idx)
+                                } else {
+                                    None
+                                }
+                            });
+                    if let Some(field_idx) = field_idx {
+                        return ControlFlow::Val(heap[object + 1 + (field_idx as u64)]);
+                    }
                 }
             }
+
+            // Must be a method.
+            if let Some(method) = pgm.associated_funs[object_tag as usize].get(field) {
+                return ControlFlow::Val(heap.allocate_assoc_fun(object_tag, method.idx, object));
+            };
+
+            panic!(
+                "{}: Unable to select method or field {}",
+                LocDisplay(&expr.loc),
+                field
+            );
         }
 
         ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
@@ -839,9 +869,16 @@ fn eval<W: Write>(
                 }
 
                 ASSOC_FUN_TYPE_TAG => {
-                    let _ty_tag = heap[fun + 1];
-                    let _fun_tag = heap[fun + 2];
-                    todo!()
+                    let ty_tag = heap[fun + 1];
+                    let fun_tag = heap[fun + 2];
+                    let receiver = heap[fun + 3];
+                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
+                    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
+                    arg_values.push(receiver);
+                    for arg in args {
+                        arg_values.push(val!(eval(w, pgm, heap, locals, &arg.expr)));
+                    }
+                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, &expr.loc))
                 }
 
                 _ => panic!("Function evaluated to non-callable"),
