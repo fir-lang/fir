@@ -1,5 +1,7 @@
 #![allow(clippy::enum_variant_names)]
 
+mod printer;
+
 use crate::interpolation::StringPart;
 
 use std::rc::Rc;
