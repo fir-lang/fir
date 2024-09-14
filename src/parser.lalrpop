@@ -69,6 +69,7 @@ extern {
         "trait" => Token { kind: TokenKind::Trait, .. },
         "impl" => Token { kind: TokenKind::Impl, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
+        HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         StringLit => Token { kind: TokenKind::String, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
     }
@@ -420,13 +421,97 @@ InlineExpr: Expr = {
             TokenKind::Int(int_kind) => int_kind,
             _ => unreachable!(),
         };
-        let str = &int.text;
-        let int = match kind {
-            IntKind::I8 => IntExpr::I8(i8::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", str, err))),
-            IntKind::U8 => IntExpr::U8(u8::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", str, err))),
-            IntKind::I32 => IntExpr::I32(i32::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", str, err))),
-            IntKind::U32 => IntExpr::U32(u32::from_str_radix(str, 10).unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", str, err))),
+        let token_str = &int.text;
+
+        // TODO: Allocate the buffer once and reuse.
+        // Even better, build the number as we scan for underscores.
+        let mut int_str = String::new();
+
+        // Drop "i8", "u32" etc. suffix.
+        let suffix = match kind {
+            IntKind::I8 => "i8",
+            IntKind::U8 => "u8",
+            IntKind::I32 => "i32",
+            IntKind::U32 => "u32",
         };
+        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        // Drop '_'s.
+        for char in token_str.chars() {
+            if char == '_' {
+                continue;
+            }
+            int_str.push(char);
+        }
+
+        let int = match kind {
+            IntKind::I8 =>
+                IntExpr::I8(i8::from_str_radix(&int_str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err))),
+
+            IntKind::U8 =>
+                IntExpr::U8(u8::from_str_radix(&int_str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err))),
+
+            IntKind::I32 =>
+                IntExpr::I32(i32::from_str_radix(&int_str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err))),
+
+            IntKind::U32 =>
+                IntExpr::U32(u32::from_str_radix(&int_str, 10)
+                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err))),
+        };
+
+        Expr::Int(int)
+    },
+
+    <int:HexIntLit> => {
+        let kind = match int.kind {
+            TokenKind::HexInt(int_kind) => int_kind,
+            _ => unreachable!(),
+        };
+        debug_assert!(int.text.starts_with("0x"));
+        let token_str = &int.text["0x".len()..];
+
+        // TODO: Allocate the buffer once and reuse.
+        // Even better, build the number as we scan for underscores.
+        let mut int_str = String::new();
+
+        // Drop "i8", "u32" etc. suffix.
+        let suffix = match kind {
+            IntKind::I8 => "i8",
+            IntKind::U8 => "u8",
+            IntKind::I32 => "i32",
+            IntKind::U32 => "u32",
+        };
+        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        // Drop '_'s.
+        for char in token_str.chars() {
+            if char == '_' {
+                continue;
+            }
+            int_str.push(char);
+        }
+
+        let int = match kind {
+            IntKind::I8 =>
+                IntExpr::I8(i8::from_str_radix(&int_str, 16)
+                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err))),
+
+            IntKind::U8 =>
+                IntExpr::U8(u8::from_str_radix(&int_str, 16)
+                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err))),
+
+            IntKind::I32 =>
+                IntExpr::I32(i32::from_str_radix(&int_str, 16)
+                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err))),
+
+            IntKind::U32 =>
+                IntExpr::U32(u32::from_str_radix(&int_str, 16)
+                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err))),
+        };
+
         Expr::Int(int)
     },
 

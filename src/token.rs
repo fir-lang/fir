@@ -82,6 +82,7 @@ pub enum TokenKind {
     // Literals
     String,
     Int(IntKind),
+    HexInt(IntKind),
     Char,
 
     // Virtual tokens, used to handle layout. Generatd by the scanner.

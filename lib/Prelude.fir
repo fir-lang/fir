@@ -1,3 +1,4 @@
+import Char
 import Num
 
 # The `+` operator.
@@ -99,6 +100,12 @@ type Option[T]:
     None
     Some(T)
 
+impl[T] Option[T]:
+    fn unwrap(self): T =
+        match self:
+            Option.None: panic("Unwrapping Option.None")
+            Option.Some(value): value
+
 type Result[E, T]:
     Err(E)
     Ok(T)
@@ -131,14 +138,6 @@ impl Bool:
 impl ToStrView[Bool]:
     fn toStrView(self): StrView =
         self.toStr().toStrView()
-
-# TODO: We may want to allow unnamed fields: `type Char(U32)`.
-type Char:
-    value: I32 # TODO: Switch to U32 when we have it.
-
-impl Eq[Char]:
-    fn __eq(self, other: Char): Bool =
-        self.value == other.value
 
 type Vec[T]:
     data: Array[T]
