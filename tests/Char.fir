@@ -10,9 +10,18 @@ fn main(input: Str) =
     # We can't convert or push a Char to a Str, for now check the value.
     printStr(Char.fromU32(128077u32).unwrap().value.toStr())
 
+    printStr('a'.lenUTF8().toStr())
+    printStr('é'.lenUTF8().toStr())
+    printStr('你'.lenUTF8().toStr())
+    printStr('😄'.lenUTF8().toStr())
+
 # expected stdout:
 # Bool.True
 # Bool.False
 # 👍
 # 128077
 # 128077
+# 1
+# 2
+# 3
+# 4

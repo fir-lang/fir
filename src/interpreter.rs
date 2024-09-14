@@ -1135,7 +1135,7 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Char(char) => {
-            let i32 = heap.allocate_i32(pgm.i32_ty_tag, (*char as u32) as i32);
+            let i32 = heap.allocate_i32(pgm.u32_ty_tag, (*char as u32) as i32);
             let alloc = heap.allocate(2);
             heap[alloc] = pgm.char_ty_tag;
             heap[alloc + 1] = i32;

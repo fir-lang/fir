@@ -12,3 +12,13 @@ impl Char:
             return Option.None
 
         Option.Some(Char(value = value))
+
+    fn lenUTF8(self): U32 =
+        if self.value < 0x80u32:
+            1u32
+        elif self.value < 0x800u32:
+            2u32
+        elif self.value < 0x10000u32:
+            3u32
+        else:
+            4u32
