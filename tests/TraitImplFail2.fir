@@ -8,5 +8,4 @@ impl T[I32]:
     fn b(self) = ()
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/TraitImplFail2.fir:8:5: Trait I32 does not have a method named b
-
+# expected stderr: tests/TraitImplFail2.fir:8:5: Trait T does not have a method named b

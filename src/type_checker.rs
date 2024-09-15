@@ -578,7 +578,7 @@ fn collect_schemes(
                                 panic!(
                                     "{}: Trait {} does not have a method named {}",
                                     loc_string(&item.loc),
-                                    ty_con_id,
+                                    ty_con.id,
                                     fun_name
                                 )
                             })
