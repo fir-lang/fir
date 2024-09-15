@@ -630,18 +630,19 @@ fn check_field_select(
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, field, tys, loc) {
             Some(scheme) => {
-                let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, loc);
-                if !ty_args.is_empty() {
+                let (method_ty, method_ty_args) = scheme.instantiate(level, var_gen, preds, loc);
+                if !method_ty_args.is_empty() {
                     let expr = std::mem::replace(&mut object.node, ast::Expr::Self_);
+                    // Instantiates associated function.
                     object.node = ast::Expr::Instantiation(
                         ast::Path::Method(Box::new(expr), field.clone()),
-                        ty_args.into_iter().map(Ty::Var).collect(),
+                        method_ty_args.into_iter().map(Ty::Var).collect(),
                     );
                 }
 
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.
-                match ty {
+                match method_ty {
                     Ty::Fun(mut args, ret) => {
                         args.remove(0);
                         Ty::Fun(args, ret)
@@ -649,7 +650,7 @@ fn check_field_select(
                     _ => panic!(
                         "{}: Type of method is not a function type: {:?}",
                         loc_string(loc),
-                        ty
+                        method_ty
                     ),
                 }
             }

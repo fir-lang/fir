@@ -96,7 +96,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
                         assoc_tys: Default::default(),
-                        details: TyConDetails::placeholder(),
+                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                     },
                 );
             }
@@ -113,7 +113,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         id: ty_name.clone(),
                         ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
                         assoc_tys: Default::default(),
-                        details: TyConDetails::placeholder(),
+                        details: TyConDetails::Trait(TraitDetails {
+                            methods: Default::default(),
+                            implementing_tys: Default::default(),
+                        }),
                     },
                 );
             }

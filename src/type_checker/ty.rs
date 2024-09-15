@@ -723,10 +723,6 @@ impl TyCon {
 }
 
 impl TyConDetails {
-    pub(super) fn placeholder() -> Self {
-        TyConDetails::Type(TypeDetails { cons: vec![] })
-    }
-
     pub(super) fn is_trait(&self) -> bool {
         self.trait_details().is_some()
     }
