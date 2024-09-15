@@ -840,20 +840,18 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
     let ty_con = tys.tys.get_con(&ty_con_id).unwrap().clone();
 
-    if ty_con.is_trait() {
-        // Check that the method types match trait method types, with the trait type parameter
-        // replaced by the implementing type.
+    if let Some(trait_details) = ty_con.trait_details() {
         let mut ty_args = match ty_args {
             TyArgs::Positional(ty_args) => ty_args,
-            TyArgs::Named(_) => panic!(),
+            TyArgs::Named(_) => panic!("Trait type parameter cannot be named"),
         };
 
         assert_eq!(ty_args.len(), 1); // checked in the previous pass
         assert_eq!(ty_con.ty_params.len(), 1); // checked in the previous pass
 
-        // Substitute `implementing_ty` for `trait_ty_param` in the trait method types.
-        let implementing_ty = ty_args.pop().unwrap();
+        let self_ty = ty_args.pop().unwrap();
 
+        // Check method bodies.
         for item in &mut impl_.node.items {
             let fun = match &mut item.node {
                 ast::ImplDeclItem::AssocTy(_) => continue,
@@ -883,7 +881,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                 let mut var_gen = TyVarGen::default();
 
-                env.insert(SmolStr::new_static("self"), implementing_ty.clone());
+                env.insert(SmolStr::new_static("self"), self_ty.clone());
 
                 for (param_name, param_ty) in &fun.sig.params {
                     env.insert(
@@ -914,6 +912,50 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
 
             tys.tys.exit_scope();
+        }
+
+        // Check that all methods without default implementations are implemented.
+        let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
+        let mut implemented_method_ids: Set<&Id> = Default::default();
+        for item in &impl_.node.items {
+            let fun_decl = match &item.node {
+                ast::ImplDeclItem::AssocTy(_) => continue,
+                ast::ImplDeclItem::Fun(fun_decl) => fun_decl,
+            };
+            let fun_id = &fun_decl.sig.name.node;
+            match (
+                trait_method_ids.contains(fun_id),
+                implemented_method_ids.contains(fun_id),
+            ) {
+                (true, true) => panic!(
+                    "{}: Trait method {} implemented multiple times",
+                    loc_string(&item.loc),
+                    fun_id
+                ),
+
+                (true, false) => {
+                    implemented_method_ids.insert(fun_id);
+                }
+
+                (false, _) => {
+                    panic!(
+                        "{}: Trait {} does not have method {}",
+                        loc_string(&item.loc),
+                        ty_con_id,
+                        fun_id
+                    )
+                }
+            }
+        }
+        let missing_methods: Vec<&&Id> = trait_method_ids
+            .difference(&implemented_method_ids)
+            .collect();
+        if !missing_methods.is_empty() {
+            panic!(
+                "{}: Trait methods missing: {:?}",
+                loc_string(&impl_.loc),
+                missing_methods
+            );
         }
     } else {
         for item in &mut impl_.node.items {

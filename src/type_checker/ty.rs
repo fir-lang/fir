@@ -714,14 +714,11 @@ impl TyCon {
     }
 
     pub fn is_trait(&self) -> bool {
-        matches!(self.details, TyConDetails::Trait { .. })
+        self.details.is_trait()
     }
 
     pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
-        match &self.details {
-            TyConDetails::Trait(details) => Some(details),
-            _ => None,
-        }
+        self.details.trait_details()
     }
 }
 
@@ -731,7 +728,14 @@ impl TyConDetails {
     }
 
     pub(super) fn is_trait(&self) -> bool {
-        matches!(self, TyConDetails::Trait(_))
+        self.trait_details().is_some()
+    }
+
+    pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
+        match self {
+            TyConDetails::Trait(details) => Some(details),
+            _ => None,
+        }
     }
 }
 
