@@ -597,7 +597,7 @@ fn collect_schemes(
                         // Also add quantified variables of `impl`.
                         trait_fun_scheme
                             .quantified_vars
-                            .splice(0..0, scheme.quantified_vars.iter().cloned());
+                            .splice(0..0, impl_context.iter().cloned());
 
                         if !trait_fun_scheme.eq_modulo_alpha(
                             tys.cons(),
