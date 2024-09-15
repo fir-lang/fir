@@ -615,6 +615,9 @@ pub(super) fn check_expr(
     }
 }
 
+/// Check a `FieldSelect` expr.
+///
+/// `object` must be an `Expr::FieldSelect`.
 fn check_field_select(
     object: &mut ast::L<ast::Expr>,
     ty_con: &Id,
@@ -626,16 +629,28 @@ fn check_field_select(
     var_gen: &mut TyVarGen,
     preds: &mut PredSet,
 ) -> Ty {
-    match select_field(ty_con, ty_args, field, loc, tys) {
+    let field_select = match &mut object.node {
+        ast::Expr::FieldSelect(field_select) => field_select,
+        _ => panic!("BUG: Expressionin `check_field_select` is not a `FieldSelect`"),
+    };
+
+    match select_field(ty_con, ty_args, &field_select.field, loc, tys) {
         Some(ty) => ty,
-        None => match select_method(ty_con, ty_args, field, tys, loc) {
+        None => match select_method(ty_con, ty_args, &field_select.field, tys, loc) {
             Some(scheme) => {
                 let (method_ty, method_ty_args) = scheme.instantiate(level, var_gen, preds, loc);
                 if !method_ty_args.is_empty() {
-                    let expr = std::mem::replace(&mut object.node, ast::Expr::Self_);
-                    // Instantiates associated function.
+                    // Instantiates an associated function.
                     object.node = ast::Expr::Instantiation(
-                        ast::Path::Method(Box::new(expr), field.clone()),
+                        ast::Path::Method(
+                            // Replace detached field_select field with some random expr to avoid
+                            // cloning.
+                            Box::new(std::mem::replace(
+                                &mut field_select.object.node,
+                                ast::Expr::Self_,
+                            )),
+                            field_select.field.clone(),
+                        ),
                         method_ty_args.into_iter().map(Ty::Var).collect(),
                     );
                 }
