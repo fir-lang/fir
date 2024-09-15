@@ -371,7 +371,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 assert!(args[0].node.0.is_none()); // type parameter shouldn't be named
                 args[0].node.1.clone()
             }
-            ast::Type::Record(_) | ast::Type::AssocType { .. } => panic!(), // can't happen
+            ast::Type::Record(_) => panic!(), // can't happen
         };
 
         for (method, method_decl) in trait_methods {

@@ -218,12 +218,6 @@ impl Type {
                 }
                 buffer.push(')');
             }
-
-            Type::AssocType(AssocType { ty, assoc_ty }) => {
-                ty.node.print(buffer);
-                buffer.push('.');
-                buffer.push_str(assoc_ty.as_str());
-            }
         }
     }
 }

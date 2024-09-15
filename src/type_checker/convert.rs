@@ -104,11 +104,6 @@ pub fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
                 })
                 .collect(),
         ),
-
-        ast::Type::AssocType(ast::AssocType { ty, assoc_ty }) => Ty::AssocTySelect {
-            ty: Box::new(convert_ast_ty(tys, &ty.node, &ty.loc)),
-            assoc_ty: assoc_ty.clone(),
-        },
     }
 }
 

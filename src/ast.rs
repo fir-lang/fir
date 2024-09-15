@@ -141,9 +141,6 @@ pub enum Type {
 
     /// An anonymous record type, e.g. `{x: I32, y: I32}`.
     Record(Vec<Named<Type>>),
-
-    /// An associated type, e.g. `Self.Item`.
-    AssocType(AssocType),
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
@@ -550,14 +547,6 @@ impl Type {
                     })
                     .collect(),
             ),
-
-            Type::AssocType(AssocType { ty: ty_, assoc_ty }) => Type::AssocType(AssocType {
-                ty: Box::new(L {
-                    loc: ty_.loc.clone(),
-                    node: ty_.node.subst_var(var, ty),
-                }),
-                assoc_ty: assoc_ty.clone(),
-            }),
         }
     }
 }
