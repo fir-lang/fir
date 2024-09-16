@@ -20,15 +20,16 @@ fn main(input: Str) =
     let b = MyBool.True.print
     let c = MyBool.False.print
     let d = Vec.withCapacity
-    let e = Option.Some
+    let e = Vec.len
+    let f = Option.Some
     a()
     b()
     c()
 
     let vec = d(3)
-    printStr(vec.len.toStr())
+    printStr(e(vec).toStr())
 
-    match e("Hi"):
+    match f("Hi"):
         Option.None: panic("")
         Option.Some(msg): printStr(msg)
 
