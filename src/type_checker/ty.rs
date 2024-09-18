@@ -117,7 +117,7 @@ pub(super) struct TyVarGen {
 #[derive(Debug, Clone)]
 pub struct TyCon {
     /// Name of the type.
-    pub(super) id: Id,
+    pub id: Id,
 
     /// Type parameters with bounds.
     pub(super) ty_params: Vec<(Id, Vec<Ty>)>,
@@ -613,6 +613,54 @@ impl Ty {
                 None => self.clone(),
             },
             _ => self.clone(),
+        }
+    }
+
+    /// Same as `normalize` but normalizes type arguments as well.
+    pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
+        match self {
+            Ty::Var(var_ref) => var_ref.normalize(cons),
+            Ty::Con(con) => match cons.get(con) {
+                Some(ty_con) => match &ty_con.details {
+                    TyConDetails::Synonym(ty) => ty.clone(),
+                    TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
+                },
+                None => self.clone(),
+            },
+            Ty::App(con, args) => Ty::App(
+                con.clone(),
+                match args {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|ty| ty.deep_normalize(cons)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
+                            .collect(),
+                    ),
+                },
+            ),
+            Ty::Record(fields) => Ty::Record(
+                fields
+                    .iter()
+                    .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
+                    .collect(),
+            ),
+            Ty::Fun(args, ret) => Ty::Fun(
+                args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
+                Box::new(ret.deep_normalize(cons)),
+            ),
+            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
+                args.iter()
+                    .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
+                    .collect(),
+                Box::new(ret.deep_normalize(cons)),
+            ),
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.deep_normalize(cons)),
+                assoc_ty: assoc_ty.clone(),
+            },
+            Ty::QVar(_) => panic!(),
         }
     }
 

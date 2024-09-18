@@ -760,25 +760,8 @@ fn eval<W: Write>(
             );
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-            ty,
-            constr: constr_name,
-        }) => {
-            let ty_con = pgm.ty_cons.get(ty).unwrap();
-            let (constr_idx, constr) = ty_con
-                .value_constrs
-                .iter()
-                .enumerate()
-                .find(|(_constr_idx, constr)| constr.name.as_ref().unwrap() == constr_name)
-                .unwrap();
-            let tag = ty_con.type_tag + (constr_idx as u64);
-            ControlFlow::Val(if constr.fields.is_empty() {
-                let addr = heap.allocate(1);
-                heap[addr] = tag;
-                addr
-            } else {
-                heap.allocate_constr(tag)
-            })
+        ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
+            ControlFlow::Val(constr_select(pgm, heap, ty, constr))
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -1145,67 +1128,70 @@ fn eval<W: Write>(
         ast::Expr::Instantiation(path, _tys) => {
             // TODO: After monomorphisation seeing an instantiation node should be a bug.
             match path {
-                ast::Path::TopLevel(var) => match pgm.top_level_funs.get(var) {
+                ast::Path::TopLevel { fun_id } => match pgm.top_level_funs.get(fun_id) {
                     Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                    None => match pgm.ty_cons.get(var) {
-                        Some(ty_con)
-                            if ty_con.value_constrs.len() == 1
-                                && ty_con.value_constrs[0].name.as_ref() == Some(var) =>
-                        {
-                            // TODO: Shouldn't the `name` be `None` above for products constructor
-                            // instantiations, like `Vec[I32]`?
-                            ControlFlow::Val(heap.allocate_constr(ty_con.type_tag))
+                    _ => match pgm.ty_cons.get(fun_id) {
+                        Some(ty_con) => {
+                            let ty_tag = ty_con.type_tag;
+                            let (first_tag, last_tag) = ty_con.tag_range();
+                            assert_eq!(first_tag, last_tag);
+                            ControlFlow::Val(heap.allocate_constr(ty_tag))
                         }
-                        _ => panic!("{}: Unbound variable {}", LocDisplay(loc), var),
+                        None => panic!("{}: Unbound variable {}", LocDisplay(loc), fun_id),
                     },
                 },
 
-                ast::Path::Associated(ty, id) => {
-                    let ty_con = pgm.ty_cons.get(ty).unwrap();
-
-                    // Could be constructor or associated function.
-                    let constr = ty_con
-                        .value_constrs
-                        .iter()
-                        .enumerate()
-                        .find(|(_constr_idx, constr)| constr.name.as_ref() == Some(id));
-
-                    if let Some((constr_idx, constr)) = constr {
-                        let tag = ty_con.type_tag + (constr_idx as u64);
-                        return ControlFlow::Val(if constr.fields.is_empty() {
-                            let addr = heap.allocate(1);
-                            heap[addr] = tag;
-                            addr
-                        } else {
-                            heap.allocate_constr(tag)
-                        });
-                    }
-
-                    // Associated function.
-                    if let Some(fun) = pgm.associated_funs[ty_con.type_tag as usize].get(id) {
-                        return ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx));
-                    }
-
-                    panic!()
+                ast::Path::Constructor { ty_id, constr_id } => {
+                    ControlFlow::Val(constr_select(pgm, heap, ty_id, constr_id))
                 }
 
-                ast::Path::Method(receiver, method) => {
+                ast::Path::AssociatedFn { ty_id, fun_id } => {
+                    let ty_con = pgm.ty_cons.get(ty_id).unwrap();
+                    let fun = pgm.associated_funs[ty_con.type_tag as usize]
+                        .get(fun_id)
+                        .unwrap();
+                    ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx))
+                }
+
+                ast::Path::Method {
+                    receiver,
+                    receiver_ty: _,
+                    method_id,
+                } => {
                     let receiver = val!(eval(w, pgm, heap, locals, receiver, loc));
                     let receiver_tag = heap[receiver as u64];
                     let fun = pgm.associated_funs[receiver_tag as usize]
-                        .get(method)
+                        .get(method_id)
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Receiver with tag {} does not have method {}",
                                 LocDisplay(loc),
                                 receiver_tag,
-                                method
+                                method_id
                             )
                         });
                     ControlFlow::Val(heap.allocate_method(receiver, fun.idx))
                 }
             }
         }
+    }
+}
+
+fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &SmolStr, constr_id: &SmolStr) -> u64 {
+    let ty_con = pgm.ty_cons.get(ty_id).unwrap();
+    let (constr_idx, constr) = ty_con
+        .value_constrs
+        .iter()
+        .enumerate()
+        .find(|(_constr_idx, constr)| constr.name.as_ref().unwrap() == constr_id)
+        .unwrap();
+    let tag = ty_con.type_tag + (constr_idx as u64);
+    if constr.fields.is_empty() {
+        let addr = heap.allocate(1);
+        heap[addr] = tag;
+        addr
+    } else {
+        heap.allocate_constr(tag)
     }
 }
 

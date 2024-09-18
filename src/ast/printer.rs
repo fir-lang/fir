@@ -559,25 +559,35 @@ impl Expr {
 
             Expr::Instantiation(path, tys) => {
                 match path {
-                    Path::TopLevel(id) => {
-                        buffer.push_str(id.as_str());
+                    Path::TopLevel { fun_id } => {
+                        buffer.push_str(fun_id.as_str());
                     }
-                    Path::Associated(ty, id) => {
-                        buffer.push_str(ty.as_str());
-                        buffer.push('.');
-                        buffer.push_str(id.as_str());
+
+                    Path::Constructor {
+                        ty_id,
+                        constr_id: member_id,
                     }
-                    Path::Method(expr, id) => {
-                        let parens = expr_parens(expr);
-                        if parens {
-                            buffer.push('(');
-                        }
-                        expr.print(buffer, indent + 4);
-                        if parens {
-                            buffer.push(')');
-                        }
+                    | Path::AssociatedFn {
+                        ty_id,
+                        fun_id: member_id,
+                    } => {
+                        buffer.push_str(ty_id.as_str());
                         buffer.push('.');
-                        buffer.push_str(id.as_str());
+                        buffer.push_str(member_id.as_str());
+                    }
+
+                    Path::Method {
+                        receiver,
+                        receiver_ty,
+                        method_id,
+                    } => {
+                        buffer.push('(');
+                        receiver.print(buffer, indent + 4);
+                        buffer.push_str(" : ");
+                        buffer.push_str(&receiver_ty.to_string());
+                        buffer.push(')');
+                        buffer.push('.');
+                        buffer.push_str(method_id.as_str());
                     }
                 }
                 buffer.push('[');

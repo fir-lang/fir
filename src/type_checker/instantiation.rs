@@ -38,7 +38,23 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
 
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
-        ast::Expr::Instantiation(_, tys) => tys.iter_mut().for_each(|ty| *ty = ty.normalize(cons)),
+        ast::Expr::Instantiation(path, tys) => {
+            match path {
+                ast::Path::TopLevel { .. }
+                | ast::Path::Constructor { .. }
+                | ast::Path::AssociatedFn { .. } => {}
+
+                ast::Path::Method {
+                    receiver,
+                    receiver_ty,
+                    method_id: _,
+                } => {
+                    normalize_expr(receiver, cons);
+                    *receiver_ty = receiver_ty.deep_normalize(cons);
+                }
+            }
+            tys.iter_mut().for_each(|ty| *ty = ty.deep_normalize(cons))
+        }
 
         ast::Expr::Var(_)
         | ast::Expr::UpperVar(_)

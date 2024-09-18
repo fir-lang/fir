@@ -27,6 +27,20 @@ pub struct Loc {
     pub byte_offset_end: u32,
 }
 
+impl Loc {
+    pub fn dummy() -> Self {
+        Loc {
+            module: "".into(),
+            line_start: 0,
+            col_start: 0,
+            byte_offset_start: 0,
+            line_end: 0,
+            col_end: 0,
+            byte_offset_end: 0,
+        }
+    }
+}
+
 impl<T> L<T> {
     pub fn new(module: &Rc<str>, start: lexgen_util::Loc, end: lexgen_util::Loc, node: T) -> Self {
         L {
@@ -321,7 +335,7 @@ pub enum Expr {
     /// This can be a type or a constructor.
     UpperVar(SmolStr),
 
-    /// A field selection: `x.a`.
+    /// A field or method selection: `<expr>.a`.
     FieldSelect(FieldSelectExpr),
 
     /// A constructor selection: `Option.None`.
@@ -363,11 +377,26 @@ pub enum Expr {
     Instantiation(Path, Vec<crate::type_checker::Ty>),
 }
 
+/// Path to a polymorphic item.
+// TODO: Find a better name.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Path {
-    TopLevel(SmolStr),
-    Associated(SmolStr, SmolStr),
-    Method(Box<Expr>, SmolStr),
+    /// Path to a top-level function.
+    TopLevel { fun_id: SmolStr },
+
+    /// Path to a constructor, e.g. `Option.Some`.
+    Constructor { ty_id: SmolStr, constr_id: SmolStr },
+
+    /// Path to an associated function or method, e.g. `Vec.len` (method), `Vec.withCapacity`
+    /// (associated function).
+    AssociatedFn { ty_id: SmolStr, fun_id: SmolStr },
+
+    /// Path to a method, e.g. `<expr>.a` where `a` is a method.
+    Method {
+        receiver: Box<Expr>,
+        receiver_ty: crate::type_checker::Ty,
+        method_id: SmolStr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

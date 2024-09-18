@@ -32,7 +32,9 @@ pub(super) fn check_expr(
                 // TODO: Do we need to distinguish top-levels from locals?
                 if !ty_args.is_empty() {
                     expr.node = ast::Expr::Instantiation(
-                        ast::Path::TopLevel(var.clone()),
+                        ast::Path::TopLevel {
+                            fun_id: var.clone(),
+                        },
                         ty_args.into_iter().map(Ty::Var).collect(),
                     );
                 }
@@ -49,7 +51,9 @@ pub(super) fn check_expr(
             let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
             if !ty_args.is_empty() {
                 expr.node = ast::Expr::Instantiation(
-                    ast::Path::TopLevel(con.clone()),
+                    ast::Path::TopLevel {
+                        fun_id: con.clone(),
+                    },
                     ty_args.into_iter().map(Ty::Var).collect(),
                 );
             }
@@ -76,7 +80,10 @@ pub(super) fn check_expr(
                         scheme.instantiate(level, var_gen, preds, &expr.loc);
                     if !method_ty_args.is_empty() {
                         expr.node = ast::Expr::Instantiation(
-                            ast::Path::Associated(ty.clone(), field.clone()),
+                            ast::Path::AssociatedFn {
+                                ty_id: ty.clone(),
+                                fun_id: field.clone(),
+                            },
                             method_ty_args.into_iter().map(Ty::Var).collect(),
                         );
                     }
@@ -166,7 +173,10 @@ pub(super) fn check_expr(
             let (con_ty, con_ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
             if !con_ty_args.is_empty() {
                 expr.node = ast::Expr::Instantiation(
-                    ast::Path::Associated(ty.clone(), constr.clone()),
+                    ast::Path::Constructor {
+                        ty_id: ty.clone(),
+                        constr_id: constr.clone(),
+                    },
                     con_ty_args.into_iter().map(Ty::Var).collect(),
                 );
             }
@@ -639,21 +649,26 @@ fn check_field_select(
         None => match select_method(ty_con, ty_args, &field_select.field, tys, loc) {
             Some(scheme) => {
                 let (method_ty, method_ty_args) = scheme.instantiate(level, var_gen, preds, loc);
-                if !method_ty_args.is_empty() {
-                    // Instantiates an associated function.
-                    object.node = ast::Expr::Instantiation(
-                        ast::Path::Method(
-                            // Replace detached field_select field with some random expr to avoid
-                            // cloning.
-                            Box::new(std::mem::replace(
-                                &mut field_select.object.node,
-                                ast::Expr::Self_,
-                            )),
-                            field_select.field.clone(),
-                        ),
-                        method_ty_args.into_iter().map(Ty::Var).collect(),
-                    );
-                }
+                // if !method_ty_args.is_empty() {
+                // Instantiates an associated function.
+                object.node = ast::Expr::Instantiation(
+                    ast::Path::Method {
+                        // Replace detached field_select field with some random expr to avoid
+                        // cloning.
+                        receiver: Box::new(std::mem::replace(
+                            &mut field_select.object.node,
+                            ast::Expr::Self_,
+                        )),
+                        receiver_ty: if ty_args.is_empty() {
+                            Ty::Con(ty_con.clone())
+                        } else {
+                            Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+                        },
+                        method_id: field_select.field.clone(),
+                    },
+                    method_ty_args.into_iter().map(Ty::Var).collect(),
+                );
+                // }
 
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.

@@ -6,6 +6,7 @@ mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
+mod monomorph;
 mod parser;
 mod record_collector;
 mod scanner;
@@ -91,6 +92,7 @@ mod native {
         let mut no_prelude = false;
         let mut no_backtrace = false;
         let mut print_checked_ast = false;
+        let mut monomorphise = false;
         let args: Vec<String> = std::env::args()
             .filter(|arg| match arg.as_str() {
                 "--typecheck" => {
@@ -107,6 +109,10 @@ mod native {
                 }
                 "--print-checked-ast" => {
                     print_checked_ast = true;
+                    false
+                }
+                "--monomorphise" => {
+                    monomorphise = true;
                     false
                 }
                 _ => true,
@@ -149,6 +155,11 @@ mod native {
         }
 
         if !typecheck {
+            // For testing purposes.
+            if monomorphise {
+                module = monomorph::monomorphise(&module, &tys);
+            }
+
             let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
             let mut w = std::io::stdout();
             interpreter::run(&mut w, module, input, &mut tys);
