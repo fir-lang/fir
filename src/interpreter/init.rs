@@ -1,5 +1,4 @@
-use crate::type_checker::{convert_and_bind_context, TyArgs, TyVarConversion};
-use crate::{interpreter::*, type_checker::convert_ast_ty};
+use crate::interpreter::*;
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
     let mut ty_cons: Map<SmolStr, TyCon> = Default::default();
@@ -126,7 +125,6 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
 
 pub fn collect_funs(
     pgm: Vec<L<ast::TopDecl>>,
-    tys: &mut PgmTypes,
 ) -> (Map<SmolStr, Fun>, Map<SmolStr, Map<SmolStr, Fun>>) {
     macro_rules! builtin_top_level_funs {
         ($($fname:expr => $fkind:expr),* $(,)?) => {{
@@ -246,32 +244,12 @@ pub fn collect_funs(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                // Convert impl type to find the type to add the method to.
-                let ast_ty: &ast::Type = &impl_decl.node.ty.node;
-
-                // Bind context types to make `convert_ast_ty` happy.
-                tys.tys.enter_scope();
-                convert_and_bind_context(
-                    &mut tys.tys,
-                    &impl_decl.node.context,
-                    TyVarConversion::ToOpaque, // does not matter
-                    &impl_decl.loc,
-                );
-
-                let ty = convert_ast_ty(&tys.tys, ast_ty, &impl_decl.node.ty.loc);
-
-                // method_ty = type to add the method to.
-                let (mut method_ty, args) = ty.con(tys.tys.cons()).unwrap();
-                if tys.tys.get_con(&method_ty).unwrap().is_trait() {
-                    let args = match args {
-                        TyArgs::Positional(args) => args,
-                        TyArgs::Named(_) => panic!(),
-                    };
-                    assert_eq!(args.len(), 1);
-                    let ty = &args[0];
-                    let (ty_con, _) = ty.con(&Default::default()).unwrap();
-                    method_ty = ty_con;
-                }
+                let implementing_ty = match &impl_decl.node.ty.node {
+                    ast::Type::Named(ast::NamedType { name, args: _ }) => name,
+                    ast::Type::Record(_) => {
+                        panic!("{}: Impl block for record type", LocDisplay(&impl_decl.loc))
+                    }
+                };
 
                 for item in impl_decl.node.items {
                     let fun_decl = match item.node {
@@ -284,7 +262,7 @@ pub fn collect_funs(
                         continue;
                     }
 
-                    let fun_map = associated_funs.entry(method_ty.clone()).or_default();
+                    let fun_map = associated_funs.entry(implementing_ty.clone()).or_default();
                     let fun_idx = fun_map.len();
                     fun_map.insert(
                         fun_decl.sig.name.node.clone(),
@@ -294,8 +272,6 @@ pub fn collect_funs(
                         },
                     );
                 }
-
-                tys.tys.enter_scope();
             }
         }
     }

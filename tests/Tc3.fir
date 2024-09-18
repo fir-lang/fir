@@ -9,7 +9,7 @@ trait T[A]:
 type A:
     i: I32
 
-impl T[A]:
+impl T for A:
     fn test(self): () =
         self.getI32()
         ()

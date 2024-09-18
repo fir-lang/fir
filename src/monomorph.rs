@@ -188,6 +188,7 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
             loc: ast::Loc::dummy(),
             node: ast::ImplDecl {
                 context: vec![],
+                trait_: None,
                 ty: ast::L {
                     loc: ast::Loc::dummy(),
                     node: ast::Type::Named(ast::NamedType {

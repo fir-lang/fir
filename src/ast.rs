@@ -509,17 +509,37 @@ pub enum TraitDeclItem {
 /// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
 pub type Context = Vec<L<(L<SmolStr>, Vec<L<Type>>)>>;
 
-/// An `impl` block, implementing associated methods for a type, or a trait.
+/// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
+///
+/// ```ignore
+/// impl[A] Vec[A]:
+///     # An associated function.
+///     fn withCapacity(cap: U32): Vec[A] = ...
+///
+///     # A method.
+///     fn push(self, elem: A) = ...
+///
+/// impl[A: ToStr] ToStr for Vec[A]:
+///   fn toStr(self): Str = ...
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImplDecl {
     /// Type parameters of the type being implemented, with bounds.
+    ///
+    /// In the first example, this is `[A]`. In the second example: `[A: ToStr]`.
     pub context: Context,
 
-    /// The type being implemented.
+    /// If the `impl` block is for a trait, the trait name.
     ///
-    /// This can be a trait (e.g. `Debug[Vec[T]]`) or a type (e.g. `Vec[T]`).
+    /// In the first example this is `None`. In the second this is `Some(ToStr)`.
+    pub trait_: Option<L<SmolStr>>,
+
+    /// The implementing type.
+    ///
+    /// In both of the examples this is `Vec[A]`.
     pub ty: L<Type>,
 
+    /// Functions, methods, and associated types.
     pub items: Vec<L<ImplDeclItem>>,
 }
 

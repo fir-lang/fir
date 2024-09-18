@@ -143,7 +143,7 @@ mod native {
             !no_prelude, // import_prelude
         );
 
-        let mut tys = type_checker::check_module(&mut module);
+        let tys = type_checker::check_module(&mut module);
 
         if print_checked_ast {
             let mut buffer = String::new();
@@ -162,7 +162,7 @@ mod native {
 
             let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
             let mut w = std::io::stdout();
-            interpreter::run(&mut w, module, input, &mut tys);
+            interpreter::run(&mut w, module, input);
         }
     }
 

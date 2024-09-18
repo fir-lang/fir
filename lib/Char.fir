@@ -2,7 +2,7 @@
 type Char:
     value: U32
 
-impl Eq[Char]:
+impl Eq for Char:
     fn __eq(self, other: Char): Bool =
         self.value == other.value
 

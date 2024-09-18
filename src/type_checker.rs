@@ -11,7 +11,7 @@ mod ty_map;
 mod unification;
 
 use convert::convert_fields;
-pub use convert::*;
+use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
@@ -302,6 +302,11 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             _ => continue,
         };
 
+        let trait_con_id = match &impl_decl.trait_ {
+            Some(trait_id) => &trait_id.node,
+            None => continue,
+        };
+
         // New scope for the context.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
@@ -315,20 +320,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
 
-        let (trait_con_id, trait_con_args) = match impl_ty.con(tys.cons()) {
-            Some(con_and_args) => con_and_args,
-            None => {
-                tys.exit_scope();
-                continue;
-            }
-        };
-
-        let trait_con_args = match trait_con_args {
-            TyArgs::Positional(args) => args,
-            TyArgs::Named(_) => panic!(), // can't happen, should be checked earlier?
-        };
-
-        let trait_ty_con = tys.get_con_mut(&trait_con_id).unwrap();
+        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap();
 
         let (trait_methods, trait_implementing_tys) = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails {
@@ -341,9 +333,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
         };
 
-        assert_eq!(trait_con_args.len(), 1);
-        assert_eq!(trait_ty_con.ty_params.len(), 1);
-
         // Type parameter of the trait, e.g. `T` in `trait Debug[T]: ...`.
         let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
 
@@ -351,7 +340,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         // TODO: We are passing empty con map here to avoid borrow checking issues. This will fail
         // when the trait arugment is a type synonym, which we should reject anyway, but with a
         // proper error message.
-        let (self_ty_con, _) = trait_con_args[0].con(&Default::default()).unwrap();
+        let (self_ty_con, _) = impl_ty.con(&Default::default()).unwrap();
 
         if !trait_implementing_tys.insert(self_ty_con.clone()) {
             panic!(
@@ -361,18 +350,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 self_ty_con
             );
         }
-
-        // The self type, e.g. in `Iterator[VecIter[T]]`, this is `VecIter[T]`. AST type instead of
-        // type checking type to be able to substitute the self type for the type parameter of the
-        // trait in default methods.
-        let self_ast_ty = match &impl_decl.ty.node {
-            ast::Type::Named(ast::NamedType { name: _, args }) => {
-                assert_eq!(args.len(), 1);
-                assert!(args[0].node.0.is_none()); // type parameter shouldn't be named
-                args[0].node.1.clone()
-            }
-            ast::Type::Record(_) => panic!(), // can't happen
-        };
 
         for (method, method_decl) in trait_methods {
             if impl_decl.items.iter().any(|item| match &item.node {
@@ -394,7 +371,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     .map(|(param, param_ty)| {
                         (
                             param,
-                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &self_ast_ty.node)),
+                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &impl_decl.ty.node)),
                         )
                     })
                     .collect();
@@ -469,36 +446,12 @@ fn collect_schemes(
                     &impl_decl.loc,
                 );
 
-                let mut self_ty: Ty =
+                let self_ty: Ty =
                     convert_ast_ty(tys, &impl_decl.node.ty.node, &impl_decl.node.ty.loc);
 
-                let (mut ty_con_id, ty_args) = self_ty.con(tys.cons()).unwrap();
-                let ty_con = match tys.get_con(&ty_con_id) {
-                    Some(ty_con) => ty_con.clone(),
-                    None => panic!("{}: Unknown type {}", loc_string(&impl_decl.loc), ty_con_id),
-                };
+                let (self_ty_con_id, _) = self_ty.con(tys.cons()).unwrap();
 
-                if ty_con.is_trait() {
-                    let mut ty_args = match ty_args {
-                        TyArgs::Positional(args) => args,
-                        TyArgs::Named(_) => panic!(), // should've been checked in collect_cons
-                    };
-
-                    assert_eq!(ty_args.len(), 1); // should've been checked in collect_cons
-
-                    // Add the associated method to the type rather than to the trait.
-                    self_ty = ty_args.pop().unwrap();
-                    let (ty_con_id_, _) = self_ty.con(tys.cons()).unwrap_or_else(|| {
-                        panic!(
-                            "{}: Trait type argument needs to be a type constructor, but it is {:?}",
-                            loc_string(&impl_decl.loc),
-                            self_ty
-                        )
-                    });
-                    ty_con_id = ty_con_id_;
-
-                    bind_associated_types(impl_decl, tys);
-                }
+                bind_associated_types(impl_decl, tys);
 
                 for item in &impl_decl.node.items {
                     let fun = match &item.node {
@@ -550,7 +503,7 @@ fn collect_schemes(
                     };
 
                     let old = associated_schemes
-                        .entry(ty_con_id.clone())
+                        .entry(self_ty_con_id.clone())
                         .or_default()
                         .insert(fun.sig.name.node.clone(), scheme.clone());
 
@@ -559,7 +512,7 @@ fn collect_schemes(
                             "{}: Associated function {} for type {} is defined multiple times",
                             loc_string(&item.loc),
                             fun.sig.name.node,
-                            ty_con_id
+                            self_ty_con_id
                         );
                     }
 
@@ -568,26 +521,26 @@ fn collect_schemes(
 
                     // If this is a trait method, check that the type matches the method type in
                     // the trait.
-                    if let TyConDetails::Trait(TraitDetails {
-                        methods: trait_methods,
-                        ..
-                    }) = &ty_con.details
-                    {
+                    if let Some(trait_id) = &impl_decl.node.trait_ {
+                        let trait_ty_con = tys.cons().get(&trait_id.node).unwrap();
+                        let trait_details = trait_ty_con.trait_details().unwrap();
+
                         let fun_name: &Id = &fun.sig.name.node;
 
-                        let trait_fun_scheme = &trait_methods
+                        let trait_fun_scheme = &trait_details
+                            .methods
                             .get(fun_name)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Trait {} does not have a method named {}",
                                     loc_string(&item.loc),
-                                    ty_con.id,
+                                    trait_ty_con.id,
                                     fun_name
                                 )
                             })
                             .scheme;
 
-                        let trait_ty_param = &ty_con.ty_params[0].0;
+                        let trait_ty_param = &trait_ty_con.ty_params[0].0;
 
                         // Type of the method in the trait declaration, with `self` type substituted for the
                         // type implementing the trait.

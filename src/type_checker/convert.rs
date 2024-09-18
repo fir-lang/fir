@@ -19,7 +19,7 @@ here as helpers.
 */
 
 /// Convert an AST type to type checking type.
-pub fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
+pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
             if let Some(ty) = tys.get_var(name) {
@@ -130,14 +130,14 @@ pub(super) fn convert_fields(
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum TyVarConversion {
+pub(super) enum TyVarConversion {
     ToOpaque,
     ToQVar,
 }
 
 /// Convert the context to type checking types, update `tys` (in the current scope) with the
 /// context types.
-pub fn convert_and_bind_context(
+pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
     context_ast: &ast::Context,
     conversion: TyVarConversion,

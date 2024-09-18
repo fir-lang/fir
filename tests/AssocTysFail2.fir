@@ -9,7 +9,7 @@ trait Test[A]:
     type T
     fn test(self): T
 
-impl Test[A]:
+impl Test for A:
     type T = I32
     fn test(self): Str =
         "hi"
@@ -20,4 +20,3 @@ impl Test[A]:
 # tests/AssocTysFail2.fir:14:5: Trait method implementation of test does not match the trait method type
 #                                 Trait method type:          Fn(A): T
 #                                 Implementation method type: Fn(A): Str
-

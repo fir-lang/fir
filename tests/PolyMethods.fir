@@ -4,7 +4,7 @@ trait T[A]:
 type X:
     value: I32
 
-impl T[X]:
+impl T for X:
     fn f[Q: ToStrView](self, q: Q) =
         printStr("X.f called with q = `q.toStrView()`")
 

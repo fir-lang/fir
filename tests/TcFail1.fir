@@ -4,7 +4,7 @@ prim type I32
 trait T[A]:
     fn toStr(self): Str
 
-impl T[Str]:
+impl T for Str:
     fn toStr(self): I32 =
         123
 
@@ -14,4 +14,3 @@ impl T[Str]:
 # tests/TcFail1.fir:8:5: Trait method implementation of toStr does not match the trait method type
 #                                 Trait method type:          Fn(Str): Str
 #                                 Implementation method type: Fn(Str): I32
-

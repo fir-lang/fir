@@ -3,7 +3,7 @@ prim type I32
 trait T[A]:
     fn a(self)
 
-impl T[I32]:
+impl T for I32:
     fn a(self): I32 = 123
 
 # args: --typecheck --no-prelude --no-backtrace

@@ -10,10 +10,10 @@ trait Eq[T]:
 trait Add[T]:
     fn __add(self, other: T): T
 
-impl Eq[I32]:
+impl Eq for I32:
     prim fn __eq(self, other: I32): Bool
 
-impl Add[I32]:
+impl Add for I32:
     prim fn __add(self, other: I32): I32
 
 type Option[T]:
@@ -35,7 +35,7 @@ type ArrayIter[T]:
     array: Array[T]
     idx: I32
 
-impl[T] Iterator[ArrayIter[T]]:
+impl[T] Iterator for ArrayIter[T]:
     type Item = T
 
     fn next(self): Option[T] =

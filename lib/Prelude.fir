@@ -58,24 +58,24 @@ type Void
 
 prim type Str
 
-impl Eq[Str]:
+impl Eq for Str:
     prim fn __eq(self, other: Str): Bool
 
 impl Str:
     prim fn len(self): I32
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
 
-impl ToStrView[Str]:
+impl ToStrView for Str:
     fn toStrView(self): StrView =
         self.substr(0, self.len())
 
 prim type StrView
 
-impl ToStrView[StrView]:
+impl ToStrView for StrView:
     fn toStrView(self): StrView =
         self
 
-impl Eq[StrView]:
+impl Eq for StrView:
     prim fn __eq(self, other: StrView): Bool
 
 impl StrView:
@@ -136,7 +136,6 @@ impl Bool:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
 
-impl ToStrView[Bool]:
+impl ToStrView for Bool:
     fn toStrView(self): StrView =
         self.toStr().toStrView()
-

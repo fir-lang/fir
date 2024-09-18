@@ -16,7 +16,6 @@ use crate::ast::{self, Loc, L};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
-use crate::type_checker::PgmTypes;
 
 use std::cmp::Ordering;
 use std::io::Write;
@@ -24,9 +23,9 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str, tys: &mut PgmTypes) {
+pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap, tys);
+    let pgm = Pgm::new(pgm, &mut heap);
 
     // Allocate command line arguments to be passed to the program.
     let input = heap.allocate_str(pgm.str_ty_tag, input.as_bytes());
@@ -256,7 +255,7 @@ macro_rules! val {
 }
 
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, tys: &mut PgmTypes) -> Pgm {
+    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap) -> Pgm {
         // Initialize `ty_cons`.
         let (ty_cons, mut next_type_tag): (Map<SmolStr, TyCon>, u64) = init::collect_types(&pgm);
 
@@ -323,7 +322,7 @@ impl Pgm {
         }
 
         // Initialize `associated_funs` and `top_level_funs`.
-        let (top_level_funs, associated_funs) = init::collect_funs(pgm, tys);
+        let (top_level_funs, associated_funs) = init::collect_funs(pgm);
 
         let mut associated_funs_vec: Vec<Map<SmolStr, Fun>> =
             vec![Default::default(); next_type_tag as usize];

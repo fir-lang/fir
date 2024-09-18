@@ -10,12 +10,12 @@ trait Test[A]:
     type T
     fn test(self): T
 
-impl Test[A]:
+impl Test for A:
     type T = I32
     fn test(self): T =
         123
 
-impl Test[B]:
+impl Test for B:
     type T = I32
     fn test(self): I32 =
         123

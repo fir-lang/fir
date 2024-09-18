@@ -789,10 +789,11 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <ty:LType> ":"
+    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LType> ":"
             NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
+            trait_,
             ty,
             items,
         })
