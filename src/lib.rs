@@ -143,7 +143,7 @@ mod native {
             !no_prelude, // import_prelude
         );
 
-        let tys = type_checker::check_module(&mut module);
+        type_checker::check_module(&mut module);
 
         if print_checked_ast {
             let mut buffer = String::new();
@@ -157,7 +157,7 @@ mod native {
         if !typecheck {
             // For testing purposes.
             if monomorphise {
-                module = monomorph::monomorphise(&module, &tys);
+                module = monomorph::monomorphise(&module);
             }
 
             let input = args.get(2).map(|s| s.as_str()).unwrap_or("");

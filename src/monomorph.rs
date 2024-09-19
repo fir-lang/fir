@@ -55,7 +55,7 @@ to collect and monomorphise types in patterns.
 use crate::ast;
 use crate::collections::Map;
 use crate::interpolation::StringPart;
-use crate::type_checker::{Id, PgmTypes, Ty, TyArgs};
+use crate::type_checker::{Id, Ty, TyArgs};
 
 use smol_str::SmolStr;
 
@@ -89,7 +89,7 @@ struct PgmGraph {
 
 // TODO: This drops traits, we should copy missing methods with default implementations before
 // converting to the graph.
-fn pgm_to_graph(pgm: Vec<ast::TopDecl>, tys: &PgmTypes) -> PgmGraph {
+fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
     let mut top: Map<Id, ast::FunDecl> = Default::default();
     let mut associated: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
     let mut ty: Map<Id, ast::TypeDecl> = Default::default();
@@ -112,23 +112,7 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>, tys: &PgmTypes) -> PgmGraph {
 
             ast::TopDecl::Impl(impl_decl) => {
                 let ty_id = match &impl_decl.node.ty.node {
-                    ast::Type::Named(ast::NamedType { name, args }) => {
-                        let con = tys.tys.get_con(name).unwrap();
-                        if con.is_trait() {
-                            let ty_con = &args[0];
-                            assert!(
-                                ty_con.node.0.is_none(),
-                                "BUG: Trait argument is an associated type"
-                            );
-                            let implementing_ty = &ty_con.node.1.node;
-                            match implementing_ty {
-                                ast::Type::Named(ast::NamedType { name, args: _ }) => name.clone(),
-                                _ => panic!(), // should be checked by type checker
-                            }
-                        } else {
-                            con.id.clone()
-                        }
-                    }
+                    ast::Type::Named(ast::NamedType { name, args: _ }) => name.clone(),
                     _ => panic!(), // should be checked by type checker
                 };
 
@@ -211,8 +195,8 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
 }
 
 // Testing.
-pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], tys: &PgmTypes) -> Vec<ast::L<ast::TopDecl>> {
-    let poly_pgm = pgm_to_graph(pgm.iter().map(|decl| decl.node.clone()).collect(), tys);
+pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>]) -> Vec<ast::L<ast::TopDecl>> {
+    let poly_pgm = pgm_to_graph(pgm.iter().map(|decl| decl.node.clone()).collect());
     let mut mono_pgm = PgmGraph::default();
 
     let main = poly_pgm.top.get("main").unwrap();
