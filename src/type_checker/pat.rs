@@ -111,7 +111,7 @@ pub(super) fn check_pat(
 
                         match pat_con_name {
                             Some(pat_con_name) =>
-                                tys.associated_schemes
+                                tys.associated_fn_schemes
                                     .get(&ty_con.id)
                                     .unwrap_or_else(|| {
                                         panic!(

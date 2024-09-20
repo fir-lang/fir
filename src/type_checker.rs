@@ -29,8 +29,13 @@ pub struct PgmTypes {
     /// Type schemes of top-level values.
     pub top_schemes: Map<Id, Scheme>,
 
-    /// Type schemes of associated functions.
-    pub associated_schemes: Map<Id, Map<Id, Scheme>>,
+    /// Type schemes of associated functions and constructors.
+    pub associated_fn_schemes: Map<Id, Map<Id, Scheme>>,
+
+    /// Type schemes of methods.
+    ///
+    /// Methods take a receiver.
+    pub method_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -70,10 +75,11 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 /// Does not type check the code, only collects types and type schemes.
 fn collect_types(module: &mut ast::Module) -> PgmTypes {
     let mut tys = collect_cons(module);
-    let (top_schemes, associated_schemes) = collect_schemes(module, &mut tys);
+    let (top_schemes, associated_fn_schemes, method_schemes) = collect_schemes(module, &mut tys);
     PgmTypes {
         top_schemes,
-        associated_schemes,
+        associated_fn_schemes,
+        method_schemes,
         tys,
     }
 }
@@ -392,9 +398,14 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 fn collect_schemes(
     module: &ast::Module,
     tys: &mut TyMap,
-) -> (Map<Id, Scheme>, Map<Id, Map<Id, Scheme>>) {
+) -> (
+    Map<Id, Scheme>,
+    Map<Id, Map<Id, Scheme>>,
+    Map<Id, Map<Id, Scheme>>,
+) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
-    let mut associated_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
+    let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
+    let mut method_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
 
     for decl in module {
         // New scope for type and function contexts.
@@ -502,18 +513,41 @@ fn collect_schemes(
                         loc: item.loc.clone(),
                     };
 
-                    let old = associated_schemes
-                        .entry(self_ty_con_id.clone())
-                        .or_default()
-                        .insert(fun.sig.name.node.clone(), scheme.clone());
+                    if sig.self_ {
+                        let old = method_schemes
+                            .entry(self_ty_con_id.clone())
+                            .or_default()
+                            .insert(fun.sig.name.node.clone(), scheme.clone());
 
-                    if old.is_some() {
-                        panic!(
-                            "{}: Associated function {} for type {} is defined multiple times",
-                            loc_string(&item.loc),
-                            fun.sig.name.node,
-                            self_ty_con_id
-                        );
+                        // Add the type key to associated_fn_schemes to make lookups easier.
+                        associated_fn_schemes
+                            .entry(self_ty_con_id.clone())
+                            .or_default();
+
+                        if old.is_some() {
+                            panic!(
+                                "{}: Method {} for type {} is defined multiple times",
+                                loc_string(&item.loc),
+                                fun.sig.name.node,
+                                self_ty_con_id
+                            );
+                        }
+                    } else {
+                        let old = associated_fn_schemes
+                            .entry(self_ty_con_id.clone())
+                            .or_default()
+                            .insert(fun.sig.name.node.clone(), scheme.clone());
+
+                        method_schemes.entry(self_ty_con_id.clone()).or_default();
+
+                        if old.is_some() {
+                            panic!(
+                                "{}: Associated function {} for type {} is defined multiple times",
+                                loc_string(&item.loc),
+                                fun.sig.name.node,
+                                self_ty_con_id
+                            );
+                        }
                     }
 
                     tys.exit_scope();
@@ -627,7 +661,7 @@ fn collect_schemes(
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
-                            let old = associated_schemes
+                            let old = associated_fn_schemes
                                 .entry(ty_decl.node.name.clone())
                                 .or_default()
                                 .insert(con.name.clone(), scheme);
@@ -683,7 +717,7 @@ fn collect_schemes(
 
     assert_eq!(tys.len_scopes(), 1);
 
-    (top_schemes, associated_schemes)
+    (top_schemes, associated_fn_schemes, method_schemes)
 }
 
 /// Type check a top-level function.
@@ -696,14 +730,14 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let mut old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
+    let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
 
     for (var, bounds) in &scheme.quantified_vars {
         tys.tys.insert_var(var.clone(), Ty::Con(var.clone()));
         tys.tys.insert_con(var.clone(), TyCon::opaque(var.clone()));
 
         // Bind trait methods to the ty con.
-        old_assoc_schemes.insert(var.clone(), tys.associated_schemes.remove(var));
+        old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
 
         for (trait_, _assoc_tys) in bounds {
             // It should be checked when converting the bounds that the ty cons are bound and
@@ -717,7 +751,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
                     method
                         .scheme
                         .subst(&trait_ty_param.0, &Ty::Con(var.clone()), &fun.loc);
-                tys.associated_schemes
+                tys.method_schemes
                     .entry(var.clone())
                     .or_default()
                     .insert(method_id.clone(), method_scheme);
@@ -756,7 +790,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
+    unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
     tys.tys.exit_scope();
 
@@ -824,7 +858,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 &impl_.loc,
             );
 
-            let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
+            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -865,7 +899,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 resolve_preds(&Default::default(), tys, &preds);
             }
 
-            unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
+            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
         }
@@ -931,7 +965,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 &item.loc,
             );
 
-            let old_assoc_schemes = bind_type_params(&bounds, tys, &item.loc);
+            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -972,7 +1006,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 resolve_preds(&Default::default(), tys, &preds);
             }
 
-            unbind_type_params(old_assoc_schemes, &mut tys.associated_schemes);
+            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
             assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
@@ -1059,10 +1093,10 @@ fn bind_type_params(
     tys: &mut PgmTypes,
     loc: &ast::Loc,
 ) -> Map<SmolStr, Option<Map<SmolStr, Scheme>>> {
-    let mut old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
+    let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
 
     for (var, bounds) in params {
-        old_assoc_schemes.insert(var.clone(), tys.associated_schemes.remove(var));
+        old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
 
         for (trait_, _assoc_tys) in bounds {
             // It should be checked when converting the bounds that the ty cons are bound and
@@ -1076,7 +1110,7 @@ fn bind_type_params(
                     method
                         .scheme
                         .subst(&trait_ty_param.0, &Ty::Con(var.clone()), loc);
-                tys.associated_schemes
+                tys.method_schemes
                     .entry(var.clone())
                     .or_default()
                     .insert(method_id.clone(), method_scheme);
@@ -1084,7 +1118,7 @@ fn bind_type_params(
         }
     }
 
-    old_assoc_schemes
+    old_method_schemes
 }
 
 fn unbind_type_params(

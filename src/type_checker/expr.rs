@@ -122,7 +122,7 @@ pub(super) fn check_expr(
 
         ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
             let scheme = tys
-                .associated_schemes
+                .associated_fn_schemes
                 .get(ty)
                 .unwrap_or_else(|| {
                     panic!(
@@ -155,10 +155,11 @@ pub(super) fn check_expr(
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
             let scheme = tys
-                .associated_schemes
+                .associated_fn_schemes
                 .get(ty)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_string(&expr.loc), ty))
                 .get(member)
+                .or_else(|| tys.method_schemes.get(ty).unwrap().get(member))
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have associated function {}",
@@ -731,7 +732,7 @@ pub(super) fn select_field(
     }
 }
 
-/// Try to select a method.
+/// Try to select a method. Does not select associated functions.
 fn select_method(
     ty_con: &Id,
     ty_args: &[Ty],
@@ -742,7 +743,7 @@ fn select_method(
     let ty_con = tys.tys.get_con(ty_con).unwrap();
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
-    let ty_methods = tys.associated_schemes.get(&ty_con.id)?;
+    let ty_methods = tys.method_schemes.get(&ty_con.id)?;
     let mut scheme = ty_methods.get(field)?.clone();
 
     for (ty_param, ty_arg) in ty_con.ty_params.iter().zip(ty_args.iter()) {
