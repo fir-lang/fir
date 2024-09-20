@@ -15,10 +15,10 @@ use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
-pub use ty::{Id, Ty, TyArgs};
+pub use ty::{Ty, TyArgs};
 use ty_map::TyMap;
 
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeMap, Set};
 
 use smol_str::SmolStr;

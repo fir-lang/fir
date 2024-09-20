@@ -8,6 +8,8 @@ use std::rc::Rc;
 
 use smol_str::SmolStr;
 
+pub type Id = SmolStr;
+
 /// Things with location information.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct L<T> {
@@ -115,10 +117,10 @@ pub enum TopDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeDecl {
     /// The type name, e.g. `Vec`.
-    pub name: SmolStr,
+    pub name: Id,
 
     /// Type parameters, e.g. `[T]`.
-    pub type_params: Vec<SmolStr>,
+    pub type_params: Vec<Id>,
 
     /// Constructors of the type.
     pub rhs: Option<TypeDeclRhs>,
@@ -137,14 +139,14 @@ pub enum TypeDeclRhs {
 /// A sum type constructor.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstructorDecl {
-    pub name: SmolStr,
+    pub name: Id,
     pub fields: ConstructorFields,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConstructorFields {
     Empty,
-    Named(Vec<(SmolStr, Type)>),
+    Named(Vec<(Id, Type)>),
     Unnamed(Vec<Type>),
 }
 
@@ -161,19 +163,19 @@ pub enum Type {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
-    pub name: SmolStr,
+    pub name: Id,
 
     /// Arguments and associated types of the tyep constructor. Examples:
     ///
     /// - In `I32`, `[]`.
     /// - In `Vec[I32]`, `[(None, I32)]`.
     /// - In `Iterator[Item = A]`, `[(Some(Item), A)]`.
-    pub args: Vec<L<(Option<SmolStr>, L<Type>)>>,
+    pub args: Vec<L<(Option<Id>, L<Type>)>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Named<T> {
-    pub name: Option<SmolStr>,
+    pub name: Option<Id>,
     pub node: T,
 }
 
@@ -183,7 +185,7 @@ pub struct AssocType {
     pub ty: Box<L<Type>>,
 
     /// In `Self.Item`, `Item`.
-    pub assoc_ty: SmolStr,
+    pub assoc_ty: Id,
 }
 
 /// Type signature part of a function declaration, including name, type parameters, parameters,
@@ -191,7 +193,7 @@ pub struct AssocType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunSig {
     /// Name of the function, e.g. in `fn f()` this is `f`.
-    pub name: L<SmolStr>,
+    pub name: L<Id>,
 
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
     ///
@@ -202,7 +204,7 @@ pub struct FunSig {
     pub self_: bool,
 
     /// Parameters of the function.
-    pub params: Vec<(SmolStr, L<Type>)>,
+    pub params: Vec<(Id, L<Type>)>,
 
     /// Optional return type.
     pub return_ty: Option<L<Type>>,
@@ -254,7 +256,7 @@ pub struct Alt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Pat {
     /// Matches anything, binds it to variable.
-    Var(SmolStr),
+    Var(Id),
 
     /// Matches a constructor.
     Constr(ConstrPattern),
@@ -271,7 +273,7 @@ pub enum Pat {
     Char(char),
 
     /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
-    StrPfx(String, SmolStr),
+    StrPfx(String, Id),
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
@@ -285,8 +287,8 @@ pub struct ConstrPattern {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Constructor {
-    pub type_: SmolStr,
-    pub constr: Option<SmolStr>,
+    pub type_: Id,
+    pub constr: Option<Id>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -313,7 +315,7 @@ pub enum AssignOp {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ForStmt {
-    pub var: SmolStr,
+    pub var: Id,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
     pub body: Vec<L<Stmt>>,
@@ -328,14 +330,17 @@ pub struct WhileStmt {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
     /// A variable: `x`.
-    Var(SmolStr),
+    Var(Id),
 
-    /// An uppercase identifier: `X`.
+    /// A constructor: `Vec`, `Bool`, `I32`.
+    UpperVar(Id),
+
+    /// A field, method, or associated function selection: `<expr>.a`.
     ///
-    /// This can be a type or a constructor.
-    UpperVar(SmolStr),
-
-    /// A field or method selection: `<expr>.a`.
+    /// Selection type depends on `<expr>`:
+    ///
+    /// - `UpperVar`: select associated function or method.
+    /// - Any other expression: select field or method.
     FieldSelect(FieldSelectExpr),
 
     /// A constructor selection: `Option.None`.
@@ -382,20 +387,20 @@ pub enum Expr {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Path {
     /// Path to a top-level function.
-    TopLevel { fun_id: SmolStr },
+    TopLevel { fun_id: Id },
 
     /// Path to a constructor, e.g. `Option.Some`.
-    Constructor { ty_id: SmolStr, constr_id: SmolStr },
+    Constructor { ty_id: Id, constr_id: Id },
 
     /// Path to an associated function or method, e.g. `Vec.len` (method), `Vec.withCapacity`
     /// (associated function).
-    AssociatedFn { ty_id: SmolStr, fun_id: SmolStr },
+    AssociatedFn { ty_id: Id, fun_id: Id },
 
     /// Path to a method, e.g. `<expr>.a` where `a` is a method.
     Method {
         receiver: Box<Expr>,
         receiver_ty: crate::type_checker::Ty,
-        method_id: SmolStr,
+        method_id: Id,
     },
 }
 
@@ -407,20 +412,20 @@ pub struct CallExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CallArg {
-    pub name: Option<SmolStr>,
+    pub name: Option<Id>,
     pub expr: L<Expr>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
-    pub field: SmolStr,
+    pub field: Id,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstrSelectExpr {
-    pub ty: SmolStr,
-    pub constr: SmolStr,
+    pub ty: Id,
+    pub constr: Id,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -480,17 +485,17 @@ pub enum UnOp {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     /// Import path, e.g. `Fir.Prelude`.
-    pub path: Vec<SmolStr>,
+    pub path: Vec<Id>,
     // TODO: Imported thing list, renaming (`as`).
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TraitDecl {
     /// Trait name.
-    pub name: L<SmolStr>,
+    pub name: L<Id>,
 
     /// Type parameter of the trait, with bounds.
-    pub ty: L<(SmolStr, Vec<L<Type>>)>,
+    pub ty: L<(Id, Vec<L<Type>>)>,
 
     pub items: Vec<L<TraitDeclItem>>,
 }
@@ -498,7 +503,7 @@ pub struct TraitDecl {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TraitDeclItem {
     /// An associated type, e.g. `type Item`.
-    AssocTy(SmolStr),
+    AssocTy(Id),
 
     /// A method, potentially with a body (default implementation).
     Fun(FunDecl),
@@ -507,7 +512,7 @@ pub enum TraitDeclItem {
 /// Type parameters of a function or `impl` block.
 ///
 /// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
-pub type Context = Vec<L<(L<SmolStr>, Vec<L<Type>>)>>;
+pub type Context = Vec<L<(L<Id>, Vec<L<Type>>)>>;
 
 /// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
 ///
@@ -532,7 +537,7 @@ pub struct ImplDecl {
     /// If the `impl` block is for a trait, the trait name.
     ///
     /// In the first example this is `None`. In the second this is `Some(ToStr)`.
-    pub trait_: Option<L<SmolStr>>,
+    pub trait_: Option<L<Id>>,
 
     /// The implementing type.
     ///
@@ -554,12 +559,12 @@ pub enum ImplDeclItem {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssocTyDecl {
-    pub name: SmolStr,
+    pub name: Id,
     pub ty: L<Type>,
 }
 
 impl Type {
-    pub fn subst_var(&self, var: &SmolStr, ty: &Type) -> Type {
+    pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
         match ty {
             Type::Named(NamedType { name, args }) => {
                 if name == var {

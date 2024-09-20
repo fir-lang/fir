@@ -1,5 +1,6 @@
+use crate::ast::Id;
 use crate::collections::ScopeMap;
-use crate::type_checker::{Id, Ty, TyCon};
+use crate::type_checker::{Ty, TyCon};
 
 /// A map of type constructors and variables in scope.
 #[derive(Debug, Default)]

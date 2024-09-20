@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::type_checker::unification::unify;
 use crate::type_checker::*;
 

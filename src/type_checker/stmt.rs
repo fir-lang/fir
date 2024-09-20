@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::scope_map::ScopeMap;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};

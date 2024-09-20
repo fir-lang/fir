@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::Set;
 use crate::scope_map::ScopeMap;
 use crate::type_checker::apply::apply;

@@ -1,6 +1,6 @@
 //! Syntax for type checking types.
 
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeMap, Set};
 use crate::type_checker::loc_string;
 
@@ -8,9 +8,6 @@ use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 use smol_str::SmolStr;
-
-// Use AST id type for now to avoid a renaming pass.
-pub type Id = SmolStr;
 
 /// A type scheme.
 #[derive(Debug, Clone)]

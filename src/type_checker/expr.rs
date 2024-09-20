@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::scope_map::ScopeMap;
@@ -244,8 +244,8 @@ pub(super) fn check_expr(
                         }
                     }
 
-                    let param_names: Set<&SmolStr> = param_tys.keys().collect();
-                    let arg_names: Set<&SmolStr> =
+                    let param_names: Set<&Id> = param_tys.keys().collect();
+                    let arg_names: Set<&Id> =
                         args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
                     if param_names != arg_names {
@@ -258,7 +258,7 @@ pub(super) fn check_expr(
                     }
 
                     for arg in args {
-                        let arg_name: &SmolStr = arg.name.as_ref().unwrap();
+                        let arg_name: &Id = arg.name.as_ref().unwrap();
                         let param_ty: &Ty = param_tys.get(arg_name).unwrap();
                         let arg_ty = check_expr(
                             &mut arg.expr,

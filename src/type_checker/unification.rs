@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::{ScopeMap, Set};
 use crate::type_checker::loc_string;
 use crate::type_checker::ty::*;

@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::Set;
 
 use std::path::PathBuf;
@@ -22,7 +22,7 @@ pub fn resolve_imports(
     import_prelude: bool,
 ) -> ast::Module {
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
-    let mut imported_modules: Set<Vec<SmolStr>> = Default::default();
+    let mut imported_modules: Set<Vec<Id>> = Default::default();
 
     let fir_root = fir_lib_root(fir_root);
     let fir_root_str = fir_root.to_str().unwrap();
@@ -53,10 +53,10 @@ pub fn resolve_imports(
     new_module
 }
 
-static FIR: SmolStr = SmolStr::new_static("Fir");
-static PRELUDE: SmolStr = SmolStr::new_static("Prelude");
+static FIR: Id = SmolStr::new_static("Fir");
+static PRELUDE: Id = SmolStr::new_static("Prelude");
 
-fn prelude_module_path() -> Vec<SmolStr> {
+fn prelude_module_path() -> Vec<Id> {
     vec![FIR.clone(), PRELUDE.clone()]
 }
 
@@ -65,7 +65,7 @@ fn resolve_imports_(
     module_root: &str,
     module: ast::Module,
     new_module: &mut ast::Module,
-    imported_modules: &mut Set<Vec<SmolStr>>,
+    imported_modules: &mut Set<Vec<Id>>,
 ) {
     for decl in module {
         match &decl.node {
@@ -105,7 +105,7 @@ fn resolve_imports_(
     }
 }
 
-fn module_path(root: &str, module: &SmolStr) -> PathBuf {
+fn module_path(root: &str, module: &Id) -> PathBuf {
     let mut path = PathBuf::new();
     path.push(root);
     path.push(module.as_str());

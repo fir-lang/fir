@@ -1,6 +1,6 @@
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
-use crate::type_checker::{Id, TyCon};
+use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {

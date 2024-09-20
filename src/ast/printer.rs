@@ -698,7 +698,7 @@ impl ImplDeclItem {
     }
 }
 
-fn print_context(context: &[L<(L<SmolStr>, Vec<L<Type>>)>], buffer: &mut String) {
+fn print_context(context: &[L<(L<Id>, Vec<L<Type>>)>], buffer: &mut String) {
     for (i, ty) in context.iter().enumerate() {
         buffer.push_str(ty.node.0.node.as_str());
         if !ty.node.1.is_empty() {

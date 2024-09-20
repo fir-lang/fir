@@ -12,7 +12,7 @@ mod init;
 use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
-use crate::ast::{self, Loc, L};
+use crate::ast::{self, Id, Loc, L};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
@@ -22,8 +22,6 @@ use std::io::Write;
 
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
-
-type Id = SmolStr;
 
 pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     let mut heap = Heap::new();

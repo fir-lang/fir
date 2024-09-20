@@ -52,10 +52,10 @@ If a type is only mentioned by a pattern but by no terms, then it can never matc
 to collect and monomorphise types in patterns.
 */
 
-use crate::ast;
+use crate::ast::{self, Id};
 use crate::collections::Map;
 use crate::interpolation::StringPart;
-use crate::type_checker::{Id, Ty, TyArgs};
+use crate::type_checker::{Ty, TyArgs};
 
 use smol_str::SmolStr;
 
