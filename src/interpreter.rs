@@ -23,6 +23,8 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
+type Id = SmolStr;
+
 pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
     let mut heap = Heap::new();
     let pgm = Pgm::new(pgm, &mut heap);
@@ -84,7 +86,7 @@ struct Pgm {
     /// These don't include records.
     ///
     /// This can be used when allocating.
-    ty_cons: Map<SmolStr, TyCon>,
+    ty_cons: Map<Id, TyCon>,
 
     /// Maps object tags to constructor info.
     cons_by_tag: Vec<Con>,
@@ -95,13 +97,13 @@ struct Pgm {
     record_ty_tags: Map<RecordShape, u64>,
 
     /// Associated functions, indexed by type tag, then function name.
-    associated_funs: Vec<Map<SmolStr, Fun>>,
+    associated_funs: Vec<Map<Id, Fun>>,
 
     /// Associated functions, indexed by type tag, then function index.
     associated_funs_by_idx: Vec<Vec<Fun>>,
 
     /// Top-level functions, indexed by function name.
-    top_level_funs: Map<SmolStr, Fun>,
+    top_level_funs: Map<Id, Fun>,
 
     /// Same as `top_level_funs`, but indexed by the function index.
     top_level_funs_by_idx: Vec<Fun>,
@@ -132,8 +134,8 @@ struct Con {
 #[derive(Debug)]
 enum ConInfo {
     Named {
-        ty_name: SmolStr,
-        con_name: Option<SmolStr>,
+        ty_name: Id,
+        con_name: Option<Id>,
     },
     Record {
         #[allow(unused)]
@@ -185,7 +187,7 @@ struct ValCon {
     /// Name of the constructor, e.g. `True` and `False` in `Bool`.
     ///
     /// In product types, there will be only one `ValCon` and the `name` will be `None`.
-    name: Option<SmolStr>,
+    name: Option<Id>,
 
     /// Fields of the constructor, with names.
     ///
@@ -213,7 +215,7 @@ enum Fields {
     Unnamed(u32),
 
     // NB. The vec shouldn't be empty. For nullary constructors use `Unnamed(0)`.
-    Named(Vec<SmolStr>),
+    Named(Vec<Id>),
 }
 
 impl Fields {
@@ -257,7 +259,7 @@ macro_rules! val {
 impl Pgm {
     fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap) -> Pgm {
         // Initialize `ty_cons`.
-        let (ty_cons, mut next_type_tag): (Map<SmolStr, TyCon>, u64) = init::collect_types(&pgm);
+        let (ty_cons, mut next_type_tag): (Map<Id, TyCon>, u64) = init::collect_types(&pgm);
 
         fn convert_record(shape: &RecordShape) -> Fields {
             match shape {
@@ -268,7 +270,7 @@ impl Pgm {
 
         let mut cons_by_tag: Vec<Con> = vec![];
 
-        let mut ty_cons_sorted: Vec<(SmolStr, TyCon)> = ty_cons
+        let mut ty_cons_sorted: Vec<(Id, TyCon)> = ty_cons
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
@@ -324,7 +326,7 @@ impl Pgm {
         // Initialize `associated_funs` and `top_level_funs`.
         let (top_level_funs, associated_funs) = init::collect_funs(pgm);
 
-        let mut associated_funs_vec: Vec<Map<SmolStr, Fun>> =
+        let mut associated_funs_vec: Vec<Map<Id, Fun>> =
             vec![Default::default(); next_type_tag as usize];
 
         let mut associated_funs_by_idx: Vec<Vec<Fun>> =
@@ -353,7 +355,7 @@ impl Pgm {
         }
 
         // Initialize `top_level_funs_by_idx`.
-        let mut top_level_funs_vec: Vec<(SmolStr, Fun)> = top_level_funs
+        let mut top_level_funs_vec: Vec<(Id, Fun)> = top_level_funs
             .iter()
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
@@ -363,14 +365,8 @@ impl Pgm {
         let top_level_funs_by_idx = top_level_funs_vec.into_iter().map(|(_, f)| f).collect();
 
         let bool_ty_con: &TyCon = ty_cons.get("Bool").as_ref().unwrap();
-        assert_eq!(
-            bool_ty_con.value_constrs[0].name,
-            Some(SmolStr::new("False"))
-        );
-        assert_eq!(
-            bool_ty_con.value_constrs[1].name,
-            Some(SmolStr::new("True"))
-        );
+        assert_eq!(bool_ty_con.value_constrs[0].name, Some(Id::new("False")));
+        assert_eq!(bool_ty_con.value_constrs[1].name, Some(Id::new("True")));
 
         let false_alloc = cons_by_tag[bool_ty_con.type_tag as usize].alloc.unwrap();
         let true_alloc = cons_by_tag[bool_ty_con.type_tag as usize + 1]
@@ -439,7 +435,7 @@ fn call_method<W: Write>(
     pgm: &Pgm,
     heap: &mut Heap,
     receiver: u64,
-    method: &SmolStr,
+    method: &Id,
     mut args: Vec<u64>,
     loc: &Loc,
 ) -> u64 {
@@ -467,11 +463,11 @@ fn call_source_fun<W: Write>(
         fun.sig.name.node
     );
 
-    let mut locals: Map<SmolStr, u64> = Default::default();
+    let mut locals: Map<Id, u64> = Default::default();
 
     let mut arg_idx: usize = 0;
     if fun.sig.self_ {
-        locals.insert(SmolStr::new("self"), args[0]);
+        locals.insert(Id::new("self"), args[0]);
         arg_idx += 1;
     }
 
@@ -491,9 +487,9 @@ fn allocate_object_from_names<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
-    ty: &SmolStr,
-    constr_name: Option<SmolStr>,
+    locals: &mut Map<Id, u64>,
+    ty: &Id,
+    constr_name: Option<Id>,
     args: &[ast::CallArg],
     loc: &Loc,
 ) -> ControlFlow {
@@ -539,7 +535,7 @@ fn allocate_object_from_tag<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
+    locals: &mut Map<Id, u64>,
     constr_tag: u64,
     args: &[ast::CallArg],
 ) -> ControlFlow {
@@ -566,7 +562,7 @@ fn allocate_object_from_tag<W: Write>(
         Fields::Named(field_names) => {
             // Evalaute in program order, store based on the order of the names
             // in the type.
-            let mut named_values: Map<SmolStr, u64> = Default::default();
+            let mut named_values: Map<Id, u64> = Default::default();
             for arg in args {
                 let name = arg.name.as_ref().unwrap().clone();
                 let value = val!(eval(w, pgm, heap, locals, &arg.expr.node, &arg.expr.loc));
@@ -592,7 +588,7 @@ fn exec<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
+    locals: &mut Map<Id, u64>,
     stmts: &[L<ast::Stmt>],
 ) -> ControlFlow {
     let mut return_value: u64 = 0;
@@ -691,7 +687,7 @@ fn eval<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
+    locals: &mut Map<Id, u64>,
     expr: &ast::Expr,
     loc: &Loc,
 ) -> ControlFlow {
@@ -1043,7 +1039,7 @@ fn eval<W: Write>(
             if !exprs.is_empty() && exprs[0].name.is_some() {
                 heap[record] = type_tag;
 
-                let mut names: Vec<SmolStr> = exprs
+                let mut names: Vec<Id> = exprs
                     .iter()
                     .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
                     .collect();
@@ -1176,7 +1172,7 @@ fn eval<W: Write>(
     }
 }
 
-fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &SmolStr, constr_id: &SmolStr) -> u64 {
+fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 {
     let ty_con = pgm.ty_cons.get(ty_id).unwrap();
     let (constr_idx, constr) = ty_con
         .value_constrs
@@ -1198,7 +1194,7 @@ fn assign<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<SmolStr, u64>,
+    locals: &mut Map<Id, u64>,
     lhs: &ast::L<ast::Expr>,
     val: u64,
     op: ast::AssignOp,
@@ -1303,8 +1299,8 @@ fn try_bind_field_pats(
     constr_fields: &Fields,
     field_pats: &[ast::Named<Box<L<ast::Pat>>>],
     value: u64,
-) -> Option<Map<SmolStr, u64>> {
-    let mut ret: Map<SmolStr, u64> = Default::default();
+) -> Option<Map<Id, u64>> {
+    let mut ret: Map<Id, u64> = Default::default();
 
     match constr_fields {
         Fields::Unnamed(arity) => {
@@ -1356,10 +1352,10 @@ fn try_bind_pat(
     heap: &mut Heap,
     pattern: &L<ast::Pat>,
     value: u64,
-) -> Option<Map<SmolStr, u64>> {
+) -> Option<Map<Id, u64>> {
     match &pattern.node {
         ast::Pat::Var(var) => {
-            let mut map: Map<SmolStr, u64> = Default::default();
+            let mut map: Map<Id, u64> = Default::default();
             map.insert(var.clone(), value);
             Some(map)
         }
@@ -1452,7 +1448,7 @@ fn try_bind_pat(
                         len as u64,
                     )
                 };
-                let mut map: Map<SmolStr, u64> = Default::default();
+                let mut map: Map<Id, u64> = Default::default();
                 map.insert(var.clone(), rest);
                 Some(map)
             } else {

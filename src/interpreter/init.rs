@@ -1,7 +1,7 @@
 use crate::interpreter::*;
 
-pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
-    let mut ty_cons: Map<SmolStr, TyCon> = Default::default();
+pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
+    let mut ty_cons: Map<Id, TyCon> = Default::default();
 
     ty_cons.insert(
         SmolStr::new("#CONSTR"),
@@ -123,17 +123,15 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<SmolStr, TyCon>, u64) {
     (ty_cons, next_type_tag)
 }
 
-pub fn collect_funs(
-    pgm: Vec<L<ast::TopDecl>>,
-) -> (Map<SmolStr, Fun>, Map<SmolStr, Map<SmolStr, Fun>>) {
+pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id, Fun>>) {
     macro_rules! builtin_top_level_funs {
         ($($fname:expr => $fkind:expr),* $(,)?) => {{
-            let mut map: Map<SmolStr, Fun> = Default::default();
+            let mut map: Map<Id, Fun> = Default::default();
             #[allow(unused_assignments)] // idx is not read after the last increment
             {
                 let mut idx = 0;
                 $(
-                    map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
+                    map.insert(Id::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
                     idx += 1;
                 )*
             }
@@ -141,7 +139,7 @@ pub fn collect_funs(
         }};
     }
 
-    let mut top_level_funs: Map<SmolStr, Fun> = builtin_top_level_funs! {
+    let mut top_level_funs: Map<Id, Fun> = builtin_top_level_funs! {
         "print" => BuiltinFun::Print,
         "printStr" => BuiltinFun::PrintStr,
         "printStrView" => BuiltinFun::PrintStrView,
@@ -150,11 +148,11 @@ pub fn collect_funs(
 
     macro_rules! builtin_associated_funs {
         ($($type:expr => {$($fname:expr => $fkind:expr),* $(,)?}),* $(,)?) => {{
-            let mut map: Map<SmolStr, Map<SmolStr, Fun>> = Default::default();
+            let mut map: Map<Id, Map<Id, Fun>> = Default::default();
             #[allow(unused_assignments)] // idx is not read after the last increment
             {
                 $(
-                    let mut fun_map: Map<SmolStr, Fun> = Default::default();
+                    let mut fun_map: Map<Id, Fun> = Default::default();
                     let mut idx = 0;
                     $(
                         fun_map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
@@ -167,7 +165,7 @@ pub fn collect_funs(
         }};
     }
 
-    let mut associated_funs: Map<SmolStr, Map<SmolStr, Fun>> = builtin_associated_funs! {
+    let mut associated_funs: Map<Id, Map<Id, Fun>> = builtin_associated_funs! {
         "Str" => {
             "len" => BuiltinFun::StrLen,
             "__eq" => BuiltinFun::StrEq,
