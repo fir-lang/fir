@@ -330,10 +330,11 @@ impl Expr {
                 buffer.push_str(field.as_str());
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr { ty, constr }) => {
+            Expr::ConstrSelect(ConstrSelectExpr { ty, constr: member })
+            | Expr::AssocFnSelect(AssocFnSelectExpr { ty, member }) => {
                 buffer.push_str(ty.as_str());
                 buffer.push('.');
-                buffer.push_str(constr.as_str());
+                buffer.push_str(member.as_str());
             }
 
             Expr::Call(CallExpr { fun, args }) => {
@@ -466,8 +467,6 @@ impl Expr {
                     buffer.push(')');
                 }
             }
-
-            Expr::ArrayIndex(_) => todo!(),
 
             Expr::Record(fields) => {
                 buffer.push('(');

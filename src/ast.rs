@@ -335,16 +335,17 @@ pub enum Expr {
     /// A constructor: `Vec`, `Bool`, `I32`.
     Constr(Id),
 
-    /// A field, method, or associated function selection: `<expr>.a`.
-    ///
-    /// Selection type depends on `<expr>`:
-    ///
-    /// - `UpperVar`: select associated function or method.
-    /// - Any other expression: select field or method.
+    /// A field or method selection: `<expr>.x`.
     FieldSelect(FieldSelectExpr),
 
     /// A constructor selection: `Option.None`.
     ConstrSelect(ConstrSelectExpr),
+
+    /// An associated function or method selection:
+    ///
+    /// - Associated function: `Vec.withCapacity`.
+    /// - Method: `Vec.push`.
+    AssocFnSelect(AssocFnSelectExpr),
 
     /// A function call: `f(a)`.
     Call(CallExpr),
@@ -363,8 +364,6 @@ pub enum Expr {
     BinOp(BinOpExpr),
 
     UnOp(UnOpExpr),
-
-    ArrayIndex(ArrayIndexExpr),
 
     Record(Vec<Named<Box<L<Expr>>>>),
 
@@ -416,16 +415,28 @@ pub struct CallArg {
     pub expr: L<Expr>,
 }
 
+/// A field or method selection: `<expr>.x`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
 }
 
+/// A constructor selection: `Option.None`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ConstrSelectExpr {
     pub ty: Id,
     pub constr: Id,
+}
+
+/// An associated function or method selection:
+///
+/// - Associated function: `Vec.withCapacity`.
+/// - Method: `Vec.push`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AssocFnSelectExpr {
+    pub ty: Id,
+    pub member: Id,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -446,12 +457,6 @@ pub struct BinOpExpr {
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ArrayIndexExpr {
-    pub array: Box<L<Expr>>,
-    pub index: Box<L<Expr>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

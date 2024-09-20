@@ -59,6 +59,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::Var(_)
         | ast::Expr::Constr(_)
         | ast::Expr::ConstrSelect(_)
+        | ast::Expr::AssocFnSelect(_)
         | ast::Expr::Int(_)
         | ast::Expr::String(_)
         | ast::Expr::Char(_)
@@ -91,11 +92,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
             normalize_expr(&mut expr.node, cons);
-        }
-
-        ast::Expr::ArrayIndex(ast::ArrayIndexExpr { array, index }) => {
-            normalize_expr(&mut array.node, cons);
-            normalize_expr(&mut index.node, cons);
         }
 
         ast::Expr::Record(fields) => {

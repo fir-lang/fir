@@ -263,7 +263,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             visit_expr(&object.node, records);
         }
 
-        ast::Expr::ConstrSelect(_) => {}
+        ast::Expr::ConstrSelect(_) | ast::Expr::AssocFnSelect(_) => {}
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             visit_expr(&fun.node, records);
@@ -288,11 +288,6 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
             visit_expr(&expr.node, records);
-        }
-
-        ast::Expr::ArrayIndex(ast::ArrayIndexExpr { array, index }) => {
-            visit_expr(&array.node, records);
-            visit_expr(&index.node, records);
         }
 
         ast::Expr::Record(fields) => {

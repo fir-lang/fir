@@ -707,14 +707,6 @@ fn eval<W: Write>(
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            if let ast::Expr::Constr(ty) = &object.node {
-                let ty_con = pgm.ty_cons.get(ty).unwrap();
-                let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                    .get(field)
-                    .unwrap();
-                return ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx));
-            }
-
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
 
@@ -755,6 +747,14 @@ fn eval<W: Write>(
 
         ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
             ControlFlow::Val(constr_select(pgm, heap, ty, constr))
+        }
+
+        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
+            let ty_con = pgm.ty_cons.get(ty).unwrap();
+            let fun = pgm.associated_funs[ty_con.type_tag as usize]
+                .get(member)
+                .unwrap();
+            ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx))
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -1014,17 +1014,6 @@ fn eval<W: Write>(
             match op {
                 ast::UnOp::Not => ControlFlow::Val(pgm.bool_alloc(val == pgm.false_alloc)),
             }
-        }
-
-        ast::Expr::ArrayIndex(ast::ArrayIndexExpr { array, index }) => {
-            let array = val!(eval(w, pgm, heap, locals, &array.node, &array.loc));
-            let index_boxed = val!(eval(w, pgm, heap, locals, &index.node, &index.loc));
-            let index = heap[index_boxed + 1];
-            let array_len = heap[array + 1];
-            if index >= array_len {
-                panic!("OOB array access, len = {}, index = {}", array_len, index);
-            }
-            ControlFlow::Val(heap[array + 2 + index])
         }
 
         ast::Expr::Record(exprs) => {

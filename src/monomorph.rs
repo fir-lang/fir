@@ -475,12 +475,32 @@ fn mono_expr(
             None => var.clone(),
         }),
 
+        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+            // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.
+            ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm),
+                field: field.clone(),
+            })
+        }
+
         ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
             let ty_decl = poly_pgm.ty.get(ty).unwrap();
             mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
             ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
                 ty: ty.clone(),
                 constr: constr.clone(),
+            })
+        }
+
+        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
+            let ty_decl = poly_pgm.ty.get(ty).unwrap();
+            let mono_ty_id = mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
+            let member_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
+            let mono_member =
+                mono_assoc_fn(&mono_ty_id, member_decl, ty_map, &[], poly_pgm, mono_pgm);
+            ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                ty: mono_ty_id,
+                member: mono_member,
             })
         }
 
@@ -503,14 +523,6 @@ fn mono_expr(
         }
 
         ast::Expr::Constr(_) | ast::Expr::Self_ => expr.clone(),
-
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.
-            ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm),
-                field: field.clone(),
-            })
-        }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => ast::Expr::Call(ast::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm),
@@ -555,8 +567,6 @@ fn mono_expr(
             op: op.clone(),
             expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm),
         }),
-
-        ast::Expr::ArrayIndex(_) => todo!(),
 
         ast::Expr::Record(_) => todo!(),
 

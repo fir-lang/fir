@@ -523,12 +523,6 @@ InlineExpr: Expr = {
     <char:CharLit> =>
         Expr::Char(char.text.chars().nth(1).unwrap()),
 
-    <l:@L> <array:InlineExpr> <r:@R> "[" <index:LExpr> "]" =>
-        Expr::ArrayIndex(ArrayIndexExpr {
-            array: Box::new(L::new(module, l, r, array)),
-            index: Box::new(index),
-        }),
-
     <l:@L> <fun:InlineExpr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
         Expr::Call(CallExpr {
             fun: Box::new(L::new(module, l, r, fun)),
@@ -536,10 +530,15 @@ InlineExpr: Expr = {
         }),
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
-        Expr::FieldSelect(FieldSelectExpr {
-            object: Box::new(L::new(module, l, r, expr)),
-            field: field.smol_str(),
-        }),
+        match expr {
+            Expr::Constr(ty) =>
+                Expr::AssocFnSelect(AssocFnSelectExpr { ty, member: field.smol_str() }),
+
+            _ => Expr::FieldSelect(FieldSelectExpr {
+                object: Box::new(L::new(module, l, r, expr)),
+                field: field.smol_str(),
+            }),
+        },
 
     <expr:InlineExpr> "." <constr:UpperId> => {
         match expr {
