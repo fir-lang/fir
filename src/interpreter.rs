@@ -196,21 +196,6 @@ struct ValCon {
 }
 
 #[derive(Debug, Clone)]
-struct Fun {
-    /// Index of the function in `top_level_funs_by_idx` (if top-level function), or
-    /// `associated_funs_by_idx` (if associated function).
-    idx: u64,
-
-    kind: FunKind,
-}
-
-#[derive(Debug, Clone)]
-enum FunKind {
-    Builtin(BuiltinFun),
-    Source(ast::FunDecl),
-}
-
-#[derive(Debug, Clone)]
 enum Fields {
     Unnamed(u32),
 
@@ -234,6 +219,21 @@ impl Fields {
                 .unwrap(),
         }
     }
+}
+
+#[derive(Debug, Clone)]
+struct Fun {
+    /// Index of the function in `top_level_funs_by_idx` (if top-level function), or
+    /// `associated_funs_by_idx` (if associated function).
+    idx: u64,
+
+    kind: FunKind,
+}
+
+#[derive(Debug, Clone)]
+enum FunKind {
+    Builtin(BuiltinFun),
+    Source(ast::FunDecl),
 }
 
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
@@ -1181,13 +1181,9 @@ fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 
         .find(|(_constr_idx, constr)| constr.name.as_ref().unwrap() == constr_id)
         .unwrap();
     let tag = ty_con.type_tag + (constr_idx as u64);
-    if constr.fields.is_empty() {
-        let addr = heap.allocate(1);
-        heap[addr] = tag;
-        addr
-    } else {
-        heap.allocate_constr(tag)
-    }
+    let con = &pgm.cons_by_tag[tag as usize];
+    debug_assert!(!constr.fields.is_empty() || con.alloc.is_some());
+    con.alloc.unwrap_or_else(|| heap.allocate_constr(tag))
 }
 
 fn assign<W: Write>(
