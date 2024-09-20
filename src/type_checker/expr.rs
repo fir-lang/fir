@@ -44,7 +44,7 @@ pub(super) fn check_expr(
             panic!("{}: Unbound variable {}", loc_string(&expr.loc), var);
         }
 
-        ast::Expr::UpperVar(con) => {
+        ast::Expr::Constr(con) => {
             let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
                 panic!("{}: Unknown constructor {}", loc_string(&expr.loc), con)
             });
@@ -62,7 +62,7 @@ pub(super) fn check_expr(
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = match &mut object.node {
-                ast::Expr::UpperVar(ty) => {
+                ast::Expr::Constr(ty) => {
                     let scheme = tys
                         .associated_schemes
                         .get(ty)

@@ -698,7 +698,7 @@ fn eval<W: Write>(
             },
         },
 
-        ast::Expr::UpperVar(ty_name) => {
+        ast::Expr::Constr(ty_name) => {
             let ty_con = pgm.ty_cons.get(ty_name).unwrap();
             let ty_tag = ty_con.type_tag;
             let (first_tag, last_tag) = ty_con.tag_range();
@@ -707,7 +707,7 @@ fn eval<W: Write>(
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            if let ast::Expr::UpperVar(ty) = &object.node {
+            if let ast::Expr::Constr(ty) = &object.node {
                 let ty_con = pgm.ty_cons.get(ty).unwrap();
                 let fun = pgm.associated_funs[ty_con.type_tag as usize]
                     .get(field)
@@ -783,7 +783,7 @@ fn eval<W: Write>(
                 },
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    if let ast::Expr::UpperVar(ty) = &object.node {
+                    if let ast::Expr::Constr(ty) = &object.node {
                         let ty_con = pgm
                             .ty_cons
                             .get(ty)
@@ -855,7 +855,7 @@ fn eval<W: Write>(
                     return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
-                ast::Expr::UpperVar(ty) => {
+                ast::Expr::Constr(ty) => {
                     return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
                 }
 

@@ -322,7 +322,7 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(var) | Expr::UpperVar(var) => buffer.push_str(var.as_str()),
+            Expr::Var(var) | Expr::Constr(var) => buffer.push_str(var.as_str()),
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
                 object.node.print(buffer, 0);
@@ -339,7 +339,7 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::Var(_) | Expr::UpperVar(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+                    Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
                 );
                 if parens {
                     buffer.push('(');
@@ -719,7 +719,7 @@ fn print_context(context: &[L<(L<Id>, Vec<L<Type>>)>], buffer: &mut String) {
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::Var(_) | Expr::UpperVar(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
     )
 }
 

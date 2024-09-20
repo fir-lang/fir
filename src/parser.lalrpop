@@ -406,7 +406,7 @@ InlineExpr: Expr = {
         Expr::Var(id.smol_str()),
 
     <id:UpperId> =>
-        Expr::UpperVar(id.smol_str()),
+        Expr::Constr(id.smol_str()),
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
@@ -543,7 +543,7 @@ InlineExpr: Expr = {
 
     <expr:InlineExpr> "." <constr:UpperId> => {
         match expr {
-            Expr::UpperVar(ty) => Expr::ConstrSelect(ConstrSelectExpr {
+            Expr::Constr(ty) => Expr::ConstrSelect(ConstrSelectExpr {
                 ty,
                 constr: constr.smol_str(),
             }),

@@ -57,7 +57,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         }
 
         ast::Expr::Var(_)
-        | ast::Expr::UpperVar(_)
+        | ast::Expr::Constr(_)
         | ast::Expr::ConstrSelect(_)
         | ast::Expr::Int(_)
         | ast::Expr::String(_)

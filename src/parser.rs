@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 2556a3611b7fe09ae685b2fd82111c4f9134567c56a01edb5302a9e975edd700
+// sha3: 022528c4e1d46f8aeca34daec134c6c31e8ff1abde07ef6c41774e9eaccac0db
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -35189,7 +35189,7 @@ fn __action56<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action57<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::UpperVar(id.smol_str())
+    Expr::Constr(id.smol_str())
 }
 
 #[allow(unused_variables)]
@@ -35455,7 +35455,7 @@ fn __action66<'a>(
 ) -> Expr {
     {
         match expr {
-            Expr::UpperVar(ty) => Expr::ConstrSelect(ConstrSelectExpr {
+            Expr::Constr(ty) => Expr::ConstrSelect(ConstrSelectExpr {
                 ty,
                 constr: constr.smol_str(),
             }),

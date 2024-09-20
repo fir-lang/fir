@@ -357,7 +357,7 @@ fn mono_expr(
 
                     if let Some(ty_decl) = poly_pgm.ty.get(fun_id) {
                         let mono_ty_id = mono_ty_decl(ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                        return ast::Expr::UpperVar(mono_ty_id);
+                        return ast::Expr::Constr(mono_ty_id);
                     }
 
                     panic!()
@@ -502,7 +502,7 @@ fn mono_expr(
             ast::Expr::Char(*char)
         }
 
-        ast::Expr::UpperVar(_) | ast::Expr::Self_ => expr.clone(),
+        ast::Expr::Constr(_) | ast::Expr::Self_ => expr.clone(),
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.

@@ -333,7 +333,7 @@ pub enum Expr {
     Var(Id),
 
     /// A constructor: `Vec`, `Bool`, `I32`.
-    UpperVar(Id),
+    Constr(Id),
 
     /// A field, method, or associated function selection: `<expr>.a`.
     ///
