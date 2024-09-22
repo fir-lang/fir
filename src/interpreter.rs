@@ -412,6 +412,33 @@ impl Pgm {
             self.false_alloc
         }
     }
+
+    fn tag_name_display(&self, tag: u64) -> impl std::fmt::Display + '_ {
+        struct TagNameDisplay<'a> {
+            ty_name: &'a Id,
+            con_name: Option<&'a Id>,
+        }
+
+        impl<'a> std::fmt::Display for TagNameDisplay<'a> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(f, "{}", self.ty_name)?;
+                if let Some(con_name) = self.con_name {
+                    write!(f, ".{}", con_name)?;
+                }
+                Ok(())
+            }
+        }
+
+        let con = &self.cons_by_tag[tag as usize];
+
+        match &con.info {
+            ConInfo::Named { ty_name, con_name } => TagNameDisplay {
+                ty_name,
+                con_name: con_name.as_ref(),
+            },
+            ConInfo::Record { shape: _ } => todo!(),
+        }
+    }
 }
 
 fn call<W: Write>(
@@ -440,7 +467,15 @@ fn call_method<W: Write>(
     let tag = heap[receiver];
     let fun = pgm.associated_funs[tag as usize]
         .get(method)
-        .unwrap_or_else(|| panic!("Receiver with tag {} does not have {} method", tag, method));
+        .unwrap_or_else(|| {
+            panic!(
+                "{}: Object with type {} (tag {}) does not have {} method",
+                LocDisplay(loc),
+                pgm.tag_name_display(tag),
+                tag,
+                method
+            )
+        });
     args.insert(0, receiver);
     call(w, pgm, heap, fun, args, loc)
 }
@@ -834,8 +869,9 @@ fn eval<W: Write>(
                         .get(field)
                         .unwrap_or_else(|| {
                             panic!(
-                                "{}: Object with tag {} doesn't have field or method {:?}",
+                                "{}: Object with type {} (tag {}) doesn't have field or method {:?}",
                                 LocDisplay(loc),
+                                pgm.tag_name_display(object_tag),
                                 object_tag,
                                 field
                             )
@@ -1146,8 +1182,9 @@ fn eval<W: Write>(
                         .get(method_id)
                         .unwrap_or_else(|| {
                             panic!(
-                                "{}: Receiver with tag {} does not have method {}",
+                                "{}: Object with type {} (tag {}) does not have method {}",
                                 LocDisplay(loc),
+                                pgm.tag_name_display(receiver_tag),
                                 receiver_tag,
                                 method_id
                             )
