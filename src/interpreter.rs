@@ -74,7 +74,7 @@ generate_tags!(
     CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
     TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
     ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
-    METHOD_TYPE_TAG,    // Methdo closure, e.g. `x.toString`.
+    METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
     FIRST_TYPE_TAG,     // First available type tag for user types.
 );
 
@@ -113,11 +113,15 @@ struct Pgm {
     char_ty_tag: u64,
     str_ty_tag: u64,
     str_view_ty_tag: u64,
-    i32_ty_tag: u64,
-    u32_ty_tag: u64,
     i8_ty_tag: u64,
     u8_ty_tag: u64,
-    array_ty_tag: u64,
+    i32_ty_tag: u64,
+    u32_ty_tag: u64,
+    array_i8_ty_tag: u64,
+    array_u8_ty_tag: u64,
+    array_i32_ty_tag: u64,
+    array_u32_ty_tag: u64,
+    array_ptr_ty_tag: u64,
 }
 
 #[derive(Debug)]
@@ -379,7 +383,11 @@ impl Pgm {
         let u32_ty_tag = ty_cons.get("U32").as_ref().unwrap().type_tag;
         let i8_ty_tag = ty_cons.get("I8").as_ref().unwrap().type_tag;
         let u8_ty_tag = ty_cons.get("U8").as_ref().unwrap().type_tag;
-        let array_ty_tag = ty_cons.get("Array").as_ref().unwrap().type_tag;
+        let array_i8_ty_tag = ty_cons.get("Array@I8").as_ref().unwrap().type_tag;
+        let array_u8_ty_tag = ty_cons.get("Array@U8").as_ref().unwrap().type_tag;
+        let array_i32_ty_tag = ty_cons.get("Array@I32").as_ref().unwrap().type_tag;
+        let array_u32_ty_tag = ty_cons.get("Array@U32").as_ref().unwrap().type_tag;
+        let array_ptr_ty_tag = ty_cons.get("Array@Ptr").as_ref().unwrap().type_tag;
 
         Pgm {
             ty_cons,
@@ -398,7 +406,11 @@ impl Pgm {
             u32_ty_tag,
             i8_ty_tag,
             u8_ty_tag,
-            array_ty_tag,
+            array_i8_ty_tag,
+            array_u8_ty_tag,
+            array_i32_ty_tag,
+            array_u32_ty_tag,
+            array_ptr_ty_tag,
         }
     }
 
@@ -1300,10 +1312,14 @@ fn try_bind_pat(
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
             fields: field_pats,
+            ty_args: _,
         }) => {
             let value_tag = heap[value];
 
-            let ty_con = pgm.ty_cons.get(type_).unwrap();
+            let ty_con = pgm.ty_cons.get(type_).unwrap_or_else(|| {
+                panic!("{}: BUG: Unknown type {}", loc_display(&pattern.loc), type_)
+            });
+
             let (ty_con_first_tag, ty_con_last_tag) = ty_con.tag_range();
 
             if value_tag < ty_con_first_tag || value_tag > ty_con_last_tag {

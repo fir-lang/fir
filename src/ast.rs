@@ -3,6 +3,7 @@
 mod printer;
 
 use crate::interpolation::StringPart;
+use crate::type_checker::Ty;
 
 use std::rc::Rc;
 
@@ -283,6 +284,9 @@ pub enum Pat {
 pub struct ConstrPattern {
     pub constr: Constructor,
     pub fields: Vec<Named<Box<L<Pat>>>>,
+
+    // TODO: Inconsistent with how exprs are instantiated. Probably add ty_args to exprs as well.
+    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -378,7 +382,7 @@ pub enum Expr {
     /// These nodes are introduced by the type checker as it instantiates polymorphic functions.
     ///
     /// Monomorphisation then replaces these nodes with references to monomorphised functions.
-    Instantiation(Path, Vec<crate::type_checker::Ty>),
+    Instantiation(Path, Vec<Ty>),
 }
 
 /// Path to a polymorphic item.

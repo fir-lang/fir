@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 64e9539617e539711a6b7380a6d9a7cc03e782d3a9f40b4cb6ebcd0784050fa0
+// sha3: 9d6275a6a02448cd20a4af3892c021ad060590e092299949539b2ce664407ae0
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -35967,6 +35967,7 @@ fn __action105<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Constructor, Loc))
     ConstrPattern {
         constr,
         fields: vec![],
+        ty_args: vec![],
     }
 }
 
@@ -35992,6 +35993,7 @@ fn __action106<'a>(
                 node: Box::new(pat),
             })
             .collect(),
+        ty_args: vec![],
     }
 }
 

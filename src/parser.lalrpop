@@ -732,10 +732,14 @@ Constructor: Constructor = {
 
 ConstrPattern: ConstrPattern = {
     <constr:Constructor> =>
-        ConstrPattern { constr, fields: vec![] },
+        ConstrPattern { constr, fields: vec![], ty_args: vec![] },
 
     <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
-        ConstrPattern { constr, fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect() },
+        ConstrPattern {
+            constr,
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
+            ty_args: vec![],
+        },
 }
 
 PatternField: (Option<SmolStr>, L<Pat>) = {

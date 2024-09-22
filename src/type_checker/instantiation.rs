@@ -4,7 +4,8 @@ use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
-        ast::Stmt::Let(ast::LetStmt { lhs: _, ty: _, rhs }) => {
+        ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
+            normalize_pat(&mut lhs.node, cons);
             normalize_expr(&mut rhs.node, cons);
         }
 
@@ -107,6 +108,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             normalize_expr(&mut scrutinee.node, cons);
             for alt in alts {
+                normalize_pat(&mut alt.pattern.node, cons);
                 for stmt in &mut alt.rhs {
                     normalize_instantiation_types(&mut stmt.node, cons);
                 }
@@ -128,6 +130,38 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                     normalize_instantiation_types(&mut stmt.node, cons);
                 }
             }
+        }
+    }
+}
+
+fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
+    match pat {
+        ast::Pat::Var(_)
+        | ast::Pat::Ignore
+        | ast::Pat::Str(_)
+        | ast::Pat::Char(_)
+        | ast::Pat::StrPfx(_, _) => {}
+
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: _,
+            fields,
+            ty_args,
+        }) => {
+            for field in fields {
+                normalize_pat(&mut field.node.node, cons);
+            }
+            for ty_arg in ty_args {
+                *ty_arg = ty_arg.deep_normalize(cons);
+            }
+        }
+
+        ast::Pat::Record(fields) => fields
+            .iter_mut()
+            .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons)),
+
+        ast::Pat::Or(pat1, pat2) => {
+            normalize_pat(&mut pat1.node, cons);
+            normalize_pat(&mut pat2.node, cons);
         }
     }
 }

@@ -1,12 +1,8 @@
 /*!
-This module implements some kind of monomorphisation.
+This module implements monomorphisation based on base types: signed and unsigned 8-bit and 32-bit
+numbers, and pointers.
 
-We have two goals with this pass:
-
-- Avoid storing numbers as boxed in arrays.
-  (which are used in: vectors, strings, ...)
-
-- Avoid boxing numbers. (I32, I8, ...)
+The goal is to avoid boxing numbers. (and maybe in the future: chars, bools etc.)
 
 The idea is that because we don't have garbage collection in the interpreter, we should avoid
 allocations when easily possible (such as for integers), and shouldn't have to box all array
@@ -29,27 +25,17 @@ fn print[T1: ToStr, T2: ToStr](a: T1, b: T2) = ...
 can be monomorphised to these variants:
 
 ```ignore
-type Vec#I8:
-    data: Array#I8
+type Vec@I8:
+    data: Array@I8
     len: U32
 
-type Vec#Ptr:
-    data: Array#Ptr
+type Vec@Ptr:
+    data: Array@Ptr
     len: U32
 
-fn print#I8#Ptr(a: I8, b: Ptr) = ...
-fn print#I64#I64(a: I64, b: I64) = ...
+fn print@I8@Ptr(a: I8, b: Ptr) = ...
+fn print@I64@I64(a: I64, b: I64) = ...
 ```
-
-This pass only looks at `Instantiation` nodes to monomorphise, we should be introduced by the
-previous pass.
-
-The resulting program won't have any `Instantiation` nodes.
-
-# Monomorphising patterns
-
-If a type is only mentioned by a pattern but by no terms, then it can never match, so we don't have
-to collect and monomorphise types in patterns.
 */
 
 use crate::ast::{self, Id};
@@ -58,26 +44,6 @@ use crate::interpolation::StringPart;
 use crate::type_checker::{Ty, TyArgs};
 
 use smol_str::SmolStr;
-
-/*
-Implementation plan:
-
-- Convert the program into a graph to be able to easily look up symbols.
-
-- The monomorphised program will also be a graph that we serialize afterwards.
-
-- Some kind of "item" type as pointers to these graph nodes.
-
-- Start from main to monomorphise. Every reference to a definition gets added to the graph.
-
-    - If the reference is from an instantiation: the monomorphised version of the target is added
-      to the graph, and the instantiation is converted into a `Var` (or `ConstrSelect` etc.) to the
-      monomorphised definition.
-
-    - If the reference is not from an instantiation: just add the definition to the graph and call it.
-
-    This also removes dead code.
-*/
 
 /// Type checked program, converted into a graph.
 #[derive(Debug, Default)]
@@ -194,21 +160,34 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
     pgm
 }
 
-// Testing.
 pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>]) -> Vec<ast::L<ast::TopDecl>> {
     let poly_pgm = pgm_to_graph(pgm.iter().map(|decl| decl.node.clone()).collect());
     let mut mono_pgm = PgmGraph::default();
+
+    // Copy types used by the interpreter built-ins.
+    for ty in [
+        make_ast_ty("Bool", vec![]),
+        make_ast_ty("Char", vec![]),
+        make_ast_ty("Str", vec![]),
+        make_ast_ty("StrView", vec![]),
+        make_ast_ty("Ordering", vec![]),
+        make_ast_ty("I8", vec![]),
+        make_ast_ty("U8", vec![]),
+        make_ast_ty("I32", vec![]),
+        make_ast_ty("U32", vec![]),
+        make_ast_ty("Array", vec!["I8"]),
+        make_ast_ty("Array", vec!["U8"]),
+        make_ast_ty("Array", vec!["I32"]),
+        make_ast_ty("Array", vec!["U32"]),
+        make_ast_ty("Array", vec!["Str"]), // Array@Ptr
+    ] {
+        mono_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
+    }
 
     let main = poly_pgm.top.get("main").unwrap();
     mono_top_decl(main, &[], &poly_pgm, &mut mono_pgm);
 
     let mono_pgm = graph_to_pgm(mono_pgm);
-    let mut buffer = String::new();
-    for item in &mono_pgm {
-        item.print(&mut buffer, 0);
-        buffer.push('\n');
-    }
-    println!("{}", buffer);
 
     mono_pgm
         .into_iter()
@@ -217,6 +196,28 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>]) -> Vec<ast::L<ast::TopDecl>> {
             node: decl,
         })
         .collect()
+}
+
+fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
+    ast::Type::Named(ast::NamedType {
+        name: SmolStr::new_static(con),
+        args: args
+            .into_iter()
+            .map(|arg| ast::L {
+                loc: ast::Loc::dummy(),
+                node: (
+                    None,
+                    ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Type::Named(ast::NamedType {
+                            name: SmolStr::new_static(arg),
+                            args: vec![],
+                        }),
+                    },
+                ),
+            })
+            .collect(),
+    })
 }
 
 fn mono_top_decl(
@@ -296,7 +297,7 @@ fn mono_stmt(
 ) -> ast::Stmt {
     match stmt {
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => ast::Stmt::Let(ast::LetStmt {
-            lhs: lhs.clone(),
+            lhs: lhs.map_as_ref(|lhs| mono_pat(lhs, ty_map, poly_pgm, mono_pgm)),
             ty: ty
                 .as_ref()
                 .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))),
@@ -401,12 +402,9 @@ fn mono_expr(
                         mono_pgm,
                     );
 
-                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                        object: Box::new(ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: ast::Expr::Var(mono_ty_id),
-                        }),
-                        field: mono_fun_id,
+                    ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                        ty: mono_ty_id,
+                        member: mono_fun_id,
                     })
                 }
 
@@ -428,7 +426,7 @@ fn mono_expr(
                     };
 
                     // Monomorphise associated function/method.
-                    match &poly_receiver_ty {
+                    let mono_method_id = match &poly_receiver_ty {
                         ast::Type::Named(ast::NamedType { name, args }) => {
                             let ty_con = poly_pgm.ty.get(name).unwrap();
                             assert_eq!(ty_con.type_params.len(), args.len());
@@ -453,10 +451,10 @@ fn mono_expr(
                                 &mono_ty_args,
                                 poly_pgm,
                                 mono_pgm,
-                            );
+                            )
                         }
                         ast::Type::Record(_) => panic!(),
-                    }
+                    };
 
                     let mono_receiver = mono_expr(receiver, ty_map, poly_pgm, mono_pgm);
                     ast::Expr::FieldSelect(ast::FieldSelectExpr {
@@ -464,7 +462,7 @@ fn mono_expr(
                             loc: ast::Loc::dummy(), // TODO
                             node: mono_receiver,
                         }),
-                        field: method_id.clone(),
+                        field: mono_method_id,
                     })
                 }
             }
@@ -522,7 +520,14 @@ fn mono_expr(
             ast::Expr::Char(*char)
         }
 
-        ast::Expr::Constr(_) | ast::Expr::Self_ => expr.clone(),
+        ast::Expr::Constr(constr) => {
+            let ty_decl = poly_pgm.ty.get(constr).unwrap();
+            let mono_constr = mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
+            debug_assert_eq!(&mono_constr, constr);
+            ast::Expr::Constr(mono_constr)
+        }
+
+        ast::Expr::Self_ => ast::Expr::Self_,
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => ast::Expr::Call(ast::CallExpr {
             fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm),
@@ -580,7 +585,8 @@ fn mono_expr(
                          guard,
                          rhs,
                      }| ast::Alt {
-                        pattern: pattern.clone(),
+                        pattern: pattern
+                            .map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm)),
                         guard: guard
                             .as_ref()
                             .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
@@ -638,6 +644,101 @@ fn mono_l_expr(
     mono_pgm: &mut PgmGraph,
 ) -> ast::L<ast::Expr> {
     expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm))
+}
+
+fn mono_pat(
+    pat: &ast::Pat,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> ast::Pat {
+    match pat {
+        // TODO: Can `Var` be a constructor like `Vec`?
+        ast::Pat::Var(_)
+        | ast::Pat::Ignore
+        | ast::Pat::Str(_)
+        | ast::Pat::Char(_)
+        | ast::Pat::StrPfx(_, _) => pat.clone(),
+
+        ast::Pat::Or(pat1, pat2) => ast::Pat::Or(
+            Box::new(mono_l_pat(pat1, ty_map, poly_pgm, mono_pgm)),
+            Box::new(mono_l_pat(pat2, ty_map, poly_pgm, mono_pgm)),
+        ),
+
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: ast::Constructor { type_, constr },
+            fields,
+            ty_args,
+        }) => {
+            let ty_decl = poly_pgm.ty.get(type_).unwrap();
+
+            let mono_ty_args: Vec<ast::Type> = ty_args
+                .iter()
+                .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
+                .collect();
+
+            let mono_ty_id = mono_ty_decl(
+                ty_decl,
+                &mono_ty_args[0..ty_decl.type_params.len()],
+                poly_pgm,
+                mono_pgm,
+            );
+
+            let mono_fields = fields
+                .iter()
+                .map(|field| mono_named_bl_pat(field, ty_map, poly_pgm, mono_pgm))
+                .collect();
+
+            ast::Pat::Constr(ast::ConstrPattern {
+                constr: ast::Constructor {
+                    type_: mono_ty_id,
+                    constr: constr.clone(),
+                },
+                fields: mono_fields,
+                ty_args: vec![],
+            })
+        }
+
+        ast::Pat::Record(fields) => ast::Pat::Record(
+            fields
+                .iter()
+                .map(|ast::Named { name, node }| ast::Named {
+                    name: name.clone(),
+                    node: Box::new(mono_l_pat(node, ty_map, poly_pgm, mono_pgm)),
+                })
+                .collect(),
+        ),
+    }
+}
+
+fn mono_l_pat(
+    pat: &ast::L<ast::Pat>,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> ast::L<ast::Pat> {
+    pat.map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm))
+}
+
+fn mono_bl_pat(
+    pat: &ast::L<ast::Pat>,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> Box<ast::L<ast::Pat>> {
+    Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
+}
+
+fn mono_named_bl_pat(
+    pat: &ast::Named<Box<ast::L<ast::Pat>>>,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> ast::Named<Box<ast::L<ast::Pat>>> {
+    ast::Named {
+        name: pat.name.clone(),
+        node: mono_bl_pat(&pat.node, ty_map, poly_pgm, mono_pgm),
+    }
 }
 
 /// Monomorphise an associated function or method.
@@ -855,7 +956,10 @@ fn mono_ty(
                 })
                 .collect();
 
-            let ty_decl = poly_pgm.ty.get(name).unwrap();
+            let ty_decl = poly_pgm
+                .ty
+                .get(name)
+                .unwrap_or_else(|| panic!("Unbound type {}", name));
 
             let mono_args: Vec<ast::Type> = args
                 .iter()
@@ -887,20 +991,12 @@ fn mono_ty(
     }
 }
 
-fn ty_name(ty: &ast::Type) -> &'static str {
+fn ty_name(ty: &ast::Type) -> &str {
     match ty {
         ast::Type::Named(ast::NamedType { name, args }) => match name.as_str() {
-            "i8" | "u8" => {
+            "I8" | "U8" | "I32" | "U32" => {
                 assert!(args.is_empty());
-                "I8"
-            }
-            "i32" | "u32" => {
-                assert!(args.is_empty());
-                "U32"
-            }
-            "i64" | "u64" => {
-                assert!(args.is_empty());
-                "U64"
+                name
             }
             _ => "Ptr",
         },

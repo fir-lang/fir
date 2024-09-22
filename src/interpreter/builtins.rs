@@ -15,10 +15,30 @@ pub enum BuiltinFun {
     PrintStrView,
 
     // Assoc funs
-    ArrayGet,
-    ArrayLen,
-    ArrayNew,
-    ArraySet,
+    ArrayI8Get,
+    ArrayI8Len,
+    ArrayI8New,
+    ArrayI8Set,
+
+    ArrayU8Get,
+    ArrayU8Len,
+    ArrayU8New,
+    ArrayU8Set,
+
+    ArrayI32Get,
+    ArrayI32Len,
+    ArrayI32New,
+    ArrayI32Set,
+
+    ArrayU32Get,
+    ArrayU32Len,
+    ArrayU32New,
+    ArrayU32Set,
+
+    ArrayPtrGet,
+    ArrayPtrLen,
+    ArrayPtrNew,
+    ArrayPtrSet,
 
     // I32
     I32Add,
@@ -61,6 +81,75 @@ pub enum BuiltinFun {
     StrViewStartsWith,
     StrViewSubstr,
     StrViewToStr,
+}
+
+macro_rules! array_new {
+    ($pgm:expr, $heap:expr, $args:expr, $array_type_tag:expr, $elem_size_in_bytes:expr) => {{
+        debug_assert_eq!($args.len(), 1);
+        let cap = $args[0];
+        debug_assert_eq!($heap[cap], $pgm.i32_ty_tag);
+        let cap = $heap[cap + 1];
+        let cap_words = (cap * $elem_size_in_bytes).div_ceil(8);
+        let array = $heap.allocate(cap_words as usize + 2);
+        $heap[array] = $array_type_tag;
+        $heap[array + 1] = cap;
+        (&mut $heap.values[(array + 2) as usize..(array + 2 + cap_words) as usize]).fill(0);
+        array
+    }};
+}
+
+macro_rules! array_set {
+    ($pgm:expr, $heap:expr, $args:expr, $array_type_tag:expr, $elem_type_tag:expr,
+     $elem_size_in_bytes:expr, $elem_rust_type_unsigned:ty, $elem_rust_type:ty) => {{
+        debug_assert_eq!($args.len(), 3);
+
+        let array = $args[0];
+        debug_assert_eq!($heap[array], $array_type_tag);
+
+        let idx = $args[1];
+        debug_assert_eq!($heap[idx], $pgm.i32_ty_tag);
+
+        let elem = $args[2];
+        debug_assert!($heap[elem] == $elem_type_tag);
+        let elem = $heap[elem + 1] as $elem_rust_type_unsigned as $elem_rust_type;
+
+        let array_len = $heap[array + 1];
+        let idx = $heap[idx + 1];
+        if idx >= array_len {
+            panic!("OOB array access");
+        }
+
+        let payload: &mut [$elem_rust_type] =
+            cast_slice_mut(&mut $heap.values[array as usize + 2..]);
+        payload[idx as usize] = elem;
+        0
+    }};
+}
+
+macro_rules! array_get {
+    ($pgm:expr, $heap:expr, $args:expr, $array_type_tag:expr, $elem_type_tag:expr,
+    $elem_size_in_bytes:expr, $elem_rust_type_unsigned:ty, $elem_rust_type:ty) => {{
+        debug_assert_eq!($args.len(), 2);
+
+        let array = $args[0];
+        debug_assert_eq!($heap[array], $array_type_tag);
+
+        let idx = $args[1];
+        debug_assert_eq!($heap[idx], $pgm.i32_ty_tag);
+
+        let array_len = $heap[array + 1];
+        let idx = $heap[idx + 1];
+        if idx >= array_len {
+            panic!("OOB array access");
+        }
+
+        let payload: &[$elem_rust_type] = cast_slice(&$heap.values[array as usize + 2..]);
+        let val = payload[idx as usize];
+        let val_boxed = $heap.allocate(2);
+        $heap[val_boxed] = $elem_type_tag;
+        $heap[val_boxed + 1] = val as $elem_rust_type_unsigned as u64;
+        val_boxed
+    }};
 }
 
 pub fn call_builtin_fun<W: Write>(
@@ -144,61 +233,166 @@ pub fn call_builtin_fun<W: Write>(
             0
         }
 
-        BuiltinFun::ArrayNew => {
-            debug_assert_eq!(args.len(), 1);
-
-            let cap = args[0];
-            debug_assert_eq!(heap[cap], pgm.i32_ty_tag);
-            let cap = heap[cap + 1];
-            heap.allocate_array(pgm.array_ty_tag, cap)
+        BuiltinFun::ArrayI8New => {
+            array_new!(pgm, heap, args, pgm.array_i8_ty_tag, 1)
         }
 
-        BuiltinFun::ArrayLen => {
-            debug_assert_eq!(args.len(), 1);
+        BuiltinFun::ArrayU8New => {
+            array_new!(pgm, heap, args, pgm.array_u8_ty_tag, 1)
+        }
 
+        BuiltinFun::ArrayI32New => {
+            array_new!(pgm, heap, args, pgm.array_i32_ty_tag, 4)
+        }
+
+        BuiltinFun::ArrayU32New => {
+            array_new!(pgm, heap, args, pgm.array_u32_ty_tag, 4)
+        }
+
+        BuiltinFun::ArrayPtrNew => {
+            array_new!(pgm, heap, args, pgm.array_ptr_ty_tag, 8)
+        }
+
+        BuiltinFun::ArrayI8Len
+        | BuiltinFun::ArrayU8Len
+        | BuiltinFun::ArrayI32Len
+        | BuiltinFun::ArrayU32Len
+        | BuiltinFun::ArrayPtrLen => {
+            debug_assert_eq!(args.len(), 1);
             let array = args[0];
-            debug_assert_eq!(heap[array], pgm.array_ty_tag);
+            // debug_assert_eq!(heap[array], pgm.array_i8_ty_tag);
             let len = heap[array + 1];
             heap.allocate_i32(pgm.i32_ty_tag, len as i32)
         }
 
-        BuiltinFun::ArraySet => {
-            debug_assert_eq!(args.len(), 3);
-
-            let array = args[0];
-            debug_assert_eq!(heap[array], pgm.array_ty_tag);
-
-            let idx = args[1];
-            debug_assert_eq!(heap[idx], pgm.i32_ty_tag);
-
-            let elem = args[2];
-
-            let array_len = heap[array + 1];
-            let idx = heap[idx + 1];
-            assert!(idx < array_len);
-
-            heap[array + 2 + idx] = elem;
-            elem
+        BuiltinFun::ArrayI8Set => {
+            array_set!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i8_ty_tag,
+                pgm.i8_ty_tag,
+                1,
+                u8,
+                i8
+            )
         }
 
-        BuiltinFun::ArrayGet => {
-            debug_assert_eq!(args.len(), 2);
+        BuiltinFun::ArrayU8Set => {
+            array_set!(
+                pgm,
+                heap,
+                args,
+                pgm.array_u8_ty_tag,
+                pgm.u8_ty_tag,
+                1,
+                u8,
+                u8
+            )
+        }
 
-            let array = args[0];
-            debug_assert_eq!(heap[array], pgm.array_ty_tag);
+        BuiltinFun::ArrayI32Set => {
+            array_set!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                4,
+                u32,
+                i32
+            )
+        }
 
-            let idx = args[1];
-            debug_assert_eq!(heap[idx], pgm.i32_ty_tag);
+        BuiltinFun::ArrayU32Set => {
+            array_set!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                4,
+                u32,
+                u32
+            )
+        }
 
-            let array_len = heap[array + 1];
-            let idx = heap[idx + 1];
-            assert!(idx < array_len);
+        BuiltinFun::ArrayPtrSet => {
+            array_set!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                8,
+                u64,
+                u64
+            )
+        }
 
-            let value = heap[array + 2 + idx];
-            if value == 0 {
-                panic!("Reading uninitialized array element");
-            }
-            value
+        BuiltinFun::ArrayI8Get => {
+            array_get!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i8_ty_tag,
+                pgm.i8_ty_tag,
+                1,
+                u8,
+                i8
+            )
+        }
+
+        BuiltinFun::ArrayU8Get => {
+            array_get!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i8_ty_tag,
+                pgm.i8_ty_tag,
+                1,
+                u8,
+                u8
+            )
+        }
+
+        BuiltinFun::ArrayI32Get => {
+            array_get!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                4,
+                u32,
+                i32
+            )
+        }
+
+        BuiltinFun::ArrayU32Get => {
+            array_get!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                4,
+                u32,
+                u32
+            )
+        }
+
+        BuiltinFun::ArrayPtrGet => {
+            array_get!(
+                pgm,
+                heap,
+                args,
+                pgm.array_i32_ty_tag,
+                pgm.i32_ty_tag,
+                8,
+                u64,
+                u64
+            )
         }
 
         BuiltinFun::StrLen => {

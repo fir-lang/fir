@@ -610,11 +610,23 @@ impl Pat {
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },
                 fields,
+                ty_args,
             }) => {
                 buffer.push_str(type_.as_str());
                 if let Some(constr) = constr {
                     buffer.push('.');
                     buffer.push_str(constr.as_str());
+                }
+
+                if !ty_args.is_empty() {
+                    buffer.push('[');
+                    for (i, ty_arg) in ty_args.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
+                        }
+                        buffer.push_str(&ty_arg.to_string());
+                    }
+                    buffer.push(']');
                 }
 
                 if !fields.is_empty() {

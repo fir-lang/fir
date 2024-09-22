@@ -212,11 +212,35 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             "isEmpty" => BuiltinFun::StrViewIsEmpty,
             "toStr" => BuiltinFun::StrViewToStr,
         },
-        "Array" => {
-            "new" => BuiltinFun::ArrayNew,
-            "len" => BuiltinFun::ArrayLen,
-            "set" => BuiltinFun::ArraySet,
-            "get" => BuiltinFun::ArrayGet,
+        "Array@U8" => {
+            "new" => BuiltinFun::ArrayU8New,
+            "len" => BuiltinFun::ArrayU8Len,
+            "set" => BuiltinFun::ArrayU8Set,
+            "get" => BuiltinFun::ArrayU8Get,
+        },
+        "Array@I8" => {
+            "new" => BuiltinFun::ArrayI8New,
+            "len" => BuiltinFun::ArrayI8Len,
+            "set" => BuiltinFun::ArrayI8Set,
+            "get" => BuiltinFun::ArrayI8Get,
+        },
+        "Array@U32" => {
+            "new" => BuiltinFun::ArrayU32New,
+            "len" => BuiltinFun::ArrayU32Len,
+            "set" => BuiltinFun::ArrayU32Set,
+            "get" => BuiltinFun::ArrayU32Get,
+        },
+        "Array@I32" => {
+            "new" => BuiltinFun::ArrayI32New,
+            "len" => BuiltinFun::ArrayI32Len,
+            "set" => BuiltinFun::ArrayI32Set,
+            "get" => BuiltinFun::ArrayI32Get,
+        },
+        "Array@Ptr" => {
+            "new" => BuiltinFun::ArrayPtrNew,
+            "len" => BuiltinFun::ArrayPtrLen,
+            "set" => BuiltinFun::ArrayPtrSet,
+            "get" => BuiltinFun::ArrayPtrGet,
         },
     };
 

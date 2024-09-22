@@ -10,14 +10,14 @@ use smol_str::SmolStr;
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 pub(super) fn check_pat(
-    pat: &ast::L<ast::Pat>,
+    pat: &mut ast::L<ast::Pat>,
     level: u32,
     env: &mut ScopeMap<Id, Ty>,
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
     preds: &mut PredSet,
 ) -> Ty {
-    match &pat.node {
+    match &mut pat.node {
         ast::Pat::Var(var) => {
             let ty = Ty::Var(var_gen.new_var(level, pat.loc.clone()));
             env.insert(var.clone(), ty.clone());
@@ -33,7 +33,10 @@ pub(super) fn check_pat(
                     constr: pat_con_name,
                 },
             fields: pat_fields,
+            ty_args,
         }) => {
+            debug_assert!(ty_args.is_empty());
+
             let ty_con: &TyCon = tys
                 .tys
                 .get_con(pat_ty_name)
@@ -83,11 +86,12 @@ pub(super) fn check_pat(
 
             // We don't need to instantiate based on pattern types. If we don't have a term with
             // the type the pattern will never match.
-            let (con_ty, _con_ty_args) = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
+            let (con_ty, con_ty_args) = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
+            *ty_args = con_ty_args.into_iter().map(Ty::Var).collect();
 
             // Apply argument pattern types to the function type.
             let pat_field_tys: Vec<ast::Named<Ty>> = pat_fields
-                .iter()
+                .iter_mut()
                 .map(|ast::Named { name, node }| ast::Named {
                     name: name.clone(),
                     node: check_pat(node, level, env, var_gen, tys, preds),
@@ -99,11 +103,11 @@ pub(super) fn check_pat(
 
         ast::Pat::Record(fields) => Ty::Record(
             fields
-                .iter()
+                .iter_mut()
                 .map(|named| {
                     (
                         named.name.as_ref().unwrap().clone(),
-                        check_pat(&named.node, level, env, var_gen, tys, preds),
+                        check_pat(&mut named.node, level, env, var_gen, tys, preds),
                     )
                 })
                 .collect(),

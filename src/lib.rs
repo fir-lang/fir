@@ -93,7 +93,7 @@ mod native {
         let mut no_prelude = false;
         let mut no_backtrace = false;
         let mut print_checked_ast = false;
-        let mut monomorphise = false;
+        let mut print_mono_ast = false;
         let args: Vec<String> = std::env::args()
             .filter(|arg| match arg.as_str() {
                 "--typecheck" => {
@@ -112,8 +112,8 @@ mod native {
                     print_checked_ast = true;
                     false
                 }
-                "--monomorphise" => {
-                    monomorphise = true;
+                "--print-mono-ast" => {
+                    print_mono_ast = true;
                     false
                 }
                 _ => true,
@@ -156,9 +156,15 @@ mod native {
         }
 
         if !typecheck {
-            // For testing purposes.
-            if monomorphise {
-                module = monomorph::monomorphise(&module);
+            module = monomorph::monomorphise(&module);
+
+            if print_mono_ast {
+                let mut buffer = String::new();
+                for top_decl in &module {
+                    top_decl.node.print(&mut buffer, 0);
+                    println!("{}", buffer);
+                    buffer.clear();
+                }
             }
 
             let input = args.get(2).map(|s| s.as_str()).unwrap_or("");

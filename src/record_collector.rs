@@ -162,27 +162,6 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
             visit_expr(&rhs.node, records);
         }
 
-        // ast::Statement::LetFn(ast::FunDecl {
-        //     type_name: _,
-        //     name: _,
-        //     type_params: _,
-        //     predicates: _,
-        //     self_: _,
-        //     params,
-        //     return_ty,
-        //     body,
-        // }) => {
-        //     for (_param_name, param_ty) in params {
-        //         visit_ty(param_ty, records);
-        //     }
-        //     if let Some(return_ty) = return_ty {
-        //         visit_ty(return_ty, records);
-        //     }
-
-        //     for stmt in body {
-        //         visit_stmt(stmt, records);
-        //     }
-        // }
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
             visit_expr(&lhs.node, records);
             visit_expr(&rhs.node, records);
@@ -222,7 +201,11 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
         | ast::Pat::StrPfx(_, _)
         | ast::Pat::Char(_) => {}
 
-        ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: _,
+            fields,
+            ty_args: _,
+        }) => {
             for field in fields {
                 visit_pat(&field.node.node, records);
             }
