@@ -1,5 +1,6 @@
 use crate::ast::Loc;
 use crate::interpreter::*;
+use crate::utils::loc_display;
 
 use std::io::Write;
 
@@ -86,7 +87,7 @@ pub fn call_builtin_fun<W: Write>(
                 "".to_string()
             };
 
-            panic!("{}: PANIC: {}", LocDisplay(loc), msg);
+            panic!("{}: PANIC: {}", loc_display(loc), msg);
         }
 
         BuiltinFun::Print => {
@@ -341,8 +342,8 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], pgm.i32_ty_tag, "{}", LocDisplay(loc));
-            debug_assert_eq!(heap[i2], pgm.i32_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i1], pgm.i32_ty_tag, "{}", loc_display(loc));
+            debug_assert_eq!(heap[i2], pgm.i32_ty_tag, "{}", loc_display(loc));
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
@@ -434,8 +435,8 @@ pub fn call_builtin_fun<W: Write>(
             let u1 = args[0];
             let u2 = args[1];
 
-            debug_assert_eq!(heap[u1], pgm.u32_ty_tag, "{}", LocDisplay(loc));
-            debug_assert_eq!(heap[u2], pgm.u32_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[u1], pgm.u32_ty_tag, "{}", loc_display(loc));
+            debug_assert_eq!(heap[u2], pgm.u32_ty_tag, "{}", loc_display(loc));
 
             let u1 = heap[u1 + 1];
             let u2 = heap[u2 + 1];
@@ -527,8 +528,8 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
 
-            debug_assert_eq!(heap[i1], pgm.i8_ty_tag, "{}", LocDisplay(loc));
-            debug_assert_eq!(heap[i2], pgm.i8_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[i1], pgm.i8_ty_tag, "{}", loc_display(loc));
+            debug_assert_eq!(heap[i2], pgm.i8_ty_tag, "{}", loc_display(loc));
 
             let i1 = heap[i1 + 1];
             let i2 = heap[i2 + 1];
@@ -620,8 +621,8 @@ pub fn call_builtin_fun<W: Write>(
             let u1 = args[0];
             let u2 = args[1];
 
-            debug_assert_eq!(heap[u1], pgm.u8_ty_tag, "{}", LocDisplay(loc));
-            debug_assert_eq!(heap[u2], pgm.u8_ty_tag, "{}", LocDisplay(loc));
+            debug_assert_eq!(heap[u1], pgm.u8_ty_tag, "{}", loc_display(loc));
+            debug_assert_eq!(heap[u2], pgm.u8_ty_tag, "{}", loc_display(loc));
 
             let u1 = heap[u1 + 1];
             let u2 = heap[u2 + 1];
@@ -700,7 +701,7 @@ pub fn call_builtin_fun<W: Write>(
             if end > view_len {
                 panic!(
                     "{}: StrView.substr({}, {}) out of bounds, view length = {}",
-                    LocDisplay(loc),
+                    loc_display(loc),
                     start,
                     end,
                     view_len

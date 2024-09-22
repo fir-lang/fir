@@ -4,7 +4,7 @@ use crate::scope_map::ScopeMap;
 use crate::type_checker::apply::apply;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{loc_string, PgmTypes};
+use crate::type_checker::{loc_display, PgmTypes};
 
 use smol_str::SmolStr;
 
@@ -37,7 +37,7 @@ pub(super) fn check_pat(
             let ty_con: &TyCon = tys
                 .tys
                 .get_con(pat_ty_name)
-                .unwrap_or_else(|| panic!("{}: Undefined type", loc_string(&pat.loc)));
+                .unwrap_or_else(|| panic!("{}: Undefined type", loc_display(&pat.loc)));
 
             // Check that `con` exists and field shapes match.
             let con_scheme = {
@@ -57,11 +57,11 @@ pub(super) fn check_pat(
                                             ConFieldShape::Unnamed(arity) => {
                                                 for pat_field in pat_fields {
                                                     if pat_field.name.is_some() {
-                                                        panic!("{}: Constructor {} does not have named fields", loc_string(&pat.loc), con_name);
+                                                        panic!("{}: Constructor {} does not have named fields", loc_display(&pat.loc), con_name);
                                                     }
                                                 }
                                                 if pat_fields.len() != *arity as usize {
-                                                    panic!("{}: Constructor {} has {} fields, but pattern bind {}", loc_string(&pat.loc), con_name, arity, pat_fields.len());
+                                                    panic!("{}: Constructor {} has {} fields, but pattern bind {}", loc_display(&pat.loc), con_name, arity, pat_fields.len());
                                                 }
                                             }
                                             ConFieldShape::Named(names) => {
@@ -71,16 +71,16 @@ pub(super) fn check_pat(
                                                     match &pat_field.name {
                                                         Some(pat_field_name) => {
                                                             if !names.contains(pat_field_name) {
-                                                                panic!("{}: Constructor {} does not have named field {}", loc_string(&pat.loc), con_name, pat_field_name);
+                                                                panic!("{}: Constructor {} does not have named field {}", loc_display(&pat.loc), con_name, pat_field_name);
                                                             }
                                                             if !pat_field_names
                                                                 .insert(pat_field_name)
                                                             {
-                                                                panic!("{}: Pattern binds named field {} multiple times", loc_string(&pat.loc), pat_field_name);
+                                                                panic!("{}: Pattern binds named field {} multiple times", loc_display(&pat.loc), pat_field_name);
                                                             }
                                                         }
                                                         None => {
-                                                            panic!("{}: Constructor {} has named fields, but pattern has unnamed field", loc_string(&pat.loc), con_name);
+                                                            panic!("{}: Constructor {} has named fields, but pattern has unnamed field", loc_display(&pat.loc), con_name);
                                                         }
                                                     }
                                                 }
@@ -91,7 +91,7 @@ pub(super) fn check_pat(
                                 if !shape_checked {
                                     panic!(
                                         "{}: Type {} does not have constructor {}",
-                                        loc_string(&pat.loc),
+                                        loc_display(&pat.loc),
                                         pat_ty_name,
                                         pat_con_name
                                     );
@@ -102,7 +102,7 @@ pub(super) fn check_pat(
                                 if cons.len() != 1 || (cons.len() == 1 && cons[0].name.is_some()) {
                                     panic!(
                                         "{}: Type {} does not have unnamed constructor",
-                                        loc_string(&pat.loc),
+                                        loc_display(&pat.loc),
                                         pat_ty_name
                                     );
                                 }
@@ -116,7 +116,7 @@ pub(super) fn check_pat(
                                     .unwrap_or_else(|| {
                                         panic!(
                                             "{}: BUG: Type {} doesn't have any schemes",
-                                            loc_string(&pat.loc),
+                                            loc_display(&pat.loc),
                                             ty_con.id
                                         )
                                     })
@@ -124,7 +124,7 @@ pub(super) fn check_pat(
                                     .unwrap_or_else(|| {
                                         panic!(
                                             "{}: BUG: Type {} doesn't have a constructor named {} in associated schemes",
-                                            loc_string(&pat.loc),
+                                            loc_display(&pat.loc),
                                             &ty_con.id,
                                             pat_con_name
                                         )
@@ -133,7 +133,7 @@ pub(super) fn check_pat(
                                 tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| {
                                     panic!(
                                         "{}: BUG: type {} doesn't have a top-level scheme",
-                                        loc_string(&pat.loc),
+                                        loc_display(&pat.loc),
                                         &ty_con.id
                                     )
                                 }),
@@ -142,13 +142,13 @@ pub(super) fn check_pat(
 
                     TyConDetails::Trait { .. } => panic!(
                         "{}: Type constructor {} is a trait",
-                        loc_string(&pat.loc),
+                        loc_display(&pat.loc),
                         pat_ty_name
                     ),
 
                     TyConDetails::Synonym(_) => panic!(
                         "{}: Type constructor {} is a type synonym",
-                        loc_string(&pat.loc),
+                        loc_display(&pat.loc),
                         pat_ty_name
                     ),
                 }

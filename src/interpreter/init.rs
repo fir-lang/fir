@@ -1,4 +1,5 @@
 use crate::interpreter::*;
+use crate::utils::loc_display;
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
     let mut ty_cons: Map<Id, TyCon> = Default::default();
@@ -245,7 +246,10 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                 let implementing_ty = match &impl_decl.node.ty.node {
                     ast::Type::Named(ast::NamedType { name, args: _ }) => name,
                     ast::Type::Record(_) => {
-                        panic!("{}: Impl block for record type", LocDisplay(&impl_decl.loc))
+                        panic!(
+                            "{}: Impl block for record type",
+                            loc_display(&impl_decl.loc)
+                        )
                     }
                 };
 

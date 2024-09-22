@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::{ScopeMap, Set};
-use crate::type_checker::loc_string;
+use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 
 pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::Loc) {
@@ -21,7 +21,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                     "Unable to unify types {} and {} at {}",
                     con1,
                     con2,
-                    loc_string(loc)
+                    loc_display(loc)
                 )
             }
         }
@@ -32,14 +32,14 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                     "Unable to unify types {} and {} at {}",
                     con1,
                     con2,
-                    loc_string(loc)
+                    loc_display(loc)
                 )
             }
 
             match (args1, args2) {
                 (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
                     if args1.len() != args2.len() {
-                        panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_string(loc), con1)
+                        panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
                     }
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                         unify(arg1, arg2, cons, loc);
@@ -49,7 +49,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                     let keys1: Set<&Id> = args1.keys().collect();
                     let keys2: Set<&Id> = args2.keys().collect();
                     if keys1 != keys2 {
-                        panic!("{}: BUG: Kind error: type constructor {} applied to different named arguments in unify", loc_string(loc), con1)
+                        panic!("{}: BUG: Kind error: type constructor {} applied to different named arguments in unify", loc_display(loc), con1)
                     }
 
                     for key in keys1 {
@@ -58,13 +58,13 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                 }
                 _ => {
                     // Bug in the type checker, types should've been checked.
-                    panic!("{}: BUG: Kind error: type constructor {} applied to different shape of arguments in unify", loc_string(loc), con1)
+                    panic!("{}: BUG: Kind error: type constructor {} applied to different shape of arguments in unify", loc_display(loc), con1)
                 }
             }
         }
 
         (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
-            panic!("{}: QVar {} during unification", loc_string(loc), var);
+            panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
         (Ty::Var(var1), Ty::Var(var2)) => {
@@ -102,7 +102,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
             if !extras1.is_empty() {
                 panic!(
                     "{}: Unable to unify records: extra keys: {:?}",
-                    loc_string(loc),
+                    loc_display(loc),
                     extras1
                 );
             }
@@ -110,7 +110,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
             if !extras2.is_empty() {
                 panic!(
                     "{}: Unable to unify records: extra keys: {:?}",
-                    loc_string(loc),
+                    loc_display(loc),
                     extras2
                 );
             }
@@ -118,7 +118,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
             if keys1 != keys2 {
                 panic!(
                     "{}: Unable to unify records: keys don't match",
-                    loc_string(loc)
+                    loc_display(loc)
                 );
             }
 
@@ -140,7 +140,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
              )",
             ty1,
             ty2,
-            loc_string(loc),
+            loc_display(loc),
             ty1,
             ty2,
         ),

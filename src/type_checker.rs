@@ -10,6 +10,7 @@ mod ty;
 mod ty_map;
 mod unification;
 
+pub use crate::utils::loc_display;
 use convert::convert_fields;
 use convert::*;
 use instantiation::normalize_instantiation_types;
@@ -54,7 +55,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
                 "{}: Import declaration in check_module",
-                loc_string(&decl.loc)
+                loc_display(&decl.loc)
             ),
 
             // Types and schemes added to `PgmTypes` by `collect_types`.
@@ -351,7 +352,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         if !trait_implementing_tys.insert(self_ty_con.clone()) {
             panic!(
                 "{}: Trait {} is implemented for type {} multiple times",
-                loc_string(&decl.loc),
+                loc_display(&decl.loc),
                 trait_con_id,
                 self_ty_con
             );
@@ -443,7 +444,7 @@ fn collect_schemes(
                 if old.is_some() {
                     panic!(
                         "{}: Function {} is defined multiple times",
-                        loc_string(loc),
+                        loc_display(loc),
                         sig.name.node
                     );
                 }
@@ -527,7 +528,7 @@ fn collect_schemes(
                         if old.is_some() {
                             panic!(
                                 "{}: Method {} for type {} is defined multiple times",
-                                loc_string(&item.loc),
+                                loc_display(&item.loc),
                                 fun.sig.name.node,
                                 self_ty_con_id
                             );
@@ -543,7 +544,7 @@ fn collect_schemes(
                         if old.is_some() {
                             panic!(
                                 "{}: Associated function {} for type {} is defined multiple times",
-                                loc_string(&item.loc),
+                                loc_display(&item.loc),
                                 fun.sig.name.node,
                                 self_ty_con_id
                             );
@@ -567,7 +568,7 @@ fn collect_schemes(
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Trait {} does not have a method named {}",
-                                    loc_string(&item.loc),
+                                    loc_display(&item.loc),
                                     trait_ty_con.id,
                                     fun_name
                                 )
@@ -596,7 +597,7 @@ fn collect_schemes(
                                 "{}: Trait method implementation of {} does not match the trait method type
                                 Trait method type:          {}
                                 Implementation method type: {}",
-                                loc_string(&item.loc),
+                                loc_display(&item.loc),
                                 fun_name,
                                 trait_fun_scheme,
                                 scheme
@@ -668,7 +669,7 @@ fn collect_schemes(
                             if old.is_some() {
                                 panic!(
                                     "{}: Constructor {}.{} is defined multiple times",
-                                    loc_string(&ty_decl.loc), // TODO: use con loc
+                                    loc_display(&ty_decl.loc), // TODO: use con loc
                                     ty_decl.node.name,
                                     con.name,
                                 );
@@ -697,7 +698,7 @@ fn collect_schemes(
                         if old.is_some() {
                             panic!(
                                 "{}: Constructor {} is defined multiple times",
-                                loc_string(&ty_decl.loc), // TODO: use con loc
+                                loc_display(&ty_decl.loc), // TODO: use con loc
                                 ty_decl.node.name,
                             );
                         }
@@ -919,7 +920,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             ) {
                 (true, true) => panic!(
                     "{}: Trait method {} implemented multiple times",
-                    loc_string(&item.loc),
+                    loc_display(&item.loc),
                     fun_id
                 ),
 
@@ -930,7 +931,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 (false, _) => {
                     panic!(
                         "{}: Trait {} does not have method {}",
-                        loc_string(&item.loc),
+                        loc_display(&item.loc),
                         ty_con_id,
                         fun_id
                     )
@@ -943,7 +944,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         if !missing_methods.is_empty() {
             panic!(
                 "{}: Trait methods missing: {:?}",
-                loc_string(&impl_.loc),
+                loc_display(&impl_.loc),
                 missing_methods
             );
         }
@@ -1135,13 +1136,4 @@ fn unbind_type_params(
             }
         }
     }
-}
-
-fn loc_string(loc: &ast::Loc) -> String {
-    format!(
-        "{}:{}:{}",
-        loc.module,
-        loc.line_start + 1,
-        loc.col_start + 1
-    )
 }

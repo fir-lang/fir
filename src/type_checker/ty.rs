@@ -2,7 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeMap, Set};
-use crate::type_checker::loc_string;
+use crate::type_checker::loc_display;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -422,13 +422,13 @@ fn ty_eq_modulo_alpha(
             let qvar1_idx = ty1_qvars.get(&qvar1).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
-                    loc_string(loc), qvar1, ty1_qvars, extra_qvars
+                    loc_display(loc), qvar1, ty1_qvars, extra_qvars
                 )
             });
             let qvar2_idx = ty2_qvars.get(&qvar2).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
-                    loc_string(loc), qvar2, ty2_qvars, extra_qvars
+                    loc_display(loc), qvar2, ty2_qvars, extra_qvars
                 )
             });
             qvar1_idx == qvar2_idx
@@ -801,7 +801,7 @@ impl PredSet {
         if old.is_some() {
             panic!(
                 "{}: Type variable {:?} already has a constraint on trait {}",
-                loc_string(loc),
+                loc_display(loc),
                 ty_var,
                 trait_
             );

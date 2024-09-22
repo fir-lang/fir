@@ -6,7 +6,7 @@ use crate::type_checker::pat::check_pat;
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{loc_string, PgmTypes};
+use crate::type_checker::{loc_display, PgmTypes};
 
 use smol_str::SmolStr;
 
@@ -41,12 +41,12 @@ pub(super) fn check_expr(
                 return unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc);
             }
 
-            panic!("{}: Unbound variable {}", loc_string(&expr.loc), var);
+            panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
         }
 
         ast::Expr::Constr(con) => {
             let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
-                panic!("{}: Unknown constructor {}", loc_string(&expr.loc), con)
+                panic!("{}: Unknown constructor {}", loc_display(&expr.loc), con)
             });
             let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
             if !ty_args.is_empty() {
@@ -89,7 +89,7 @@ pub(super) fn check_expr(
                             // Associated type arguments are only allowed in traits, sothe `con` must
                             // be a trait.
                             assert!(tys.tys.get_con(&con).unwrap().details.is_trait());
-                            panic!("{}: Traits cannot have fields", loc_string(&object.loc))
+                            panic!("{}: Traits cannot have fields", loc_display(&object.loc))
                         }
                     },
 
@@ -97,7 +97,7 @@ pub(super) fn check_expr(
                         Some(field_ty) => field_ty.clone(),
                         None => panic!(
                             "{}: Record with fields {:?} does not have field {}",
-                            loc_string(&object.loc),
+                            loc_display(&object.loc),
                             fields.keys().collect::<Vec<_>>(),
                             field
                         ),
@@ -105,13 +105,13 @@ pub(super) fn check_expr(
 
                     Ty::AssocTySelect { ty: _, assoc_ty: _ } => panic!(
                         "{}: Associated type select in fiel select expr",
-                        loc_string(&object.loc)
+                        loc_display(&object.loc)
                     ),
 
                     Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
                         panic!(
                             "{}: Object in field selection does not have fields: {:?}",
-                            loc_string(&object.loc),
+                            loc_display(&object.loc),
                             object_ty
                         )
                     }
@@ -127,7 +127,7 @@ pub(super) fn check_expr(
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} is not in type environment",
-                        loc_string(&expr.loc),
+                        loc_display(&expr.loc),
                         ty
                     )
                 })
@@ -135,7 +135,7 @@ pub(super) fn check_expr(
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have the constructor {}",
-                        loc_string(&expr.loc),
+                        loc_display(&expr.loc),
                         ty,
                         constr
                     )
@@ -157,13 +157,13 @@ pub(super) fn check_expr(
             let scheme = tys
                 .associated_fn_schemes
                 .get(ty)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_string(&expr.loc), ty))
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty))
                 .get(member)
                 .or_else(|| tys.method_schemes.get(ty).unwrap().get(member))
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have associated function {}",
-                        loc_string(&expr.loc),
+                        loc_display(&expr.loc),
                         ty,
                         member
                     )
@@ -190,7 +190,7 @@ pub(super) fn check_expr(
                     if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
-                            loc_string(&expr.loc),
+                            loc_display(&expr.loc),
                             param_tys.len(),
                             args.len()
                         );
@@ -200,7 +200,7 @@ pub(super) fn check_expr(
                         if arg.name.is_some() {
                             panic!(
                                 "{}: Named argument applied to function that expects positional arguments",
-                                loc_string(&expr.loc),
+                                loc_display(&expr.loc),
                             );
                         }
                     }
@@ -227,7 +227,7 @@ pub(super) fn check_expr(
                     if param_tys.len() != args.len() {
                         panic!(
                             "{}: Function with arity {} is passed {} args",
-                            loc_string(&expr.loc),
+                            loc_display(&expr.loc),
                             param_tys.len(),
                             args.len()
                         );
@@ -237,7 +237,7 @@ pub(super) fn check_expr(
                         if arg.name.is_none() {
                             panic!(
                                 "{}: Positional argument applied to function that expects named arguments",
-                                loc_string(&expr.loc),
+                                loc_display(&expr.loc),
                             );
                         }
                     }
@@ -249,7 +249,7 @@ pub(super) fn check_expr(
                     if param_names != arg_names {
                         panic!(
                             "{}: Function expects arguments with names {:?}, but passed {:?}",
-                            loc_string(&expr.loc),
+                            loc_display(&expr.loc),
                             param_names,
                             arg_names
                         );
@@ -276,7 +276,7 @@ pub(super) fn check_expr(
 
                 _ => panic!(
                     "{}: Function in function application is not a function: {:?}",
-                    loc_string(&expr.loc),
+                    loc_display(&expr.loc),
                     fun_ty,
                 ),
             }
@@ -285,7 +285,7 @@ pub(super) fn check_expr(
         ast::Expr::Range(ast::RangeExpr { .. }) => {
             panic!(
                 "{}: Range expressions are currently only allowed in `for` loops",
-                loc_string(&expr.loc)
+                loc_display(&expr.loc)
             );
         }
 
@@ -351,7 +351,7 @@ pub(super) fn check_expr(
             Some(self_ty) => {
                 unify_expected_ty(self_ty.clone(), expected_ty, tys.tys.cons(), &expr.loc)
             }
-            None => panic!("{}: Unbound self", loc_string(&expr.loc)),
+            None => panic!("{}: Unbound self", loc_display(&expr.loc)),
         },
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
@@ -424,12 +424,12 @@ pub(super) fn check_expr(
                         if !field_names.insert(name) {
                             panic!(
                                 "{}: Field name {} occurs multiple times in the record",
-                                loc_string(&expr.loc),
+                                loc_display(&expr.loc),
                                 name
                             );
                         }
                     }
-                    None => panic!("{}: Unnamed record field", loc_string(&expr.loc)),
+                    None => panic!("{}: Unnamed record field", loc_display(&expr.loc)),
                 }
             }
 
@@ -440,7 +440,7 @@ pub(super) fn check_expr(
                     Ty::Record(expected_fields) => expected_fields,
                     other => panic!(
                         "{}: Record expression expected to have type {:?}",
-                        loc_string(&expr.loc),
+                        loc_display(&expr.loc),
                         other
                     ),
                 });
@@ -450,7 +450,7 @@ pub(super) fn check_expr(
                 if expected_field_names != field_names {
                     panic!(
                         "{}: Record expected to have fields {:?}, but it has fields {:?}",
-                        loc_string(&expr.loc),
+                        loc_display(&expr.loc),
                         expected_field_names,
                         field_names
                     );
@@ -615,7 +615,7 @@ pub(super) fn check_expr(
         ast::Expr::Instantiation(_, _) => {
             panic!(
                 "{}: BUG: Instantiation in check_expr",
-                loc_string(&expr.loc)
+                loc_display(&expr.loc)
             );
         }
     }
@@ -675,14 +675,14 @@ fn check_field_select(
                     }
                     _ => panic!(
                         "{}: Type of method is not a function type: {:?}",
-                        loc_string(loc),
+                        loc_display(loc),
                         method_ty
                     ),
                 }
             }
             None => panic!(
                 "{}: Type {} does not have field or method {}",
-                loc_string(loc),
+                loc_display(loc),
                 ty_con,
                 field
             ),
@@ -722,12 +722,12 @@ pub(super) fn select_field(
             // Ignore this for now, we probably won't need it.
             todo!(
                 "{}: FieldSelect expression selecting a trait method without receiver",
-                loc_string(loc)
+                loc_display(loc)
             );
         }
 
         TyConDetails::Synonym(_) => {
-            panic!("{}: Type synonym in select_field", loc_string(loc));
+            panic!("{}: Type synonym in select_field", loc_display(loc));
         }
     }
 }

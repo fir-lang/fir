@@ -5,7 +5,7 @@ use crate::type_checker::expr::{check_expr, select_field};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{loc_string, PgmTypes};
+use crate::type_checker::{loc_display, PgmTypes};
 
 use smol_str::SmolStr;
 
@@ -81,7 +81,7 @@ fn check_stmt(
             match &mut lhs.node {
                 ast::Expr::Var(var) => {
                     let var_ty = env.get(var).cloned().unwrap_or_else(|| {
-                        panic!("{}: Unbound variable {}", loc_string(&lhs.loc), var)
+                        panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
 
                     let method = match op {
@@ -148,7 +148,7 @@ fn check_stmt(
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
-                                    loc_string(&lhs.loc),
+                                    loc_display(&lhs.loc),
                                     con,
                                     field
                                 )
@@ -161,7 +161,7 @@ fn check_stmt(
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
-                                    loc_string(&lhs.loc),
+                                    loc_display(&lhs.loc),
                                     con,
                                     field
                                 )
@@ -173,7 +173,7 @@ fn check_stmt(
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
-                                loc_string(&object.loc),
+                                loc_display(&object.loc),
                                 fields.keys().collect::<Vec<_>>(),
                                 field
                             ),
@@ -234,7 +234,7 @@ fn check_stmt(
                     );
                 }
 
-                _ => todo!("{}: Assignment with LHS: {:?}", loc_string(&lhs.loc), lhs),
+                _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
             }
 
             unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &stmt.loc)
@@ -300,13 +300,13 @@ fn check_stmt(
                     };
 
                     if !known_ty {
-                        panic!("{}: Don't know how to iterate type {}", loc_string(&expr.loc), &to_ty);
+                        panic!("{}: Don't know how to iterate type {}", loc_display(&expr.loc), &to_ty);
                     }
 
                     to_ty
                 }
 
-                _ => panic!("{}: For now `for` loops can only have range expressions in the iterator position", loc_string(&expr.loc)),
+                _ => panic!("{}: For now `for` loops can only have range expressions in the iterator position", loc_display(&expr.loc)),
             };
 
             env.enter();

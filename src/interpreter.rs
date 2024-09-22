@@ -16,6 +16,7 @@ use crate::ast::{self, Id, Loc, L};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape};
+use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
@@ -470,7 +471,7 @@ fn call_method<W: Write>(
         .unwrap_or_else(|| {
             panic!(
                 "{}: Object with type {} (tag {}) does not have {} method",
-                LocDisplay(loc),
+                loc_display(loc),
                 pgm.tag_name_display(tag),
                 tag,
                 method
@@ -492,7 +493,7 @@ fn call_source_fun<W: Write>(
         fun.num_params(),
         args.len() as u32,
         "{}, fun: {}",
-        LocDisplay(loc),
+        loc_display(loc),
         fun.sig.name.node
     );
 
@@ -529,7 +530,7 @@ fn allocate_object_from_names<W: Write>(
     let ty_con = pgm
         .ty_cons
         .get(ty)
-        .unwrap_or_else(|| panic!("Undefined type {} at {}", ty, LocDisplay(loc)));
+        .unwrap_or_else(|| panic!("Undefined type {} at {}", ty, loc_display(loc)));
 
     let constr_idx = match constr_name {
         Some(constr_name) => {
@@ -632,7 +633,7 @@ fn exec<W: Write>(
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
                 match try_bind_pat(pgm, heap, lhs, val) {
                     Some(binds) => locals.extend(binds.into_iter()),
-                    None => panic!("Pattern binding at {} failed", LocDisplay(&stmt.loc)),
+                    None => panic!("Pattern binding at {} failed", loc_display(&stmt.loc)),
                 }
                 val
             }
@@ -729,7 +730,7 @@ fn eval<W: Write>(
             Some(value) => ControlFlow::Val(*value),
             None => match pgm.top_level_funs.get(var) {
                 Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                None => panic!("{}: Unbound variable: {}", LocDisplay(loc), var),
+                None => panic!("{}: Unbound variable: {}", loc_display(loc), var),
             },
         },
 
@@ -775,7 +776,7 @@ fn eval<W: Write>(
 
             panic!(
                 "{}: Unable to select method or field {}",
-                LocDisplay(loc),
+                loc_display(loc),
                 field
             );
         }
@@ -870,7 +871,7 @@ fn eval<W: Write>(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Object with type {} (tag {}) doesn't have field or method {:?}",
-                                LocDisplay(loc),
+                                loc_display(loc),
                                 pgm.tag_name_display(object_tag),
                                 object_tag,
                                 field
@@ -1155,7 +1156,7 @@ fn eval<W: Write>(
                             assert_eq!(first_tag, last_tag);
                             ControlFlow::Val(heap.allocate_constr(ty_tag))
                         }
-                        None => panic!("{}: Unbound variable {}", LocDisplay(loc), fun_id),
+                        None => panic!("{}: Unbound variable {}", loc_display(loc), fun_id),
                     },
                 },
 
@@ -1183,7 +1184,7 @@ fn eval<W: Write>(
                         .unwrap_or_else(|| {
                             panic!(
                                 "{}: Object with type {} (tag {}) does not have method {}",
-                                LocDisplay(loc),
+                                loc_display(loc),
                                 pgm.tag_name_display(receiver_tag),
                                 receiver_tag,
                                 method_id
@@ -1228,21 +1229,21 @@ fn assign<W: Write>(
             }
             ast::AssignOp::PlusEq => {
                 let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                 });
                 let new_val = call_method(w, pgm, heap, *old_val, &"__add".into(), vec![val], loc);
                 locals.insert(var.clone(), new_val);
             }
             ast::AssignOp::MinusEq => {
                 let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                 });
                 let new_val = call_method(w, pgm, heap, *old_val, &"__sub".into(), vec![val], loc);
                 locals.insert(var.clone(), new_val);
             }
             ast::AssignOp::StarEq => {
                 let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", LocDisplay(&lhs.loc), var)
+                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                 });
                 let new_val = call_method(w, pgm, heap, *old_val, &"__mul".into(), vec![val], loc);
                 locals.insert(var.clone(), new_val);
@@ -1505,7 +1506,7 @@ fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
     let tag = heap[obj];
     let con = &pgm.cons_by_tag[tag as usize];
 
-    write!(&mut s, "{}: ", LocDisplay(loc)).unwrap();
+    write!(&mut s, "{}: ", loc_display(loc)).unwrap();
 
     match &con.info {
         ConInfo::Named {
@@ -1545,18 +1546,4 @@ fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
     write!(&mut s, ")").unwrap();
 
     s
-}
-
-struct LocDisplay<'a>(&'a Loc);
-
-impl<'a> std::fmt::Display for LocDisplay<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}:{}:{}",
-            self.0.module,
-            self.0.line_start + 1,
-            self.0.col_start + 1
-        )
-    }
 }

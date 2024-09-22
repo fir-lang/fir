@@ -13,11 +13,12 @@ mod scanner;
 mod scope_map;
 mod token;
 mod type_checker;
+mod utils;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
 
-fn lexgen_loc_string(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
+fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
@@ -39,21 +40,21 @@ fn report_parse_error(
 ) -> ! {
     match err {
         lalrpop_util::ParseError::InvalidToken { location } => {
-            panic!("Invalid token at {}", lexgen_loc_string(module, location));
+            panic!("Invalid token at {}", lexgen_loc_display(module, location));
         }
 
         lalrpop_util::ParseError::UnrecognizedEof {
             location,
             expected: _,
         } => {
-            panic!("Unexpected EOF at {}", lexgen_loc_string(module, location));
+            panic!("Unexpected EOF at {}", lexgen_loc_display(module, location));
         }
 
         lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
             panic!(
                 "Unexpected token {:?} at {}",
                 token.1,
-                lexgen_loc_string(module, token.0)
+                lexgen_loc_display(module, token.0)
             );
         }
 
@@ -61,7 +62,7 @@ fn report_parse_error(
             panic!(
                 "Extra token {:?} after parsing at {}",
                 token.1,
-                lexgen_loc_string(module, token.0)
+                lexgen_loc_display(module, token.0)
             );
         }
 

@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::Map;
-use crate::type_checker::loc_string;
+use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 
@@ -26,7 +26,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 if !args.is_empty() {
                     panic!(
                         "{}: Type variable {} cannot be applied arguments",
-                        loc_string(loc),
+                        loc_display(loc),
                         name
                     );
                 }
@@ -37,7 +37,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 if ty_con.arity() as usize != args.len() {
                     panic!(
                         "{}: Incorrect number of type arguments to {}, expected {}, found {}",
-                        loc_string(loc),
+                        loc_display(loc),
                         name,
                         ty_con.arity(),
                         args.len()
@@ -59,7 +59,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                             if old.is_some() {
                                 panic!(
                                     "{}: Associated type argument {} defined multiple times",
-                                    loc_string(loc),
+                                    loc_display(loc),
                                     name
                                 );
                             }
@@ -73,7 +73,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 if !converted_args.is_empty() && !converted_named_args.is_empty() {
                     panic!(
                         "{}: Type cannot have both associated and positional arguments",
-                        loc_string(loc),
+                        loc_display(loc),
                     );
                 }
 
@@ -90,7 +90,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 return Ty::App(ty_con.id.clone(), args);
             }
 
-            panic!("{}: Unknown type {}", loc_string(loc), name);
+            panic!("{}: Unknown type {}", loc_display(loc), name);
         }
 
         ast::Type::Record(fields) => Ty::Record(
@@ -193,14 +193,14 @@ pub(super) fn convert_and_bind_context(
                     )
                 }
 
-                _ => panic!("{}: Invalid predicate syntax", loc_string(&bound.loc)),
+                _ => panic!("{}: Invalid predicate syntax", loc_display(&bound.loc)),
             };
 
             let trait_con = match tys.get_con(&trait_id) {
                 Some(con) => con,
                 None => panic!(
                     "{}: Unknown type {} in bound",
-                    loc_string(&bound.loc),
+                    loc_display(&bound.loc),
                     trait_id
                 ),
             };
@@ -208,7 +208,7 @@ pub(super) fn convert_and_bind_context(
             if !trait_con.is_trait() {
                 panic!(
                     "{}: Type {} is not a trait",
-                    loc_string(&bound.loc),
+                    loc_display(&bound.loc),
                     trait_id
                 );
             }
@@ -217,7 +217,7 @@ pub(super) fn convert_and_bind_context(
             if old.is_some() {
                 panic!(
                     "{}: Bound {} is defined multiple times",
-                    loc_string(&bound.loc),
+                    loc_display(&bound.loc),
                     trait_id
                 );
             }
@@ -226,7 +226,7 @@ pub(super) fn convert_and_bind_context(
         if context_converted.iter().any(|(var, _)| var == &ty_var.node) {
             panic!(
                 "{}: Type variable {} is listed multiple times",
-                loc_string(loc),
+                loc_display(loc),
                 ty_var.node,
             );
         }
