@@ -40,118 +40,45 @@ pub(super) fn check_pat(
                 .unwrap_or_else(|| panic!("{}: Undefined type", loc_display(&pat.loc)));
 
             // Check that `con` exists and field shapes match.
-            let con_scheme = {
-                match &ty_con.details {
-                    TyConDetails::Type(TypeDetails { cons }) => {
-                        match pat_con_name {
-                            Some(pat_con_name) => {
-                                let mut shape_checked = false;
-                                for con in cons {
-                                    if let Some(con_name) = &con.name {
-                                        if con_name != pat_con_name {
-                                            continue;
-                                        }
-
-                                        shape_checked = true;
-                                        match &con.fields {
-                                            ConFieldShape::Unnamed(arity) => {
-                                                for pat_field in pat_fields {
-                                                    if pat_field.name.is_some() {
-                                                        panic!("{}: Constructor {} does not have named fields", loc_display(&pat.loc), con_name);
-                                                    }
-                                                }
-                                                if pat_fields.len() != *arity as usize {
-                                                    panic!("{}: Constructor {} has {} fields, but pattern bind {}", loc_display(&pat.loc), con_name, arity, pat_fields.len());
-                                                }
-                                            }
-                                            ConFieldShape::Named(names) => {
-                                                let mut pat_field_names: Set<&Id> =
-                                                    Default::default();
-                                                for pat_field in pat_fields {
-                                                    match &pat_field.name {
-                                                        Some(pat_field_name) => {
-                                                            if !names.contains(pat_field_name) {
-                                                                panic!("{}: Constructor {} does not have named field {}", loc_display(&pat.loc), con_name, pat_field_name);
-                                                            }
-                                                            if !pat_field_names
-                                                                .insert(pat_field_name)
-                                                            {
-                                                                panic!("{}: Pattern binds named field {} multiple times", loc_display(&pat.loc), pat_field_name);
-                                                            }
-                                                        }
-                                                        None => {
-                                                            panic!("{}: Constructor {} has named fields, but pattern has unnamed field", loc_display(&pat.loc), con_name);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if !shape_checked {
-                                    panic!(
-                                        "{}: Type {} does not have constructor {}",
-                                        loc_display(&pat.loc),
-                                        pat_ty_name,
-                                        pat_con_name
-                                    );
-                                }
-                            }
-                            None => {
-                                // Type should have a single unnamed constructor.
-                                if cons.len() != 1 || (cons.len() == 1 && cons[0].name.is_some()) {
-                                    panic!(
-                                        "{}: Type {} does not have unnamed constructor",
-                                        loc_display(&pat.loc),
-                                        pat_ty_name
-                                    );
-                                }
-                            }
-                        }
-
-                        match pat_con_name {
-                            Some(pat_con_name) =>
-                                tys.associated_fn_schemes
-                                    .get(&ty_con.id)
-                                    .unwrap_or_else(|| {
-                                        panic!(
-                                            "{}: BUG: Type {} doesn't have any schemes",
-                                            loc_display(&pat.loc),
-                                            ty_con.id
-                                        )
-                                    })
-                                    .get(pat_con_name)
-                                    .unwrap_or_else(|| {
-                                        panic!(
-                                            "{}: BUG: Type {} doesn't have a constructor named {} in associated schemes",
-                                            loc_display(&pat.loc),
-                                            &ty_con.id,
-                                            pat_con_name
-                                        )
-                                    }),
-                            None =>
-                                tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: BUG: type {} doesn't have a top-level scheme",
-                                        loc_display(&pat.loc),
-                                        &ty_con.id
-                                    )
-                                }),
-                        }
+            let con_scheme = match &ty_con.details {
+                TyConDetails::Type(TypeDetails { cons }) => {
+                    check_pat_shape(pat_ty_name, pat_con_name, pat_fields, &pat.loc, cons);
+                    match pat_con_name {
+                        Some(pat_con_name) =>
+                            tys.associated_fn_schemes
+                                .get(&ty_con.id)
+                                .unwrap_or_else(|| panic!(
+                                    "{}: BUG: Type {} doesn't have any schemes",
+                                    loc_display(&pat.loc),
+                                    ty_con.id
+                                ))
+                                .get(pat_con_name)
+                                .unwrap_or_else(|| panic!(
+                                    "{}: BUG: Type {} doesn't have a constructor named {} in associated schemes",
+                                    loc_display(&pat.loc),
+                                    &ty_con.id,
+                                    pat_con_name
+                                )),
+                        None =>
+                            tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| panic!(
+                                "{}: BUG: type {} doesn't have a top-level scheme",
+                                loc_display(&pat.loc),
+                                &ty_con.id
+                            )),
                     }
-
-                    TyConDetails::Trait { .. } => panic!(
-                        "{}: Type constructor {} is a trait",
-                        loc_display(&pat.loc),
-                        pat_ty_name
-                    ),
-
-                    TyConDetails::Synonym(_) => panic!(
-                        "{}: Type constructor {} is a type synonym",
-                        loc_display(&pat.loc),
-                        pat_ty_name
-                    ),
                 }
+
+                TyConDetails::Trait { .. } => panic!(
+                    "{}: Type constructor {} is a trait",
+                    loc_display(&pat.loc),
+                    pat_ty_name
+                ),
+
+                TyConDetails::Synonym(_) => panic!(
+                    "{}: Type constructor {} is a type synonym",
+                    loc_display(&pat.loc),
+                    pat_ty_name
+                ),
             };
 
             // We don't need to instantiate based on pattern types. If we don't have a term with
@@ -222,5 +149,99 @@ pub(super) fn check_pat(
             unify(&pat1_ty, &pat2_ty, tys.tys.cons(), &pat.loc);
             pat1_ty
         }
+    }
+}
+
+fn check_pat_shape(
+    pat_ty_name: &Id,
+    pat_con_name: &Option<Id>,
+    pat_fields: &[ast::Named<Box<ast::L<ast::Pat>>>],
+    loc: &ast::Loc,
+    cons: &[ConShape],
+) {
+    let pat_con_name = match pat_con_name {
+        Some(pat_con_name) => pat_con_name,
+        None => {
+            if cons.len() != 1 || (cons.len() == 1 && cons[0].name.is_some()) {
+                panic!(
+                    "{}: Type {} does not have unnamed constructor",
+                    loc_display(loc),
+                    pat_ty_name
+                );
+            }
+            return;
+        }
+    };
+
+    let mut shape_checked = false;
+    for con in cons {
+        if let Some(con_name) = &con.name {
+            if con_name != pat_con_name {
+                continue;
+            }
+
+            shape_checked = true;
+            match &con.fields {
+                ConFieldShape::Unnamed(arity) => {
+                    for pat_field in pat_fields {
+                        if pat_field.name.is_some() {
+                            panic!(
+                                "{}: Constructor {} does not have named fields",
+                                loc_display(loc),
+                                con_name
+                            );
+                        }
+                    }
+                    if pat_fields.len() != *arity as usize {
+                        panic!(
+                            "{}: Constructor {} has {} fields, but pattern bind {}",
+                            loc_display(loc),
+                            con_name,
+                            arity,
+                            pat_fields.len()
+                        );
+                    }
+                }
+                ConFieldShape::Named(names) => {
+                    let mut pat_field_names: Set<&Id> = Default::default();
+                    for pat_field in pat_fields {
+                        match &pat_field.name {
+                            Some(pat_field_name) => {
+                                if !names.contains(pat_field_name) {
+                                    panic!(
+                                        "{}: Constructor {} does not have named field {}",
+                                        loc_display(loc),
+                                        con_name,
+                                        pat_field_name
+                                    );
+                                }
+                                if !pat_field_names.insert(pat_field_name) {
+                                    panic!(
+                                        "{}: Pattern binds named field {} multiple times",
+                                        loc_display(loc),
+                                        pat_field_name
+                                    );
+                                }
+                            }
+                            None => {
+                                panic!(
+                                    "{}: Constructor {} has named fields, but pattern has unnamed field",
+                                    loc_display(loc),
+                                    con_name
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if !shape_checked {
+        panic!(
+            "{}: Type {} does not have constructor {}",
+            loc_display(loc),
+            pat_ty_name,
+            pat_con_name
+        );
     }
 }
