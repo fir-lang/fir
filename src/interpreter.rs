@@ -993,56 +993,7 @@ fn eval<W: Write>(
 
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
-            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
-            let right = val!(eval(w, pgm, heap, locals, &right.node, &right.loc));
-
-            let method_name = match op {
-                ast::BinOp::Add => "__add",
-                ast::BinOp::Subtract => "__sub",
-                ast::BinOp::Multiply => "__mul",
-                ast::BinOp::Equal => {
-                    let eq = eq(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(pgm.bool_alloc(eq));
-                }
-                ast::BinOp::NotEqual => {
-                    let eq = eq(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(pgm.bool_alloc(!eq));
-                }
-                ast::BinOp::Lt => {
-                    let ord = cmp(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(pgm.bool_alloc(matches!(ord, Ordering::Less)));
-                }
-                ast::BinOp::Gt => {
-                    let ord = cmp(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(pgm.bool_alloc(matches!(ord, Ordering::Greater)));
-                }
-                ast::BinOp::LtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(
-                        pgm.bool_alloc(matches!(ord, Ordering::Less | Ordering::Equal)),
-                    );
-                }
-                ast::BinOp::GtEq => {
-                    let ord = cmp(w, pgm, heap, left, right, loc);
-                    return ControlFlow::Val(
-                        pgm.bool_alloc(matches!(ord, Ordering::Greater | Ordering::Equal)),
-                    );
-                }
-                ast::BinOp::And => "__and",
-                ast::BinOp::Or => "__or",
-            };
-
-            ControlFlow::Val(call_method(
-                w,
-                pgm,
-                heap,
-                left,
-                &method_name.into(),
-                vec![right],
-                loc,
-            ))
-        }
+        ast::Expr::BinOp(_) => panic!("{}: BinOp in interpreter", loc_display(loc)),
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
             let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
@@ -1275,43 +1226,6 @@ fn assign<W: Write>(
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
     ControlFlow::Val(val)
-}
-
-fn cmp<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    val1: u64,
-    val2: u64,
-    loc: &Loc,
-) -> Ordering {
-    let ret = call_method(w, pgm, heap, val1, &"__cmp".into(), vec![val2], loc);
-    let ret_tag = heap[ret];
-    let ordering_ty_con = pgm
-        .ty_cons
-        .get("Ordering")
-        .unwrap_or_else(|| panic!("__cmp was called, but the Ordering type is not defined"));
-
-    assert_eq!(ordering_ty_con.value_constrs.len(), 3);
-    let (less_tag, _) = ordering_ty_con.get_constr_with_tag("Less");
-    let (eq_tag, _) = ordering_ty_con.get_constr_with_tag("Equal");
-    let (greater_tag, _) = ordering_ty_con.get_constr_with_tag("Greater");
-
-    if ret_tag == less_tag {
-        Ordering::Less
-    } else if ret_tag == eq_tag {
-        Ordering::Equal
-    } else if ret_tag == greater_tag {
-        Ordering::Greater
-    } else {
-        panic!()
-    }
-}
-
-fn eq<W: Write>(w: &mut W, pgm: &Pgm, heap: &mut Heap, val1: u64, val2: u64, loc: &Loc) -> bool {
-    let ret = call_method(w, pgm, heap, val1, &"__eq".into(), vec![val2], loc);
-    debug_assert!(ret == pgm.true_alloc || ret == pgm.false_alloc);
-    ret == pgm.true_alloc
 }
 
 fn try_bind_field_pats(

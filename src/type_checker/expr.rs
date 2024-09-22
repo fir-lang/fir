@@ -369,7 +369,7 @@ pub(super) fn check_expr(
                 ast::BinOp::Or => "__or",
             };
 
-            let mut desugared = ast::L {
+            let desugared = ast::L {
                 loc: expr.loc.clone(),
                 node: ast::Expr::Call(ast::CallExpr {
                     fun: Box::new(ast::L {
@@ -386,8 +386,10 @@ pub(super) fn check_expr(
                 }),
             };
 
+            *expr = desugared;
+
             check_expr(
-                &mut desugared,
+                expr,
                 expected_ty,
                 return_ty,
                 level,
