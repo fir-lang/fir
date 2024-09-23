@@ -403,10 +403,10 @@ InlineExpr: Expr = {
         Expr::Self_,
 
     <id:LowerId> =>
-        Expr::Var(id.smol_str()),
+        Expr::Var(VarExpr { id: id.smol_str(), ty_args: vec![] }),
 
     <id:UpperId> =>
-        Expr::Constr(id.smol_str()),
+        Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
@@ -531,8 +531,8 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
         match expr {
-            Expr::Constr(ty) =>
-                Expr::AssocFnSelect(AssocFnSelectExpr { ty, member: field.smol_str() }),
+            Expr::Constr(ConstrExpr { id, ty_args: _ }) =>
+                Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
                 object: Box::new(L::new(module, l, r, expr)),
@@ -542,9 +542,10 @@ InlineExpr: Expr = {
 
     <expr:InlineExpr> "." <constr:UpperId> => {
         match expr {
-            Expr::Constr(ty) => Expr::ConstrSelect(ConstrSelectExpr {
+            Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => Expr::ConstrSelect(ConstrSelectExpr {
                 ty,
                 constr: constr.smol_str(),
+                ty_args: vec![],
             }),
 
             _ => panic!(),

@@ -79,7 +79,8 @@ fn check_stmt(
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
             match &mut lhs.node {
-                ast::Expr::Var(var) => {
+                ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+                    debug_assert!(ty_args.is_empty());
                     let var_ty = env.get(var).cloned().unwrap_or_else(|| {
                         panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
@@ -115,7 +116,10 @@ fn check_stmt(
                                 node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                                     object: Box::new(ast::L {
                                         loc: stmt.loc.clone(),
-                                        node: ast::Expr::Var(var.clone()),
+                                        node: ast::Expr::Var(ast::VarExpr {
+                                            id: var.clone(),
+                                            ty_args: vec![],
+                                        }),
                                     }),
                                     field: SmolStr::new_static(method),
                                 }),

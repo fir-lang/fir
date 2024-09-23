@@ -246,6 +246,12 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
             visit_expr(&object.node, records);
         }
 
+        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+            object, method: _, ..
+        }) => {
+            visit_expr(&object.node, records);
+        }
+
         ast::Expr::ConstrSelect(_) | ast::Expr::AssocFnSelect(_) => {}
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
@@ -310,11 +316,6 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
                     visit_stmt(&stmt.node, records);
                 }
             }
-        }
-
-        ast::Expr::Instantiation(_, _) => {
-            // No need to visit type-checking types here as those types need to come from elsewhere
-            // in the program, which we visit.
         }
     }
 }

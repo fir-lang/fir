@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 9d6275a6a02448cd20a4af3892c021ad060590e092299949539b2ce664407ae0
+// sha3: c6e1f257a96da75f5591a873dbb7ee9ee5990a86fcf437036a0419c9d8d1311d
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -35050,7 +35050,10 @@ fn __action55<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action56<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::Var(id.smol_str())
+    Expr::Var(VarExpr {
+        id: id.smol_str(),
+        ty_args: vec![],
+    })
 }
 
 #[allow(unused_variables)]
@@ -35060,7 +35063,10 @@ fn __action56<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action57<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::Constr(id.smol_str())
+    Expr::Constr(ConstrExpr {
+        id: id.smol_str(),
+        ty_args: vec![],
+    })
 }
 
 #[allow(unused_variables)]
@@ -35286,9 +35292,10 @@ fn __action64<'a>(
     (_, field, _): (Loc, Token, Loc),
 ) -> Expr {
     match expr {
-        Expr::Constr(ty) => Expr::AssocFnSelect(AssocFnSelectExpr {
-            ty,
+        Expr::Constr(ConstrExpr { id, ty_args: _ }) => Expr::AssocFnSelect(AssocFnSelectExpr {
+            ty: id,
             member: field.smol_str(),
+            ty_args: vec![],
         }),
 
         _ => Expr::FieldSelect(FieldSelectExpr {
@@ -35312,10 +35319,13 @@ fn __action65<'a>(
 ) -> Expr {
     {
         match expr {
-            Expr::Constr(ty) => Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr: constr.smol_str(),
-            }),
+            Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => {
+                Expr::ConstrSelect(ConstrSelectExpr {
+                    ty,
+                    constr: constr.smol_str(),
+                    ty_args: vec![],
+                })
+            }
 
             _ => panic!(),
         }

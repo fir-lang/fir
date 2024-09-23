@@ -322,7 +322,10 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(var) | Expr::Constr(var) => buffer.push_str(var.as_str()),
+            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+                buffer.push_str(id);
+                print_ty_args(ty_args, buffer);
+            }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
                 object.node.print(buffer, 0);
@@ -330,11 +333,32 @@ impl Expr {
                 buffer.push_str(field.as_str());
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr { ty, constr: member })
-            | Expr::AssocFnSelect(AssocFnSelectExpr { ty, member }) => {
+            Expr::MethodSelect(MethodSelectExpr {
+                object,
+                object_ty: _,
+                method,
+                ty_args,
+            }) => {
+                object.node.print(buffer, 0);
+                buffer.push('.');
+                buffer.push_str(method.as_str());
+                print_ty_args(ty_args, buffer);
+            }
+
+            Expr::ConstrSelect(ConstrSelectExpr {
+                ty,
+                constr: member,
+                ty_args,
+            })
+            | Expr::AssocFnSelect(AssocFnSelectExpr {
+                ty,
+                member,
+                ty_args,
+            }) => {
                 buffer.push_str(ty.as_str());
                 buffer.push('.');
                 buffer.push_str(member.as_str());
+                print_ty_args(ty_args, buffer);
             }
 
             Expr::Call(CallExpr { fun, args }) => {
@@ -555,49 +579,6 @@ impl Expr {
                     }
                 }
             }
-
-            Expr::Instantiation(path, tys) => {
-                match path {
-                    Path::TopLevel { fun_id } => {
-                        buffer.push_str(fun_id.as_str());
-                    }
-
-                    Path::Constructor {
-                        ty_id,
-                        constr_id: member_id,
-                    }
-                    | Path::AssociatedFn {
-                        ty_id,
-                        fun_id: member_id,
-                    } => {
-                        buffer.push_str(ty_id.as_str());
-                        buffer.push('.');
-                        buffer.push_str(member_id.as_str());
-                    }
-
-                    Path::Method {
-                        receiver,
-                        receiver_ty,
-                        method_id,
-                    } => {
-                        buffer.push('(');
-                        receiver.print(buffer, indent + 4);
-                        buffer.push_str(" : ");
-                        buffer.push_str(&receiver_ty.to_string());
-                        buffer.push(')');
-                        buffer.push('.');
-                        buffer.push_str(method_id.as_str());
-                    }
-                }
-                buffer.push('[');
-                for (i, ty) in tys.iter().enumerate() {
-                    buffer.push_str(&ty.to_string());
-                    if i != tys.len() - 1 {
-                        buffer.push_str(", ");
-                    }
-                }
-                buffer.push(']');
-            }
         }
     }
 }
@@ -725,6 +706,21 @@ fn print_context(context: &[L<(L<Id>, Vec<L<Type>>)>], buffer: &mut String) {
             buffer.push_str(", ");
         }
     }
+}
+
+fn print_ty_args(args: &[Ty], buffer: &mut String) {
+    if args.is_empty() {
+        return;
+    }
+
+    buffer.push('[');
+    for (i, ty) in args.iter().enumerate() {
+        if i != 0 {
+            buffer.push_str(", ");
+        }
+        buffer.push_str(&ty.to_string());
+    }
+    buffer.push(']');
 }
 
 fn expr_parens(expr: &Expr) -> bool {

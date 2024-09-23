@@ -738,15 +738,22 @@ fn eval<W: Write>(
     loc: &Loc,
 ) -> ControlFlow {
     match expr {
-        ast::Expr::Var(var) => match locals.get(var) {
-            Some(value) => ControlFlow::Val(*value),
-            None => match pgm.top_level_funs.get(var) {
-                Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                None => panic!("{}: Unbound variable: {}", loc_display(loc), var),
-            },
-        },
+        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+            debug_assert!(ty_args.is_empty());
+            match locals.get(var) {
+                Some(value) => ControlFlow::Val(*value),
+                None => match pgm.top_level_funs.get(var) {
+                    Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
+                    None => panic!("{}: Unbound variable: {}", loc_display(loc), var),
+                },
+            }
+        }
 
-        ast::Expr::Constr(ty_name) => {
+        ast::Expr::Constr(ast::ConstrExpr {
+            id: ty_name,
+            ty_args,
+        }) => {
+            debug_assert!(ty_args.is_empty());
             let ty_con = pgm.ty_cons.get(ty_name).unwrap();
             let ty_tag = ty_con.type_tag;
             let (first_tag, last_tag) = ty_con.tag_range();
@@ -758,8 +765,6 @@ fn eval<W: Write>(
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
 
-            // This could be a field of method selection. TOOD: Maybe type checker could elaborate?
-            // Check fields first.
             let fields = pgm.get_tag_fields(object_tag);
             match fields {
                 Fields::Unnamed(_) => {}
@@ -781,23 +786,39 @@ fn eval<W: Write>(
                 }
             }
 
-            // Must be a method.
-            if let Some(method) = pgm.associated_funs[object_tag as usize].get(field) {
-                return ControlFlow::Val(heap.allocate_method(object, method.idx));
-            };
-
-            panic!(
-                "{}: Unable to select method or field {}",
-                loc_display(loc),
-                field
-            );
+            panic!("{}: Unable to select field {}", loc_display(loc), field);
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
+        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+            object,
+            object_ty: _,
+            method,
+            ty_args,
+        }) => {
+            debug_assert!(ty_args.is_empty());
+            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
+            let object_tag = heap[object];
+            match pgm.associated_funs[object_tag as usize].get(method) {
+                Some(method) => ControlFlow::Val(heap.allocate_method(object, method.idx)),
+                None => panic!("{}: Unable to select method {}", loc_display(loc), method),
+            }
+        }
+
+        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+            ty,
+            constr,
+            ty_args,
+        }) => {
+            debug_assert!(ty_args.is_empty());
             ControlFlow::Val(constr_select(pgm, heap, ty, constr))
         }
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
+        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+            ty,
+            member,
+            ty_args,
+        }) => {
+            debug_assert!(ty_args.is_empty());
             let ty_con = pgm.ty_cons.get(ty).unwrap();
             let fun = pgm.associated_funs[ty_con.type_tag as usize]
                 .get(member)
@@ -809,7 +830,10 @@ fn eval<W: Write>(
             // See if `fun` is a method or function and avoid tear-off allocations for
             // performance (and also because we don't support method tear-offs right now).
             let fun: u64 = match &fun.node {
-                ast::Expr::Var(var) => match locals.get(var) {
+                ast::Expr::Var(ast::VarExpr {
+                    id: var,
+                    ty_args: _,
+                }) => match locals.get(var) {
                     Some(val) => *val,
                     None => match pgm.top_level_funs.get(var) {
                         Some(fun) => {
@@ -831,7 +855,8 @@ fn eval<W: Write>(
                 },
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    if let ast::Expr::Constr(ty) = &object.node {
+                    if let ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args: _ }) = &object.node
+                    {
                         let ty_con = pgm
                             .ty_cons
                             .get(ty)
@@ -904,7 +929,7 @@ fn eval<W: Write>(
                     return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
-                ast::Expr::Constr(ty) => {
+                ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args: _ }) => {
                     return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
                 }
 
@@ -1106,10 +1131,6 @@ fn eval<W: Write>(
             heap[alloc + 1] = i32;
             ControlFlow::Val(alloc)
         }
-
-        ast::Expr::Instantiation(_, _) => {
-            panic!("{}: Instantiation in interpreter", loc_display(loc))
-        }
     }
 }
 
@@ -1138,7 +1159,10 @@ fn assign<W: Write>(
     loc: &Loc,
 ) -> ControlFlow {
     match &lhs.node {
-        ast::Expr::Var(var) => match op {
+        ast::Expr::Var(ast::VarExpr {
+            id: var,
+            ty_args: _,
+        }) => match op {
             ast::AssignOp::Eq => {
                 let old = locals.insert(var.clone(), val);
                 assert!(old.is_some());

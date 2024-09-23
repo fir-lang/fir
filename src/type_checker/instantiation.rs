@@ -39,34 +39,31 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
 
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
-        ast::Expr::Instantiation(path, tys) => {
-            match path {
-                ast::Path::TopLevel { .. }
-                | ast::Path::Constructor { .. }
-                | ast::Path::AssociatedFn { .. } => {}
+        ast::Expr::Var(ast::VarExpr { ty_args, .. })
+        | ast::Expr::Constr(ast::ConstrExpr { ty_args, .. })
+        | ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty_args, .. })
+        | ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty_args, .. }) => ty_args
+            .iter_mut()
+            .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
-                ast::Path::Method {
-                    receiver,
-                    receiver_ty,
-                    method_id: _,
-                } => {
-                    normalize_expr(receiver, cons);
-                    *receiver_ty = receiver_ty.deep_normalize(cons);
-                }
-            }
-            tys.iter_mut().for_each(|ty| *ty = ty.deep_normalize(cons))
-        }
-
-        ast::Expr::Var(_)
-        | ast::Expr::Constr(_)
-        | ast::Expr::ConstrSelect(_)
-        | ast::Expr::AssocFnSelect(_)
-        | ast::Expr::Int(_)
-        | ast::Expr::String(_)
-        | ast::Expr::Char(_)
-        | ast::Expr::Self_ => {}
+        ast::Expr::Int(_) | ast::Expr::String(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
+            normalize_expr(&mut object.node, cons)
+        }
+
+        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+            object,
+            object_ty,
+            method: _,
+            ty_args,
+        }) => {
+            if let Some(object_ty) = object_ty {
+                *object_ty = object_ty.deep_normalize(cons);
+            }
+            ty_args
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(cons));
             normalize_expr(&mut object.node, cons)
         }
 

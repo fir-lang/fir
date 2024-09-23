@@ -21,7 +21,9 @@ pub(super) fn check_expr(
     preds: &mut PredSet,
 ) -> Ty {
     match &mut expr.node {
-        ast::Expr::Var(var) => {
+        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+            debug_assert!(ty_args.is_empty());
+
             // Check if local.
             if let Some(ty) = env.get(var) {
                 return unify_expected_ty(ty.clone(), expected_ty, tys.tys.cons(), &expr.loc);
@@ -29,34 +31,26 @@ pub(super) fn check_expr(
 
             if let Some(scheme) = tys.top_schemes.get(var) {
                 let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
-                // TODO: Do we need to distinguish top-levels from locals?
-                if !ty_args.is_empty() {
-                    expr.node = ast::Expr::Instantiation(
-                        ast::Path::TopLevel {
-                            fun_id: var.clone(),
-                        },
-                        ty_args.into_iter().map(Ty::Var).collect(),
-                    );
-                }
+                expr.node = ast::Expr::Var(ast::VarExpr {
+                    id: var.clone(),
+                    ty_args: ty_args.into_iter().map(Ty::Var).collect(),
+                });
                 return unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc);
             }
 
             panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
         }
 
-        ast::Expr::Constr(con) => {
+        ast::Expr::Constr(ast::ConstrExpr { id: con, ty_args }) => {
+            assert!(ty_args.is_empty());
             let scheme = tys.top_schemes.get(con).unwrap_or_else(|| {
                 panic!("{}: Unknown constructor {}", loc_display(&expr.loc), con)
             });
             let (ty, ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
-            if !ty_args.is_empty() {
-                expr.node = ast::Expr::Instantiation(
-                    ast::Path::TopLevel {
-                        fun_id: con.clone(),
-                    },
-                    ty_args.into_iter().map(Ty::Var).collect(),
-                );
-            }
+            expr.node = ast::Expr::Constr(ast::ConstrExpr {
+                id: con.clone(),
+                ty_args: ty_args.into_iter().map(Ty::Var).collect(),
+            });
             unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
@@ -120,7 +114,14 @@ pub(super) fn check_expr(
             unify_expected_ty(ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
+        ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
+
+        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+            ty,
+            constr,
+            ty_args,
+        }) => {
+            assert!(ty_args.is_empty());
             let scheme = tys
                 .associated_fn_schemes
                 .get(ty)
@@ -141,19 +142,20 @@ pub(super) fn check_expr(
                     )
                 });
             let (con_ty, con_ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
-            if !con_ty_args.is_empty() {
-                expr.node = ast::Expr::Instantiation(
-                    ast::Path::Constructor {
-                        ty_id: ty.clone(),
-                        constr_id: constr.clone(),
-                    },
-                    con_ty_args.into_iter().map(Ty::Var).collect(),
-                );
-            }
+            expr.node = ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+                ty: ty.clone(),
+                constr: constr.clone(),
+                ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
+            });
             unify_expected_ty(con_ty, expected_ty, tys.tys.cons(), &expr.loc)
         }
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
+        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+            ty,
+            member,
+            ty_args,
+        }) => {
+            assert!(ty_args.is_empty());
             let scheme = tys
                 .associated_fn_schemes
                 .get(ty)
@@ -169,15 +171,11 @@ pub(super) fn check_expr(
                     )
                 });
             let (method_ty, method_ty_args) = scheme.instantiate(level, var_gen, preds, &expr.loc);
-            if !method_ty_args.is_empty() {
-                expr.node = ast::Expr::Instantiation(
-                    ast::Path::AssociatedFn {
-                        ty_id: ty.clone(),
-                        fun_id: member.clone(),
-                    },
-                    method_ty_args.into_iter().map(Ty::Var).collect(),
-                );
-            }
+            expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                ty: ty.clone(),
+                member: member.clone(),
+                ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+            });
             method_ty
         }
 
@@ -613,13 +611,6 @@ pub(super) fn check_expr(
 
             branch_tys.pop().unwrap()
         }
-
-        ast::Expr::Instantiation(_, _) => {
-            panic!(
-                "{}: BUG: Instantiation in check_expr",
-                loc_display(&expr.loc)
-            );
-        }
     }
 }
 
@@ -647,26 +638,25 @@ fn check_field_select(
         None => match select_method(ty_con, ty_args, &field_select.field, tys, loc) {
             Some(scheme) => {
                 let (method_ty, method_ty_args) = scheme.instantiate(level, var_gen, preds, loc);
-                // if !method_ty_args.is_empty() {
                 // Instantiates an associated function.
-                object.node = ast::Expr::Instantiation(
-                    ast::Path::Method {
-                        // Replace detached field_select field with some random expr to avoid
-                        // cloning.
-                        receiver: Box::new(std::mem::replace(
-                            &mut field_select.object.node,
-                            ast::Expr::Self_,
-                        )),
-                        receiver_ty: if ty_args.is_empty() {
-                            Ty::Con(ty_con.clone())
-                        } else {
-                            Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+                object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                    // Replace detached field_select field with some random expr to avoid
+                    // cloning.
+                    object: Box::new(std::mem::replace(
+                        &mut field_select.object,
+                        ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::Self_,
                         },
-                        method_id: field_select.field.clone(),
-                    },
-                    method_ty_args.into_iter().map(Ty::Var).collect(),
-                );
-                // }
+                    )),
+                    object_ty: Some(if ty_args.is_empty() {
+                        Ty::Con(ty_con.clone())
+                    } else {
+                        Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+                    }),
+                    method: field_select.field.clone(),
+                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                });
 
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.

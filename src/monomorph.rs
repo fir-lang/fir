@@ -342,136 +342,56 @@ fn mono_expr(
     mono_pgm: &mut PgmGraph,
 ) -> ast::Expr {
     match expr {
-        ast::Expr::Instantiation(path, ty_args) => {
-            let mono_ty_args: Vec<ast::Type> = ty_args
-                .iter()
-                .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
-                .collect();
-
-            match path {
-                ast::Path::TopLevel { fun_id } => {
-                    if let Some(fun_decl) = poly_pgm.top.get(fun_id) {
-                        let mono_fun_id =
-                            mono_top_decl(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                        return ast::Expr::Var(mono_fun_id);
-                    }
-
-                    if let Some(ty_decl) = poly_pgm.ty.get(fun_id) {
-                        let mono_ty_id = mono_ty_decl(ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                        return ast::Expr::Constr(mono_ty_id);
-                    }
-
-                    panic!()
+        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+            let poly_decl = match poly_pgm.top.get(var) {
+                Some(poly_decl) => poly_decl,
+                None => {
+                    // Local variable, cannot be polymorphic.
+                    assert!(ty_args.is_empty());
+                    return ast::Expr::Var(ast::VarExpr {
+                        id: var.clone(),
+                        ty_args: vec![],
+                    });
                 }
+            };
 
-                ast::Path::Constructor { ty_id, constr_id } => {
-                    let ty_decl = poly_pgm.ty.get(ty_id).unwrap();
-                    let mono_ty_id = mono_ty_decl(ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                    ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-                        ty: mono_ty_id,
-                        constr: constr_id.clone(),
-                    })
-                }
+            let mono_decl_id = mono_top_decl(
+                poly_decl,
+                &ty_args
+                    .iter()
+                    .map(|ty| ty_to_ast(ty, ty_map))
+                    .collect::<Vec<_>>(),
+                poly_pgm,
+                mono_pgm,
+            );
 
-                ast::Path::AssociatedFn { ty_id, fun_id } => {
-                    let ty_decl = poly_pgm.ty.get(ty_id).unwrap();
-                    let ty_num_type_params = ty_decl.type_params.len();
-
-                    let mono_ty_id = mono_ty_decl(
-                        ty_decl,
-                        &mono_ty_args[0..ty_num_type_params],
-                        poly_pgm,
-                        mono_pgm,
-                    );
-
-                    let fun_decl = poly_pgm.associated.get(ty_id).unwrap().get(fun_id).unwrap();
-
-                    let ty_map: Map<Id, ast::Type> = ty_decl
-                        .type_params
-                        .iter()
-                        .cloned()
-                        .zip(mono_ty_args.iter().cloned())
-                        .collect();
-
-                    let mono_fun_id = mono_assoc_fn(
-                        &mono_ty_id,
-                        fun_decl,
-                        &ty_map,
-                        &mono_ty_args[ty_num_type_params..],
-                        poly_pgm,
-                        mono_pgm,
-                    );
-
-                    ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                        ty: mono_ty_id,
-                        member: mono_fun_id,
-                    })
-                }
-
-                ast::Path::Method {
-                    receiver,
-                    receiver_ty,
-                    method_id,
-                } => {
-                    let poly_receiver_ty = ty_to_ast(receiver_ty, ty_map);
-
-                    let mono_receiver_ty = mono_ty(&poly_receiver_ty, ty_map, poly_pgm, mono_pgm);
-
-                    let mono_receiver_ty_id = match mono_receiver_ty {
-                        ast::Type::Named(ast::NamedType { name, args }) => {
-                            assert!(args.is_empty());
-                            name
-                        }
-                        ast::Type::Record(_) => panic!(),
-                    };
-
-                    // Monomorphise associated function/method.
-                    let mono_method_id = match &poly_receiver_ty {
-                        ast::Type::Named(ast::NamedType { name, args }) => {
-                            let ty_con = poly_pgm.ty.get(name).unwrap();
-                            assert_eq!(ty_con.type_params.len(), args.len());
-
-                            let fun = poly_pgm
-                                .associated
-                                .get(name)
-                                .unwrap()
-                                .get(method_id)
-                                .unwrap();
-
-                            let mut assoc_fn_ty_map = ty_map.clone();
-                            for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
-                                assoc_fn_ty_map
-                                    .insert(ty_param.clone(), ty_arg.node.1.node.clone());
-                            }
-
-                            mono_assoc_fn(
-                                &mono_receiver_ty_id,
-                                fun,
-                                &assoc_fn_ty_map,
-                                &mono_ty_args,
-                                poly_pgm,
-                                mono_pgm,
-                            )
-                        }
-                        ast::Type::Record(_) => panic!(),
-                    };
-
-                    let mono_receiver = mono_expr(receiver, ty_map, poly_pgm, mono_pgm);
-                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                        object: Box::new(ast::L {
-                            loc: ast::Loc::dummy(), // TODO
-                            node: mono_receiver,
-                        }),
-                        field: mono_method_id,
-                    })
-                }
-            }
+            ast::Expr::Var(ast::VarExpr {
+                id: mono_decl_id,
+                ty_args: vec![],
+            })
         }
 
-        ast::Expr::Var(var) => ast::Expr::Var(match poly_pgm.top.get(var) {
-            Some(fun_decl) => mono_top_decl(fun_decl, &[], poly_pgm, mono_pgm),
-            None => var.clone(),
-        }),
+        ast::Expr::Constr(ast::ConstrExpr { id, ty_args }) => {
+            let poly_ty_decl = match poly_pgm.ty.get(id) {
+                None => panic!("Unknown constructor {}", id),
+                Some(ty_decl) => ty_decl,
+            };
+
+            let mono_ty_id = mono_ty_decl(
+                poly_ty_decl,
+                &ty_args
+                    .iter()
+                    .map(|ty| ty_to_ast(ty, ty_map))
+                    .collect::<Vec<_>>(),
+                poly_pgm,
+                mono_pgm,
+            );
+
+            ast::Expr::Constr(ast::ConstrExpr {
+                id: mono_ty_id,
+                ty_args: vec![],
+            })
+        }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.
@@ -481,24 +401,126 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty, constr }) => {
-            let ty_decl = poly_pgm.ty.get(ty).unwrap();
-            mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
-            ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-                ty: ty.clone(),
-                constr: constr.clone(),
+        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+            object,
+            object_ty,
+            method,
+            ty_args,
+        }) => {
+            let poly_object_ty = ty_to_ast(object_ty.as_ref().unwrap(), ty_map);
+
+            let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
+
+            let mono_receiver_ty_id = match mono_object_ty {
+                ast::Type::Named(ast::NamedType { name, args }) => {
+                    assert!(args.is_empty());
+                    name
+                }
+                ast::Type::Record(_) => panic!(),
+            };
+
+            let mono_ty_args: Vec<ast::Type> = ty_args
+                .iter()
+                .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
+                .collect();
+
+            let mono_method_id = match &poly_object_ty {
+                ast::Type::Named(ast::NamedType { name, args }) => {
+                    let ty_con = poly_pgm.ty.get(name).unwrap();
+                    assert_eq!(ty_con.type_params.len(), args.len());
+
+                    let fun = poly_pgm.associated.get(name).unwrap().get(method).unwrap();
+
+                    let mut assoc_fn_ty_map = ty_map.clone();
+                    for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
+                        assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
+                    }
+
+                    mono_assoc_fn(
+                        &mono_receiver_ty_id,
+                        fun,
+                        &assoc_fn_ty_map,
+                        &mono_ty_args,
+                        poly_pgm,
+                        mono_pgm,
+                    )
+                }
+                ast::Type::Record(_) => panic!(),
+            };
+
+            let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
+            ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                object: mono_object,
+                object_ty: object_ty.clone(),
+                method: mono_method_id,
+                ty_args: vec![],
             })
         }
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty, member }) => {
+        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+            ty,
+            constr,
+            ty_args,
+        }) => {
+            let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
+            let mono_ty_id = mono_ty_decl(
+                poly_ty_decl,
+                &ty_args
+                    .iter()
+                    .map(|ty| ty_to_ast(ty, ty_map))
+                    .collect::<Vec<_>>(),
+                poly_pgm,
+                mono_pgm,
+            );
+            ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+                ty: mono_ty_id,
+                constr: constr.clone(),
+                ty_args: vec![],
+            })
+        }
+
+        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+            ty,
+            member,
+            ty_args,
+        }) => {
             let ty_decl = poly_pgm.ty.get(ty).unwrap();
-            let mono_ty_id = mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
-            let member_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
-            let mono_member =
-                mono_assoc_fn(&mono_ty_id, member_decl, ty_map, &[], poly_pgm, mono_pgm);
+            let ty_num_type_params = ty_decl.type_params.len();
+
+            let mono_ty_args: Vec<ast::Type> = ty_args
+                .iter()
+                .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
+                .collect();
+
+            let mono_ty_id = mono_ty_decl(
+                ty_decl,
+                &mono_ty_args[0..ty_num_type_params],
+                poly_pgm,
+                mono_pgm,
+            );
+
+            let fun_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
+
+            let ty_map: Map<Id, ast::Type> = ty_decl
+                .type_params
+                .iter()
+                .cloned()
+                .zip(mono_ty_args.iter().cloned())
+                .collect();
+
+            let mono_fun_id = mono_assoc_fn(
+                &mono_ty_id,
+                fun_decl,
+                &ty_map,
+                &mono_ty_args[ty_num_type_params..],
+                poly_pgm,
+                mono_pgm,
+            );
+
             ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                 ty: mono_ty_id,
-                member: mono_member,
+                member: mono_fun_id,
+                ty_args: vec![],
             })
         }
 
@@ -518,13 +540,6 @@ fn mono_expr(
             let ty_decl = poly_pgm.ty.get("Char").unwrap();
             mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
             ast::Expr::Char(*char)
-        }
-
-        ast::Expr::Constr(constr) => {
-            let ty_decl = poly_pgm.ty.get(constr).unwrap();
-            let mono_constr = mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
-            debug_assert_eq!(&mono_constr, constr);
-            ast::Expr::Constr(mono_constr)
         }
 
         ast::Expr::Self_ => ast::Expr::Self_,
