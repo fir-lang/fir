@@ -1107,55 +1107,8 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        ast::Expr::Instantiation(path, _tys) => {
-            // TODO: After monomorphisation seeing an instantiation node should be a bug.
-            match path {
-                ast::Path::TopLevel { fun_id } => match pgm.top_level_funs.get(fun_id) {
-                    Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                    _ => match pgm.ty_cons.get(fun_id) {
-                        Some(ty_con) => {
-                            let ty_tag = ty_con.type_tag;
-                            let (first_tag, last_tag) = ty_con.tag_range();
-                            assert_eq!(first_tag, last_tag);
-                            ControlFlow::Val(heap.allocate_constr(ty_tag))
-                        }
-                        None => panic!("{}: Unbound variable {}", loc_display(loc), fun_id),
-                    },
-                },
-
-                ast::Path::Constructor { ty_id, constr_id } => {
-                    ControlFlow::Val(constr_select(pgm, heap, ty_id, constr_id))
-                }
-
-                ast::Path::AssociatedFn { ty_id, fun_id } => {
-                    let ty_con = pgm.ty_cons.get(ty_id).unwrap();
-                    let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                        .get(fun_id)
-                        .unwrap();
-                    ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx))
-                }
-
-                ast::Path::Method {
-                    receiver,
-                    receiver_ty: _,
-                    method_id,
-                } => {
-                    let receiver = val!(eval(w, pgm, heap, locals, receiver, loc));
-                    let receiver_tag = heap[receiver as u64];
-                    let fun = pgm.associated_funs[receiver_tag as usize]
-                        .get(method_id)
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: Object with type {} (tag {}) does not have method {}",
-                                loc_display(loc),
-                                pgm.tag_name_display(receiver_tag),
-                                receiver_tag,
-                                method_id
-                            )
-                        });
-                    ControlFlow::Val(heap.allocate_method(receiver, fun.idx))
-                }
-            }
+        ast::Expr::Instantiation(_, _) => {
+            panic!("{}: Instantiation in interpreter", loc_display(loc))
         }
     }
 }
