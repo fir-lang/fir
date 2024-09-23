@@ -889,7 +889,8 @@ fn eval<W: Write>(
                                 field
                             )
                         });
-                    let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
+                    let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
+                    arg_vals.push(object);
                     for arg in args {
                         arg_vals.push(val!(eval(
                             w,
@@ -900,7 +901,6 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    arg_vals.insert(0, object);
                     return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
