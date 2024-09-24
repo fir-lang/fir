@@ -1,4 +1,4 @@
-use crate::ast::{self, Id};
+use crate::ast::{self, AssignOp, Id};
 use crate::scope_map::ScopeMap;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};
@@ -107,8 +107,8 @@ fn check_stmt(
                         ast::AssignOp::StarEq => "__mul",
                     };
 
-                    // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
-                    let mut desugared_rhs = ast::L {
+                    // `lhs.method(rhs)`
+                    let desugared_rhs = ast::L {
                         loc: rhs.loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
@@ -131,16 +131,10 @@ fn check_stmt(
                         }),
                     };
 
-                    check_expr(
-                        &mut desugared_rhs,
-                        None,
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        tys,
-                        preds,
-                    );
+                    *rhs = desugared_rhs;
+                    *op = AssignOp::Eq;
+
+                    check_expr(rhs, None, return_ty, level, env, var_gen, tys, preds);
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
@@ -208,8 +202,8 @@ fn check_stmt(
                         ast::AssignOp::StarEq => "__mul",
                     };
 
-                    // `lhs.__add(rhs)` or `lhs.__sub(rhs)`
-                    let mut desugared_rhs = ast::L {
+                    // `lhs.method(rhs)`
+                    let desugared_rhs = ast::L {
                         loc: rhs.loc.clone(),
                         node: ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
@@ -226,16 +220,10 @@ fn check_stmt(
                         }),
                     };
 
-                    check_expr(
-                        &mut desugared_rhs,
-                        None,
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        tys,
-                        preds,
-                    );
+                    *rhs = desugared_rhs;
+                    *op = AssignOp::Eq;
+
+                    check_expr(rhs, None, return_ty, level, env, var_gen, tys, preds);
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),

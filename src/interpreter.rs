@@ -468,31 +468,6 @@ fn call<W: Write>(
     }
 }
 
-fn call_method<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    receiver: u64,
-    method: &Id,
-    mut args: Vec<u64>,
-    loc: &Loc,
-) -> u64 {
-    let tag = heap[receiver];
-    let fun = pgm.associated_funs[tag as usize]
-        .get(method)
-        .unwrap_or_else(|| {
-            panic!(
-                "{}: Object with type {} (tag {}) does not have {} method",
-                loc_display(loc),
-                pgm.tag_name_display(tag),
-                tag,
-                method
-            )
-        });
-    args.insert(0, receiver);
-    call(w, pgm, heap, fun, args, loc)
-}
-
 fn call_source_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -651,8 +626,16 @@ fn exec<W: Write>(
             }
 
             ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+                // Complex assignment operators should've been desugared during type checking.
+                debug_assert_eq!(
+                    *op,
+                    ast::AssignOp::Eq,
+                    "{}: Complex assignment: {:?}",
+                    loc_display(&stmt.loc),
+                    op
+                );
                 let rhs = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
-                val!(assign(w, pgm, heap, locals, lhs, rhs, *op, &stmt.loc))
+                val!(assign(w, pgm, heap, locals, lhs, rhs))
             }
 
             ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
@@ -1012,7 +995,10 @@ fn eval<W: Write>(
 
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
 
-        ast::Expr::BinOp(_) => panic!("{}: BinOp in interpreter", loc_display(loc)),
+        ast::Expr::BinOp(_) => {
+            // BinOps should've been desugared during type checking.
+            panic!("{}: BinOp in interpreter", loc_display(loc))
+        }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
             let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
@@ -1137,62 +1123,22 @@ fn assign<W: Write>(
     locals: &mut Map<Id, u64>,
     lhs: &ast::L<ast::Expr>,
     val: u64,
-    op: ast::AssignOp,
-    loc: &Loc,
 ) -> ControlFlow {
     match &lhs.node {
         ast::Expr::Var(ast::VarExpr {
             id: var,
             ty_args: _,
-        }) => match op {
-            ast::AssignOp::Eq => {
-                let old = locals.insert(var.clone(), val);
-                assert!(old.is_some());
-            }
-            ast::AssignOp::PlusEq => {
-                let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
-                });
-                let new_val = call_method(w, pgm, heap, *old_val, &"__add".into(), vec![val], loc);
-                locals.insert(var.clone(), new_val);
-            }
-            ast::AssignOp::MinusEq => {
-                let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
-                });
-                let new_val = call_method(w, pgm, heap, *old_val, &"__sub".into(), vec![val], loc);
-                locals.insert(var.clone(), new_val);
-            }
-            ast::AssignOp::StarEq => {
-                let old_val = locals.get(var).unwrap_or_else(|| {
-                    panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
-                });
-                let new_val = call_method(w, pgm, heap, *old_val, &"__mul".into(), vec![val], loc);
-                locals.insert(var.clone(), new_val);
-            }
-        },
+        }) => {
+            let old = locals.insert(var.clone(), val);
+            assert!(old.is_some());
+        }
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
             let object_con = &pgm.cons_by_tag[object_tag as usize];
             let object_fields = &object_con.fields;
             let field_idx = object_fields.find_named_field_idx(field);
-            let new_val = match op {
-                ast::AssignOp::Eq => val,
-                ast::AssignOp::PlusEq => {
-                    let field_value = heap[object + 1 + field_idx];
-                    call_method(w, pgm, heap, field_value, &"__add".into(), vec![val], loc)
-                }
-                ast::AssignOp::MinusEq => {
-                    let field_value = heap[object + 1 + field_idx];
-                    call_method(w, pgm, heap, field_value, &"__sub".into(), vec![val], loc)
-                }
-                ast::AssignOp::StarEq => {
-                    let field_value = heap[object + 1 + field_idx];
-                    call_method(w, pgm, heap, field_value, &"__mul".into(), vec![val], loc)
-                }
-            };
-            heap[object + 1 + field_idx] = new_val;
+            heap[object + 1 + field_idx] = val;
         }
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
