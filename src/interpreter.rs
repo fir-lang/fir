@@ -250,6 +250,38 @@ enum ControlFlow {
     Ret(u64),
 }
 
+fn val_as_i8(val: u64) -> i8 {
+    val as u8 as i8
+}
+
+fn val_as_u8(val: u64) -> u8 {
+    val as u8
+}
+
+fn val_as_i32(val: u64) -> i32 {
+    val as u32 as i32
+}
+
+fn val_as_u32(val: u64) -> u32 {
+    val as u32
+}
+
+fn i8_as_val(i: i8) -> u64 {
+    i as u8 as u64
+}
+
+fn u8_as_val(i: u8) -> u64 {
+    i as u64
+}
+
+fn i32_as_val(i: i32) -> u64 {
+    i as u32 as u64
+}
+
+fn u32_as_val(i: u32) -> u64 {
+    i as u64
+}
+
 macro_rules! val {
     ($expr:expr) => {
         match $expr {
@@ -402,10 +434,10 @@ impl Pgm {
             char_ty_tag,
             str_ty_tag,
             str_view_ty_tag,
-            i32_ty_tag,
-            u32_ty_tag,
             i8_ty_tag,
             u8_ty_tag,
+            i32_ty_tag,
+            u32_ty_tag,
             array_i8_ty_tag,
             array_u8_ty_tag,
             array_i32_ty_tag,
@@ -670,17 +702,14 @@ fn exec<W: Write>(
                 };
 
                 let from = val!(eval(w, pgm, heap, locals, &from.node, &from.loc));
-                debug_assert_eq!(heap[from], pgm.i32_ty_tag);
-                let from = heap[from + 1] as i32;
+                let from = val_as_i32(from);
 
                 let to = val!(eval(w, pgm, heap, locals, &to.node, &to.loc));
-                debug_assert_eq!(heap[to], pgm.i32_ty_tag);
-                let to = heap[to + 1] as i32;
+                let to = val_as_i32(to);
 
                 if *inclusive {
                     for i in from..=to {
-                        let iter_value = heap.allocate_i32(pgm.i32_ty_tag, i);
-                        locals.insert(var.clone(), iter_value);
+                        locals.insert(var.clone(), i32_as_val(i));
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Val(_) => {}
                             ControlFlow::Ret(val) => {
@@ -691,8 +720,7 @@ fn exec<W: Write>(
                     }
                 } else {
                     for i in from..to {
-                        let iter_value = heap.allocate_i32(pgm.i32_ty_tag, i);
-                        locals.insert(var.clone(), iter_value);
+                        locals.insert(var.clone(), i32_as_val(i));
                         match exec(w, pgm, heap, locals, body) {
                             ControlFlow::Val(_) => {}
                             ControlFlow::Ret(val) => {
@@ -820,12 +848,21 @@ fn eval<W: Write>(
 
                 ast::Expr::MethodSelect(ast::MethodSelectExpr {
                     object,
-                    object_ty: _,
+                    object_ty,
                     method,
                     ty_args: _,
                 }) => {
                     let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-                    let object_tag = heap[object];
+                    let object_tag = match object_ty.as_ref().unwrap() {
+                        crate::type_checker::Ty::Con(con) => match con.as_str() {
+                            "I8" => pgm.i8_ty_tag,
+                            "U8" => pgm.u8_ty_tag,
+                            "I32" => pgm.i32_ty_tag,
+                            "U32" => pgm.u32_ty_tag,
+                            _ => heap[object],
+                        },
+                        _ => heap[object],
+                    };
                     let fun = pgm.associated_funs[object_tag as usize]
                         .get(method)
                         .unwrap_or_else(|| {
@@ -971,10 +1008,10 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Int(i) => match i {
-            ast::IntExpr::I8(val) => ControlFlow::Val(heap.allocate_i8(pgm.i8_ty_tag, *val)),
-            ast::IntExpr::U8(val) => ControlFlow::Val(heap.allocate_u8(pgm.u8_ty_tag, *val)),
-            ast::IntExpr::I32(val) => ControlFlow::Val(heap.allocate_i32(pgm.i32_ty_tag, *val)),
-            ast::IntExpr::U32(val) => ControlFlow::Val(heap.allocate_u32(pgm.u32_ty_tag, *val)),
+            ast::IntExpr::I8(val) => ControlFlow::Val(i8_as_val(*val)),
+            ast::IntExpr::U8(val) => ControlFlow::Val(u8_as_val(*val)),
+            ast::IntExpr::I32(val) => ControlFlow::Val(i32_as_val(*val)),
+            ast::IntExpr::U32(val) => ControlFlow::Val(u32_as_val(*val)),
         },
 
         ast::Expr::String(parts) => {
@@ -1093,10 +1130,9 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Char(char) => {
-            let i32 = heap.allocate_i32(pgm.u32_ty_tag, (*char as u32) as i32);
             let alloc = heap.allocate(2);
             heap[alloc] = pgm.char_ty_tag;
-            heap[alloc + 1] = i32;
+            heap[alloc + 1] = u32_as_val(*char as u32);
             ControlFlow::Val(alloc)
         }
     }
@@ -1324,7 +1360,7 @@ fn try_bind_pat(
 
         ast::Pat::Char(char) => {
             debug_assert_eq!(heap[value], pgm.char_ty_tag);
-            if heap[heap[value + 1] + 1] == u64::from(*char as u32) {
+            if heap[value + 1] == u64::from(*char as u32) {
                 Some(Default::default())
             } else {
                 None

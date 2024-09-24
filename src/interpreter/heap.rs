@@ -85,34 +85,6 @@ impl Heap {
         &str_bytes[byte_start as usize..byte_end as usize]
     }
 
-    pub fn allocate_i32(&mut self, ty_tag: u64, i: i32) -> u64 {
-        let alloc = self.allocate(2);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = (i as u32) as u64;
-        alloc
-    }
-
-    pub fn allocate_u32(&mut self, ty_tag: u64, u: u32) -> u64 {
-        let alloc = self.allocate(2);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = u as u64;
-        alloc
-    }
-
-    pub fn allocate_i8(&mut self, ty_tag: u64, i: i8) -> u64 {
-        let alloc = self.allocate(2);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = (i as u8) as u64;
-        alloc
-    }
-
-    pub fn allocate_u8(&mut self, ty_tag: u64, u: u8) -> u64 {
-        let alloc = self.allocate(2);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = u as u64;
-        alloc
-    }
-
     pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {
         let alloc = self.allocate(2);
         self[alloc] = CONSTR_TYPE_TAG;
