@@ -827,91 +827,31 @@ fn eval<W: Write>(
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            // See if `fun` is a method or function and avoid tear-off allocations for
-            // performance (and also because we don't support method tear-offs right now).
+            // See if `fun` is a method, associated function, or constructor to avoid closure
+            // allocations.
             let fun: u64 = match &fun.node {
-                ast::Expr::Var(ast::VarExpr {
-                    id: var,
+                ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args }) => {
+                    debug_assert!(ty_args.is_empty());
+                    return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
+                }
+
+                ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                    object,
+                    object_ty: _,
+                    method,
                     ty_args: _,
-                }) => match locals.get(var) {
-                    Some(val) => *val,
-                    None => match pgm.top_level_funs.get(var) {
-                        Some(fun) => {
-                            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-                            for arg in args {
-                                arg_values.push(val!(eval(
-                                    w,
-                                    pgm,
-                                    heap,
-                                    locals,
-                                    &arg.expr.node,
-                                    &arg.expr.loc
-                                )));
-                            }
-                            return ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc));
-                        }
-                        None => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
-                    },
-                },
-
-                ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    if let ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args: _ }) = &object.node
-                    {
-                        let ty_con = pgm
-                            .ty_cons
-                            .get(ty)
-                            .unwrap_or_else(|| panic!("Undefined type: {}", ty));
-
-                        // Handle `Type.Constructor`.
-                        if field.chars().next().unwrap().is_uppercase() {
-                            return allocate_object_from_names(
-                                w,
-                                pgm,
-                                heap,
-                                locals,
-                                ty,
-                                Some(field.clone()),
-                                args,
-                                loc,
-                            );
-                        } else {
-                            // Handle `Type.associatedFunction`.
-                            let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                                .get(field)
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "Type {} does not have associated function {}",
-                                        ty, field
-                                    )
-                                });
-
-                            let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
-                            for arg in args {
-                                arg_vals.push(val!(eval(
-                                    w,
-                                    pgm,
-                                    heap,
-                                    locals,
-                                    &arg.expr.node,
-                                    &arg.expr.loc
-                                )));
-                            }
-
-                            return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
-                        }
-                    }
-
+                }) => {
                     let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
                     let object_tag = heap[object];
                     let fun = pgm.associated_funs[object_tag as usize]
-                        .get(field)
+                        .get(method)
                         .unwrap_or_else(|| {
                             panic!(
-                                "{}: Object with type {} (tag {}) doesn't have field or method {:?}",
+                                "{}: Object with type {} (tag {}) doesn't have method {:?}",
                                 loc_display(loc),
                                 pgm.tag_name_display(object_tag),
                                 object_tag,
-                                field
+                                method
                             )
                         });
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
@@ -929,13 +869,58 @@ fn eval<W: Write>(
                     return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
-                ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args: _ }) => {
-                    return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
+                ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+                    ty,
+                    constr,
+                    ty_args,
+                }) => {
+                    debug_assert!(ty_args.is_empty());
+                    return allocate_object_from_names(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        ty,
+                        Some(constr.clone()),
+                        args,
+                        loc,
+                    );
+                }
+
+                ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                    ty,
+                    member,
+                    ty_args,
+                }) => {
+                    debug_assert!(ty_args.is_empty());
+                    let ty_con = pgm
+                        .ty_cons
+                        .get(ty)
+                        .unwrap_or_else(|| panic!("Undefined type: {}", ty));
+                    let fun = pgm.associated_funs[ty_con.type_tag as usize]
+                        .get(member)
+                        .unwrap_or_else(|| {
+                            panic!("Type {} does not have associated function {}", ty, member)
+                        });
+
+                    let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
+                    for arg in args {
+                        arg_vals.push(val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &arg.expr.node,
+                            &arg.expr.loc
+                        )));
+                    }
+                    return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
                 }
 
                 _ => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
             };
 
+            // Slow path calls a closure.
             match heap[fun] {
                 CONSTR_TYPE_TAG => {
                     let constr_tag = heap[fun + 1];
