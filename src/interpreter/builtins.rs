@@ -47,6 +47,8 @@ pub enum BuiltinFun {
     I32Mul,
     I32Sub,
     I32ToStr,
+    I32BitOr,
+    I32BitAnd,
 
     // U32
     U32Add,
@@ -55,6 +57,8 @@ pub enum BuiltinFun {
     U32Mul,
     U32Sub,
     U32ToStr,
+    U32BitOr,
+    U32BitAnd,
 
     // I8
     I8Add,
@@ -63,6 +67,8 @@ pub enum BuiltinFun {
     I8Mul,
     I8Sub,
     I8ToStr,
+    I8BitOr,
+    I8BitAnd,
 
     // U8
     U8Add,
@@ -71,6 +77,8 @@ pub enum BuiltinFun {
     U8Mul,
     U8Sub,
     U8ToStr,
+    U8BitOr,
+    U8BitAnd,
 
     StrEq,
     StrLen,
@@ -404,6 +412,21 @@ pub fn call_builtin_fun<W: Write>(
             pgm.bool_alloc(i1 == i2)
         }
 
+        BuiltinFun::I32BitOr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i32_as_val(val_as_i32(i1) | val_as_i32(i2))
+        }
+
+        BuiltinFun::I32BitAnd => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+
+            i32_as_val(val_as_i32(i1) & val_as_i32(i2))
+        }
+
         BuiltinFun::I32ToStr => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
@@ -463,6 +486,20 @@ pub fn call_builtin_fun<W: Write>(
             let u2 = args[1];
 
             pgm.bool_alloc(u1 == u2)
+        }
+
+        BuiltinFun::U32BitOr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u32_as_val(val_as_u32(i1) | val_as_u32(i2))
+        }
+
+        BuiltinFun::U32BitAnd => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u32_as_val(val_as_u32(i1) & val_as_u32(i2))
         }
 
         BuiltinFun::U32ToStr => {
@@ -526,6 +563,21 @@ pub fn call_builtin_fun<W: Write>(
             pgm.bool_alloc(i1 == i2)
         }
 
+        BuiltinFun::I8BitOr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i8_as_val(val_as_i8(i1) | val_as_i8(i2))
+        }
+
+        BuiltinFun::I8BitAnd => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+
+            i8_as_val(val_as_i8(i1) & val_as_i8(i2))
+        }
+
         BuiltinFun::I8ToStr => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
@@ -585,6 +637,21 @@ pub fn call_builtin_fun<W: Write>(
             let u2 = args[1];
 
             pgm.bool_alloc(u1 == u2)
+        }
+
+        BuiltinFun::U8BitOr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u8_as_val(val_as_u8(i1) | val_as_u8(i2))
+        }
+
+        BuiltinFun::U8BitAnd => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+
+            u8_as_val(val_as_u8(i1) & val_as_u8(i2))
         }
 
         BuiltinFun::U8ToStr => {

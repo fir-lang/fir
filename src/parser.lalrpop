@@ -42,6 +42,7 @@ extern {
         "*=" => Token { kind: TokenKind::StarEq, .. },
         "!" => Token { kind: TokenKind::Exclamation, .. },
         "!=" => Token { kind: TokenKind::ExclamationEq, .. },
+        "&" => Token { kind: TokenKind::Amp, .. },
         "&&" => Token { kind: TokenKind::AmpAmp, .. },
         "|" => Token { kind: TokenKind::Pipe, .. },
         "||" => Token { kind: TokenKind::PipePipe, .. },
@@ -70,6 +71,7 @@ extern {
         "impl" => Token { kind: TokenKind::Impl, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
+        BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
         StringLit => Token { kind: TokenKind::String, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
     }
@@ -515,6 +517,56 @@ InlineExpr: Expr = {
         Expr::Int(int)
     },
 
+    <int:BinIntLit> => {
+        let kind = match int.kind {
+            TokenKind::BinInt(int_kind) => int_kind,
+            _ => unreachable!(),
+        };
+        debug_assert!(int.text.starts_with("0b"));
+        let token_str = &int.text["0x".len()..];
+
+        // TODO: Allocate the buffer once and reuse.
+        // Even better, build the number as we scan for underscores.
+        let mut int_str = String::new();
+
+        // Drop "i8", "u32" etc. suffix.
+        let suffix = match kind {
+            IntKind::I8 => "i8",
+            IntKind::U8 => "u8",
+            IntKind::I32 => "i32",
+            IntKind::U32 => "u32",
+        };
+        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        // Drop '_'s.
+        for char in token_str.chars() {
+            if char == '_' {
+                continue;
+            }
+            int_str.push(char);
+        }
+
+        let int = match kind {
+            IntKind::I8 =>
+                IntExpr::I8(i8::from_str_radix(&int_str, 2)
+                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err))),
+
+            IntKind::U8 =>
+                IntExpr::U8(u8::from_str_radix(&int_str, 2)
+                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err))),
+
+            IntKind::I32 =>
+                IntExpr::I32(i32::from_str_radix(&int_str, 2)
+                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err))),
+
+            IntKind::U32 =>
+                IntExpr::U32(u32::from_str_radix(&int_str, 2)
+                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err))),
+        };
+
+        Expr::Int(int)
+    },
+
     <l:@L> <string:StringLit> => {
         let l = Loc { line: l.line, col: l.col + 1, byte_idx: l.byte_idx + 1 };
         Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
@@ -583,6 +635,24 @@ InlineExpr: Expr = {
 
     #[precedence(level = "5")]
     #[assoc(side = "left")]
+    <l1:@L> <left:InlineExpr> <r1:@R> "&" <l2:@L> <right:InlineExpr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
+            op: BinOp::BitAnd,
+        }),
+
+    #[precedence(level = "6")]
+    #[assoc(side = "left")]
+    <l1:@L> <left:InlineExpr> <r1:@R> "|" <l2:@L> <right:InlineExpr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
+            op: BinOp::BitOr,
+        }),
+
+    #[precedence(level = "7")]
+    #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "==" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
@@ -625,7 +695,7 @@ InlineExpr: Expr = {
             op: BinOp::GtEq,
         }),
 
-    #[precedence(level = "6")]
+    #[precedence(level = "8")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -634,7 +704,7 @@ InlineExpr: Expr = {
             op: BinOp::And,
         }),
 
-    #[precedence(level = "7")]
+    #[precedence(level = "9")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -643,7 +713,7 @@ InlineExpr: Expr = {
             op: BinOp::Or,
         }),
 
-    #[precedence(level = "8")]
+    #[precedence(level = "10")]
     #[assoc(side = "left")]
     <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
         Expr::Range(RangeExpr {
@@ -659,7 +729,7 @@ InlineExpr: Expr = {
             inclusive: true,
         }),
 
-    #[precedence(level = "9")]
+    #[precedence(level = "11")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }

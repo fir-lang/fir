@@ -465,6 +465,8 @@ impl Expr {
                     BinOp::GtEq => ">=",
                     BinOp::And => "&&",
                     BinOp::Or => "||",
+                    BinOp::BitOr => "|",
+                    BinOp::BitAnd => "&",
                 };
                 buffer.push(' ');
                 buffer.push_str(op_str);

@@ -67,6 +67,7 @@ lexgen::lexer! {
         "-" = TokenKind::Minus,
         "*" = TokenKind::Star,
         "!" = TokenKind::Exclamation,
+        "&" = TokenKind::Amp,
         "&&" = TokenKind::AmpAmp,
         "|" = TokenKind::Pipe,
         "||" = TokenKind::PipePipe,
@@ -96,6 +97,12 @@ lexgen::lexer! {
         "0x" $hex_int+ "u32" = TokenKind::HexInt(IntKind::U32),
         "0x" $hex_int+ "i8" = TokenKind::HexInt(IntKind::I8),
         "0x" $hex_int+ "u8" = TokenKind::HexInt(IntKind::U8),
+
+        let bin_int = ['0' '1' '_']+;
+        "0b" $bin_int+ "i32"? = TokenKind::BinInt(IntKind::I32),
+        "0b" $bin_int+ "u32" = TokenKind::BinInt(IntKind::U32),
+        "0b" $bin_int+ "i8" = TokenKind::BinInt(IntKind::I8),
+        "0b" $bin_int+ "u8" = TokenKind::BinInt(IntKind::U8),
 
         "'" (_ # '\'') "'" = TokenKind::Char,
     }

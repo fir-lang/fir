@@ -22,6 +22,12 @@ impl Eq for I32:
 impl Ord for I32:
     prim fn cmp(self, other: I32): Ordering
 
+impl BitAnd for I32:
+    prim fn __bitand(self, other: I32): I32
+
+impl BitOr for I32:
+    prim fn __bitor(self, other: I32): I32
+
 impl I32:
     prim fn toStr(self): Str
 
@@ -48,6 +54,12 @@ impl Eq for U32:
 
 impl Ord for U32:
     prim fn cmp(self, other: U32): Ordering
+
+impl BitAnd for U32:
+    prim fn __bitand(self, other: U32): U32
+
+impl BitOr for U32:
+    prim fn __bitor(self, other: U32): U32
 
 impl U32:
     prim fn toStr(self): Str
@@ -76,6 +88,12 @@ impl Eq for I8:
 impl Ord for I8:
     prim fn cmp(self, other: I8): Ordering
 
+impl BitAnd for I8:
+    prim fn __bitand(self, other: I8): I8
+
+impl BitOr for I8:
+    prim fn __bitor(self, other: I8): I8
+
 impl I8:
     prim fn toStr(self): Str
 
@@ -102,6 +120,12 @@ impl Eq for U8:
 
 impl Ord for U8:
     prim fn cmp(self, other: U8): Ordering
+
+impl BitAnd for U8:
+    prim fn __bitand(self, other: U8): U8
+
+impl BitOr for U8:
+    prim fn __bitor(self, other: U8): U8
 
 impl U8:
     prim fn toStr(self): Str

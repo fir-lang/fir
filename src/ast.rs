@@ -499,6 +499,8 @@ pub enum BinOp {
     GtEq,
     And,
     Or,
+    BitAnd,
+    BitOr,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

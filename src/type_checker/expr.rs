@@ -381,6 +381,8 @@ pub(super) fn check_expr(
                 ast::BinOp::GtEq => "__ge",
                 ast::BinOp::And => "__and",
                 ast::BinOp::Or => "__or",
+                ast::BinOp::BitOr => "__bitor",
+                ast::BinOp::BitAnd => "__bitand",
             };
 
             let desugared = ast::L {

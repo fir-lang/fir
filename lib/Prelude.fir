@@ -25,6 +25,14 @@ trait Eq[T]:
     fn __neq(self, other: T): Bool =
         !self.__eq(other)
 
+# The `|` operator.
+trait BitOr[T]:
+    fn __bitor(self, other: T): T
+
+# The `&` operator.
+trait BitAnd[T]:
+    fn __bitand(self, other: T): T
+
 trait Ord[T]:
     fn cmp(self, other: T): Ordering
 
