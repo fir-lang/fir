@@ -411,7 +411,7 @@ fn mono_expr(
 
             let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
 
-            let mono_receiver_ty_id = match mono_object_ty {
+            let mono_receiver_ty_id = match &mono_object_ty {
                 ast::Type::Named(ast::NamedType { name, args }) => {
                     assert!(args.is_empty());
                     name
@@ -437,7 +437,7 @@ fn mono_expr(
                     }
 
                     mono_assoc_fn(
-                        &mono_receiver_ty_id,
+                        mono_receiver_ty_id,
                         fun,
                         &assoc_fn_ty_map,
                         &mono_ty_args,
@@ -451,7 +451,7 @@ fn mono_expr(
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
             ast::Expr::MethodSelect(ast::MethodSelectExpr {
                 object: mono_object,
-                object_ty: object_ty.clone(),
+                object_ty: Some(mono_ast_ty_to_ty(&mono_object_ty)),
                 method: mono_method_id,
                 ty_args: vec![],
             })
@@ -1090,5 +1090,15 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
         Ty::FunNamedArgs(_args, _ret) => todo!(),
 
         Ty::AssocTySelect { ty: _, assoc_ty: _ } => todo!(),
+    }
+}
+
+fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
+    match mono_ast_ty {
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            assert!(args.is_empty());
+            Ty::Con(name.clone())
+        }
+        ast::Type::Record(_) => todo!(),
     }
 }
