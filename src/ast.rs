@@ -384,6 +384,8 @@ pub enum Expr {
     Match(MatchExpr),
 
     If(IfExpr),
+
+    As(AsExpr),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -484,6 +486,24 @@ pub enum IntExpr {
     U8(u8),
     I32(i32),
     U32(u32),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AsExpr {
+    pub expr: Box<L<Expr>>,
+
+    /// Filled in by the type checker.
+    pub expr_ty: Option<AsExprTy>,
+
+    pub target_ty: AsExprTy,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum AsExprTy {
+    U8,
+    I8,
+    U32,
+    I32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -317,5 +317,11 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
                 }
             }
         }
+
+        ast::Expr::As(ast::AsExpr {
+            expr,
+            expr_ty: _,
+            target_ty: _,
+        }) => visit_expr(&expr.node, records),
     }
 }

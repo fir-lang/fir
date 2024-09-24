@@ -628,6 +628,16 @@ fn mono_expr(
                 .as_ref()
                 .map(|stmts| mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm)),
         }),
+
+        ast::Expr::As(ast::AsExpr {
+            expr,
+            expr_ty,
+            target_ty,
+        }) => ast::Expr::As(ast::AsExpr {
+            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm),
+            expr_ty: expr_ty.clone(),
+            target_ty: target_ty.clone(),
+        }),
     }
 }
 

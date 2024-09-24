@@ -629,6 +629,34 @@ pub(super) fn check_expr(
 
             branch_tys.pop().unwrap()
         }
+
+        ast::Expr::As(ast::AsExpr {
+            expr,
+            expr_ty,
+            target_ty,
+        }) => {
+            assert_eq!(expr_ty, &None);
+            let expr_ty_ = check_expr(expr, None, return_ty, level, env, var_gen, tys, preds)
+                .normalize(tys.tys.cons());
+            let as_ty = match expr_ty_ {
+                Ty::Con(id) if id.as_str() == "I8" => ast::AsExprTy::I8,
+                Ty::Con(id) if id.as_str() == "U8" => ast::AsExprTy::U8,
+                Ty::Con(id) if id.as_str() == "I32" => ast::AsExprTy::I32,
+                Ty::Con(id) if id.as_str() == "U32" => ast::AsExprTy::U32,
+                other => panic!(
+                    "{}: Source of `as` expression should have a numeric type, but it is {}",
+                    loc_display(&expr.loc),
+                    other
+                ),
+            };
+            *expr_ty = Some(as_ty);
+            match target_ty {
+                ast::AsExprTy::U8 => Ty::Con(SmolStr::new_static("U8")),
+                ast::AsExprTy::I8 => Ty::Con(SmolStr::new_static("I8")),
+                ast::AsExprTy::U32 => Ty::Con(SmolStr::new_static("U32")),
+                ast::AsExprTy::I32 => Ty::Con(SmolStr::new_static("I32")),
+            }
+        }
     }
 }
 

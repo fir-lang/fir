@@ -128,6 +128,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                 }
             }
         }
+
+        ast::Expr::As(ast::AsExpr {
+            expr,
+            expr_ty: _,
+            target_ty: _,
+        }) => normalize_expr(&mut expr.node, cons),
     }
 }
 
