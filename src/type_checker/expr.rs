@@ -316,7 +316,7 @@ pub(super) fn check_expr(
                             },
                             &expr.loc,
                         );
-                        check_expr(
+                        let part_ty = check_expr(
                             expr,
                             Some(&Ty::Var(expr_var)),
                             return_ty,
@@ -326,6 +326,22 @@ pub(super) fn check_expr(
                             tys,
                             preds,
                         );
+                        let expr_node = std::mem::replace(&mut expr.node, ast::Expr::Self_);
+                        expr.node = ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                                    object: Box::new(ast::L {
+                                        node: expr_node,
+                                        loc: expr.loc.clone(),
+                                    }),
+                                    object_ty: Some(part_ty),
+                                    method: SmolStr::new_static("toStrView"),
+                                    ty_args: vec![],
+                                }),
+                                loc: expr.loc.clone(),
+                            }),
+                            args: vec![],
+                        });
                     }
                 }
             }

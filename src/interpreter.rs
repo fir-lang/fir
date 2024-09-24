@@ -1000,12 +1000,9 @@ fn eval<W: Write>(
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
-                        let part_val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                        // Call toStr
-                        let part_str_val =
-                            call_method(w, pgm, heap, part_val, &"toStr".into(), vec![], &expr.loc);
-                        assert_eq!(heap[part_str_val], pgm.str_ty_tag);
-                        let part_bytes = heap.str_bytes(part_str_val);
+                        let str_view = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+                        debug_assert_eq!(heap[str_view], pgm.str_view_ty_tag);
+                        let part_bytes = heap.str_view_bytes(str_view);
                         bytes.extend(part_bytes);
                     }
                 }
