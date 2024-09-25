@@ -383,6 +383,8 @@ pub(super) fn check_expr(
                 ast::BinOp::Or => "__or",
                 ast::BinOp::BitOr => "__bitor",
                 ast::BinOp::BitAnd => "__bitand",
+                ast::BinOp::LeftShift => "__shl",
+                ast::BinOp::RightShift => "__shr",
             };
 
             let desugared = ast::L {

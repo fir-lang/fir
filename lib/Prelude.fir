@@ -33,6 +33,14 @@ trait BitOr[T]:
 trait BitAnd[T]:
     fn __bitand(self, other: T): T
 
+# The `<<` operator.
+trait Shl[T]:
+    fn __shl(self, other: T): T
+
+# The `>>` operator.
+trait Shr[T]:
+    fn __shr(self, other: T): T
+
 trait Ord[T]:
     fn cmp(self, other: T): Ordering
 

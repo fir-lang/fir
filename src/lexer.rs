@@ -72,8 +72,10 @@ lexgen::lexer! {
         "|" = TokenKind::Pipe,
         "||" = TokenKind::PipePipe,
         "<" = TokenKind::LAngle,
+        "<<" = TokenKind::DoubleLAngle,
         "<=" = TokenKind::LAngleEq,
         ">" = TokenKind::RAngle,
+        ">>" = TokenKind::DoubleRAngle,
         ">=" = TokenKind::RAngleEq,
         "!=" = TokenKind::ExclamationEq,
 

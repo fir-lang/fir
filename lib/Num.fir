@@ -28,6 +28,12 @@ impl BitAnd for I32:
 impl BitOr for I32:
     prim fn __bitor(self, other: I32): I32
 
+impl Shl for I32:
+    prim fn __shl(self, shift: I32): I32
+
+impl Shr for I32:
+    prim fn __shr(self, shift: I32): I32
+
 impl I32:
     prim fn toStr(self): Str
 
@@ -60,6 +66,12 @@ impl BitAnd for U32:
 
 impl BitOr for U32:
     prim fn __bitor(self, other: U32): U32
+
+impl Shl for U32:
+    prim fn __shl(self, shift: U32): U32
+
+impl Shr for U32:
+    prim fn __shr(self, shift: U32): U32
 
 impl U32:
     prim fn toStr(self): Str
@@ -94,6 +106,12 @@ impl BitAnd for I8:
 impl BitOr for I8:
     prim fn __bitor(self, other: I8): I8
 
+impl Shl for I8:
+    prim fn __shl(self, shift: I8): I8
+
+impl Shr for I8:
+    prim fn __shr(self, shift: I8): I8
+
 impl I8:
     prim fn toStr(self): Str
 
@@ -126,6 +144,12 @@ impl BitAnd for U8:
 
 impl BitOr for U8:
     prim fn __bitor(self, other: U8): U8
+
+impl Shl for U8:
+    prim fn __shl(self, shift: U8): U8
+
+impl Shr for U8:
+    prim fn __shr(self, shift: U8): U8
 
 impl U8:
     prim fn toStr(self): Str

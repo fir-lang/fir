@@ -49,6 +49,8 @@ pub enum BuiltinFun {
     I32ToStr,
     I32BitOr,
     I32BitAnd,
+    I32Shl,
+    I32Shr,
 
     // U32
     U32Add,
@@ -59,6 +61,8 @@ pub enum BuiltinFun {
     U32ToStr,
     U32BitOr,
     U32BitAnd,
+    U32Shl,
+    U32Shr,
 
     // I8
     I8Add,
@@ -69,6 +73,8 @@ pub enum BuiltinFun {
     I8ToStr,
     I8BitOr,
     I8BitAnd,
+    I8Shl,
+    I8Shr,
 
     // U8
     U8Add,
@@ -79,6 +85,8 @@ pub enum BuiltinFun {
     U8ToStr,
     U8BitOr,
     U8BitAnd,
+    U8Shl,
+    U8Shr,
 
     StrEq,
     StrLen,
@@ -799,6 +807,62 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(heap[s], pgm.str_view_ty_tag);
             let str_view_bytes = heap.str_view_bytes(s).to_vec();
             heap.allocate_str(pgm.str_ty_tag, &str_view_bytes)
+        }
+
+        BuiltinFun::I32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i32_as_val(val_as_i32(i1) << val_as_i32(i2))
+        }
+
+        BuiltinFun::I32Shr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i32_as_val(val_as_i32(i1) >> val_as_i32(i2))
+        }
+
+        BuiltinFun::U32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u32_as_val(val_as_u32(i1) << val_as_u32(i2))
+        }
+
+        BuiltinFun::U32Shr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u32_as_val(val_as_u32(i1) >> val_as_u32(i2))
+        }
+
+        BuiltinFun::I8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i8_as_val(val_as_i8(i1) << val_as_i8(i2))
+        }
+
+        BuiltinFun::I8Shr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            i8_as_val(val_as_i8(i1) >> val_as_i8(i2))
+        }
+
+        BuiltinFun::U8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u8_as_val(val_as_u8(i1) << val_as_u8(i2))
+        }
+
+        BuiltinFun::U8Shr => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            u8_as_val(val_as_u8(i1) >> val_as_u8(i2))
         }
     }
 }

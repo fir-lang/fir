@@ -467,6 +467,8 @@ impl Expr {
                     BinOp::Or => "||",
                     BinOp::BitOr => "|",
                     BinOp::BitAnd => "&",
+                    BinOp::LeftShift => "<<",
+                    BinOp::RightShift => ">>",
                 };
                 buffer.push(' ');
                 buffer.push_str(op_str);

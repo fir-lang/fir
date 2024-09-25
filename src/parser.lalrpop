@@ -47,8 +47,10 @@ extern {
         "|" => Token { kind: TokenKind::Pipe, .. },
         "||" => Token { kind: TokenKind::PipePipe, .. },
         "<" => Token { kind: TokenKind::LAngle, .. },
+        "<<" => Token { kind: TokenKind::DoubleLAngle, .. },
         "<=" => Token { kind: TokenKind::LAngleEq, .. },
         ">" => Token { kind: TokenKind::RAngle, .. },
+        ">>" => Token { kind: TokenKind::DoubleRAngle, .. },
         ">=" => Token { kind: TokenKind::RAngleEq, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
@@ -653,6 +655,22 @@ InlineExpr: Expr = {
 
     #[precedence(level = "6")]
     #[assoc(side = "left")]
+    <l1:@L> <left:InlineExpr> <r1:@R> "<<" <l2:@L> <right:InlineExpr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
+            op: BinOp::LeftShift,
+        }),
+
+    <l1:@L> <left:InlineExpr> <r1:@R> ">>" <l2:@L> <right:InlineExpr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
+            op: BinOp::RightShift,
+        }),
+
+    #[precedence(level = "7")]
+    #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
@@ -660,7 +678,7 @@ InlineExpr: Expr = {
             op: BinOp::BitAnd,
         }),
 
-    #[precedence(level = "7")]
+    #[precedence(level = "8")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "|" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -669,7 +687,7 @@ InlineExpr: Expr = {
             op: BinOp::BitOr,
         }),
 
-    #[precedence(level = "8")]
+    #[precedence(level = "9")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "==" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -713,7 +731,7 @@ InlineExpr: Expr = {
             op: BinOp::GtEq,
         }),
 
-    #[precedence(level = "9")]
+    #[precedence(level = "10")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -722,7 +740,7 @@ InlineExpr: Expr = {
             op: BinOp::And,
         }),
 
-    #[precedence(level = "10")]
+    #[precedence(level = "11")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -731,7 +749,7 @@ InlineExpr: Expr = {
             op: BinOp::Or,
         }),
 
-    #[precedence(level = "11")]
+    #[precedence(level = "12")]
     #[assoc(side = "left")]
     <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
         Expr::Range(RangeExpr {
@@ -747,7 +765,7 @@ InlineExpr: Expr = {
             inclusive: true,
         }),
 
-    #[precedence(level = "12")]
+    #[precedence(level = "13")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }
