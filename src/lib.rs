@@ -182,16 +182,9 @@ mod native {
                 err
             )
         });
-        let tokens = scanner::scan(lexer::lex(&contents));
-        parse_module(
-            &path
-                .as_ref()
-                .to_owned()
-                .to_string_lossy()
-                .to_string()
-                .into(),
-            tokens,
-        )
+        let module_path: SmolStr = path.as_ref().to_string_lossy().into();
+        let tokens = scanner::scan(lexer::lex(&contents, &module_path));
+        parse_module(&module_path, tokens)
     }
 }
 
@@ -305,7 +298,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm));
+        let tokens = scan(lex(pgm, "test"));
         let ast = crate::parser::LExprParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -318,7 +311,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm));
+        let tokens = scan(lex(pgm, "test"));
         let ast = crate::parser::LStmtParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -333,7 +326,7 @@ mod tests {
                     A.X: 1
                 q
         "};
-        let tokens = scan(lex(pgm));
+        let tokens = scan(lex(pgm, "test"));
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -347,7 +340,7 @@ mod tests {
                     2
                 q
         "};
-        let tokens = scan(lex(pgm));
+        let tokens = scan(lex(pgm, "test"));
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
