@@ -287,7 +287,7 @@ fn check_stmt(
                     let to_ty = to_ty.normalize(tys.tys.cons());
 
                     let known_ty = match &to_ty {
-                        Ty::Con(con) => con.as_ref() == "I32",
+                        Ty::Con(con) => matches!(con.as_str(), "I32" | "U32" | "I8" | "U8"),
                         _ => false,
                     };
 

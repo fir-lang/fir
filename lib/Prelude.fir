@@ -1,5 +1,6 @@
 import Char
 import Num
+import StrBuf
 import Vec
 
 # The `+` operator.
@@ -78,6 +79,7 @@ impl Eq for Str:
     prim fn __eq(self, other: Str): Bool
 
 impl Str:
+    prim fn fromUtf8Vec(byte: Vec[U8]): Str
     prim fn len(self): I32
     prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
 
@@ -104,10 +106,10 @@ impl StrView:
 prim type Array[T]
 
 impl[T] Array[T]:
-    prim fn new(len: I32): Array[T]
-    prim fn len(self): I32
-    prim fn get(self, idx: I32): T
-    prim fn set(self, idx: I32, elem: T)
+    prim fn new(len: U32): Array[T]
+    prim fn len(self): U32
+    prim fn get(self, idx: U32): T
+    prim fn set(self, idx: U32, elem: T)
 
 prim fn printStr(s: Str)
 prim fn printStrView(s: StrView)

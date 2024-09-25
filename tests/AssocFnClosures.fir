@@ -26,7 +26,7 @@ fn main(input: Str) =
     b()
     c()
 
-    let vec = d(3)
+    let vec = d(3u32)
     printStr(e(vec).toStr())
 
     match f("Hi"):

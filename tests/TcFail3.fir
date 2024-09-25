@@ -1,11 +1,11 @@
 fn main(input: Str) =
     let f = Vec.len
 
-    let vec1 = Vec.withCapacity(10)
+    let vec1 = Vec.withCapacity(10u32)
     vec1.push("a")
     vec1.push("b")
 
-    let vec2 = Vec.withCapacity(20)
+    let vec2 = Vec.withCapacity(20u32)
     vec2.push(123i32)
 
     printStr(f(vec1).toStr())

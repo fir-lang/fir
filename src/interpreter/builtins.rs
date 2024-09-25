@@ -91,6 +91,7 @@ pub enum BuiltinFun {
     StrEq,
     StrLen,
     StrSubstr,
+    StrFromUtf8Vec,
     StrViewEq,
     StrViewIsEmpty,
     StrViewLen,
@@ -863,6 +864,16 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
             u8_as_val(val_as_u8(i1) >> val_as_u8(i2))
+        }
+
+        BuiltinFun::StrFromUtf8Vec => {
+            debug_assert_eq!(args.len(), 1);
+            let vec = args[0];
+            let array = heap[vec + 1];
+            let len = val_as_u32(heap[vec + 2]);
+            let bytes =
+                cast_slice::<u64, u8>(&heap.values[array as usize + 2..])[..len as usize].to_vec();
+            heap.allocate_str(pgm.str_ty_tag, &bytes)
         }
     }
 }

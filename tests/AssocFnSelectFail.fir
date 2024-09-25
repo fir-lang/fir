@@ -1,5 +1,5 @@
 fn main(input: Str) =
-    let a = Vec.withCapacity(10)
+    let a = Vec.withCapacity(10u32)
     let b = a.withCapacity
 
 # args: --typecheck --no-backtrace

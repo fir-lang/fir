@@ -171,6 +171,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             "len" => BuiltinFun::StrLen,
             "__eq" => BuiltinFun::StrEq,
             "substr" => BuiltinFun::StrSubstr,
+            "fromUtf8Vec" => BuiltinFun::StrFromUtf8Vec,
         },
         "I32" => {
             "__add" => BuiltinFun::I32Add,

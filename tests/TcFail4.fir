@@ -1,11 +1,11 @@
 fn main(input: Str) =
     let f = Vec.withCapacity
 
-    let vec1 = f(10)
+    let vec1 = f(10u32)
     vec1.push("a")
     vec1.push("b")
 
-    let vec2 = f(20)
+    let vec2 = f(20u32)
     vec2.push(123i32)
 
 # args: --no-backtrace
