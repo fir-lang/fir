@@ -10,7 +10,7 @@ fn fac2(n: I32): I32 =
         ret *= i
     ret
 
-fn main(input: Str) =
+fn main() =
     printStr(fac1(0).toStr())
     printStr(fac1(5).toStr())
     printStr(fac1(10).toStr())

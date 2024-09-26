@@ -8,7 +8,7 @@ impl T for X:
     fn f[Q: ToStrView](self, q: Q) =
         printStr("X.f called with q = `q.toStrView()`")
 
-fn main(input: Str) =
+fn main() =
     let x = X(value = 123)
     x.f("hi")
 

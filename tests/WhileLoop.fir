@@ -5,7 +5,7 @@ fn fac(n: I32): I32 =
         n -= 1
     ret
 
-fn main(input: Str) =
+fn main() =
     printStr(fac(0).toStr())
     printStr(fac(5).toStr())
     printStr(fac(10).toStr())

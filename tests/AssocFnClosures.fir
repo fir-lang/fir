@@ -15,7 +15,7 @@ impl MyBool:
             MyBool.False: printStr("False")
             MyBool.True: printStr("True")
 
-fn main(input: Str) =
+fn main() =
     let a = T(i = 123).print
     let b = MyBool.True.print
     let c = MyBool.False.print

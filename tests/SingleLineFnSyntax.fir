@@ -1,4 +1,4 @@
-fn main(input: Str): () = sayHi()
+fn main(): () = sayHi()
 
 fn sayHi() = printStr("Hi")
 

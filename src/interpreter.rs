@@ -24,35 +24,53 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: &str) {
+pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: Option<&str>) {
     let mut heap = Heap::new();
     let pgm = Pgm::new(pgm, &mut heap);
-
-    // Allocate command line arguments to be passed to the program.
-    let input = heap.allocate_str(pgm.str_ty_tag, input.as_bytes());
 
     // Find the main function.
     let main_fun = pgm
         .top_level_funs
         .get("main")
         .unwrap_or_else(|| panic!("main function not defined"));
-    call(
-        w,
-        &pgm,
-        &mut heap,
-        main_fun,
-        vec![input],
-        // `main` doesn't have a call site, called by the interpreter.
-        &Loc {
-            module: "".into(),
-            line_start: 0,
-            col_start: 0,
-            byte_offset_start: 0,
-            line_end: 0,
-            col_end: 0,
-            byte_offset_end: 0,
+
+    // `main` doesn't have a call site, called by the interpreter.
+    let call_loc = Loc {
+        module: "".into(),
+        line_start: 0,
+        col_start: 0,
+        byte_offset_start: 0,
+        line_end: 0,
+        col_end: 0,
+        byte_offset_end: 0,
+    };
+
+    // Check if main takes an input argument.
+    let num_args = match &main_fun.kind {
+        FunKind::Builtin(_) => panic!(),
+        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
+    };
+
+    let arg_vec = match num_args {
+        0 => vec![],
+        1 => match input {
+            Some(input) => {
+                let input = heap.allocate_str(pgm.str_ty_tag, input.as_bytes());
+                vec![input]
+            }
+            None => {
+                eprintln!("WARNING: main takes one argument, but no input was provided to the interpreter");
+                let input = heap.allocate_str(pgm.str_ty_tag, &[]);
+                vec![input]
+            }
         },
-    );
+        other => panic!(
+            "main needs to take 0 or 1 argument, but takes {} arguments",
+            other
+        ),
+    };
+
+    call(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
 
 macro_rules! generate_tags {

@@ -1,4 +1,4 @@
-fn main(args: Str) =
+fn main() =
     let test = Vec.withCapacity(10u32)
 
     for i in 0 .. 20:

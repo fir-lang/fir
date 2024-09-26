@@ -167,7 +167,7 @@ mod native {
                 }
             }
 
-            let input = args.get(2).map(|s| s.as_str()).unwrap_or("");
+            let input = args.get(2).map(|s| s.as_str());
             let mut w = std::io::stdout();
             interpreter::run(&mut w, module, input);
         }
