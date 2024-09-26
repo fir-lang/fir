@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 67dc85b16c9be44d5516c64a453b52b9aaba6f86300565bce48838dfd9255b85
+// sha3: 7f0bebeb9be8c7242a15ebb5d88c39899a00357f95f6062f5457488092cf6c51
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -36201,12 +36201,17 @@ fn __action59<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
 
         // Drop "i8", "u32" etc. suffix.
         let suffix = match kind {
-            IntKind::I8 => "i8",
-            IntKind::U8 => "u8",
-            IntKind::I32 => "i32",
-            IntKind::U32 => "u32",
+            Some(IntKind::I8) => Some("i8"),
+            Some(IntKind::U8) => Some("u8"),
+            Some(IntKind::I32) => Some("i32"),
+            Some(IntKind::U32) => Some("u32"),
+            None => None,
         };
-        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        let token_str = match suffix {
+            None => token_str,
+            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
+        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -36216,29 +36221,12 @@ fn __action59<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
             int_str.push(char);
         }
 
-        let int = match kind {
-            IntKind::I8 => IntExpr::I8(
-                i8::from_str_radix(&int_str, 10)
-                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U8 => IntExpr::U8(
-                u8::from_str_radix(&int_str, 10)
-                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::I32 => IntExpr::I32(
-                i32::from_str_radix(&int_str, 10)
-                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U32 => IntExpr::U32(
-                u32::from_str_radix(&int_str, 10)
-                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err)),
-            ),
-        };
-
-        Expr::Int(int)
+        Expr::Int(IntExpr {
+            text: int_str,
+            suffix: kind,
+            radix: 10,
+            parsed: 0,
+        })
     }
 }
 
@@ -36263,12 +36251,17 @@ fn __action60<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
 
         // Drop "i8", "u32" etc. suffix.
         let suffix = match kind {
-            IntKind::I8 => "i8",
-            IntKind::U8 => "u8",
-            IntKind::I32 => "i32",
-            IntKind::U32 => "u32",
+            Some(IntKind::I8) => Some("i8"),
+            Some(IntKind::U8) => Some("u8"),
+            Some(IntKind::I32) => Some("i32"),
+            Some(IntKind::U32) => Some("u32"),
+            None => None,
         };
-        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        let token_str = match suffix {
+            None => token_str,
+            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
+        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -36278,29 +36271,12 @@ fn __action60<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
             int_str.push(char);
         }
 
-        let int = match kind {
-            IntKind::I8 => IntExpr::I8(
-                i8::from_str_radix(&int_str, 16)
-                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U8 => IntExpr::U8(
-                u8::from_str_radix(&int_str, 16)
-                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::I32 => IntExpr::I32(
-                i32::from_str_radix(&int_str, 16)
-                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U32 => IntExpr::U32(
-                u32::from_str_radix(&int_str, 16)
-                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err)),
-            ),
-        };
-
-        Expr::Int(int)
+        Expr::Int(IntExpr {
+            text: int_str,
+            suffix: kind,
+            radix: 16,
+            parsed: 0,
+        })
     }
 }
 
@@ -36325,12 +36301,17 @@ fn __action61<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
 
         // Drop "i8", "u32" etc. suffix.
         let suffix = match kind {
-            IntKind::I8 => "i8",
-            IntKind::U8 => "u8",
-            IntKind::I32 => "i32",
-            IntKind::U32 => "u32",
+            Some(IntKind::I8) => Some("i8"),
+            Some(IntKind::U8) => Some("u8"),
+            Some(IntKind::I32) => Some("i32"),
+            Some(IntKind::U32) => Some("u32"),
+            None => None,
         };
-        let token_str = token_str.strip_suffix(suffix).unwrap_or(token_str);
+
+        let token_str = match suffix {
+            None => token_str,
+            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
+        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -36340,29 +36321,12 @@ fn __action61<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
             int_str.push(char);
         }
 
-        let int = match kind {
-            IntKind::I8 => IntExpr::I8(
-                i8::from_str_radix(&int_str, 2)
-                    .unwrap_or_else(|err| panic!("Can't parse I8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U8 => IntExpr::U8(
-                u8::from_str_radix(&int_str, 2)
-                    .unwrap_or_else(|err| panic!("Can't parse U8 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::I32 => IntExpr::I32(
-                i32::from_str_radix(&int_str, 2)
-                    .unwrap_or_else(|err| panic!("Can't parse I32 \"{}\": {}", token_str, err)),
-            ),
-
-            IntKind::U32 => IntExpr::U32(
-                u32::from_str_radix(&int_str, 2)
-                    .unwrap_or_else(|err| panic!("Can't parse U32 \"{}\": {}", token_str, err)),
-            ),
-        };
-
-        Expr::Int(int)
+        Expr::Int(IntExpr {
+            text: int_str,
+            suffix: kind,
+            radix: 2,
+            parsed: 0,
+        })
     }
 }
 

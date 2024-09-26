@@ -89,22 +89,25 @@ lexgen::lexer! {
 
         // TODO: We should probably leave defaulting to the type checker.
         let int = ['0'-'9' '_']+;
-        $int+ "i32"? = TokenKind::Int(IntKind::I32),
-        $int+ "u32" = TokenKind::Int(IntKind::U32),
-        $int+ "i8" = TokenKind::Int(IntKind::I8),
-        $int+ "u8" = TokenKind::Int(IntKind::U8),
+        $int+ = TokenKind::Int(None),
+        $int+ "i32" = TokenKind::Int(Some(IntKind::I32)),
+        $int+ "u32" = TokenKind::Int(Some(IntKind::U32)),
+        $int+ "i8" = TokenKind::Int(Some(IntKind::I8)),
+        $int+ "u8" = TokenKind::Int(Some(IntKind::U8)),
 
         let hex_int = ['0'-'9' 'a'-'f' 'A'-'F' '_']+;
-        "0x" $hex_int+ "i32"? = TokenKind::HexInt(IntKind::I32),
-        "0x" $hex_int+ "u32" = TokenKind::HexInt(IntKind::U32),
-        "0x" $hex_int+ "i8" = TokenKind::HexInt(IntKind::I8),
-        "0x" $hex_int+ "u8" = TokenKind::HexInt(IntKind::U8),
+        "0x" $hex_int+ = TokenKind::HexInt(None),
+        "0x" $hex_int+ "i32" = TokenKind::HexInt(Some(IntKind::I32)),
+        "0x" $hex_int+ "u32" = TokenKind::HexInt(Some(IntKind::U32)),
+        "0x" $hex_int+ "i8" = TokenKind::HexInt(Some(IntKind::I8)),
+        "0x" $hex_int+ "u8" = TokenKind::HexInt(Some(IntKind::U8)),
 
         let bin_int = ['0' '1' '_']+;
-        "0b" $bin_int+ "i32"? = TokenKind::BinInt(IntKind::I32),
-        "0b" $bin_int+ "u32" = TokenKind::BinInt(IntKind::U32),
-        "0b" $bin_int+ "i8" = TokenKind::BinInt(IntKind::I8),
-        "0b" $bin_int+ "u8" = TokenKind::BinInt(IntKind::U8),
+        "0b" $bin_int+ = TokenKind::BinInt(None),
+        "0b" $bin_int+ "i32" = TokenKind::BinInt(Some(IntKind::I32)),
+        "0b" $bin_int+ "u32" = TokenKind::BinInt(Some(IntKind::U32)),
+        "0b" $bin_int+ "i8" = TokenKind::BinInt(Some(IntKind::I8)),
+        "0b" $bin_int+ "u8" = TokenKind::BinInt(Some(IntKind::U8)),
 
         "'" (_ # '\'') "'" = TokenKind::Char,
     }

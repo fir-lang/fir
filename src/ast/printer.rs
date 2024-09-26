@@ -401,24 +401,27 @@ impl Expr {
                 to.node.print(buffer, 0);
             }
 
-            Expr::Int(int) => match int {
-                IntExpr::I8(i) => {
-                    buffer.push_str(&i.to_string());
-                    buffer.push_str("i8");
+            Expr::Int(IntExpr {
+                text,
+                suffix,
+                radix,
+                parsed: _,
+            }) => {
+                match radix {
+                    2 => buffer.push_str("0b"),
+                    10 => {}
+                    16 => buffer.push_str("0x"),
+                    _ => panic!(),
                 }
-                IntExpr::U8(i) => {
-                    buffer.push_str(&i.to_string());
-                    buffer.push_str("u8");
+                buffer.push_str(text);
+                match suffix {
+                    Some(IntKind::I32) => buffer.push_str("I32"),
+                    Some(IntKind::U32) => buffer.push_str("U32"),
+                    Some(IntKind::I8) => buffer.push_str("I8"),
+                    Some(IntKind::U8) => buffer.push_str("U8"),
+                    None => {}
                 }
-                IntExpr::I32(i) => {
-                    buffer.push_str(&i.to_string());
-                    buffer.push_str("i32");
-                }
-                IntExpr::U32(i) => {
-                    buffer.push_str(&i.to_string());
-                    buffer.push_str("u32");
-                }
-            },
+            }
 
             Expr::String(parts) => {
                 buffer.push('"');

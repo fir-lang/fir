@@ -1025,12 +1025,7 @@ fn eval<W: Write>(
             }
         }
 
-        ast::Expr::Int(i) => match i {
-            ast::IntExpr::I8(val) => ControlFlow::Val(i8_as_val(*val)),
-            ast::IntExpr::U8(val) => ControlFlow::Val(u8_as_val(*val)),
-            ast::IntExpr::I32(val) => ControlFlow::Val(i32_as_val(*val)),
-            ast::IntExpr::U32(val) => ControlFlow::Val(u32_as_val(*val)),
-        },
+        ast::Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
 
         ast::Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];

@@ -287,19 +287,89 @@ pub(super) fn check_expr(
             );
         }
 
-        ast::Expr::Int(int_expr) => {
-            let con = match int_expr {
-                ast::IntExpr::I8(_) => "I8",
-                ast::IntExpr::U8(_) => "U8",
-                ast::IntExpr::I32(_) => "I32",
-                ast::IntExpr::U32(_) => "U32",
-            };
-            unify_expected_ty(
-                Ty::Con(SmolStr::new_static(con)),
-                expected_ty,
-                tys.tys.cons(),
-                &expr.loc,
-            )
+        ast::Expr::Int(ast::IntExpr {
+            text,
+            suffix,
+            radix,
+            parsed,
+        }) => {
+            let kind: ast::IntKind = suffix.unwrap_or_else(|| {
+                match expected_ty.map(|ty| ty.normalize(tys.tys.cons())) {
+                    Some(Ty::Con(con)) if con == "I8" => ast::IntKind::I8,
+                    Some(Ty::Con(con)) if con == "U8" => ast::IntKind::U8,
+                    Some(Ty::Con(con)) if con == "I32" => ast::IntKind::I32,
+                    Some(Ty::Con(con)) if con == "U32" => ast::IntKind::U32,
+
+                    None | Some(Ty::Var(_)) => {
+                        // Try defaulting as i32.
+                        ast::IntKind::I32
+                    }
+
+                    Some(other) => panic!(
+                        "{}: Expected {}, found integer literal",
+                        loc_display(&expr.loc),
+                        other,
+                    ),
+                }
+            });
+
+            *suffix = Some(kind);
+
+            match kind {
+                ast::IntKind::I8 => {
+                    *parsed = i8::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as I8: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    }) as u8 as u64;
+                    unify_expected_ty(Ty::Con("I8".into()), expected_ty, tys.tys.cons(), &expr.loc)
+                }
+
+                ast::IntKind::U8 => {
+                    *parsed = u8::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as U8: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    }) as u64;
+                    unify_expected_ty(Ty::Con("U8".into()), expected_ty, tys.tys.cons(), &expr.loc)
+                }
+
+                ast::IntKind::I32 => {
+                    *parsed = i32::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as I32: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    }) as u32 as u64;
+                    unify_expected_ty(
+                        Ty::Con("I32".into()),
+                        expected_ty,
+                        tys.tys.cons(),
+                        &expr.loc,
+                    )
+                }
+
+                ast::IntKind::U32 => {
+                    *parsed = u32::from_str_radix(text, *radix).unwrap_or_else(|err| {
+                        panic!(
+                            "{}: Integer cannot be parsed as U32: {:?}",
+                            loc_display(&expr.loc),
+                            err
+                        )
+                    }) as u64;
+                    unify_expected_ty(
+                        Ty::Con("U32".into()),
+                        expected_ty,
+                        tys.tys.cons(),
+                        &expr.loc,
+                    )
+                }
+            }
         }
 
         ast::Expr::String(parts) => {

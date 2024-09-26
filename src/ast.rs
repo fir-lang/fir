@@ -3,6 +3,7 @@
 mod printer;
 
 use crate::interpolation::StringPart;
+pub use crate::token::IntKind;
 use crate::type_checker::Ty;
 
 use std::rc::Rc;
@@ -481,11 +482,24 @@ pub struct UnOpExpr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum IntExpr {
-    I8(i8),
-    U8(u8),
-    I32(i32),
-    U32(u32),
+pub struct IntExpr {
+    /// The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
+    ///
+    /// The digits will be parsed during type checking. If the integer doesn't have a suffix,
+    /// parsing will be done based on the inferred type of the integer.
+    pub text: String,
+
+    /// Suffix of the integer. Initially as parsed. If not available, the type checker updates
+    /// this based on the inferred type of the integer.
+    pub suffix: Option<IntKind>,
+
+    pub radix: u32,
+
+    /// Filled in by the type checker. The parsed integer.
+    ///
+    /// This should be the integer value as expected by the interpreter. E.g. `-1u64` should be
+    /// `0x00000000000000ff`, instead of `0xffffffffffffffff`.
+    pub parsed: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

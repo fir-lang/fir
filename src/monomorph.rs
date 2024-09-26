@@ -524,12 +524,12 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::Int(int) => {
-            let ty_decl_id = match int {
-                ast::IntExpr::I8(_) => "I8",
-                ast::IntExpr::U8(_) => "U8",
-                ast::IntExpr::I32(_) => "I32",
-                ast::IntExpr::U32(_) => "U32",
+        ast::Expr::Int(int @ ast::IntExpr { suffix, .. }) => {
+            let ty_decl_id = match suffix.unwrap() {
+                ast::IntKind::I8 => "I8",
+                ast::IntKind::U8 => "U8",
+                ast::IntKind::I32 => "I32",
+                ast::IntKind::U32 => "U32",
             };
             let ty_decl = poly_pgm.ty.get(ty_decl_id).unwrap();
             mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm);
@@ -584,7 +584,15 @@ fn mono_expr(
             expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm),
         }),
 
-        ast::Expr::Record(_) => todo!(),
+        ast::Expr::Record(fields) => ast::Expr::Record(
+            fields
+                .iter()
+                .map(|ast::Named { name, node }| ast::Named {
+                    name: name.clone(),
+                    node: mono_bl_expr(node, ty_map, poly_pgm, mono_pgm),
+                })
+                .collect(),
+        ),
 
         ast::Expr::Return(expr) => {
             ast::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm))

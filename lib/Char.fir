@@ -8,17 +8,17 @@ impl Eq for Char:
 
 impl Char:
     fn fromU32(value: U32): Option[Char] =
-        if value >= 0x110000u32 || (value >= 0xD800u32 && value <= 0xDFFFu32):
+        if value >= 0x110000 || (value >= 0xD800 && value <= 0xDFFF):
             return Option.None
 
         Option.Some(Char(value = value))
 
     fn lenUtf8(self): U32 =
-        if self.value < 0x80u32:
-            1u32
-        elif self.value < 0x800u32:
-            2u32
-        elif self.value < 0x10000u32:
-            3u32
+        if self.value < 0x80:
+            1
+        elif self.value < 0x800:
+            2
+        elif self.value < 0x10000:
+            3
         else:
-            4u32
+            4
