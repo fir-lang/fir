@@ -364,7 +364,11 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+                    Expr::Var(_)
+                        | Expr::Constr(_)
+                        | Expr::FieldSelect(_)
+                        | Expr::ConstrSelect(_)
+                        | Expr::MethodSelect(_)
                 );
                 if parens {
                     buffer.push('(');
@@ -556,33 +560,29 @@ impl Expr {
                 buffer.push_str("if ");
                 branches[0].0.node.print(buffer, 0);
                 buffer.push_str(":\n");
-                for (i, stmt) in branches[0].1.iter().enumerate() {
+                for stmt in &branches[0].1 {
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
                     stmt.node.print(buffer, indent + 4);
-                    if i != branches[0].1.len() - 1 {
-                        buffer.push('\n');
-                    }
+                    buffer.push('\n');
                 }
                 for branch in &branches[1..] {
+                    buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("elif ");
                     branch.0.node.print(buffer, 0);
                     buffer.push_str(":\n");
-                    for (i, stmt) in branch.1.iter().enumerate() {
+                    for stmt in &branch.1 {
                         buffer.push_str(&INDENTS[0..indent as usize + 4]);
                         stmt.node.print(buffer, indent + 4);
-                        if i != branch.1.len() - 1 {
-                            buffer.push('\n');
-                        }
+                        buffer.push('\n');
                     }
                 }
                 if let Some(else_branch) = else_branch {
+                    buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("else:\n");
-                    for (i, stmt) in else_branch.iter().enumerate() {
+                    for stmt in else_branch {
                         buffer.push_str(&INDENTS[0..indent as usize + 4]);
                         stmt.node.print(buffer, indent + 4);
-                        if i != else_branch.len() - 1 {
-                            buffer.push('\n');
-                        }
+                        buffer.push('\n');
                     }
                 }
             }
@@ -651,7 +651,21 @@ impl Pat {
                 }
             }
 
-            Pat::Record(_) => todo!(),
+            Pat::Record(fields) => {
+                buffer.push('(');
+                for (i, field) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    let Named { name, node } = field;
+                    if let Some(name) = name {
+                        buffer.push_str(name);
+                        buffer.push_str(" = ");
+                    }
+                    node.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
             Pat::Ignore => buffer.push('_'),
 
