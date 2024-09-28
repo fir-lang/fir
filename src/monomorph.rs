@@ -160,7 +160,7 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
     pgm
 }
 
-pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>]) -> Vec<ast::L<ast::TopDecl>> {
+pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast::TopDecl>> {
     let poly_pgm = pgm_to_graph(pgm.iter().map(|decl| decl.node.clone()).collect());
     let mut mono_pgm = PgmGraph::default();
 
@@ -184,7 +184,10 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>]) -> Vec<ast::L<ast::TopDecl>> {
         mono_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
     }
 
-    let main = poly_pgm.top.get("main").unwrap();
+    let main = poly_pgm
+        .top
+        .get(main)
+        .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
     mono_top_decl(main, &[], &poly_pgm, &mut mono_pgm);
 
     let mono_pgm = graph_to_pgm(mono_pgm);

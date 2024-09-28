@@ -94,31 +94,36 @@ mod native {
         let mut no_backtrace = false;
         let mut print_checked_ast = false;
         let mut print_mono_ast = false;
-        let args: Vec<String> = std::env::args()
-            .filter(|arg| match arg.as_str() {
+        let mut main: String = "main".to_string();
+
+        let mut arg_iter = std::env::args();
+        let mut args: Vec<String> = vec![];
+        while let Some(arg) = arg_iter.next() {
+            match arg.as_str() {
                 "--typecheck" => {
                     typecheck = true;
-                    false
                 }
                 "--no-prelude" => {
                     no_prelude = true;
-                    false
                 }
                 "--no-backtrace" => {
                     no_backtrace = true;
-                    false
                 }
                 "--print-checked-ast" => {
                     print_checked_ast = true;
-                    false
                 }
                 "--print-mono-ast" => {
                     print_mono_ast = true;
-                    false
                 }
-                _ => true,
-            })
-            .collect();
+                "--main" => match arg_iter.next() {
+                    Some(main_) => main = main_,
+                    None => panic!("--main argument takes a value, e.g. `--main myMainFunction`"),
+                },
+                _ => {
+                    args.push(arg);
+                }
+            }
+        }
 
         if no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
@@ -156,7 +161,7 @@ mod native {
         }
 
         if !typecheck {
-            module = monomorph::monomorphise(&module);
+            module = monomorph::monomorphise(&module, &main);
 
             if print_mono_ast {
                 let mut buffer = String::new();
@@ -169,7 +174,7 @@ mod native {
 
             let input = args.get(2).map(|s| s.as_str());
             let mut w = std::io::stdout();
-            interpreter::run(&mut w, module, input);
+            interpreter::run(&mut w, module, &main, input);
         }
     }
 

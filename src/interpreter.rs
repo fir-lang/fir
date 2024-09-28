@@ -24,15 +24,15 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, input: Option<&str>) {
+pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
     let mut heap = Heap::new();
     let pgm = Pgm::new(pgm, &mut heap);
 
     // Find the main function.
     let main_fun = pgm
         .top_level_funs
-        .get("main")
-        .unwrap_or_else(|| panic!("main function not defined"));
+        .get(main)
+        .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
 
     // `main` doesn't have a call site, called by the interpreter.
     let call_loc = Loc {

@@ -128,3 +128,22 @@ fn expectKeyword(pgm: StrView, kw: StrView): StrView =
     if !pgm.startsWith(kw.toStr()):
         panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
+
+fn testMain() =
+    main("0")
+    main("succ(0)")
+    main("succ(succ(0))")
+    main("succ(pred(succ(0)))")
+    main("pred(succ(pred(succ(0))))")
+    main("if true then succ(0) else 0")
+    main("if iszero(0) then succ(0) else 0")
+
+# args: --main testMain
+# expected stdout:
+# 0
+# 1
+# 2
+# 1
+# 0
+# 1
+# 1
