@@ -144,7 +144,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
         "print" => BuiltinFun::Print,
         "printStr" => BuiltinFun::PrintStr,
         "printStrView" => BuiltinFun::PrintStrView,
-        "panic" => BuiltinFun::Panic,
+        "panic@Ptr" => BuiltinFun::Panic,
     };
 
     macro_rules! builtin_associated_funs {

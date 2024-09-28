@@ -1,5 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
+use crate::interpolation::StringPart;
 use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
@@ -46,7 +47,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
-        ast::Expr::Int(_) | ast::Expr::String(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
+        ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
+
+        ast::Expr::String(parts) => parts.iter_mut().for_each(|part| match part {
+            StringPart::Str(_) => {}
+            StringPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
+        }),
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
             normalize_expr(&mut object.node, cons)
@@ -104,9 +110,17 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             normalize_expr(&mut scrutinee.node, cons);
-            for alt in alts {
-                normalize_pat(&mut alt.pattern.node, cons);
-                for stmt in &mut alt.rhs {
+            for ast::Alt {
+                pattern,
+                guard,
+                rhs,
+            } in alts
+            {
+                normalize_pat(&mut pattern.node, cons);
+                if let Some(expr) = guard {
+                    normalize_expr(&mut expr.node, cons);
+                }
+                for stmt in rhs {
                     normalize_instantiation_types(&mut stmt.node, cons);
                 }
             }
