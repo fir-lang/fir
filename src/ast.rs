@@ -181,6 +181,19 @@ pub struct Named<T> {
     pub node: T,
 }
 
+impl<T> Named<T> {
+    pub fn map_as_ref<T2, F>(&self, f: F) -> Named<T2>
+    where
+        F: FnOnce(&T) -> T2,
+    {
+        let Named { name, node } = &self;
+        Named {
+            name: name.clone(),
+            node: f(node),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssocType {
     /// In `Self.Item`, `Self`.

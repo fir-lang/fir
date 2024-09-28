@@ -587,9 +587,8 @@ fn mono_expr(
         ast::Expr::Record(fields) => ast::Expr::Record(
             fields
                 .iter()
-                .map(|ast::Named { name, node }| ast::Named {
-                    name: name.clone(),
-                    node: mono_bl_expr(node, ty_map, poly_pgm, mono_pgm),
+                .map(|named_field| {
+                    named_field.map_as_ref(|field| mono_bl_expr(field, ty_map, poly_pgm, mono_pgm))
                 })
                 .collect(),
         ),
@@ -694,8 +693,8 @@ fn mono_pat(
         | ast::Pat::StrPfx(_, _) => pat.clone(),
 
         ast::Pat::Or(pat1, pat2) => ast::Pat::Or(
-            Box::new(mono_l_pat(pat1, ty_map, poly_pgm, mono_pgm)),
-            Box::new(mono_l_pat(pat2, ty_map, poly_pgm, mono_pgm)),
+            mono_bl_pat(pat1, ty_map, poly_pgm, mono_pgm),
+            mono_bl_pat(pat2, ty_map, poly_pgm, mono_pgm),
         ),
 
         ast::Pat::Constr(ast::ConstrPattern {
@@ -735,9 +734,8 @@ fn mono_pat(
         ast::Pat::Record(fields) => ast::Pat::Record(
             fields
                 .iter()
-                .map(|ast::Named { name, node }| ast::Named {
-                    name: name.clone(),
-                    node: Box::new(mono_l_pat(node, ty_map, poly_pgm, mono_pgm)),
+                .map(|named_pat| {
+                    named_pat.map_as_ref(|pat| mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm))
                 })
                 .collect(),
         ),
@@ -768,10 +766,7 @@ fn mono_named_bl_pat(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> ast::Named<Box<ast::L<ast::Pat>>> {
-    ast::Named {
-        name: pat.name.clone(),
-        node: mono_bl_pat(&pat.node, ty_map, poly_pgm, mono_pgm),
-    }
+    pat.map_as_ref(|pat| mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
 
 /// Monomorphise an associated function or method.
@@ -1014,13 +1009,11 @@ fn mono_ty(
             })
         }
 
-        ast::Type::Record(args) => {
-            if args.is_empty() {
-                ast::Type::Record(vec![])
-            } else {
-                todo!()
-            }
-        }
+        ast::Type::Record(args) => ast::Type::Record(
+            args.iter()
+                .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                .collect(),
+        ),
     }
 }
 
