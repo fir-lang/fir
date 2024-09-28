@@ -209,15 +209,9 @@ mod wasm {
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
-        match fetch_sync(&path) {
-            Some(contents) => {
-                let tokens = scanner::scan(lexer::lex(&contents));
-                parse_module(&path.to_string().into(), tokens)
-            }
-            None => {
-                panic!("Unable to fetch {}", path);
-            }
-        }
+        let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
+        let tokens = scanner::scan(lexer::lex(&contents, module));
+        parse_module(module, tokens)
     }
 
     fn fetch_sync(url: &str) -> Option<String> {
@@ -267,12 +261,17 @@ mod wasm {
         clear_interpreter_output();
         clear_program_output();
 
-        let tokens = scanner::scan(lexer::lex(pgm));
-        let module = parse_module(&SmolStr::new("FirWeb"), tokens);
-        let module = import_resolver::resolve_imports("fir", "", module, true);
+        let module_name = SmolStr::new_static("FirWeb");
+        let tokens = scanner::scan(lexer::lex(pgm, &module_name));
+        let module = parse_module(&module_name, tokens);
+        let mut module = import_resolver::resolve_imports("fir", "", module, true);
+
+        type_checker::check_module(&mut module);
+
+        module = monomorph::monomorphise(&module, "main".into());
 
         let mut w = WasmOutput;
-        interpreter::run(&mut w, module, input.trim());
+        interpreter::run(&mut w, module, "main", Some(input.trim()));
     }
 
     struct WasmOutput;
