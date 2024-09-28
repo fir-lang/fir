@@ -9,5 +9,4 @@ fn toStr(self): Str =
     Bool.False
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected exit status: 101
-# expected stderr: Unable to unify types Bool and Str at tests/TcFail2.fir:9:5
+# expected stderr: tests/TcFail2.fir:9:5: Unable to unify types Bool and Str

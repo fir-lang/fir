@@ -9,4 +9,4 @@ fn main() =
     vec2.push(123i32)
 
 # args: --no-backtrace
-# expected stderr: Unable to unify types I32 and Str at tests/TcFail4.fir:9:15
+# expected stderr: tests/TcFail4.fir:9:15: Unable to unify types I32 and Str

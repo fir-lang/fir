@@ -13,4 +13,4 @@ impl Test[A]:
         "hi"
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: Unable to unify types Str and I32 at tests/AssocTysFail1.fir:13:9
+# expected stderr: tests/AssocTysFail1.fir:13:9: Unable to unify types Str and I32

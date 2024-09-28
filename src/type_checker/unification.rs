@@ -18,10 +18,10 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
         (Ty::Con(con1), Ty::Con(con2)) => {
             if con1 != con2 {
                 panic!(
-                    "Unable to unify types {} and {} at {}",
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
                     con1,
                     con2,
-                    loc_display(loc)
                 )
             }
         }
@@ -29,10 +29,10 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
         (Ty::App(con1, args1), Ty::App(con2, args2)) => {
             if con1 != con2 {
                 panic!(
-                    "Unable to unify types {} and {} at {}",
+                    "{}: Unable to unify types {} and {}",
+                    loc_display(loc),
                     con1,
                     con2,
-                    loc_display(loc)
                 )
             }
 
@@ -130,17 +130,16 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
         }
 
         (ty1, ty2) => panic!(
-            "Unable to unify types
+            "{}: Unable to unify types
              {} and
-             {} at
              {}
              (
                 {:?}
                 {:?}
              )",
+            loc_display(loc),
             ty1,
             ty2,
-            loc_display(loc),
             ty1,
             ty2,
         ),
