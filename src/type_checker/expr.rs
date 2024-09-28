@@ -440,6 +440,31 @@ pub(super) fn check_expr(
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
+                ast::BinOp::And | ast::BinOp::Or => {
+                    let bool_ty = Ty::Con("Bool".into());
+                    check_expr(
+                        left,
+                        Some(&bool_ty),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        tys,
+                        preds,
+                    );
+                    check_expr(
+                        right,
+                        Some(&bool_ty),
+                        return_ty,
+                        level,
+                        env,
+                        var_gen,
+                        tys,
+                        preds,
+                    );
+                    return bool_ty;
+                }
+
                 ast::BinOp::Add => "__add",
                 ast::BinOp::Subtract => "__sub",
                 ast::BinOp::Equal => "__eq",
@@ -449,8 +474,6 @@ pub(super) fn check_expr(
                 ast::BinOp::Gt => "__gt",
                 ast::BinOp::LtEq => "__le",
                 ast::BinOp::GtEq => "__ge",
-                ast::BinOp::And => "__and",
-                ast::BinOp::Or => "__or",
                 ast::BinOp::BitOr => "__bitor",
                 ast::BinOp::BitAnd => "__bitand",
                 ast::BinOp::LeftShift => "__shl",

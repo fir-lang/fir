@@ -1045,9 +1045,22 @@ fn eval<W: Write>(
 
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
 
-        ast::Expr::BinOp(_) => {
-            // BinOps should've been desugared during type checking.
-            panic!("{}: BinOp in interpreter", loc_display(loc))
+        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
+            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            match op {
+                ast::BinOp::And => {
+                    if left == pgm.false_alloc {
+                        return ControlFlow::Val(pgm.false_alloc);
+                    }
+                }
+                ast::BinOp::Or => {
+                    if left == pgm.true_alloc {
+                        return ControlFlow::Val(pgm.true_alloc);
+                    }
+                }
+                _ => panic!(),
+            }
+            eval(w, pgm, heap, locals, &right.node, &right.loc)
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {

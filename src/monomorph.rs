@@ -577,7 +577,11 @@ fn mono_expr(
                 .collect(),
         ),
 
-        ast::Expr::BinOp(_) => panic!("BinOp in monomorphisation"),
+        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => ast::Expr::BinOp(ast::BinOpExpr {
+            left: mono_bl_expr(left, ty_map, poly_pgm, mono_pgm),
+            right: mono_bl_expr(right, ty_map, poly_pgm, mono_pgm),
+            op: *op,
+        }),
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => ast::Expr::UnOp(ast::UnOpExpr {
             op: op.clone(),

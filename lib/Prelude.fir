@@ -80,8 +80,10 @@ impl Eq for Str:
 
 impl Str:
     prim fn fromUtf8Vec(byte: Vec[U8]): Str
-    prim fn len(self): I32
-    prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
+    prim fn len(self): U32
+    prim fn substr(self, byteStart: U32, byteEnd: U32): StrView
+
+    fn isEmpty(self): Bool = self.len() == 0
 
 impl ToStrView for Str:
     fn toStrView(self): StrView =
@@ -97,11 +99,12 @@ impl Eq for StrView:
     prim fn __eq(self, other: StrView): Bool
 
 impl StrView:
-    prim fn isEmpty(self): Bool
-    prim fn len(self): I32
+    prim fn len(self): U32
     prim fn startsWith(self, str: Str): Bool    # TODO: Argument should be StrView
-    prim fn substr(self, byteStart: I32, byteEnd: I32): StrView
+    prim fn substr(self, byteStart: U32, byteEnd: U32): StrView
     prim fn toStr(self): Str
+
+    fn isEmpty(self): Bool = self.len() == 0
 
 prim type Array[T]
 
@@ -139,16 +142,6 @@ type Bool:
     True
 
 impl Bool:
-    fn __and(self, other: Bool): Bool =
-        match self:
-            Bool.False: Bool.False
-            Bool.True: other
-
-    fn __or(self, other: Bool): Bool =
-        match self:
-            Bool.True: Bool.True
-            Bool.False: other
-
     fn toStr(self): Str =
         match self:
             Bool.True: "Bool.True"

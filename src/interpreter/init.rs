@@ -226,7 +226,6 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             "substr" => BuiltinFun::StrViewSubstr,
             "len" => BuiltinFun::StrViewLen,
             "startsWith" => BuiltinFun::StrViewStartsWith,
-            "isEmpty" => BuiltinFun::StrViewIsEmpty,
             "toStr" => BuiltinFun::StrViewToStr,
         },
         "Array@U8" => {

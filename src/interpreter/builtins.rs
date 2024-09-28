@@ -93,7 +93,6 @@ pub enum BuiltinFun {
     StrSubstr,
     StrFromUtf8Vec,
     StrViewEq,
-    StrViewIsEmpty,
     StrViewLen,
     StrViewStartsWith,
     StrViewSubstr,
@@ -789,17 +788,6 @@ pub fn call_builtin_fun<W: Write>(
                     [s2_payload_byte_addr as usize..(s2_payload_byte_addr + s2_len) as usize];
 
             pgm.bool_alloc(eq)
-        }
-
-        BuiltinFun::StrViewIsEmpty => {
-            debug_assert_eq!(args.len(), 1);
-            let s = args[0];
-            debug_assert_eq!(heap[s], pgm.str_view_ty_tag);
-
-            let s_start = heap[s + 1];
-            let s_end = heap[s + 2];
-
-            pgm.bool_alloc(s_start == s_end)
         }
 
         BuiltinFun::StrViewToStr => {
