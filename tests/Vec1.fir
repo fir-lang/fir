@@ -4,7 +4,7 @@ fn main() =
     for i in 0 .. 20:
         test.push(i)
 
-    for i in 0u32 .. test.len:
+    for i in 0u32 .. test.len():
         printStr(test.get(i).toStr())
 
 # expected stdout:

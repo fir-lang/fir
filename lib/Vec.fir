@@ -1,45 +1,45 @@
 type Vec[T]:
-    data: Array[T]
-    len: U32
+    _data: Array[T]
+    _len: U32
 
 impl[T] Vec[T]:
     fn withCapacity(cap: U32): Vec[T] =
-        Vec(data = Array.new(cap), len = 0)
+        Vec(_data = Array.new(cap), _len = 0)
 
     fn len(self): U32 =
-        self.len
+        self._len
 
     fn clear(self) =
         # In the compiled version we should actually clear the elements to allow garbage collection.
-        self.len = 0
+        self._len = 0
 
     fn push(self, elem: T) =
-        let cap = self.data.len()
+        let cap = self._data.len()
 
-        if self.len == cap:
+        if self._len == cap:
             let newData = Array.new(cap * 2)
             for i in 0u32 .. cap:
-                newData.set(i, self.data.get(i))
-            self.data = newData
+                newData.set(i, self._data.get(i))
+            self._data = newData
 
-        self.data.set(self.len, elem)
-        self.len += 1
+        self._data.set(self._len, elem)
+        self._len += 1
 
     fn pop(self): Option[T] =
-        if self.len == 0:
+        if self._len == 0:
             return Option.None
 
-        self.len -= 1
-        Option.Some(self.data.get(self.len))
+        self._len -= 1
+        Option.Some(self._data.get(self._len))
 
     fn set(self, idx: U32, elem: T) =
-        if idx >= self.len:
-            panic("Vec.set OOB (len=`self.len.toStr()`, idx=`idx.toStr()`)")
+        if idx >= self._len:
+            panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
-        self.data.set(idx, elem)
+        self._data.set(idx, elem)
 
     fn get(self, idx: U32): T =
-        if idx >= self.len:
-            panic("Vec.get OOB (len=`self.len.toStr()`, idx=`idx.toStr()`)")
+        if idx >= self._len:
+            panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
-        self.data.get(idx)
+        self._data.get(idx)
