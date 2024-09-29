@@ -112,3 +112,8 @@ impl ToStr for Bool:
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
+
+trait Iterator[T]:
+    type Item
+
+    fn next(self): Option[Item]

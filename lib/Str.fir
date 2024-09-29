@@ -79,6 +79,13 @@ impl Str:
             let b3 = (self._bytes.get(byteIndex + 3) & 0b111111) as U32
             Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
+    fn chars(self): CharIter =
+        CharIter(
+            _bytes = self._bytes,
+            _idx = self._start,
+            _end = self._start + self._len,
+        )
+
 impl Eq for Str:
     fn __eq(self, other: Str): Bool =
         if self.len() != other.len():
@@ -92,3 +99,54 @@ impl Eq for Str:
 
 impl ToStr for Str:
     fn toStr(self): Str = self
+
+type CharIter:
+    # UTF-8 encoding of the string.
+    _bytes: Array[U8]
+
+    # Current index into `_bytes`.
+    _idx: U32
+
+    # End index.
+    _end: U32
+
+impl Iterator for CharIter:
+    type Item = Char
+
+    fn next(self): Option[Char] =
+        if self._idx == self._end:
+            return Option.None
+
+        let char = _charAt(self._bytes, self._idx)
+        let charLength = char.lenUtf8()
+        self._idx += charLength
+        Option.Some(char)
+
+fn _charAt(bytes: Array[U8], idx: U32): Char =
+    let byte = bytes.get(idx)
+
+    if byte < 128:
+        return Char(_codePoint = byte as U32)
+
+    # Check continuation bit.
+    if byte & 0b1100_0000 == 0b1000_0000:
+        panic("Byte at index `idx` is not a code point start")
+
+    if byte & 0b1110_0000 == 0b1100_0000:
+        # 2 bytes
+        let b0 = (byte & 0b11111) as U32
+        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
+        Char(_codePoint = (b0 << 6) | b1)
+    elif byte & 0b1111_0000 == 0b1110_0000:
+        # 3 bytes
+        let b0 = (byte & 0b1111) as U32
+        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
+        let b2 = (bytes.get(idx + 2) & 0b111111) as U32
+        Char(_codePoint = (b0 << 12) | (b1 << 6) | b2)
+    else:
+        # 4 bytes
+        let b0 = (byte & 0b111) as U32
+        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
+        let b2 = (bytes.get(idx + 2) & 0b111111) as U32
+        let b3 = (bytes.get(idx + 3) & 0b111111) as U32
+        Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
