@@ -13,7 +13,7 @@ impl StrBuf:
         self._bytes.clear()
 
     fn push(self, char: Char) =
-        let code = char.value
+        let code = char._codePoint
         let len = char.lenUtf8()
         if len == 1:
             self._bytes.push(code as U8)

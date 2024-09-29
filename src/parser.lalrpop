@@ -551,8 +551,15 @@ InlineExpr: Expr = {
         Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
     },
 
-    <char:CharLit> =>
-        Expr::Char(char.text.chars().nth(1).unwrap()),
+    <char:CharLit> => {
+        for char in char.text.chars().skip(1) {
+            if char == '\\' {
+                continue;
+            }
+            return Expr::Char(char);
+        }
+        panic!()
+    },
 
     <l:@L> <fun:InlineExpr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
         Expr::Call(CallExpr {

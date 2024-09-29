@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 7f0bebeb9be8c7242a15ebb5d88c39899a00357f95f6062f5457488092cf6c51
+// sha3: a33325f7f380b9d64faa650d5ea39457cc2d479e56a3e315fd58075d90a77573
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -36362,7 +36362,15 @@ fn __action62<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action63<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Expr {
-    Expr::Char(char.text.chars().nth(1).unwrap())
+    {
+        for char in char.text.chars().skip(1) {
+            if char == '\\' {
+                continue;
+            }
+            return Expr::Char(char);
+        }
+        panic!()
+    }
 }
 
 #[allow(unused_variables)]
