@@ -2,7 +2,7 @@ fn main() =
     printStr(('a' == 'a').toStr())
     printStr(('a' == 'b').toStr())
     match 'a':
-        'b': panic("'a' == 'b'".toStrView())
+        'b': panic("'a' == 'b'".toStr())
         'a': printStr("👍")
 
     printStr('👍'.value.toStr())

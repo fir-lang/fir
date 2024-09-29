@@ -327,7 +327,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
 
-        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap();
+        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap_or_else(|| {
+            panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id)
+        });
 
         let (trait_methods, trait_implementing_tys) = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails {

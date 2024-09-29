@@ -118,7 +118,7 @@ pub(super) fn check_pat(
             preds.add(
                 Pred {
                     ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_view_id(),
+                    trait_: Ty::to_str_id(),
                     assoc_tys: Default::default(),
                 },
                 &pat.loc,
@@ -132,13 +132,13 @@ pub(super) fn check_pat(
             preds.add(
                 Pred {
                     ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_view_id(),
+                    trait_: Ty::to_str_id(),
                     assoc_tys: Default::default(),
                 },
                 &pat.loc,
             );
 
-            env.insert(var.clone(), Ty::str_view());
+            env.insert(var.clone(), Ty::str());
 
             Ty::Var(pat_ty)
         }

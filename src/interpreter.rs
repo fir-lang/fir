@@ -55,12 +55,13 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Op
         0 => vec![],
         1 => match input {
             Some(input) => {
-                let input = heap.allocate_str(pgm.str_ty_tag, input.as_bytes());
+                let input =
+                    heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, input.as_bytes());
                 vec![input]
             }
             None => {
                 eprintln!("WARNING: main takes one argument, but no input was provided to the interpreter");
-                let input = heap.allocate_str(pgm.str_ty_tag, &[]);
+                let input = heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, &[]);
                 vec![input]
             }
         },
@@ -130,7 +131,6 @@ struct Pgm {
     false_alloc: u64,
     char_ty_tag: u64,
     str_ty_tag: u64,
-    str_view_ty_tag: u64,
     i8_ty_tag: u64,
     u8_ty_tag: u64,
     i32_ty_tag: u64,
@@ -428,7 +428,6 @@ impl Pgm {
 
         let char_ty_tag = ty_cons.get("Char").as_ref().unwrap().type_tag;
         let str_ty_tag = ty_cons.get("Str").as_ref().unwrap().type_tag;
-        let str_view_ty_tag = ty_cons.get("StrView").as_ref().unwrap().type_tag;
         let i32_ty_tag = ty_cons.get("I32").as_ref().unwrap().type_tag;
         let u32_ty_tag = ty_cons.get("U32").as_ref().unwrap().type_tag;
         let i8_ty_tag = ty_cons.get("I8").as_ref().unwrap().type_tag;
@@ -451,7 +450,6 @@ impl Pgm {
             true_alloc,
             char_ty_tag,
             str_ty_tag,
-            str_view_ty_tag,
             i8_ty_tag,
             u8_ty_tag,
             i32_ty_tag,
@@ -1033,14 +1031,14 @@ fn eval<W: Write>(
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
-                        let str_view = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                        debug_assert_eq!(heap[str_view], pgm.str_view_ty_tag);
-                        let part_bytes = heap.str_view_bytes(str_view);
+                        let str = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+                        debug_assert_eq!(heap[str], pgm.str_ty_tag);
+                        let part_bytes = heap.str_bytes(str);
                         bytes.extend(part_bytes);
                     }
                 }
             }
-            ControlFlow::Val(heap.allocate_str(pgm.str_ty_tag, &bytes))
+            ControlFlow::Val(heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, &bytes))
         }
 
         ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
@@ -1361,12 +1359,8 @@ fn try_bind_pat(
         }
 
         ast::Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag || heap[value] == pgm.str_view_ty_tag);
-            let value_bytes = if heap[value] == pgm.str_ty_tag {
-                heap.str_bytes(value)
-            } else {
-                heap.str_view_bytes(value)
-            };
+            debug_assert!(heap[value] == pgm.str_ty_tag);
+            let value_bytes = heap.str_bytes(value);
             if value_bytes == str.as_bytes() {
                 Some(Default::default())
             } else {
@@ -1375,26 +1369,12 @@ fn try_bind_pat(
         }
 
         ast::Pat::StrPfx(pfx, var) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag || heap[value] == pgm.str_view_ty_tag);
-            let value_bytes = if heap[value] == pgm.str_ty_tag {
-                heap.str_bytes(value)
-            } else {
-                heap.str_view_bytes(value)
-            };
+            debug_assert!(heap[value] == pgm.str_ty_tag);
+            let value_bytes = heap.str_bytes(value);
             if value_bytes.starts_with(pfx.as_bytes()) {
-                let pfx_len = pfx.len();
-                let rest = if heap[value] == pgm.str_ty_tag {
-                    let len = heap.str_bytes(value).len();
-                    heap.allocate_str_view(pgm.str_view_ty_tag, value, pfx_len as u64, len as u64)
-                } else {
-                    let len = heap.str_view_bytes(value).len();
-                    heap.allocate_str_view_from_str_view(
-                        pgm.str_view_ty_tag,
-                        value,
-                        pfx_len as u64,
-                        len as u64,
-                    )
-                };
+                let pfx_len = pfx.len() as u32;
+                let len = heap.str_bytes(value).len() as u32;
+                let rest = heap.allocate_str_view(pgm.str_ty_tag, value, pfx_len, len - pfx_len);
                 let mut map: Map<Id, u64> = Default::default();
                 map.insert(var.clone(), rest);
                 Some(map)

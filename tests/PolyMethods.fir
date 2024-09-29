@@ -1,12 +1,12 @@
 trait T[A]:
-    fn f[B: ToStrView](self, b: B)
+    fn f[B: ToStr](self, b: B)
 
 type X:
     value: I32
 
 impl T for X:
-    fn f[Q: ToStrView](self, q: Q) =
-        printStr("X.f called with q = `q.toStrView()`")
+    fn f[Q: ToStr](self, q: Q) =
+        printStr("X.f called with q = `q.toStr()`")
 
 fn main() =
     let x = X(value = 123)

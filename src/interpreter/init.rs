@@ -143,7 +143,6 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
     let mut top_level_funs: Map<Id, Fun> = builtin_top_level_funs! {
         "print" => BuiltinFun::Print,
         "printStr" => BuiltinFun::PrintStr,
-        "printStrView" => BuiltinFun::PrintStrView,
         "panic@Ptr" => BuiltinFun::Panic,
     };
 
@@ -167,12 +166,6 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
     }
 
     let mut associated_funs: Map<Id, Map<Id, Fun>> = builtin_associated_funs! {
-        "Str" => {
-            "len" => BuiltinFun::StrLen,
-            "__eq" => BuiltinFun::StrEq,
-            "substr" => BuiltinFun::StrSubstr,
-            "fromUtf8Vec" => BuiltinFun::StrFromUtf8Vec,
-        },
         "I32" => {
             "__add" => BuiltinFun::I32Add,
             "cmp" => BuiltinFun::I32Cmp,
@@ -220,13 +213,6 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             "toStr" => BuiltinFun::U8ToStr,
             "__shl" => BuiltinFun::U8Shl,
             "__shr" => BuiltinFun::U8Shr,
-        },
-        "StrView" => {
-            "__eq" => BuiltinFun::StrViewEq,
-            "substr" => BuiltinFun::StrViewSubstr,
-            "len" => BuiltinFun::StrViewLen,
-            "startsWith" => BuiltinFun::StrViewStartsWith,
-            "toStr" => BuiltinFun::StrViewToStr,
         },
         "Array@U8" => {
             "new" => BuiltinFun::ArrayU8New,

@@ -1,5 +1,6 @@
 import Char
 import Num
+import Str
 import StrBuf
 import Vec
 
@@ -65,46 +66,12 @@ trait Ord[T]:
             Ordering.Greater | Ordering.Equal: Bool.True
             _: Bool.False
 
-# Just to be able to pass `Str` where `StrView` is expected.
-trait ToStrView[T]:
-    fn toStrView(self): StrView
+trait ToStr[T]:
+    fn toStr(self): Str
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
 type Void
-
-prim type Str
-
-impl Eq for Str:
-    prim fn __eq(self, other: Str): Bool
-
-impl Str:
-    prim fn fromUtf8Vec(byte: Vec[U8]): Str
-    prim fn len(self): U32
-    prim fn substr(self, byteStart: U32, byteEnd: U32): StrView
-
-    fn isEmpty(self): Bool = self.len() == 0
-
-impl ToStrView for Str:
-    fn toStrView(self): StrView =
-        self.substr(0, self.len())
-
-prim type StrView
-
-impl ToStrView for StrView:
-    fn toStrView(self): StrView =
-        self
-
-impl Eq for StrView:
-    prim fn __eq(self, other: StrView): Bool
-
-impl StrView:
-    prim fn len(self): U32
-    prim fn startsWith(self, str: Str): Bool    # TODO: Argument should be StrView
-    prim fn substr(self, byteStart: U32, byteEnd: U32): StrView
-    prim fn toStr(self): Str
-
-    fn isEmpty(self): Bool = self.len() == 0
 
 prim type Array[T]
 
@@ -115,8 +82,7 @@ impl[T] Array[T]:
     prim fn set(self, idx: U32, elem: T)
 
 prim fn printStr(s: Str)
-prim fn printStrView(s: StrView)
-prim fn panic[T: ToStrView](msg: T): Void
+prim fn panic[T: ToStr](msg: T): Void
 
 type Option[T]:
     None
@@ -141,12 +107,8 @@ type Bool:
     False
     True
 
-impl Bool:
+impl ToStr for Bool:
     fn toStr(self): Str =
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
-
-impl ToStrView for Bool:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()

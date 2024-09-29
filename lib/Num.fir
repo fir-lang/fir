@@ -1,9 +1,5 @@
 prim type I32
 
-impl ToStrView for I32:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()
-
 impl Add for I32:
     prim fn __add(self, other: I32): I32
 
@@ -34,14 +30,10 @@ impl Shl for I32:
 impl Shr for I32:
     prim fn __shr(self, shift: I32): I32
 
-impl I32:
+impl ToStr for I32:
     prim fn toStr(self): Str
 
 prim type U32
-
-impl ToStrView for U32:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()
 
 impl Add for U32:
     prim fn __add(self, other: U32): U32
@@ -78,10 +70,6 @@ impl U32:
 
 prim type I8
 
-impl ToStrView for I8:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()
-
 impl Add for I8:
     prim fn __add(self, other: I8): I8
 
@@ -116,10 +104,6 @@ impl I8:
     prim fn toStr(self): Str
 
 prim type U8
-
-impl ToStrView for U8:
-    fn toStrView(self): StrView =
-        self.toStr().toStrView()
 
 impl Add for U8:
     prim fn __add(self, other: U8): U8

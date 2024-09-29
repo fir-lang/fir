@@ -55,34 +55,48 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str(&mut self, ty_tag: u64, string: &[u8]) -> u64 {
+    pub fn allocate_str(&mut self, str_tag: u64, array_tag: u64, string: &[u8]) -> u64 {
         let size_words = string.len().div_ceil(8);
-        let alloc = self.allocate(size_words + 2);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = string.len() as u64;
+        let array = self.allocate(size_words + 2);
+        self[array] = array_tag;
+        self[array + 1] = string.len() as u64;
+        let bytes: &mut [u8] =
+            &mut cast_slice_mut::<u64, u8>(&mut self.values[array as usize + 2..])[..string.len()];
+        bytes.copy_from_slice(string);
 
-        let bytes_start_word = (alloc as usize) + 2;
-        let bytes_end_word = bytes_start_word + size_words;
-
-        let bytes: &mut [u8] = cast_slice_mut(&mut self.values[bytes_start_word..=bytes_end_word]);
-        bytes[..string.len()].copy_from_slice(string);
-
+        let alloc = self.allocate(4);
+        self[alloc] = str_tag;
+        self[alloc + 1] = array;
+        self[alloc + 2] = 0;
+        self[alloc + 3] = string.len() as u64;
         alloc
     }
 
-    pub fn str_bytes(&self, str_addr: u64) -> &[u8] {
-        let str_len_bytes = self[str_addr + 1];
-        let str_payload_byte_addr = (str_addr + 2) * 8;
-        &cast_slice(&self.values)
-            [str_payload_byte_addr as usize..(str_payload_byte_addr + str_len_bytes) as usize]
+    pub fn allocate_str_view(
+        &mut self,
+        ty_tag: u64,
+        str: u64,
+        byte_start: u32,
+        byte_len: u32,
+    ) -> u64 {
+        let array = self[str + 1];
+        let start = val_as_u32(self[str + 2]);
+
+        let new_str = self.allocate(4);
+        self[new_str] = ty_tag;
+        self[new_str + 1] = array;
+        self[new_str + 2] = u32_as_val(start + byte_start);
+        self[new_str + 3] = u32_as_val(byte_len);
+
+        new_str
     }
 
-    pub fn str_view_bytes(&self, str_view_addr: u64) -> &[u8] {
-        let str_addr = self[str_view_addr + 3];
-        let byte_start = self[str_view_addr + 1];
-        let byte_end = self[str_view_addr + 2];
-        let str_bytes = self.str_bytes(str_addr);
-        &str_bytes[byte_start as usize..byte_end as usize]
+    pub fn str_bytes(&self, str_addr: u64) -> &[u8] {
+        let str_byte_array = self[str_addr + 1];
+        let str_start = val_as_u32(self[str_addr + 2]);
+        let str_len = val_as_u32(self[str_addr + 3]);
+        &cast_slice::<u64, u8>(&self.values[(str_byte_array + 2) as usize..])
+            [str_start as usize..(str_start + str_len) as usize]
     }
 
     pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {
@@ -112,55 +126,6 @@ impl Heap {
         self[alloc] = METHOD_TYPE_TAG;
         self[alloc + 1] = receiver;
         self[alloc + 2] = fun_idx;
-        alloc
-    }
-
-    pub fn allocate_str_view(
-        &mut self,
-        ty_tag: u64,
-        string: u64,
-        start_byte: u64,
-        end_byte: u64,
-    ) -> u64 {
-        debug_assert!(
-            start_byte <= end_byte,
-            "start_byte={}, end_byte={}",
-            start_byte,
-            end_byte
-        );
-        let alloc = self.allocate(4);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = start_byte;
-        self[alloc + 2] = end_byte;
-        self[alloc + 3] = string;
-        alloc
-    }
-
-    pub fn allocate_str_view_from_str_view(
-        &mut self,
-        ty_tag: u64,
-        str_view: u64,
-        start_byte: u64,
-        end_byte: u64,
-    ) -> u64 {
-        debug_assert!(
-            start_byte <= end_byte,
-            "start_byte={}, end_byte={}",
-            start_byte,
-            end_byte
-        );
-
-        let str = self[str_view + 3];
-        let str_view_start = self[str_view + 1];
-        let str_view_end = self[str_view + 2];
-
-        assert!(str_view_start + end_byte <= str_view_end);
-
-        let alloc = self.allocate(4);
-        self[alloc] = ty_tag;
-        self[alloc + 1] = str_view_start + start_byte;
-        self[alloc + 2] = str_view_start + end_byte;
-        self[alloc + 3] = str;
         alloc
     }
 }

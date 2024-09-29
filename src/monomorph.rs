@@ -169,7 +169,6 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast:
         make_ast_ty("Bool", vec![]),
         make_ast_ty("Char", vec![]),
         make_ast_ty("Str", vec![]),
-        make_ast_ty("StrView", vec![]),
         make_ast_ty("Ordering", vec![]),
         make_ast_ty("I8", vec![]),
         make_ast_ty("U8", vec![]),

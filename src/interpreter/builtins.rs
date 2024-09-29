@@ -12,7 +12,6 @@ pub enum BuiltinFun {
     Panic,
     Print,
     PrintStr,
-    PrintStrView,
 
     // Assoc funs
     ArrayI8Get,
@@ -87,16 +86,6 @@ pub enum BuiltinFun {
     U8BitAnd,
     U8Shl,
     U8Shr,
-
-    StrEq,
-    StrLen,
-    StrSubstr,
-    StrFromUtf8Vec,
-    StrViewEq,
-    StrViewLen,
-    StrViewStartsWith,
-    StrViewSubstr,
-    StrViewToStr,
 }
 
 macro_rules! array_new {
@@ -124,7 +113,7 @@ macro_rules! array_set {
 
         let array_len = $heap[array + 1];
         if idx >= array_len {
-            panic!("OOB array access");
+            panic!("OOB array access (idx = {}, len = {})", idx, array_len);
         }
 
         let payload: &mut [$elem_rust_type] =
@@ -145,7 +134,7 @@ macro_rules! array_get {
 
         let array_len = $heap[array + 1];
         if idx >= array_len {
-            panic!("OOB array access");
+            panic!("OOB array access (idx = {}, len = {})", idx, array_len);
         }
 
         let payload: &[$elem_rust_type] = cast_slice(&$heap.values[array as usize + 2..]);
@@ -167,12 +156,8 @@ pub fn call_builtin_fun<W: Write>(
 
             let msg: String = if args.len() == 1 {
                 let msg = args[0];
-                let len_bytes = heap[msg + 1];
-                let len_words = len_bytes.div_ceil(8);
-                let words =
-                    &heap.values[(msg as usize) + 2..(msg as usize) + 2 + (len_words as usize)];
-                let bytes = cast_slice(words);
-                String::from_utf8_lossy(&bytes[..len_bytes as usize]).into_owned()
+                let bytes = heap.str_bytes(msg);
+                String::from_utf8_lossy(bytes).into_owned()
             } else {
                 "".to_string()
             };
@@ -192,45 +177,8 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let str = args[0];
             debug_assert_eq!(heap[str], pgm.str_ty_tag);
-
-            let len_bytes = heap[str + 1];
-            let len_words = len_bytes.div_ceil(8);
-            let words = &heap.values[(str as usize) + 2..(str as usize) + 2 + (len_words as usize)];
-            let bytes = cast_slice(words);
-            writeln!(
-                w,
-                "{}",
-                String::from_utf8_lossy(&bytes[..len_bytes as usize])
-            )
-            .unwrap();
-            0
-        }
-
-        BuiltinFun::PrintStrView => {
-            debug_assert_eq!(args.len(), 1);
-            let str = args[0];
-            debug_assert_eq!(heap[str], pgm.str_ty_tag);
-
-            let view_start = heap[str + 1];
-            let view_end = heap[str + 2];
-
-            let payload_byte_addr = {
-                let viewed_str = heap[str + 3];
-                let skip_tag_and_len = viewed_str + 2;
-                skip_tag_and_len * 8
-            };
-
-            let heap_bytes: &[u8] = cast_slice(&heap.values);
-            writeln!(
-                w,
-                "{}",
-                String::from_utf8_lossy(
-                    &heap_bytes[(payload_byte_addr + view_start) as usize
-                        ..(payload_byte_addr + view_end) as usize]
-                )
-            )
-            .unwrap();
-
+            let bytes = heap.str_bytes(str);
+            writeln!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
             0
         }
 
@@ -302,67 +250,6 @@ pub fn call_builtin_fun<W: Write>(
 
         BuiltinFun::ArrayPtrGet => {
             array_get!(pgm, heap, args, pgm.array_ptr_ty_tag, u64, |val| val)
-        }
-
-        BuiltinFun::StrLen => {
-            debug_assert_eq!(args.len(), 1);
-            let str = args[0];
-            debug_assert_eq!(heap[str], pgm.str_ty_tag);
-            heap[str + 1]
-        }
-
-        BuiltinFun::StrEq => {
-            debug_assert_eq!(args.len(), 2);
-
-            let str1 = args[0];
-            let str2 = args[1];
-
-            debug_assert_eq!(heap[str1], pgm.str_ty_tag);
-            debug_assert_eq!(heap[str2], pgm.str_ty_tag);
-
-            let str1_len = heap[str1 + 1];
-            let str2_len = heap[str2 + 1];
-
-            if str1_len != str2_len {
-                return pgm.bool_alloc(false);
-            }
-
-            let len_words = str1_len.div_ceil(8);
-
-            for i in 0..len_words {
-                if heap[str1 + 2 + i] != heap[str2 + 2 + i] {
-                    return pgm.bool_alloc(false);
-                }
-            }
-
-            pgm.bool_alloc(true)
-        }
-
-        BuiltinFun::StrSubstr => {
-            debug_assert_eq!(args.len(), 3);
-
-            // Returns a `StrView`.
-            let str = args[0];
-            let byte_start = args[1];
-            let byte_end = args[2];
-
-            debug_assert_eq!(heap[str], pgm.str_ty_tag);
-
-            let str_len = heap[str + 1];
-
-            if byte_start > str_len {
-                panic!("String.substr start index out of bounds");
-            }
-
-            if byte_end > str_len {
-                panic!("String.substr end index out of bounds");
-            }
-
-            if byte_start > byte_end {
-                panic!("String.substr start index larger than end index");
-            }
-
-            heap.allocate_str_view(pgm.str_view_ty_tag, str, byte_start, byte_end)
         }
 
         BuiltinFun::I32Add => {
@@ -438,7 +325,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::I32ToStr => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
-            heap.allocate_str(pgm.str_ty_tag, format!("{}", i as i32).as_bytes())
+            heap.allocate_str(
+                pgm.str_ty_tag,
+                pgm.array_u8_ty_tag,
+                format!("{}", i as i32).as_bytes(),
+            )
         }
 
         BuiltinFun::U32Add => {
@@ -513,7 +404,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U32ToStr => {
             debug_assert_eq!(args.len(), 1);
             let u = args[0];
-            heap.allocate_str(pgm.str_ty_tag, format!("{}", u as u32).as_bytes())
+            heap.allocate_str(
+                pgm.str_ty_tag,
+                pgm.array_u8_ty_tag,
+                format!("{}", u as u32).as_bytes(),
+            )
         }
 
         BuiltinFun::I8Add => {
@@ -589,7 +484,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::I8ToStr => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
-            heap.allocate_str(pgm.str_ty_tag, format!("{}", i as i8).as_bytes())
+            heap.allocate_str(
+                pgm.str_ty_tag,
+                pgm.array_u8_ty_tag,
+                format!("{}", i as i8).as_bytes(),
+            )
         }
 
         BuiltinFun::U8Add => {
@@ -665,137 +564,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U8ToStr => {
             debug_assert_eq!(args.len(), 1);
             let u = args[0];
-            heap.allocate_str(pgm.str_ty_tag, format!("{}", u as u8).as_bytes())
-        }
-
-        BuiltinFun::StrViewEq => {
-            debug_assert_eq!(args.len(), 2);
-
-            let s1 = args[0];
-            let s2 = args[1];
-
-            debug_assert_eq!(heap[s1], pgm.str_view_ty_tag, "{:?}", loc);
-            debug_assert_eq!(heap[s2], pgm.str_view_ty_tag, "{:?}", loc);
-
-            let s1_start = heap[s1 + 1];
-            let s1_end = heap[s1 + 2];
-
-            let s2_start = heap[s2 + 1];
-            let s2_end = heap[s2 + 2];
-
-            if s1_end - s1_start != s2_end - s2_start {
-                return pgm.bool_alloc(false);
-            }
-
-            let s1_payload_byte_addr = {
-                let viewed_str = heap[s1 + 3];
-                let skip_tag_and_len = viewed_str + 2;
-                skip_tag_and_len * 8
-            };
-
-            let s2_payload_byte_addr = (heap[s2 + 3] + 2) * 8;
-
-            let heap_bytes: &[u8] = cast_slice(&heap.values);
-
-            let eq = heap_bytes[(s1_payload_byte_addr + s1_start) as usize
-                ..(s1_payload_byte_addr + s1_end) as usize]
-                == heap_bytes[(s2_payload_byte_addr + s2_start) as usize
-                    ..(s2_payload_byte_addr + s2_end) as usize];
-
-            pgm.bool_alloc(eq)
-        }
-
-        BuiltinFun::StrViewSubstr => {
-            debug_assert_eq!(args.len(), 3);
-
-            let s = args[0];
-            let start = args[1];
-            let end = args[2];
-
-            debug_assert_eq!(heap[s], pgm.str_view_ty_tag, "{:?}", loc);
-
-            let view_len = heap[s + 2] - heap[s + 1];
-
-            if start > view_len {
-                panic!(
-                    "StrView.substr start index {} is larger than view length {}",
-                    start, view_len
-                );
-            }
-
-            if end > view_len {
-                panic!(
-                    "{}: StrView.substr({}, {}) out of bounds, view length = {}",
-                    loc_display(loc),
-                    start,
-                    end,
-                    view_len
-                );
-            }
-
-            if start > end {
-                panic!("StrView.substr start index larger than end index");
-            }
-
-            heap.allocate_str_view(
-                pgm.str_view_ty_tag,
-                heap[s + 3],
-                start + heap[s + 1],
-                end + heap[s + 1],
+            heap.allocate_str(
+                pgm.str_ty_tag,
+                pgm.array_u8_ty_tag,
+                format!("{}", u as u8).as_bytes(),
             )
-        }
-
-        BuiltinFun::StrViewLen => {
-            debug_assert_eq!(args.len(), 1);
-
-            let s = args[0];
-            debug_assert_eq!(heap[s], pgm.str_view_ty_tag, "{:?}", loc);
-
-            heap[s + 2] - heap[s + 1]
-        }
-
-        BuiltinFun::StrViewStartsWith => {
-            debug_assert_eq!(args.len(), 2);
-
-            let s1 = args[0];
-            let s2 = args[1];
-
-            debug_assert_eq!(heap[s1], pgm.str_view_ty_tag);
-            debug_assert_eq!(heap[s2], pgm.str_ty_tag);
-
-            let s1_start = heap[s1 + 1];
-            let s1_end = heap[s1 + 2];
-            let s1_len = s1_end - s1_start;
-            let s2_len = heap[s2 + 1];
-
-            if s1_len < s2_len {
-                return pgm.bool_alloc(false);
-            }
-
-            let s1_payload_byte_addr = {
-                let viewed_str = heap[s1 + 3];
-                let skip_tag_and_len = viewed_str + 2;
-                skip_tag_and_len * 8
-            };
-
-            let s2_payload_byte_addr = (s2 + 2) * 8;
-
-            let heap_bytes: &[u8] = cast_slice(&heap.values);
-
-            let eq = heap_bytes[(s1_payload_byte_addr + s1_start) as usize
-                ..(s1_payload_byte_addr + s1_start + s2_len) as usize]
-                == heap_bytes
-                    [s2_payload_byte_addr as usize..(s2_payload_byte_addr + s2_len) as usize];
-
-            pgm.bool_alloc(eq)
-        }
-
-        BuiltinFun::StrViewToStr => {
-            debug_assert_eq!(args.len(), 1);
-            let s = args[0];
-            debug_assert_eq!(heap[s], pgm.str_view_ty_tag);
-            let str_view_bytes = heap.str_view_bytes(s).to_vec();
-            heap.allocate_str(pgm.str_ty_tag, &str_view_bytes)
         }
 
         BuiltinFun::I32Shl => {
@@ -852,16 +625,6 @@ pub fn call_builtin_fun<W: Write>(
             let i1 = args[0];
             let i2 = args[1];
             u8_as_val(val_as_u8(i1) >> val_as_u8(i2))
-        }
-
-        BuiltinFun::StrFromUtf8Vec => {
-            debug_assert_eq!(args.len(), 1);
-            let vec = args[0];
-            let array = heap[vec + 1];
-            let len = val_as_u32(heap[vec + 2]);
-            let bytes =
-                cast_slice::<u64, u8>(&heap.values[array as usize + 2..])[..len as usize].to_vec();
-            heap.allocate_str(pgm.str_ty_tag, &bytes)
         }
     }
 }

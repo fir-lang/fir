@@ -1,9 +1,7 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-fn main(pgm: Str) =
-    let pgmStringView = pgm.substr(0, pgm.len())
-    printStr(eval(parse(pgmStringView)).toStr())
+fn main(pgm: Str) = printStr(eval(parse(pgm)).toStr())
 
 type Term:
     True
@@ -67,19 +65,19 @@ impl Value:
             Value.Bool(value): value.toStr()
             Value.Num(value): value.toStr()
 
-fn parse(pgm: StrView): Term =
+fn parse(pgm: Str): Term =
     let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
         panic("Leftover code after parsing the program: \"`rest`\"")
     term
 
-fn skipWhitespace(pgm: StrView): StrView =
-    while pgm.len() > 0 && pgm.substr(0, 1) == " ".substr(0, 1):
+fn skipWhitespace(pgm: Str): Str =
+    while pgm.len() > 0 && pgm.startsWith(" "):
         pgm = pgm.substr(1, pgm.len())
     pgm
 
 ## Parse the program, return the parsed term and the unparsed part of the program.
-fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
+fn parseWithRest(pgm: Str): (term: Term, rest: Str) =
     match skipWhitespace(pgm):
         "0" rest:
             (term = Term.Zero, rest = rest)
@@ -98,18 +96,21 @@ fn parseWithRest(pgm: StrView): (term: Term, rest: StrView) =
             (term = Term.IsZero(arg), rest = rest)
         "if" rest:
             let (term = cond, rest = rest) = parseWithRest(rest)
-            let rest = expectKeyword(rest, "then".toStrView())
+            let rest = expectKeyword(rest, "then")
             let (term = then, rest = rest) = parseWithRest(rest)
-            let rest = expectKeyword(rest, "else".toStrView())
+            let rest = expectKeyword(rest, "else")
             let (term = else_, rest = rest) = parseWithRest(rest)
             (term = Term.If(cond = cond, then = then, else_ = else_), rest = rest)
         _:
             panic("Invalid syntax: \"`pgm`\"")
 
-fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
+fn parseArg(pgm: Str): (arg: Term, rest: Str) =
     # Skip "("
-    if pgm.isEmpty() || pgm.substr(0, 1) != "(".substr(0, 1):
+    if pgm.isEmpty():
         panic("Unexpected end of program while parsing arguments")
+
+    if !pgm.startsWith("("):
+        panic("Missing argument list")
 
     let pgm = pgm.substr(1, pgm.len())
 
@@ -117,13 +118,17 @@ fn parseArg(pgm: StrView): (arg: Term, rest: StrView) =
     let (term = arg, rest = rest)  = parseWithRest(pgm)
 
     # Skip ")"
-    if rest.isEmpty() || rest.substr(0, 1) != ")".substr(0, 1):
+    if rest.isEmpty():
         panic("Unexpected end of program while parsing arguments")
+
+    if !rest.startsWith(")"):
+        panic("Missing ')'")
+
     let rest = rest.substr(1, rest.len())
 
     (arg = arg, rest = rest)
 
-fn expectKeyword(pgm: StrView, kw: StrView): StrView =
+fn expectKeyword(pgm: Str, kw: Str): Str =
     let pgm = skipWhitespace(pgm)
     if !pgm.startsWith(kw.toStr()):
         panic("Expected \"`kw`\", found \"`pgm`\"")

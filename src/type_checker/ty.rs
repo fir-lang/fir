@@ -480,12 +480,12 @@ impl Ty {
         Ty::Con(SmolStr::new_static("Bool"))
     }
 
-    pub(super) fn to_str_view_id() -> Id {
-        SmolStr::new_static("ToStrView")
+    pub(super) fn to_str_id() -> Id {
+        SmolStr::new_static("ToStr")
     }
 
-    pub(super) fn str_view() -> Ty {
-        Ty::Con(SmolStr::new_static("StrView"))
+    pub(super) fn str() -> Ty {
+        Ty::Con(SmolStr::new_static("Str"))
     }
 
     /// Substitute `ty` for quantified `var` in `self`.

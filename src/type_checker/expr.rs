@@ -381,7 +381,7 @@ pub(super) fn check_expr(
                         preds.add(
                             Pred {
                                 ty_var: expr_var.clone(),
-                                trait_: Ty::to_str_view_id(),
+                                trait_: Ty::to_str_id(),
                                 assoc_tys: Default::default(),
                             },
                             &expr.loc,
@@ -405,7 +405,7 @@ pub(super) fn check_expr(
                                         loc: expr.loc.clone(),
                                     }),
                                     object_ty: Some(part_ty),
-                                    method: SmolStr::new_static("toStrView"),
+                                    method: SmolStr::new_static("toStr"),
                                     ty_args: vec![],
                                 }),
                                 loc: expr.loc.clone(),
