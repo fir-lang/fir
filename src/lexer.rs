@@ -4,7 +4,9 @@ use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 #[derive(Debug, Default)]
-struct LexerState {}
+struct LexerState {
+    comment_depth: u32,
+}
 
 lexgen::lexer! {
     pub Lexer(LexerState) -> TokenKind;
@@ -15,7 +17,13 @@ lexgen::lexer! {
         [' ' '\n'],
 
         // Skip comments
-        "#" (_ # '\n')* '\n',
+        '#',
+        '#' '\n',
+        '#' (_ # '|') (_ # '\n')* '\n',
+
+        "#|" => |lexer| {
+            lexer.switch(LexerRule::Comment)
+        },
 
         // Keywords
         "as" = TokenKind::As,
@@ -134,6 +142,28 @@ lexgen::lexer! {
 
         _ => |lexer| lexer.continue_(),
     }
+
+
+    rule Comment {
+        "#|" =>
+            |lexer| {
+                lexer.state().comment_depth += 1;
+                lexer.continue_()
+            },
+
+        "|#" =>
+            |lexer| {
+                let depth = &mut lexer.state().comment_depth;
+                if *depth == 0 {
+                    lexer.switch(LexerRule::Init)
+                } else {
+                    *depth -= 1;
+                    lexer.continue_()
+                }
+            },
+
+        _,
+    },
 }
 
 pub fn lex(src: &str, module: &str) -> Vec<(Loc, Token, Loc)> {
