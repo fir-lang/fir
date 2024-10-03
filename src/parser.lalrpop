@@ -975,9 +975,22 @@ pub Rule: RuleOrBinding = {
         RuleOrBinding::Binding(Binding { var: var.smol_str(), re })
     },
 
-    <lhs:Regex> ":" <expr:InlineExpr> NEWLINE => todo!(),
+    <lhs:Regex> ":" <expr:LInlineExpr> NEWLINE => {
+        RuleOrBinding::Rule(SingleRule {
+            lhs,
+            rhs: vec![L {
+                loc: expr.loc.clone(),
+                node: Stmt::Expr(expr),
+            }],
+        })
+    },
 
-    <lhs:Regex> ":" NEWLINE INDENT <stmts:LStmts> DEDENT => todo!(),
+    <lhs:Regex> ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
+        RuleOrBinding::Rule(SingleRule {
+            lhs,
+            rhs: stmts,
+        })
+    },
 }
 
 pub Regex: Regex = {
