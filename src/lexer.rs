@@ -143,7 +143,10 @@ pub fn lex(src: &str, module: &str) -> Vec<(Loc, Token, Loc)> {
             let (l, t, r) = t.unwrap_or_else(|err| {
                 panic!(
                     "{}:{}:{}: {:?}",
-                    module, err.location.line, err.location.col, err.kind
+                    module,
+                    err.location.line + 1,
+                    err.location.col + 1,
+                    err.kind
                 )
             });
             (
