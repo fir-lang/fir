@@ -72,7 +72,9 @@ fn resolve_imports_(
             ast::TopDecl::Type(_)
             | ast::TopDecl::Fun(_)
             | ast::TopDecl::Trait(_)
-            | ast::TopDecl::Impl(_) => new_module.push(decl),
+            | ast::TopDecl::Impl(_)
+            | ast::TopDecl::Lexer(_) => new_module.push(decl),
+
             ast::TopDecl::Import(import) => {
                 let path = &import.node.path;
 

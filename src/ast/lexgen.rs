@@ -10,6 +10,7 @@ pub struct LexerDecl {
     pub rules: Vec<Rule>,
 }
 
+#[derive(Debug, Clone)]
 pub enum Rule {
     /// `type Error = UserError;`
     ErrorType {
@@ -24,18 +25,20 @@ pub enum Rule {
     },
 }
 
+#[derive(Debug, Clone)]
 pub enum RuleOrBinding {
     Rule(SingleRule),
     Binding(Binding),
 }
 
+#[derive(Debug, Clone)]
 pub struct SingleRule {
     pub lhs: RegexCtx,
     pub rhs: Vec<L<Stmt>>,
 }
 
 /// A named regex binding: `let <ident> = <regex>;`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Binding {
     pub var: Id,
     pub re: Regex,

@@ -99,6 +99,8 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
                 }
             }
 
+            ast::TopDecl::Lexer(_) => panic!("Lexer declaration in monomorphiser"),
+
             ast::TopDecl::Import(_) | ast::TopDecl::Trait(_) => continue,
         }
     }

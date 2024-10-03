@@ -64,6 +64,8 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
             ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys),
 
             ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys),
+
+            ast::TopDecl::Lexer(_) => todo!(),
         }
     }
 
@@ -127,6 +129,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     },
                 );
             }
+
+            ast::TopDecl::Lexer(_) => todo!(),
 
             ast::TopDecl::Import(_) | ast::TopDecl::Fun(_) | ast::TopDecl::Impl(_) => continue,
         }
@@ -296,6 +300,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
 
             ast::TopDecl::Fun(_) | ast::TopDecl::Import(_) | ast::TopDecl::Impl(_) => continue,
+
+            ast::TopDecl::Lexer(_) => todo!(),
         }
     }
 
@@ -712,6 +718,8 @@ fn collect_schemes(
                 tys.exit_scope();
                 continue;
             }
+
+            ast::TopDecl::Lexer(_) => todo!(),
         }
 
         tys.exit_scope();

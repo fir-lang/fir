@@ -8,6 +8,7 @@ impl TopDecl {
             TopDecl::Import(decl) => decl.node.print(buffer),
             TopDecl::Trait(decl) => decl.node.print(buffer, indent),
             TopDecl::Impl(decl) => decl.node.print(buffer, indent),
+            TopDecl::Lexer(_decl) => todo!(),
         }
     }
 }

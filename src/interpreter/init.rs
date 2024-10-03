@@ -62,6 +62,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
         } = match &decl.node {
             ast::TopDecl::Type(ty_decl) => &ty_decl.node,
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
+            ast::TopDecl::Lexer(_) => panic!("Lexer declaration in the interpreter"),
             ast::TopDecl::Fun(_) | ast::TopDecl::Trait(_) | ast::TopDecl::Impl(_) => continue,
         };
 
@@ -251,6 +252,8 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => continue,
 
             ast::TopDecl::Import(_) => panic!("Import declaration in the interpreter"),
+
+            ast::TopDecl::Lexer(_) => panic!("Lexer declaration in the interpreter"),
 
             ast::TopDecl::Fun(fun_decl) => {
                 if fun_decl.node.body.is_none() {

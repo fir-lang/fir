@@ -49,6 +49,7 @@ pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> Set<RecordShape> {
             ast::TopDecl::Trait(trait_decl) => visit_trait_decl(&trait_decl.node, &mut records),
             ast::TopDecl::Impl(impl_decl) => visit_impl_decl(&impl_decl.node, &mut records),
             ast::TopDecl::Import(_) => panic!("Import declaration in record collector"),
+            ast::TopDecl::Lexer(_) => panic!("Lexer declaration in record collector"),
         }
     }
 
