@@ -99,7 +99,7 @@ impl Loc {
 pub type Module = Vec<L<TopDecl>>;
 
 /// A top-level declaration.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum TopDecl {
     /// A type declaration: `type T = ...`.
     Type(L<TypeDecl>),
@@ -121,7 +121,7 @@ pub enum TopDecl {
 }
 
 /// A type declaration: `type Vec[T] = ...`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct TypeDecl {
     /// The type name, e.g. `Vec`.
     pub name: Id,
@@ -134,7 +134,7 @@ pub struct TypeDecl {
 }
 
 /// Constructors of a type declaration.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum TypeDeclRhs {
     /// A sum type, with more than one constructor.
     Sum(Vec<ConstructorDecl>),
@@ -144,20 +144,20 @@ pub enum TypeDeclRhs {
 }
 
 /// A sum type constructor.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ConstructorDecl {
     pub name: Id,
     pub fields: ConstructorFields,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum ConstructorFields {
     Empty,
     Named(Vec<(Id, Type)>),
     Unnamed(Vec<Type>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
@@ -167,7 +167,7 @@ pub enum Type {
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct NamedType {
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     pub name: Id,
@@ -180,7 +180,7 @@ pub struct NamedType {
     pub args: Vec<L<(Option<Id>, L<Type>)>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Named<T> {
     pub name: Option<Id>,
     pub node: T,
@@ -199,18 +199,9 @@ impl<T> Named<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct AssocType {
-    /// In `Self.Item`, `Self`.
-    pub ty: Box<L<Type>>,
-
-    /// In `Self.Item`, `Item`.
-    pub assoc_ty: Id,
-}
-
 /// Type signature part of a function declaration, including name, type parameters, parameters,
 /// return type.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct FunSig {
     /// Name of the function, e.g. in `fn f()` this is `f`.
     pub name: L<Id>,
@@ -230,7 +221,7 @@ pub struct FunSig {
     pub return_ty: Option<L<Type>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct FunDecl {
     pub sig: FunSig,
     pub body: Option<L<Vec<L<Stmt>>>>,
@@ -242,7 +233,7 @@ impl FunDecl {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Stmt {
     Let(LetStmt),
     // LetFn(FunDecl),
@@ -253,27 +244,27 @@ pub enum Stmt {
 }
 
 /// A let statement: `let x: T = expr`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct LetStmt {
     pub lhs: L<Pat>,
     pub ty: Option<L<Type>>,
     pub rhs: L<Expr>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct MatchExpr {
     pub scrutinee: Box<L<Expr>>,
     pub alts: Vec<Alt>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Alt {
     pub pattern: L<Pat>,
     pub guard: Option<L<Expr>>,
     pub rhs: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Pat {
     /// Matches anything, binds it to variable.
     Var(Id),
@@ -299,7 +290,7 @@ pub enum Pat {
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
     pub fields: Vec<Named<Box<L<Pat>>>>,
@@ -308,20 +299,20 @@ pub struct ConstrPattern {
     pub ty_args: Vec<Ty>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Constructor {
     pub type_: Id,
     pub constr: Option<Id>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct IfExpr {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct AssignStmt {
     pub lhs: L<Expr>,
     pub rhs: L<Expr>,
@@ -336,7 +327,7 @@ pub enum AssignOp {
     StarEq,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ForStmt {
     pub var: Id,
     pub ty: Option<Type>,
@@ -344,13 +335,13 @@ pub struct ForStmt {
     pub body: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct WhileStmt {
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     /// A variable: `x`.
     Var(VarExpr),
@@ -407,7 +398,7 @@ pub enum Expr {
     As(AsExpr),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
 
@@ -415,7 +406,7 @@ pub struct VarExpr {
     pub ty_args: Vec<Ty>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ConstrExpr {
     pub id: Id,
 
@@ -423,27 +414,27 @@ pub struct ConstrExpr {
     pub ty_args: Vec<Ty>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
     pub args: Vec<CallArg>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct CallArg {
     pub name: Option<Id>,
     pub expr: L<Expr>,
 }
 
 /// A field selection: `<expr>.x`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
     pub field: Id,
 }
 
 /// A method selection: `<expr>.x`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct MethodSelectExpr {
     pub object: Box<L<Expr>>,
 
@@ -457,7 +448,7 @@ pub struct MethodSelectExpr {
 }
 
 /// A constructor selection: `Option.None`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ConstrSelectExpr {
     pub ty: Id,
     pub constr: Id,
@@ -470,7 +461,7 @@ pub struct ConstrSelectExpr {
 ///
 /// - Associated function: `Vec.withCapacity`.
 /// - Method: `Vec.push`.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct AssocFnSelectExpr {
     pub ty: Id,
     pub member: Id,
@@ -479,27 +470,27 @@ pub struct AssocFnSelectExpr {
     pub ty_args: Vec<Ty>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct RangeExpr {
     pub from: Box<L<Expr>>,
     pub to: Box<L<Expr>>,
     pub inclusive: bool,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct BinOpExpr {
     pub left: Box<L<Expr>>,
     pub right: Box<L<Expr>>,
     pub op: BinOp,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct IntExpr {
     /// The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
     ///
@@ -520,7 +511,7 @@ pub struct IntExpr {
     pub parsed: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct AsExpr {
     pub expr: Box<L<Expr>>,
 
@@ -569,7 +560,7 @@ pub struct ImportDecl {
     // TODO: Imported thing list, renaming (`as`).
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct TraitDecl {
     /// Trait name.
     pub name: L<Id>,
@@ -580,7 +571,7 @@ pub struct TraitDecl {
     pub items: Vec<L<TraitDeclItem>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum TraitDeclItem {
     /// An associated type, e.g. `type Item`.
     AssocTy(Id),
@@ -607,7 +598,7 @@ pub type Context = Vec<L<(L<Id>, Vec<L<Type>>)>>;
 /// impl[A: ToStr] ToStr for Vec[A]:
 ///   fn toStr(self): Str = ...
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ImplDecl {
     /// Type parameters of the type being implemented, with bounds.
     ///
@@ -628,7 +619,7 @@ pub struct ImplDecl {
     pub items: Vec<L<ImplDeclItem>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum ImplDeclItem {
     /// An associated type definition, e.g. `type Item = T`.
     AssocTy(AssocTyDecl),
@@ -637,7 +628,7 @@ pub enum ImplDeclItem {
     Fun(FunDecl),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct AssocTyDecl {
     pub name: Id,
     pub ty: L<Type>,
