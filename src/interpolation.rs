@@ -8,7 +8,7 @@ use std::rc::Rc;
 use lexgen_util::Loc;
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum StringPart {
     Str(String),
     Expr(ast::L<ast::Expr>),
@@ -119,11 +119,29 @@ fn update_loc(err_loc: &Loc, start_loc: &Loc) -> Loc {
     }
 }
 
+#[cfg(test)]
+impl StringPart {
+    fn as_str(&self) -> &str {
+        match self {
+            StringPart::Str(str) => str,
+            StringPart::Expr(_) => panic!(),
+        }
+    }
+
+    fn as_expr(&self) -> &ast::L<ast::Expr> {
+        match self {
+            StringPart::Str(_) => panic!(),
+            StringPart::Expr(expr) => expr,
+        }
+    }
+}
+
 #[test]
 fn interpolation_parsing_1() {
     let s = r#"abc"#;
     let parts = parse_string_parts(&"test".into(), s, Loc::default());
-    assert_eq!(parts, vec![StringPart::Str("abc".into())]);
+    assert_eq!(parts.len(), 1);
+    assert_eq!(parts[0].as_str(), "abc");
 }
 
 #[test]
@@ -131,6 +149,6 @@ fn interpolation_parsing_2() {
     let s = r#"abc `a`"#;
     let parts = parse_string_parts(&"test".into(), s, Loc::default());
     assert_eq!(parts.len(), 2);
-    assert_eq!(parts[0], StringPart::Str("abc ".into()));
-    assert!(matches!(parts[1], StringPart::Expr(_)));
+    assert_eq!(parts[0].as_str(), "abc ");
+    parts[1].as_expr();
 }
