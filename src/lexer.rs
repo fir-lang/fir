@@ -47,6 +47,10 @@ lexgen::lexer! {
         "var" = TokenKind::Var,
         "while" = TokenKind::While,
 
+        // Contextual keywords
+        "lexer" = TokenKind::Lexer,
+        "rule" = TokenKind::Rule,
+
         // Delimiters
         "(" = TokenKind::LParen,
         ")" = TokenKind::RParen,
@@ -119,7 +123,7 @@ lexgen::lexer! {
         "0b" $bin_int+ "i8" = TokenKind::BinInt(Some(IntKind::I8)),
         "0b" $bin_int+ "u8" = TokenKind::BinInt(Some(IntKind::U8)),
 
-        "'" ((_ # '\'') | "\\'") "'" = TokenKind::Char,
+        "'" ((_ # '\'') | "\\'" | "\\t" | "\\n" | "\\r") "'" = TokenKind::Char,
     }
 
 

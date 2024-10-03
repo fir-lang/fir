@@ -82,6 +82,10 @@ extern {
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
         StringLit => Token { kind: TokenKind::String, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
+
+        // Contextual keywords
+        "lexer" => Token { kind: TokenKind::Lexer, .. },
+        "rule" => Token { kind: TokenKind::Rule, .. },
     }
 }
 
@@ -935,6 +939,9 @@ TopDecl: L<TopDecl> = {
 
     NEWLINE* <l:@L> <impl_decl:ImplDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Impl(impl_decl)),
+
+    NEWLINE* <l:@L> <lexer_decl:LexerDecl> <r:@R> =>
+        L::new(module, l, r, TopDecl::Lexer(lexer_decl)),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -942,6 +949,36 @@ TopDecl: L<TopDecl> = {
 // Lexers
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub LexerDecl: L<LexerDecl> = {
+    <l:@L> "lexer" <type_name:UpperId> ":" NEWLINE INDENT <rules:RuleSet*> DEDENT <r:@R> => {
+        L::new(module, l, r, LexerDecl {
+            type_name: type_name.smol_str(),
+            user_state_type: None, // TODO
+            token_type: Type::Record(vec![]), // TODO
+            rules,
+        })
+    },
+}
+
+pub RuleSet: Rule = {
+    "rule" <rule_name:UpperId> ":" NEWLINE INDENT <rules:Rule*> DEDENT => {
+        Rule::RuleSet {
+            name: rule_name.smol_str(),
+            rules,
+        }
+    },
+}
+
+pub Rule: RuleOrBinding = {
+    "let" <var:LowerId> "=" <re:Regex> NEWLINE => {
+        RuleOrBinding::Binding(Binding { var: var.smol_str(), re })
+    },
+
+    <lhs:Regex> ":" <expr:InlineExpr> NEWLINE => todo!(),
+
+    <lhs:Regex> ":" NEWLINE INDENT <stmts:LStmts> DEDENT => todo!(),
+}
 
 pub Regex: Regex = {
     #[precedence(level = "1")]

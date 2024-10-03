@@ -42,6 +42,11 @@ pub enum TokenKind {
     Var,
     While,
 
+    // Contextual keywords. TODO: Handle these in the parser after
+    // https://github.com/lalrpop/lalrpop/issues/966.
+    Lexer,
+    Rule,
+
     // Delimiters
     LParen,
     RParen,

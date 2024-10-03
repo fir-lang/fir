@@ -7,40 +7,40 @@ type Token:
 type LexerState:
     comentDepth: U32
 
-lexer Lexer(LexerState):
+lexer Lexer:
     rule Init:
-        [' ' '\t' '\n']+
+        [' ' '\t' '\n']+: Token.Whitespace
 
-        "(" = Token.LParen
-        ")" = Token.RParen
-        "true" = Token.Bool(true)
-        "false" = Token.Bool(false)
-        "not" = Token.Not
-        "if" = Token.If
-        "then" = Token.Then
-        "else" = Token.Else
-        "let" = Token.Let
-        "rec" = Token.Rec
-        "in" = Token.In
-        "-" = Token.Minus
-        "-." = Token.MinusDot
-        "+" = Token.Plus
-        "+." = Token.PlusDot
-        "*." = Token.AstDot
-        "/." = Token.SlashDot
-        "=" = Token.Equal
-        "<>" = Token.LessGreater
-        "<=" = Token.LessEqual
-        "<-" = Token.LessMinus
-        "<" = Token.Less
-        ">=" = Token.GreaterEqual
-        ">" = Token.Greater
-        "." = Token.Dot
-        "," = Token.Comma
-        ";" = Token.Semicolon
-        "_" = Token.Underscore
-        "Array.create" = Token.ArrayCreate
-        "Array.make" = Token.ArrayCreate
+        "(": Token.LParen
+        ")": Token.RParen
+        "true": Token.Bool(true)
+        "false": Token.Bool(false)
+        "not": Token.Not
+        "if": Token.If
+        "then": Token.Then
+        "else": Token.Else
+        "let": Token.Let
+        "rec": Token.Rec
+        "in": Token.In
+        "-": Token.Minus
+        "-.": Token.MinusDot
+        "+": Token.Plus
+        "+.": Token.PlusDot
+        "*.": Token.AstDot
+        "/.": Token.SlashDot
+        "=": Token.Equal
+        "<>": Token.LessGreater
+        "<=": Token.LessEqual
+        "<-": Token.LessMinus
+        "<": Token.Less
+        ">=": Token.GreaterEqual
+        ">": Token.Greater
+        ".": Token.Dot
+        ",": Token.Comma
+        ";": Token.Semicolon
+        "_": Token.Underscore
+        "Array.create": Token.ArrayCreate
+        "Array.make": Token.ArrayCreate
 
         ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*:
             let match_ = lexer.match_()

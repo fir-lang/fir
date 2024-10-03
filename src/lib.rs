@@ -91,6 +91,9 @@ mod native {
         // Stop after tokenizing, print tokens.
         let mut tokenize = false;
 
+        // Skip after parsing, print parsed AST.
+        let mut parse = false;
+
         // Stop after type checking.
         let mut typecheck = false;
 
@@ -116,6 +119,9 @@ mod native {
             match arg.as_str() {
                 "--tokenize" => {
                     tokenize = true;
+                }
+                "--parse" => {
+                    parse = true;
                 }
                 "--typecheck" => {
                     typecheck = true;
@@ -168,6 +174,16 @@ mod native {
         }
 
         let module = parse_file(file_path, module);
+
+        if parse {
+            let mut buffer = String::new();
+            for top_decl in &module {
+                top_decl.node.print(&mut buffer, 0);
+                println!("{}", buffer);
+                buffer.clear();
+            }
+        }
+
         let mut module = import_resolver::resolve_imports(
             &fir_root,
             root_path.to_str().unwrap(),
