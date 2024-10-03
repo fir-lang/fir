@@ -86,6 +86,8 @@ lexgen::lexer! {
         ">>" = TokenKind::DoubleRAngle,
         ">=" = TokenKind::RAngleEq,
         "!=" = TokenKind::ExclamationEq,
+        "?" = TokenKind::Question,
+        "$" = TokenKind::Dollar,
 
         $$ascii_uppercase ($$ascii_alphanumeric | '_')* = TokenKind::UpperId,
         ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,

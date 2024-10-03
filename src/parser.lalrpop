@@ -2,8 +2,10 @@
 #![allow(clippy::all)]
 
 use crate::ast::*;
-use crate::token::*;
+use crate::ast::lexgen::*;
 use crate::interpolation::parse_string_parts;
+use crate::parser_utils::parse_char_lit;
+use crate::token::*;
 
 use std::convert::Infallible;
 use std::rc::Rc;
@@ -52,6 +54,9 @@ extern {
         ">" => Token { kind: TokenKind::RAngle, .. },
         ">>" => Token { kind: TokenKind::DoubleRAngle, .. },
         ">=" => Token { kind: TokenKind::RAngleEq, .. },
+        "?" => Token { kind: TokenKind::Question, .. },
+        "$" => Token { kind: TokenKind::Dollar, .. },
+        "\\" => Token { kind: TokenKind::Backslash, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
@@ -551,15 +556,7 @@ InlineExpr: Expr = {
         Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
     },
 
-    <char:CharLit> => {
-        for char in char.text.chars().skip(1) {
-            if char == '\\' {
-                continue;
-            }
-            return Expr::Char(char);
-        }
-        panic!()
-    },
+    <char:CharLit> => Expr::Char(parse_char_lit(&char.text)),
 
     <l:@L> <fun:InlineExpr> <r:@R> "(" <args:Sep<CallArg, ",">> ")" =>
         Expr::Call(CallExpr {
@@ -798,7 +795,7 @@ Pat: Pat = {
 
     <str:StringLit> => Pat::Str(str.text[1..str.text.len() - 1].to_string()),
 
-    <char:CharLit> => Pat::Char(char.text.chars().nth(1).unwrap()),
+    <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
     <str:StringLit> <id:LowerId> => Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str()),
 
@@ -938,4 +935,77 @@ TopDecl: L<TopDecl> = {
 
     NEWLINE* <l:@L> <impl_decl:ImplDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Impl(impl_decl)),
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Lexers
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+pub Regex: Regex = {
+    #[precedence(level = "1")]
+    <id:LowerId> => {
+        Regex::Var(id.smol_str())
+    },
+
+    <char:CharLit> => {
+        Regex::Char(parse_char_lit(&char.text))
+    },
+
+    <str:StringLit> => {
+        Regex::String(str.text[1..str.text.len() - 1].to_string())
+    },
+
+    "[" <char_set:CharOrRange+> "]" => {
+        Regex::CharSet(CharSet(char_set))
+    },
+
+    <regex:Regex> "*" => {
+        Regex::ZeroOrMore(Box::new(regex))
+    },
+
+    <regex:Regex> "+" => {
+        Regex::OneOrMore(Box::new(regex))
+    },
+
+    <regex:Regex> "?" => {
+        Regex::ZeroOrOne(Box::new(regex))
+    },
+
+    "_" => {
+        Regex::Any
+    },
+
+    "$" => {
+        Regex::EndOfInput
+    },
+
+    #[precedence(level = "2")]
+    #[assoc(side = "left")]
+    <regex1:Regex> "|" <regex2:Regex> => {
+        Regex::Or(Box::new(regex1), Box::new(regex2))
+    },
+
+    #[precedence(level = "3")]
+    #[assoc(side = "left")]
+    <regex1:Regex> "\\" <regex2:Regex> => {
+        Regex::Diff(Box::new(regex1), Box::new(regex2))
+    },
+
+    #[precedence(level = "4")]
+    #[assoc(side = "left")]
+    <regex1:Regex> <regex2:Regex> => {
+        Regex::Concat(Box::new(regex1), Box::new(regex2))
+    },
+}
+
+pub CharOrRange: CharOrRange = {
+    <char:CharLit> => {
+        CharOrRange::Char(parse_char_lit(&char.text))
+    },
+
+    <char1:CharLit> "-" <char2:CharLit> => {
+        CharOrRange::Range(parse_char_lit(&char1.text), parse_char_lit(&char2.text))
+    },
 }

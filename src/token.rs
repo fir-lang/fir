@@ -81,6 +81,8 @@ pub enum TokenKind {
     RAngleEq,
     Star,
     StarEq,
+    Question,
+    Dollar,
 
     // Literals
     String,

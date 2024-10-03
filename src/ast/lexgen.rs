@@ -19,10 +19,7 @@ pub enum Rule {
     },
 
     /// A list of named rules at the top level: `rule <Ident> { <rules> },`
-    RuleSet {
-        name: Id,
-        rules: Vec<RuleOrBinding>,
-    },
+    RuleSet { name: Id, rules: Vec<RuleOrBinding> },
 }
 
 #[derive(Debug, Clone)]
@@ -33,7 +30,7 @@ pub enum RuleOrBinding {
 
 #[derive(Debug, Clone)]
 pub struct SingleRule {
-    pub lhs: RegexCtx,
+    pub lhs: Regex,
     pub rhs: Vec<L<Stmt>>,
 }
 
@@ -42,13 +39,6 @@ pub struct SingleRule {
 pub struct Binding {
     pub var: Id,
     pub re: Regex,
-}
-
-/// Regular expression with optional right context (lookahead)
-#[derive(Debug, Clone)]
-pub struct RegexCtx {
-    pub re: Regex,
-    pub right_ctx: Option<Regex>,
 }
 
 #[derive(Debug, Clone)]

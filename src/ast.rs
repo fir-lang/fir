@@ -1,6 +1,6 @@
 #![allow(clippy::enum_variant_names)]
 
-mod lexgen;
+pub mod lexgen;
 mod printer;
 
 use crate::interpolation::StringPart;
