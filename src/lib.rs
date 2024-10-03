@@ -15,6 +15,8 @@ mod token;
 mod type_checker;
 mod utils;
 
+use token::Token;
+
 use lexgen_util::Loc;
 use smol_str::SmolStr;
 
@@ -22,7 +24,7 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
-fn parse_module(module: &SmolStr, tokens: Vec<(Loc, token::Token, Loc)>) -> ast::Module {
+fn parse_module(module: &SmolStr, tokens: Vec<(Loc, Token, Loc)>) -> ast::Module {
     let parser = parser::TopDeclsParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
@@ -32,11 +34,7 @@ fn parse_module(module: &SmolStr, tokens: Vec<(Loc, token::Token, Loc)>) -> ast:
 
 fn report_parse_error(
     module: &SmolStr,
-    err: lalrpop_util::ParseError<
-        Loc,
-        token::Token,
-        lexgen_util::LexerError<std::convert::Infallible>,
-    >,
+    err: lalrpop_util::ParseError<Loc, Token, lexgen_util::LexerError<std::convert::Infallible>>,
 ) -> ! {
     match err {
         lalrpop_util::ParseError::InvalidToken { location } => {
@@ -89,17 +87,35 @@ mod native {
             }
         };
 
+        // Stop after tokenizing, print tokens.
+        let mut tokenize = false;
+
+        // Stop after type checking.
         let mut typecheck = false;
+
+        // Don't implicitly import Prelude.
         let mut no_prelude = false;
+
+        // Don't print backtraces in the panic handler.
         let mut no_backtrace = false;
+
+        // Print AST after type checking.
+        // Note: type checker does desugaring as well.
         let mut print_checked_ast = false;
+
+        // Print AST after monomorphisation.
         let mut print_mono_ast = false;
+
+        // Name of the main function to run.
         let mut main: String = "main".to_string();
 
         let mut arg_iter = std::env::args();
         let mut args: Vec<String> = vec![];
         while let Some(arg) = arg_iter.next() {
             match arg.as_str() {
+                "--tokenize" => {
+                    tokenize = true;
+                }
                 "--typecheck" => {
                     typecheck = true;
                 }
@@ -140,8 +156,17 @@ mod native {
         let file_path = Path::new(&args[1]); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
+        let module = &SmolStr::new(file_name_wo_ext.to_str().unwrap());
 
-        let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
+        if tokenize {
+            let contents = read_module_file(file_path, module);
+            let module_path: SmolStr = file_path.to_string_lossy().into();
+            let tokens = scanner::scan(lexer::lex(&contents, &module_path));
+            print_tokens(&tokens);
+            return;
+        }
+
+        let module = parse_file(file_path, module);
         let mut module = import_resolver::resolve_imports(
             &fir_root,
             root_path.to_str().unwrap(),
@@ -178,18 +203,35 @@ mod native {
         }
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
-        let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
+    fn read_module_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> String {
+        std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
                 path.as_ref().to_string_lossy(),
                 module,
                 err
             )
-        });
+        })
+    }
+
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+        let contents = read_module_file(&path, module);
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
         let tokens = scanner::scan(lexer::lex(&contents, &module_path));
         parse_module(&module_path, tokens)
+    }
+
+    fn print_tokens(tokens: &[(Loc, Token, Loc)]) {
+        for (start, token, end) in tokens {
+            println!(
+                "{}:{}-{}:{}: {:?}",
+                start.line + 1,
+                start.col + 1,
+                end.line + 1,
+                end.col + 1,
+                token
+            );
+        }
     }
 }
 

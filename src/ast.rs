@@ -1,10 +1,12 @@
 #![allow(clippy::enum_variant_names)]
 
+mod lexgen;
 mod printer;
 
 use crate::interpolation::StringPart;
 pub use crate::token::IntKind;
 use crate::type_checker::Ty;
+use lexgen::LexerDecl;
 
 use std::rc::Rc;
 
@@ -113,6 +115,9 @@ pub enum TopDecl {
 
     /// An `impl` block, implementing a trait or associated methods for a type.
     Impl(L<ImplDecl>),
+
+    /// A lexer declaration: `lexer MyLexer: ...`.
+    Lexer(L<LexerDecl>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
