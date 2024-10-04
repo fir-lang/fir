@@ -1,8 +1,8 @@
 type Token:
     LParen
     RParen
-    Id
-    String
+    Id(Str)
+    String(Str)
 
 type LexerState:
     comentDepth: U32
@@ -43,28 +43,25 @@ lexer Lexer:
         "Array.make": Token.ArrayCreate
 
         ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*:
-            let match_ = lexer.match_()
-            return Token.Id(match_.to_owned())
+            return Token.Id(lexeme())
 
         ['0'-'9']+:
-            let match_ = lexer.match_()
-            match I64.from_str(match_):
+            match I64.fromStr(lexeme()):
                 Ok(i):
-                    return Ok(Token::Int(i))
+                    return Ok(Token.Int(i))
                 Err(_):
-                    return Err(LexErr::InvalidInt { found: match_.to_owned() })
+                    return Err(LexErr.InvalidInt(found = lexeme()))
 
         ['0'-'9']+ '.' ['0'-'9']*:
-            let match_ = lexer.match_()
-            match f64::from_str(match_):
+            match F64.fromStr(lexeme()):
                 Ok(f):
-                    return Ok(Token::Float(f))
+                    return Ok(Token.Float(f))
                 Err(_):
-                    return Err(LexErr::InvalidFloat { found: match_.to_owned() })
+                    return Err(LexErr.InvalidFloat(found = lexeme()))
 
         "(*":
-            lexer.state().comment_depth = 1
-            lexer.switch(LexerRule::Comment)
+            state().comment_depth = 1
+            switch(Comment)
 
 
 #|
@@ -73,21 +70,13 @@ Syntax for lexer actions:
 return: use the `return` keyword
 continue: use the `continue` keyword. When in a loop, use `continue LexerName`.
 switch: add contextual `switch` keyword
-switch_and_return: doesn't exist in Fir, use `switch` and then `return`.
+    For now: switch function, as it's not easy to add contextual keywords, see
+    https://github.com/lalrpop/lalrpop/issues/966
 
 Also:
 
-Get current match:
-Peek:
-Reset current match:
+Get current match: lexeme() built-in function
+Peek: peek() built-in function
+Reset current match: resetMatch() built-in function
+Get lexer state: lexer() built-in function. (or variable?)
 |#
-
-
-# This is a single line comment.
-
-#:
-    This is a multi-line comment.
-    The comment ends with the indented block.
-
-#:  You can also do this.
-    Still a comment.
