@@ -123,7 +123,7 @@ lexgen::lexer! {
         "0b" $bin_int+ "i8" = TokenKind::BinInt(Some(IntKind::I8)),
         "0b" $bin_int+ "u8" = TokenKind::BinInt(Some(IntKind::U8)),
 
-        "'" ((_ # '\'') | "\\'" | "\\t" | "\\n" | "\\r") "'" = TokenKind::Char,
+        "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\") "'" = TokenKind::Char,
     }
 
 
