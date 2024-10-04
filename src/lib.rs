@@ -8,6 +8,7 @@ mod interpreter;
 mod lexer;
 mod monomorph;
 mod parser;
+mod parser_utils;
 mod record_collector;
 mod scanner;
 mod scope_map;

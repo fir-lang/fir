@@ -1,9 +1,10 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: a33325f7f380b9d64faa650d5ea39457cc2d479e56a3e315fd58075d90a77573
+// sha3: 0e38d888ca0abec3535e7a93c9de8d4736dfb0d1d8352f3c38233cecde59740b
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
+use crate::parser_utils::parse_char_lit;
 use crate::token::*;
 use lexgen_util::{LexerError, Loc};
 use smol_str::SmolStr;
@@ -21,8 +22,9 @@ extern crate alloc;
 mod __parse__LExpr {
 
     use crate::ast::*;
-    use crate::token::*;
     use crate::interpolation::parse_string_parts;
+    use crate::parser_utils::parse_char_lit;
+    use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
     use lexgen_util::{LexerError, Loc};
@@ -11463,8 +11465,9 @@ pub use self::__parse__LExpr::LExprParser;
 mod __parse__LStmt {
 
     use crate::ast::*;
-    use crate::token::*;
     use crate::interpolation::parse_string_parts;
+    use crate::parser_utils::parse_char_lit;
+    use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
     use lexgen_util::{LexerError, Loc};
@@ -22905,8 +22908,9 @@ pub use self::__parse__LStmt::LStmtParser;
 mod __parse__TopDecls {
 
     use crate::ast::*;
-    use crate::token::*;
     use crate::interpolation::parse_string_parts;
+    use crate::parser_utils::parse_char_lit;
+    use crate::token::*;
     use std::convert::Infallible;
     use std::rc::Rc;
     use lexgen_util::{LexerError, Loc};
@@ -36362,15 +36366,7 @@ fn __action62<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action63<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Expr {
-    {
-        for char in char.text.chars().skip(1) {
-            if char == '\\' {
-                continue;
-            }
-            return Expr::Char(char);
-        }
-        panic!()
-    }
+    Expr::Char(parse_char_lit(&char.text))
 }
 
 #[allow(unused_variables)]
@@ -37165,7 +37161,7 @@ fn __action108<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> Pat {
     clippy::just_underscores_and_digits
 )]
 fn __action109<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Pat {
-    Pat::Char(char.text.chars().nth(1).unwrap())
+    Pat::Char(parse_char_lit(&char.text))
 }
 
 #[allow(unused_variables)]
