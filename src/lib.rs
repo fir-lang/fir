@@ -41,29 +41,29 @@ fn report_parse_error(
 ) -> ! {
     match err {
         lalrpop_util::ParseError::InvalidToken { location } => {
-            panic!("Invalid token at {}", lexgen_loc_display(module, location));
+            panic!("{}: Invalid token", lexgen_loc_display(module, location));
         }
 
         lalrpop_util::ParseError::UnrecognizedEof {
             location,
             expected: _,
         } => {
-            panic!("Unexpected EOF at {}", lexgen_loc_display(module, location));
+            panic!("{}: Unexpected EOF", lexgen_loc_display(module, location));
         }
 
         lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
             panic!(
-                "Unexpected token {:?} at {}",
+                "{}: Unexpected token {:?}",
+                lexgen_loc_display(module, token.0),
                 token.1,
-                lexgen_loc_display(module, token.0)
             );
         }
 
         lalrpop_util::ParseError::ExtraToken { token } => {
             panic!(
-                "Extra token {:?} after parsing at {}",
+                "{}: Extra token {:?} after parsing",
+                lexgen_loc_display(module, token.0),
                 token.1,
-                lexgen_loc_display(module, token.0)
             );
         }
 
