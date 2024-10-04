@@ -7,6 +7,11 @@ type Token:
 type LexerState:
     comentDepth: U32
 
+#|
+Defines type:
+
+... TODO
+|#
 lexer Lexer:
     rule Init:
         [' ' '\t' '\n']+: Token.Whitespace
@@ -42,27 +47,33 @@ lexer Lexer:
         "Array.create": Token.ArrayCreate
         "Array.make": Token.ArrayCreate
 
-        ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*:
-            return Token.Id(lexeme())
+        ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*: Token.Id(lexeme())
 
         ['0'-'9']+:
             match I64.fromStr(lexeme()):
-                Ok(i):
-                    return Ok(Token.Int(i))
-                Err(_):
-                    return Err(LexErr.InvalidInt(found = lexeme()))
+                Ok(i): Ok(Token.Int(i))
+                Err(_): Err(LexErr.InvalidInt(found = lexeme()))
 
         ['0'-'9']+ '.' ['0'-'9']*:
             match F64.fromStr(lexeme()):
-                Ok(f):
-                    return Ok(Token.Float(f))
-                Err(_):
-                    return Err(LexErr.InvalidFloat(found = lexeme()))
+                Ok(f): Ok(Token.Float(f))
+                Err(_): Err(LexErr.InvalidFloat(found = lexeme()))
 
         "(*":
             state().comment_depth = 1
             switch(Comment)
 
+    rule Comment:
+        "(*":
+            state().commentDepth += 1
+
+        "*)":
+            if state().commentDepth == 1:
+                switch(Init)
+            else:
+                state().commentDepth -= 1
+
+        _: continue
 
 #|
 Syntax for lexer actions:
@@ -79,4 +90,9 @@ Get current match: lexeme() built-in function
 Peek: peek() built-in function
 Reset current match: resetMatch() built-in function
 Get lexer state: lexer() built-in function. (or variable?)
+
+
+Type-checking rule RHSs:
+
+- Each RHS will either return a token with the `return` keyword, or implicitly continue.
 |#

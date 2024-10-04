@@ -1,4 +1,5 @@
 import Char
+import Lexgen
 import Num
 import Str
 import StrBuf
