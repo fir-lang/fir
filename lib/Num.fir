@@ -65,7 +65,7 @@ impl Shl for U32:
 impl Shr for U32:
     prim fn __shr(self, shift: U32): U32
 
-impl U32:
+impl ToStr for U32:
     prim fn toStr(self): Str
 
 prim type I8
@@ -100,7 +100,7 @@ impl Shl for I8:
 impl Shr for I8:
     prim fn __shr(self, shift: I8): I8
 
-impl I8:
+impl ToStr for I8:
     prim fn toStr(self): Str
 
 prim type U8
@@ -135,5 +135,5 @@ impl Shl for U8:
 impl Shr for U8:
     prim fn __shr(self, shift: U8): U8
 
-impl U8:
+impl ToStr for U8:
     prim fn toStr(self): Str

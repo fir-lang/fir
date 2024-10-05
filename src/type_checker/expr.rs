@@ -182,7 +182,6 @@ pub(super) fn check_expr(
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
 
-            // TODO: Handle passing self when `fun` is a `FieldSelect`.
             match fun_ty.normalize(tys.tys.cons()) {
                 Ty::Fun(param_tys, ret_ty) => {
                     if param_tys.len() != args.len() {

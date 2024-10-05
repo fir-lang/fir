@@ -188,6 +188,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 );
 
                 // Convert bounds before binding associated types and self.
+                // Bound in `Trait[T: Bound]` is converted as `Bound[T]`.
                 let bounds: Vec<Ty> = trait_decl
                     .node
                     .ty
@@ -804,7 +805,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         .map(|(var, trait_map)| (var.clone(), trait_map.clone()))
         .collect();
 
-    resolve_preds(&quantified_vars, tys, &preds);
+    resolve_preds(&quantified_vars, tys, preds);
 }
 
 /// Type check an `impl` block.
@@ -899,7 +900,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 }
 
                 // TODO: Context
-                resolve_preds(&Default::default(), tys, &preds);
+                resolve_preds(&Default::default(), tys, preds);
             }
 
             unbind_type_params(old_method_schemes, &mut tys.method_schemes);
@@ -1006,7 +1007,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 }
 
                 // TODO: Context
-                resolve_preds(&Default::default(), tys, &preds);
+                resolve_preds(&Default::default(), tys, preds);
             }
 
             unbind_type_params(old_method_schemes, &mut tys.method_schemes);
@@ -1027,44 +1028,79 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 // TODO: Add locations to error messages.
-fn resolve_preds(_context: &Map<Id, Map<Id, Map<Id, Ty>>>, _tys: &PgmTypes, _preds: &PredSet) {
-    /*
-    for (var, traits) in preds {
-        let var_ty = var.normalize();
-        match var_ty {
+fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds: PredSet) {
+    for Pred {
+        ty_var,
+        trait_,
+        assoc_tys: _,
+    } in preds.into_preds()
+    {
+        let loc = ty_var.loc();
+        let ty_var = ty_var.normalize(tys.tys.cons());
+        match ty_var {
             Ty::Con(con) | Ty::App(con, _) => {
-                for trait_ in traits {
-                    let TraitDetails {
-                        implementing_tys, ..
-                    } = tys.cons.get(trait_).unwrap().as_trait();
+                let TraitDetails {
+                    implementing_tys, ..
+                } = tys
+                    .tys
+                    .cons()
+                    .get(&trait_)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: BUG: Trait {} is not in the environment",
+                            loc_display(&loc),
+                            trait_
+                        )
+                    })
+                    .trait_details()
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: BUG: {} in predicates is not a trait",
+                            loc_display(&loc),
+                            trait_
+                        )
+                    });
 
-                    if !implementing_tys.contains(&con) {
-                        panic!("Type {} does not implement trait {}", con, trait_);
-                    }
+                if !implementing_tys.contains(&con) {
+                    panic!(
+                        "{}: Type {} does not implement trait {}",
+                        loc_display(&loc),
+                        con,
+                        trait_
+                    );
                 }
             }
 
             Ty::QVar(var) => {
-                for trait_ in traits {
-                    if context.get(&var).map(|context| context.contains(trait_)) != Some(true) {
-                        panic!("Type variable {} does not implement trait {}", var, trait_);
-                    }
+                if context
+                    .get(&var)
+                    .map(|context| context.contains_key(&trait_))
+                    != Some(true)
+                {
+                    panic!(
+                        "{}: Type variable {} does not implement trait {}",
+                        loc_display(&loc),
+                        var,
+                        trait_
+                    );
                 }
             }
 
             // TODO: Records can implement Debug, Eq, etc.
-            Ty::Var(_)
+            other @ (Ty::Var(_)
             | Ty::Record(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
-            | Ty::AssocTySelect { .. } => {
-                if let Some(trait_) = traits.iter().next() {
-                    panic!("Type {:?} does not implement trait {}", var_ty, trait_);
-                }
+            | Ty::AssocTySelect { .. }) => {
+                panic!(
+                    "{}: Type {} does not implement trait {}",
+                    loc_display(&loc),
+                    other,
+                    trait_
+                );
             }
         }
     }
-    */
 }
 
 fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {

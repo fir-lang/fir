@@ -84,6 +84,12 @@ pub enum TyArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TyVarRef(Rc<TyVar>);
 
+impl TyVarRef {
+    pub(super) fn loc(&self) -> ast::Loc {
+        self.0.loc.clone()
+    }
+}
+
 /// A unification variable.
 #[derive(Debug, Clone)]
 pub struct TyVar {
@@ -100,8 +106,6 @@ pub struct TyVar {
 
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
-    // TODO: We should make this a field/method of `Ty` and give all types locations.
-    #[allow(unused)]
     loc: ast::Loc,
 }
 
@@ -793,10 +797,7 @@ impl PredSet {
             trait_,
             assoc_tys,
         } = pred;
-
         let trait_map = self.preds.entry(ty_var.clone()).or_default();
-
-        // TODO: Give unification variables
         let old = trait_map.insert(trait_.clone(), assoc_tys);
         if old.is_some() {
             panic!(
@@ -808,7 +809,6 @@ impl PredSet {
         }
     }
 
-    #[allow(unused)]
     pub(super) fn into_preds(mut self) -> Vec<Pred> {
         let mut preds: Vec<Pred> = vec![];
         for (ty_var, trait_map) in self.preds.drain() {
