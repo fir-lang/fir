@@ -403,6 +403,53 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         assert_eq!(tys.len_scopes(), 1);
     }
 
+    // Check bounds of trait type parameters.
+    // This needs to be done after populating the trait->implementing types map, as we use the map
+    // to check if a type satisfies the bounds.
+    for decl in module {
+        let impl_decl = match &mut decl.node {
+            ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
+            _ => continue,
+        };
+
+        let trait_con_id = match &impl_decl.trait_ {
+            Some(trait_id) => &trait_id.node,
+            None => continue,
+        };
+
+        tys.enter_scope();
+
+        let _impl_context = convert_and_bind_context(
+            &mut tys,
+            &impl_decl.context,
+            TyVarConversion::ToQVar,
+            &decl.loc,
+        );
+
+        let trait_ty_con = tys.get_con(trait_con_id).unwrap();
+
+        let trait_ty_params = &trait_ty_con.ty_params;
+        assert_eq!(trait_ty_params.len(), 1);
+
+        let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
+        let (impl_ty_con, _) = impl_ty.con(&tys.cons()).unwrap();
+
+        // TODO: What do we need to check on associated types here?
+        for (bound, _assoc_tys) in &trait_ty_params[0].1 {
+            let bound_trait_details = tys.get_con(bound).unwrap().trait_details().unwrap();
+            if !bound_trait_details.implementing_tys.contains(&impl_ty_con) {
+                panic!(
+                    "{}: Type {} does not implement {}",
+                    loc_display(&decl.loc),
+                    impl_ty_con,
+                    bound
+                );
+            }
+        }
+
+        tys.exit_scope();
+    }
+
     assert_eq!(tys.len_scopes(), 1);
     tys
 }
