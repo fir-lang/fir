@@ -101,7 +101,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        ty_params: ty_params
+                            .into_iter()
+                            .map(|ty| (ty, Default::default()))
+                            .collect(),
                         assoc_tys: Default::default(),
                         details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                     },
@@ -118,7 +121,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params.into_iter().map(|ty| (ty, vec![])).collect(),
+                        ty_params: ty_params
+                            .into_iter()
+                            .map(|ty| (ty, Default::default()))
+                            .collect(),
                         assoc_tys: Default::default(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
@@ -188,14 +194,13 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 );
 
                 // Convert bounds before binding associated types and self.
-                // Bound in `Trait[T: Bound]` is converted as `Bound[T]`.
-                let bounds: Vec<Ty> = trait_decl
+                let bounds: Map<Id, Map<Id, Ty>> = trait_decl
                     .node
                     .ty
                     .node
                     .1
                     .iter()
-                    .map(|ty| convert_ast_ty(&tys, &ty.node, &ty.loc))
+                    .map(|bound| convert_bound(&tys, bound))
                     .collect();
 
                 // E.g. `T` in `trait Debug[T]: ...`.

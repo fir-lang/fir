@@ -147,7 +147,6 @@ pub(super) fn convert_and_bind_context(
         Vec::with_capacity(context_ast.len());
 
     // Bind type parameters.
-    // TODO: Add bounds.
     for ast::L {
         node: (var, _bounds),
         ..
@@ -176,43 +175,7 @@ pub(super) fn convert_and_bind_context(
         for bound in bounds {
             // Syntactically a bound should be in form: `Id ([(Id = Ty),*])?`.
             // Parser is more permissive, we check the syntax here.
-            let (trait_id, assoc_tys): (Id, Map<Id, Ty>) = match &bound.node {
-                ast::Type::Named(ast::NamedType { name, args })
-                    if args.iter().all(|arg| arg.node.0.is_some()) =>
-                {
-                    (
-                        name.clone(),
-                        args.iter()
-                            .map(|arg| {
-                                (
-                                    arg.node.0.as_ref().unwrap().clone(),
-                                    convert_ast_ty(tys, &arg.node.1.node, &arg.node.1.loc),
-                                )
-                            })
-                            .collect(),
-                    )
-                }
-
-                _ => panic!("{}: Invalid predicate syntax", loc_display(&bound.loc)),
-            };
-
-            let trait_con = match tys.get_con(&trait_id) {
-                Some(con) => con,
-                None => panic!(
-                    "{}: Unknown type {} in bound",
-                    loc_display(&bound.loc),
-                    trait_id
-                ),
-            };
-
-            if !trait_con.is_trait() {
-                panic!(
-                    "{}: Type {} is not a trait",
-                    loc_display(&bound.loc),
-                    trait_id
-                );
-            }
-
+            let (trait_id, assoc_tys) = convert_bound(tys, bound);
             let old = trait_map.insert(trait_id.clone(), assoc_tys);
             if old.is_some() {
                 panic!(
@@ -235,4 +198,45 @@ pub(super) fn convert_and_bind_context(
     }
 
     context_converted
+}
+
+pub(super) fn convert_bound(tys: &TyMap, bound: &ast::L<ast::Type>) -> (Id, Map<Id, Ty>) {
+    let (trait_id, assoc_tys): (Id, Map<Id, Ty>) = match &bound.node {
+        ast::Type::Named(ast::NamedType { name, args })
+            if args.iter().all(|arg| arg.node.0.is_some()) =>
+        {
+            (
+                name.clone(),
+                args.iter()
+                    .map(|arg| {
+                        (
+                            arg.node.0.as_ref().unwrap().clone(),
+                            convert_ast_ty(tys, &arg.node.1.node, &arg.node.1.loc),
+                        )
+                    })
+                    .collect(),
+            )
+        }
+
+        _ => panic!("{}: Invalid predicate syntax", loc_display(&bound.loc)),
+    };
+
+    let trait_con = match tys.get_con(&trait_id) {
+        Some(con) => con,
+        None => panic!(
+            "{}: Unknown type {} in bound",
+            loc_display(&bound.loc),
+            trait_id
+        ),
+    };
+
+    if !trait_con.is_trait() {
+        panic!(
+            "{}: Type {} is not a trait",
+            loc_display(&bound.loc),
+            trait_id
+        );
+    }
+
+    (trait_id, assoc_tys)
 }
