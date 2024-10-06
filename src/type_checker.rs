@@ -342,9 +342,13 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 ref mut methods,
                 ref mut implementing_tys,
             }) => (methods, implementing_tys),
+
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
-                tys.exit_scope();
-                continue;
+                panic!(
+                    "{}: {} in impl declararation is not a trait",
+                    loc_display(&decl.loc),
+                    trait_con_id
+                );
             }
         };
 
