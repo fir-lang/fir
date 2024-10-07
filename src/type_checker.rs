@@ -432,7 +432,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         assert_eq!(trait_ty_params.len(), 1);
 
         let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
-        let (impl_ty_con, _) = impl_ty.con(&tys.cons()).unwrap();
+        let (impl_ty_con, _) = impl_ty.con(tys.cons()).unwrap();
 
         // TODO: What do we need to check on associated types here?
         for (bound, _assoc_tys) in &trait_ty_params[0].1 {

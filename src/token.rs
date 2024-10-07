@@ -26,6 +26,7 @@ pub enum TokenKind {
     Else,
     Export,
     Fn,
+    UpperFn,
     For,
     If,
     Impl,

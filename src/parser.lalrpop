@@ -59,6 +59,7 @@ extern {
         "as" => Token { kind: TokenKind::As, .. },
         "type" => Token { kind: TokenKind::Type, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
+        "Fn" => Token { kind: TokenKind::UpperFn, .. },
         "let" => Token { kind: TokenKind::Let, .. },
         "if" => Token { kind: TokenKind::If, .. },
         "else" => Token { kind: TokenKind::Else, .. },
@@ -197,7 +198,18 @@ LType: L<Type> = {
     <l:@L> <ty:Type> <r:@R> => L::new(module, l, r, ty),
 }
 
+LTypeNoFn: L<Type> = {
+    <l:@L> <ty:TypeNoFn> <r:@R> => L::new(module, l, r, ty),
+}
+
 Type: Type = {
+    <ty:TypeNoFn> => ty,
+
+    "Fn" "(" <args:Sep<LType, ",">> ")" <ret:(":" <LType>)?> =>
+        Type::Fn(FnType { args, ret: ret.map(|t| t.map(|t| Box::new(t))) }),
+}
+
+TypeNoFn: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
@@ -875,7 +887,7 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LType> ":"
+    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNoFn> ":"
             NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,

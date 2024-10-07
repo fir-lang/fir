@@ -31,6 +31,7 @@ lexgen::lexer! {
         "else" = TokenKind::Else,
         "export" = TokenKind::Export,
         "fn" = TokenKind::Fn,
+        "Fn" = TokenKind::UpperFn,
         "for" = TokenKind::For,
         "if" = TokenKind::If,
         "impl" = TokenKind::Impl,

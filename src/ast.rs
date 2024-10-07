@@ -159,6 +159,9 @@ pub enum Type {
 
     /// An anonymous record type, e.g. `{x: I32, y: I32}`.
     Record(Vec<Named<Type>>),
+
+    /// A function type: `Fn(I32): Bool`.
+    Fn(FnType),
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
@@ -173,6 +176,12 @@ pub struct NamedType {
     /// - In `Vec[I32]`, `[(None, I32)]`.
     /// - In `Iterator[Item = A]`, `[(Some(Item), A)]`.
     pub args: Vec<L<(Option<Id>, L<Type>)>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FnType {
+    pub args: Vec<L<Type>>,
+    pub ret: Option<L<Box<Type>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -667,6 +676,16 @@ impl Type {
                     })
                     .collect(),
             ),
+
+            Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
+                args: args
+                    .iter()
+                    .map(|arg| arg.map_as_ref(|arg| arg.subst_var(var, ty)))
+                    .collect(),
+                ret: ret
+                    .as_ref()
+                    .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_var(var, ty)))),
+            }),
         }
     }
 }

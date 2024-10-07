@@ -419,6 +419,7 @@ fn mono_expr(
                     name
                 }
                 ast::Type::Record(_) => panic!(),
+                ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
             };
 
             let mono_ty_args: Vec<ast::Type> = ty_args
@@ -448,6 +449,7 @@ fn mono_expr(
                     )
                 }
                 ast::Type::Record(_) => panic!(),
+                ast::Type::Fn(_) => panic!(),
             };
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
@@ -1020,6 +1022,16 @@ fn mono_ty(
                 .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
                 .collect(),
         ),
+
+        ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
+            args: args
+                .iter()
+                .map(|arg| arg.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                .collect(),
+            ret: ret.as_ref().map(|ret| {
+                ret.map_as_ref(|ret| Box::new(mono_ty(ret, ty_map, poly_pgm, mono_pgm)))
+            }),
+        }),
     }
 }
 
@@ -1033,6 +1045,7 @@ fn ty_name(ty: &ast::Type) -> &str {
             _ => "Ptr",
         },
         ast::Type::Record(_) => "Ptr",
+        ast::Type::Fn(_) => "Ptr",
     }
 }
 
@@ -1117,5 +1130,6 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
             Ty::Con(name.clone())
         }
         ast::Type::Record(_) => todo!(),
+        ast::Type::Fn(_) => todo!(),
     }
 }

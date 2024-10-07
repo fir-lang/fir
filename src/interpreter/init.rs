@@ -277,6 +277,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                             loc_display(&impl_decl.loc)
                         )
                     }
+                    ast::Type::Fn(_) => panic!(), // invalid syntax, can't happen
                 };
 
                 for item in impl_decl.node.items {
