@@ -875,12 +875,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     tys.tys.enter_scope();
 
     // Bind trait type parameters.
-    convert_and_bind_context(
+    let impl_bounds = convert_and_bind_context(
         &mut tys.tys,
         &impl_.node.context,
         TyVarConversion::ToOpaque,
         &impl_.loc,
     );
+
+    // Schemes overridden by trait bounds.
+    let old_schemes_1 = bind_type_params(&impl_bounds, tys, &impl_.loc);
 
     let trait_ty = convert_ast_ty(&tys.tys, &impl_.node.ty.node, &impl_.loc);
     let (ty_con_id, ty_args) = trait_ty.con(tys.tys.cons()).unwrap();
@@ -911,14 +914,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            let bounds = convert_and_bind_context(
+            let method_bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
                 TyVarConversion::ToOpaque,
                 &impl_.loc,
             );
 
-            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
+            // Schemes overridden by method bounds.
+            let old_schemes_2 = bind_type_params(&method_bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -959,7 +963,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 resolve_preds(&Default::default(), tys, preds);
             }
 
-            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+            unbind_type_params(old_schemes_2, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
         }
@@ -1025,7 +1029,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 &item.loc,
             );
 
-            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
+            // Schemes overridden by method bounds.
+            let old_schemes_2 = bind_type_params(&bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -1066,12 +1071,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 resolve_preds(&Default::default(), tys, preds);
             }
 
-            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+            unbind_type_params(old_schemes_2, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
             assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
         }
     }
+
+    unbind_type_params(old_schemes_1, &mut tys.method_schemes);
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
