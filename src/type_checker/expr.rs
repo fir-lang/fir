@@ -770,7 +770,7 @@ fn check_field_select(
 ) -> Ty {
     let field_select = match &mut object.node {
         ast::Expr::FieldSelect(field_select) => field_select,
-        _ => panic!("BUG: Expressionin `check_field_select` is not a `FieldSelect`"),
+        _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
     };
 
     match select_field(ty_con, ty_args, &field_select.field, loc, tys) {
@@ -878,8 +878,18 @@ fn select_method(
     let ty_methods = tys.method_schemes.get(&ty_con.id)?;
     let mut scheme = ty_methods.get(field)?.clone();
 
-    for (ty_param, ty_arg) in ty_con.ty_params.iter().zip(ty_args.iter()) {
-        scheme = scheme.subst(&ty_param.0, ty_arg, loc);
+    // Replace the first type parameters of the scheme with `ty_args`.
+    assert!(ty_args.len() <= scheme.quantified_vars.len());
+
+    let substituted_quantified_vars: Vec<Id> = scheme
+        .quantified_vars
+        .iter()
+        .take(ty_args.len())
+        .map(|(id, _)| id.clone())
+        .collect();
+
+    for (quantified_var, ty_arg) in substituted_quantified_vars.iter().zip(ty_args.iter()) {
+        scheme = scheme.subst(quantified_var, ty_arg, loc);
     }
 
     Some(scheme)

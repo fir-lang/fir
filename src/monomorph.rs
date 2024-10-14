@@ -505,7 +505,7 @@ fn mono_expr(
 
             let fun_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
 
-            let ty_map: Map<Id, ast::Type> = ty_decl
+            let assoc_fn_ty_map: Map<Id, ast::Type> = ty_decl
                 .type_params
                 .iter()
                 .cloned()
@@ -515,7 +515,7 @@ fn mono_expr(
             let mono_fun_id = mono_assoc_fn(
                 &mono_ty_id,
                 fun_decl,
-                &ty_map,
+                &assoc_fn_ty_map,
                 &mono_ty_args[ty_num_type_params..],
                 poly_pgm,
                 mono_pgm,

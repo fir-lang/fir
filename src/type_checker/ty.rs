@@ -240,6 +240,7 @@ impl Scheme {
         let mut var_map: Map<Id, TyVarRef> = Default::default();
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
+        // Instantiate quantified variables of the scheme, add bounds to `preds`.
         for (var, bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
             var_map.insert(var.clone(), instantiated_var.clone());
@@ -275,6 +276,11 @@ impl Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
+        debug_assert!(self
+            .quantified_vars
+            .iter()
+            .any(|(var_, _bounds)| var_ == var));
+
         Scheme {
             quantified_vars: self
                 .quantified_vars

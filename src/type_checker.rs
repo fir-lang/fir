@@ -875,12 +875,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     tys.tys.enter_scope();
 
     // Bind trait type parameters.
-    convert_and_bind_context(
+    let impl_bounds = convert_and_bind_context(
         &mut tys.tys,
         &impl_.node.context,
         TyVarConversion::ToOpaque,
         &impl_.loc,
     );
+
+    // Schemes overridden by trait bounds.
+    let old_schemes_1 = bind_type_params(&impl_bounds, tys, &impl_.loc);
 
     let trait_ty = convert_ast_ty(&tys.tys, &impl_.node.ty.node, &impl_.loc);
     let (ty_con_id, ty_args) = trait_ty.con(tys.tys.cons()).unwrap();
@@ -911,14 +914,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            let bounds = convert_and_bind_context(
+            let fn_bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
                 TyVarConversion::ToOpaque,
                 &impl_.loc,
             );
 
-            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
+            // Schemes overridden by method bounds.
+            let old_schemes_2 = bind_type_params(&fn_bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -955,11 +959,18 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                // TODO: Context
-                resolve_preds(&Default::default(), tys, preds);
+                resolve_preds(
+                    &impl_bounds
+                        .iter()
+                        .cloned()
+                        .chain(fn_bounds.into_iter())
+                        .collect(),
+                    tys,
+                    preds,
+                );
             }
 
-            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+            unbind_type_params(old_schemes_2, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
         }
@@ -1018,14 +1029,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            let bounds = convert_and_bind_context(
+            let fn_bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
                 TyVarConversion::ToOpaque,
                 &item.loc,
             );
 
-            let old_method_schemes = bind_type_params(&bounds, tys, &item.loc);
+            // Schemes overridden by method bounds.
+            let old_schemes_2 = bind_type_params(&fn_bounds, tys, &item.loc);
 
             // Check the body.
             if let Some(body) = &mut fun.body {
@@ -1062,16 +1074,25 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                // TODO: Context
-                resolve_preds(&Default::default(), tys, preds);
+                resolve_preds(
+                    &impl_bounds
+                        .iter()
+                        .cloned()
+                        .chain(fn_bounds.into_iter())
+                        .collect(),
+                    tys,
+                    preds,
+                );
             }
 
-            unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+            unbind_type_params(old_schemes_2, &mut tys.method_schemes);
 
             tys.tys.exit_scope();
             assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
         }
     }
+
+    unbind_type_params(old_schemes_1, &mut tys.method_schemes);
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
@@ -1083,7 +1104,12 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 ///
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
+
 // TODO: Add locations to error messages.
+
+// TODO: I'm not sure if context is necessary. When we do something like `x.f()`
+// where `x : A` and `A` is a quantified variable, we check that it implements
+// the right traits in `check_expr`.
 fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds: PredSet) {
     for Pred {
         ty_var,
