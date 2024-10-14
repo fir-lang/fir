@@ -33,6 +33,9 @@ impl Shr for I32:
 impl ToStr for I32:
     prim fn toStr(self): Str
 
+impl Step for I32:
+    fn next(self): I32 = self + 1
+
 prim type U32
 
 impl Add for U32:
@@ -67,6 +70,9 @@ impl Shr for U32:
 
 impl ToStr for U32:
     prim fn toStr(self): Str
+
+impl Step for U32:
+    fn next(self): U32 = self + 1
 
 prim type I8
 
@@ -103,6 +109,9 @@ impl Shr for I8:
 impl ToStr for I8:
     prim fn toStr(self): Str
 
+impl Step for I8:
+    fn next(self): I8 = self + 1
+
 prim type U8
 
 impl Add for U8:
@@ -137,3 +146,6 @@ impl Shr for U8:
 
 impl ToStr for U8:
     prim fn toStr(self): Str
+
+impl Step for U8:
+    fn next(self): U8 = self + 1

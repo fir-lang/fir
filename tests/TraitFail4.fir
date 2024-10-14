@@ -1,13 +1,13 @@
-trait Step[T: Ord]:
+trait Step2[T: Ord]:
     fn next(self): T
 
-impl Step for U32:
+impl Step2 for U32:
     fn next(self): U32 = self + 1
 
 type T:
     i: I32
 
-impl Step for T:
+impl Step2 for T:
     fn next(self): T = T(i = self.i + 1)
 
 # args: --typecheck --no-backtrace
