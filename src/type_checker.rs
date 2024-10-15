@@ -233,19 +233,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let self_ty = Ty::QVar(self_ty_id.clone());
 
                 // Bind assocaited types.
-                let assoc_tys: Vec<&Id> = trait_decl
+                let assoc_tys: Set<Id> = trait_decl
                     .node
                     .items
                     .iter()
                     .filter_map(|item| match &item.node {
-                        ast::TraitDeclItem::AssocTy(ty) => Some(ty),
+                        ast::TraitDeclItem::AssocTy(ty) => Some(ty.clone()),
                         ast::TraitDeclItem::Fun(_) => None,
                     })
                     .collect();
 
                 for assoc_ty in &assoc_tys {
-                    tys.insert_con((*assoc_ty).clone(), TyCon::opaque((*assoc_ty).clone()));
-                    tys.insert_var((*assoc_ty).clone(), Ty::Con((*assoc_ty).clone()));
+                    tys.insert_con(assoc_ty.clone(), TyCon::opaque(assoc_ty.clone()));
+                    tys.insert_var(assoc_ty.clone(), Ty::Con(assoc_ty.clone()));
                 }
 
                 let methods: Map<Id, TraitMethod> = trait_decl
@@ -316,7 +316,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 ty_con.ty_params[0].1 = bounds;
                 ty_con.details = TyConDetails::Trait(TraitDetails {
                     methods,
-                    assoc_tys: assoc_tys.into_iter().cloned().collect(),
+                    assoc_tys,
                     implementing_tys: Default::default(),
                 });
 
