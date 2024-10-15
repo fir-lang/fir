@@ -95,7 +95,11 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let ty_name = ty_decl.node.name.clone();
                 let ty_params = ty_decl.node.type_params.clone();
                 if tys.has_con(&ty_name) {
-                    panic!("Type {} is defined multiple times", ty_name);
+                    panic!(
+                        "{}: Type {} is defined multiple times",
+                        loc_display(&decl.loc),
+                        ty_name
+                    );
                 }
                 tys.insert_con(
                     ty_name.clone(),
@@ -105,7 +109,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .into_iter()
                             .map(|ty| (ty, Default::default()))
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                     },
                 );
@@ -115,8 +118,27 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 let ty_name = trait_decl.node.name.node.clone();
                 let ty_params = vec![trait_decl.node.ty.node.0.clone()];
                 if tys.has_con(&ty_name) {
-                    panic!("Type {} is defined multiple times", ty_name);
+                    panic!(
+                        "{}: Type {} is defined multiple times",
+                        loc_display(&decl.loc),
+                        ty_name
+                    );
                 }
+
+                let mut assoc_tys: Set<Id> = Default::default();
+                for item in &trait_decl.node.items {
+                    if let ast::TraitDeclItem::AssocTy(assoc_ty_id) = &item.node {
+                        let new = assoc_tys.insert(assoc_ty_id.clone());
+                        if !new {
+                            panic!(
+                                "{}: Associated type {} is defined multiple times",
+                                loc_display(&item.loc),
+                                assoc_ty_id
+                            );
+                        }
+                    }
+                }
+
                 tys.insert_con(
                     ty_name.clone(),
                     TyCon {
@@ -125,9 +147,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .into_iter()
                             .map(|ty| (ty, Default::default()))
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
+                            assoc_tys,
                             implementing_tys: Default::default(),
                         }),
                     },
@@ -294,6 +316,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 ty_con.ty_params[0].1 = bounds;
                 ty_con.details = TyConDetails::Trait(TraitDetails {
                     methods,
+                    assoc_tys: assoc_tys.into_iter().cloned().collect(),
                     implementing_tys: Default::default(),
                 });
 
@@ -305,7 +328,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add default methods to impls, and populate the trait->implementing types map.
+    // Add default methods to impls, and populate the trait->implementing types map, check
+    // associated types.
     //
     // We don't need to type check default methods copied to impls, but for now we do. So replace
     // the trait type parameter with the self type in the copied declarations.
@@ -337,20 +361,59 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id)
         });
 
-        let (trait_methods, trait_implementing_tys) = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails {
-                ref mut methods,
-                ref mut implementing_tys,
-            }) => (methods, implementing_tys),
+        let (trait_methods, trait_assoc_tys, trait_implementing_tys) =
+            match &mut trait_ty_con.details {
+                TyConDetails::Trait(TraitDetails {
+                    ref methods,
+                    ref assoc_tys,
+                    ref mut implementing_tys,
+                }) => (methods, assoc_tys, implementing_tys),
 
-            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
+                TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
+                    panic!(
+                        "{}: {} in impl declararation is not a trait",
+                        loc_display(&decl.loc),
+                        trait_con_id
+                    );
+                }
+            };
+
+        // Check that associated types are defined only once.
+        let mut defined_assoc_tys: Set<Id> = Default::default();
+        for item in &impl_decl.items {
+            if let ast::ImplDeclItem::AssocTy(impl_assoc_ty) = &item.node {
+                let new = defined_assoc_tys.insert(impl_assoc_ty.name.clone());
+                if !new {
+                    panic!(
+                        "{}: Associated type {} is defined multiple times",
+                        loc_display(&item.loc),
+                        impl_assoc_ty.name
+                    );
+                }
+            }
+        }
+
+        // Check that all associated types of the trait are implemented, and no extra associated
+        // types are defined.
+        if &defined_assoc_tys != trait_assoc_tys {
+            let extras: Set<&Id> = defined_assoc_tys.difference(trait_assoc_tys).collect();
+            if !extras.is_empty() {
                 panic!(
-                    "{}: {} in impl declararation is not a trait",
+                    "{}: Extra associated types defined: {:?}",
                     loc_display(&decl.loc),
-                    trait_con_id
+                    extras
                 );
             }
-        };
+
+            let missing: Set<&Id> = trait_assoc_tys.difference(&defined_assoc_tys).collect();
+            if !missing.is_empty() {
+                panic!(
+                    "{}: Missing associated types: {:?}",
+                    loc_display(&decl.loc),
+                    missing
+                );
+            }
+        }
 
         // Type parameter of the trait, e.g. `T` in `trait Debug[T]: ...`.
         let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
@@ -1202,7 +1265,6 @@ fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {
             TyCon {
                 id: assoc_ty_id.clone(),
                 ty_params: vec![],
-                assoc_tys: Default::default(),
                 details: TyConDetails::Synonym(ty_converted),
             },
         );

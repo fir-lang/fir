@@ -123,10 +123,6 @@ pub struct TyCon {
     /// Type parameters with bounds.
     pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
-    /// Associated types. Currently these can't have bounds.
-    #[allow(unused)]
-    pub(super) assoc_tys: Set<Id>,
-
     /// Methods for traits, constructor for sums, fields for products.
     ///
     /// Types can refer to `ty_params` and need to be substituted by the instantiated the types in
@@ -156,6 +152,9 @@ pub(super) enum TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: Map<Id, TraitMethod>,
+
+    /// Associated types of the trait.
+    pub(super) assoc_tys: Set<Id>,
 
     /// Types implementing the trait.
     ///
@@ -759,7 +758,6 @@ impl TyCon {
         TyCon {
             id,
             ty_params: vec![],
-            assoc_tys: Default::default(),
             details: TyConDetails::Type(TypeDetails { cons: vec![] }),
         }
     }
