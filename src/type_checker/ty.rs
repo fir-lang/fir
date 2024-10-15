@@ -123,6 +123,11 @@ pub struct TyCon {
     /// Type parameters with bounds.
     pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
+    /// Associated types. Currently these can't have bounds.
+    // TODO: This should be `Trait -> Assoc type -> Ty` to allow same associated types in different
+    // traits.
+    pub(super) assoc_tys: Map<Id, Ty>,
+
     /// Methods for traits, constructor for sums, fields for products.
     ///
     /// Types can refer to `ty_params` and need to be substituted by the instantiated the types in
@@ -288,6 +293,15 @@ impl Scheme {
                 .cloned()
                 .collect(),
             ty: self.ty.subst(var, ty),
+            loc: self.loc.clone(),
+        }
+    }
+
+    /// Substitute `ty` for the `Self` type in the scheme.
+    pub(super) fn subst_self(&self, ty: &Ty) -> Scheme {
+        Scheme {
+            quantified_vars: self.quantified_vars.clone(),
+            ty: self.ty.subst_self(ty),
             loc: self.loc.clone(),
         }
     }
@@ -553,6 +567,61 @@ impl Ty {
         }
     }
 
+    /// Substitute `ty` for the `Self` type in the type.
+    fn subst_self(&self, self_ty: &Ty) -> Ty {
+        match self {
+            Ty::Con(id) => {
+                if id == &SmolStr::new_static("Self") {
+                    self_ty.clone()
+                } else {
+                    Ty::Con(id.clone())
+                }
+            }
+
+            Ty::Var(var) => Ty::Var(var.clone()),
+
+            Ty::App(ty, tys) => Ty::App(
+                ty.clone(),
+                match tys {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_self(self_ty)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_self(self_ty)))
+                            .collect(),
+                    ),
+                },
+            ),
+
+            Ty::Record(fields) => Ty::Record(
+                fields
+                    .iter()
+                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
+                    .collect(),
+            ),
+
+            Ty::QVar(id) => Ty::QVar(id.clone()),
+
+            Ty::Fun(args, ret) => Ty::Fun(
+                args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
+                Box::new(ret.subst_self(self_ty)),
+            ),
+
+            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
+                args.iter()
+                    .map(|(name, ty_)| (name.clone(), ty_.subst_self(self_ty)))
+                    .collect(),
+                Box::new(ret.subst_self(self_ty)),
+            ),
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_self(self_ty)),
+                assoc_ty: assoc_ty.clone(),
+            },
+        }
+    }
+
     pub(super) fn subst_qvars(&self, vars: &Map<Id, TyVarRef>) -> Ty {
         match self {
             Ty::Con(con) => Ty::Con(con.clone()),
@@ -611,6 +680,7 @@ impl Ty {
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
+
             Ty::Con(con) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
@@ -618,6 +688,26 @@ impl Ty {
                 },
                 None => self.clone(),
             },
+
+            Ty::AssocTySelect { ty, assoc_ty } => match ty.normalize(cons) {
+                Ty::Con(con) | Ty::App(con, _) => {
+                    let con = cons
+                        .get(&con)
+                        .unwrap_or_else(|| panic!("Unknown type constructor {}", con));
+                    match con.assoc_tys.get(assoc_ty) {
+                        Some(ty) => ty.clone(),
+                        None => panic!(
+                            "Associated type {} is not defined for type {}",
+                            assoc_ty, con.id
+                        ),
+                    }
+                }
+                ty => Ty::AssocTySelect {
+                    ty: Box::new(ty),
+                    assoc_ty: assoc_ty.clone(),
+                },
+            },
+
             _ => self.clone(),
         }
     }
@@ -626,6 +716,7 @@ impl Ty {
     pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
+
             Ty::Con(con) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
@@ -633,6 +724,7 @@ impl Ty {
                 },
                 None => self.clone(),
             },
+
             Ty::App(con, args) => Ty::App(
                 con.clone(),
                 match args {
@@ -646,26 +738,31 @@ impl Ty {
                     ),
                 },
             ),
+
             Ty::Record(fields) => Ty::Record(
                 fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
                     .collect(),
             ),
+
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
                 Box::new(ret.deep_normalize(cons)),
             ),
+
             Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
                 args.iter()
                     .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
                     .collect(),
                 Box::new(ret.deep_normalize(cons)),
             ),
+
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.deep_normalize(cons)),
                 assoc_ty: assoc_ty.clone(),
             },
+
             Ty::QVar(_) => panic!(),
         }
     }
@@ -758,6 +855,7 @@ impl TyCon {
         TyCon {
             id,
             ty_params: vec![],
+            assoc_tys: Default::default(),
             details: TyConDetails::Type(TypeDetails { cons: vec![] }),
         }
     }

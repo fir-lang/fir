@@ -216,7 +216,6 @@ pub(super) fn check_expr(
                         );
                         arg_tys.push(arg_ty);
                     }
-
                     unify_expected_ty(*ret_ty, expected_ty, tys.tys.cons(), &expr.loc)
                 }
 
