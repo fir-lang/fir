@@ -1263,6 +1263,27 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                     );
                 }
 
+                // Substitute quantified variables in the type constructor with the type arguments.
+                let args = match &ty_var_ty {
+                    Ty::App(_, TyArgs::Positional(args)) => args,
+                    _ => &vec![],
+                };
+
+                let con_qvars: Vec<Id> = tys
+                    .tys
+                    .get_con(con)
+                    .unwrap()
+                    .ty_params
+                    .iter()
+                    .map(|(qvar, _)| qvar.clone())
+                    .collect();
+
+                let qvar_map: Map<Id, Ty> = con_qvars
+                    .into_iter()
+                    .zip(args.iter())
+                    .map(|(var, ty)| (var, ty.clone()))
+                    .collect();
+
                 for (assoc_ty_id, ty) in assoc_tys {
                     let assoc_ty = tys
                         .tys
@@ -1271,6 +1292,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         .assoc_tys
                         .get(&assoc_ty_id)
                         .unwrap()
+                        .subst_qvars(&qvar_map)
                         .normalize(tys.tys.cons());
 
                     let expected_ty = ty.normalize(tys.tys.cons());
