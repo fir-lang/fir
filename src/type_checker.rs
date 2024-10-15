@@ -848,39 +848,23 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let scheme = tys.top_schemes.get(&fun.node.sig.name.node).unwrap();
+    let scheme = tys
+        .top_schemes
+        .get(&fun.node.sig.name.node)
+        .unwrap()
+        .clone();
 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
+    let fn_bounds = convert_and_bind_context(
+        &mut tys.tys,
+        &fun.node.sig.type_params,
+        TyVarConversion::ToOpaque,
+        &fun.loc,
+    );
 
-    for (var, bounds) in &scheme.quantified_vars {
-        tys.tys.insert_var(var.clone(), Ty::Con(var.clone()));
-        tys.tys.insert_con(var.clone(), TyCon::opaque(var.clone()));
-
-        // Bind trait methods to the ty con.
-        old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
-
-        for (trait_, _assoc_tys) in bounds {
-            // It should be checked when converting the bounds that the ty cons are bound and
-            // traits.
-            let trait_ty_con = tys.tys.get_con(trait_).unwrap();
-            let trait_details = trait_ty_con.trait_details().unwrap();
-            for (method_id, method) in &trait_details.methods {
-                assert_eq!(trait_ty_con.ty_params.len(), 1);
-                let trait_ty_param = &trait_ty_con.ty_params[0];
-                let method_scheme =
-                    method
-                        .scheme
-                        .subst(&trait_ty_param.0, &Ty::Con(var.clone()), &fun.loc);
-                tys.method_schemes
-                    .entry(var.clone())
-                    .or_default()
-                    .insert(method_id.clone(), method_scheme);
-            }
-        }
-    }
+    let old_method_schemes = bind_type_params(&fn_bounds, tys, &fun.loc);
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.insert(
