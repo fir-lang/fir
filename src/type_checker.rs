@@ -949,10 +949,6 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    unbind_type_params(old_method_schemes, &mut tys.method_schemes);
-
-    tys.tys.exit_scope();
-
     // Converts vec to map.
     let quantified_vars: Map<Id, Map<Id, Map<Id, Ty>>> = scheme
         .quantified_vars
@@ -961,6 +957,10 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         .collect();
 
     resolve_preds(&quantified_vars, tys, preds);
+
+    unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+
+    tys.tys.exit_scope();
 }
 
 /// Type check an `impl` block.
@@ -1226,9 +1226,11 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
         assoc_tys,
     } in preds.into_preds()
     {
+        // TODO: This location is not right, it points to the definition of a type parameter rather
+        // than the call site of the function with the type parameter.
         let loc = ty_var.loc();
-        let ty_var = ty_var.normalize(tys.tys.cons());
-        match ty_var {
+        let ty_var_ty = ty_var.normalize(tys.tys.cons());
+        match &ty_var_ty {
             Ty::Con(con) | Ty::App(con, _) => {
                 let TraitDetails {
                     implementing_tys, ..
@@ -1252,7 +1254,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         )
                     });
 
-                if !implementing_tys.contains(&con) {
+                if !implementing_tys.contains(con) {
                     panic!(
                         "{}: Type {} does not implement trait {}",
                         loc_display(&loc),
@@ -1260,6 +1262,27 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         trait_
                     );
                 }
+
+                // Substitute quantified variables in the type constructor with the type arguments.
+                let args = match &ty_var_ty {
+                    Ty::App(_, TyArgs::Positional(args)) => args,
+                    _ => &vec![],
+                };
+
+                let con_qvars: Vec<Id> = tys
+                    .tys
+                    .get_con(con)
+                    .unwrap()
+                    .ty_params
+                    .iter()
+                    .map(|(qvar, _)| qvar.clone())
+                    .collect();
+
+                let qvar_map: Map<Id, Ty> = con_qvars
+                    .into_iter()
+                    .zip(args.iter())
+                    .map(|(var, ty)| (var, ty.clone()))
+                    .collect();
 
                 for (assoc_ty_id, ty) in assoc_tys {
                     let assoc_ty = tys
@@ -1269,6 +1292,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         .assoc_tys
                         .get(&assoc_ty_id)
                         .unwrap()
+                        .subst_qvars(&qvar_map)
                         .normalize(tys.tys.cons());
 
                     let expected_ty = ty.normalize(tys.tys.cons());
@@ -1278,7 +1302,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         panic!(
                             "{}: Associated type {}.{} ({}) is not {}",
                             loc_display(&loc),
-                            con,
+                            ty_var_ty,
                             assoc_ty_id,
                             assoc_ty,
                             expected_ty,
@@ -1289,7 +1313,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
 
             Ty::QVar(var) => {
                 if context
-                    .get(&var)
+                    .get(var)
                     .map(|context| context.contains_key(&trait_))
                     != Some(true)
                 {

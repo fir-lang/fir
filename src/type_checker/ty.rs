@@ -241,13 +241,13 @@ impl Scheme {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
-        let mut var_map: Map<Id, TyVarRef> = Default::default();
+        let mut var_map: Map<Id, Ty> = Default::default();
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         // Instantiate quantified variables of the scheme, add bounds to `preds`.
         for (var, bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
-            var_map.insert(var.clone(), instantiated_var.clone());
+            var_map.insert(var.clone(), Ty::Var(instantiated_var.clone()));
             instantiations.push(instantiated_var.clone());
 
             for (trait_, assoc_tys) in bounds {
@@ -622,7 +622,7 @@ impl Ty {
         }
     }
 
-    pub(super) fn subst_qvars(&self, vars: &Map<Id, TyVarRef>) -> Ty {
+    pub(super) fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
         match self {
             Ty::Con(con) => Ty::Con(con.clone()),
 
@@ -649,11 +649,10 @@ impl Ty {
                     .collect(),
             ),
 
-            Ty::QVar(id) => Ty::Var(
-                vars.get(id)
-                    .cloned()
-                    .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
-            ),
+            Ty::QVar(id) => vars
+                .get(id)
+                .cloned()
+                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
