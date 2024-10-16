@@ -111,34 +111,11 @@ pub(super) fn check_pat(
                 .collect(),
         ),
 
-        ast::Pat::Str(_) => {
-            let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.add(
-                Pred {
-                    ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_id(),
-                    assoc_tys: Default::default(),
-                },
-                &pat.loc,
-            );
-            Ty::Var(pat_ty)
-        }
+        ast::Pat::Str(_) => Ty::str(),
 
         ast::Pat::StrPfx(_, var) => {
-            // Pattern may be a `Str` or `StrView`, `var` will be `StrView`.
-            let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.add(
-                Pred {
-                    ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_id(),
-                    assoc_tys: Default::default(),
-                },
-                &pat.loc,
-            );
-
             env.insert(var.clone(), Ty::str());
-
-            Ty::Var(pat_ty)
+            Ty::str()
         }
 
         ast::Pat::Char(_) => Ty::char(),

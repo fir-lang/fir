@@ -1254,7 +1254,9 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                         )
                     });
 
-                if !implementing_tys.contains(con) {
+                if !implementing_tys.contains(con)
+                    && context.get(con).map(|ctx| ctx.contains_key(&trait_)) != Some(true)
+                {
                     panic!(
                         "{}: Type {} does not implement trait {}",
                         loc_display(&loc),
@@ -1287,7 +1289,7 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                 for (assoc_ty_id, ty) in assoc_tys {
                     let assoc_ty = tys
                         .tys
-                        .get_con(&con)
+                        .get_con(con)
                         .unwrap()
                         .assoc_tys
                         .get(&assoc_ty_id)
@@ -1311,23 +1313,9 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
                 }
             }
 
-            Ty::QVar(var) => {
-                if context
-                    .get(var)
-                    .map(|context| context.contains_key(&trait_))
-                    != Some(true)
-                {
-                    panic!(
-                        "{}: Type variable {} does not implement trait {}",
-                        loc_display(&loc),
-                        var,
-                        trait_
-                    );
-                }
-            }
-
             // TODO: Records can implement Debug, Eq, etc.
-            other @ (Ty::Var(_)
+            other @ (Ty::QVar(_)
+            | Ty::Var(_)
             | Ty::Record(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
