@@ -511,6 +511,26 @@ impl Ty {
         Ty::Con(SmolStr::new_static("Str"))
     }
 
+    pub(super) fn char() -> Ty {
+        Ty::Con(SmolStr::new_static("Char"))
+    }
+
+    pub(super) fn u8() -> Ty {
+        Ty::Con(SmolStr::new_static("U8"))
+    }
+
+    pub(super) fn i8() -> Ty {
+        Ty::Con(SmolStr::new_static("I8"))
+    }
+
+    pub(super) fn u32() -> Ty {
+        Ty::Con(SmolStr::new_static("U32"))
+    }
+
+    pub(super) fn i32() -> Ty {
+        Ty::Con(SmolStr::new_static("I32"))
+    }
+
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {

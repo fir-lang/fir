@@ -6,8 +6,6 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
 use crate::type_checker::{loc_display, PgmTypes};
 
-use smol_str::SmolStr;
-
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 pub(super) fn check_pat(
     pat: &mut ast::L<ast::Pat>,
@@ -143,7 +141,7 @@ pub(super) fn check_pat(
             Ty::Var(pat_ty)
         }
 
-        ast::Pat::Char(_) => Ty::Con(SmolStr::new_static("Char")),
+        ast::Pat::Char(_) => Ty::char(),
 
         ast::Pat::Or(pat1, pat2) => {
             let pat1_ty = check_pat(pat1, level, env, var_gen, tys, preds);

@@ -414,20 +414,10 @@ pub(super) fn check_expr(
                 }
             }
 
-            unify_expected_ty(
-                Ty::Con(SmolStr::new_static("Str")),
-                expected_ty,
-                tys.tys.cons(),
-                &expr.loc,
-            )
+            unify_expected_ty(Ty::str(), expected_ty, tys.tys.cons(), &expr.loc)
         }
 
-        ast::Expr::Char(_) => unify_expected_ty(
-            Ty::Con(SmolStr::new_static("Char")),
-            expected_ty,
-            tys.tys.cons(),
-            &expr.loc,
-        ),
+        ast::Expr::Char(_) => unify_expected_ty(Ty::char(), expected_ty, tys.tys.cons(), &expr.loc),
 
         ast::Expr::Self_ => match env.get("self") {
             Some(self_ty) => {
@@ -744,10 +734,10 @@ pub(super) fn check_expr(
             };
             *expr_ty = Some(as_ty);
             match target_ty {
-                ast::AsExprTy::U8 => Ty::Con(SmolStr::new_static("U8")),
-                ast::AsExprTy::I8 => Ty::Con(SmolStr::new_static("I8")),
-                ast::AsExprTy::U32 => Ty::Con(SmolStr::new_static("U32")),
-                ast::AsExprTy::I32 => Ty::Con(SmolStr::new_static("I32")),
+                ast::AsExprTy::U8 => Ty::u8(),
+                ast::AsExprTy::I8 => Ty::i8(),
+                ast::AsExprTy::U32 => Ty::u32(),
+                ast::AsExprTy::I32 => Ty::i32(),
             }
         }
     }
