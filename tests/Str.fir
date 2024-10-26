@@ -14,12 +14,8 @@ fn main() =
     printStr(s.charAt(3).toStr())
     printStr(s.charAt(6).toStr())
 
-    # TODO: Add continue and break statements, use iterator type in for loops, something like `while let`.
-    let chars = s.chars()
-    while Bool.True:
-        match chars.next():
-            Option.None: return ()
-            Option.Some(char): printStr(char.toStr())
+    for char in s.chars():
+        printStr(char.toStr())
 
 # expected stdout:
 # Bool.True
