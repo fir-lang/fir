@@ -230,18 +230,10 @@ pub(super) struct Pred {
 }
 
 /// A predicate set.
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(super) struct PredSet {
     /// Maps type variables to traits to associated types of the trait.
     preds: Map<TyVarRef, Map<Id, TraitBoundDetails>>,
-}
-
-impl Default for PredSet {
-    fn default() -> PredSet {
-        PredSet {
-            preds: Default::default(),
-        }
-    }
 }
 
 // E.g. `Item = A` in `Iterator[Item = A]`.

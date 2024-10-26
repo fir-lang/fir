@@ -956,7 +956,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         .map(|(var, trait_map)| (var.clone(), trait_map.clone()))
         .collect();
 
-    resolve_preds(&quantified_vars, tys, preds);
+    resolve_all_preds(&quantified_vars, tys, preds);
 
     unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
@@ -1068,7 +1068,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_preds(
+                resolve_all_preds(
                     &impl_bounds
                         .iter()
                         .cloned()
@@ -1183,7 +1183,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_preds(
+                resolve_all_preds(
                     &impl_bounds
                         .iter()
                         .cloned()
@@ -1213,7 +1213,13 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 ///
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
-fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds: PredSet) {
+fn resolve_preds(
+    context: &Map<Id, Map<Id, Map<Id, Ty>>>,
+    tys: &PgmTypes,
+    preds: PredSet,
+) -> PredSet {
+    let mut remaining_preds: PredSet = Default::default();
+
     for Pred {
         ty_var,
         trait_,
@@ -1299,21 +1305,53 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
             }
 
             // TODO: Records can implement Debug, Eq, etc.
-            other @ (Ty::QVar(_)
+            Ty::QVar(_)
             | Ty::Var(_)
             | Ty::Record(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
-            | Ty::AssocTySelect { .. }) => {
-                panic!(
-                    "{}: Type {} does not implement trait {}",
-                    loc_display(&loc),
-                    other,
-                    trait_
-                );
+            | Ty::AssocTySelect { .. } => {
+                remaining_preds.add(Pred {
+                    ty_var,
+                    trait_,
+                    assoc_tys,
+                    loc,
+                });
             }
         }
     }
+
+    remaining_preds
+}
+
+fn resolve_all_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds: PredSet) {
+    let unresolved_preds = resolve_preds(context, tys, preds);
+    report_unresolved_preds(unresolved_preds, tys.tys.cons());
+}
+
+fn report_unresolved_preds(preds: PredSet, cons: &ScopeMap<Id, TyCon>) {
+    let preds = preds.into_preds();
+
+    if preds.is_empty() {
+        return;
+    }
+
+    for Pred {
+        ty_var,
+        trait_,
+        assoc_tys: _,
+        loc,
+    } in preds
+    {
+        eprintln!(
+            "{}: Type {} does not implement trait {}",
+            loc_display(&loc),
+            ty_var.normalize(cons),
+            trait_
+        );
+    }
+
+    panic!();
 }
 
 fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {

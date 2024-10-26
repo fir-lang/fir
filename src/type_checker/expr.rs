@@ -8,6 +8,8 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
 use crate::type_checker::{loc_display, PgmTypes};
 
+use std::mem::{replace, take};
+
 use smol_str::SmolStr;
 
 pub(super) fn check_expr(
@@ -58,6 +60,8 @@ pub(super) fn check_expr(
             let ty = {
                 let object_ty =
                     check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
+
+                *preds = super::resolve_preds(&Default::default(), tys, take(preds));
 
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
@@ -392,7 +396,7 @@ pub(super) fn check_expr(
                             tys,
                             preds,
                         );
-                        let expr_node = std::mem::replace(&mut expr.node, ast::Expr::Self_);
+                        let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
@@ -769,7 +773,7 @@ fn check_field_select(
                 object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
                     // Replace detached field_select field with some random expr to avoid
                     // cloning.
-                    object: Box::new(std::mem::replace(
+                    object: Box::new(replace(
                         &mut field_select.object,
                         ast::L {
                             loc: ast::Loc::dummy(),
@@ -817,7 +821,11 @@ pub(super) fn select_field(
     loc: &ast::Loc,
     tys: &PgmTypes,
 ) -> Option<Ty> {
-    let ty_con = tys.tys.get_con(ty_con).unwrap();
+    let ty_con = tys
+        .tys
+        .get_con(ty_con)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
