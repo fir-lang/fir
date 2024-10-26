@@ -376,14 +376,12 @@ pub(super) fn check_expr(
                     StringPart::Str(_) => continue,
                     StringPart::Expr(expr) => {
                         let expr_var = var_gen.new_var(level, expr.loc.clone());
-                        preds.add(
-                            Pred {
-                                ty_var: expr_var.clone(),
-                                trait_: Ty::to_str_id(),
-                                assoc_tys: Default::default(),
-                            },
-                            &expr.loc,
-                        );
+                        preds.add(Pred {
+                            ty_var: expr_var.clone(),
+                            trait_: Ty::to_str_id(),
+                            assoc_tys: Default::default(),
+                            loc: expr.loc.clone(),
+                        });
                         let part_ty = check_expr(
                             expr,
                             Some(&Ty::Var(expr_var)),

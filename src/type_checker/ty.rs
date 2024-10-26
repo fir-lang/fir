@@ -85,6 +85,7 @@ pub enum TyArgs {
 pub struct TyVarRef(Rc<TyVar>);
 
 impl TyVarRef {
+    #[allow(unused)]
     pub(super) fn loc(&self) -> ast::Loc {
         self.0.loc.clone()
     }
@@ -207,6 +208,9 @@ pub(super) struct Pred {
     /// Type variable constrained by the predicate.
     ///
     /// `I` in the example.
+    ///
+    /// Note: location of this type variable is the declaration in the function definition, not the
+    /// use site that instantiated it.
     pub(super) ty_var: TyVarRef,
 
     /// Trait of the predicate.
@@ -220,13 +224,36 @@ pub(super) struct Pred {
     ///
     /// `{Item = A}`  in the exmaple.
     pub(super) assoc_tys: Map<Id, Ty>,
+
+    /// Location of the expression that created this predicate.
+    pub(super) loc: ast::Loc,
 }
 
 /// A predicate set.
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub(super) struct PredSet {
     /// Maps type variables to traits to associated types of the trait.
-    preds: Map<TyVarRef, Map<Id, Map<Id, Ty>>>,
+    preds: Map<TyVarRef, Map<Id, TraitBoundDetails>>,
+}
+
+impl Default for PredSet {
+    fn default() -> PredSet {
+        PredSet {
+            preds: Default::default(),
+        }
+    }
+}
+
+// E.g. `Item = A` in `Iterator[Item = A]`.
+pub(super) type AssocTyMap = Map<Id, Ty>;
+
+#[derive(Debug, Clone)]
+pub(super) struct TraitBoundDetails {
+    /// Associated types of the bound. E.g. `Item = A` in `X: Iterator[Item = A]`.
+    pub(super) assoc_tys: AssocTyMap,
+
+    /// Location of the expression that generated the bound.
+    pub(super) loc: ast::Loc,
 }
 
 impl Scheme {
@@ -255,8 +282,9 @@ impl Scheme {
                     ty_var: instantiated_var.clone(),
                     trait_: trait_.clone(),
                     assoc_tys: assoc_tys.clone(),
+                    loc: loc.clone(),
                 };
-                preds.add(pred, loc);
+                preds.add(pred);
             }
         }
 
@@ -912,18 +940,23 @@ impl TyArgs {
 }
 
 impl PredSet {
-    pub(super) fn add(&mut self, pred: Pred, loc: &ast::Loc) {
+    pub(super) fn add(&mut self, pred: Pred) {
         let Pred {
             ty_var,
             trait_,
             assoc_tys,
+            loc,
         } = pred;
         let trait_map = self.preds.entry(ty_var.clone()).or_default();
-        let old = trait_map.insert(trait_.clone(), assoc_tys);
+        let bound_details = TraitBoundDetails {
+            assoc_tys,
+            loc: loc.clone(),
+        };
+        let old = trait_map.insert(trait_.clone(), bound_details);
         if old.is_some() {
             panic!(
                 "{}: Type variable {:?} already has a constraint on trait {}",
-                loc_display(loc),
+                loc_display(&loc),
                 ty_var,
                 trait_
             );
@@ -933,11 +966,12 @@ impl PredSet {
     pub(super) fn into_preds(mut self) -> Vec<Pred> {
         let mut preds: Vec<Pred> = vec![];
         for (ty_var, trait_map) in self.preds.drain() {
-            for (trait_, assoc_tys) in trait_map {
+            for (trait_, TraitBoundDetails { assoc_tys, loc }) in trait_map {
                 preds.push(Pred {
                     ty_var: ty_var.clone(),
                     trait_,
                     assoc_tys,
+                    loc,
                 });
             }
         }

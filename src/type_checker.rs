@@ -1224,11 +1224,9 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
         ty_var,
         trait_,
         assoc_tys,
+        loc,
     } in preds.into_preds()
     {
-        // TODO: This location is not right, it points to the definition of a type parameter rather
-        // than the call site of the function with the type parameter.
-        let loc = ty_var.loc();
         let ty_var_ty = ty_var.normalize(tys.tys.cons());
         match &ty_var_ty {
             Ty::Con(con) | Ty::App(con, _) => {

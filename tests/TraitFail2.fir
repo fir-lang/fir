@@ -12,4 +12,4 @@ fn f[A: ToStr](a: A) =
 fn g() = f(123u32)
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/TraitFail2.fir:9:1: Type U32 does not implement trait ToStr
+# expected stderr: tests/TraitFail2.fir:12:10: Type U32 does not implement trait ToStr
