@@ -6,7 +6,7 @@ type X:
 
 impl T for X:
     fn f[Q: ToStr](self, q: Q) =
-        printStr("X.f called with q = `q.toStr()`")
+        printStr("X.f called with q = `q`")
 
 fn main() =
     let x = X(value = 123)

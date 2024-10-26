@@ -6,8 +6,6 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
 use crate::type_checker::{loc_display, PgmTypes};
 
-use smol_str::SmolStr;
-
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 pub(super) fn check_pat(
     pat: &mut ast::L<ast::Pat>,
@@ -113,37 +111,14 @@ pub(super) fn check_pat(
                 .collect(),
         ),
 
-        ast::Pat::Str(_) => {
-            let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.add(
-                Pred {
-                    ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_id(),
-                    assoc_tys: Default::default(),
-                },
-                &pat.loc,
-            );
-            Ty::Var(pat_ty)
-        }
+        ast::Pat::Str(_) => Ty::str(),
 
         ast::Pat::StrPfx(_, var) => {
-            // Pattern may be a `Str` or `StrView`, `var` will be `StrView`.
-            let pat_ty = var_gen.new_var(level, pat.loc.clone());
-            preds.add(
-                Pred {
-                    ty_var: pat_ty.clone(),
-                    trait_: Ty::to_str_id(),
-                    assoc_tys: Default::default(),
-                },
-                &pat.loc,
-            );
-
             env.insert(var.clone(), Ty::str());
-
-            Ty::Var(pat_ty)
+            Ty::str()
         }
 
-        ast::Pat::Char(_) => Ty::Con(SmolStr::new_static("Char")),
+        ast::Pat::Char(_) => Ty::char(),
 
         ast::Pat::Or(pat1, pat2) => {
             let pat1_ty = check_pat(pat1, level, env, var_gen, tys, preds);

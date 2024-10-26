@@ -8,6 +8,8 @@ use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
 use crate::type_checker::{loc_display, PgmTypes};
 
+use std::mem::{replace, take};
+
 use smol_str::SmolStr;
 
 pub(super) fn check_expr(
@@ -59,6 +61,8 @@ pub(super) fn check_expr(
                 let object_ty =
                     check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
 
+                *preds = super::resolve_preds(&Default::default(), tys, take(preds));
+
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
 
@@ -102,10 +106,11 @@ pub(super) fn check_expr(
                         loc_display(&object.loc)
                     ),
 
-                    Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+                    other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _)) => {
                         panic!(
-                            "{}: Object in field selection does not have fields: {:?}",
+                            "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),
+                            other,
                             object_ty
                         )
                     }
@@ -182,7 +187,6 @@ pub(super) fn check_expr(
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
 
-            // TODO: Handle passing self when `fun` is a `FieldSelect`.
             match fun_ty.normalize(tys.tys.cons()) {
                 Ty::Fun(param_tys, ret_ty) => {
                     if param_tys.len() != args.len() {
@@ -217,7 +221,6 @@ pub(super) fn check_expr(
                         );
                         arg_tys.push(arg_ty);
                     }
-
                     unify_expected_ty(*ret_ty, expected_ty, tys.tys.cons(), &expr.loc)
                 }
 
@@ -378,14 +381,12 @@ pub(super) fn check_expr(
                     StringPart::Str(_) => continue,
                     StringPart::Expr(expr) => {
                         let expr_var = var_gen.new_var(level, expr.loc.clone());
-                        preds.add(
-                            Pred {
-                                ty_var: expr_var.clone(),
-                                trait_: Ty::to_str_id(),
-                                assoc_tys: Default::default(),
-                            },
-                            &expr.loc,
-                        );
+                        preds.add(Pred {
+                            ty_var: expr_var.clone(),
+                            trait_: Ty::to_str_id(),
+                            assoc_tys: Default::default(),
+                            loc: expr.loc.clone(),
+                        });
                         let part_ty = check_expr(
                             expr,
                             Some(&Ty::Var(expr_var)),
@@ -396,7 +397,7 @@ pub(super) fn check_expr(
                             tys,
                             preds,
                         );
-                        let expr_node = std::mem::replace(&mut expr.node, ast::Expr::Self_);
+                        let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
                             fun: Box::new(ast::L {
                                 node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
@@ -416,20 +417,10 @@ pub(super) fn check_expr(
                 }
             }
 
-            unify_expected_ty(
-                Ty::Con(SmolStr::new_static("Str")),
-                expected_ty,
-                tys.tys.cons(),
-                &expr.loc,
-            )
+            unify_expected_ty(Ty::str(), expected_ty, tys.tys.cons(), &expr.loc)
         }
 
-        ast::Expr::Char(_) => unify_expected_ty(
-            Ty::Con(SmolStr::new_static("Char")),
-            expected_ty,
-            tys.tys.cons(),
-            &expr.loc,
-        ),
+        ast::Expr::Char(_) => unify_expected_ty(Ty::char(), expected_ty, tys.tys.cons(), &expr.loc),
 
         ast::Expr::Self_ => match env.get("self") {
             Some(self_ty) => {
@@ -746,10 +737,10 @@ pub(super) fn check_expr(
             };
             *expr_ty = Some(as_ty);
             match target_ty {
-                ast::AsExprTy::U8 => Ty::Con(SmolStr::new_static("U8")),
-                ast::AsExprTy::I8 => Ty::Con(SmolStr::new_static("I8")),
-                ast::AsExprTy::U32 => Ty::Con(SmolStr::new_static("U32")),
-                ast::AsExprTy::I32 => Ty::Con(SmolStr::new_static("I32")),
+                ast::AsExprTy::U8 => Ty::u8(),
+                ast::AsExprTy::I8 => Ty::i8(),
+                ast::AsExprTy::U32 => Ty::u32(),
+                ast::AsExprTy::I32 => Ty::i32(),
             }
         }
     }
@@ -771,7 +762,7 @@ fn check_field_select(
 ) -> Ty {
     let field_select = match &mut object.node {
         ast::Expr::FieldSelect(field_select) => field_select,
-        _ => panic!("BUG: Expressionin `check_field_select` is not a `FieldSelect`"),
+        _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
     };
 
     match select_field(ty_con, ty_args, &field_select.field, loc, tys) {
@@ -783,7 +774,7 @@ fn check_field_select(
                 object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
                     // Replace detached field_select field with some random expr to avoid
                     // cloning.
-                    object: Box::new(std::mem::replace(
+                    object: Box::new(replace(
                         &mut field_select.object,
                         ast::L {
                             loc: ast::Loc::dummy(),
@@ -831,7 +822,11 @@ pub(super) fn select_field(
     loc: &ast::Loc,
     tys: &PgmTypes,
 ) -> Option<Ty> {
-    let ty_con = tys.tys.get_con(ty_con).unwrap();
+    let ty_con = tys
+        .tys
+        .get_con(ty_con)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
+
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
@@ -879,8 +874,18 @@ fn select_method(
     let ty_methods = tys.method_schemes.get(&ty_con.id)?;
     let mut scheme = ty_methods.get(field)?.clone();
 
-    for (ty_param, ty_arg) in ty_con.ty_params.iter().zip(ty_args.iter()) {
-        scheme = scheme.subst(&ty_param.0, ty_arg, loc);
+    // Replace the first type parameters of the scheme with `ty_args`.
+    assert!(ty_args.len() <= scheme.quantified_vars.len());
+
+    let substituted_quantified_vars: Vec<Id> = scheme
+        .quantified_vars
+        .iter()
+        .take(ty_args.len())
+        .map(|(id, _)| id.clone())
+        .collect();
+
+    for (quantified_var, ty_arg) in substituted_quantified_vars.iter().zip(ty_args.iter()) {
+        scheme = scheme.subst(quantified_var, ty_arg, loc);
     }
 
     Some(scheme)

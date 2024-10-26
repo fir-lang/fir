@@ -150,6 +150,15 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
         ast::Type::Record(fields) => {
             records.insert(RecordShape::from_named_things(fields));
         }
+
+        ast::Type::Fn(ast::FnType { args, ret }) => {
+            for arg in args {
+                visit_ty(&arg.node, records);
+            }
+            if let Some(ret) = ret {
+                visit_ty(&ret.node, records);
+            }
+        }
     }
 }
 
@@ -174,6 +183,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
             var: _,
             ty,
             expr,
+            expr_ty: _,
             body,
         }) => {
             if let Some(ty) = ty {

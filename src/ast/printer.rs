@@ -219,6 +219,21 @@ impl Type {
                 }
                 buffer.push(')');
             }
+
+            Type::Fn(FnType { args, ret }) => {
+                buffer.push_str("Fn(");
+                for (i, arg) in args.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    arg.node.print(buffer);
+                }
+                buffer.push(')');
+                if let Some(ret) = ret {
+                    buffer.push_str(": ");
+                    ret.node.print(buffer);
+                }
+            }
         }
     }
 }
@@ -289,6 +304,7 @@ impl Stmt {
                 var,
                 ty,
                 expr,
+                expr_ty: _,
                 body,
             }) => {
                 buffer.push_str("for ");

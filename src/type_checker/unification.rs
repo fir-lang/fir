@@ -63,6 +63,23 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
             }
         }
 
+        (Ty::Fun(args1, ret1), Ty::Fun(args2, ret2)) => {
+            if args1.len() != args2.len() {
+                panic!(
+                    "{}: Unable to unify functions {} and {} (argument numbers)",
+                    loc_display(loc),
+                    ty1,
+                    ty2
+                );
+            }
+
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                unify(arg1, arg2, cons, loc);
+            }
+
+            unify(ret1, ret2, cons, loc);
+        }
+
         (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }

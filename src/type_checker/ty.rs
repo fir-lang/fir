@@ -84,6 +84,13 @@ pub enum TyArgs {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TyVarRef(Rc<TyVar>);
 
+impl TyVarRef {
+    #[allow(unused)]
+    pub(super) fn loc(&self) -> ast::Loc {
+        self.0.loc.clone()
+    }
+}
+
 /// A unification variable.
 #[derive(Debug, Clone)]
 pub struct TyVar {
@@ -100,8 +107,6 @@ pub struct TyVar {
 
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
-    // TODO: We should make this a field/method of `Ty` and give all types locations.
-    #[allow(unused)]
     loc: ast::Loc,
 }
 
@@ -117,11 +122,12 @@ pub struct TyCon {
     pub id: Id,
 
     /// Type parameters with bounds.
-    pub(super) ty_params: Vec<(Id, Vec<Ty>)>,
+    pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
     /// Associated types. Currently these can't have bounds.
-    #[allow(unused)]
-    pub(super) assoc_tys: Set<Id>,
+    // TODO: This should be `Trait -> Assoc type -> Ty` to allow same associated types in different
+    // traits.
+    pub(super) assoc_tys: Map<Id, Ty>,
 
     /// Methods for traits, constructor for sums, fields for products.
     ///
@@ -145,13 +151,16 @@ pub(super) enum TyConDetails {
     ///
     /// For now, type synonyms are not allowed to have type parameters, and the RHS needs to have
     /// kind `*`.
-    Synonym(#[allow(unused)] Ty),
+    Synonym(Ty),
 }
 
 #[derive(Debug, Clone)]
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: Map<Id, TraitMethod>,
+
+    /// Associated types of the trait.
+    pub(super) assoc_tys: Set<Id>,
 
     /// Types implementing the trait.
     ///
@@ -199,6 +208,9 @@ pub(super) struct Pred {
     /// Type variable constrained by the predicate.
     ///
     /// `I` in the example.
+    ///
+    /// Note: location of this type variable is the declaration in the function definition, not the
+    /// use site that instantiated it.
     pub(super) ty_var: TyVarRef,
 
     /// Trait of the predicate.
@@ -212,13 +224,28 @@ pub(super) struct Pred {
     ///
     /// `{Item = A}`  in the exmaple.
     pub(super) assoc_tys: Map<Id, Ty>,
+
+    /// Location of the expression that created this predicate.
+    pub(super) loc: ast::Loc,
 }
 
 /// A predicate set.
 #[derive(Debug, Default, Clone)]
 pub(super) struct PredSet {
     /// Maps type variables to traits to associated types of the trait.
-    preds: Map<TyVarRef, Map<Id, Map<Id, Ty>>>,
+    preds: Map<TyVarRef, Map<Id, TraitBoundDetails>>,
+}
+
+// E.g. `Item = A` in `Iterator[Item = A]`.
+pub(super) type AssocTyMap = Map<Id, Ty>;
+
+#[derive(Debug, Clone)]
+pub(super) struct TraitBoundDetails {
+    /// Associated types of the bound. E.g. `Item = A` in `X: Iterator[Item = A]`.
+    pub(super) assoc_tys: AssocTyMap,
+
+    /// Location of the expression that generated the bound.
+    pub(super) loc: ast::Loc,
 }
 
 impl Scheme {
@@ -233,21 +260,31 @@ impl Scheme {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
-        let mut var_map: Map<Id, TyVarRef> = Default::default();
+        let mut var_map: Map<Id, Ty> = Default::default();
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
-        for (var, bounds) in &self.quantified_vars {
+        // Instantiate quantified variables of the scheme.
+        for (var, _bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
-            var_map.insert(var.clone(), instantiated_var.clone());
-            instantiations.push(instantiated_var.clone());
+            var_map.insert(var.clone(), Ty::Var(instantiated_var.clone()));
+            instantiations.push(instantiated_var);
+        }
 
+        // Add associated types, substitute instantiated types.
+        for (instantiation, (_var, bounds)) in
+            instantiations.iter().zip(self.quantified_vars.iter())
+        {
             for (trait_, assoc_tys) in bounds {
                 let pred = Pred {
-                    ty_var: instantiated_var.clone(),
+                    ty_var: instantiation.clone(),
                     trait_: trait_.clone(),
-                    assoc_tys: assoc_tys.clone(),
+                    assoc_tys: assoc_tys
+                        .iter()
+                        .map(|(assoc_ty, ty)| (assoc_ty.clone(), ty.subst_qvars(&var_map)))
+                        .collect(),
+                    loc: loc.clone(),
                 };
-                preds.add(pred, loc);
+                preds.add(pred);
             }
         }
 
@@ -271,6 +308,11 @@ impl Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
+        debug_assert!(self
+            .quantified_vars
+            .iter()
+            .any(|(var_, _bounds)| var_ == var));
+
         Scheme {
             quantified_vars: self
                 .quantified_vars
@@ -279,6 +321,15 @@ impl Scheme {
                 .cloned()
                 .collect(),
             ty: self.ty.subst(var, ty),
+            loc: self.loc.clone(),
+        }
+    }
+
+    /// Substitute `ty` for the `Self` type in the scheme.
+    pub(super) fn subst_self(&self, ty: &Ty) -> Scheme {
+        Scheme {
+            quantified_vars: self.quantified_vars.clone(),
+            ty: self.ty.subst_self(ty),
             loc: self.loc.clone(),
         }
     }
@@ -488,6 +539,26 @@ impl Ty {
         Ty::Con(SmolStr::new_static("Str"))
     }
 
+    pub(super) fn char() -> Ty {
+        Ty::Con(SmolStr::new_static("Char"))
+    }
+
+    pub(super) fn u8() -> Ty {
+        Ty::Con(SmolStr::new_static("U8"))
+    }
+
+    pub(super) fn i8() -> Ty {
+        Ty::Con(SmolStr::new_static("I8"))
+    }
+
+    pub(super) fn u32() -> Ty {
+        Ty::Con(SmolStr::new_static("U32"))
+    }
+
+    pub(super) fn i32() -> Ty {
+        Ty::Con(SmolStr::new_static("I32"))
+    }
+
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
@@ -544,7 +615,62 @@ impl Ty {
         }
     }
 
-    pub(super) fn subst_qvars(&self, vars: &Map<Id, TyVarRef>) -> Ty {
+    /// Substitute `ty` for the `Self` type in the type.
+    fn subst_self(&self, self_ty: &Ty) -> Ty {
+        match self {
+            Ty::Con(id) => {
+                if id == &SmolStr::new_static("Self") {
+                    self_ty.clone()
+                } else {
+                    Ty::Con(id.clone())
+                }
+            }
+
+            Ty::Var(var) => Ty::Var(var.clone()),
+
+            Ty::App(ty, tys) => Ty::App(
+                ty.clone(),
+                match tys {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_self(self_ty)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_self(self_ty)))
+                            .collect(),
+                    ),
+                },
+            ),
+
+            Ty::Record(fields) => Ty::Record(
+                fields
+                    .iter()
+                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
+                    .collect(),
+            ),
+
+            Ty::QVar(id) => Ty::QVar(id.clone()),
+
+            Ty::Fun(args, ret) => Ty::Fun(
+                args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
+                Box::new(ret.subst_self(self_ty)),
+            ),
+
+            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
+                args.iter()
+                    .map(|(name, ty_)| (name.clone(), ty_.subst_self(self_ty)))
+                    .collect(),
+                Box::new(ret.subst_self(self_ty)),
+            ),
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_self(self_ty)),
+                assoc_ty: assoc_ty.clone(),
+            },
+        }
+    }
+
+    pub(super) fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
         match self {
             Ty::Con(con) => Ty::Con(con.clone()),
 
@@ -571,11 +697,10 @@ impl Ty {
                     .collect(),
             ),
 
-            Ty::QVar(id) => Ty::Var(
-                vars.get(id)
-                    .cloned()
-                    .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
-            ),
+            Ty::QVar(id) => vars
+                .get(id)
+                .cloned()
+                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
@@ -602,6 +727,7 @@ impl Ty {
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
+
             Ty::Con(con) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
@@ -609,6 +735,26 @@ impl Ty {
                 },
                 None => self.clone(),
             },
+
+            Ty::AssocTySelect { ty, assoc_ty } => match ty.normalize(cons) {
+                Ty::Con(con) | Ty::App(con, _) => {
+                    let con = cons
+                        .get(&con)
+                        .unwrap_or_else(|| panic!("Unknown type constructor {}", con));
+                    match con.assoc_tys.get(assoc_ty) {
+                        Some(ty) => ty.clone(),
+                        None => panic!(
+                            "Associated type {} is not defined for type {}",
+                            assoc_ty, con.id
+                        ),
+                    }
+                }
+                ty => Ty::AssocTySelect {
+                    ty: Box::new(ty),
+                    assoc_ty: assoc_ty.clone(),
+                },
+            },
+
             _ => self.clone(),
         }
     }
@@ -617,6 +763,7 @@ impl Ty {
     pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
+
             Ty::Con(con) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
@@ -624,6 +771,7 @@ impl Ty {
                 },
                 None => self.clone(),
             },
+
             Ty::App(con, args) => Ty::App(
                 con.clone(),
                 match args {
@@ -637,26 +785,31 @@ impl Ty {
                     ),
                 },
             ),
+
             Ty::Record(fields) => Ty::Record(
                 fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
                     .collect(),
             ),
+
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
                 Box::new(ret.deep_normalize(cons)),
             ),
+
             Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
                 args.iter()
                     .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
                     .collect(),
                 Box::new(ret.deep_normalize(cons)),
             ),
+
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.deep_normalize(cons)),
                 assoc_ty: assoc_ty.clone(),
             },
+
             Ty::QVar(_) => panic!(),
         }
     }
@@ -787,36 +940,38 @@ impl TyArgs {
 }
 
 impl PredSet {
-    pub(super) fn add(&mut self, pred: Pred, loc: &ast::Loc) {
+    pub(super) fn add(&mut self, pred: Pred) {
         let Pred {
             ty_var,
             trait_,
             assoc_tys,
+            loc,
         } = pred;
-
         let trait_map = self.preds.entry(ty_var.clone()).or_default();
-
-        // TODO: Give unification variables
-        let old = trait_map.insert(trait_.clone(), assoc_tys);
+        let bound_details = TraitBoundDetails {
+            assoc_tys,
+            loc: loc.clone(),
+        };
+        let old = trait_map.insert(trait_.clone(), bound_details);
         if old.is_some() {
             panic!(
                 "{}: Type variable {:?} already has a constraint on trait {}",
-                loc_display(loc),
+                loc_display(&loc),
                 ty_var,
                 trait_
             );
         }
     }
 
-    #[allow(unused)]
     pub(super) fn into_preds(mut self) -> Vec<Pred> {
         let mut preds: Vec<Pred> = vec![];
         for (ty_var, trait_map) in self.preds.drain() {
-            for (trait_, assoc_tys) in trait_map {
+            for (trait_, TraitBoundDetails { assoc_tys, loc }) in trait_map {
                 preds.push(Pred {
                     ty_var: ty_var.clone(),
                     trait_,
                     assoc_tys,
+                    loc,
                 });
             }
         }
