@@ -271,17 +271,25 @@ impl Scheme {
         let mut var_map: Map<Id, Ty> = Default::default();
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
-        // Instantiate quantified variables of the scheme, add bounds to `preds`.
-        for (var, bounds) in &self.quantified_vars {
+        // Instantiate quantified variables of the scheme.
+        for (var, _bounds) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, self.loc.clone());
             var_map.insert(var.clone(), Ty::Var(instantiated_var.clone()));
-            instantiations.push(instantiated_var.clone());
+            instantiations.push(instantiated_var);
+        }
 
+        // Add associated types, substitute instantiated types.
+        for (instantiation, (_var, bounds)) in
+            instantiations.iter().zip(self.quantified_vars.iter())
+        {
             for (trait_, assoc_tys) in bounds {
                 let pred = Pred {
-                    ty_var: instantiated_var.clone(),
+                    ty_var: instantiation.clone(),
                     trait_: trait_.clone(),
-                    assoc_tys: assoc_tys.clone(),
+                    assoc_tys: assoc_tys
+                        .iter()
+                        .map(|(assoc_ty, ty)| (assoc_ty.clone(), ty.subst_qvars(&var_map)))
+                        .collect(),
                     loc: loc.clone(),
                 };
                 preds.add(pred);
