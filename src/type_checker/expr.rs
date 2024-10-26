@@ -106,10 +106,11 @@ pub(super) fn check_expr(
                         loc_display(&object.loc)
                     ),
 
-                    Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => {
+                    other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _)) => {
                         panic!(
-                            "{}: Object in field selection does not have fields: {:?}",
+                            "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),
+                            other,
                             object_ty
                         )
                     }

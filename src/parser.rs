@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: f8047b0c0449980c7ba166a7959322064bce453c4e45765a918bb48e45aef13b
+// sha3: ae3cdddd947aa4e675007385eeb288d1935ae5c0409fd8f12b570b42d0b04b16
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -37176,6 +37176,7 @@ fn __action42<'a>(
         var: id.smol_str(),
         ty: None,
         expr,
+        expr_ty: None,
         body: statements,
     })
 }

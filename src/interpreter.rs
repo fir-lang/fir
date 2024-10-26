@@ -257,6 +257,15 @@ enum FunKind {
     Source(ast::FunDecl),
 }
 
+impl FunKind {
+    fn as_source(&self) -> &ast::FunDecl {
+        match self {
+            FunKind::Builtin(_) => panic!(),
+            FunKind::Source(fun) => fun,
+        }
+    }
+}
+
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
 #[derive(Debug)]
@@ -704,45 +713,57 @@ fn exec<W: Write>(
                 var,
                 ty: _,
                 expr,
+                expr_ty: _,
                 body,
             }) => {
-                let (from, to, inclusive) = match &expr.node {
-                    ast::Expr::Range(ast::RangeExpr {
-                        from,
-                        to,
-                        inclusive,
-                    }) => (from, to, inclusive),
-                    _ => panic!(
-                        "Interpreter only supports for loops with a range expression in the head"
-                    ),
-                };
+                let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
 
-                let from = val!(eval(w, pgm, heap, locals, &from.node, &from.loc));
-                let from = val_as_i32(from);
+                let next_method = pgm.associated_funs[heap[iter] as usize]
+                    .get("next")
+                    .unwrap();
 
-                let to = val!(eval(w, pgm, heap, locals, &to.node, &to.loc));
-                let to = val_as_i32(to);
+                // Get the monomorphised `next` from the return type of the method.
+                let iter_named_ty: &ast::NamedType = next_method
+                    .kind
+                    .as_source()
+                    .sig
+                    .return_ty
+                    .as_ref()
+                    .unwrap()
+                    .node
+                    .as_named_type();
 
-                if *inclusive {
-                    for i in from..=to {
-                        locals.insert(var.clone(), i32_as_val(i));
-                        match exec(w, pgm, heap, locals, body) {
-                            ControlFlow::Val(_) => {}
-                            ControlFlow::Ret(val) => {
-                                locals.remove(var);
-                                return ControlFlow::Ret(val);
-                            }
+                debug_assert!(iter_named_ty.args.is_empty());
+
+                let option_ty_con = pgm.ty_cons.get(&iter_named_ty.name).unwrap();
+
+                let some_tag: u64 = option_ty_con
+                    .value_constrs
+                    .iter()
+                    .enumerate()
+                    .find_map(|(idx, constr)| {
+                        if constr.name == Some(SmolStr::new_static("Some")) {
+                            Some(idx as u64 + option_ty_con.type_tag)
+                        } else {
+                            None
                         }
+                    })
+                    .unwrap();
+
+                loop {
+                    let next_item_option = call(w, pgm, heap, next_method, vec![iter], &expr.loc);
+                    if heap[next_item_option] != some_tag {
+                        break;
                     }
-                } else {
-                    for i in from..to {
-                        locals.insert(var.clone(), i32_as_val(i));
-                        match exec(w, pgm, heap, locals, body) {
-                            ControlFlow::Val(_) => {}
-                            ControlFlow::Ret(val) => {
-                                locals.remove(var);
-                                return ControlFlow::Ret(val);
-                            }
+
+                    let value = heap[next_item_option + 1];
+                    locals.insert(var.clone(), value);
+
+                    match exec(w, pgm, heap, locals, body) {
+                        ControlFlow::Val(_) => {}
+                        ControlFlow::Ret(val) => {
+                            locals.remove(var);
+                            return ControlFlow::Ret(val);
                         }
                     }
                 }

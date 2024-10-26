@@ -18,7 +18,7 @@ impl[T] Vec[T]:
 
         if self._len == cap:
             let newData = Array.new(cap * 2)
-            for i in 0u32 .. cap:
+            for i in range(0u32, cap):
                 newData.set(i, self._data.get(i))
             self._data = newData
 

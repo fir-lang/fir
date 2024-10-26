@@ -320,15 +320,36 @@ fn mono_stmt(
             var,
             ty,
             expr,
+            expr_ty,
             body,
-        }) => ast::Stmt::For(ast::ForStmt {
-            var: var.clone(),
-            ty: ty
-                .as_ref()
-                .map(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)),
-            expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
-            body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
-        }),
+        }) => {
+            // Interpreter will call `next` on `expr`, monomorphise the `next` member.
+            let mono_expr_ty = mono_ty(
+                &ty_to_ast(expr_ty.as_ref().unwrap(), ty_map),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            );
+
+            mono_method(
+                expr_ty.as_ref().unwrap(),
+                &[],
+                &SmolStr::new_static("next"),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            );
+
+            ast::Stmt::For(ast::ForStmt {
+                var: var.clone(),
+                ty: ty
+                    .as_ref()
+                    .map(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)),
+                expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
+                expr_ty: Some(mono_ast_ty_to_ty(&mono_expr_ty)),
+                body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+            })
+        }
 
         ast::Stmt::While(ast::WhileStmt { cond, body }) => ast::Stmt::While(ast::WhileStmt {
             cond: cond.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
@@ -409,49 +430,14 @@ fn mono_expr(
             method,
             ty_args,
         }) => {
-            let poly_object_ty = ty_to_ast(object_ty.as_ref().unwrap(), ty_map);
-
-            let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
-
-            let mono_receiver_ty_id = match &mono_object_ty {
-                ast::Type::Named(ast::NamedType { name, args }) => {
-                    assert!(args.is_empty());
-                    name
-                }
-                ast::Type::Record(_) => panic!(),
-                ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
-            };
-
-            let mono_ty_args: Vec<ast::Type> = ty_args
-                .iter()
-                .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
-                .collect();
-
-            let mono_method_id = match &poly_object_ty {
-                ast::Type::Named(ast::NamedType { name, args }) => {
-                    let ty_con = poly_pgm.ty.get(name).unwrap();
-                    assert_eq!(ty_con.type_params.len(), args.len());
-
-                    let fun = poly_pgm.associated.get(name).unwrap().get(method).unwrap();
-
-                    let mut assoc_fn_ty_map = ty_map.clone();
-                    for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
-                        assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
-                    }
-
-                    mono_assoc_fn(
-                        mono_receiver_ty_id,
-                        fun,
-                        &assoc_fn_ty_map,
-                        &mono_ty_args,
-                        poly_pgm,
-                        mono_pgm,
-                    )
-                }
-                ast::Type::Record(_) => panic!(),
-                ast::Type::Fn(_) => panic!(),
-            };
-
+            let (mono_method_id, mono_object_ty) = mono_method(
+                object_ty.as_ref().unwrap(),
+                ty_args,
+                method,
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            );
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
             ast::Expr::MethodSelect(ast::MethodSelectExpr {
                 object: mono_object,
@@ -653,6 +639,61 @@ fn mono_expr(
             expr_ty: expr_ty.clone(),
             target_ty: target_ty.clone(),
         }),
+    }
+}
+
+fn mono_method(
+    poly_object_ty: &Ty,
+    ty_args: &[Ty],
+    method: &Id,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> (Id, ast::Type) {
+    let poly_object_ty = ty_to_ast(poly_object_ty, ty_map);
+
+    let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
+
+    let mono_receiver_ty_id = match &mono_object_ty {
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            assert!(args.is_empty());
+            name
+        }
+        ast::Type::Record(_) => panic!(),
+        ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
+    };
+
+    let mono_ty_args: Vec<ast::Type> = ty_args
+        .iter()
+        .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
+        .collect();
+
+    match &poly_object_ty {
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            let ty_con = poly_pgm.ty.get(name).unwrap();
+            assert_eq!(ty_con.type_params.len(), args.len());
+
+            let fun = poly_pgm.associated.get(name).unwrap().get(method).unwrap();
+
+            let mut assoc_fn_ty_map = ty_map.clone();
+            for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
+                assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
+            }
+
+            (
+                mono_assoc_fn(
+                    mono_receiver_ty_id,
+                    fun,
+                    &assoc_fn_ty_map,
+                    &mono_ty_args,
+                    poly_pgm,
+                    mono_pgm,
+                ),
+                mono_object_ty,
+            )
+        }
+        ast::Type::Record(_) => panic!(),
+        ast::Type::Fn(_) => panic!(),
     }
 }
 

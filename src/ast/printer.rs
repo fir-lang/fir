@@ -303,6 +303,7 @@ impl Stmt {
                 var,
                 ty,
                 expr,
+                expr_ty: _,
                 body,
             }) => {
                 buffer.push_str("for ");

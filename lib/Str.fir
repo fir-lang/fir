@@ -13,7 +13,7 @@ impl Str:
     # Copied the bytes, does not validate UTF-8.
     fn fromUtf8Vec(bytes: Vec[U8]): Str =
         let copied = Array.new(bytes.len())
-        for i in 0u32 .. bytes.len():
+        for i in range(0u32, bytes.len()):
             copied.set(i, bytes.get(i))
         Str(_bytes = copied, _start = 0, _len = copied.len())
 
@@ -42,7 +42,7 @@ impl Str:
         if self.len() < prefix.len():
             return Bool.False
 
-        for i in 0u32 .. prefix.len():
+        for i in range(0u32, prefix.len()):
             if self._bytes.get(i + self._start) != prefix._bytes.get(i + prefix._start):
                 return Bool.False
 
@@ -91,7 +91,7 @@ impl Eq for Str:
         if self.len() != other.len():
             return Bool.False
 
-        for i in 0u32 .. self.len():
+        for i in range(0u32, self.len()):
             if self._bytes.get(i + self._start) != other._bytes.get(i + other._start):
                 return Bool.False
 

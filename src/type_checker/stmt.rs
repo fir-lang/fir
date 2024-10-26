@@ -247,59 +247,43 @@ fn check_stmt(
             var,
             ty,
             expr,
+            expr_ty,
             body,
         }) => {
+            assert!(expr_ty.is_none());
+
             let ty = ty
                 .as_ref()
                 .map(|ty| convert_ast_ty(&tys.tys, ty, &stmt.loc));
 
-            // Special case range expression. For now range expressions are only allowed in `for`
-            // loops, and the types of expression in the range start and end need to resolve to a
-            // type we know how to increment and compare (e.g. `I32` and other number types).
-            let item_ty: Ty = match &mut expr.node {
-                ast::Expr::Range(ast::RangeExpr {
-                    from,
-                    to,
-                    inclusive: _,
-                }) => {
-                    let from_ty = check_expr(
-                        from,
-                        ty.as_ref(),
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        tys,
-                        preds,
-                    );
+            // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
+            // with fresh type `A`.
+            let iterator_ty = var_gen.new_var(level, expr.loc.clone());
 
-                    let to_ty = check_expr(
-                        to,
-                        Some(&from_ty),
-                        return_ty,
-                        level,
-                        env,
-                        var_gen,
-                        tys,
-                        preds,
-                    );
+            // TODO: loc should be the loc of `var`, which we don't have.
+            let item_ty = ty
+                .clone()
+                .unwrap_or_else(|| Ty::Var(var_gen.new_var(level, expr.loc.clone())));
 
-                    let to_ty = to_ty.normalize(tys.tys.cons());
+            preds.add(Pred {
+                ty_var: iterator_ty.clone(),
+                trait_: SmolStr::new_static("Iterator"),
+                assoc_tys: [(SmolStr::new_static("Item"), item_ty.clone())]
+                    .into_iter()
+                    .collect(),
+                loc: stmt.loc.clone(),
+            });
 
-                    let known_ty = match &to_ty {
-                        Ty::Con(con) => matches!(con.as_str(), "I32" | "U32" | "I8" | "U8"),
-                        _ => false,
-                    };
-
-                    if !known_ty {
-                        panic!("{}: Don't know how to iterate type {}", loc_display(&expr.loc), &to_ty);
-                    }
-
-                    to_ty
-                }
-
-                _ => panic!("{}: For now `for` loops can only have range expressions in the iterator position", loc_display(&expr.loc)),
-            };
+            *expr_ty = Some(check_expr(
+                expr,
+                Some(&Ty::Var(iterator_ty.clone())),
+                return_ty,
+                level,
+                env,
+                var_gen,
+                tys,
+                preds,
+            ));
 
             env.enter();
             env.insert(var.clone(), item_ty);

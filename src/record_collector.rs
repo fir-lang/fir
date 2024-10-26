@@ -182,6 +182,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>) {
             var: _,
             ty,
             expr,
+            expr_ty: _,
             body,
         }) => {
             if let Some(ty) = ty {

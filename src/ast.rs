@@ -336,6 +336,7 @@ pub struct ForStmt {
     pub var: Id,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
+    pub expr_ty: Option<Ty>, // filled in by the type checker
     pub body: Vec<L<Stmt>>,
 }
 
@@ -686,6 +687,13 @@ impl Type {
                     .as_ref()
                     .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_var(var, ty)))),
             }),
+        }
+    }
+
+    pub fn as_named_type(&self) -> &NamedType {
+        match self {
+            Type::Named(named_type) => named_type,
+            _ => panic!(),
         }
     }
 }

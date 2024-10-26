@@ -330,6 +330,7 @@ Stmt: Stmt = {
             var: id.smol_str(),
             ty: None,
             expr,
+            expr_ty: None,
             body: statements,
         }),
 
