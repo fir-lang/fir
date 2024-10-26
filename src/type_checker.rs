@@ -1297,17 +1297,10 @@ fn resolve_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds:
 
                     let expected_ty = ty.normalize(tys.tys.cons());
 
-                    // TODO: Syntactic equality OK?
-                    if expected_ty != assoc_ty {
-                        panic!(
-                            "{}: Associated type {}.{} ({}) is not {}",
-                            loc_display(&loc),
-                            ty_var_ty,
-                            assoc_ty_id,
-                            assoc_ty,
-                            expected_ty,
-                        );
-                    }
+                    // TODO: We could show where the associated type is coming from in the error
+                    // messages here, e.g. instead of `Unable to unify Str and I32`, we could say
+                    // `Unable to unify MyType.AssocTy (Str) and I32`.
+                    unification::unify(&assoc_ty, &expected_ty, tys.tys.cons(), &loc);
                 }
             }
 
