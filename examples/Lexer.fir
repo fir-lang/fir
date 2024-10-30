@@ -51,13 +51,13 @@ lexer Lexer:
 
         ['0'-'9']+:
             match I64.fromStr(lexeme()):
-                Ok(i): Ok(Token.Int(i))
-                Err(_): Err(LexErr.InvalidInt(found = lexeme()))
+                Result.Ok(i): Ok(Token.Int(i))
+                Result.Err(_): Err(LexErr.InvalidInt(found = lexeme()))
 
         ['0'-'9']+ '.' ['0'-'9']*:
             match F64.fromStr(lexeme()):
-                Ok(f): Ok(Token.Float(f))
-                Err(_): Err(LexErr.InvalidFloat(found = lexeme()))
+                Result.Ok(f): Ok(Token.Float(f))
+                Result.Err(_): Err(LexErr.InvalidFloat(found = lexeme()))
 
         "(*":
             state().comment_depth = 1
