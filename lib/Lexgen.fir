@@ -24,7 +24,9 @@ type LexerCommon[S]:
 
     _input: Str
 
-    _iter: Peekable[Chars]
+    _iter: CharIter
+
+    _peeked: Option[Option[Char]]
 
     # Start of the current match.
     _currentMatchStart: Loc
