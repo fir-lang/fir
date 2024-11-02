@@ -7,57 +7,55 @@ type Token:
 type LexerState:
     comentDepth: U32
 
-#|
-Defines type:
+fn t[E](token: Token): Result[E, Token] =
+    Result.Ok(token)
 
-... TODO
-|#
 lexer Lexer:
     rule Init:
-        [' ' '\t' '\n']+: Token.Whitespace
+        [' ' '\t' '\n']+: t(Token.Whitespace)
 
-        "(": Token.LParen
-        ")": Token.RParen
-        "true": Token.Bool(true)
-        "false": Token.Bool(false)
-        "not": Token.Not
-        "if": Token.If
-        "then": Token.Then
-        "else": Token.Else
-        "let": Token.Let
-        "rec": Token.Rec
-        "in": Token.In
-        "-": Token.Minus
-        "-.": Token.MinusDot
-        "+": Token.Plus
-        "+.": Token.PlusDot
-        "*.": Token.AstDot
-        "/.": Token.SlashDot
-        "=": Token.Equal
-        "<>": Token.LessGreater
-        "<=": Token.LessEqual
-        "<-": Token.LessMinus
-        "<": Token.Less
-        ">=": Token.GreaterEqual
-        ">": Token.Greater
-        ".": Token.Dot
-        ",": Token.Comma
-        ";": Token.Semicolon
-        "_": Token.Underscore
-        "Array.create": Token.ArrayCreate
-        "Array.make": Token.ArrayCreate
+        "(": t(Token.LParen)
+        ")": t(Token.RParen)
+        "true": t(Token.Bool(true))
+        "false": t(Token.Bool(false))
+        "not": t(Token.Not)
+        "if": t(Token.If)
+        "then": t(Token.Then)
+        "else": t(Token.Else)
+        "let": t(Token.Let)
+        "rec": t(Token.Rec)
+        "in": t(Token.In)
+        "-": t(Token.Minus)
+        "-.": t(Token.MinusDot)
+        "+": t(Token.Plus)
+        "+.": t(Token.PlusDot)
+        "*.": t(Token.AstDot)
+        "/.": t(Token.SlashDot)
+        "=": t(Token.Equal)
+        "<>": t(Token.LessGreater)
+        "<=": t(Token.LessEqual)
+        "<-": t(Token.LessMinus)
+        "<": t(Token.Less)
+        ">=": t(Token.GreaterEqual)
+        ">": t(Token.Greater)
+        ".": t(Token.Dot)
+        ",": t(Token.Comma)
+        ";": t(Token.Semicolon)
+        "_": t(Token.Underscore)
+        "Array.create": t(Token.ArrayCreate)
+        "Array.make": t(Token.ArrayCreate)
 
-        ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*: Token.Id(lexeme())
+        ['a'-'z'] ['a'-'z' 'A'-'Z' '_' '0'-'9']*: t(Token.Id(lexeme()))
 
         ['0'-'9']+:
-            match I64.fromStr(lexeme()):
-                Result.Ok(i): Ok(Token.Int(i))
-                Result.Err(_): Err(LexErr.InvalidInt(found = lexeme()))
+            match I32.fromStr(lexeme()):
+                Result.Ok(i): Result.Ok(Token.Int(i))
+                Result.Err(_): Result.Err(LexErr.InvalidInt(found = lexeme()))
 
-        ['0'-'9']+ '.' ['0'-'9']*:
-            match F64.fromStr(lexeme()):
-                Result.Ok(f): Ok(Token.Float(f))
-                Result.Err(_): Err(LexErr.InvalidFloat(found = lexeme()))
+        # ['0'-'9']+ '.' ['0'-'9']*:
+        #     match F64.fromStr(lexeme()):
+        #         Result.Ok(f): Result.Ok(Token.Float(f))
+        #         Result.Err(_): Result.Err(LexErr.InvalidFloat(found = lexeme()))
 
         "(*":
             state().comment_depth = 1
