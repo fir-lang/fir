@@ -49,6 +49,7 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
+    desugar(module);
     let mut tys = collect_types(module);
     for decl in module {
         match &mut decl.node {
@@ -64,11 +65,30 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 
             ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys),
 
-            ast::TopDecl::Lexer(_) => todo!(),
+            ast::TopDecl::Lexer(lexer) => {
+                dbg!(lexer);
+                todo!();
+            }
         }
     }
 
     tys
+}
+
+/// Desugar lexer declarations.
+fn desugar(module: &mut ast::Module) {
+    let decls = std::mem::replace(module, Vec::with_capacity(module.len()));
+    for ast::L { loc, node } in decls {
+        match node {
+            ast::TopDecl::Lexer(l) => {
+                module.extend(crate::lexgen::desugar(l));
+            }
+
+            other => {
+                module.push(ast::L { loc, node: other });
+            }
+        }
+    }
 }
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
@@ -86,6 +106,7 @@ fn collect_types(module: &mut ast::Module) -> PgmTypes {
     }
 }
 
+// `mut` module to be able to add missing default methods to impls.
 fn collect_cons(module: &mut ast::Module) -> TyMap {
     let mut tys: TyMap = Default::default();
 

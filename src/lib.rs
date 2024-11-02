@@ -6,6 +6,7 @@ mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
+mod lexgen;
 mod monomorph;
 mod parser;
 mod parser_utils;
