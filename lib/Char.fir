@@ -23,6 +23,23 @@ impl Char:
         else:
             4
 
+    fn isAsciiWhitesapce(self): Bool =
+        self == ' ' || self == '\t' || self == '\n' || self == '\r'
+            # TODO:
+            # || self == '\x0C'
+
+    fn isAsciiUppercase(self): Bool =
+        self._codePoint >= 'A'._codePoint && self._codePoint <= 'Z'._codePoint
+
+    fn isAsciiLowercase(self): Bool =
+        self._codePoint >= 'a'._codePoint && self._codePoint <= 'z'._codePoint
+
+    fn isAsciiDigit(self): Bool =
+        self._codePoint >= '0'._codePoint && self._codePoint <= '9'._codePoint
+
+    fn isAsciiAlphanumeric(self): Bool =
+        self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
+
 impl ToStr for Char:
     fn toStr(self): Str =
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
