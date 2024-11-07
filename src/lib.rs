@@ -252,7 +252,7 @@ mod wasm {
         std::panic::set_hook(Box::new(hook_impl));
     }
 
-    fn hook_impl(panic_info: &std::panic::PanicInfo) {
+    fn hook_impl(panic_info: &std::panic::PanicHookInfo) {
         if let Some(s) = panic_info.payload().downcast_ref::<String>() {
             add_interpreter_output(s);
         } else if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
