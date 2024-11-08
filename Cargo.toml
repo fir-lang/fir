@@ -19,9 +19,13 @@ lalrpop-util = "0.20.2"
 lazy_static = "1.4.0"
 lexgen = "0.15.0"
 lexgen_util = "0.15.0"
+rustc_tools_util = "0.4.0"
 smol_str = "0.2.2"
 wasm-bindgen = "0.2"
 web-sys = { version = "0.3.69", features = ["XmlHttpRequest", "XmlHttpRequestResponseType"] }
+
+[build-dependencies]
+rustc_tools_util = "0.4.0"
 
 [profile.release]
 panic = "abort"

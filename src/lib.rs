@@ -280,6 +280,11 @@ mod wasm {
         interpreter::run(&mut w, module, "main", Some(input.trim()));
     }
 
+    #[wasm_bindgen(js_name = "version")]
+    pub fn version() -> String {
+        rustc_tools_util::get_version_info!().to_string()
+    }
+
     struct WasmOutput;
 
     impl Write for WasmOutput {
