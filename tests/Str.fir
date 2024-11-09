@@ -17,6 +17,21 @@ fn main() =
     for char in s.chars():
         printStr(char.toStr())
 
+    let charIter = s.chars()
+    printStr(charIter.asStr())
+    charIter.next()
+    printStr(charIter.asStr())
+    charIter.next()
+    printStr(charIter.asStr())
+    charIter.next()
+    printStr(charIter.asStr())
+    charIter.next()
+
+    # goldentests ignores trailing empty lines, so add some noise to the last empty lines.
+    printStr("\"`charIter.asStr()`\"")
+    charIter.next()
+    printStr("\"`charIter.asStr()`\"")
+
 # expected stdout:
 # Bool.True
 # Bool.True
@@ -34,3 +49,9 @@ fn main() =
 # 'α'
 # 'あ'
 # '💩'
+#  αあ💩
+# αあ💩
+# あ💩
+# 💩
+# \"\"
+# \"\"

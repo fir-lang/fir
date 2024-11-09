@@ -110,6 +110,15 @@ type CharIter:
     # End index.
     _end: U32
 
+impl CharIter:
+    # Get the slice of the original string, starting from the current iteration point.
+    fn asStr(self): Str =
+        Str(
+            _bytes = self._bytes,
+            _start = self._idx,
+            _len = self._end - self._idx
+        )
+
 impl Iterator for CharIter:
     type Item = Char
 
