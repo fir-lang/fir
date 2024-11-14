@@ -106,7 +106,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         id: ty_name.clone(),
                         ty_params: ty_params
                             .into_iter()
-                            .map(|ty| (ty, Default::default()))
+                            .map(|(ty, bounds)| (ty, Default::default()))
                             .collect(),
                         assoc_tys: Default::default(),
                         details: TyConDetails::Type(TypeDetails { cons: vec![] }),
@@ -790,11 +790,17 @@ fn collect_schemes(
                     }
                 };
 
-                for ty_var in &ty_decl.node.type_params {
+                for (ty_var, bounds) in &ty_decl.node.type_params {
                     tys.insert_var(ty_var.clone(), Ty::QVar(ty_var.clone()));
                 }
 
-                let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
+                let ty_vars: Set<Id> = ty_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .map(|(ty_var, bounds)| ty_var)
+                    .cloned()
+                    .collect();
 
                 let ret = if ty_vars.is_empty() {
                     Ty::Con(ty_decl.node.name.clone())
@@ -806,7 +812,7 @@ fn collect_schemes(
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_var| Ty::QVar(ty_var.clone()))
+                                .map(|(ty_var, bounds)| Ty::QVar(ty_var.clone()))
                                 .collect(),
                         ),
                     )
@@ -831,7 +837,9 @@ fn collect_schemes(
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|ty_param| (ty_param.clone(), Default::default()))
+                                    .map(|(ty_param, bounds)| {
+                                        (ty_param.clone(), Default::default())
+                                    })
                                     .collect(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -863,7 +871,7 @@ fn collect_schemes(
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_param| (ty_param.clone(), Default::default()))
+                                .map(|(ty_param, bounds)| (ty_param.clone(), Default::default()))
                                 .collect(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc

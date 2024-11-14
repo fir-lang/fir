@@ -146,11 +146,15 @@ TypeDeclRhs: TypeDeclRhs = {
         TypeDeclRhs::Product(ConstructorFields::Named(named_fields)),
 }
 
-TypeParams: Vec<Id> = {
+TypeParams: Vec<(Id, Vec<L<Type>>)> = {
     => vec![],
+    "[" <params:Sep<TyIdWithBounds, ",">> "]" => params,
+}
 
-    "[" <params:Sep<UpperId, ",">> "]" =>
-        params.into_iter().map(|id| id.smol_str()).collect(),
+TyIdWithBounds: (Id, Vec<L<Type>>) = {
+    <id:UpperId> => (id.smol_str(), vec![]),
+
+    <id:UpperId> ":" <bounds:Sep<LType, "+">> => (id.smol_str(), bounds),
 }
 
 TypeConstrs: Vec<ConstructorDecl> = {

@@ -19,7 +19,7 @@ impl TypeDecl {
 
         if !self.type_params.is_empty() {
             buffer.push('[');
-            for (i, type_param) in self.type_params.iter().enumerate() {
+            for (i, (type_param, bounds)) in self.type_params.iter().enumerate() {
                 buffer.push_str(type_param.as_str());
                 if i != self.type_params.len() - 1 {
                     buffer.push_str(", ");

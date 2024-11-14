@@ -498,6 +498,7 @@ fn mono_expr(
             let assoc_fn_ty_map: Map<Id, ast::Type> = ty_decl
                 .type_params
                 .iter()
+                .map(|(ty_param, _bounds)| ty_param)
                 .cloned()
                 .zip(mono_ty_args.iter().cloned())
                 .collect();
@@ -680,7 +681,7 @@ fn mono_method(
             let fun = poly_pgm.associated.get(name).unwrap().get(method).unwrap();
 
             let mut assoc_fn_ty_map = ty_map.clone();
-            for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
+            for ((ty_param, _bounds), ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
                 assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
             }
 
@@ -951,6 +952,7 @@ fn mono_ty_decl(
     let ty_map: Map<Id, ast::Type> = ty_decl
         .type_params
         .iter()
+        .map(|(ty_param, _bounds)| ty_param)
         .cloned()
         .zip(args.iter().cloned())
         .collect();
