@@ -942,6 +942,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
             &mut var_gen,
             tys,
             &mut preds,
+            0,
         );
 
         for stmt in &mut body.node {
@@ -1062,6 +1063,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     &mut var_gen,
                     tys,
                     &mut preds,
+                    0,
                 );
 
                 for stmt in &mut body.node {
@@ -1177,6 +1179,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     &mut var_gen,
                     tys,
                     &mut preds,
+                    0,
                 );
 
                 for stmt in &mut body.node {

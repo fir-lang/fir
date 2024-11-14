@@ -275,6 +275,10 @@ enum ControlFlow {
 
     /// Return value from the function.
     Ret(u64),
+
+    Break,
+
+    Continue,
 }
 
 fn val_as_i8(val: u64) -> i8 {
@@ -314,6 +318,8 @@ macro_rules! val {
         match $expr {
             ControlFlow::Val(val) => val,
             ControlFlow::Ret(val) => return ControlFlow::Ret(val),
+            ControlFlow::Break => return ControlFlow::Break,
+            ControlFlow::Continue => return ControlFlow::Continue,
         }
     };
 }
@@ -557,6 +563,7 @@ fn call_source_fun<W: Write>(
 
     match exec(w, pgm, heap, &mut locals, &fun.body.as_ref().unwrap().node) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => val,
+        ControlFlow::Break | ControlFlow::Continue => panic!(),
     }
 }
 
@@ -673,6 +680,14 @@ fn exec<W: Write>(
 
     for stmt in stmts {
         return_value = match &stmt.node {
+            ast::Stmt::Break => {
+                return ControlFlow::Break;
+            }
+
+            ast::Stmt::Continue => {
+                return ControlFlow::Continue;
+            }
+
             ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
                 match try_bind_pat(pgm, heap, lhs, val) {
@@ -706,6 +721,8 @@ fn exec<W: Write>(
                 match exec(w, pgm, heap, locals, body) {
                     ControlFlow::Val(_val) => {}
                     ControlFlow::Ret(val) => return ControlFlow::Ret(val),
+                    ControlFlow::Break => break 0,
+                    ControlFlow::Continue => continue,
                 }
             },
 
@@ -765,6 +782,8 @@ fn exec<W: Write>(
                             locals.remove(var);
                             return ControlFlow::Ret(val);
                         }
+                        ControlFlow::Break => break,
+                        ControlFlow::Continue => continue,
                     }
                 }
 

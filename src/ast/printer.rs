@@ -272,6 +272,14 @@ impl FunSig {
 impl Stmt {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
+            Stmt::Break => {
+                buffer.push_str("break");
+            }
+
+            Stmt::Continue => {
+                buffer.push_str("continue");
+            }
+
             Stmt::Let(LetStmt { lhs, ty, rhs }) => {
                 buffer.push_str("let ");
                 lhs.node.print(buffer);

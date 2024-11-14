@@ -22,6 +22,8 @@ pub enum TokenKind {
 
     // Keywords
     As,
+    Break,
+    Continue,
     Elif,
     Else,
     Export,

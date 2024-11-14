@@ -57,6 +57,8 @@ extern {
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
         "as" => Token { kind: TokenKind::As, .. },
+        "break" => Token { kind: TokenKind::Break, .. },
+        "continue" => Token { kind: TokenKind::Continue, .. },
         "type" => Token { kind: TokenKind::Type, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
         "Fn" => Token { kind: TokenKind::UpperFn, .. },
@@ -306,6 +308,10 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
+    "break" NEWLINE => Stmt::Break,
+
+    "continue" NEWLINE => Stmt::Continue,
+
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
 

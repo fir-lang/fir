@@ -245,6 +245,8 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
+    Break,
+    Continue,
 }
 
 /// A let statement: `let x: T = expr`.

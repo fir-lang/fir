@@ -298,6 +298,10 @@ fn mono_stmt(
     mono_pgm: &mut PgmGraph,
 ) -> ast::Stmt {
     match stmt {
+        ast::Stmt::Break => ast::Stmt::Break,
+
+        ast::Stmt::Continue => ast::Stmt::Continue,
+
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => ast::Stmt::Let(ast::LetStmt {
             lhs: lhs.map_as_ref(|lhs| mono_pat(lhs, ty_map, poly_pgm, mono_pgm)),
             ty: ty

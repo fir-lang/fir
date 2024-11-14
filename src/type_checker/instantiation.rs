@@ -5,6 +5,8 @@ use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
+        ast::Stmt::Break | ast::Stmt::Continue => {}
+
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
             normalize_pat(&mut lhs.node, cons);
             normalize_expr(&mut rhs.node, cons);

@@ -27,6 +27,8 @@ lexgen::lexer! {
 
         // Keywords
         "as" = TokenKind::As,
+        "break" = TokenKind::Break,
+        "continue" = TokenKind::Continue,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
         "export" = TokenKind::Export,

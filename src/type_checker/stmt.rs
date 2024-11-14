@@ -18,6 +18,7 @@ pub(super) fn check_stmts(
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
     preds: &mut PredSet,
+    loop_depth: u32,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -32,6 +33,7 @@ pub(super) fn check_stmts(
             var_gen,
             tys,
             preds,
+            loop_depth,
         );
         if last {
             return stmt_ty;
@@ -50,8 +52,19 @@ fn check_stmt(
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
     preds: &mut PredSet,
+    loop_depth: u32,
 ) -> Ty {
     match &mut stmt.node {
+        ast::Stmt::Break | ast::Stmt::Continue => {
+            if loop_depth == 0 {
+                panic!(
+                    "{}: `break` or `continue` statement not inside a loop",
+                    loc_display(&stmt.loc)
+                );
+            }
+            unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &stmt.loc)
+        }
+
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             let pat_expected_ty = ty
                 .as_ref()
@@ -67,6 +80,7 @@ fn check_stmt(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             );
             env.exit();
 
@@ -96,6 +110,7 @@ fn check_stmt(
                                 var_gen,
                                 tys,
                                 preds,
+                                loop_depth,
                             );
                             return Ty::unit();
                         }
@@ -134,12 +149,15 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(rhs, None, return_ty, level, env, var_gen, tys, preds);
+                    check_expr(
+                        rhs, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+                    );
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    let object_ty =
-                        check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
+                    let object_ty = check_expr(
+                        object, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+                    );
 
                     let lhs_ty: Ty = match object_ty.normalize(tys.tys.cons()) {
                         Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tys)
@@ -191,6 +209,7 @@ fn check_stmt(
                                 var_gen,
                                 tys,
                                 preds,
+                                loop_depth,
                             );
                             return Ty::unit();
                         }
@@ -223,7 +242,9 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(rhs, None, return_ty, level, env, var_gen, tys, preds);
+                    check_expr(
+                        rhs, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+                    );
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
@@ -241,6 +262,7 @@ fn check_stmt(
             var_gen,
             tys,
             preds,
+            loop_depth,
         ),
 
         ast::Stmt::For(ast::ForStmt {
@@ -283,11 +305,22 @@ fn check_stmt(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             ));
 
             env.enter();
             env.insert(var.clone(), item_ty);
-            check_stmts(body, None, return_ty, level, env, var_gen, tys, preds);
+            check_stmts(
+                body,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                tys,
+                preds,
+                loop_depth + 1,
+            );
             env.exit();
             unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &stmt.loc)
         }
@@ -302,8 +335,19 @@ fn check_stmt(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             );
-            check_stmts(body, None, return_ty, level, env, var_gen, tys, preds);
+            check_stmts(
+                body,
+                None,
+                return_ty,
+                level,
+                env,
+                var_gen,
+                tys,
+                preds,
+                loop_depth + 1,
+            );
             unify_expected_ty(Ty::unit(), expected_ty, tys.tys.cons(), &stmt.loc)
         }
     }

@@ -21,6 +21,7 @@ pub(super) fn check_expr(
     var_gen: &mut TyVarGen,
     tys: &PgmTypes,
     preds: &mut PredSet,
+    loop_depth: u32,
 ) -> Ty {
     match &mut expr.node {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
@@ -58,8 +59,9 @@ pub(super) fn check_expr(
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
-                let object_ty =
-                    check_expr(object, None, return_ty, level, env, var_gen, tys, preds);
+                let object_ty = check_expr(
+                    object, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+                );
 
                 *preds = super::resolve_preds(&Default::default(), tys, take(preds));
 
@@ -185,7 +187,9 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let fun_ty = check_expr(fun, None, return_ty, level, env, var_gen, tys, preds);
+            let fun_ty = check_expr(
+                fun, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+            );
 
             match fun_ty.normalize(tys.tys.cons()) {
                 Ty::Fun(param_tys, ret_ty) => {
@@ -218,6 +222,7 @@ pub(super) fn check_expr(
                             var_gen,
                             tys,
                             preds,
+                            loop_depth,
                         );
                         arg_tys.push(arg_ty);
                     }
@@ -268,6 +273,7 @@ pub(super) fn check_expr(
                             var_gen,
                             tys,
                             preds,
+                            loop_depth,
                         );
                         unify(&arg_ty, param_ty, tys.tys.cons(), &expr.loc);
                     }
@@ -396,6 +402,7 @@ pub(super) fn check_expr(
                             var_gen,
                             tys,
                             preds,
+                            loop_depth,
                         );
                         let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
@@ -442,6 +449,7 @@ pub(super) fn check_expr(
                         var_gen,
                         tys,
                         preds,
+                        loop_depth,
                     );
                     check_expr(
                         right,
@@ -452,6 +460,7 @@ pub(super) fn check_expr(
                         var_gen,
                         tys,
                         preds,
+                        loop_depth,
                     );
                     return bool_ty;
                 }
@@ -499,6 +508,7 @@ pub(super) fn check_expr(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             )
         }
 
@@ -512,6 +522,7 @@ pub(super) fn check_expr(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             ),
         },
 
@@ -576,6 +587,7 @@ pub(super) fn check_expr(
                     var_gen,
                     tys,
                     preds,
+                    loop_depth,
                 );
                 record_ty.insert(field_name.clone(), field_ty);
             }
@@ -598,12 +610,15 @@ pub(super) fn check_expr(
                 var_gen,
                 tys,
                 preds,
+                loop_depth,
             );
             expected_ty.cloned().unwrap_or_else(Ty::unit)
         }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let scrut_ty = check_expr(scrutinee, None, return_ty, level, env, var_gen, tys, preds);
+            let scrut_ty = check_expr(
+                scrutinee, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+            );
 
             let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
@@ -626,11 +641,12 @@ pub(super) fn check_expr(
                         var_gen,
                         tys,
                         preds,
+                        loop_depth,
                     );
                 }
 
                 rhs_tys.push(check_stmts(
-                    rhs, None, return_ty, level, env, var_gen, tys, preds,
+                    rhs, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
                 ));
             }
 
@@ -662,6 +678,7 @@ pub(super) fn check_expr(
                     var_gen,
                     tys,
                     preds,
+                    loop_depth,
                 );
                 unify(&cond_ty, &Ty::bool(), tys.tys.cons(), &expr.loc);
 
@@ -674,6 +691,7 @@ pub(super) fn check_expr(
                     var_gen,
                     tys,
                     preds,
+                    loop_depth,
                 );
 
                 branch_tys.push(body_ty);
@@ -690,6 +708,7 @@ pub(super) fn check_expr(
                         var_gen,
                         tys,
                         preds,
+                        loop_depth,
                     );
                     branch_tys.push(body_ty);
                 }
@@ -722,8 +741,10 @@ pub(super) fn check_expr(
             target_ty,
         }) => {
             assert_eq!(expr_ty, &None);
-            let expr_ty_ = check_expr(expr, None, return_ty, level, env, var_gen, tys, preds)
-                .normalize(tys.tys.cons());
+            let expr_ty_ = check_expr(
+                expr, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
+            )
+            .normalize(tys.tys.cons());
             let as_ty = match expr_ty_ {
                 Ty::Con(id) if id.as_str() == "I8" => ast::AsExprTy::I8,
                 Ty::Con(id) if id.as_str() == "U8" => ast::AsExprTy::U8,
