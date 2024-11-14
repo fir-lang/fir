@@ -10,7 +10,6 @@ use std::convert::Infallible;
 use std::rc::Rc;
 
 use lexgen_util::{LexerError, Loc};
-use smol_str::SmolStr;
 
 grammar<'a>(module: &'a Rc<str>);
 
@@ -109,11 +108,11 @@ Sep1<T, S>: Vec<T> = {
     }
 };
 
-LUpperId: L<SmolStr> = {
+LUpperId: L<Id> = {
     <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
-LLowerId: L<SmolStr> = {
+LLowerId: L<Id> = {
     <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
@@ -147,7 +146,7 @@ TypeDeclRhs: TypeDeclRhs = {
         TypeDeclRhs::Product(ConstructorFields::Named(named_fields)),
 }
 
-TypeParams: Vec<SmolStr> = {
+TypeParams: Vec<Id> = {
     => vec![],
 
     "[" <params:Sep<UpperId, ",">> "]" =>
@@ -178,11 +177,11 @@ ConstructorDecl: ConstructorDecl = {
         },
 }
 
-NamedFields: Vec<(SmolStr, Type)> = {
+NamedFields: Vec<(Id, Type)> = {
     (<NamedField> NEWLINE)+
 }
 
-NamedField: (SmolStr, Type) = {
+NamedField: (Id, Type) = {
     <name:LowerId> ":" <type_:Type> =>
         (name.smol_str(), type_),
 }
@@ -222,7 +221,7 @@ TypeNoFn: Type = {
         Type::Record(fields),
 }
 
-TypeArg: L<(Option<SmolStr>, L<Type>)> = {
+TypeArg: L<(Option<Id>, L<Type>)> = {
     <l:@L> <name:UpperId> "=" <ty:LType> <r:@R> =>
         L::new(module, l, r, (Some(name.smol_str()), ty)),
 
@@ -765,7 +764,7 @@ InlineExpr: Expr = {
         Expr::Return(Box::new(expr)),
 }
 
-ParenExpr: (Option<SmolStr>, L<Expr>) = {
+ParenExpr: (Option<Id>, L<Expr>) = {
     <id:LowerId> "=" <expr:LExpr> =>
         (Some(id.smol_str()), expr),
 
@@ -844,7 +843,7 @@ ConstrPattern: ConstrPattern = {
         },
 }
 
-PatternField: (Option<SmolStr>, L<Pat>) = {
+PatternField: (Option<Id>, L<Pat>) = {
     <id:LowerId> "=" <pat:LPat> =>
         (Some(id.smol_str()), pat),
 
@@ -905,14 +904,14 @@ ImplDecl: L<ImplDecl> = {
     }
 }
 
-//  type Context = Vec<L<(L<SmolStr>, Vec<L<Type>>)>>;
+//  type Context = Vec<L<(L<Id>, Vec<L<Type>>)>>;
 Context: Context = {
     => vec![],
 
     "[" <tys:Sep<TypeWithBounds, ",">> "]" => tys,
 }
 
-TypeWithBounds: L<(L<SmolStr>, Vec<L<Type>>)> = {
+TypeWithBounds: L<(L<Id>, Vec<L<Type>>)> = {
     <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
     <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
