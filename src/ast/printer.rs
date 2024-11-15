@@ -21,6 +21,7 @@ impl TypeDecl {
             buffer.push('[');
             for (i, (type_param, bounds)) in self.type_params.iter().enumerate() {
                 buffer.push_str(type_param.as_str());
+                print_bounds(bounds, buffer);
                 if i != self.type_params.len() - 1 {
                     buffer.push_str(", ");
                 }
@@ -142,15 +143,7 @@ impl TraitDecl {
         buffer.push('[');
         buffer.push_str(self.ty.node.0.as_str());
         let bounds = &self.ty.node.1;
-        if !bounds.is_empty() {
-            buffer.push_str(": ");
-            for (i, bound) in bounds.iter().enumerate() {
-                bound.node.print(buffer);
-                if i != bounds.len() - 1 {
-                    buffer.push_str(" + ");
-                }
-            }
-        }
+        print_bounds(bounds, buffer);
         buffer.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
             buffer.push_str(&INDENTS[0..indent as usize + 4]);
@@ -784,6 +777,20 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
         buffer.push_str(&ty.to_string());
     }
     buffer.push(']');
+}
+
+fn print_bounds(bounds: &[L<Type>], buffer: &mut String) {
+    if buffer.is_empty() {
+        return;
+    }
+
+    buffer.push_str(": ");
+    for (i, bound) in bounds.iter().enumerate() {
+        bound.node.print(buffer);
+        if i != bounds.len() - 1 {
+            buffer.push_str(" + ");
+        }
+    }
 }
 
 fn expr_parens(expr: &Expr) -> bool {
