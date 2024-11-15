@@ -27,7 +27,7 @@ trait Iterator[T]:
 
     fn next(self): Option[Item]
 
-impl[T] Iterator[ArrayIter[T]]:
+impl[T] Iterator for ArrayIter[T]:
     type Item = T
 
     fn next(self): Option[T] =

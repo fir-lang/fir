@@ -514,7 +514,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         tys.enter_scope();
 
-        let _impl_context: Vec<(Id, Map<Id, Map<Id, Ty>>)> = convert_and_bind_context(
+        let impl_context: Vec<(Id, Map<Id, Map<Id, Ty>>)> = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
             TyVarConversion::ToQVar,
@@ -568,9 +568,106 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 }
             }
             None => {
-                // TODO
-                tys.exit_scope();
-                continue;
+                // type param -> bound -> assoc ty -> assoc ty value
+                let impl_context_map: Map<Id, Map<Id, Map<Id, Ty>>> =
+                    impl_context.iter().cloned().collect();
+
+                let context_ty_vars_set: Set<&Id> = impl_context_map.keys().collect();
+
+                if context_ty_vars_set.len() != impl_context.len() {
+                    panic!(
+                        "{}: Duplicate type variables in `impl` context",
+                        loc_display(&decl.loc)
+                    );
+                }
+
+                // Type of the `impl` block.
+                //
+                // Note: in this implementation we have this limitation that a type can't have
+                // different `impl` blocks with different instantiations of the type, e.g. a `type
+                // T[A1, A2, ...]` will have all impl blocks as `impl[A1, A2, ...] T[A1, A2, ...]`.
+                let (impl_con_id, impl_con_args): (Id, Vec<Id>) = match &impl_decl.ty.node {
+                    ast::Type::Named(ast::NamedType { name, args }) => {
+                        // Args should all be type variables.
+                        let args: Vec<Id> = args
+                            .iter()
+                            .map(
+                                |ast::L {
+                                     node: (arg_name, arg_ty),
+                                     loc,
+                                 }| {
+                                    if arg_name.is_some() {
+                                        panic!(
+                                            "{}: Associated type in a `impl` type",
+                                            loc_display(loc)
+                                        );
+                                    }
+                                    match &arg_ty.node {
+                                        ast::Type::Named(ast::NamedType { name, args }) => {
+                                            if !args.is_empty() {
+                                                panic!(
+                                                    "{}: Unsupported type argument in `impl` (1)",
+                                                    loc_display(&arg_ty.loc)
+                                                );
+                                            }
+                                            name.clone()
+                                        }
+                                        ast::Type::Record(_) | ast::Type::Fn(_) => panic!(
+                                            "{}: Unsupported type argument in `impl` (2)",
+                                            loc_display(&arg_ty.loc),
+                                        ),
+                                    }
+                                },
+                            )
+                            .collect();
+                        (name.clone(), args)
+                    }
+                    ast::Type::Record(_) | ast::Type::Fn(_) => {
+                        // Invalid syntax, should've been checked in a previous pass.
+                        panic!();
+                    }
+                };
+
+                // Maps type constructor parameters to the parameters in the `impl` block.
+                let con_ty_con = tys.get_con(&impl_con_id).unwrap();
+                let ty_con_params_to_impl_params: Map<&Id, &Id> = con_ty_con
+                    .ty_params
+                    .iter()
+                    .map(|(id, _)| id)
+                    .zip(impl_con_args.iter())
+                    .collect();
+
+                // Check bounds of the type parameters of the constructor in `impl`.
+                for (con_ty_param, bounds) in &con_ty_con.ty_params {
+                    let impl_ty_param = ty_con_params_to_impl_params.get(con_ty_param).unwrap();
+                    let context_bounds = impl_context_map.get(*impl_ty_param);
+                    for (bound, assoc_tys) in bounds {
+                        assert!(assoc_tys.is_empty());
+                        match context_bounds.and_then(|context_bounds| context_bounds.get(bound)) {
+                            Some(context_bound_assoc_tys) => {
+                                assert!(context_bound_assoc_tys.is_empty());
+                            }
+                            None => {
+                                panic!(
+                                    "{}: Bound {} for type parameter {} is not in context",
+                                    loc_display(&decl.loc),
+                                    bound,
+                                    impl_ty_param
+                                );
+                            }
+                        }
+                    }
+                }
+
+                /*
+                let con_ty_params_map: Map<Id, Map<Id, Map<Id, Ty>>> =
+                    con_ty_con.ty_params.iter().cloned().collect();
+                let con_ty_params_set: Set<&Id> = con_ty_params_map.keys().collect();
+
+                for (con_ty_param, bounds) in con_ty_params_map {
+                    // let impl_ty_param = impl_
+                }
+                */
             }
         }
 

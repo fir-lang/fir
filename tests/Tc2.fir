@@ -6,7 +6,7 @@ trait T[A]:
 type A:
     i: I32
 
-impl T[A]:
+impl T for A:
     fn getI32(self): I32 =
         self.i
 
