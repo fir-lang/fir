@@ -210,6 +210,7 @@ pub(super) fn convert_and_bind_context(
     context_converted
 }
 
+/// Convert a bound in `<Id>[(<AssocTy> = <Ty>)*] form to (bound, associated types) pair.
 pub(super) fn convert_bound(tys: &TyMap, bound: &ast::L<ast::Type>) -> (Id, Map<Id, Ty>) {
     let (trait_id, assoc_tys): (Id, Map<Id, Ty>) = match &bound.node {
         ast::Type::Named(ast::NamedType { name, args })
@@ -218,12 +219,17 @@ pub(super) fn convert_bound(tys: &TyMap, bound: &ast::L<ast::Type>) -> (Id, Map<
             (
                 name.clone(),
                 args.iter()
-                    .map(|arg| {
-                        (
-                            arg.node.0.as_ref().unwrap().clone(),
-                            convert_ast_ty(tys, &arg.node.1.node, &arg.node.1.loc),
-                        )
-                    })
+                    .map(
+                        |ast::L {
+                             node: (assoc_ty_name, assoc_ty_value),
+                             loc: _,
+                         }| {
+                            (
+                                assoc_ty_name.as_ref().unwrap().clone(),
+                                convert_ast_ty(tys, &assoc_ty_value.node, &assoc_ty_value.loc),
+                            )
+                        },
+                    )
                     .collect(),
             )
         }

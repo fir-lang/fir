@@ -186,7 +186,25 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     None => TyConDetails::Type(TypeDetails { cons: vec![] }),
                 };
 
-                tys.get_con_mut(&ty_decl.node.name).unwrap().details = details;
+                // Convert bounds.
+                let ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)> = ty_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .map(|(param, bounds)| {
+                        (
+                            param.clone(),
+                            bounds
+                                .iter()
+                                .map(|bound| convert_bound(&tys, bound))
+                                .collect(),
+                        )
+                    })
+                    .collect();
+
+                let con = tys.get_con_mut(&ty_decl.node.name).unwrap();
+                con.details = details;
+                con.ty_params = ty_params;
             }
 
             ast::TopDecl::Trait(trait_decl) => {
