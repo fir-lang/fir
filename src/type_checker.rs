@@ -512,60 +512,65 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             _ => continue,
         };
 
-        let trait_con_id = match &impl_decl.trait_ {
-            Some(trait_id) => &trait_id.node,
-            None => continue,
-        };
-
         tys.enter_scope();
 
-        let _impl_context = convert_and_bind_context(
+        let _impl_context: Vec<(Id, Map<Id, Map<Id, Ty>>)> = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
             TyVarConversion::ToQVar,
             &decl.loc,
         );
 
-        let trait_ty_con = tys.get_con(trait_con_id).unwrap();
+        match &impl_decl.trait_ {
+            Some(trait_con_id) => {
+                // In a trait impl, the implementing type should satisfy the trait type parameter bounds.
+                let trait_ty_con = tys.get_con(&trait_con_id.node).unwrap();
 
-        let trait_ty_params = &trait_ty_con.ty_params;
-        assert_eq!(trait_ty_params.len(), 1);
+                let trait_ty_params = &trait_ty_con.ty_params;
+                assert_eq!(trait_ty_params.len(), 1);
 
-        let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
-        let (impl_ty_con_id, _) = impl_ty.con(tys.cons()).unwrap();
+                let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
+                let (impl_ty_con_id, _) = impl_ty.con(tys.cons()).unwrap();
 
-        // TODO: What do we need to check on associated types here?
-        for (bound, _assoc_tys) in &trait_ty_params[0].1 {
-            let bound_trait_details = tys.get_con(bound).unwrap().trait_details().unwrap();
-            if !bound_trait_details
-                .implementing_tys
-                .contains(&impl_ty_con_id)
-            {
-                panic!(
-                    "{}: Type {} does not implement {}",
-                    loc_display(&decl.loc),
-                    impl_ty_con_id,
-                    bound
-                );
-            }
-        }
-
-        for item in &impl_decl.items {
-            if let ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) = &item.node {
-                let ty = convert_ast_ty(&tys, &ty.node, &ty.loc);
-                let old = tys
-                    .get_con_mut(&impl_ty_con_id)
-                    .unwrap()
-                    .assoc_tys
-                    .insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Associated type {} is defined multiple times for type {}",
-                        loc_display(&item.loc),
-                        name,
-                        impl_ty_con_id
-                    );
+                // TODO: What do we need to check on associated types here?
+                for (bound, _assoc_tys) in &trait_ty_params[0].1 {
+                    let bound_trait_details = tys.get_con(bound).unwrap().trait_details().unwrap();
+                    if !bound_trait_details
+                        .implementing_tys
+                        .contains(&impl_ty_con_id)
+                    {
+                        panic!(
+                            "{}: Type {} does not implement {}",
+                            loc_display(&decl.loc),
+                            impl_ty_con_id,
+                            bound
+                        );
+                    }
                 }
+
+                for item in &impl_decl.items {
+                    if let ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) = &item.node {
+                        let ty = convert_ast_ty(&tys, &ty.node, &ty.loc);
+                        let old = tys
+                            .get_con_mut(&impl_ty_con_id)
+                            .unwrap()
+                            .assoc_tys
+                            .insert(name.clone(), ty);
+                        if old.is_some() {
+                            panic!(
+                                "{}: Associated type {} is defined multiple times for type {}",
+                                loc_display(&item.loc),
+                                name,
+                                impl_ty_con_id
+                            );
+                        }
+                    }
+                }
+            }
+            None => {
+                // TODO
+                tys.exit_scope();
+                continue;
             }
         }
 

@@ -295,8 +295,7 @@ impl Scheme {
         assert_eq!(tys.len(), self.quantified_vars.len());
 
         let mut ty = self.ty.clone();
-        for ((quantified_var, bounds), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
-            assert!(bounds.is_empty());
+        for ((quantified_var, _bounds), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
             ty = ty.subst(quantified_var, ty_);
         }
 
