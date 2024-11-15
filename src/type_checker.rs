@@ -506,9 +506,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     // Check bounds of trait type parameters.
     // This needs to be done after populating the trait->implementing types map, as we use the map
     // to check if a type satisfies the bounds.
-    for decl in module {
-        let impl_decl = match &mut decl.node {
-            ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
+    for decl in module.iter() {
+        let impl_decl = match &decl.node {
+            ast::TopDecl::Impl(impl_decl) => &impl_decl.node,
             _ => continue,
         };
 
