@@ -122,6 +122,8 @@ pub struct TyCon {
     pub id: Id,
 
     /// Type parameters with bounds.
+    ///
+    /// E.g. in `[A: Iterator[Item = B]]`, this is `[(A, {Iterator => {Item => B}})]`.
     pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
     /// Associated types. Currently these can't have bounds.
@@ -522,6 +524,24 @@ fn ty_eq_modulo_alpha(
 }
 
 impl Ty {
+    /// Apply the type consturctor to the positional arguments. Generates constraints based on the
+    /// type constructor's type parameter bounds.
+    ///
+    /// Constraints on the concrete types in the type arguments are resolved by this function.
+    /// Constraints on type variables are added as predicates.
+    pub(super) fn app(con: &TyCon, args: &[Ty], preds: &mut PredSet) {
+        assert_eq!(con.ty_params.len(), args.len());
+        for (ty_arg, (_ty_param, bounds)) in args.iter().zip(con.ty_params.iter()) {
+            if bounds.is_empty() {
+                continue;
+            }
+
+            // TODO: Implement reducing predicates on `Ty`s to predicates on `TyVarRef`s and
+            // resolving the rest.
+        }
+        todo!()
+    }
+
     pub(super) fn unit() -> Ty {
         Ty::Record(Default::default())
     }

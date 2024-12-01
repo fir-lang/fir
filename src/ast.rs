@@ -121,7 +121,7 @@ pub struct TypeDecl {
     /// The type name, e.g. `Vec`.
     pub name: Id,
 
-    /// Type parameters, with bounds. E.g. `[T: Debug + Eq]`.
+    /// Type parameters, with bounds. E.g. In `[T: Debug + Eq]` this is `[(T, [Debug, Eq])]`.
     pub type_params: Vec<(Id, Vec<L<Type>>)>,
 
     /// Constructors of the type.
