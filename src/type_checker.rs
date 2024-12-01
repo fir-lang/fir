@@ -558,7 +558,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
     tys
 }
 
-// `ty_cons` is mut to be able to update it with associated types when checking traits.
+// `ty_cons` is `mut` to be able to update it with associated types when checking traits.
 fn collect_schemes(
     module: &ast::Module,
     tys: &mut TyMap,
@@ -782,6 +782,7 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Type(ty_decl) => {
+                // Add constructors as functions.
                 let rhs = match &ty_decl.node.rhs {
                     Some(rhs) => rhs,
                     None => {
@@ -790,12 +791,14 @@ fn collect_schemes(
                     }
                 };
 
+                // Bind type parameters in the context for constructor schemes.
                 for ty_var in &ty_decl.node.type_params {
                     tys.insert_var(ty_var.clone(), Ty::QVar(ty_var.clone()));
                 }
 
                 let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
 
+                // Return type of constructors.
                 let ret = if ty_vars.is_empty() {
                     Ty::Con(ty_decl.node.name.clone())
                 } else {

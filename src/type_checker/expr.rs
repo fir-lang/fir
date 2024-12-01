@@ -63,6 +63,9 @@ pub(super) fn check_expr(
                     object, None, return_ty, level, env, var_gen, tys, preds, loop_depth,
                 );
 
+                // To be able to select a field or method of a type made precise via a unification
+                // to an associated type, try to resolve predicates right before selecting the field
+                // or method.
                 *preds = super::resolve_preds(&Default::default(), tys, take(preds));
 
                 let field = field.clone();

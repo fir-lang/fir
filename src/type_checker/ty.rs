@@ -122,6 +122,8 @@ pub struct TyCon {
     pub id: Id,
 
     /// Type parameters with bounds.
+    ///
+    /// E.g. in `[A: Iterator[Item = B]]`, this is `[(A, {Iterator => {Item => B}})]`.
     pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
     /// Associated types. Currently these can't have bounds.
