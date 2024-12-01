@@ -6,7 +6,7 @@ pub fn loc_display(loc: &ast::Loc) -> impl std::fmt::Display + '_ {
 
 struct LocDisplay<'a>(&'a ast::Loc);
 
-impl<'a> std::fmt::Display for LocDisplay<'a> {
+impl std::fmt::Display for LocDisplay<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

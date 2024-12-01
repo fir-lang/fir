@@ -495,7 +495,7 @@ impl Pgm {
             con_name: Option<&'a Id>,
         }
 
-        impl<'a> std::fmt::Display for TagNameDisplay<'a> {
+        impl std::fmt::Display for TagNameDisplay<'_> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 write!(f, "{}", self.ty_name)?;
                 if let Some(con_name) = self.con_name {
