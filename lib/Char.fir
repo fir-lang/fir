@@ -23,7 +23,7 @@ impl Char:
         else:
             4
 
-    fn isAsciiWhitesapce(self): Bool =
+    fn isAsciiWhitespace(self): Bool =
         self == ' ' || self == '\t' || self == '\n' || self == '\r'
             # TODO:
             # || self == '\x0C'
