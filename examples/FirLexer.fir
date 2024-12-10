@@ -399,7 +399,7 @@ fn tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token]) =
                                 if char == '_':
                                     continue
 
-                                let digit = (char._codePoint - '0'._codePoint) as i8
+                                let digit = (char._codePoint - '0'._codePoint) as I8
 
                                 if result > (127i8 - digit) / 10:
                                     panic("Overflow")
