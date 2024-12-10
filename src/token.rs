@@ -82,6 +82,7 @@ pub enum TokenKind {
     RAngle,
     DoubleRAngle,
     RAngleEq,
+    Slash,
     Star,
     StarEq,
 
