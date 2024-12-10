@@ -291,6 +291,7 @@ fn tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token]) =
                 tokens.push(Token(kind = TokenKind.Plus, text = "+", byteIdx = byteIdx))
                 byteIdx += 1
 
+            # TODO: Handle negative numbers here by checking whether `rest` starts with a digit.
             "-" rest:
                 tokens.push(Token(kind = TokenKind.Minus, text = "-", byteIdx = byteIdx))
                 byteIdx += 1
@@ -350,7 +351,71 @@ fn tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token]) =
             ########################################################################################
             # Literals
 
+            "0b" rest:
+                panic("TODO")
+
+            "0x" rest:
+                panic("TODO")
+
             other:
+                if c.isAsciiDigit():
+                    let digitsStart = byteIdx
+                    byteIdx += 1
+
+                    let digitsEnd = byteIdx
+                    while byteIdx < input.len():
+                        let c = input.charAt(byteIdx)
+                        if c != '_' && !c.isAsciiDigit():
+                            break
+                        digitsEnd += 1
+
+                    byteIdx = digitsEnd
+
+                    # Check type suffix
+                    let rest = input.substr(digitsEnd, input.len())
+                    let typeSuffix = IntKind.U32
+                    match rest:
+                        "u8" rest:
+                            typeSuffix = IntKind.U8
+                            byteIdx += 2
+                        "i8" rest:
+                            typeSuffix = IntKind.I8
+                            byteIdx += 2
+                        "u32" rest:
+                            typeSuffix = IntKind.U32
+                            byteIdx += 3
+                        "i32" rest:
+                            typeSuffix = IntKind.I32
+                            byteIdx += 3
+
+                    # Parse the number, check overflows.
+                    # TODO: We don't have to check for overflows on every digit,
+                    # we can parse some number of digits (depending on the int
+                    # type), then start checking.
+                    match typeSuffix:
+                        IntKind.I8:
+                            let result = 0i8
+                            for char in input.substr(digitsStart, digitsEnd).chars():
+                                if char == '_':
+                                    continue
+
+                                let digit = (char._codePoint - '0'._codePoint) as i8
+
+                                if result > (127i8 - digit) / 10:
+                                    panic("Overflow")
+
+                            panic("TODO")
+
+                        IntKind.U8:
+                            panic("TODO")
+
+                        IntKind.I32:
+                            panic("TODO")
+
+                        IntKind.U32:
+                            panic("TODO")
+
+
                 panic("Invalid token at `byteIdx`")
 
 # TODO: Handle nested comments.
