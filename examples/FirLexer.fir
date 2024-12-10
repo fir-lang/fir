@@ -3,6 +3,7 @@
 type Token:
     kind: TokenKind
     text: Str
+    byteIdx: U32
 
 type TokenKind:
     # An identifier starting with an uppercase letter.
@@ -118,232 +119,232 @@ fn tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token]) =
             # Keywords
 
             "as" rest:
-                tokens.push(Token(kind = TokenKind.As, text = "as"))
+                tokens.push(Token(kind = TokenKind.As, text = "as", byteIdx = byteIdx))
                 byteIdx += 2
 
             "break" rest:
-                tokens.push(Token(kind = TokenKind.Break, text = "break"))
+                tokens.push(Token(kind = TokenKind.Break, text = "break", byteIdx = byteIdx))
                 byteIdx += 5
 
             "continue" rest:
-                tokens.push(Token(kind = TokenKind.Continue, text = "continue"))
+                tokens.push(Token(kind = TokenKind.Continue, text = "continue", byteIdx = byteIdx))
                 byteIdx += 8
 
             "elif" rest:
-                tokens.push(Token(kind = TokenKind.Elif, text = "elif"))
+                tokens.push(Token(kind = TokenKind.Elif, text = "elif", byteIdx = byteIdx))
                 byteIdx += 4
 
             "else" rest:
-                tokens.push(Token(kind = TokenKind.Else, text = "else"))
+                tokens.push(Token(kind = TokenKind.Else, text = "else", byteIdx = byteIdx))
                 byteIdx += 4
 
             "export" rest:
-                tokens.push(Token(kind = TokenKind.Export, text = "export"))
+                tokens.push(Token(kind = TokenKind.Export, text = "export", byteIdx = byteIdx))
                 byteIdx += 6
 
             "fn" rest:
-                tokens.push(Token(kind = TokenKind.Fn_, text = "fn"))
+                tokens.push(Token(kind = TokenKind.Fn_, text = "fn", byteIdx = byteIdx))
                 byteIdx += 2
 
             "Fn" rest:
-                tokens.push(Token(kind = TokenKind.UpperFn, text = "Fn"))
+                tokens.push(Token(kind = TokenKind.UpperFn, text = "Fn", byteIdx = byteIdx))
                 byteIdx += 2
 
             "for" rest:
-                tokens.push(Token(kind = TokenKind.For, text = "for"))
+                tokens.push(Token(kind = TokenKind.For, text = "for", byteIdx = byteIdx))
                 byteIdx += 3
 
             "if" rest:
-                tokens.push(Token(kind = TokenKind.If, text = "if"))
+                tokens.push(Token(kind = TokenKind.If, text = "if", byteIdx = byteIdx))
                 byteIdx += 2
 
             "impl" rest:
-                tokens.push(Token(kind = TokenKind.Impl, text = "impl"))
+                tokens.push(Token(kind = TokenKind.Impl, text = "impl", byteIdx = byteIdx))
                 byteIdx += 4
 
             "import" rest:
-                tokens.push(Token(kind = TokenKind.Import, text = "import"))
+                tokens.push(Token(kind = TokenKind.Import, text = "import", byteIdx = byteIdx))
                 byteIdx += 6
 
             "in" rest:
-                tokens.push(Token(kind = TokenKind.In, text = "in"))
+                tokens.push(Token(kind = TokenKind.In, text = "in", byteIdx = byteIdx))
                 byteIdx += 2
 
             "jump" rest:
-                tokens.push(Token(kind = TokenKind.Jump, text = "jump"))
+                tokens.push(Token(kind = TokenKind.Jump, text = "jump", byteIdx = byteIdx))
                 byteIdx += 4
 
             "let" rest:
-                tokens.push(Token(kind = TokenKind.Let, text = "let"))
+                tokens.push(Token(kind = TokenKind.Let, text = "let", byteIdx = byteIdx))
                 byteIdx += 3
 
             "match" rest:
-                tokens.push(Token(kind = TokenKind.Match, text = "match"))
+                tokens.push(Token(kind = TokenKind.Match, text = "match", byteIdx = byteIdx))
                 byteIdx += 5
 
             "prim" rest:
-                tokens.push(Token(kind = TokenKind.Prim, text = "prim"))
+                tokens.push(Token(kind = TokenKind.Prim, text = "prim", byteIdx = byteIdx))
                 byteIdx += 4
 
             "return" rest:
-                tokens.push(Token(kind = TokenKind.Return, text = "return"))
+                tokens.push(Token(kind = TokenKind.Return, text = "return", byteIdx = byteIdx))
                 byteIdx += 6
 
             "self" rest:
-                tokens.push(Token(kind = TokenKind.Self_, text = "self"))
+                tokens.push(Token(kind = TokenKind.Self_, text = "self", byteIdx = byteIdx))
                 byteIdx += 4
 
             "trait" rest:
-                tokens.push(Token(kind = TokenKind.Trait, text = "trait"))
+                tokens.push(Token(kind = TokenKind.Trait, text = "trait", byteIdx = byteIdx))
                 byteIdx += 5
 
             "type" rest:
-                tokens.push(Token(kind = TokenKind.Type, text = "type"))
+                tokens.push(Token(kind = TokenKind.Type, text = "type", byteIdx = byteIdx))
                 byteIdx += 4
 
             "var" rest:
-                tokens.push(Token(kind = TokenKind.Var, text = "var"))
+                tokens.push(Token(kind = TokenKind.Var, text = "var", byteIdx = byteIdx))
                 byteIdx += 3
 
             "while" rest:
-                tokens.push(Token(kind = TokenKind.While, text = "while"))
+                tokens.push(Token(kind = TokenKind.While, text = "while", byteIdx = byteIdx))
                 byteIdx += 5
 
             ########################################################################################
             # Delimiters
 
             "(" rest:
-                tokens.push(Token(kind = TokenKind.LParen, text = "("))
+                tokens.push(Token(kind = TokenKind.LParen, text = "(", byteIdx = byteIdx))
                 byteIdx += 1
 
             ")" rest:
-                tokens.push(Token(kind = TokenKind.RParen, text = ")"))
+                tokens.push(Token(kind = TokenKind.RParen, text = ")", byteIdx = byteIdx))
                 byteIdx += 1
 
             "[" rest:
-                tokens.push(Token(kind = TokenKind.LBracket, text = "["))
+                tokens.push(Token(kind = TokenKind.LBracket, text = "[", byteIdx = byteIdx))
                 byteIdx += 1
 
             "]" rest:
-                tokens.push(Token(kind = TokenKind.RBracket, text = "]"))
+                tokens.push(Token(kind = TokenKind.RBracket, text = "]", byteIdx = byteIdx))
                 byteIdx += 1
 
             "{" rest:
-                tokens.push(Token(kind = TokenKind.LBrace, text = "{"))
+                tokens.push(Token(kind = TokenKind.LBrace, text = "{", byteIdx = byteIdx))
                 byteIdx += 1
 
             "}" rest:
-                tokens.push(Token(kind = TokenKind.RBrace, text = "}"))
+                tokens.push(Token(kind = TokenKind.RBrace, text = "}", byteIdx = byteIdx))
                 byteIdx += 1
 
             ########################################################################################
             # Punctuation
 
             "." rest:
-                tokens.push(Token(kind = TokenKind.Dot, text = "."))
+                tokens.push(Token(kind = TokenKind.Dot, text = ".", byteIdx = byteIdx))
                 byteIdx += 1
 
             "," rest:
-                tokens.push(Token(kind = TokenKind.Comma, text = ","))
+                tokens.push(Token(kind = TokenKind.Comma, text = ",", byteIdx = byteIdx))
                 byteIdx += 1
 
             ":" rest:
-                tokens.push(Token(kind = TokenKind.Colon, text = ":"))
+                tokens.push(Token(kind = TokenKind.Colon, text = ":", byteIdx = byteIdx))
                 byteIdx += 1
 
             # "\\" rest:
-            #     tokens.push(Token(kind = TokenKind.Backslash, text = "\\"))
+            #     tokens.push(Token(kind = TokenKind.Backslash, text = "\\", byteIdx = byteIdx))
             #     byteIdx += 1
 
             "..=" rest:
-                tokens.push(Token(kind = TokenKind.DotDotEq, text = "..="))
+                tokens.push(Token(kind = TokenKind.DotDotEq, text = "..=", byteIdx = byteIdx))
                 byteIdx += 1
 
             ".." rest:
-                tokens.push(Token(kind = TokenKind.DotDot, text = ".."))
+                tokens.push(Token(kind = TokenKind.DotDot, text = "..", byteIdx = byteIdx))
                 byteIdx += 1
 
             ########################################################################################
             # Operators
 
             "==" rest:
-                tokens.push(Token(kind = TokenKind.EqEq, text = "=="))
+                tokens.push(Token(kind = TokenKind.EqEq, text = "==", byteIdx = byteIdx))
                 byteIdx += 2
 
             "=" rest:
-                tokens.push(Token(kind = TokenKind.Eq, text = "="))
+                tokens.push(Token(kind = TokenKind.Eq, text = "=", byteIdx = byteIdx))
                 byteIdx += 1
 
             "+=" rest:
-                tokens.push(Token(kind = TokenKind.PlusEq, text = "+="))
+                tokens.push(Token(kind = TokenKind.PlusEq, text = "+=", byteIdx = byteIdx))
                 byteIdx += 2
 
             "-=" rest:
-                tokens.push(Token(kind = TokenKind.MinusEq, text = "-="))
+                tokens.push(Token(kind = TokenKind.MinusEq, text = "-=", byteIdx = byteIdx))
                 byteIdx += 2
 
             "*=" rest:
-                tokens.push(Token(kind = TokenKind.StarEq, text = "*="))
+                tokens.push(Token(kind = TokenKind.StarEq, text = "*=", byteIdx = byteIdx))
                 byteIdx += 2
 
             "+" rest:
-                tokens.push(Token(kind = TokenKind.Plus, text = "+"))
+                tokens.push(Token(kind = TokenKind.Plus, text = "+", byteIdx = byteIdx))
                 byteIdx += 1
 
             "-" rest:
-                tokens.push(Token(kind = TokenKind.Minus, text = "-"))
+                tokens.push(Token(kind = TokenKind.Minus, text = "-", byteIdx = byteIdx))
                 byteIdx += 1
 
             "*" rest:
-                tokens.push(Token(kind = TokenKind.Star, text = "*"))
+                tokens.push(Token(kind = TokenKind.Star, text = "*", byteIdx = byteIdx))
                 byteIdx += 1
 
             "!=" rest:
-                tokens.push(Token(kind = TokenKind.ExclamationEq, text = "!="))
+                tokens.push(Token(kind = TokenKind.ExclamationEq, text = "!=", byteIdx = byteIdx))
                 byteIdx += 2
 
             "!" rest:
-                tokens.push(Token(kind = TokenKind.Exclamation, text = "!"))
+                tokens.push(Token(kind = TokenKind.Exclamation, text = "!", byteIdx = byteIdx))
                 byteIdx += 1
 
             "&&" rest:
-                tokens.push(Token(kind = TokenKind.AmpAmp, text = "&&"))
+                tokens.push(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx = byteIdx))
                 byteIdx += 2
 
             "&" rest:
-                tokens.push(Token(kind = TokenKind.Amp, text = "&"))
+                tokens.push(Token(kind = TokenKind.Amp, text = "&", byteIdx = byteIdx))
                 byteIdx += 1
 
             "||" rest:
-                tokens.push(Token(kind = TokenKind.PipePipe, text = "||"))
+                tokens.push(Token(kind = TokenKind.PipePipe, text = "||", byteIdx = byteIdx))
                 byteIdx += 2
 
             "|" rest:
-                tokens.push(Token(kind = TokenKind.PipePipe, text = "|"))
+                tokens.push(Token(kind = TokenKind.PipePipe, text = "|", byteIdx = byteIdx))
                 byteIdx += 1
 
             "<<" rest:
-                tokens.push(Token(kind = TokenKind.DoubleLAngle, text = "<<"))
+                tokens.push(Token(kind = TokenKind.DoubleLAngle, text = "<<", byteIdx = byteIdx))
                 byteIdx += 2
 
             "<=" rest:
-                tokens.push(Token(kind = TokenKind.LAngleEq, text = "<="))
+                tokens.push(Token(kind = TokenKind.LAngleEq, text = "<=", byteIdx = byteIdx))
                 byteIdx += 2
 
             "<" rest:
-                tokens.push(Token(kind = TokenKind.LAngle, text = "<"))
+                tokens.push(Token(kind = TokenKind.LAngle, text = "<", byteIdx = byteIdx))
                 byteIdx += 1
 
             ">>" rest:
-                tokens.push(Token(kind = TokenKind.DoubleRAngle, text = ">>"))
+                tokens.push(Token(kind = TokenKind.DoubleRAngle, text = ">>", byteIdx = byteIdx))
                 byteIdx += 2
 
             ">=" rest:
-                tokens.push(Token(kind = TokenKind.RAngleEq, text = ">="))
+                tokens.push(Token(kind = TokenKind.RAngleEq, text = ">=", byteIdx = byteIdx))
                 byteIdx += 2
 
             ">" rest:
-                tokens.push(Token(kind = TokenKind.RAngle, text = ">"))
+                tokens.push(Token(kind = TokenKind.RAngle, text = ">", byteIdx = byteIdx))
                 byteIdx += 1
 
             ########################################################################################
