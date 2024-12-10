@@ -473,6 +473,7 @@ pub(super) fn check_expr(
                 ast::BinOp::Equal => "__eq",
                 ast::BinOp::NotEqual => "__neq",
                 ast::BinOp::Multiply => "__mul",
+                ast::BinOp::Divide => "__div",
                 ast::BinOp::Lt => "__lt",
                 ast::BinOp::Gt => "__gt",
                 ast::BinOp::LtEq => "__le",

@@ -52,6 +52,7 @@ extern {
         ">" => Token { kind: TokenKind::RAngle, .. },
         ">>" => Token { kind: TokenKind::DoubleRAngle, .. },
         ">=" => Token { kind: TokenKind::RAngleEq, .. },
+        "/" => Token { kind: TokenKind::Slash, .. },
         INDENT => Token { kind: TokenKind::Indent, .. },
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
@@ -629,6 +630,14 @@ InlineExpr: Expr = {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
             op: BinOp::Multiply,
+        }),
+
+    #[assoc(side = "left")]
+    <l1:@L> <left:InlineExpr> <r1:@R> "/" <l2:@L> <right:InlineExpr> <r2:@R> =>
+        Expr::BinOp(BinOpExpr {
+            left: Box::new(L::new(module, l1, r1, left)),
+            right: Box::new(L::new(module, l2, r2, right)),
+            op: BinOp::Divide,
         }),
 
     #[precedence(level = "5")]
