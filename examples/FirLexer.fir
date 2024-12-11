@@ -388,35 +388,14 @@ fn tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token]) =
                             typeSuffix = IntKind.I32
                             byteIdx += 3
 
-                    # Parse the number, check overflows.
-                    # TODO: We don't have to check for overflows on every digit,
-                    # we can parse some number of digits (depending on the int
-                    # type), then start checking.
-                    match typeSuffix:
-                        IntKind.I8:
-                            let result = 0i8
-                            for char in input.substr(digitsStart, digitsEnd).chars():
-                                if char == '_':
-                                    continue
+                    tokens.push(Token(
+                        kind = TokenKind.Int(kind = Option.Some(typeSuffix)),
+                        text = input.substr(digitsStart, digitsEnd),
+                        byteIdx = byteIdx,
+                    ))
 
-                                let digit = (char._codePoint - '0'._codePoint) as I8
-
-                                if result > (127i8 - digit) / 10:
-                                    panic("Overflow")
-
-                            panic("TODO")
-
-                        IntKind.U8:
-                            panic("TODO")
-
-                        IntKind.I32:
-                            panic("TODO")
-
-                        IntKind.U32:
-                            panic("TODO")
-
-
-                panic("Invalid token at `byteIdx`")
+                else:
+                    panic("TODO")
 
 # TODO: Handle nested comments.
 fn skipMultiLineComment(input: Str, byteIdx: U32): U32 =
