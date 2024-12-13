@@ -483,6 +483,7 @@ impl Expr {
                     BinOp::Equal => "==",
                     BinOp::NotEqual => "!=",
                     BinOp::Multiply => "*",
+                    BinOp::Divide => "/",
                     BinOp::Lt => "<",
                     BinOp::Gt => ">",
                     BinOp::LtEq => "<=",

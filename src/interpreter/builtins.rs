@@ -44,6 +44,7 @@ pub enum BuiltinFun {
     I32Cmp,
     I32Eq,
     I32Mul,
+    I32Div,
     I32Sub,
     I32ToStr,
     I32BitOr,
@@ -56,6 +57,7 @@ pub enum BuiltinFun {
     U32Cmp,
     U32Eq,
     U32Mul,
+    U32Div,
     U32Sub,
     U32ToStr,
     U32BitOr,
@@ -68,6 +70,7 @@ pub enum BuiltinFun {
     I8Cmp,
     I8Eq,
     I8Mul,
+    I8Div,
     I8Sub,
     I8ToStr,
     I8BitOr,
@@ -80,6 +83,7 @@ pub enum BuiltinFun {
     U8Cmp,
     U8Eq,
     U8Mul,
+    U8Div,
     U8Sub,
     U8ToStr,
     U8BitOr,
@@ -279,6 +283,15 @@ pub fn call_builtin_fun<W: Write>(
             i32_as_val(val_as_i32(i1) * val_as_i32(i2))
         }
 
+        BuiltinFun::I32Div => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            i32_as_val(val_as_i32(i1) / val_as_i32(i2))
+        }
+
         BuiltinFun::I32Cmp => {
             debug_assert_eq!(args.len(), 2);
 
@@ -357,6 +370,15 @@ pub fn call_builtin_fun<W: Write>(
             let u2 = args[1];
 
             u32_as_val(val_as_u32(u1) * val_as_u32(u2))
+        }
+
+        BuiltinFun::U32Div => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            u32_as_val(val_as_u32(u1) / val_as_u32(u2))
         }
 
         BuiltinFun::U32Cmp => {
@@ -438,6 +460,15 @@ pub fn call_builtin_fun<W: Write>(
             i8_as_val(val_as_i8(i1) * val_as_i8(i2))
         }
 
+        BuiltinFun::I8Div => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            i8_as_val(val_as_i8(i1) / val_as_i8(i2))
+        }
+
         BuiltinFun::I8Cmp => {
             debug_assert_eq!(args.len(), 2);
 
@@ -516,6 +547,15 @@ pub fn call_builtin_fun<W: Write>(
             let u2 = args[1];
 
             u8_as_val(val_as_u8(u1) * val_as_u8(u2))
+        }
+
+        BuiltinFun::U8Div => {
+            debug_assert_eq!(args.len(), 2);
+
+            let u1 = args[0];
+            let u2 = args[1];
+
+            u8_as_val(val_as_u8(u1) / val_as_u8(u2))
         }
 
         BuiltinFun::U8Cmp => {

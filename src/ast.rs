@@ -543,6 +543,7 @@ pub enum BinOp {
     Equal,
     NotEqual,
     Multiply,
+    Divide,
     Lt,
     Gt,
     LtEq,
