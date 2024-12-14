@@ -69,6 +69,14 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     tys
 }
 
+struct TcFunState<'a> {
+    return_ty: &'a Ty,
+    env: &'a mut ScopeMap<Id, Ty>,
+    var_gen: &'a mut TyVarGen,
+    tys: &'a PgmTypes,
+    preds: &'a mut PredSet,
+}
+
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
 ///
@@ -935,18 +943,16 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let mut preds: PredSet = Default::default();
 
+    let mut tc_state = TcFunState {
+        return_ty: &ret_ty,
+        env: &mut env,
+        var_gen: &mut var_gen,
+        tys,
+        preds: &mut preds,
+    };
+
     if let Some(body) = &mut fun.node.body.as_mut() {
-        check_stmts(
-            &mut body.node,
-            Some(&ret_ty),
-            &ret_ty,
-            0,
-            &mut env,
-            &mut var_gen,
-            tys,
-            &mut preds,
-            0,
-        );
+        check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
         for stmt in &mut body.node {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
@@ -1057,17 +1063,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
-                check_stmts(
-                    &mut body.node,
-                    Some(&ret_ty),
-                    &ret_ty,
-                    0,
-                    &mut env,
-                    &mut var_gen,
+                let mut tc_state = TcFunState {
+                    return_ty: &ret_ty,
+                    env: &mut env,
+                    var_gen: &mut var_gen,
                     tys,
-                    &mut preds,
-                    0,
-                );
+                    preds: &mut preds,
+                };
+
+                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
@@ -1173,17 +1177,15 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
-                check_stmts(
-                    &mut body.node,
-                    Some(&ret_ty),
-                    &ret_ty,
-                    0,
-                    &mut env,
-                    &mut var_gen,
+                let mut tc_state = TcFunState {
+                    return_ty: &ret_ty,
+                    env: &mut env,
+                    var_gen: &mut var_gen,
                     tys,
-                    &mut preds,
-                    0,
-                );
+                    preds: &mut preds,
+                };
+
+                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());

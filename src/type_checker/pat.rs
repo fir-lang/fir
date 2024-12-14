@@ -1,28 +1,20 @@
 use crate::ast::{self, Id};
 use crate::collections::Set;
-use crate::scope_map::ScopeMap;
 use crate::type_checker::apply::apply;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{loc_display, PgmTypes};
+use crate::type_checker::{loc_display, TcFunState};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
-pub(super) fn check_pat(
-    pat: &mut ast::L<ast::Pat>,
-    level: u32,
-    env: &mut ScopeMap<Id, Ty>,
-    var_gen: &mut TyVarGen,
-    tys: &PgmTypes,
-    preds: &mut PredSet,
-) -> Ty {
+pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
     match &mut pat.node {
         ast::Pat::Var(var) => {
-            let ty = Ty::Var(var_gen.new_var(level, pat.loc.clone()));
-            env.insert(var.clone(), ty.clone());
+            let ty = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+            tc_state.env.insert(var.clone(), ty.clone());
             ty
         }
 
-        ast::Pat::Ignore => Ty::Var(var_gen.new_var(level, pat.loc.clone())),
+        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone())),
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
@@ -35,7 +27,8 @@ pub(super) fn check_pat(
         }) => {
             debug_assert!(ty_args.is_empty());
 
-            let ty_con: &TyCon = tys
+            let ty_con: &TyCon = tc_state
+                .tys
                 .tys
                 .get_con(pat_ty_name)
                 .unwrap_or_else(|| panic!("{}: Undefined type", loc_display(&pat.loc)));
@@ -46,7 +39,7 @@ pub(super) fn check_pat(
                     check_pat_shape(pat_ty_name, pat_con_name, pat_fields, &pat.loc, cons);
                     match pat_con_name {
                         Some(pat_con_name) =>
-                            tys.associated_fn_schemes
+                            tc_state.tys.associated_fn_schemes
                                 .get(&ty_con.id)
                                 .unwrap_or_else(|| panic!(
                                     "{}: BUG: Type {} doesn't have any schemes",
@@ -61,7 +54,7 @@ pub(super) fn check_pat(
                                     pat_con_name
                                 )),
                         None =>
-                            tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| panic!(
+                            tc_state.tys.top_schemes.get(&ty_con.id).unwrap_or_else(|| panic!(
                                 "{}: BUG: type {} doesn't have a top-level scheme",
                                 loc_display(&pat.loc),
                                 &ty_con.id
@@ -84,7 +77,8 @@ pub(super) fn check_pat(
 
             // We don't need to instantiate based on pattern types. If we don't have a term with
             // the type the pattern will never match.
-            let (con_ty, con_ty_args) = con_scheme.instantiate(level, var_gen, preds, &pat.loc);
+            let (con_ty, con_ty_args) =
+                con_scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &pat.loc);
             *ty_args = con_ty_args.into_iter().map(Ty::Var).collect();
 
             // Apply argument pattern types to the function type.
@@ -92,11 +86,11 @@ pub(super) fn check_pat(
                 .iter_mut()
                 .map(|ast::Named { name, node }| ast::Named {
                     name: name.clone(),
-                    node: check_pat(node, level, env, var_gen, tys, preds),
+                    node: check_pat(tc_state, node, level),
                 })
                 .collect();
 
-            apply(&con_ty, &pat_field_tys, tys.tys.cons(), &pat.loc)
+            apply(&con_ty, &pat_field_tys, tc_state.tys.tys.cons(), &pat.loc)
         }
 
         ast::Pat::Record(fields) => Ty::Record(
@@ -105,7 +99,7 @@ pub(super) fn check_pat(
                 .map(|named| {
                     (
                         named.name.as_ref().unwrap().clone(),
-                        check_pat(&mut named.node, level, env, var_gen, tys, preds),
+                        check_pat(tc_state, &mut named.node, level),
                     )
                 })
                 .collect(),
@@ -114,18 +108,18 @@ pub(super) fn check_pat(
         ast::Pat::Str(_) => Ty::str(),
 
         ast::Pat::StrPfx(_, var) => {
-            env.insert(var.clone(), Ty::str());
+            tc_state.env.insert(var.clone(), Ty::str());
             Ty::str()
         }
 
         ast::Pat::Char(_) => Ty::char(),
 
         ast::Pat::Or(pat1, pat2) => {
-            let pat1_ty = check_pat(pat1, level, env, var_gen, tys, preds);
-            let pat2_ty = check_pat(pat2, level, env, var_gen, tys, preds);
+            let pat1_ty = check_pat(tc_state, pat1, level);
+            let pat2_ty = check_pat(tc_state, pat2, level);
             // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
-            unify(&pat1_ty, &pat2_ty, tys.tys.cons(), &pat.loc);
+            unify(&pat1_ty, &pat2_ty, tc_state.tys.tys.cons(), &pat.loc);
             pat1_ty
         }
     }
