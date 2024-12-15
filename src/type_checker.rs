@@ -959,14 +959,9 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    // Converts vec to map.
-    let quantified_vars: Map<Id, Map<Id, Map<Id, Ty>>> = scheme
-        .quantified_vars
-        .iter()
-        .map(|(var, trait_map)| (var.clone(), trait_map.clone()))
-        .collect();
+    let context: Map<Id, Map<Id, Map<Id, Ty>>> = scheme.quantified_vars.iter().cloned().collect();
 
-    resolve_all_preds(&quantified_vars, tys, preds);
+    resolve_all_preds(&context, tys, preds);
 
     unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
@@ -1077,15 +1072,13 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(
-                    &impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect(),
-                    tys,
-                    preds,
-                );
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
+                resolve_all_preds(&context, tys, preds);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
@@ -1191,15 +1184,13 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(
-                    &impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect(),
-                    tys,
-                    preds,
-                );
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
+                resolve_all_preds(&context, tys, preds);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
