@@ -13,8 +13,12 @@ test:
     cargo build
     cargo test
 
-    goldentests target/debug/fir tests '# ' $@
-    goldentests target/debug/fir examples '# ' $@
+    goldentests target/debug/fir tests '# '
+    goldentests target/debug/fir examples '# '
+
+update_tests:
+    goldentests target/debug/fir tests '# ' --overwrite
+    goldentests target/debug/fir examples '# ' --overwrite
 
 # build_site tested with:
 #

@@ -39,5 +39,11 @@ impl StrBuf:
             self._bytes.push(b2)
             self._bytes.push(b3)
 
+    fn pushStr(self, str: Str) =
+        # TODO: Maybe consider memcpy-ing the bytes.
+        self._bytes.reserve(str.len())
+        for char in str.chars():
+            self.push(char)
+
     fn toStr(self): Str =
         Str.fromUtf8Vec(self._bytes)

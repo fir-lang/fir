@@ -6,6 +6,21 @@ impl[T] Vec[T]:
     fn withCapacity(cap: U32): Vec[T] =
         Vec(_data = Array.new(cap), _len = 0)
 
+    fn reserve(self, cap: U32) =
+        let len = self._len
+        let newCap = self._data.len()
+        while newCap - len < cap:
+            newCap *= 2
+
+        if newCap != self._data.len():
+            let newData = Array.new(newCap)
+            for i in range(0u32, self._data.len()):
+                newData.set(i, self._data.get(i))
+            self._data = newData
+
+    fn spareCapacity(self): U32 =
+        self._data.len() - self._len
+
     fn len(self): U32 =
         self._len
 
@@ -43,3 +58,47 @@ impl[T] Vec[T]:
             panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
         self._data.get(idx)
+
+    fn swap(self, i: U32, j: U32) =
+        let tmp = self.get(i)
+        self.set(i, self.get(j))
+        self.set(j, tmp)
+
+impl[T: Ord] Vec[T]:
+    fn sort(self) =
+        if self.len() != 0:
+            _quicksort(self, 0, self.len() - 1)
+
+fn _quicksort[T: Ord](vec: Vec[T], low: U32, high: U32) =
+    if low >= high:
+        return ()   # TODO: Allow returning without a value
+
+    let p = _partition(vec, low, high)
+
+    if p != low:
+        _quicksort(vec, low, p - 1)
+
+    _quicksort(vec, p + 1, high)
+
+fn _partition[T: Ord](vec: Vec[T], low: U32, high: U32): U32 =
+    let pivot = vec.get(high)
+    let i = low
+
+    for j in irange(low, high - 1):
+        if vec.get(j) <= pivot:
+            vec.swap(i, j)
+            i += 1
+
+    vec.swap(i, high)
+    i
+
+impl[T: ToStr] ToStr for Vec[T]:
+    fn toStr(self): Str =
+        let buf = StrBuf.withCapacity(self.len() * 5 + 2)
+        buf.push('[')
+        for i in range(0u32, self.len()):
+            if i != 0:
+                buf.push(',')
+            buf.pushStr(self.get(i).toStr())
+        buf.push(']')
+        buf.toStr()
