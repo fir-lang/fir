@@ -70,6 +70,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 }
 
 struct TcFunState<'a> {
+    context: &'a Map<Id, Map<Id, Map<Id, Ty>>>,
     return_ty: &'a Ty,
     env: &'a mut ScopeMap<Id, Ty>,
     var_gen: &'a mut TyVarGen,
@@ -943,7 +944,10 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let mut preds: PredSet = Default::default();
 
+    let context = scheme.quantified_vars.iter().cloned().collect();
+
     let mut tc_state = TcFunState {
+        context: &context,
         return_ty: &ret_ty,
         env: &mut env,
         var_gen: &mut var_gen,
@@ -958,8 +962,6 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
         }
     }
-
-    let context: Map<Id, Map<Id, Map<Id, Ty>>> = scheme.quantified_vars.iter().cloned().collect();
 
     resolve_all_preds(&context, tys, preds);
 
@@ -1058,7 +1060,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
                 let mut tc_state = TcFunState {
+                    context: &context,
                     return_ty: &ret_ty,
                     env: &mut env,
                     var_gen: &mut var_gen,
@@ -1071,12 +1080,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
-
-                let context = impl_bounds
-                    .iter()
-                    .cloned()
-                    .chain(fn_bounds.into_iter())
-                    .collect();
 
                 resolve_all_preds(&context, tys, preds);
             }
@@ -1170,7 +1173,14 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
                 let mut tc_state = TcFunState {
+                    context: &context,
                     return_ty: &ret_ty,
                     env: &mut env,
                     var_gen: &mut var_gen,
@@ -1183,12 +1193,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
-
-                let context = impl_bounds
-                    .iter()
-                    .cloned()
-                    .chain(fn_bounds.into_iter())
-                    .collect();
 
                 resolve_all_preds(&context, tys, preds);
             }

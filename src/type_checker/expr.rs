@@ -67,7 +67,7 @@ pub(super) fn check_expr(
                 // to an associated type, try to resolve predicates right before selecting the field
                 // or method.
                 *tc_state.preds =
-                    super::resolve_preds(&Default::default(), tc_state.tys, take(tc_state.preds));
+                    super::resolve_preds(tc_state.context, tc_state.tys, take(tc_state.preds));
 
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
