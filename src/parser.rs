@@ -1,6 +1,5 @@
-// auto-generated: "lalrpop 0.21.0"
-// sha3: d834852412f1570dc074104682935b1bfe70bef55594be9a68e2dcce1f9d08f8
-#![allow(unused)]
+// auto-generated: "lalrpop 0.22.0"
+// sha3: 5597aa666959dbeb199173513b37c1535026845642016b18e5fa1714ee1137ed
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -1549,6 +1548,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<usize>
     {
+        #[warn(unused_variables)]
         match __token {
             Token { kind: TokenKind::UpperId, .. } if true => Some(0),
             Token { kind: TokenKind::LowerId, .. } if true => Some(1),
@@ -13518,6 +13518,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<usize>
     {
+        #[warn(unused_variables)]
         match __token {
             Token { kind: TokenKind::UpperId, .. } if true => Some(0),
             Token { kind: TokenKind::LowerId, .. } if true => Some(1),
@@ -26347,6 +26348,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> Option<usize>
     {
+        #[warn(unused_variables)]
         match __token {
             Token { kind: TokenKind::UpperId, .. } if true => Some(0),
             Token { kind: TokenKind::LowerId, .. } if true => Some(1),
@@ -46478,30 +46480,27 @@ fn __action546<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc))
     let __temp0 = (__start0, __temp0, __end0);
     __action371(module, __0, __temp0)
 }
-#[allow(clippy::type_complexity, dead_code)]
 
+#[allow(clippy::type_complexity, dead_code)]
 pub trait __ToTriple<'a> {
     fn to_triple(
-        value: Self,
+        self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>;
 }
 
 impl<'a> __ToTriple<'a> for (Loc, Token, Loc) {
     fn to_triple(
-        value: Self,
+        self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
     {
-        Ok(value)
+        Ok(self)
     }
 }
 impl<'a> __ToTriple<'a> for Result<(Loc, Token, Loc), LexerError<Infallible>> {
     fn to_triple(
-        value: Self,
+        self,
     ) -> Result<(Loc, Token, Loc), __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
     {
-        match value {
-            Ok(v) => Ok(v),
-            Err(error) => Err(__lalrpop_util::ParseError::User { error }),
-        }
+        self.map_err(|error| __lalrpop_util::ParseError::User { error })
     }
 }
