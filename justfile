@@ -24,6 +24,7 @@ build: generate_parser
 
 generate_parser:
     lalrpop src/parser.lalrpop
+    cargo fmt -- src/parser.rs
 
 # build_site tested with:
 #
