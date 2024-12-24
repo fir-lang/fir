@@ -93,8 +93,8 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             panic!("{}: Unknown type {}", loc_display(loc), name);
         }
 
-        ast::Type::Record { fields, extension } => Ty::Record(
-            fields
+        ast::Type::Record { fields, extension } => Ty::Record {
+            fields: fields
                 .iter()
                 .map(|named_ty| {
                     (
@@ -103,7 +103,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     )
                 })
                 .collect(),
-        ),
+        },
 
         ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun(
             args.iter()
@@ -111,7 +111,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 .collect(),
             Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
-                None => Ty::Record(Default::default()),
+                None => Ty::Record {
+                    fields: Default::default(),
+                },
             }),
         ),
     }

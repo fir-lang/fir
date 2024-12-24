@@ -154,7 +154,7 @@ fn check_stmt(
                             TyArgs::Named(_) => panic!(),
                         },
 
-                        Ty::Record(fields) => match fields.get(field) {
+                        Ty::Record { fields } => match fields.get(field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
