@@ -9,23 +9,28 @@ format:
 lint:
     cargo clippy --all-targets
 
-test:
-    cargo build
+test: build
     cargo test
 
     goldentests target/debug/fir tests '# '
     goldentests target/debug/fir examples '# '
 
-update_tests:
+update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
     goldentests target/debug/fir examples '# ' --overwrite
+
+build: generate_parser
+    cargo build
+
+generate_parser:
+    lalrpop src/parser.lalrpop
 
 # build_site tested with:
 #
 # - wasm-pack 0.12.1
 # - wasm-opt version 114 (version_114-3-g5f6594c52)
 
-build_site:
+build_site: generate_parser
     #!/usr/bin/env bash
 
     OUT_DIR=../fir-lang.github.io
