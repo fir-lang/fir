@@ -157,7 +157,7 @@ pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
 
-    /// An anonymous record type, e.g. `{x: I32, y: I32}`.
+    /// An anonymous record type, e.g. `(x: I32, y: I32)`.
     Record { fields: Vec<Named<Type>> },
 
     /// A function type: `Fn(I32): Bool`.
