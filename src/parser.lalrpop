@@ -218,8 +218,14 @@ TypeNoFn: Type = {
     <name:UpperId> "[" <args:Sep<TypeArg, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 
-    "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        Type::Record { fields },
+    "(" <fields:Sep<RecordTypeField, ",">> <extension:RecordTypeExtension> ")" =>
+        Type::Record { fields, extension },
+}
+
+RecordTypeExtension: Option<Id> = {
+    => None,
+
+    "|" <id:LowerId> => Some(id.smol_str()),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {

@@ -93,7 +93,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             panic!("{}: Unknown type {}", loc_display(loc), name);
         }
 
-        ast::Type::Record { fields } => Ty::Record(
+        ast::Type::Record { fields, extension } => Ty::Record(
             fields
                 .iter()
                 .map(|named_ty| {

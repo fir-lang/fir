@@ -158,7 +158,10 @@ pub enum Type {
     Named(NamedType),
 
     /// An anonymous record type, e.g. `(x: I32, y: I32)`.
-    Record { fields: Vec<Named<Type>> },
+    Record {
+        fields: Vec<Named<Type>>,
+        extension: Option<Id>,
+    },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
@@ -643,6 +646,7 @@ pub struct AssocTyDecl {
 }
 
 impl Type {
+    /// Substitute star-kinded `ty` for `var` in `self`.
     pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
         match ty {
             Type::Named(NamedType { name, args }) => {
@@ -671,7 +675,7 @@ impl Type {
                 }
             }
 
-            Type::Record { fields } => Type::Record {
+            Type::Record { fields, extension } => Type::Record {
                 fields: fields
                     .iter()
                     .map(|Named { name, node }| Named {
@@ -679,6 +683,8 @@ impl Type {
                         node: node.subst_var(var, ty),
                     })
                     .collect(),
+                // NB. This does not substitute row types.
+                extension: extension.clone(),
             },
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {

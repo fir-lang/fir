@@ -204,7 +204,7 @@ impl Type {
                 }
             }
 
-            Type::Record { fields } => {
+            Type::Record { fields, extension } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(name) = &field.name {
@@ -215,6 +215,10 @@ impl Type {
                     if i != fields.len() - 1 {
                         buffer.push_str(", ");
                     }
+                }
+                if let Some(extension) = extension {
+                    buffer.push('|');
+                    buffer.push_str(extension.as_str());
                 }
                 buffer.push(')');
             }

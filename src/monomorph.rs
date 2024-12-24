@@ -1062,11 +1062,12 @@ fn mono_ty(
             })
         }
 
-        ast::Type::Record { fields } => ast::Type::Record {
+        ast::Type::Record { fields, extension } => ast::Type::Record {
             fields: fields
                 .iter()
                 .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
                 .collect(),
+            extension: extension.clone(),
         },
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
@@ -1119,7 +1120,10 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
 
         Ty::Var(_var) => {
             // Ambiguous type, monomorphise as unit.
-            ast::Type::Record { fields: vec![] }
+            ast::Type::Record {
+                fields: vec![],
+                extension: None,
+            }
         }
 
         Ty::App(con, args) => {
