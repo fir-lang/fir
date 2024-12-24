@@ -33,7 +33,7 @@ pub(crate) fn apply(
         Ty::Con(_)
         | Ty::Var(_)
         | Ty::App(_, _)
-        | Ty::Record(_)
+        | Ty::Record { .. }
         | Ty::QVar(_)
         | Ty::AssocTySelect { .. } => {
             if args.is_empty() {

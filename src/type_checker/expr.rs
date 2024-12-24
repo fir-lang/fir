@@ -89,7 +89,7 @@ pub(super) fn check_expr(
                         }
                     },
 
-                    Ty::Record(fields) => match fields.get(&field) {
+                    Ty::Record { fields } => match fields.get(&field) {
                         Some(field_ty) => field_ty.clone(),
                         None => panic!(
                             "{}: Record with fields {:?} does not have field {}",
@@ -504,7 +504,9 @@ pub(super) fn check_expr(
             // types of the expr fields when possible.
             let expected_fields = expected_ty.map(|expected_ty| {
                 match expected_ty.normalize(tc_state.tys.tys.cons()) {
-                    Ty::Record(expected_fields) => expected_fields,
+                    Ty::Record {
+                        fields: expected_fields,
+                    } => expected_fields,
                     other => panic!(
                         "{}: Record expression expected to have type {:?}",
                         loc_display(&expr.loc),
@@ -525,7 +527,7 @@ pub(super) fn check_expr(
                 }
             }
 
-            let mut record_ty: Map<Id, Ty> = Default::default();
+            let mut record_fields: Map<Id, Ty> = Default::default();
             for field in fields.iter_mut() {
                 let field_name = field.name.as_ref().unwrap();
                 let expected_ty = expected_fields
@@ -533,11 +535,13 @@ pub(super) fn check_expr(
                     .map(|expected_fields| expected_fields.get(field_name).unwrap());
                 let field_ty =
                     check_expr(tc_state, &mut field.node, expected_ty, level, loop_depth);
-                record_ty.insert(field_name.clone(), field_ty);
+                record_fields.insert(field_name.clone(), field_ty);
             }
 
             unify_expected_ty(
-                Ty::Record(record_ty),
+                Ty::Record {
+                    fields: record_fields,
+                },
                 expected_ty,
                 tc_state.tys.tys.cons(),
                 &expr.loc,

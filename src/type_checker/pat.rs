@@ -93,8 +93,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             apply(&con_ty, &pat_field_tys, tc_state.tys.tys.cons(), &pat.loc)
         }
 
-        ast::Pat::Record(fields) => Ty::Record(
-            fields
+        ast::Pat::Record(fields) => Ty::Record {
+            fields: fields
                 .iter_mut()
                 .map(|named| {
                     (
@@ -103,7 +103,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     )
                 })
                 .collect(),
-        ),
+        },
 
         ast::Pat::Str(_) => Ty::str(),
 
