@@ -219,7 +219,7 @@ TypeNoFn: Type = {
         Type::Named(NamedType { name: name.smol_str(), args }),
 
     "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        Type::Record(fields),
+        Type::Record { fields },
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {

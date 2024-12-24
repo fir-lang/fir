@@ -158,7 +158,7 @@ pub enum Type {
     Named(NamedType),
 
     /// An anonymous record type, e.g. `{x: I32, y: I32}`.
-    Record(Vec<Named<Type>>),
+    Record { fields: Vec<Named<Type>> },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
@@ -671,15 +671,15 @@ impl Type {
                 }
             }
 
-            Type::Record(fields) => Type::Record(
-                fields
+            Type::Record { fields } => Type::Record {
+                fields: fields
                     .iter()
                     .map(|Named { name, node }| Named {
                         name: name.clone(),
                         node: node.subst_var(var, ty),
                     })
                     .collect(),
-            ),
+            },
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
                 args: args

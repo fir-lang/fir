@@ -204,7 +204,7 @@ impl Type {
                 }
             }
 
-            Type::Record(fields) => {
+            Type::Record { fields } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(name) = &field.name {

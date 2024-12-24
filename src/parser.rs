@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.21.0"
-// sha3: 1006aaac032f4d885aff4a1900e7be59c898d042a33011bb583dcdd7b731795c
+// sha3: d834852412f1570dc074104682935b1bfe70bef55594be9a68e2dcce1f9d08f8
 #![allow(unused)]
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -37189,7 +37189,7 @@ fn __action25<'a>(
     (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Type {
-    Type::Record(fields)
+    Type::Record { fields }
 }
 
 #[allow(unused_variables)]
