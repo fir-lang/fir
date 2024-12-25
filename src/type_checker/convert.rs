@@ -115,10 +115,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 .collect(),
             Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
-                None => Ty::Record {
-                    fields: Default::default(),
-                    extension: None,
-                },
+                None => Ty::unit(),
             }),
         ),
     }

@@ -939,10 +939,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let ret_ty = match &fun.node.sig.return_ty {
         Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-        None => Ty::Record {
-            fields: Default::default(),
-            extension: None,
-        },
+        None => Ty::unit(),
     };
 
     let mut preds: PredSet = Default::default();
@@ -1047,10 +1044,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                    None => Ty::Record {
-                        fields: Default::default(),
-                        extension: None,
-                    },
+                    None => Ty::unit(),
                 };
 
                 let mut preds: PredSet = Default::default();
@@ -1163,10 +1157,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                    None => Ty::Record {
-                        fields: Default::default(),
-                        extension: None,
-                    },
+                    None => Ty::unit(),
                 };
 
                 let mut preds: PredSet = Default::default();
