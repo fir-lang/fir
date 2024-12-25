@@ -1151,7 +1151,10 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }
 
-        Ty::Record { fields: _ } => todo!(),
+        Ty::Record {
+            fields: _,
+            extension: _,
+        } => todo!(),
 
         Ty::QVar(_var) => panic!(),
 

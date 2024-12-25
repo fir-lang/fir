@@ -56,8 +56,11 @@ pub enum Ty {
     /// Invariant: the vector is not empty.
     App(Id, TyArgs),
 
-    /// A record type, e.g. `(x: U32, y: U32)`.
-    Record { fields: Map<Id, Ty> },
+    /// A record type, e.g. `(x: U32, y: U32)`, `(a: Str|r)`.
+    Record {
+        fields: Map<Id, Ty>,
+        extension: Option<Box<Ty>>,
+    },
 
     /// Only in type schemes: a quantified type variable.
     ///
@@ -442,7 +445,16 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::Record { fields: fields1 }, Ty::Record { fields: fields2 }) => {
+        (
+            Ty::Record {
+                fields: fields1,
+                extension: extension1,
+            },
+            Ty::Record {
+                fields: fields2,
+                extension: extension2,
+            },
+        ) => {
             let keys1: Set<&Id> = fields1.keys().collect();
             let keys2: Set<&Id> = fields2.keys().collect();
 
@@ -528,6 +540,7 @@ impl Ty {
     pub(super) fn unit() -> Ty {
         Ty::Record {
             fields: Default::default(),
+            extension: None,
         }
     }
 
@@ -568,11 +581,12 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
+            Ty::Record { fields, extension } => Ty::Record {
                 fields: fields
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
             },
 
             Ty::QVar(qvar) => {
@@ -630,11 +644,14 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
+            Ty::Record { fields, extension } => Ty::Record {
                 fields: fields
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
                     .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_self(self_ty))),
             },
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
@@ -678,11 +695,14 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
+            Ty::Record { fields, extension } => Ty::Record {
                 fields: fields
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
                     .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_qvars(vars))),
             },
 
             Ty::QVar(id) => vars
@@ -774,11 +794,14 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
+            Ty::Record { fields, extension } => Ty::Record {
                 fields: fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
                     .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.deep_normalize(cons))),
             },
 
             Ty::Fun(args, ret) => Ty::Fun(
@@ -1021,13 +1044,16 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Record { fields } => {
+            Ty::Record { fields, extension } => {
                 write!(f, "(")?;
                 for (i, (name, ty)) in fields.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
                     write!(f, "{}: {}", name, ty)?;
+                }
+                if let Some(ext) = extension {
+                    write!(f, " | {}", ext)?;
                 }
                 write!(f, ")")
             }

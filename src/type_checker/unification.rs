@@ -109,7 +109,16 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
 
         (ty1, Ty::Var(var)) => link_var(var, ty1),
 
-        (Ty::Record { fields: fields1 }, Ty::Record { fields: fields2 }) => {
+        (
+            Ty::Record {
+                fields: fields1,
+                extension: extension1,
+            },
+            Ty::Record {
+                fields: fields2,
+                extension: extension2,
+            },
+        ) => {
             let keys1: Set<&Id> = fields1.keys().collect();
             let keys2: Set<&Id> = fields2.keys().collect();
 
@@ -198,9 +207,12 @@ fn prune_level(ty: &Ty, max_level: u32) {
             TyArgs::Named(tys) => tys.values().for_each(|ty| prune_level(ty, max_level)),
         },
 
-        Ty::Record { fields } => {
+        Ty::Record { fields, extension } => {
             for field_ty in fields.values() {
                 prune_level(field_ty, max_level);
+            }
+            if let Some(ext) = extension {
+                prune_level(ext, max_level);
             }
         }
 

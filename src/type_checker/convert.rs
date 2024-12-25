@@ -103,6 +103,10 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     )
                 })
                 .collect(),
+            extension: extension.as_ref().map(|var| match tys.get_var(var) {
+                Some(ty) => Box::new(ty.clone()),
+                None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
+            }),
         },
 
         ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun(
@@ -113,6 +117,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
                 None => Ty::Record {
                     fields: Default::default(),
+                    extension: None,
                 },
             }),
         ),

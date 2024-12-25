@@ -941,6 +941,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
         None => Ty::Record {
             fields: Default::default(),
+            extension: None,
         },
     };
 
@@ -1048,6 +1049,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     None => Ty::Record {
                         fields: Default::default(),
+                        extension: None,
                     },
                 };
 
@@ -1163,6 +1165,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     None => Ty::Record {
                         fields: Default::default(),
+                        extension: None,
                     },
                 };
 

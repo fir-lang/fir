@@ -89,7 +89,7 @@ pub(super) fn check_expr(
                         }
                     },
 
-                    Ty::Record { fields } => match fields.get(&field) {
+                    Ty::Record { fields, extension } => match fields.get(&field) {
                         Some(field_ty) => field_ty.clone(),
                         None => panic!(
                             "{}: Record with fields {:?} does not have field {}",
@@ -506,6 +506,7 @@ pub(super) fn check_expr(
                 match expected_ty.normalize(tc_state.tys.tys.cons()) {
                     Ty::Record {
                         fields: expected_fields,
+                        extension,
                     } => expected_fields,
                     other => panic!(
                         "{}: Record expression expected to have type {:?}",
@@ -541,6 +542,7 @@ pub(super) fn check_expr(
             unify_expected_ty(
                 Ty::Record {
                     fields: record_fields,
+                    extension: None,
                 },
                 expected_ty,
                 tc_state.tys.tys.cons(),

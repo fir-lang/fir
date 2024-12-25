@@ -93,17 +93,21 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             apply(&con_ty, &pat_field_tys, tc_state.tys.tys.cons(), &pat.loc)
         }
 
-        ast::Pat::Record(fields) => Ty::Record {
-            fields: fields
-                .iter_mut()
-                .map(|named| {
-                    (
-                        named.name.as_ref().unwrap().clone(),
-                        check_pat(tc_state, &mut named.node, level),
-                    )
-                })
-                .collect(),
-        },
+        ast::Pat::Record(fields) => {
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+            Ty::Record {
+                fields: fields
+                    .iter_mut()
+                    .map(|named| {
+                        (
+                            named.name.as_ref().unwrap().clone(),
+                            check_pat(tc_state, &mut named.node, level),
+                        )
+                    })
+                    .collect(),
+                extension: Some(Box::new(extension_var)),
+            }
+        }
 
         ast::Pat::Str(_) => Ty::str(),
 
