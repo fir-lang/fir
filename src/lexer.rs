@@ -63,6 +63,7 @@ lexgen::lexer! {
         "." = TokenKind::Dot,
         "," = TokenKind::Comma,
         ":" = TokenKind::Colon,
+        ";" = TokenKind::Semicolon,
         "\\" = TokenKind::Backslash,
         ".." = TokenKind::DotDot,
         "..=" = TokenKind::DotDotEq,

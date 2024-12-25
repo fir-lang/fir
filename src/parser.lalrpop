@@ -1,4 +1,3 @@
-#![allow(unused)]
 #![allow(clippy::all)]
 
 use crate::ast::*;
@@ -613,23 +612,6 @@ InlineExpr: Expr = {
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
-    <l:@L> <expr:InlineExpr> <r:@R> "as" <ty:UpperId> => {
-        let ty = match ty.smol_str().as_str() {
-            "I8" => AsExprTy::I8,
-            "U8" => AsExprTy::U8,
-            "I32" => AsExprTy::I32,
-            "U32" => AsExprTy::U32,
-            _ => panic!("`as` expression target needs to be one of: I8, U8, I32, U32"),
-        };
-
-        Expr::As(AsExpr {
-            expr: Box::new(L::new(module, l, r, expr)),
-            expr_ty: None,
-            target_ty: ty,
-        })
-    },
-
-    #[precedence(level = "4")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "*" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -646,7 +628,7 @@ InlineExpr: Expr = {
             op: BinOp::Divide,
         }),
 
-    #[precedence(level = "5")]
+    #[precedence(level = "4")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "+" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -662,7 +644,7 @@ InlineExpr: Expr = {
             op: BinOp::Subtract,
         }),
 
-    #[precedence(level = "6")]
+    #[precedence(level = "5")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "<<" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -678,7 +660,7 @@ InlineExpr: Expr = {
             op: BinOp::RightShift,
         }),
 
-    #[precedence(level = "7")]
+    #[precedence(level = "6")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -687,7 +669,7 @@ InlineExpr: Expr = {
             op: BinOp::BitAnd,
         }),
 
-    #[precedence(level = "8")]
+    #[precedence(level = "7")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "|" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -696,7 +678,7 @@ InlineExpr: Expr = {
             op: BinOp::BitOr,
         }),
 
-    #[precedence(level = "9")]
+    #[precedence(level = "8")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "==" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -740,7 +722,7 @@ InlineExpr: Expr = {
             op: BinOp::GtEq,
         }),
 
-    #[precedence(level = "10")]
+    #[precedence(level = "9")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -749,7 +731,7 @@ InlineExpr: Expr = {
             op: BinOp::And,
         }),
 
-    #[precedence(level = "11")]
+    #[precedence(level = "10")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -758,7 +740,7 @@ InlineExpr: Expr = {
             op: BinOp::Or,
         }),
 
-    #[precedence(level = "12")]
+    #[precedence(level = "11")]
     #[assoc(side = "left")]
     <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
         Expr::Range(RangeExpr {
@@ -774,7 +756,7 @@ InlineExpr: Expr = {
             inclusive: true,
         }),
 
-    #[precedence(level = "13")]
+    #[precedence(level = "12")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }
