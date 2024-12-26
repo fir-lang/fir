@@ -192,6 +192,63 @@ where
     );
 }
 
+pub fn tree_to_tokens(token_tree: TokenTree) -> Vec<(Loc, Token, Loc)> {
+    let mut tokens: Vec<(Loc, Token, Loc)> = vec![];
+    tree_to_tokens_(token_tree, &mut tokens);
+    tokens
+}
+
+fn tree_to_tokens_(token_tree: TokenTree, tokens: &mut Vec<(Loc, Token, Loc)>) {
+    for node in token_tree {
+        node_to_tokens(node, tokens);
+    }
+}
+
+fn node_to_tokens(node: TokenTreeNode, tokens: &mut Vec<(Loc, Token, Loc)>) {
+    match node {
+        TokenTreeNode::Single(Single { left, token, right }) => tokens.push((left, token, right)),
+        TokenTreeNode::Delimited(Delimited {
+            delim,
+            left_delim,
+            right_delim,
+            elems,
+        }) => {
+            let (left_delim_tok, right_delim_tok) = match delim {
+                Delimiter::Brace => (Token::lbrace(), Token::rbrace()),
+                Delimiter::Bracket => (Token::lbracket(), Token::rbracket()),
+                Delimiter::Paren => (Token::lparen(), Token::rparen()),
+            };
+            tokens.push((left_delim, left_delim_tok, loc1(&left_delim)));
+            for elem in elems {
+                token_tree_sep_to_tokens(elem, tokens);
+            }
+            tokens.push((right_delim, right_delim_tok, loc1(&right_delim)));
+        }
+    }
+}
+
+fn token_tree_sep_to_tokens(
+    TokenTreeSep { tokens, sep }: TokenTreeSep,
+    out: &mut Vec<(Loc, Token, Loc)>,
+) {
+    tree_to_tokens_(tokens, out);
+    if let Some(sep) = sep {
+        let tok = match sep.kind {
+            SeparatorKind::Comma => Token::comma(),
+            SeparatorKind::Semicolon => Token::semicolon(),
+        };
+        out.push((sep.loc, tok, loc1(&sep.loc)));
+    }
+}
+
+fn loc1(loc: &Loc) -> Loc {
+    Loc {
+        line: loc.line,
+        col: loc.col + 1,
+        byte_idx: loc.byte_idx + 1,
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -200,17 +257,18 @@ mod test {
     use indoc::indoc;
 
     #[test]
-    fn token_tree_1() {
-        let tokens = lex(
+    fn token_tree_roundtrip_1() {
+        let tokens0 = lex(
             indoc! {"
-                fn test() {
-                    stmt1;
-                    stmt2;
-                }
+                fn test(a, b,) {
+                    stmt1
+                    stmt2
+                } [1, 2,,]
             "},
             "test",
         );
-        let tree = tokens_to_tree("test", &mut tokens.into_iter().peekable());
-        dbg!(tree);
+        let tree = tokens_to_tree("test", &mut tokens0.clone().into_iter().peekable());
+        let tokens1 = tree_to_tokens(tree.clone());
+        assert_eq!(tokens0, tokens1);
     }
 }

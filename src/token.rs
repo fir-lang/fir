@@ -1,12 +1,68 @@
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: TokenKind,
     pub text: SmolStr,
 }
 
 impl Token {
+    pub fn lparen() -> Token {
+        Token {
+            kind: TokenKind::LParen,
+            text: "(".into(),
+        }
+    }
+
+    pub fn rparen() -> Token {
+        Token {
+            kind: TokenKind::RParen,
+            text: ")".into(),
+        }
+    }
+
+    pub fn lbrace() -> Token {
+        Token {
+            kind: TokenKind::LBrace,
+            text: "{".into(),
+        }
+    }
+
+    pub fn rbrace() -> Token {
+        Token {
+            kind: TokenKind::RBrace,
+            text: "}".into(),
+        }
+    }
+
+    pub fn lbracket() -> Token {
+        Token {
+            kind: TokenKind::LBracket,
+            text: "[".into(),
+        }
+    }
+
+    pub fn rbracket() -> Token {
+        Token {
+            kind: TokenKind::RBracket,
+            text: "]".into(),
+        }
+    }
+
+    pub fn comma() -> Token {
+        Token {
+            kind: TokenKind::Comma,
+            text: ",".into(),
+        }
+    }
+
+    pub fn semicolon() -> Token {
+        Token {
+            kind: TokenKind::Semicolon,
+            text: ";".into(),
+        }
+    }
+
     pub fn smol_str(&self) -> SmolStr {
         self.text.clone()
     }
