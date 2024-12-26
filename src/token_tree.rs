@@ -271,4 +271,19 @@ mod test {
         let tokens1 = tree_to_tokens(tree.clone());
         assert_eq!(tokens0, tokens1);
     }
+
+    #[test]
+    fn token_tree_roundtrip_2() {
+        let tokens0 = lex(
+            indoc! {"
+                (1, fn()
+                    a
+                    b, 3)
+            "},
+            "test",
+        );
+        let tree = tokens_to_tree("test", &mut tokens0.clone().into_iter().peekable());
+        let tokens1 = tree_to_tokens(tree.clone());
+        assert_eq!(tokens0, tokens1);
+    }
 }
