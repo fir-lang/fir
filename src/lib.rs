@@ -13,6 +13,7 @@ mod record_collector;
 mod scanner;
 mod scope_map;
 mod token;
+mod token_tree;
 mod type_checker;
 mod utils;
 
