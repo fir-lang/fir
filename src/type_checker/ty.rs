@@ -59,6 +59,9 @@ pub enum Ty {
     /// A record type, e.g. `(x: U32, y: U32)`, `(a: Str|r)`.
     Record {
         fields: Map<Id, Ty>,
+
+        /// When available, this will be a `Ty::Var`, or a `Ty::Record`, potentially with extension.
+        /// The fields with `fields` and all the extension fields linked here won't have duplicates.
         extension: Option<Box<Ty>>,
     },
 

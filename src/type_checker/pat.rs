@@ -90,7 +90,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply(&con_ty, &pat_field_tys, tc_state.tys.tys.cons(), &pat.loc)
+            apply(
+                &con_ty,
+                &pat_field_tys,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &pat.loc,
+            )
         }
 
         ast::Pat::Record(fields) => {
@@ -123,7 +130,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let pat2_ty = check_pat(tc_state, pat2, level);
             // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
-            unify(&pat1_ty, &pat2_ty, tc_state.tys.tys.cons(), &pat.loc);
+            unify(
+                &pat1_ty,
+                &pat2_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
             pat1_ty
         }
     }

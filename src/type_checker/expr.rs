@@ -28,6 +28,8 @@ pub(super) fn check_expr(
                     ty.clone(),
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
                     &expr.loc,
                 );
             }
@@ -39,7 +41,14 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     ty_args: ty_args.into_iter().map(Ty::Var).collect(),
                 });
-                return unify_expected_ty(ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc);
+                return unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                );
             }
 
             panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
@@ -56,7 +65,14 @@ pub(super) fn check_expr(
                 id: con.clone(),
                 ty_args: ty_args.into_iter().map(Ty::Var).collect(),
             });
-            unify_expected_ty(ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+            unify_expected_ty(
+                ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
@@ -66,8 +82,13 @@ pub(super) fn check_expr(
                 // To be able to select a field or method of a type made precise via a unification
                 // to an associated type, try to resolve predicates right before selecting the field
                 // or method.
-                *tc_state.preds =
-                    super::resolve_preds(tc_state.context, tc_state.tys, take(tc_state.preds));
+                *tc_state.preds = super::resolve_preds(
+                    tc_state.context,
+                    tc_state.tys,
+                    take(tc_state.preds),
+                    &mut tc_state.var_gen,
+                    level,
+                );
 
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
@@ -114,7 +135,14 @@ pub(super) fn check_expr(
                     }
                 }
             };
-            unify_expected_ty(ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+            unify_expected_ty(
+                ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
         }
 
         ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
@@ -152,7 +180,14 @@ pub(super) fn check_expr(
                 constr: constr.clone(),
                 ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
             });
-            unify_expected_ty(con_ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+            unify_expected_ty(
+                con_ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
         }
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
@@ -215,7 +250,14 @@ pub(super) fn check_expr(
                             check_expr(tc_state, &mut arg.expr, Some(param_ty), level, loop_depth);
                         arg_tys.push(arg_ty);
                     }
-                    unify_expected_ty(*ret_ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+                    unify_expected_ty(
+                        *ret_ty,
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    )
                 }
 
                 Ty::FunNamedArgs(param_tys, ret_ty) => {
@@ -255,10 +297,24 @@ pub(super) fn check_expr(
                         let param_ty: &Ty = param_tys.get(arg_name).unwrap();
                         let arg_ty =
                             check_expr(tc_state, &mut arg.expr, Some(param_ty), level, loop_depth);
-                        unify(&arg_ty, param_ty, tc_state.tys.tys.cons(), &expr.loc);
+                        unify(
+                            &arg_ty,
+                            param_ty,
+                            tc_state.tys.tys.cons(),
+                            &mut tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        );
                     }
 
-                    unify_expected_ty(*ret_ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+                    unify_expected_ty(
+                        *ret_ty,
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    )
                 }
 
                 _ => panic!(
@@ -317,6 +373,8 @@ pub(super) fn check_expr(
                         Ty::Con("I8".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
                         &expr.loc,
                     )
                 }
@@ -333,6 +391,8 @@ pub(super) fn check_expr(
                         Ty::Con("U8".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
                         &expr.loc,
                     )
                 }
@@ -349,6 +409,8 @@ pub(super) fn check_expr(
                         Ty::Con("I32".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
                         &expr.loc,
                     )
                 }
@@ -365,6 +427,8 @@ pub(super) fn check_expr(
                         Ty::Con("U32".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
                         &expr.loc,
                     )
                 }
@@ -405,18 +469,32 @@ pub(super) fn check_expr(
                 }
             }
 
-            unify_expected_ty(Ty::str(), expected_ty, tc_state.tys.tys.cons(), &expr.loc)
+            unify_expected_ty(
+                Ty::str(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
         }
 
-        ast::Expr::Char(_) => {
-            unify_expected_ty(Ty::char(), expected_ty, tc_state.tys.tys.cons(), &expr.loc)
-        }
+        ast::Expr::Char(_) => unify_expected_ty(
+            Ty::char(),
+            expected_ty,
+            tc_state.tys.tys.cons(),
+            &mut tc_state.var_gen,
+            level,
+            &expr.loc,
+        ),
 
         ast::Expr::Self_ => match tc_state.env.get("self") {
             Some(self_ty) => unify_expected_ty(
                 self_ty.clone(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
                 &expr.loc,
             ),
             None => panic!("{}: Unbound self", loc_display(&expr.loc)),
@@ -479,6 +557,8 @@ pub(super) fn check_expr(
                     Ty::unit(),
                     expected_ty,
                     tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
                     &expr.loc,
                 );
             }
@@ -546,6 +626,8 @@ pub(super) fn check_expr(
                 },
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
                 &expr.loc,
             )
         }
@@ -567,7 +649,14 @@ pub(super) fn check_expr(
             } in alts
             {
                 let pat_ty = check_pat(tc_state, pattern, level);
-                unify(&pat_ty, &scrut_ty, tc_state.tys.tys.cons(), &pattern.loc);
+                unify(
+                    &pat_ty,
+                    &scrut_ty,
+                    tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
+                    &pattern.loc,
+                );
 
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);
@@ -577,13 +666,22 @@ pub(super) fn check_expr(
             }
 
             for rhs_tys in rhs_tys.windows(2) {
-                unify(&rhs_tys[0], &rhs_tys[1], tc_state.tys.tys.cons(), &expr.loc);
+                unify(
+                    &rhs_tys[0],
+                    &rhs_tys[1],
+                    tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                );
             }
 
             unify_expected_ty(
                 rhs_tys.pop().unwrap(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
                 &expr.loc,
             )
         }
@@ -596,7 +694,14 @@ pub(super) fn check_expr(
 
             for (cond, body) in branches {
                 let cond_ty = check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_depth);
-                unify(&cond_ty, &Ty::bool(), tc_state.tys.tys.cons(), &expr.loc);
+                unify(
+                    &cond_ty,
+                    &Ty::bool(),
+                    tc_state.tys.tys.cons(),
+                    &mut tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                );
 
                 let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_depth);
 
@@ -618,12 +723,26 @@ pub(super) fn check_expr(
             match expected_ty {
                 Some(expected_ty) => {
                     for ty in &branch_tys {
-                        unify(ty, expected_ty, tc_state.tys.tys.cons(), &expr.loc);
+                        unify(
+                            ty,
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            &mut tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        );
                     }
                 }
                 None => {
                     for ty_pair in branch_tys.windows(2) {
-                        unify(&ty_pair[0], &ty_pair[1], tc_state.tys.tys.cons(), &expr.loc);
+                        unify(
+                            &ty_pair[0],
+                            &ty_pair[1],
+                            tc_state.tys.tys.cons(),
+                            &mut tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        );
                     }
                 }
             }

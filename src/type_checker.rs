@@ -963,7 +963,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    resolve_all_preds(&context, tys, preds);
+    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
 
     unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
@@ -1081,7 +1081,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(&context, tys, preds);
+                resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
@@ -1194,7 +1194,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(&context, tys, preds);
+                resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
@@ -1220,6 +1220,8 @@ fn resolve_preds(
     context: &Map<Id, Map<Id, Map<Id, Ty>>>,
     tys: &PgmTypes,
     preds: PredSet,
+    var_gen: &mut TyVarGen,
+    level: u32,
 ) -> PredSet {
     let mut remaining_preds: PredSet = Default::default();
 
@@ -1301,9 +1303,16 @@ fn resolve_preds(
                     let expected_ty = ty.normalize(tys.tys.cons());
 
                     // TODO: We could show where the associated type is coming from in the error
-                    // messages here, e.g. instead of `Unable to unify Str and I32`, we could say
-                    // `Unable to unify MyType.AssocTy (Str) and I32`.
-                    unification::unify(&assoc_ty, &expected_ty, tys.tys.cons(), &loc);
+                    // messages here, e.g. instead of "Unable to unify Str and I32", we could say
+                    // "Unable to unify MyType.AssocTy (Str) and I32".
+                    unification::unify(
+                        &assoc_ty,
+                        &expected_ty,
+                        tys.tys.cons(),
+                        var_gen,
+                        level,
+                        &loc,
+                    );
                 }
             }
 
@@ -1327,8 +1336,14 @@ fn resolve_preds(
     remaining_preds
 }
 
-fn resolve_all_preds(context: &Map<Id, Map<Id, Map<Id, Ty>>>, tys: &PgmTypes, preds: PredSet) {
-    let unresolved_preds = resolve_preds(context, tys, preds);
+fn resolve_all_preds(
+    context: &Map<Id, Map<Id, Map<Id, Ty>>>,
+    tys: &PgmTypes,
+    preds: PredSet,
+    var_gen: &mut TyVarGen,
+    level: u32,
+) {
+    let unresolved_preds = resolve_preds(context, tys, preds, var_gen, level);
     report_unresolved_preds(unresolved_preds, tys.tys.cons());
 }
 

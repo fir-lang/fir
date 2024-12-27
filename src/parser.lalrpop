@@ -224,7 +224,7 @@ TypeNoFn: Type = {
 RecordTypeExtension: Option<Id> = {
     => None,
 
-    "|" <id:LowerId> => Some(id.smol_str()),
+    "|" <id:UpperId> => Some(id.smol_str()),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {

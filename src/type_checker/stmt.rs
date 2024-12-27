@@ -49,7 +49,14 @@ fn check_stmt(
                     loc_display(&stmt.loc)
                 );
             }
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
@@ -69,9 +76,23 @@ fn check_stmt(
 
             let pat_ty = check_pat(tc_state, lhs, level);
 
-            unify(&pat_ty, &rhs_ty, tc_state.tys.tys.cons(), &lhs.loc);
+            unify(
+                &pat_ty,
+                &rhs_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &lhs.loc,
+            );
 
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
@@ -207,7 +228,14 @@ fn check_stmt(
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
             }
 
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_depth),
@@ -255,13 +283,27 @@ fn check_stmt(
             tc_state.env.insert(var.clone(), item_ty);
             check_stmts(tc_state, body, None, level, loop_depth + 1);
             tc_state.env.exit();
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::While(ast::WhileStmt { cond, body }) => {
             check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_depth);
             check_stmts(tc_state, body, None, level, loop_depth + 1);
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                &mut tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
     }
 }

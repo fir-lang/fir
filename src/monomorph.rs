@@ -1052,13 +1052,24 @@ fn mono_ty(
             })
         }
 
-        ast::Type::Record { fields, extension } => ast::Type::Record {
-            fields: fields
-                .iter()
-                .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
-                .collect(),
-            extension: extension.clone(),
-        },
+        ast::Type::Record { fields, extension } => {
+            if let Some(extension) = extension {
+                println!(
+                    "Monomorphising record, extension = {} -> {:?}",
+                    extension,
+                    ty_map.get(extension)
+                );
+            }
+            ast::Type::Record {
+                fields: fields
+                    .iter()
+                    .map(|named_ty| {
+                        named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))
+                    })
+                    .collect(),
+                extension: extension.clone(),
+            }
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
             args: args
