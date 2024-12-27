@@ -797,15 +797,21 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields, extension } => Ty::Record {
-                fields: fields
-                    .iter()
-                    .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
-                    .collect(),
-                extension: extension
-                    .as_ref()
-                    .map(|ext| Box::new(ext.deep_normalize(cons))),
-            },
+            Ty::Record { fields, extension } => {
+                let (fields, extension) = crate::type_checker::unification::collect_record_fields(
+                    cons,
+                    self,
+                    fields,
+                    extension.clone(),
+                );
+                Ty::Record {
+                    fields: fields
+                        .iter()
+                        .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
+                        .collect(),
+                    extension: extension.map(|ext| Box::new(Ty::Var(ext))),
+                }
+            }
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),

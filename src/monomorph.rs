@@ -1162,10 +1162,19 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }
 
-        Ty::Record {
-            fields: _,
-            extension: _,
-        } => todo!(),
+        Ty::Record { fields, extension } => {
+            assert!(extension.is_none());
+            ast::Type::Record {
+                fields: fields
+                    .iter()
+                    .map(|(field_id, field_ty)| ast::Named {
+                        name: Some(field_id.clone()),
+                        node: ty_to_ast(field_ty, ty_map),
+                    })
+                    .collect(),
+                extension: None,
+            }
+        }
 
         Ty::QVar(_var) => panic!(),
 

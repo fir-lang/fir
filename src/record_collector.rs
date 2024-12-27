@@ -147,7 +147,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
             .for_each(|arg| visit_ty(&arg.node.1.node, records)),
 
         ast::Type::Record { fields, extension } => {
-            assert_eq!(extension, &None);
+            assert_eq!(extension, &None, "{:?}", extension);
             records.insert(RecordShape::from_named_things(fields));
         }
 

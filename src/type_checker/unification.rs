@@ -135,12 +135,11 @@ pub(super) fn unify(
         ) => {
             println!("Unifying record types: {} ~ {}", ty1, ty2);
 
-            // TODO: Unification when only one side has an extension is not right.
-
             let (record1_fields, record1_extension) =
                 collect_record_fields(cons, &ty1, fields1, extension1.clone());
             let (record2_fields, record2_extension) =
                 collect_record_fields(cons, &ty2, fields2, extension2.clone());
+            let make_concrete = record1_extension.is_none() || record2_extension.is_none();
 
             let keys1: Set<&Id> = record1_fields.keys().collect();
             let keys2: Set<&Id> = record2_fields.keys().collect();
@@ -153,10 +152,18 @@ pub(super) fn unify(
             let common_fields: Set<&&Id> = keys1.intersection(&keys2).collect();
 
             if !extras1.is_empty() {
-                match record2_extension {
+                match &record2_extension {
                     Some(var) => {
                         // TODO: Not sure about level
-                        link_record_extension(&extras1, &record1_fields, &var, var_gen, level, loc);
+                        link_record_extension(
+                            &extras1,
+                            &record1_fields,
+                            &var,
+                            var_gen,
+                            level,
+                            !make_concrete,
+                            loc,
+                        );
                     }
                     None => {
                         panic!(
@@ -169,10 +176,18 @@ pub(super) fn unify(
             }
 
             if !extras2.is_empty() {
-                match record1_extension {
+                match &record1_extension {
                     Some(var) => {
                         // TODO: Not sure about level
-                        link_record_extension(&extras2, &record2_fields, &var, var_gen, level, loc);
+                        link_record_extension(
+                            &extras2,
+                            &record2_fields,
+                            &var,
+                            var_gen,
+                            level,
+                            !make_concrete,
+                            loc,
+                        );
                     }
                     None => {
                         panic!(
@@ -184,11 +199,22 @@ pub(super) fn unify(
                 }
             }
 
+            if extras1.is_empty() && extras2.is_empty() && make_concrete {
+                if let Some(extension) = &record1_extension {
+                    extension.set_link(Ty::unit());
+                }
+                if let Some(extension) = &record2_extension {
+                    extension.set_link(Ty::unit());
+                }
+            }
+
             for key in common_fields {
                 let ty1 = fields1.get(*key).unwrap();
                 let ty2 = fields2.get(*key).unwrap();
                 unify(ty1, ty2, cons, var_gen, level, loc);
             }
+
+            println!("  After unification: {} ~ {}", ty1, ty2);
         }
 
         (ty1, ty2) => panic!(
@@ -210,7 +236,7 @@ pub(super) fn unify(
 
 /// Returns all of the fields in the record including extensions, with extension variable (if
 /// exists).
-fn collect_record_fields<'a>(
+pub(crate) fn collect_record_fields<'a>(
     cons: &ScopeMap<Id, TyCon>,
     record_ty: &Ty, // used in errors
     fields: &Map<Id, Ty>,
@@ -268,6 +294,7 @@ fn link_record_extension(
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
+    generate_new_extension: bool,
     loc: &ast::Loc,
 ) {
     let extension_fields: Map<Id, Ty> = extra_fields
@@ -279,11 +306,15 @@ fn link_record_extension(
             )
         })
         .collect();
-    // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, loc.clone());
+    let new_extension_var = if generate_new_extension {
+        // TODO: Not sure about the level.
+        Some(Box::new(Ty::Var(var_gen.new_var(level, loc.clone()))))
+    } else {
+        None
+    };
     let new_extension_ty = Ty::Record {
         fields: extension_fields,
-        extension: Some(Box::new(Ty::Var(new_extension_var))),
+        extension: new_extension_var,
     };
     var.set_link(new_extension_ty);
 }
