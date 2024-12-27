@@ -1053,21 +1053,29 @@ fn mono_ty(
         }
 
         ast::Type::Record { fields, extension } => {
+            // TODO: Assert that there are no duplicate fields.
+
+            let mut fields: Vec<ast::Named<ast::Type>> = fields
+                .iter()
+                .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                .collect();
+
             if let Some(extension) = extension {
-                println!(
-                    "Monomorphising record, extension = {} -> {:?}",
-                    extension,
-                    ty_map.get(extension)
-                );
+                match ty_map.get(extension) {
+                    Some(ast::Type::Record {
+                        fields: extra_fields,
+                        extension,
+                    }) => {
+                        assert!(extension.is_none());
+                        fields.extend(extra_fields.iter().cloned());
+                    }
+                    _ => panic!("Record extension is not a record"),
+                }
             }
+
             ast::Type::Record {
-                fields: fields
-                    .iter()
-                    .map(|named_ty| {
-                        named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))
-                    })
-                    .collect(),
-                extension: extension.clone(),
+                fields,
+                extension: None,
             }
         }
 
