@@ -149,7 +149,8 @@ fn check_stmt(
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
                     let object_ty = check_expr(tc_state, object, None, level, loop_depth);
 
-                    let lhs_ty: Ty = match object_ty.normalize(tc_state.tys.tys.cons()) {
+                    let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
+                    let lhs_ty: Ty = match &lhs_ty_normalized {
                         Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tc_state.tys)
                             .unwrap_or_else(|| {
                                 panic!(
@@ -175,15 +176,24 @@ fn check_stmt(
                             TyArgs::Named(_) => panic!(),
                         },
 
-                        Ty::Record { fields, extension } => match fields.get(field) {
-                            Some(field_ty) => field_ty.clone(),
-                            None => panic!(
-                                "{}: Record with fields {:?} does not have field {}",
-                                loc_display(&object.loc),
-                                fields.keys().collect::<Vec<_>>(),
-                                field
-                            ),
-                        },
+                        Ty::Record { fields, extension } => {
+                            let (fields, _) =
+                                crate::type_checker::unification::collect_record_fields(
+                                    tc_state.tys.tys.cons(),
+                                    &lhs_ty_normalized,
+                                    fields,
+                                    extension.clone(),
+                                );
+                            match fields.get(field) {
+                                Some(field_ty) => field_ty.clone(),
+                                None => panic!(
+                                    "{}: Record with fields {:?} does not have field {}",
+                                    loc_display(&object.loc),
+                                    fields.keys().collect::<Vec<_>>(),
+                                    field
+                                ),
+                            }
+                        }
 
                         _ => panic!(),
                     };

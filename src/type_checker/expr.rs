@@ -93,7 +93,8 @@ pub(super) fn check_expr(
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
 
-                match object_ty.normalize(tc_state.tys.tys.cons()) {
+                let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
+                match &ty_normalized {
                     Ty::Con(con) => {
                         check_field_select(tc_state, expr, &con, &[], &field, &expr_loc, level)
                     }
@@ -110,15 +111,23 @@ pub(super) fn check_expr(
                         }
                     },
 
-                    Ty::Record { fields, extension } => match fields.get(&field) {
-                        Some(field_ty) => field_ty.clone(),
-                        None => panic!(
-                            "{}: Record with fields {:?} does not have field {}",
-                            loc_display(&object.loc),
-                            fields.keys().collect::<Vec<_>>(),
-                            field
-                        ),
-                    },
+                    Ty::Record { fields, extension } => {
+                        let (fields, _) = crate::type_checker::unification::collect_record_fields(
+                            tc_state.tys.tys.cons(),
+                            &ty_normalized,
+                            fields,
+                            extension.clone(),
+                        );
+                        match fields.get(&field) {
+                            Some(field_ty) => field_ty.clone(),
+                            None => panic!(
+                                "{}: Record with fields {:?} does not have field {}",
+                                loc_display(&object.loc),
+                                fields.keys().collect::<Vec<_>>(),
+                                field
+                            ),
+                        }
+                    }
 
                     Ty::AssocTySelect { ty: _, assoc_ty: _ } => panic!(
                         "{}: Associated type select in fiel select expr",

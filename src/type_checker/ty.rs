@@ -393,7 +393,9 @@ fn ty_eq_modulo_alpha(
     ty2_qvars: &Map<Id, u32>,
     loc: &ast::Loc,
 ) -> bool {
-    match (ty1.normalize(cons), ty2.normalize(cons)) {
+    let ty1_normalized = ty1.normalize(cons);
+    let ty2_normalized = ty2.normalize(cons);
+    match (&ty1_normalized, &ty2_normalized) {
         (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
 
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
@@ -458,6 +460,19 @@ fn ty_eq_modulo_alpha(
                 extension: extension2,
             },
         ) => {
+            let (fields1, extension1) = crate::type_checker::unification::collect_record_fields(
+                cons,
+                &ty1_normalized,
+                fields1,
+                extension1.clone(),
+            );
+            let (fields2, extension2) = crate::type_checker::unification::collect_record_fields(
+                cons,
+                &ty2_normalized,
+                fields2,
+                extension2.clone(),
+            );
+
             let keys1: Set<&Id> = fields1.keys().collect();
             let keys2: Set<&Id> = fields2.keys().collect();
 
@@ -479,21 +494,27 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            true
+            match (extension1, extension2) {
+                (None, None) => true,
+                (Some(ext1), Some(ext2)) => {
+                    ty_eq_modulo_alpha(cons, extra_qvars, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
+                }
+                (None, Some(_)) | (Some(_), None) => false,
+            }
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
-            if qvar1 == qvar2 && extra_qvars.contains(&qvar1) {
+            if qvar1 == qvar2 && extra_qvars.contains(qvar1) {
                 return true;
             }
 
-            let qvar1_idx = ty1_qvars.get(&qvar1).unwrap_or_else(|| {
+            let qvar1_idx = ty1_qvars.get(qvar1).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_display(loc), qvar1, ty1_qvars, extra_qvars
                 )
             });
-            let qvar2_idx = ty2_qvars.get(&qvar2).unwrap_or_else(|| {
+            let qvar2_idx = ty2_qvars.get(qvar2).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_display(loc), qvar2, ty2_qvars, extra_qvars
