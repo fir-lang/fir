@@ -534,7 +534,7 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         (Ty::FunNamedArgs(args1, ret1), Ty::FunNamedArgs(args2, ret2)) => {
@@ -553,7 +553,7 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         _ => false,

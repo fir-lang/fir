@@ -53,7 +53,7 @@ fn check_stmt(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &stmt.loc,
             )
@@ -80,7 +80,7 @@ fn check_stmt(
                 &pat_ty,
                 &rhs_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &lhs.loc,
             );
@@ -89,7 +89,7 @@ fn check_stmt(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &stmt.loc,
             )
@@ -151,7 +151,7 @@ fn check_stmt(
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
-                        Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tc_state.tys)
+                        Ty::Con(con) => select_field(con, &[], field, &lhs.loc, tc_state.tys)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
@@ -163,7 +163,7 @@ fn check_stmt(
 
                         Ty::App(con, args) => match args {
                             TyArgs::Positional(args) => {
-                                select_field(&con, &args, field, &lhs.loc, tc_state.tys)
+                                select_field(con, args, field, &lhs.loc, tc_state.tys)
                                     .unwrap_or_else(|| {
                                         panic!(
                                             "{}: Type {} does not have field {}",
@@ -242,7 +242,7 @@ fn check_stmt(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &stmt.loc,
             )
@@ -297,7 +297,7 @@ fn check_stmt(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &stmt.loc,
             )
@@ -310,7 +310,7 @@ fn check_stmt(
                 Ty::unit(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &stmt.loc,
             )

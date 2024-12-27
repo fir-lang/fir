@@ -160,7 +160,7 @@ pub(super) fn unify(
                         link_record_extension(
                             &extras1,
                             &record1_fields,
-                            &var,
+                            var,
                             var_gen,
                             level,
                             !make_concrete,
@@ -184,7 +184,7 @@ pub(super) fn unify(
                         link_record_extension(
                             &extras2,
                             &record2_fields,
-                            &var,
+                            var,
                             var_gen,
                             level,
                             !make_concrete,
@@ -230,7 +230,7 @@ pub(super) fn unify(
 
 /// Returns all of the fields in the record including extensions, with extension variable (if
 /// exists).
-pub(crate) fn collect_record_fields<'a>(
+pub(crate) fn collect_record_fields(
     cons: &ScopeMap<Id, TyCon>,
     record_ty: &Ty, // used in errors
     fields: &Map<Id, Ty>,

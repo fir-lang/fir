@@ -94,7 +94,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &pat.loc,
             )
@@ -134,7 +134,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 &pat1_ty,
                 &pat2_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &pat.loc,
             );

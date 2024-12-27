@@ -28,7 +28,7 @@ pub(super) fn check_expr(
                     ty.clone(),
                     expected_ty,
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &expr.loc,
                 );
@@ -45,7 +45,7 @@ pub(super) fn check_expr(
                     ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &expr.loc,
                 );
@@ -69,7 +69,7 @@ pub(super) fn check_expr(
                 ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -86,7 +86,7 @@ pub(super) fn check_expr(
                     tc_state.context,
                     tc_state.tys,
                     take(tc_state.preds),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                 );
 
@@ -96,17 +96,17 @@ pub(super) fn check_expr(
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
                     Ty::Con(con) => {
-                        check_field_select(tc_state, expr, &con, &[], &field, &expr_loc, level)
+                        check_field_select(tc_state, expr, con, &[], &field, &expr_loc, level)
                     }
 
                     Ty::App(con, args) => match args {
-                        TyArgs::Positional(args) => check_field_select(
-                            tc_state, expr, &con, &args, &field, &expr_loc, level,
-                        ),
+                        TyArgs::Positional(args) => {
+                            check_field_select(tc_state, expr, con, args, &field, &expr_loc, level)
+                        }
                         TyArgs::Named(_) => {
                             // Associated type arguments are only allowed in traits, sothe `con` must
                             // be a trait.
-                            assert!(tc_state.tys.tys.get_con(&con).unwrap().details.is_trait());
+                            assert!(tc_state.tys.tys.get_con(con).unwrap().details.is_trait());
                             panic!("{}: Traits cannot have fields", loc_display(&object.loc))
                         }
                     },
@@ -148,7 +148,7 @@ pub(super) fn check_expr(
                 ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -193,7 +193,7 @@ pub(super) fn check_expr(
                 con_ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -263,7 +263,7 @@ pub(super) fn check_expr(
                         *ret_ty,
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -310,7 +310,7 @@ pub(super) fn check_expr(
                             &arg_ty,
                             param_ty,
                             tc_state.tys.tys.cons(),
-                            &mut tc_state.var_gen,
+                            tc_state.var_gen,
                             level,
                             &expr.loc,
                         );
@@ -320,7 +320,7 @@ pub(super) fn check_expr(
                         *ret_ty,
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -382,7 +382,7 @@ pub(super) fn check_expr(
                         Ty::Con("I8".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -400,7 +400,7 @@ pub(super) fn check_expr(
                         Ty::Con("U8".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -418,7 +418,7 @@ pub(super) fn check_expr(
                         Ty::Con("I32".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -436,7 +436,7 @@ pub(super) fn check_expr(
                         Ty::Con("U32".into()),
                         expected_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         &expr.loc,
                     )
@@ -482,7 +482,7 @@ pub(super) fn check_expr(
                 Ty::str(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -492,7 +492,7 @@ pub(super) fn check_expr(
             Ty::char(),
             expected_ty,
             tc_state.tys.tys.cons(),
-            &mut tc_state.var_gen,
+            tc_state.var_gen,
             level,
             &expr.loc,
         ),
@@ -502,7 +502,7 @@ pub(super) fn check_expr(
                 self_ty.clone(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             ),
@@ -566,7 +566,7 @@ pub(super) fn check_expr(
                     Ty::unit(),
                     expected_ty,
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &expr.loc,
                 );
@@ -623,7 +623,7 @@ pub(super) fn check_expr(
                 },
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -650,7 +650,7 @@ pub(super) fn check_expr(
                     &pat_ty,
                     &scrut_ty,
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &pattern.loc,
                 );
@@ -667,7 +667,7 @@ pub(super) fn check_expr(
                     &rhs_tys[0],
                     &rhs_tys[1],
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &expr.loc,
                 );
@@ -677,7 +677,7 @@ pub(super) fn check_expr(
                 rhs_tys.pop().unwrap(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
-                &mut tc_state.var_gen,
+                tc_state.var_gen,
                 level,
                 &expr.loc,
             )
@@ -695,7 +695,7 @@ pub(super) fn check_expr(
                     &cond_ty,
                     &Ty::bool(),
                     tc_state.tys.tys.cons(),
-                    &mut tc_state.var_gen,
+                    tc_state.var_gen,
                     level,
                     &expr.loc,
                 );
@@ -724,7 +724,7 @@ pub(super) fn check_expr(
                             ty,
                             expected_ty,
                             tc_state.tys.tys.cons(),
-                            &mut tc_state.var_gen,
+                            tc_state.var_gen,
                             level,
                             &expr.loc,
                         );
@@ -736,7 +736,7 @@ pub(super) fn check_expr(
                             &ty_pair[0],
                             &ty_pair[1],
                             tc_state.tys.tys.cons(),
-                            &mut tc_state.var_gen,
+                            tc_state.var_gen,
                             level,
                             &expr.loc,
                         );
