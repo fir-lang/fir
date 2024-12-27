@@ -809,7 +809,7 @@ impl Ty {
                         .iter()
                         .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
                         .collect(),
-                    extension: extension.map(|ext| Box::new(Ty::Var(ext))),
+                    extension: extension.map(Box::new),
                 }
             }
 

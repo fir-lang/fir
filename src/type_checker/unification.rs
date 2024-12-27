@@ -133,8 +133,6 @@ pub(super) fn unify(
                 extension: extension2,
             },
         ) => {
-            println!("Unifying record types: {} ~ {}", ty1, ty2);
-
             let (record1_fields, record1_extension) =
                 collect_record_fields(cons, &ty1, fields1, extension1.clone());
             let (record2_fields, record2_extension) =
@@ -148,12 +146,16 @@ pub(super) fn unify(
             let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
             let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
 
-            // Common fields will be unified.
-            let common_fields: Set<&&Id> = keys1.intersection(&keys2).collect();
+            // Unify common fields.
+            for key in keys1.intersection(&keys2) {
+                let ty1 = record1_fields.get(*key).unwrap();
+                let ty2 = record2_fields.get(*key).unwrap();
+                unify(ty1, ty2, cons, var_gen, level, loc);
+            }
 
             if !extras1.is_empty() {
                 match &record2_extension {
-                    Some(var) => {
+                    Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
                         link_record_extension(
                             &extras1,
@@ -165,7 +167,7 @@ pub(super) fn unify(
                             loc,
                         );
                     }
-                    None => {
+                    _ => {
                         panic!(
                             "{}: Unable to unify records: extra keys: {:?}",
                             loc_display(loc),
@@ -177,7 +179,7 @@ pub(super) fn unify(
 
             if !extras2.is_empty() {
                 match &record1_extension {
-                    Some(var) => {
+                    Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
                         link_record_extension(
                             &extras2,
@@ -189,7 +191,7 @@ pub(super) fn unify(
                             loc,
                         );
                     }
-                    None => {
+                    _ => {
                         panic!(
                             "{}: Unable to unify records: extra keys: {:?}",
                             loc_display(loc),
@@ -201,20 +203,12 @@ pub(super) fn unify(
 
             if extras1.is_empty() && extras2.is_empty() && make_concrete {
                 if let Some(extension) = &record1_extension {
-                    extension.set_link(Ty::unit());
+                    unify(extension, &Ty::unit(), cons, var_gen, level, loc);
                 }
                 if let Some(extension) = &record2_extension {
-                    extension.set_link(Ty::unit());
+                    unify(extension, &Ty::unit(), cons, var_gen, level, loc);
                 }
             }
-
-            for key in common_fields {
-                let ty1 = fields1.get(*key).unwrap();
-                let ty2 = fields2.get(*key).unwrap();
-                unify(ty1, ty2, cons, var_gen, level, loc);
-            }
-
-            println!("  After unification: {} ~ {}", ty1, ty2);
         }
 
         (ty1, ty2) => panic!(
@@ -241,7 +235,7 @@ pub(crate) fn collect_record_fields<'a>(
     record_ty: &Ty, // used in errors
     fields: &Map<Id, Ty>,
     mut extension: Option<Box<Ty>>,
-) -> (Map<Id, Ty>, Option<TyVarRef>) {
+) -> (Map<Id, Ty>, Option<Ty>) {
     let mut all_fields: Map<Id, Ty> = fields
         .iter()
         .map(|(id, ty)| (id.clone(), ty.clone()))
@@ -274,14 +268,10 @@ pub(crate) fn collect_record_fields<'a>(
                     extension = next_ext;
                 }
 
-                Ty::Var(var) => {
-                    return (all_fields, Some(var.clone()));
-                }
-
-                _ => panic!("Invalid record extension in {}", record_ty),
+                other => return (all_fields, Some(other)),
             },
 
-            _ => panic!("Invalid record extension in {}", record_ty),
+            other => return (all_fields, Some(other)),
         }
     }
 

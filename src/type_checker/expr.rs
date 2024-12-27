@@ -586,34 +586,22 @@ pub(super) fn check_expr(
                 match expected_ty.normalize(tc_state.tys.tys.cons()) {
                     Ty::Record {
                         fields: expected_fields,
-                        extension,
+                        extension: _,
                     } => expected_fields,
                     other => panic!(
-                        "{}: Record expression expected to have type {:?}",
+                        "{}: Expected {}, found record expression",
                         loc_display(&expr.loc),
                         other
                     ),
                 }
             });
 
-            if let Some(expected_fields) = &expected_fields {
-                let expected_field_names: Set<&Id> = expected_fields.keys().collect();
-                if expected_field_names != field_names {
-                    panic!(
-                        "{}: Record expected to have fields {:?}, but it has fields {:?}",
-                        loc_display(&expr.loc),
-                        expected_field_names,
-                        field_names
-                    );
-                }
-            }
-
             let mut record_fields: Map<Id, Ty> = Default::default();
             for field in fields.iter_mut() {
                 let field_name = field.name.as_ref().unwrap();
                 let expected_ty = expected_fields
                     .as_ref()
-                    .map(|expected_fields| expected_fields.get(field_name).unwrap());
+                    .and_then(|expected_fields| expected_fields.get(field_name));
                 let field_ty =
                     check_expr(tc_state, &mut field.node, expected_ty, level, loop_depth);
                 record_fields.insert(field_name.clone(), field_ty);
