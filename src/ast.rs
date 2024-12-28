@@ -381,7 +381,7 @@ pub enum Expr {
     Constr(ConstrExpr),
 
     /// A variant constructor: "`A", "`ParseError".
-    VariantConstr(ConstrExpr),
+    Variant(ConstrExpr),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///

@@ -354,7 +354,7 @@ impl Expr {
         match self {
             Expr::Var(VarExpr { id, ty_args })
             | Expr::Constr(ConstrExpr { id, ty_args })
-            | Expr::VariantConstr(ConstrExpr { id, ty_args }) => {
+            | Expr::Variant(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }

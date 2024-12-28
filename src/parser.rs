@@ -39821,7 +39821,7 @@ fn __action67<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action68<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::VariantConstr(ConstrExpr {
+    Expr::Variant(ConstrExpr {
         id: id.smol_str(),
         ty_args: vec![],
     })

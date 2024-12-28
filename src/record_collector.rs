@@ -246,7 +246,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
     match expr {
         ast::Expr::Var(_)
         | ast::Expr::Constr(_)
-        | ast::Expr::VariantConstr(_)
+        | ast::Expr::Variant(_)
         | ast::Expr::Int(_)
         | ast::Expr::Self_
         | ast::Expr::Char(_) => {}
