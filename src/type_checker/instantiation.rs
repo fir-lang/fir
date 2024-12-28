@@ -46,6 +46,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
         ast::Expr::Var(ast::VarExpr { ty_args, .. })
         | ast::Expr::Constr(ast::ConstrExpr { ty_args, .. })
+        | ast::Expr::VariantConstr(ast::ConstrExpr { ty_args, .. })
         | ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty_args, .. })
         | ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty_args, .. }) => ty_args
             .iter_mut()

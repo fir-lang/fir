@@ -350,7 +350,9 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::Var(VarExpr { id, ty_args })
+            | Expr::Constr(ConstrExpr { id, ty_args })
+            | Expr::VariantConstr(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }

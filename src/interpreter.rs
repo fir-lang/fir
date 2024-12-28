@@ -828,6 +828,8 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_constr(ty_tag))
         }
 
+        ast::Expr::VariantConstr(_) => todo!(),
+
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];

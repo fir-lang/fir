@@ -75,6 +75,8 @@ pub(super) fn check_expr(
             )
         }
 
+        ast::Expr::VariantConstr(_) => todo!(),
+
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
                 let object_ty = check_expr(tc_state, object, None, level, loop_depth);

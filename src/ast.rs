@@ -359,6 +359,9 @@ pub enum Expr {
     /// A constructor: `Vec`, `Bool`, `I32`.
     Constr(ConstrExpr),
 
+    /// A variant constructor: "`A", "`ParseError".
+    VariantConstr(ConstrExpr),
+
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
     /// Parser generates this node for all expression of form `<expr>.<id>`, type checker converts

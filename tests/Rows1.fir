@@ -1,13 +1,13 @@
-fn test[R](r: (x: I32, y: I32 | R)) =
+fn test[R](r: (x: I32, y: I32, ..R)) =
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-fn id[R](r: (x: I32 | R)): (x: I32 | R) =
+fn id[R](r: (x: I32, ..R)): (x: I32, ..R) =
     printStr(r.x.toStr())
     r
 
 type Test[R]:
-    x: (x: I32 | R)
+    x: (x: I32, ..R)
 
 fn main() =
     test(id((x = 1, y = 2)))
