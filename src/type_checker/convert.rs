@@ -109,6 +109,8 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }),
         },
 
+        ast::Type::Variant { alts, extension } => todo!(),
+
         ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun(
             args.iter()
                 .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))

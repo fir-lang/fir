@@ -213,8 +213,8 @@ Type: Type = {
     "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension },
 
-    "[" <variants:Sep<VariantType, ",">> <extension:RowExtension> "]" =>
-        todo!("Variant parsing"),
+    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, },
 }
 
 TypeNamed: Type = {
@@ -246,9 +246,11 @@ RecordTypeField: Named<Type> = {
     <ty:Type> => Named { name: None, node: ty },
 }
 
-VariantType: () = {
-    <name:UpperId> "(" Sep<RecordTypeField, ","> ")" => (),
-    <name:UpperId> => (),
+VariantAlt: VariantAlt = {
+    <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
+        VariantAlt { con: name.smol_str(), fields },
+    <name:UpperId> =>
+        VariantAlt { con: name.smol_str(), fields: vec![] },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

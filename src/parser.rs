@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 89bf0e09d16dc0255eb8d857a7d20257c349fc9e594846a9fa6e90f9551eaaba
+// sha3: 6751bb4ba8e6419a21e0db5dfdc2986f23f3f376745cce72e2037b4f7b73f6f6
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -69,8 +69,8 @@ mod __parse__LExpr {
         Variant30(L<(L<Id>, Vec<L<Type>>)>),
         Variant31(alloc::vec::Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant32(alloc::vec::Vec<Token>),
-        Variant33(()),
-        Variant34(alloc::vec::Vec<()>),
+        Variant33(VariantAlt),
+        Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
         Variant36(Alt),
         Variant37(alloc::vec::Vec<Alt>),
@@ -108,7 +108,7 @@ mod __parse__LExpr {
         Variant69(Vec<L<(Option<Id>, L<Type>)>>),
         Variant70(Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<()>),
+        Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
         Variant75(alloc::vec::Vec<L<TopDecl>>),
@@ -124,7 +124,7 @@ mod __parse__LExpr {
         Variant85(Vec<Id>),
         Variant86(Option<L<(L<Id>, Vec<L<Type>>)>>),
         Variant87(Vec<Type>),
-        Variant88(Option<()>),
+        Variant88(Option<VariantAlt>),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -5009,16 +5009,6 @@ mod __parse__LExpr {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -5349,16 +5339,6 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<()>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant59<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -5479,6 +5459,16 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -5549,13 +5539,13 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant72<
+    fn __pop_Variant33<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<()>, Loc)
+    ) -> (Loc, VariantAlt, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -5719,13 +5709,13 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant34<
+    fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<()>, Loc)
+    ) -> (Loc, Vec<VariantAlt>, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -5896,6 +5886,16 @@ mod __parse__LExpr {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -7513,7 +7513,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",") = VariantType, "," => ActionFn(215);
+        // (<VariantAlt> ",") = VariantAlt, "," => ActionFn(215);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -7532,7 +7532,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* =  => ActionFn(213);
+        // (<VariantAlt> ",")* =  => ActionFn(213);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action213::<>(module, &__start, &__end);
@@ -7548,7 +7548,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* = (<VariantType> ",")+ => ActionFn(214);
+        // (<VariantAlt> ",")* = (<VariantAlt> ",")+ => ActionFn(214);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -7565,7 +7565,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = VariantType, "," => ActionFn(384);
+        // (<VariantAlt> ",")+ = VariantAlt, "," => ActionFn(384);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -7584,7 +7584,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = (<VariantType> ",")+, VariantType, "," => ActionFn(385);
+        // (<VariantAlt> ",")+ = (<VariantAlt> ",")+, VariantAlt, "," => ActionFn(385);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
@@ -11184,7 +11184,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = VariantType => ActionFn(561);
+        // Sep<VariantAlt, ","> = VariantAlt => ActionFn(561);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -11201,7 +11201,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> =  => ActionFn(562);
+        // Sep<VariantAlt, ","> =  => ActionFn(562);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action562::<>(module, &__start, &__end);
@@ -11217,7 +11217,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+, VariantType => ActionFn(563);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+, VariantAlt => ActionFn(563);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
@@ -11236,7 +11236,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+ => ActionFn(564);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+ => ActionFn(564);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -11981,7 +11981,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Type = "[", Sep<VariantType, ",">, RowExtension, "]" => ActionFn(24);
+        // Type = "[", Sep<VariantAlt, ",">, RowExtension, "]" => ActionFn(24);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant63(__symbols);
@@ -12411,7 +12411,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
+        // VariantAlt = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant68(__symbols);
@@ -12432,7 +12432,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId => ActionFn(34);
+        // VariantAlt = UpperId => ActionFn(34);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -12449,7 +12449,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? = VariantType => ActionFn(211);
+        // VariantAlt? = VariantAlt => ActionFn(211);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -12466,7 +12466,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? =  => ActionFn(212);
+        // VariantAlt? =  => ActionFn(212);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action212::<>(module, &__start, &__end);
@@ -12565,8 +12565,8 @@ mod __parse__LStmt {
         Variant30(L<(L<Id>, Vec<L<Type>>)>),
         Variant31(alloc::vec::Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant32(alloc::vec::Vec<Token>),
-        Variant33(()),
-        Variant34(alloc::vec::Vec<()>),
+        Variant33(VariantAlt),
+        Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
         Variant36(Alt),
         Variant37(alloc::vec::Vec<Alt>),
@@ -12604,7 +12604,7 @@ mod __parse__LStmt {
         Variant69(Vec<L<(Option<Id>, L<Type>)>>),
         Variant70(Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<()>),
+        Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
         Variant75(alloc::vec::Vec<L<TopDecl>>),
@@ -12620,7 +12620,7 @@ mod __parse__LStmt {
         Variant85(Vec<Id>),
         Variant86(Option<L<(L<Id>, Vec<L<Type>>)>>),
         Variant87(Vec<Type>),
-        Variant88(Option<()>),
+        Variant88(Option<VariantAlt>),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -17505,16 +17505,6 @@ mod __parse__LStmt {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -17845,16 +17835,6 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<()>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant59<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -17975,6 +17955,16 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -18045,13 +18035,13 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant72<
+    fn __pop_Variant33<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<()>, Loc)
+    ) -> (Loc, VariantAlt, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -18215,13 +18205,13 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant34<
+    fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<()>, Loc)
+    ) -> (Loc, Vec<VariantAlt>, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -18392,6 +18382,16 @@ mod __parse__LStmt {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -20009,7 +20009,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",") = VariantType, "," => ActionFn(215);
+        // (<VariantAlt> ",") = VariantAlt, "," => ActionFn(215);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -20028,7 +20028,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* =  => ActionFn(213);
+        // (<VariantAlt> ",")* =  => ActionFn(213);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action213::<>(module, &__start, &__end);
@@ -20044,7 +20044,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* = (<VariantType> ",")+ => ActionFn(214);
+        // (<VariantAlt> ",")* = (<VariantAlt> ",")+ => ActionFn(214);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -20061,7 +20061,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = VariantType, "," => ActionFn(384);
+        // (<VariantAlt> ",")+ = VariantAlt, "," => ActionFn(384);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -20080,7 +20080,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = (<VariantType> ",")+, VariantType, "," => ActionFn(385);
+        // (<VariantAlt> ",")+ = (<VariantAlt> ",")+, VariantAlt, "," => ActionFn(385);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
@@ -23680,7 +23680,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = VariantType => ActionFn(561);
+        // Sep<VariantAlt, ","> = VariantAlt => ActionFn(561);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -23697,7 +23697,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> =  => ActionFn(562);
+        // Sep<VariantAlt, ","> =  => ActionFn(562);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action562::<>(module, &__start, &__end);
@@ -23713,7 +23713,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+, VariantType => ActionFn(563);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+, VariantAlt => ActionFn(563);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
@@ -23732,7 +23732,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+ => ActionFn(564);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+ => ActionFn(564);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -24477,7 +24477,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Type = "[", Sep<VariantType, ",">, RowExtension, "]" => ActionFn(24);
+        // Type = "[", Sep<VariantAlt, ",">, RowExtension, "]" => ActionFn(24);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant63(__symbols);
@@ -24907,7 +24907,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
+        // VariantAlt = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant68(__symbols);
@@ -24928,7 +24928,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId => ActionFn(34);
+        // VariantAlt = UpperId => ActionFn(34);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -24945,7 +24945,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? = VariantType => ActionFn(211);
+        // VariantAlt? = VariantAlt => ActionFn(211);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -24962,7 +24962,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? =  => ActionFn(212);
+        // VariantAlt? =  => ActionFn(212);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action212::<>(module, &__start, &__end);
@@ -25061,8 +25061,8 @@ mod __parse__TopDecls {
         Variant30(L<(L<Id>, Vec<L<Type>>)>),
         Variant31(alloc::vec::Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant32(alloc::vec::Vec<Token>),
-        Variant33(()),
-        Variant34(alloc::vec::Vec<()>),
+        Variant33(VariantAlt),
+        Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
         Variant36(Alt),
         Variant37(alloc::vec::Vec<Alt>),
@@ -25100,7 +25100,7 @@ mod __parse__TopDecls {
         Variant69(Vec<L<(Option<Id>, L<Type>)>>),
         Variant70(Vec<L<(L<Id>, Vec<L<Type>>)>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<()>),
+        Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
         Variant75(alloc::vec::Vec<L<TopDecl>>),
@@ -25116,7 +25116,7 @@ mod __parse__TopDecls {
         Variant85(Vec<Id>),
         Variant86(Option<L<(L<Id>, Vec<L<Type>>)>>),
         Variant87(Vec<Type>),
-        Variant88(Option<()>),
+        Variant88(Option<VariantAlt>),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -30861,16 +30861,6 @@ mod __parse__TopDecls {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -31201,16 +31191,6 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<()>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant59<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -31331,6 +31311,16 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -31401,13 +31391,13 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant72<
+    fn __pop_Variant33<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<()>, Loc)
+    ) -> (Loc, VariantAlt, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -31571,13 +31561,13 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant34<
+    fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<()>, Loc)
+    ) -> (Loc, Vec<VariantAlt>, Loc)
      {
         match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
+            Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -31748,6 +31738,16 @@ mod __parse__TopDecls {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -33365,7 +33365,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",") = VariantType, "," => ActionFn(215);
+        // (<VariantAlt> ",") = VariantAlt, "," => ActionFn(215);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -33384,7 +33384,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* =  => ActionFn(213);
+        // (<VariantAlt> ",")* =  => ActionFn(213);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action213::<>(module, &__start, &__end);
@@ -33400,7 +33400,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")* = (<VariantType> ",")+ => ActionFn(214);
+        // (<VariantAlt> ",")* = (<VariantAlt> ",")+ => ActionFn(214);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -33417,7 +33417,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = VariantType, "," => ActionFn(384);
+        // (<VariantAlt> ",")+ = VariantAlt, "," => ActionFn(384);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant33(__symbols);
@@ -33436,7 +33436,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<VariantType> ",")+ = (<VariantType> ",")+, VariantType, "," => ActionFn(385);
+        // (<VariantAlt> ",")+ = (<VariantAlt> ",")+, VariantAlt, "," => ActionFn(385);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant33(__symbols);
@@ -37036,7 +37036,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = VariantType => ActionFn(561);
+        // Sep<VariantAlt, ","> = VariantAlt => ActionFn(561);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -37053,7 +37053,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> =  => ActionFn(562);
+        // Sep<VariantAlt, ","> =  => ActionFn(562);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action562::<>(module, &__start, &__end);
@@ -37069,7 +37069,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+, VariantType => ActionFn(563);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+, VariantAlt => ActionFn(563);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant33(__symbols);
         let __sym0 = __pop_Variant34(__symbols);
@@ -37088,7 +37088,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<VariantType, ","> = (<VariantType> ",")+ => ActionFn(564);
+        // Sep<VariantAlt, ","> = (<VariantAlt> ",")+ => ActionFn(564);
         let __sym0 = __pop_Variant34(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -37833,7 +37833,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Type = "[", Sep<VariantType, ",">, RowExtension, "]" => ActionFn(24);
+        // Type = "[", Sep<VariantAlt, ",">, RowExtension, "]" => ActionFn(24);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant63(__symbols);
@@ -38263,7 +38263,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
+        // VariantAlt = UpperId, "(", Sep<RecordTypeField, ",">, ")" => ActionFn(33);
         assert!(__symbols.len() >= 4);
         let __sym3 = __pop_Variant0(__symbols);
         let __sym2 = __pop_Variant68(__symbols);
@@ -38284,7 +38284,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType = UpperId => ActionFn(34);
+        // VariantAlt = UpperId => ActionFn(34);
         let __sym0 = __pop_Variant0(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -38301,7 +38301,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? = VariantType => ActionFn(211);
+        // VariantAlt? = VariantAlt => ActionFn(211);
         let __sym0 = __pop_Variant33(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -38318,7 +38318,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // VariantType? =  => ActionFn(212);
+        // VariantAlt? =  => ActionFn(212);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action212::<>(module, &__start, &__end);
@@ -38750,11 +38750,11 @@ fn __action23<'a>(
 fn __action24<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, variants, _): (Loc, Vec<()>, Loc),
+    (_, alts, _): (Loc, Vec<VariantAlt>, Loc),
     (_, extension, _): (Loc, Option<Id>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Type {
-    todo!("Variant parsing")
+    Type::Variant { alts, extension }
 }
 
 #[allow(unused_variables)]
@@ -38890,9 +38890,13 @@ fn __action33<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, _, _): (Loc, Vec<Named<Type>>, Loc),
+    (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) {
+) -> VariantAlt {
+    VariantAlt {
+        con: name.smol_str(),
+        fields,
+    }
 }
 
 #[allow(unused_variables)]
@@ -38901,7 +38905,12 @@ fn __action33<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action34<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) {}
+fn __action34<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> VariantAlt {
+    VariantAlt {
+        con: name.smol_str(),
+        fields: vec![],
+    }
+}
 
 #[allow(unused_variables)]
 #[allow(
@@ -41483,9 +41492,9 @@ fn __action181<'a>(
 )]
 fn __action182<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<()>, Loc),
-    (_, e, _): (Loc, Option<()>, Loc),
-) -> Vec<()> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+    (_, e, _): (Loc, Option<VariantAlt>, Loc),
+) -> Vec<VariantAlt> {
     match e {
         None => v,
         Some(e) => {
@@ -41873,7 +41882,7 @@ fn __action210<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action211<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, (), Loc)) -> Option<()> {
+fn __action211<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, VariantAlt, Loc)) -> Option<VariantAlt> {
     Some(__0)
 }
 
@@ -41883,7 +41892,11 @@ fn __action211<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, (), Loc)) -> Option<(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action212<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<()> {
+fn __action212<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Option<VariantAlt> {
     None
 }
 
@@ -41897,7 +41910,7 @@ fn __action213<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<()> {
+) -> alloc::vec::Vec<VariantAlt> {
     alloc::vec![]
 }
 
@@ -41909,8 +41922,8 @@ fn __action213<'a>(
 )]
 fn __action214<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<()>, Loc),
-) -> alloc::vec::Vec<()> {
+    (_, v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+) -> alloc::vec::Vec<VariantAlt> {
     v
 }
 
@@ -41920,7 +41933,11 @@ fn __action214<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action215<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, (), Loc), (_, _, _): (Loc, Token, Loc)) {
+fn __action215<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, VariantAlt, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> VariantAlt {
     __0
 }
 
@@ -42878,7 +42895,10 @@ fn __action283<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action284<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, (), Loc)) -> alloc::vec::Vec<()> {
+fn __action284<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, VariantAlt, Loc),
+) -> alloc::vec::Vec<VariantAlt> {
     alloc::vec![__0]
 }
 
@@ -42890,9 +42910,9 @@ fn __action284<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, (), Loc)) -> alloc::v
 )]
 fn __action285<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<()>, Loc),
-    (_, e, _): (Loc, (), Loc),
-) -> alloc::vec::Vec<()> {
+    (_, v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+    (_, e, _): (Loc, VariantAlt, Loc),
+) -> alloc::vec::Vec<VariantAlt> {
     {
         let mut v = v;
         v.push(e);
@@ -44841,9 +44861,9 @@ fn __action383<'a>(
 )]
 fn __action384<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (), Loc),
+    __0: (Loc, VariantAlt, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<()> {
+) -> alloc::vec::Vec<VariantAlt> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action215(module, __0, __1);
@@ -44859,10 +44879,10 @@ fn __action384<'a>(
 )]
 fn __action385<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<()>, Loc),
-    __1: (Loc, (), Loc),
+    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+    __1: (Loc, VariantAlt, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<()> {
+) -> alloc::vec::Vec<VariantAlt> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action215(module, __1, __2);
@@ -44876,7 +44896,7 @@ fn __action385<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action386<'a>(module: &'a Rc<str>, __0: (Loc, Option<()>, Loc)) -> Vec<()> {
+fn __action386<'a>(module: &'a Rc<str>, __0: (Loc, Option<VariantAlt>, Loc)) -> Vec<VariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action213(module, &__start0, &__end0);
@@ -44892,9 +44912,9 @@ fn __action386<'a>(module: &'a Rc<str>, __0: (Loc, Option<()>, Loc)) -> Vec<()> 
 )]
 fn __action387<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<()>, Loc),
-    __1: (Loc, Option<()>, Loc),
-) -> Vec<()> {
+    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+    __1: (Loc, Option<VariantAlt>, Loc),
+) -> Vec<VariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action214(module, __0);
@@ -48236,7 +48256,7 @@ fn __action560<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc))
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action561<'a>(module: &'a Rc<str>, __0: (Loc, (), Loc)) -> Vec<()> {
+fn __action561<'a>(module: &'a Rc<str>, __0: (Loc, VariantAlt, Loc)) -> Vec<VariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action211(module, __0);
@@ -48250,7 +48270,7 @@ fn __action561<'a>(module: &'a Rc<str>, __0: (Loc, (), Loc)) -> Vec<()> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action562<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<()> {
+fn __action562<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<VariantAlt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action212(module, &__start0, &__end0);
@@ -48266,9 +48286,9 @@ fn __action562<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action563<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<()>, Loc),
-    __1: (Loc, (), Loc),
-) -> Vec<()> {
+    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+    __1: (Loc, VariantAlt, Loc),
+) -> Vec<VariantAlt> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action211(module, __1);
@@ -48282,7 +48302,10 @@ fn __action563<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action564<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<()>, Loc)) -> Vec<()> {
+fn __action564<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
+) -> Vec<VariantAlt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action212(module, &__start0, &__end0);

@@ -223,6 +223,8 @@ impl Type {
                 buffer.push(')');
             }
 
+            Type::Variant { alts, extension } => todo!(),
+
             Type::Fn(FnType { args, ret }) => {
                 buffer.push_str("Fn(");
                 for (i, arg) in args.iter().enumerate() {

@@ -163,8 +163,19 @@ pub enum Type {
         extension: Option<Id>,
     },
 
+    Variant {
+        alts: Vec<VariantAlt>,
+        extension: Option<Id>,
+    },
+
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantAlt {
+    pub con: Id,
+    pub fields: Vec<Named<Type>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
@@ -669,6 +680,8 @@ impl Type {
                 // NB. This does not substitute row types.
                 extension: extension.clone(),
             },
+
+            Type::Variant { alts, extension } => todo!(),
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
                 args: args

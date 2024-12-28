@@ -287,13 +287,10 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             ast::TopDecl::Impl(impl_decl) => {
                 let implementing_ty = match &impl_decl.node.ty.node {
                     ast::Type::Named(ast::NamedType { name, args: _ }) => name,
-                    ast::Type::Record { .. } => {
-                        panic!(
-                            "{}: Impl block for record type",
-                            loc_display(&impl_decl.loc)
-                        )
+                    ast::Type::Record { .. } | ast::Type::Variant { .. } | ast::Type::Fn(_) => {
+                        // invalid syntax, can't happen
+                        panic!()
                     }
-                    ast::Type::Fn(_) => panic!(), // invalid syntax, can't happen
                 };
 
                 for item in impl_decl.node.items {

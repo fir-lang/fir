@@ -655,8 +655,11 @@ fn mono_method(
             assert!(args.is_empty());
             name
         }
-        ast::Type::Record { .. } => panic!(),
-        ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
+
+        ast::Type::Record { .. } | ast::Type::Variant { .. } | ast::Type::Fn(_) => {
+            // syntactically invalid, can't happen
+            panic!()
+        }
     };
 
     let mono_ty_args: Vec<ast::Type> = ty_args
@@ -689,6 +692,7 @@ fn mono_method(
             )
         }
         ast::Type::Record { .. } => panic!(),
+        ast::Type::Variant { .. } => panic!(),
         ast::Type::Fn(_) => panic!(),
     }
 }
@@ -1081,6 +1085,8 @@ fn mono_ty(
             }
         }
 
+        ast::Type::Variant { alts, extension } => todo!(),
+
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
             args: args
                 .iter()
@@ -1102,7 +1108,7 @@ fn ty_name(ty: &ast::Type) -> &str {
             }
             _ => "Ptr",
         },
-        ast::Type::Record { .. } => "Ptr",
+        ast::Type::Record { .. } | ast::Type::Variant { .. } => "Ptr",
         ast::Type::Fn(_) => "Ptr",
     }
 }
@@ -1203,6 +1209,7 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
             Ty::Con(name.clone())
         }
         ast::Type::Record { .. } => todo!(),
+        ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
     }
 }
