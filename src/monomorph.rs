@@ -780,6 +780,8 @@ fn mono_pat(
             })
         }
 
+        ast::Pat::Variant(_) => todo!(),
+
         ast::Pat::Record(fields) => ast::Pat::Record(
             fields
                 .iter()

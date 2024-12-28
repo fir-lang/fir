@@ -100,6 +100,8 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             )
         }
 
+        ast::Pat::Variant(_) => todo!(),
+
         ast::Pat::Record(fields) => {
             let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
             Ty::Record {

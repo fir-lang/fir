@@ -1365,6 +1365,8 @@ fn try_bind_pat(
             try_bind_field_pats(pgm, heap, fields, field_pats, value)
         }
 
+        ast::Pat::Variant(_) => todo!(),
+
         ast::Pat::Record(fields) => {
             let value_tag = heap[value];
             let value_fields = pgm.get_tag_fields(value_tag);

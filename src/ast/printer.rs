@@ -666,6 +666,40 @@ impl Pat {
                 }
             }
 
+            Pat::Variant(VariantPattern {
+                constr,
+                fields,
+                ty_args,
+            }) => {
+                buffer.push_str(constr.as_str());
+
+                if !ty_args.is_empty() {
+                    buffer.push('[');
+                    for (i, ty_arg) in ty_args.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
+                        }
+                        buffer.push_str(&ty_arg.to_string());
+                    }
+                    buffer.push(']');
+                }
+
+                if !fields.is_empty() {
+                    buffer.push('(');
+                    for (i, field) in fields.iter().enumerate() {
+                        if let Some(name) = &field.name {
+                            buffer.push_str(name.as_str());
+                            buffer.push_str(" = ");
+                        }
+                        field.node.node.print(buffer);
+                        if i != fields.len() - 1 {
+                            buffer.push_str(", ");
+                        }
+                    }
+                    buffer.push(')');
+                }
+            }
+
             Pat::Record(fields) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {

@@ -813,6 +813,8 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
+    <var:VariantPattern> => Pat::Variant(var),
+
     "(" <fields:Sep<PatternField, ",">> ")" =>
         Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect()),
 
@@ -849,6 +851,22 @@ ConstrPattern: ConstrPattern = {
     <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
         ConstrPattern {
             constr,
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
+            ty_args: vec![],
+        },
+}
+
+VariantPattern: VariantPattern = {
+    <constr:BacktickUpperId> =>
+        VariantPattern {
+            constr: constr.smol_str(),
+            fields: vec![],
+            ty_args: vec![],
+        },
+
+    <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
+        VariantPattern {
+            constr: constr.smol_str(),
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
             ty_args: vec![],
         },

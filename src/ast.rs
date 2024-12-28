@@ -292,6 +292,9 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
+    /// Matches a variant.
+    Variant(VariantPattern),
+
     Record(Vec<Named<Box<L<Pat>>>>),
 
     /// Underscore, aka. wildcard.
@@ -323,6 +326,13 @@ pub struct ConstrPattern {
 pub struct Constructor {
     pub type_: Id,
     pub constr: Option<Id>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantPattern {
+    pub constr: Id,
+    pub fields: Vec<Named<Box<L<Pat>>>>,
+    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]

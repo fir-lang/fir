@@ -226,6 +226,8 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>) {
             }
         }
 
+        ast::Pat::Variant(_) => todo!(),
+
         ast::Pat::Record(fields) => {
             for field in fields {
                 visit_pat(&field.node.node, records);
