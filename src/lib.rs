@@ -53,9 +53,10 @@ fn report_parse_error(
 
         lalrpop_util::ParseError::UnrecognizedToken { token, expected: _ } => {
             panic!(
-                "{}: Unexpected token {:?}",
+                "{}: Unexpected token {:?} (\"{}\")",
                 lexgen_loc_display(module, token.0),
-                token.1,
+                token.1.kind,
+                token.1.text,
             );
         }
 
