@@ -169,9 +169,10 @@ pub(super) fn unify(
                     }
                     _ => {
                         panic!(
-                            "{}: Unable to unify records: extra keys: {:?}",
+                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
                             loc_display(loc),
-                            extras1
+                            keys1,
+                            keys2
                         );
                     }
                 }
@@ -193,9 +194,10 @@ pub(super) fn unify(
                     }
                     _ => {
                         panic!(
-                            "{}: Unable to unify records: extra keys: {:?}",
+                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
                             loc_display(loc),
-                            extras2
+                            keys1,
+                            keys2
                         );
                     }
                 }
