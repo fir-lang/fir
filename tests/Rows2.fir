@@ -1,4 +1,4 @@
-fn exhaustive1(alts: [A(I32), B(Str), ..R]) =
+fn exhaustive(alts: [A(I32), B(Str), ..R]) =
     match alts:
         `A(i): printStr("A(i=`i.toStr()`)")
         `B(s): printStr("B(s=`s`)")
