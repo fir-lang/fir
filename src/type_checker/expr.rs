@@ -132,11 +132,15 @@ pub(super) fn check_expr(
                     }
 
                     Ty::AssocTySelect { ty: _, assoc_ty: _ } => panic!(
-                        "{}: Associated type select in fiel select expr",
+                        "{}: Associated type select in field select expr",
                         loc_display(&object.loc)
                     ),
 
-                    other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _)) => {
+                    other @ (Ty::Var(_)
+                    | Ty::QVar(_)
+                    | Ty::Fun(_, _)
+                    | Ty::FunNamedArgs(_, _)
+                    | Ty::Variant { .. }) => {
                         panic!(
                             "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),

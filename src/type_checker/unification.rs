@@ -357,6 +357,17 @@ fn prune_level(ty: &Ty, max_level: u32) {
             }
         }
 
+        Ty::Variant { cons, extension } => {
+            for (_, fields) in cons {
+                for field_ty in fields {
+                    prune_level(field_ty, max_level);
+                }
+            }
+            if let Some(ext) = extension {
+                prune_level(ext, max_level);
+            }
+        }
+
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
         Ty::Fun(args, ret) => {

@@ -60,8 +60,18 @@ pub enum Ty {
     Record {
         fields: Map<Id, Ty>,
 
-        /// When available, this will be a `Ty::Var`, or a `Ty::Record`, potentially with extension.
-        /// The fields with `fields` and all the extension fields linked here won't have duplicates.
+        /// When available, this will be a `Ty::Var` (a unification variable), `Ty::Con` (a rigid
+        /// type variable), or a `Ty::Record`, potentially with an extension. The field names with
+        /// all the extensions won't have duplicates.
+        extension: Option<Box<Ty>>,
+    },
+
+    Variant {
+        cons: Map<Id, Vec<Ty>>, // no named fields for now
+
+        /// Similar to `Record.extension`, when available, this will be a `Ty::Var` (a unification
+        /// variable), `Ty::Con` (a rigid type variable), or a `Ty::Variant`, potentially with an
+        /// extension. The constructor names with all the extensions won't have duplicates.
         extension: Option<Box<Ty>>,
     },
 
@@ -613,6 +623,19 @@ impl Ty {
                 extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
             },
 
+            Ty::Variant { cons, extension } => Ty::Variant {
+                cons: cons
+                    .iter()
+                    .map(|(id, fields)| {
+                        (
+                            id.clone(),
+                            fields.iter().map(|field| field.subst(var, ty)).collect(),
+                        )
+                    })
+                    .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
+            },
+
             Ty::QVar(qvar) => {
                 if qvar == var {
                     ty.clone()
@@ -678,6 +701,24 @@ impl Ty {
                     .map(|ext| Box::new(ext.subst_self(self_ty))),
             },
 
+            Ty::Variant { cons, extension } => Ty::Variant {
+                cons: cons
+                    .iter()
+                    .map(|(name, fields)| {
+                        (
+                            name.clone(),
+                            fields
+                                .iter()
+                                .map(|field| field.subst_self(self_ty))
+                                .collect(),
+                        )
+                    })
+                    .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_self(self_ty))),
+            },
+
             Ty::QVar(id) => Ty::QVar(id.clone()),
 
             Ty::Fun(args, ret) => Ty::Fun(
@@ -723,6 +764,21 @@ impl Ty {
                 fields: fields
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
+                    .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_qvars(vars))),
+            },
+
+            Ty::Variant { cons, extension } => Ty::Variant {
+                cons: cons
+                    .iter()
+                    .map(|(name, fields)| {
+                        (
+                            name.clone(),
+                            fields.iter().map(|field| field.subst_qvars(vars)).collect(),
+                        )
+                    })
                     .collect(),
                 extension: extension
                     .as_ref()
@@ -834,6 +890,8 @@ impl Ty {
                 }
             }
 
+            Ty::Variant { cons, extension } => todo!(),
+
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
                 Box::new(ret.deep_normalize(cons)),
@@ -864,6 +922,7 @@ impl Ty {
 
             Ty::Var(_)
             | Ty::Record { .. }
+            | Ty::Variant { .. }
             | Ty::QVar(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
@@ -1086,6 +1145,32 @@ impl fmt::Display for Ty {
                     write!(f, " | {}", ext)?;
                 }
                 write!(f, ")")
+            }
+
+            Ty::Variant { cons, extension } => {
+                write!(f, "[")?;
+                for (i, (con_name, fields)) in cons.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", con_name)?;
+                    if !fields.is_empty() {
+                        write!(f, "(")?;
+                        for (i, field_ty) in fields.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{}", field_ty)?;
+                        }
+                    }
+                }
+                if let Some(ext) = extension {
+                    if !cons.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{}", ext)?;
+                }
+                write!(f, "]")
             }
 
             Ty::QVar(id) => write!(f, "'{}", id),

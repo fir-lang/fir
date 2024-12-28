@@ -1320,6 +1320,7 @@ fn resolve_preds(
             Ty::QVar(_)
             | Ty::Var(_)
             | Ty::Record { .. }
+            | Ty::Variant { .. }
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
             | Ty::AssocTySelect { .. } => {

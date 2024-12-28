@@ -1194,6 +1194,8 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             }
         }
 
+        Ty::Variant { .. } => todo!(),
+
         Ty::QVar(_var) => panic!(),
 
         Ty::Fun(_args, _ret) => todo!(),
