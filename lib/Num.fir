@@ -149,3 +149,29 @@ impl ToStr for U8:
 
 impl Step for U8:
     fn next(self): U8 = self + 1
+
+################################################################################
+#
+# Conversions
+#
+################################################################################
+
+impl U8:
+    prim fn asI8(self): I8
+    prim fn asI32(self): I32
+    prim fn asU32(self): U32
+
+impl I8:
+    prim fn asU8(self): U8
+    prim fn asI32(self): I32
+    prim fn asU32(self): U32
+
+impl U32:
+    prim fn asI8(self): I8
+    prim fn asU8(self): U8
+    prim fn asI32(self): I32
+
+impl I32:
+    prim fn asI8(self): I8
+    prim fn asU8(self): U8
+    prim fn asU32(self): U32

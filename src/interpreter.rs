@@ -1199,35 +1199,6 @@ fn eval<W: Write>(
             heap[alloc + 1] = u32_as_val(*char as u32);
             ControlFlow::Val(alloc)
         }
-
-        ast::Expr::As(ast::AsExpr {
-            expr,
-            expr_ty,
-            target_ty,
-        }) => {
-            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-            ControlFlow::Val(match (expr_ty.as_ref().unwrap(), target_ty) {
-                (ast::AsExprTy::U8, _) => val,
-
-                (ast::AsExprTy::I8, ast::AsExprTy::I32) => i32_as_val(val_as_i8(val) as i32),
-
-                (ast::AsExprTy::I8, ast::AsExprTy::U8 | ast::AsExprTy::I8 | ast::AsExprTy::U32) => {
-                    val
-                }
-
-                (ast::AsExprTy::U32, ast::AsExprTy::U8 | ast::AsExprTy::I8) => {
-                    u8_as_val(val_as_u32(val) as u8)
-                }
-
-                (ast::AsExprTy::U32, ast::AsExprTy::U32 | ast::AsExprTy::I32) => val,
-
-                (ast::AsExprTy::I32, ast::AsExprTy::U8) => u8_as_val(val_as_i32(val) as u8),
-
-                (ast::AsExprTy::I32, ast::AsExprTy::I8) => i8_as_val(val_as_i32(val) as i8),
-
-                (ast::AsExprTy::I32, ast::AsExprTy::U32 | ast::AsExprTy::I32) => val,
-            })
-        }
     }
 }
 

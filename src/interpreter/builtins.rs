@@ -51,6 +51,9 @@ pub enum BuiltinFun {
     I32BitAnd,
     I32Shl,
     I32Shr,
+    I32AsI8,
+    I32AsU8,
+    I32AsU32,
 
     // U32
     U32Add,
@@ -64,6 +67,9 @@ pub enum BuiltinFun {
     U32BitAnd,
     U32Shl,
     U32Shr,
+    U32AsI8,
+    U32AsU8,
+    U32AsI32,
 
     // I8
     I8Add,
@@ -77,6 +83,9 @@ pub enum BuiltinFun {
     I8BitAnd,
     I8Shl,
     I8Shr,
+    I8AsU8,
+    I8AsI32,
+    I8AsU32,
 
     // U8
     U8Add,
@@ -90,6 +99,9 @@ pub enum BuiltinFun {
     U8BitAnd,
     U8Shl,
     U8Shr,
+    U8AsI8,
+    U8AsI32,
+    U8AsU32,
 }
 
 macro_rules! array_new {
@@ -666,5 +678,29 @@ pub fn call_builtin_fun<W: Write>(
             let i2 = args[1];
             u8_as_val(val_as_u8(i1) >> val_as_u8(i2))
         }
+
+        BuiltinFun::I32AsI8 => i8_as_val(val_as_i32(args[0]) as i8),
+
+        BuiltinFun::I32AsU8 => u8_as_val(val_as_i32(args[0]) as u8),
+
+        BuiltinFun::I32AsU32 => args[0],
+
+        BuiltinFun::U32AsI8 => i8_as_val(val_as_u32(args[0]) as i8),
+
+        BuiltinFun::U32AsU8 => u8_as_val(val_as_u32(args[0]) as u8),
+
+        BuiltinFun::U32AsI32 => args[0],
+
+        BuiltinFun::I8AsU8 => args[0],
+
+        BuiltinFun::I8AsI32 => i32_as_val(val_as_i8(args[0]) as i32),
+
+        BuiltinFun::I8AsU32 => u32_as_val(val_as_i8(args[0]) as u32),
+
+        BuiltinFun::U8AsI8 => args[0],
+
+        BuiltinFun::U8AsI32 => i32_as_val(val_as_u8(args[0]) as i32),
+
+        BuiltinFun::U8AsU32 => u32_as_val(val_as_u8(args[0]) as u32),
     }
 }

@@ -54,7 +54,7 @@ impl Str:
         let byte = self._bytes.get(byteIndex)
 
         if byte < 128:
-            return Char(_codePoint = byte as U32)
+            return Char(_codePoint = byte.asU32())
 
         # Check continuation bit.
         if byte & 0b1100_0000 == 0b1000_0000:
@@ -62,21 +62,21 @@ impl Str:
 
         if byte & 0b1110_0000 == 0b1100_0000:
             # 2 bytes
-            let b0 = (byte & 0b11111) as U32
-            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111) as U32
+            let b0 = (byte & 0b11111).asU32()
+            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
             Char(_codePoint = (b0 << 6) | b1)
         elif byte & 0b1111_0000 == 0b1110_0000:
             # 3 bytes
-            let b0 = (byte & 0b1111) as U32
-            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111) as U32
-            let b2 = (self._bytes.get(byteIndex + 2) & 0b111111) as U32
+            let b0 = (byte & 0b1111).asU32()
+            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
+            let b2 = (self._bytes.get(byteIndex + 2) & 0b111111).asU32()
             Char(_codePoint = (b0 << 12) | (b1 << 6) | b2)
         else:
             # 4 bytes
-            let b0 = (byte & 0b111) as U32
-            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111) as U32
-            let b2 = (self._bytes.get(byteIndex + 2) & 0b111111) as U32
-            let b3 = (self._bytes.get(byteIndex + 3) & 0b111111) as U32
+            let b0 = (byte & 0b111).asU32()
+            let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
+            let b2 = (self._bytes.get(byteIndex + 2) & 0b111111).asU32()
+            let b3 = (self._bytes.get(byteIndex + 3) & 0b111111).asU32()
             Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
     fn chars(self): CharIter =
@@ -135,7 +135,7 @@ fn _charAt(bytes: Array[U8], idx: U32): Char =
     let byte = bytes.get(idx)
 
     if byte < 128:
-        return Char(_codePoint = byte as U32)
+        return Char(_codePoint = byte.asU32())
 
     # Check continuation bit.
     if byte & 0b1100_0000 == 0b1000_0000:
@@ -143,19 +143,19 @@ fn _charAt(bytes: Array[U8], idx: U32): Char =
 
     if byte & 0b1110_0000 == 0b1100_0000:
         # 2 bytes
-        let b0 = (byte & 0b11111) as U32
-        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
+        let b0 = (byte & 0b11111).asU32()
+        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
         Char(_codePoint = (b0 << 6) | b1)
     elif byte & 0b1111_0000 == 0b1110_0000:
         # 3 bytes
-        let b0 = (byte & 0b1111) as U32
-        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
-        let b2 = (bytes.get(idx + 2) & 0b111111) as U32
+        let b0 = (byte & 0b1111).asU32()
+        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
+        let b2 = (bytes.get(idx + 2) & 0b111111).asU32()
         Char(_codePoint = (b0 << 12) | (b1 << 6) | b2)
     else:
         # 4 bytes
-        let b0 = (byte & 0b111) as U32
-        let b1 = (bytes.get(idx + 1) & 0b111111) as U32
-        let b2 = (bytes.get(idx + 2) & 0b111111) as U32
-        let b3 = (bytes.get(idx + 3) & 0b111111) as U32
+        let b0 = (byte & 0b111).asU32()
+        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
+        let b2 = (bytes.get(idx + 2) & 0b111111).asU32()
+        let b3 = (bytes.get(idx + 3) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)

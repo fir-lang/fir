@@ -146,7 +146,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
             .iter()
             .for_each(|arg| visit_ty(&arg.node.1.node, records)),
 
-        ast::Type::Record(fields) => {
+        ast::Type::Record { fields } => {
             records.insert(RecordShape::from_named_things(fields));
         }
 
@@ -329,11 +329,5 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>) {
                 }
             }
         }
-
-        ast::Expr::As(ast::AsExpr {
-            expr,
-            expr_ty: _,
-            target_ty: _,
-        }) => visit_expr(&expr.node, records),
     }
 }

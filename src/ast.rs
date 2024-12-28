@@ -157,8 +157,8 @@ pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
 
-    /// An anonymous record type, e.g. `{x: I32, y: I32}`.
-    Record(Vec<Named<Type>>),
+    /// An anonymous record type, e.g. `(x: I32, y: I32)`.
+    Record { fields: Vec<Named<Type>> },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
@@ -401,8 +401,6 @@ pub enum Expr {
     Match(MatchExpr),
 
     If(IfExpr),
-
-    As(AsExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -516,24 +514,6 @@ pub struct IntExpr {
     /// This should be the integer value as expected by the interpreter. E.g. `-1u64` should be
     /// `0x00000000000000ff`, instead of `0xffffffffffffffff`.
     pub parsed: u64,
-}
-
-#[derive(Debug, Clone)]
-pub struct AsExpr {
-    pub expr: Box<L<Expr>>,
-
-    /// Filled in by the type checker.
-    pub expr_ty: Option<AsExprTy>,
-
-    pub target_ty: AsExprTy,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum AsExprTy {
-    U8,
-    I8,
-    U32,
-    I32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -671,15 +651,15 @@ impl Type {
                 }
             }
 
-            Type::Record(fields) => Type::Record(
-                fields
+            Type::Record { fields } => Type::Record {
+                fields: fields
                     .iter()
                     .map(|Named { name, node }| Named {
                         name: name.clone(),
                         node: node.subst_var(var, ty),
                     })
                     .collect(),
-            ),
+            },
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
                 args: args

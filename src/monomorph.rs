@@ -633,16 +633,6 @@ fn mono_expr(
                 .as_ref()
                 .map(|stmts| mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm)),
         }),
-
-        ast::Expr::As(ast::AsExpr {
-            expr,
-            expr_ty,
-            target_ty,
-        }) => ast::Expr::As(ast::AsExpr {
-            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm),
-            expr_ty: expr_ty.clone(),
-            target_ty: target_ty.clone(),
-        }),
     }
 }
 
@@ -663,7 +653,7 @@ fn mono_method(
             assert!(args.is_empty());
             name
         }
-        ast::Type::Record(_) => panic!(),
+        ast::Type::Record { .. } => panic!(),
         ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
     };
 
@@ -696,7 +686,7 @@ fn mono_method(
                 mono_object_ty,
             )
         }
-        ast::Type::Record(_) => panic!(),
+        ast::Type::Record { .. } => panic!(),
         ast::Type::Fn(_) => panic!(),
     }
 }
@@ -1062,11 +1052,12 @@ fn mono_ty(
             })
         }
 
-        ast::Type::Record(args) => ast::Type::Record(
-            args.iter()
+        ast::Type::Record { fields } => ast::Type::Record {
+            fields: fields
+                .iter()
                 .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
                 .collect(),
-        ),
+        },
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
             args: args
@@ -1089,7 +1080,7 @@ fn ty_name(ty: &ast::Type) -> &str {
             }
             _ => "Ptr",
         },
-        ast::Type::Record(_) => "Ptr",
+        ast::Type::Record { .. } => "Ptr",
         ast::Type::Fn(_) => "Ptr",
     }
 }
@@ -1118,7 +1109,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
 
         Ty::Var(_var) => {
             // Ambiguous type, monomorphise as unit.
-            ast::Type::Record(vec![])
+            ast::Type::Record { fields: vec![] }
         }
 
         Ty::App(con, args) => {
@@ -1156,7 +1147,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }
 
-        Ty::Record(_fields) => todo!(),
+        Ty::Record { fields: _ } => todo!(),
 
         Ty::QVar(_var) => panic!(),
 
@@ -1174,7 +1165,7 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
             assert!(args.is_empty());
             Ty::Con(name.clone())
         }
-        ast::Type::Record(_) => todo!(),
+        ast::Type::Record { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
     }
 }

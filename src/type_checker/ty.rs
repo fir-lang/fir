@@ -57,7 +57,7 @@ pub enum Ty {
     App(Id, TyArgs),
 
     /// A record type, e.g. `(x: U32, y: U32)`.
-    Record(Map<Id, Ty>),
+    Record { fields: Map<Id, Ty> },
 
     /// Only in type schemes: a quantified type variable.
     ///
@@ -442,7 +442,7 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::Record(fields1), Ty::Record(fields2)) => {
+        (Ty::Record { fields: fields1 }, Ty::Record { fields: fields2 }) => {
             let keys1: Set<&Id> = fields1.keys().collect();
             let keys2: Set<&Id> = fields2.keys().collect();
 
@@ -526,7 +526,9 @@ fn ty_eq_modulo_alpha(
 
 impl Ty {
     pub(super) fn unit() -> Ty {
-        Ty::Record(Default::default())
+        Ty::Record {
+            fields: Default::default(),
+        }
     }
 
     pub(super) fn bool() -> Ty {
@@ -543,22 +545,6 @@ impl Ty {
 
     pub(super) fn char() -> Ty {
         Ty::Con(SmolStr::new_static("Char"))
-    }
-
-    pub(super) fn u8() -> Ty {
-        Ty::Con(SmolStr::new_static("U8"))
-    }
-
-    pub(super) fn i8() -> Ty {
-        Ty::Con(SmolStr::new_static("I8"))
-    }
-
-    pub(super) fn u32() -> Ty {
-        Ty::Con(SmolStr::new_static("U32"))
-    }
-
-    pub(super) fn i32() -> Ty {
-        Ty::Con(SmolStr::new_static("I32"))
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
@@ -582,12 +568,12 @@ impl Ty {
                 },
             ),
 
-            Ty::Record(fields) => Ty::Record(
-                fields
+            Ty::Record { fields } => Ty::Record {
+                fields: fields
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
-            ),
+            },
 
             Ty::QVar(qvar) => {
                 if qvar == var {
@@ -644,12 +630,12 @@ impl Ty {
                 },
             ),
 
-            Ty::Record(fields) => Ty::Record(
-                fields
+            Ty::Record { fields } => Ty::Record {
+                fields: fields
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
                     .collect(),
-            ),
+            },
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
 
@@ -692,12 +678,12 @@ impl Ty {
                 },
             ),
 
-            Ty::Record(fields) => Ty::Record(
-                fields
+            Ty::Record { fields } => Ty::Record {
+                fields: fields
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
                     .collect(),
-            ),
+            },
 
             Ty::QVar(id) => vars
                 .get(id)
@@ -788,12 +774,12 @@ impl Ty {
                 },
             ),
 
-            Ty::Record(fields) => Ty::Record(
-                fields
+            Ty::Record { fields } => Ty::Record {
+                fields: fields
                     .iter()
                     .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
                     .collect(),
-            ),
+            },
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
@@ -824,7 +810,7 @@ impl Ty {
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
             Ty::Var(_)
-            | Ty::Record(_)
+            | Ty::Record { .. }
             | Ty::QVar(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
@@ -1035,7 +1021,7 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Record(fields) => {
+            Ty::Record { fields } => {
                 write!(f, "(")?;
                 for (i, (name, ty)) in fields.iter().enumerate() {
                     if i > 0 {

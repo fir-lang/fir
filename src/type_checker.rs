@@ -69,6 +69,15 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     tys
 }
 
+struct TcFunState<'a> {
+    context: &'a Map<Id, Map<Id, Map<Id, Ty>>>,
+    return_ty: &'a Ty,
+    env: &'a mut ScopeMap<Id, Ty>,
+    var_gen: &'a mut TyVarGen,
+    tys: &'a PgmTypes,
+    preds: &'a mut PredSet,
+}
+
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
 ///
@@ -930,37 +939,31 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let ret_ty = match &fun.node.sig.return_ty {
         Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-        None => Ty::Record(Default::default()),
+        None => Ty::unit(),
     };
 
     let mut preds: PredSet = Default::default();
 
+    let context = scheme.quantified_vars.iter().cloned().collect();
+
+    let mut tc_state = TcFunState {
+        context: &context,
+        return_ty: &ret_ty,
+        env: &mut env,
+        var_gen: &mut var_gen,
+        tys,
+        preds: &mut preds,
+    };
+
     if let Some(body) = &mut fun.node.body.as_mut() {
-        check_stmts(
-            &mut body.node,
-            Some(&ret_ty),
-            &ret_ty,
-            0,
-            &mut env,
-            &mut var_gen,
-            tys,
-            &mut preds,
-            0,
-        );
+        check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
         for stmt in &mut body.node {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
         }
     }
 
-    // Converts vec to map.
-    let quantified_vars: Map<Id, Map<Id, Map<Id, Ty>>> = scheme
-        .quantified_vars
-        .iter()
-        .map(|(var, trait_map)| (var.clone(), trait_map.clone()))
-        .collect();
-
-    resolve_all_preds(&quantified_vars, tys, preds);
+    resolve_all_preds(&context, tys, preds);
 
     unbind_type_params(old_method_schemes, &mut tys.method_schemes);
 
@@ -1041,7 +1044,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                    None => Ty::Record(Default::default()),
+                    None => Ty::unit(),
                 };
 
                 let mut preds: PredSet = Default::default();
@@ -1057,31 +1060,28 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
-                check_stmts(
-                    &mut body.node,
-                    Some(&ret_ty),
-                    &ret_ty,
-                    0,
-                    &mut env,
-                    &mut var_gen,
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
+                let mut tc_state = TcFunState {
+                    context: &context,
+                    return_ty: &ret_ty,
+                    env: &mut env,
+                    var_gen: &mut var_gen,
                     tys,
-                    &mut preds,
-                    0,
-                );
+                    preds: &mut preds,
+                };
+
+                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(
-                    &impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect(),
-                    tys,
-                    preds,
-                );
+                resolve_all_preds(&context, tys, preds);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
@@ -1157,7 +1157,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             if let Some(body) = &mut fun.body {
                 let ret_ty = match &fun.sig.return_ty {
                     Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                    None => Ty::Record(Default::default()),
+                    None => Ty::unit(),
                 };
 
                 let mut preds: PredSet = Default::default();
@@ -1173,31 +1173,28 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     );
                 }
 
-                check_stmts(
-                    &mut body.node,
-                    Some(&ret_ty),
-                    &ret_ty,
-                    0,
-                    &mut env,
-                    &mut var_gen,
+                let context = impl_bounds
+                    .iter()
+                    .cloned()
+                    .chain(fn_bounds.into_iter())
+                    .collect();
+
+                let mut tc_state = TcFunState {
+                    context: &context,
+                    return_ty: &ret_ty,
+                    env: &mut env,
+                    var_gen: &mut var_gen,
                     tys,
-                    &mut preds,
-                    0,
-                );
+                    preds: &mut preds,
+                };
+
+                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
 
                 for stmt in &mut body.node {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
-                resolve_all_preds(
-                    &impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect(),
-                    tys,
-                    preds,
-                );
+                resolve_all_preds(&context, tys, preds);
             }
 
             unbind_type_params(old_schemes_2, &mut tys.method_schemes);
@@ -1313,7 +1310,7 @@ fn resolve_preds(
             // TODO: Records can implement Debug, Eq, etc.
             Ty::QVar(_)
             | Ty::Var(_)
-            | Ty::Record(_)
+            | Ty::Record { .. }
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
             | Ty::AssocTySelect { .. } => {

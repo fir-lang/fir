@@ -204,7 +204,7 @@ impl Type {
                 }
             }
 
-            Type::Record(fields) => {
+            Type::Record { fields } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(name) = &field.name {
@@ -610,24 +610,6 @@ impl Expr {
                         buffer.push('\n');
                     }
                 }
-            }
-
-            Expr::As(AsExpr {
-                expr,
-                expr_ty: _,
-                target_ty,
-            }) => {
-                buffer.push('(');
-                expr.node.print(buffer, indent);
-                buffer.push_str(" as ");
-                let ty_str = match target_ty {
-                    AsExprTy::U8 => "U8",
-                    AsExprTy::I8 => "I8",
-                    AsExprTy::U32 => "U32",
-                    AsExprTy::I32 => "I32",
-                };
-                buffer.push_str(ty_str);
-                buffer.push(')');
             }
         }
     }
