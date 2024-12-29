@@ -227,8 +227,84 @@ pub(super) fn unify(
                 collect_variant_cons(cons, &ty1, cons1, extension1.clone());
             let (var2_cons, var2_extension) =
                 collect_variant_cons(cons, &ty2, cons2, extension2.clone());
+            let make_concrete = var1_extension.is_none() || var2_extension.is_none();
 
-            todo!()
+            let cons1: Set<&Id> = var1_cons.keys().collect();
+            let cons2: Set<&Id> = var2_cons.keys().collect();
+
+            let extras1: Set<&&Id> = cons1.difference(&cons2).collect();
+            let extras2: Set<&&Id> = cons1.difference(&cons2).collect();
+
+            // Unify common cons.
+            for con in cons1.intersection(&cons2) {
+                let fields1 = var1_cons.get(*con).unwrap();
+                let fields2 = var2_cons.get(*con).unwrap();
+                if fields1.len() != fields2.len() {
+                    panic!("{}: Unable to unify variant constructors {} with different number of fields", loc_display(loc), con);
+                }
+                for (ty1, ty2) in fields1.iter().zip(fields2.iter()) {
+                    unify(ty1, ty2, cons, var_gen, level, loc);
+                }
+            }
+
+            if !extras1.is_empty() {
+                match &var2_extension {
+                    Some(Ty::Var(var)) => {
+                        // TODO: Not sure about level
+                        link_variant_extension(
+                            &extras1,
+                            &var1_cons,
+                            var,
+                            var_gen,
+                            level,
+                            !make_concrete,
+                            loc,
+                        );
+                    }
+                    _ => {
+                        panic!(
+                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
+                            loc_display(loc),
+                            cons1,
+                            cons2,
+                        );
+                    }
+                }
+            }
+
+            if !extras2.is_empty() {
+                match &var1_extension {
+                    Some(Ty::Var(var)) => {
+                        // TODO: Not sure about level
+                        link_variant_extension(
+                            &extras2,
+                            &var2_cons,
+                            var,
+                            var_gen,
+                            level,
+                            !make_concrete,
+                            loc,
+                        );
+                    }
+                    _ => {
+                        panic!(
+                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
+                            loc_display(loc),
+                            cons1,
+                            cons2
+                        );
+                    }
+                }
+            }
+
+            if extras1.is_empty() && extras2.is_empty() && make_concrete {
+                if let Some(extension) = &var1_extension {
+                    unify(extension, &Ty::empty_variant(), cons, var_gen, level, loc);
+                }
+                if let Some(extension) = &var2_extension {
+                    unify(extension, &Ty::empty_variant(), cons, var_gen, level, loc);
+                }
+            }
         }
 
         (ty1, ty2) => panic!(
@@ -370,6 +446,37 @@ fn link_record_extension(
     };
     let new_extension_ty = Ty::Record {
         fields: extension_fields,
+        extension: new_extension_var,
+    };
+    var.set_link(new_extension_ty);
+}
+
+fn link_variant_extension(
+    extra_cons: &Set<&&Id>,
+    con_values: &Map<Id, Vec<Ty>>,
+    var: &TyVarRef,
+    var_gen: &mut TyVarGen,
+    level: u32,
+    generate_new_extension: bool,
+    loc: &ast::Loc,
+) {
+    let extension_cons: Map<Id, Vec<Ty>> = extra_cons
+        .iter()
+        .map(|extra_con| {
+            (
+                (**extra_con).clone(),
+                con_values.get(**extra_con).unwrap().clone(),
+            )
+        })
+        .collect();
+    let new_extension_var = if generate_new_extension {
+        // TODO: Not sure about the level.
+        Some(Box::new(Ty::Var(var_gen.new_var(level, loc.clone()))))
+    } else {
+        None
+    };
+    let new_extension_ty = Ty::Variant {
+        cons: extension_cons,
         extension: new_extension_var,
     };
     var.set_link(new_extension_ty);

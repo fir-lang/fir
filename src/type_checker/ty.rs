@@ -578,6 +578,13 @@ impl Ty {
         }
     }
 
+    pub(super) fn empty_variant() -> Ty {
+        Ty::Variant {
+            cons: Default::default(),
+            extension: None,
+        }
+    }
+
     pub(super) fn bool() -> Ty {
         Ty::Con(SmolStr::new_static("Bool"))
     }
