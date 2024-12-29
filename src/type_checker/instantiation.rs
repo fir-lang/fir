@@ -51,7 +51,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
-        ast::Expr::Variant(_) => {}
+        ast::Expr::Variant(ast::VariantExpr { args, .. }) => args
+            .iter_mut()
+            .for_each(|arg| normalize_expr(&mut arg.node, cons)),
 
         ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
 

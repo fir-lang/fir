@@ -897,7 +897,21 @@ impl Ty {
                 }
             }
 
-            Ty::Variant { cons, extension } => todo!(),
+            Ty::Variant {
+                cons: var_cons,
+                extension,
+            } => {
+                let (var_cons, extension) = crate::type_checker::unification::collect_variant_cons(
+                    cons,
+                    self,
+                    var_cons,
+                    extension.clone(),
+                );
+                Ty::Variant {
+                    cons: var_cons,
+                    extension: extension.map(Box::new),
+                }
+            }
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
