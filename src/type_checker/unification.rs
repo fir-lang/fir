@@ -213,6 +213,24 @@ pub(super) fn unify(
             }
         }
 
+        (
+            Ty::Variant {
+                cons: cons1,
+                extension: extension1,
+            },
+            Ty::Variant {
+                cons: cons2,
+                extension: extension2,
+            },
+        ) => {
+            let (var1_cons, var1_extension) =
+                collect_variant_cons(cons, &ty1, cons1, extension1.clone());
+            let (var2_cons, var2_extension) =
+                collect_variant_cons(cons, &ty2, cons2, extension2.clone());
+
+            todo!()
+        }
+
         (ty1, ty2) => panic!(
             "{}: Unable to unify types
              {} and
@@ -251,7 +269,7 @@ pub(crate) fn collect_record_fields(
             } => {
                 for (field_id, field_ty) in fields {
                     if all_fields.insert(field_id, field_ty).is_some() {
-                        panic!("Duplicate field in record {}", record_ty);
+                        panic!("BUG: Duplicate field in record {}", record_ty);
                     }
                 }
                 extension = next_ext;
@@ -264,7 +282,7 @@ pub(crate) fn collect_record_fields(
                 } => {
                     for (field_id, field_ty) in fields {
                         if all_fields.insert(field_id, field_ty).is_some() {
-                            panic!("Duplicate field in record {}", record_ty);
+                            panic!("BUG: Duplicate field in record {}", record_ty);
                         }
                     }
                     extension = next_ext;
@@ -278,6 +296,52 @@ pub(crate) fn collect_record_fields(
     }
 
     (all_fields, None)
+}
+
+/// Similar to `collect_record_fields`, but collects variant constructors.
+pub(crate) fn collect_variant_cons(
+    cons: &ScopeMap<Id, TyCon>,
+    variant_ty: &Ty, // used in errors
+    var_cons: &Map<Id, Vec<Ty>>,
+    mut extension: Option<Box<Ty>>,
+) -> (Map<Id, Vec<Ty>>, Option<Ty>) {
+    let mut all_cons: Map<Id, Vec<Ty>> = var_cons.clone();
+
+    while let Some(ext) = extension {
+        match *ext {
+            Ty::Variant {
+                cons,
+                extension: next_ext,
+            } => {
+                for (con, fields) in cons {
+                    if all_cons.insert(con, fields).is_some() {
+                        panic!("BUG: Duplicate constructor in variant {}", variant_ty);
+                    }
+                }
+                extension = next_ext;
+            }
+
+            Ty::Var(var) => match var.normalize(cons) {
+                Ty::Variant {
+                    cons,
+                    extension: next_ext,
+                } => {
+                    for (con, fields) in cons {
+                        if all_cons.insert(con, fields).is_some() {
+                            panic!("BUG: Duplicate constructor in variant {}", variant_ty);
+                        }
+                    }
+                    extension = next_ext;
+                }
+
+                other => return (all_cons, Some(other)),
+            },
+
+            other => return (all_cons, Some(other)),
+        }
+    }
+
+    (all_cons, None)
 }
 
 fn link_record_extension(
