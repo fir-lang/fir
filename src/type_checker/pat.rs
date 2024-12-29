@@ -100,8 +100,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             )
         }
 
-        ast::Pat::Variant(_) => todo!(),
-
         ast::Pat::Record(fields) => {
             let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
             Ty::Record {
@@ -114,6 +112,26 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                         )
                     })
                     .collect(),
+                extension: Some(Box::new(extension_var)),
+            }
+        }
+
+        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+
+            let mut field_tys: Vec<Ty> = Vec::with_capacity(fields.len());
+            for ast::Named { name, node } in fields.iter_mut() {
+                if name.is_some() {
+                    panic!(
+                        "{}: Variants with named fields not supported yet",
+                        loc_display(&pat.loc)
+                    );
+                }
+                field_tys.push(check_pat(tc_state, node, level));
+            }
+
+            Ty::Variant {
+                cons: [(constr.clone(), field_tys)].into_iter().collect(),
                 extension: Some(Box::new(extension_var)),
             }
         }

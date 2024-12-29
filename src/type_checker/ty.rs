@@ -1162,6 +1162,7 @@ impl fmt::Display for Ty {
                             }
                             write!(f, "{}", field_ty)?;
                         }
+                        write!(f, ")")?;
                     }
                 }
                 if let Some(ext) = extension {

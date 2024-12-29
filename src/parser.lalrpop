@@ -450,7 +450,7 @@ InlineExpr: Expr = {
         Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
 
     <id:BacktickUpperId> =>
-        Expr::VariantConstr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
+        Expr::Variant(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
@@ -861,14 +861,12 @@ VariantPattern: VariantPattern = {
         VariantPattern {
             constr: constr.smol_str(),
             fields: vec![],
-            ty_args: vec![],
         },
 
     <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
         VariantPattern {
             constr: constr.smol_str(),
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
-            ty_args: vec![],
         },
 }
 

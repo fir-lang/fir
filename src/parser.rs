@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: b3c5157faa9825babe0014fe4ab744c95008b04a44b01df10720300c759332bd
+// sha3: e301261371fc40a4c98d649d700792fbbc6c00a41bf5a5a2ffc1ceeeaf46410f
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -40956,7 +40956,6 @@ fn __action128<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Token, Loc)) -> Va
     VariantPattern {
         constr: constr.smol_str(),
         fields: vec![],
-        ty_args: vec![],
     }
 }
 
@@ -40982,7 +40981,6 @@ fn __action129<'a>(
                 node: Box::new(pat),
             })
             .collect(),
-        ty_args: vec![],
     }
 }
 
