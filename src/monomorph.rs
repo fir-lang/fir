@@ -420,8 +420,6 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::Variant(_) => todo!(),
-
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.
             ast::Expr::FieldSelect(ast::FieldSelectExpr {
@@ -592,6 +590,14 @@ fn mono_expr(
                 })
                 .collect(),
         ),
+
+        ast::Expr::Variant(ast::VariantExpr { id, args }) => ast::Expr::Variant(ast::VariantExpr {
+            id: id.clone(),
+            args: args
+                .iter()
+                .map(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm))
+                .collect(),
+        }),
 
         ast::Expr::Return(expr) => {
             ast::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm))
