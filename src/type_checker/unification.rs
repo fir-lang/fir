@@ -233,7 +233,7 @@ pub(super) fn unify(
             let cons2: Set<&Id> = var2_cons.keys().collect();
 
             let extras1: Set<&&Id> = cons1.difference(&cons2).collect();
-            let extras2: Set<&&Id> = cons1.difference(&cons2).collect();
+            let extras2: Set<&&Id> = cons2.difference(&cons1).collect();
 
             // Unify common cons.
             for con in cons1.intersection(&cons2) {
