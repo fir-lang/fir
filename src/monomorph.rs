@@ -39,7 +39,7 @@ fn print@I64@I64(a: I64, b: I64) = ...
 */
 
 use crate::ast::{self, Id};
-use crate::collections::Map;
+use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
 use crate::type_checker::{Ty, TyArgs};
 
@@ -1061,7 +1061,17 @@ fn mono_ty(
         }
 
         ast::Type::Record { fields, extension } => {
-            // TODO: Assert that there are no duplicate fields.
+            if cfg!(debug_assertions) {
+                let mut names: Set<&Id> = Default::default();
+                for field in fields {
+                    if let Some(name) = &field.name {
+                        let new = names.insert(name);
+                        if !new {
+                            panic!("Record has duplicate fields: {:?}", fields);
+                        }
+                    }
+                }
+            }
 
             let mut fields: Vec<ast::Named<ast::Type>> = fields
                 .iter()
