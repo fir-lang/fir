@@ -134,11 +134,10 @@ pub(super) fn unify(
                 extension: extension2,
             },
         ) => {
-            let (record1_fields, record1_extension) =
+            let (record1_fields, mut record1_extension) =
                 collect_record_fields(cons, &ty1, fields1, extension1.clone());
-            let (record2_fields, record2_extension) =
+            let (record2_fields, mut record2_extension) =
                 collect_record_fields(cons, &ty2, fields2, extension2.clone());
-            let make_concrete = record1_extension.is_none() || record2_extension.is_none();
 
             let keys1: Set<&Id> = record1_fields.keys().collect();
             let keys2: Set<&Id> = record2_fields.keys().collect();
@@ -158,15 +157,14 @@ pub(super) fn unify(
                 match &record2_extension {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        link_record_extension(
+                        record2_extension = Some(Ty::Var(link_record_extension(
                             &extras1,
                             &record1_fields,
                             var,
                             var_gen,
                             level,
-                            !make_concrete,
                             loc,
-                        );
+                        )));
                     }
                     _ => {
                         panic!(
@@ -183,15 +181,14 @@ pub(super) fn unify(
                 match &record1_extension {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        link_record_extension(
+                        record1_extension = Some(Ty::Var(link_record_extension(
                             &extras2,
                             &record2_fields,
                             var,
                             var_gen,
                             level,
-                            !make_concrete,
                             loc,
-                        );
+                        )));
                     }
                     _ => {
                         panic!(
@@ -204,12 +201,16 @@ pub(super) fn unify(
                 }
             }
 
-            if extras1.is_empty() && extras2.is_empty() && make_concrete {
-                if let Some(extension) = &record1_extension {
-                    unify(extension, &Ty::unit(), cons, var_gen, level, loc);
+            match (record1_extension, record2_extension) {
+                (None, None) => {}
+                (Some(ext1), None) => {
+                    unify(&ext1, &Ty::unit(), cons, var_gen, level, loc);
                 }
-                if let Some(extension) = &record2_extension {
-                    unify(extension, &Ty::unit(), cons, var_gen, level, loc);
+                (None, Some(ext2)) => {
+                    unify(&Ty::unit(), &ext2, cons, var_gen, level, loc);
+                }
+                (Some(ext1), Some(ext2)) => {
+                    unify(&ext1, &ext2, cons, var_gen, level, loc);
                 }
             }
         }
@@ -224,11 +225,10 @@ pub(super) fn unify(
                 extension: extension2,
             },
         ) => {
-            let (var1_cons, var1_extension) =
+            let (var1_cons, mut var1_extension) =
                 collect_variant_cons(cons, &ty1, cons1, extension1.clone());
-            let (var2_cons, var2_extension) =
+            let (var2_cons, mut var2_extension) =
                 collect_variant_cons(cons, &ty2, cons2, extension2.clone());
-            let make_concrete = var1_extension.is_none() || var2_extension.is_none();
 
             let cons1: Set<&Id> = var1_cons.keys().collect();
             let cons2: Set<&Id> = var2_cons.keys().collect();
@@ -252,15 +252,9 @@ pub(super) fn unify(
                 match &var2_extension {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        link_variant_extension(
-                            &extras1,
-                            &var1_cons,
-                            var,
-                            var_gen,
-                            level,
-                            !make_concrete,
-                            loc,
-                        );
+                        var2_extension = Some(Ty::Var(link_variant_extension(
+                            &extras1, &var1_cons, var, var_gen, level, loc,
+                        )));
                     }
                     _ => {
                         panic!(
@@ -277,15 +271,9 @@ pub(super) fn unify(
                 match &var1_extension {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        link_variant_extension(
-                            &extras2,
-                            &var2_cons,
-                            var,
-                            var_gen,
-                            level,
-                            !make_concrete,
-                            loc,
-                        );
+                        var1_extension = Some(Ty::Var(link_variant_extension(
+                            &extras2, &var2_cons, var, var_gen, level, loc,
+                        )));
                     }
                     _ => {
                         panic!(
@@ -298,12 +286,16 @@ pub(super) fn unify(
                 }
             }
 
-            if extras1.is_empty() && extras2.is_empty() && make_concrete {
-                if let Some(extension) = &var1_extension {
-                    unify(extension, &Ty::empty_variant(), cons, var_gen, level, loc);
+            match (var1_extension, var2_extension) {
+                (None, None) => {}
+                (Some(ext1), None) => {
+                    unify(&ext1, &Ty::empty_variant(), cons, var_gen, level, loc);
                 }
-                if let Some(extension) = &var2_extension {
-                    unify(extension, &Ty::empty_variant(), cons, var_gen, level, loc);
+                (None, Some(ext2)) => {
+                    unify(&Ty::empty_variant(), &ext2, cons, var_gen, level, loc);
+                }
+                (Some(ext1), Some(ext2)) => {
+                    unify(&ext1, &ext2, cons, var_gen, level, loc);
                 }
             }
         }
@@ -331,9 +323,8 @@ fn link_record_extension(
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
-    generate_new_extension: bool,
     loc: &ast::Loc,
-) {
+) -> TyVarRef {
     let extension_fields: Map<Id, Ty> = extra_fields
         .iter()
         .map(|extra_field| {
@@ -343,17 +334,14 @@ fn link_record_extension(
             )
         })
         .collect();
-    let new_extension_var = if generate_new_extension {
-        // TODO: Not sure about the level.
-        Some(Box::new(Ty::Var(var_gen.new_var(level, loc.clone()))))
-    } else {
-        None
-    };
+    // TODO: Not sure about the level.
+    let new_extension_var = var_gen.new_var(level, loc.clone());
     let new_extension_ty = Ty::Record {
         fields: extension_fields,
-        extension: new_extension_var,
+        extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
     };
     var.set_link(new_extension_ty);
+    new_extension_var
 }
 
 fn link_variant_extension(
@@ -362,9 +350,8 @@ fn link_variant_extension(
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
-    generate_new_extension: bool,
     loc: &ast::Loc,
-) {
+) -> TyVarRef {
     let extension_cons: Map<Id, Vec<Ty>> = extra_cons
         .iter()
         .map(|extra_con| {
@@ -374,17 +361,14 @@ fn link_variant_extension(
             )
         })
         .collect();
-    let new_extension_var = if generate_new_extension {
-        // TODO: Not sure about the level.
-        Some(Box::new(Ty::Var(var_gen.new_var(level, loc.clone()))))
-    } else {
-        None
-    };
+    // TODO: Not sure about the level.
+    let new_extension_var = var_gen.new_var(level, loc.clone());
     let new_extension_ty = Ty::Variant {
         cons: extension_cons,
-        extension: new_extension_var,
+        extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
     };
     var.set_link(new_extension_ty);
+    new_extension_var
 }
 
 /// When we have an expected type during type inference (i.e. we're in 'checking' mode), this

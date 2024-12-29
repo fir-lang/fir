@@ -1246,7 +1246,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
         }
 
         Ty::Record { fields, extension } => {
-            assert!(extension.is_none());
+            assert!(extension.is_none(), "{:?}", extension);
             ast::Type::Record {
                 fields: fields
                     .iter()
@@ -1260,7 +1260,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
         }
 
         Ty::Variant { cons, extension } => {
-            assert!(extension.is_none());
+            assert!(extension.is_none(), "{:?}", extension);
             ast::Type::Variant {
                 alts: cons
                     .iter()
