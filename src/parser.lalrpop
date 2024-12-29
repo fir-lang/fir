@@ -859,13 +859,13 @@ ConstrPattern: ConstrPattern = {
 VariantPattern: VariantPattern = {
     <constr:BacktickUpperId> =>
         VariantPattern {
-            constr: constr.smol_str(),
+            constr: constr.text.as_str()[1..].into(),
             fields: vec![],
         },
 
     <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
         VariantPattern {
-            constr: constr.smol_str(),
+            constr: constr.text.as_str()[1..].into(),
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
         },
 }
