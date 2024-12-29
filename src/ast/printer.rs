@@ -223,7 +223,38 @@ impl Type {
                 buffer.push(')');
             }
 
-            Type::Variant { alts, extension } => todo!(),
+            Type::Variant { alts, extension } => {
+                buffer.push('[');
+                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push('`');
+                    buffer.push_str(con);
+                    if !fields.is_empty() {
+                        buffer.push('(');
+                        for (i, Named { name, node }) in fields.iter().enumerate() {
+                            if i != 0 {
+                                buffer.push_str(", ");
+                            }
+                            if let Some(name) = name {
+                                buffer.push_str(name);
+                                buffer.push_str(": ");
+                            }
+                            node.print(buffer);
+                        }
+                        buffer.push(')');
+                    }
+                }
+                if let Some(ext) = extension {
+                    if !alts.is_empty() {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push_str("..");
+                    buffer.push_str(ext);
+                }
+                buffer.push(']');
+            }
 
             Type::Fn(FnType { args, ret }) => {
                 buffer.push_str("Fn(");
