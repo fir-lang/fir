@@ -1087,7 +1087,7 @@ fn ty_name(ty: &ast::Type) -> &str {
 
 fn mono_id(name: &Id, tys: &[ast::Type]) -> Id {
     let mut mono_name = String::new();
-    mono_name.push_str(name.as_str());
+    mono_name.push_str(name);
     for ty in tys {
         mono_name.push('@');
         mono_name.push_str(ty_name(ty));
