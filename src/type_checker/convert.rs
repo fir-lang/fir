@@ -93,23 +93,71 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             panic!("{}: Unknown type {}", loc_display(loc), name);
         }
 
-        ast::Type::Record { fields, extension } => Ty::Record {
-            fields: fields
-                .iter()
-                .map(|named_ty| {
-                    (
-                        named_ty.name.as_ref().unwrap().clone(),
-                        convert_ast_ty(tys, &named_ty.node, loc),
-                    )
-                })
-                .collect(),
-            extension: extension.as_ref().map(|var| match tys.get_var(var) {
-                Some(ty) => Box::new(ty.clone()),
-                None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
-            }),
-        },
+        ast::Type::Record { fields, extension } => {
+            let mut ty_fields: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(fields.len(), Default::default());
 
-        ast::Type::Variant { alts, extension } => todo!(),
+            for ast::Named { name, node } in fields {
+                let name = name.as_ref().unwrap_or_else(|| {
+                    panic!(
+                        "{}: Records with unnamed fields not supported yet",
+                        loc_display(loc)
+                    )
+                });
+                let ty = convert_ast_ty(tys, node, loc);
+                let old = ty_fields.insert(name.clone(), ty);
+                if old.is_some() {
+                    panic!(
+                        "{}: Field {} defined multiple times in record",
+                        loc_display(loc),
+                        name
+                    );
+                }
+            }
+
+            Ty::Record {
+                fields: ty_fields,
+                extension: extension.as_ref().map(|var| match tys.get_var(var) {
+                    Some(ty) => Box::new(ty.clone()),
+                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
+                }),
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            let mut ty_alts: Map<Id, Vec<Ty>> =
+                Map::with_capacity_and_hasher(alts.len(), Default::default());
+
+            for ast::VariantAlt { con, fields } in alts {
+                let mut ty_fields: Vec<Ty> = Vec::with_capacity(fields.len());
+                for ast::Named { name, node } in fields {
+                    if name.is_some() {
+                        panic!(
+                            "{}: Variants with named fields not supported yet",
+                            loc_display(loc)
+                        );
+                    }
+                    ty_fields.push(convert_ast_ty(tys, node, loc));
+                }
+
+                let old = ty_alts.insert(con.clone(), ty_fields);
+                if old.is_some() {
+                    panic!(
+                        "{}: Constructor {} defined multiple times in variant",
+                        loc_display(loc),
+                        con
+                    );
+                }
+            }
+
+            Ty::Variant {
+                cons: ty_alts,
+                extension: extension.as_ref().map(|var| match tys.get_var(var) {
+                    Some(ty) => Box::new(ty.clone()),
+                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
+                }),
+            }
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun(
             args.iter()
