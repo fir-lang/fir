@@ -15,12 +15,12 @@ impl TopDecl {
 impl TypeDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str("type ");
-        buffer.push_str(self.name.as_str());
+        buffer.push_str(&self.name);
 
         if !self.type_params.is_empty() {
             buffer.push('[');
             for (i, type_param) in self.type_params.iter().enumerate() {
-                buffer.push_str(type_param.as_str());
+                buffer.push_str(type_param);
                 if i != self.type_params.len() - 1 {
                     buffer.push_str(", ");
                 }
@@ -41,7 +41,7 @@ impl TypeDeclRhs {
                 buffer.push_str(":\n");
                 for (i, constr) in constrs.iter().enumerate() {
                     buffer.push_str(&INDENTS[0..indent as usize]);
-                    buffer.push_str(constr.name.as_str());
+                    buffer.push_str(&constr.name);
                     match &constr.fields {
                         ConstructorFields::Empty => {}
 
@@ -49,7 +49,7 @@ impl TypeDeclRhs {
                             buffer.push_str(":\n");
                             for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                                 buffer.push_str(&INDENTS[0..indent as usize]);
-                                buffer.push_str(field_name.as_str());
+                                buffer.push_str(field_name);
                                 buffer.push_str(": ");
                                 field_ty.print(buffer);
                                 if i != fields.len() - 1 {
@@ -82,7 +82,7 @@ impl TypeDeclRhs {
                     buffer.push_str(":\n");
                     for (i, (field_name, field_ty)) in fields.iter().enumerate() {
                         buffer.push_str(&INDENTS[0..indent as usize]);
-                        buffer.push_str(field_name.as_str());
+                        buffer.push_str(field_name);
                         buffer.push_str(": ");
                         field_ty.print(buffer);
                         if i != fields.len() - 1 {
@@ -138,9 +138,9 @@ impl TraitDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str(&INDENTS[0..indent as usize]);
         buffer.push_str("trait ");
-        buffer.push_str(self.name.node.as_str());
+        buffer.push_str(&self.name.node);
         buffer.push('[');
-        buffer.push_str(self.ty.node.0.as_str());
+        buffer.push_str(&self.ty.node.0);
         let bounds = &self.ty.node.1;
         if !bounds.is_empty() {
             buffer.push_str(": ");
@@ -187,12 +187,12 @@ impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
             Type::Named(NamedType { name, args }) => {
-                buffer.push_str(name.as_str());
+                buffer.push_str(name);
                 if !args.is_empty() {
                     buffer.push('[');
                     for (i, arg) in args.iter().enumerate() {
                         if let Some(name) = &arg.node.0 {
-                            buffer.push_str(name.as_str());
+                            buffer.push_str(name);
                             buffer.push_str(" = ");
                         }
                         arg.node.1.node.print(buffer);
@@ -208,7 +208,7 @@ impl Type {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(name) = &field.name {
-                        buffer.push_str(name.as_str());
+                        buffer.push_str(name);
                         buffer.push_str(": ");
                     }
                     field.node.print(buffer);
@@ -277,7 +277,7 @@ impl Type {
 impl FunSig {
     pub fn print(&self, buffer: &mut String) {
         buffer.push_str("fn ");
-        buffer.push_str(self.name.node.as_str());
+        buffer.push_str(&self.name.node);
         if !self.type_params.is_empty() {
             buffer.push('[');
             print_context(&self.type_params, buffer);
@@ -291,7 +291,7 @@ impl FunSig {
             }
         }
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
-            buffer.push_str(param_name.as_str());
+            buffer.push_str(param_name);
             buffer.push_str(": ");
             param_ty.node.print(buffer);
             if i != self.params.len() - 1 {
@@ -352,7 +352,7 @@ impl Stmt {
                 body,
             }) => {
                 buffer.push_str("for ");
-                buffer.push_str(var.as_str());
+                buffer.push_str(var);
                 assert!(ty.is_none()); // TODO
                 buffer.push_str(" in ");
                 expr.node.print(buffer, 0);
@@ -406,7 +406,7 @@ impl Expr {
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
                 object.node.print(buffer, 0);
                 buffer.push('.');
-                buffer.push_str(field.as_str());
+                buffer.push_str(field);
             }
 
             Expr::MethodSelect(MethodSelectExpr {
@@ -417,7 +417,7 @@ impl Expr {
             }) => {
                 object.node.print(buffer, 0);
                 buffer.push('.');
-                buffer.push_str(method.as_str());
+                buffer.push_str(method);
                 print_ty_args(ty_args, buffer);
             }
 
@@ -431,9 +431,9 @@ impl Expr {
                 member,
                 ty_args,
             }) => {
-                buffer.push_str(ty.as_str());
+                buffer.push_str(ty);
                 buffer.push('.');
-                buffer.push_str(member.as_str());
+                buffer.push_str(member);
                 print_ty_args(ty_args, buffer);
             }
 
@@ -456,7 +456,7 @@ impl Expr {
                 buffer.push('(');
                 for (i, CallArg { name, expr }) in args.iter().enumerate() {
                     if let Some(name) = name {
-                        buffer.push_str(name.as_str());
+                        buffer.push_str(name);
                         buffer.push_str(" = ");
                     }
                     expr.node.print(buffer, 0);
@@ -670,17 +670,17 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Pat::Var(var) => buffer.push_str(var.as_str()),
+            Pat::Var(var) => buffer.push_str(var),
 
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },
                 fields,
                 ty_args,
             }) => {
-                buffer.push_str(type_.as_str());
+                buffer.push_str(type_);
                 if let Some(constr) = constr {
                     buffer.push('.');
-                    buffer.push_str(constr.as_str());
+                    buffer.push_str(constr);
                 }
 
                 if !ty_args.is_empty() {
@@ -698,7 +698,7 @@ impl Pat {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if let Some(name) = &field.name {
-                            buffer.push_str(name.as_str());
+                            buffer.push_str(name);
                             buffer.push_str(" = ");
                         }
                         field.node.node.print(buffer);
@@ -783,7 +783,7 @@ impl TraitDeclItem {
             TraitDeclItem::AssocTy(ty) => {
                 buffer.push_str(&INDENTS[0..indent as usize]);
                 buffer.push_str("type ");
-                buffer.push_str(ty.as_str());
+                buffer.push_str(ty);
             }
             TraitDeclItem::Fun(ty) => {
                 ty.print(buffer, indent);
@@ -797,7 +797,7 @@ impl ImplDeclItem {
         match self {
             ImplDeclItem::AssocTy(AssocTyDecl { name, ty }) => {
                 buffer.push_str("type ");
-                buffer.push_str(name.as_str());
+                buffer.push_str(name);
                 buffer.push_str(" = ");
                 ty.node.print(buffer);
             }
@@ -808,7 +808,7 @@ impl ImplDeclItem {
 
 fn print_context(context: &[L<(L<Id>, Vec<L<Type>>)>], buffer: &mut String) {
     for (i, ty) in context.iter().enumerate() {
-        buffer.push_str(ty.node.0.node.as_str());
+        buffer.push_str(&ty.node.0.node);
         if !ty.node.1.is_empty() {
             buffer.push_str(": ");
             for (j, bound) in ty.node.1.iter().enumerate() {
