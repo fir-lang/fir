@@ -366,7 +366,7 @@ impl Expr {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        expr.print(buffer, 0);
+                        expr.node.print(buffer, 0);
                     }
                     buffer.push(')');
                 }

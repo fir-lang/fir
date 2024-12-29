@@ -623,7 +623,7 @@ InlineExpr: Expr = {
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
-    <id:BacktickUpperId> <args:("(" <Sep<Expr, ",">> ")")?> =>
+    <id:BacktickUpperId> <args:("(" <Sep<LExpr, ",">> ")")?> =>
         Expr::Variant(VariantExpr {
             id: id.text.as_str()[1..].into(),
             args: args.unwrap_or(vec![]),

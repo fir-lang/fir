@@ -75,7 +75,26 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Variant(id) => todo!(),
+        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
+            let arg_tys: Vec<Ty> = args
+                .iter_mut()
+                .map(|arg| check_expr(tc_state, arg, None, level, loop_depth))
+                .collect();
+            let ty = Ty::Variant {
+                cons: [(id.clone(), arg_tys)].into_iter().collect(),
+                extension: Some(Box::new(Ty::Var(
+                    tc_state.var_gen.new_var(level, expr.loc.clone()),
+                ))),
+            };
+            unify_expected_ty(
+                ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
+        }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
