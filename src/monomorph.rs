@@ -780,8 +780,6 @@ fn mono_pat(
             })
         }
 
-        ast::Pat::Variant(_) => todo!(),
-
         ast::Pat::Record(fields) => ast::Pat::Record(
             fields
                 .iter()
@@ -790,6 +788,19 @@ fn mono_pat(
                 })
                 .collect(),
         ),
+
+        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+            ast::Pat::Variant(ast::VariantPattern {
+                constr: constr.clone(),
+                fields: fields
+                    .iter()
+                    .map(|ast::Named { name, node }| ast::Named {
+                        name: name.clone(),
+                        node: mono_bl_pat(node, ty_map, poly_pgm, mono_pgm),
+                    })
+                    .collect(),
+            })
+        }
     }
 }
 
@@ -1131,7 +1142,10 @@ fn mono_ty(
                 }
             }
 
-            todo!()
+            ast::Type::Variant {
+                alts,
+                extension: None,
+            }
         }
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
