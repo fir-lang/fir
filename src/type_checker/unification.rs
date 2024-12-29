@@ -263,7 +263,7 @@ pub(super) fn unify(
                     }
                     _ => {
                         panic!(
-                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
+                            "{}: Unable to unify variants with constructors {:?} with variant with constructors {:?}",
                             loc_display(loc),
                             cons1,
                             cons2,
@@ -288,7 +288,7 @@ pub(super) fn unify(
                     }
                     _ => {
                         panic!(
-                            "{}: Unable to unify records with keys {:?} with record with keys {:?}",
+                            "{}: Unable to unify variants with constructors {:?} with variant with constructors {:?}",
                             loc_display(loc),
                             cons1,
                             cons2
