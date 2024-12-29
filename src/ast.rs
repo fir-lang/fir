@@ -379,8 +379,11 @@ pub enum Expr {
     /// A constructor: `Vec`, `Bool`, `I32`.
     Constr(ConstrExpr),
 
-    /// A variant constructor: "`A", "`ParseError".
-    Variant(ConstrExpr),
+    /// A variant application: "`A()", "`ParseError(...)".
+    ///
+    /// Because "`A" is type checked differently from "`A(1)", we parse variant applications as
+    /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
+    Variant(VariantExpr),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
@@ -443,6 +446,12 @@ pub struct ConstrExpr {
 
     /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantExpr {
+    pub id: Id,
+    pub args: Vec<Expr>,
 }
 
 #[derive(Debug, Clone)]

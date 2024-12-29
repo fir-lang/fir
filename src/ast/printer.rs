@@ -352,11 +352,24 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args })
-            | Expr::Constr(ConstrExpr { id, ty_args })
-            | Expr::Variant(ConstrExpr { id, ty_args }) => {
+            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
+            }
+
+            Expr::Variant(VariantExpr { id, args }) => {
+                buffer.push('`');
+                buffer.push_str(id);
+                if !args.is_empty() {
+                    buffer.push('(');
+                    for (i, expr) in args.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
+                        }
+                        expr.print(buffer, 0);
+                    }
+                    buffer.push(')');
+                }
             }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {

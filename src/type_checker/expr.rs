@@ -75,7 +75,7 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Variant(_) => todo!(),
+        ast::Expr::Variant(id) => todo!(),
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
