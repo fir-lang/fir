@@ -470,13 +470,13 @@ fn ty_eq_modulo_alpha(
                 extension: extension2,
             },
         ) => {
-            let (fields1, extension1) = crate::type_checker::unification::collect_record_fields(
+            let (fields1, extension1) = crate::type_checker::row_utils::collect_record_fields(
                 cons,
                 &ty1_normalized,
                 fields1,
                 extension1.clone(),
             );
-            let (fields2, extension2) = crate::type_checker::unification::collect_record_fields(
+            let (fields2, extension2) = crate::type_checker::row_utils::collect_record_fields(
                 cons,
                 &ty2_normalized,
                 fields2,
@@ -882,7 +882,7 @@ impl Ty {
             ),
 
             Ty::Record { fields, extension } => {
-                let (fields, extension) = crate::type_checker::unification::collect_record_fields(
+                let (fields, extension) = crate::type_checker::row_utils::collect_record_fields(
                     cons,
                     self,
                     fields,
@@ -901,7 +901,7 @@ impl Ty {
                 cons: var_cons,
                 extension,
             } => {
-                let (var_cons, extension) = crate::type_checker::unification::collect_variant_cons(
+                let (var_cons, extension) = crate::type_checker::row_utils::collect_variant_cons(
                     cons,
                     self,
                     var_cons,

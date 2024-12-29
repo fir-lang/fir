@@ -1,5 +1,4 @@
 use crate::interpreter::*;
-use crate::utils::loc_display;
 
 pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
     let mut ty_cons: Map<Id, TyCon> = Default::default();

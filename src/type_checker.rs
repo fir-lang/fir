@@ -5,6 +5,7 @@ mod convert;
 mod expr;
 mod instantiation;
 mod pat;
+mod row_utils;
 mod stmt;
 mod ty;
 mod ty_map;

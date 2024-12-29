@@ -133,7 +133,7 @@ pub(super) fn check_expr(
                     },
 
                     Ty::Record { fields, extension } => {
-                        let (fields, _) = crate::type_checker::unification::collect_record_fields(
+                        let (fields, _) = crate::type_checker::row_utils::collect_record_fields(
                             tc_state.tys.tys.cons(),
                             &ty_normalized,
                             fields,

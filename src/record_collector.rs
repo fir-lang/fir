@@ -151,7 +151,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>) {
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Type::Variant { alts, extension } => todo!(),
+        ast::Type::Variant { .. } => todo!(),
 
         ast::Type::Fn(ast::FnType { args, ret }) => {
             for arg in args {

@@ -699,7 +699,7 @@ impl Type {
                 extension: extension.clone(),
             },
 
-            Type::Variant { alts, extension } => todo!(),
+            Type::Variant { .. } => todo!(),
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
                 args: args

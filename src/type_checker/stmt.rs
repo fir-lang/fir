@@ -177,13 +177,12 @@ fn check_stmt(
                         },
 
                         Ty::Record { fields, extension } => {
-                            let (fields, _) =
-                                crate::type_checker::unification::collect_record_fields(
-                                    tc_state.tys.tys.cons(),
-                                    &lhs_ty_normalized,
-                                    fields,
-                                    extension.clone(),
-                                );
+                            let (fields, _) = crate::type_checker::row_utils::collect_record_fields(
+                                tc_state.tys.tys.cons(),
+                                &lhs_ty_normalized,
+                                fields,
+                                extension.clone(),
+                            );
                             match fields.get(field) {
                                 Some(field_ty) => field_ty.clone(),
                                 None => panic!(
