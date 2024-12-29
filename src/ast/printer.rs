@@ -218,7 +218,7 @@ impl Type {
                 }
                 if let Some(extension) = extension {
                     buffer.push('|');
-                    buffer.push_str(extension.as_str());
+                    buffer.push_str(extension);
                 }
                 buffer.push(')');
             }
@@ -711,12 +711,12 @@ impl Pat {
             }
 
             Pat::Variant(VariantPattern { constr, fields }) => {
-                buffer.push_str(constr.as_str());
+                buffer.push_str(constr);
                 if !fields.is_empty() {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if let Some(name) = &field.name {
-                            buffer.push_str(name.as_str());
+                            buffer.push_str(name);
                             buffer.push_str(" = ");
                         }
                         field.node.node.print(buffer);
