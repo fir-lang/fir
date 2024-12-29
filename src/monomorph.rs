@@ -1194,7 +1194,25 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             }
         }
 
-        Ty::Variant { .. } => todo!(),
+        Ty::Variant { cons, extension } => {
+            assert!(extension.is_none());
+            ast::Type::Variant {
+                alts: cons
+                    .iter()
+                    .map(|(con, args)| ast::VariantAlt {
+                        con: con.clone(),
+                        fields: args
+                            .iter()
+                            .map(|arg| ast::Named {
+                                name: None,
+                                node: ty_to_ast(arg, ty_map),
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+                extension: None,
+            }
+        }
 
         Ty::QVar(_var) => panic!(),
 
