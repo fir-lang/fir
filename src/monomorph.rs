@@ -1061,14 +1061,12 @@ fn mono_ty(
         }
 
         ast::Type::Record { fields, extension } => {
-            if cfg!(debug_assertions) {
-                let mut names: Set<&Id> = Default::default();
-                for field in fields {
-                    if let Some(name) = &field.name {
-                        let new = names.insert(name);
-                        if !new {
-                            panic!("Record has duplicate fields: {:?}", fields);
-                        }
+            let mut names: Set<&Id> = Default::default();
+            for field in fields {
+                if let Some(name) = &field.name {
+                    let new = names.insert(name);
+                    if !new {
+                        panic!("Record has duplicate fields: {:?}", fields);
                     }
                 }
             }
@@ -1087,7 +1085,7 @@ fn mono_ty(
                         assert!(extension.is_none());
                         fields.extend(extra_fields.iter().cloned());
                     }
-                    _ => panic!("Record extension is not a record"),
+                    other => panic!("Record extension is not a record: {:?}", other),
                 }
             }
 
@@ -1097,7 +1095,44 @@ fn mono_ty(
             }
         }
 
-        ast::Type::Variant { alts, extension } => todo!(),
+        ast::Type::Variant { alts, extension } => {
+            let mut cons: Set<&Id> = Default::default();
+            for ast::VariantAlt { con, .. } in alts {
+                let new = cons.insert(con);
+                if !new {
+                    panic!("Variant has duplicate constructors: {:?}", alts);
+                }
+            }
+
+            let mut alts: Vec<ast::VariantAlt> = alts
+                .iter()
+                .map(|ast::VariantAlt { con, fields }| ast::VariantAlt {
+                    con: con.clone(),
+                    fields: fields
+                        .iter()
+                        .map(|ast::Named { name, node }| ast::Named {
+                            name: name.clone(),
+                            node: mono_ty(node, ty_map, poly_pgm, mono_pgm),
+                        })
+                        .collect(),
+                })
+                .collect();
+
+            if let Some(extension) = extension {
+                match ty_map.get(extension) {
+                    Some(ast::Type::Variant {
+                        alts: extra_alts,
+                        extension,
+                    }) => {
+                        assert!(extension.is_none());
+                        alts.extend(extra_alts.iter().cloned());
+                    }
+                    other => panic!("Variant extension is not a variant: {:?}", other),
+                }
+            }
+
+            todo!()
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
             args: args
