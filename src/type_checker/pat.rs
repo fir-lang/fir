@@ -166,7 +166,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 fn check_pat_shape(
     pat_ty_name: &Id,
     pat_con_name: &Option<Id>,
-    pat_fields: &[ast::Named<Box<ast::L<ast::Pat>>>],
+    pat_fields: &[ast::Named<ast::L<ast::Pat>>],
     loc: &ast::Loc,
     cons: &[ConShape],
 ) {

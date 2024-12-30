@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 9aa6df18dfdb4b39a817c383d9c0619bfc48386ea07e85a80d8f11d56ff7c16f
+// sha3: e744153cafc1ff04ccc924c239bd24d8f8b84c07e99dcdb125922ffb03f29e0c
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -42357,10 +42357,7 @@ fn __action118<'a>(
     Pat::Record(
         fields
             .into_iter()
-            .map(|(name, pat)| Named {
-                name,
-                node: Box::new(pat),
-            })
+            .map(|(name, pat)| Named { name, node: pat })
             .collect(),
     )
 }
@@ -42505,10 +42502,7 @@ fn __action128<'a>(
         constr,
         fields: fields
             .into_iter()
-            .map(|(name, pat)| Named {
-                name,
-                node: Box::new(pat),
-            })
+            .map(|(name, pat)| Named { name, node: pat })
             .collect(),
         ty_args: vec![],
     }

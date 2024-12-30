@@ -773,7 +773,7 @@ fn mono_pat(
 
             let mono_fields = fields
                 .iter()
-                .map(|field| mono_named_bl_pat(field, ty_map, poly_pgm, mono_pgm))
+                .map(|field| mono_named_l_pat(field, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
             ast::Pat::Constr(ast::ConstrPattern {
@@ -790,7 +790,7 @@ fn mono_pat(
             fields
                 .iter()
                 .map(|named_pat| {
-                    named_pat.map_as_ref(|pat| mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm))
+                    named_pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
                 })
                 .collect(),
         ),
@@ -828,13 +828,13 @@ fn mono_bl_pat(
     Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
 
-fn mono_named_bl_pat(
-    pat: &ast::Named<Box<ast::L<ast::Pat>>>,
+fn mono_named_l_pat(
+    pat: &ast::Named<ast::L<ast::Pat>>,
     ty_map: &Map<Id, ast::Type>,
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
-) -> ast::Named<Box<ast::L<ast::Pat>>> {
-    pat.map_as_ref(|pat| mono_bl_pat(pat, ty_map, poly_pgm, mono_pgm))
+) -> ast::Named<ast::L<ast::Pat>> {
+    pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
 
 /// Monomorphise an associated function or method.
