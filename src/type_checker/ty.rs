@@ -997,7 +997,7 @@ impl TyVarRef {
 
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
-            Some(link) => link.normalize(cons),
+            Some(link) => link.normalize(cons).deep_normalize(cons),
             None => return Ty::Var(self.clone()),
         };
         self.set_link(link.clone());
