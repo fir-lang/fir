@@ -870,7 +870,7 @@ VariantPattern: VariantPattern = {
     <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
         VariantPattern {
             constr: constr.text.as_str()[1..].into(),
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: Box::new(pat) }).collect(),
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
         },
 }
 

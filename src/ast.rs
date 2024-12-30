@@ -331,7 +331,7 @@ pub struct Constructor {
 #[derive(Debug, Clone)]
 pub struct VariantPattern {
     pub constr: Id,
-    pub fields: Vec<Named<Box<L<Pat>>>>,
+    pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]

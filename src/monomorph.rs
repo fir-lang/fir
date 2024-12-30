@@ -802,7 +802,7 @@ fn mono_pat(
                     .iter()
                     .map(|ast::Named { name, node }| ast::Named {
                         name: name.clone(),
-                        node: mono_bl_pat(node, ty_map, poly_pgm, mono_pgm),
+                        node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm),
                     })
                     .collect(),
             })
