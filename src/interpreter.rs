@@ -1249,7 +1249,7 @@ fn try_bind_field_pats(
     pgm: &Pgm,
     heap: &mut Heap,
     constr_fields: &Fields,
-    field_pats: &[ast::Named<Box<L<ast::Pat>>>],
+    field_pats: &[ast::Named<L<ast::Pat>>],
     value: u64,
 ) -> Option<Map<Id, u64>> {
     let mut ret: Map<Id, u64> = Default::default();

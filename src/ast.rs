@@ -278,7 +278,7 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
-    Record(Vec<Named<Box<L<Pat>>>>),
+    Record(Vec<Named<L<Pat>>>),
 
     /// Underscore, aka. wildcard.
     Ignore,
@@ -299,7 +299,7 @@ pub enum Pat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
-    pub fields: Vec<Named<Box<L<Pat>>>>,
+    pub fields: Vec<Named<L<Pat>>>,
 
     /// Inferred type arguments of the constructor. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
