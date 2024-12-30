@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: b5911e83b2b058604d31e8c8f8c66e73d0b7a74b750c003b8d5f1b677c6dfb30
+// sha3: d59a5832fc9d48d4d4bea93b9c3c016d572067d8420026d9b32149cedfee0cc9
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -37629,7 +37629,7 @@ fn __action63<'a>(
                     .into_iter()
                     .map(|(name, expr)| Named {
                         name: name,
-                        node: Box::new(expr),
+                        node: expr,
                     })
                     .collect(),
             ),

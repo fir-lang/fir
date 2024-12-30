@@ -436,7 +436,7 @@ InlineExpr: Expr = {
         match exprs.len() {
             0 => Expr::Record(vec![]),
             1 if exprs[0].0.is_none() => exprs.pop().unwrap().1.node,
-            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, node: Box::new(expr) }).collect()),
+            _ => Expr::Record(exprs.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect()),
         }
     },
 
