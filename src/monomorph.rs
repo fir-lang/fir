@@ -586,7 +586,7 @@ fn mono_expr(
             fields
                 .iter()
                 .map(|named_field| {
-                    named_field.map_as_ref(|field| mono_bl_expr(field, ty_map, poly_pgm, mono_pgm))
+                    named_field.map_as_ref(|field| mono_l_expr(field, ty_map, poly_pgm, mono_pgm))
                 })
                 .collect(),
         ),

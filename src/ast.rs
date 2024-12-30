@@ -423,7 +423,7 @@ pub enum Expr {
 
     UnOp(UnOpExpr),
 
-    Record(Vec<Named<Box<L<Expr>>>>),
+    Record(Vec<Named<L<Expr>>>),
 
     Return(Box<L<Expr>>),
 
