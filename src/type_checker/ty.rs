@@ -826,7 +826,7 @@ impl Ty {
                 kind,
                 is_row,
             } => {
-                assert_eq!(*is_row, false);
+                assert!(!(*is_row));
                 let (labels, extension) = crate::type_checker::row_utils::collect_rows(
                     cons,
                     self,

@@ -1252,7 +1252,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             is_row,
         } => {
             assert!(extension.is_none(), "{:?}", extension);
-            assert_eq!(*is_row, false);
+            assert!(!(*is_row));
             match kind {
                 RecordOrVariant::Record => ast::Type::Record {
                     fields: labels

@@ -1550,7 +1550,7 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
                 ty_var_kinds(&arg.node, kinds);
             }
             if let Some(ret) = ret {
-                ty_var_kinds(&*ret.node, kinds);
+                ty_var_kinds(&ret.node, kinds);
             }
         }
     }

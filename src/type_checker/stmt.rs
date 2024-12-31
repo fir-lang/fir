@@ -182,7 +182,7 @@ fn check_stmt(
                             kind: RecordOrVariant::Record,
                             is_row,
                         } => {
-                            assert_eq!(*is_row, false);
+                            assert!(!(*is_row));
                             let (fields, _) = crate::type_checker::row_utils::collect_rows(
                                 tc_state.tys.tys.cons(),
                                 &lhs_ty_normalized,
