@@ -878,7 +878,7 @@ impl Ty {
                 labels,
                 extension,
                 kind,
-                is_row: _,
+                is_row,
             } => {
                 let (labels, extension) = crate::type_checker::row_utils::collect_rows(
                     cons,
@@ -891,7 +891,7 @@ impl Ty {
                     labels,
                     extension: extension.map(Box::new),
                     kind: *kind,
-                    is_row: false,
+                    is_row: *is_row,
                 }
             }
 

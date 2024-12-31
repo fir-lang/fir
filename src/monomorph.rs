@@ -1255,10 +1255,10 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             labels,
             extension,
             kind,
-            is_row,
+            is_row: _,
         } => {
-            assert!(extension.is_none(), "{:?}", extension);
-            assert!(!(*is_row));
+            // TODO: Extension should be `None` or ambiguous.
+            // assert!(extension.is_none(), "{:?}", extension);
             match kind {
                 RecordOrVariant::Record => ast::Type::Record {
                     fields: labels
