@@ -165,7 +165,7 @@ pub(super) fn check_expr(
                     | Ty::QVar(_)
                     | Ty::Fun(_, _)
                     | Ty::FunNamedArgs(_, _)
-                    | Ty::Anonymous { .. }) => {
+                    | Ty::Variant { .. }) => {
                         panic!(
                             "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),

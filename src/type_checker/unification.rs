@@ -249,7 +249,7 @@ fn link_extension(
         })
         .collect();
     // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, loc.clone());
+    let new_extension_var = var_gen.new_var(level, Kind::Row, loc.clone());
     let new_extension_ty = Ty::Anonymous {
         labels: extension_labels,
         extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),

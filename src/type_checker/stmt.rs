@@ -176,11 +176,18 @@ fn check_stmt(
                             TyArgs::Named(_) => panic!(),
                         },
 
-                        Ty::Record { fields, extension } => {
-                            let (fields, _) = crate::type_checker::row_utils::collect_record_fields(
+                        Ty::Anonymous {
+                            labels,
+                            extension,
+                            kind: RecordOrVariant::Record,
+                            is_row,
+                        } => {
+                            assert_eq!(*is_row, false);
+                            let (fields, _) = crate::type_checker::row_utils::collect_rows(
                                 tc_state.tys.tys.cons(),
                                 &lhs_ty_normalized,
-                                fields,
+                                RecordOrVariant::Record,
+                                labels,
                                 extension.clone(),
                             );
                             match fields.get(field) {
@@ -264,12 +271,18 @@ fn check_stmt(
 
             // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
             // with fresh type `A`.
-            let iterator_ty = tc_state.var_gen.new_var(level, expr.loc.clone());
+            let iterator_ty = tc_state
+                .var_gen
+                .new_var(level, Kind::Star, expr.loc.clone());
 
             // TODO: loc should be the loc of `var`, which we don't have.
-            let item_ty = ty
-                .clone()
-                .unwrap_or_else(|| Ty::Var(tc_state.var_gen.new_var(level, expr.loc.clone())));
+            let item_ty = ty.clone().unwrap_or_else(|| {
+                Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, expr.loc.clone()),
+                )
+            });
 
             tc_state.preds.add(Pred {
                 ty_var: iterator_ty.clone(),

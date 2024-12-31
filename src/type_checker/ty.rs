@@ -951,7 +951,7 @@ impl TyVarRef {
 }
 
 impl TyVarGen {
-    pub(super) fn new_var(&mut self, level: u32, loc: ast::Loc) -> TyVarRef {
+    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> TyVarRef {
         let id = self.next_id;
         self.next_id += 1;
         TyVarRef(Rc::new(TyVar {
@@ -959,6 +959,7 @@ impl TyVarGen {
             level: Cell::new(level),
             link: RefCell::new(None),
             loc,
+            kind,
         }))
     }
 }
