@@ -9,12 +9,12 @@ use crate::type_checker::{loc_display, TcFunState};
 pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
     match &mut pat.node {
         ast::Pat::Var(var) => {
-            let ty = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+            let ty = Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
             tc_state.env.insert(var.clone(), ty.clone());
             ty
         }
 
-        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone())),
+        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr:

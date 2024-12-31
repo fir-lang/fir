@@ -12,24 +12,8 @@ use smol_str::SmolStr;
 /// A type scheme.
 #[derive(Debug, Clone)]
 pub struct Scheme {
-    /// Generalized variables with predicates.
-    ///
-    /// `Vec` instead of `Map` as type arguments in explicit type applications are ordered. A type
-    /// variable cannot appear multiple times in the `Vec`.
-    ///
-    /// For now, all quantified variables have kind `*`.
-    ///
-    /// The bounds can refer to the associated types, e.g. `[A, I: Iterator[Item = A]]`.
-    ///
-    /// In the example `[A, I: Iterator[Item = A]]`, this field will be:
-    ///
-    /// ```ignore
-    /// [
-    ///     (A, {}),
-    ///     (I, {Iterator => {Item => A}})
-    /// ]
-    /// ```
-    pub(super) quantified_vars: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
+    /// Generalized variables with bounds.
+    pub(super) quantified_vars: Vec<(Id, QVar)>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -38,6 +22,21 @@ pub struct Scheme {
     /// Source code location of the variable with this type scheme. This is used in error messages
     /// and for debugging.
     pub(super) loc: ast::Loc,
+}
+
+/// Kind and bounds of a quantified type variable.
+#[derive(Debug, Clone)]
+pub struct QVar {
+    pub kind: Kind,
+
+    /// Bounds of the variable. E.g. in `I: ToStr + Iterator[Item = A]`:
+    /// ```ignore
+    /// {
+    ///     (ToStr => {}),
+    ///     (Iterator => {Item = A}),
+    /// }
+    /// ```
+    pub bounds: Map<Id, Map<Id, Ty>>,
 }
 
 /// A type checking type.
@@ -304,17 +303,17 @@ impl Scheme {
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         // Instantiate quantified variables of the scheme.
-        for (var, _bounds) in &self.quantified_vars {
-            let instantiated_var = var_gen.new_var(level, self.loc.clone());
-            var_map.insert(var.clone(), Ty::Var(instantiated_var.clone()));
+        for (qvar, QVar { kind, bounds: _ }) in &self.quantified_vars {
+            let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
+            var_map.insert(qvar.clone(), Ty::Var(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
 
         // Add associated types, substitute instantiated types.
-        for (instantiation, (_var, bounds)) in
+        for (instantiation, (_qvar, QVar { kind: _, bounds })) in
             instantiations.iter().zip(self.quantified_vars.iter())
         {
-            for (trait_, assoc_tys) in bounds {
+            for (trait_, assoc_tys) in bounds.iter() {
                 let pred = Pred {
                     ty_var: instantiation.clone(),
                     trait_: trait_.clone(),
@@ -335,9 +334,9 @@ impl Scheme {
         assert_eq!(tys.len(), self.quantified_vars.len());
 
         let mut ty = self.ty.clone();
-        for ((quantified_var, bounds), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
+        for ((qvar, QVar { kind: _, bounds }), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
             assert!(bounds.is_empty());
-            ty = ty.subst(quantified_var, ty_);
+            ty = ty.subst(qvar, ty_);
         }
 
         ty
@@ -348,16 +347,13 @@ impl Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
-        debug_assert!(self
-            .quantified_vars
-            .iter()
-            .any(|(var_, _bounds)| var_ == var));
+        debug_assert!(self.quantified_vars.iter().any(|(qvar, _)| qvar == var));
 
         Scheme {
             quantified_vars: self
                 .quantified_vars
                 .iter()
-                .filter(|(var_, _bounds)| var_ != var)
+                .filter(|(qvar, _)| qvar != var)
                 .cloned()
                 .collect(),
             ty: self.ty.subst(var, ty),
@@ -394,14 +390,14 @@ impl Scheme {
             .quantified_vars
             .iter()
             .enumerate()
-            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
         let right_vars: Map<Id, u32> = other
             .quantified_vars
             .iter()
             .enumerate()
-            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
         ty_eq_modulo_alpha(
@@ -1163,11 +1159,11 @@ impl fmt::Display for Scheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.quantified_vars.is_empty() {
             write!(f, "[")?;
-            for (i, (var, bounds)) in self.quantified_vars.iter().enumerate() {
+            for (i, (qvar, QVar { kind: _, bounds })) in self.quantified_vars.iter().enumerate() {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", var)?;
+                write!(f, "{}", qvar)?;
                 if !bounds.is_empty() {
                     write!(f, ": ")?;
                     for (j, (trait_, assoc_tys)) in bounds.iter().enumerate() {

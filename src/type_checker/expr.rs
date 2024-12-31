@@ -950,7 +950,7 @@ fn select_method(
         .quantified_vars
         .iter()
         .take(ty_args.len())
-        .map(|(id, _)| id.clone())
+        .map(|(qvar, _)| qvar.clone())
         .collect();
 
     for (quantified_var, ty_arg) in substituted_quantified_vars.iter().zip(ty_args.iter()) {

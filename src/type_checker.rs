@@ -71,7 +71,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 }
 
 struct TcFunState<'a> {
-    context: &'a Map<Id, Map<Id, Map<Id, Ty>>>,
+    context: &'a Map<Id, QVar>,
     return_ty: &'a Ty,
     env: &'a mut ScopeMap<Id, Ty>,
     var_gen: &'a mut TyVarGen,
@@ -219,9 +219,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     loc: trait_decl.node.ty.loc.clone(),
                 }];
 
-                let trait_context = convert_and_bind_context(
+                // Type variables of a trait declaration will have kind `*`.
+                let var_kinds: Map<Id, Kind> = Default::default();
+                let trait_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     &mut tys,
                     &trait_context_ast,
+                    &var_kinds,
                     TyVarConversion::ToQVar,
                     &trait_decl.loc,
                 );
@@ -287,9 +290,11 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             // New scope for function context.
                             tys.enter_scope();
 
-                            let fun_context = convert_and_bind_context(
+                            let var_kinds: Map<Id, Kind> = Default::default();
+                            let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                                 &mut tys,
                                 &fun.sig.type_params,
+                                &var_kinds,
                                 TyVarConversion::ToQVar,
                                 &item.loc,
                             );
@@ -321,7 +326,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             let scheme = Scheme {
                                 quantified_vars: trait_context
                                     .iter()
-                                    .cloned()
+                                    .map(|(qvar, details)| (qvar.clone(), details.clone()))
                                     .chain(fun_context.into_iter())
                                     .collect(),
                                 ty: fun_ty,
@@ -380,6 +385,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let _impl_context = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
+            &Default::default(), // TODO: not sure about var kinds
             TyVarConversion::ToQVar,
             &decl.loc,
         );
@@ -514,6 +520,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let _impl_context = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
+            &Default::default(), // TODO: not sure about var kinds
             TyVarConversion::ToQVar,
             &decl.loc,
         );
@@ -591,8 +598,14 @@ fn collect_schemes(
                 node: ast::FunDecl { sig, body: _ },
                 loc,
             }) => {
-                let fun_context =
-                    convert_and_bind_context(tys, &sig.type_params, TyVarConversion::ToQVar, loc);
+                let var_kinds = fun_sig_ty_var_kinds(sig);
+                let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                    tys,
+                    &sig.type_params,
+                    &var_kinds,
+                    TyVarConversion::ToQVar,
+                    loc,
+                );
 
                 let arg_tys: Vec<Ty> = sig
                     .params
@@ -624,9 +637,10 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                let impl_context = convert_and_bind_context(
+                let impl_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     tys,
                     &impl_decl.node.context,
+                    &Default::default(), // TODO
                     TyVarConversion::ToQVar,
                     &impl_decl.loc,
                 );
@@ -659,9 +673,11 @@ fn collect_schemes(
 
                     let sig = &fun.sig;
 
+                    let var_kinds = fun_sig_ty_var_kinds(sig);
                     let fun_context = convert_and_bind_context(
                         tys,
                         &sig.type_params,
+                        &var_kinds,
                         TyVarConversion::ToQVar,
                         &item.loc,
                     );
@@ -839,12 +855,24 @@ fn collect_schemes(
                                     Ty::FunNamedArgs(tys, Box::new(ret.clone()))
                                 }
                             };
+                            let var_kinds = constructor_decls_var_kinds(cons);
                             let scheme = Scheme {
                                 quantified_vars: ty_decl
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|ty_param| (ty_param.clone(), Default::default()))
+                                    .map(|ty_param| {
+                                        (
+                                            ty_param.clone(),
+                                            QVar {
+                                                kind: var_kinds
+                                                    .get(ty_param)
+                                                    .cloned()
+                                                    .unwrap_or(Kind::Star),
+                                                bounds: Default::default(),
+                                            },
+                                        )
+                                    })
                                     .collect(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -871,12 +899,24 @@ fn collect_schemes(
                                 Ty::FunNamedArgs(tys, Box::new(ret.clone()))
                             }
                         };
+                        let var_kinds = constructor_fields_var_kinds(fields);
                         let scheme = Scheme {
                             quantified_vars: ty_decl
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_param| (ty_param.clone(), Default::default()))
+                                .map(|ty_param| {
+                                    (
+                                        ty_param.clone(),
+                                        QVar {
+                                            kind: var_kinds
+                                                .get(ty_param)
+                                                .cloned()
+                                                .unwrap_or(Kind::Star),
+                                            bounds: Default::default(),
+                                        },
+                                    )
+                                })
                                 .collect(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -922,9 +962,11 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
+    let var_kinds = fun_sig_ty_var_kinds(&fun.node.sig);
     let fn_bounds = convert_and_bind_context(
         &mut tys.tys,
         &fun.node.sig.type_params,
+        &var_kinds,
         TyVarConversion::ToOpaque,
         &fun.loc,
     );
@@ -985,6 +1027,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     let impl_bounds = convert_and_bind_context(
         &mut tys.tys,
         &impl_.node.context,
+        &Default::default(), // TODO
         TyVarConversion::ToOpaque,
         &impl_.loc,
     );
@@ -1031,9 +1074,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
+            let var_kinds = fun_sig_ty_var_kinds(&fun.sig);
             let fn_bounds = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
+                &var_kinds,
                 TyVarConversion::ToOpaque,
                 &impl_.loc,
             );
@@ -1144,9 +1189,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             tys.tys.enter_scope();
 
             // Bind function type parameters.
-            let fn_bounds = convert_and_bind_context(
+            let var_kinds = fun_sig_ty_var_kinds(&fun.sig);
+            let fn_bounds: Vec<(Id, QVar)> = convert_and_bind_context(
                 &mut tys.tys,
                 &fun.sig.type_params,
+                &var_kinds,
                 TyVarConversion::ToOpaque,
                 &item.loc,
             );
@@ -1176,7 +1223,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 let context = impl_bounds
                     .iter()
-                    .cloned()
+                    .map(|(qvar, details)| (qvar.clone(), details.clone()))
                     .chain(fn_bounds.into_iter())
                     .collect();
 
@@ -1218,7 +1265,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 fn resolve_preds(
-    context: &Map<Id, Map<Id, Map<Id, Ty>>>,
+    context: &Map<Id, QVar>,
     tys: &PgmTypes,
     preds: PredSet,
     var_gen: &mut TyVarGen,
@@ -1259,7 +1306,7 @@ fn resolve_preds(
                     });
 
                 if !implementing_tys.contains(con)
-                    && context.get(con).map(|ctx| ctx.contains_key(&trait_)) != Some(true)
+                    && context.get(con).map(|ctx| ctx.bounds.contains_key(&trait_)) != Some(true)
                 {
                     panic!(
                         "{}: Type {} does not implement trait {}",
@@ -1338,7 +1385,7 @@ fn resolve_preds(
 }
 
 fn resolve_all_preds(
-    context: &Map<Id, Map<Id, Map<Id, Ty>>>,
+    context: &Map<Id, QVar>,
     tys: &PgmTypes,
     preds: PredSet,
     var_gen: &mut TyVarGen,
@@ -1398,16 +1445,16 @@ fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {
 }
 
 fn bind_type_params(
-    params: &[(Id, Map<Id, Map<Id, Ty>>)],
+    params: &[(Id, QVar)],
     tys: &mut PgmTypes,
     loc: &ast::Loc,
 ) -> Map<SmolStr, Option<Map<SmolStr, Scheme>>> {
     let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
 
-    for (var, bounds) in params {
+    for (var, qvar) in params {
         old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
 
-        for (trait_, assoc_tys) in bounds {
+        for (trait_, assoc_tys) in &qvar.bounds {
             // It should be checked when converting the bounds that the ty cons are bound and
             // traits.
             let trait_ty_con = tys.tys.get_con(trait_).unwrap();
@@ -1454,4 +1501,87 @@ fn unbind_type_params(
             }
         }
     }
+}
+
+fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
+    let mut kinds: Map<Id, Kind> = Default::default();
+    for (_, param) in fun_sig.params.iter() {
+        ty_var_kinds(&param.node, &mut kinds);
+    }
+    if let Some(ret) = &fun_sig.return_ty {
+        ty_var_kinds(&ret.node, &mut kinds);
+    }
+    kinds
+}
+
+// TODO: This only generates row kinded variables for now, as we default the rest as `*`.
+// It will be easier to add `*` kinded variables here once we distinguish variables from
+// constructors syntactically (#33).
+fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
+    match ty {
+        ast::Type::Named(ast::NamedType { name: _, args }) => {
+            for arg in args {
+                ty_var_kinds(&arg.node.1.node, kinds);
+            }
+        }
+
+        ast::Type::Record { fields, extension } => {
+            for field in fields {
+                ty_var_kinds(&field.node, kinds);
+            }
+            if let Some(ext) = extension {
+                kinds.insert(ext.clone(), Kind::Row);
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            for ast::VariantAlt { con: _, fields } in alts {
+                for field in fields {
+                    ty_var_kinds(&field.node, kinds);
+                }
+            }
+            if let Some(ext) = extension {
+                kinds.insert(ext.clone(), Kind::Row);
+            }
+        }
+
+        ast::Type::Fn(ast::FnType { args, ret }) => {
+            for arg in args {
+                ty_var_kinds(&arg.node, kinds);
+            }
+            if let Some(ret) = ret {
+                ty_var_kinds(&*ret.node, kinds);
+            }
+        }
+    }
+}
+
+fn constructor_fields_var_kinds(ty: &ast::ConstructorFields) -> Map<Id, Kind> {
+    let mut kinds: Map<Id, Kind> = Default::default();
+    constructor_fields_var_kinds_(ty, &mut kinds);
+    kinds
+}
+
+fn constructor_fields_var_kinds_(ty: &ast::ConstructorFields, kinds: &mut Map<Id, Kind>) {
+    match ty {
+        ast::ConstructorFields::Empty => {}
+        ast::ConstructorFields::Named(fields) => {
+            for (_, field) in fields {
+                ty_var_kinds(field, kinds);
+            }
+        }
+        ast::ConstructorFields::Unnamed(fields) => {
+            for field in fields {
+                ty_var_kinds(field, kinds);
+            }
+        }
+    }
+}
+
+fn constructor_decls_var_kinds(decls: &[ast::ConstructorDecl]) -> Map<Id, Kind> {
+    let mut kinds: Map<Id, Kind> = Default::default();
+    for decl in decls {
+        constructor_fields_var_kinds_(&decl.fields, &mut kinds);
+    }
+    kinds
 }
