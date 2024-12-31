@@ -115,32 +115,43 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 }
             }
 
-            Ty::Record {
-                fields: ty_fields,
+            Ty::Anonymous {
+                labels: ty_fields,
                 extension: extension.as_ref().map(|var| match tys.get_var(var) {
                     Some(ty) => Box::new(ty.clone()),
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
+                kind: RecordOrVariant::Record,
+                is_row: false,
             }
         }
 
         ast::Type::Variant { alts, extension } => {
-            let mut ty_alts: Map<Id, Vec<Ty>> =
+            let mut ty_alts: Map<Id, Ty> =
                 Map::with_capacity_and_hasher(alts.len(), Default::default());
 
             for ast::VariantAlt { con, fields } in alts {
-                let mut ty_fields: Vec<Ty> = Vec::with_capacity(fields.len());
-                for ast::Named { name, node } in fields {
-                    if name.is_some() {
-                        panic!(
-                            "{}: Variants with named fields not supported yet",
-                            loc_display(loc)
-                        );
-                    }
-                    ty_fields.push(convert_ast_ty(tys, node, loc));
-                }
+                let mut record_labels: Map<Id, Ty> =
+                    Map::with_capacity_and_hasher(fields.len(), Default::default());
 
-                let old = ty_alts.insert(con.clone(), ty_fields);
+                for ast::Named { name, node } in fields {
+                    let name = name.as_ref().unwrap_or_else(|| {
+                        panic!(
+                            "{}: Variants with unnamed fields not supported yet",
+                            loc_display(loc)
+                        )
+                    });
+                    let ty = convert_ast_ty(tys, node, loc);
+                    record_labels.insert(name.clone(), ty);
+                }
+                let record_ty = Ty::Anonymous {
+                    labels: record_labels,
+                    extension: None,
+                    kind: RecordOrVariant::Record,
+                    is_row: false,
+                };
+
+                let old = ty_alts.insert(con.clone(), record_ty);
                 if old.is_some() {
                     panic!(
                         "{}: Constructor {} defined multiple times in variant",
@@ -150,12 +161,14 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 }
             }
 
-            Ty::Variant {
-                cons: ty_alts,
+            Ty::Anonymous {
+                labels: ty_alts,
                 extension: extension.as_ref().map(|var| match tys.get_var(var) {
                     Some(ty) => Box::new(ty.clone()),
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
             }
         }
 

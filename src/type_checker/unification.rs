@@ -125,45 +125,48 @@ pub(super) fn unify(
         (ty1, Ty::Var(var)) => link_var(var, ty1),
 
         (
-            Ty::Record {
-                fields: fields1,
+            Ty::Anonymous {
+                labels: labels1,
                 extension: extension1,
+                kind: kind1,
+                is_row: is_row_1,
             },
-            Ty::Record {
-                fields: fields2,
+            Ty::Anonymous {
+                labels: labels2,
                 extension: extension2,
+                kind: kind2,
+                is_row: is_row_2,
             },
         ) => {
-            let (record1_fields, mut record1_extension) =
-                collect_record_fields(cons, &ty1, fields1, extension1.clone());
-            let (record2_fields, mut record2_extension) =
-                collect_record_fields(cons, &ty2, fields2, extension2.clone());
+            // TODO: Are these type errors or bugs?
+            assert_eq!(kind1, kind2);
+            assert_eq!(is_row_1, is_row_2);
 
-            let keys1: Set<&Id> = record1_fields.keys().collect();
-            let keys2: Set<&Id> = record2_fields.keys().collect();
+            let (labels1, mut extension1) =
+                collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
+            let (labels2, mut extension2) =
+                collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
 
-            // Extra fields in one record will be added to the extension of the other.
+            let keys1: Set<&Id> = labels1.keys().collect();
+            let keys2: Set<&Id> = labels2.keys().collect();
+
+            // Extra labels in one type will be added to the extension of the other.
             let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
             let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
 
-            // Unify common fields.
+            // Unify common labels.
             for key in keys1.intersection(&keys2) {
-                let ty1 = record1_fields.get(*key).unwrap();
-                let ty2 = record2_fields.get(*key).unwrap();
+                let ty1 = labels1.get(*key).unwrap();
+                let ty2 = labels2.get(*key).unwrap();
                 unify(ty1, ty2, cons, var_gen, level, loc);
             }
 
             if !extras1.is_empty() {
-                match &record2_extension {
+                match &extension2 {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        record2_extension = Some(Ty::Var(link_record_extension(
-                            &extras1,
-                            &record1_fields,
-                            var,
-                            var_gen,
-                            level,
-                            loc,
+                        extension2 = Some(Ty::Var(link_extension(
+                            *kind2, &extras1, &labels1, var, var_gen, level, loc,
                         )));
                     }
                     _ => {
@@ -178,16 +181,11 @@ pub(super) fn unify(
             }
 
             if !extras2.is_empty() {
-                match &record1_extension {
+                match &extension1 {
                     Some(Ty::Var(var)) => {
                         // TODO: Not sure about level
-                        record1_extension = Some(Ty::Var(link_record_extension(
-                            &extras2,
-                            &record2_fields,
-                            var,
-                            var_gen,
-                            level,
-                            loc,
+                        extension1 = Some(Ty::Var(link_extension(
+                            *kind1, &extras2, &labels2, var, var_gen, level, loc,
                         )));
                     }
                     _ => {
@@ -201,98 +199,13 @@ pub(super) fn unify(
                 }
             }
 
-            match (record1_extension, record2_extension) {
+            match (extension1, extension2) {
                 (None, None) => {}
                 (Some(ext1), None) => {
                     unify(&ext1, &Ty::unit(), cons, var_gen, level, loc);
                 }
                 (None, Some(ext2)) => {
                     unify(&Ty::unit(), &ext2, cons, var_gen, level, loc);
-                }
-                (Some(ext1), Some(ext2)) => {
-                    unify(&ext1, &ext2, cons, var_gen, level, loc);
-                }
-            }
-        }
-
-        (
-            Ty::Variant {
-                cons: cons1,
-                extension: extension1,
-            },
-            Ty::Variant {
-                cons: cons2,
-                extension: extension2,
-            },
-        ) => {
-            let (var1_cons, mut var1_extension) =
-                collect_variant_cons(cons, &ty1, cons1, extension1.clone());
-            let (var2_cons, mut var2_extension) =
-                collect_variant_cons(cons, &ty2, cons2, extension2.clone());
-
-            let cons1: Set<&Id> = var1_cons.keys().collect();
-            let cons2: Set<&Id> = var2_cons.keys().collect();
-
-            let extras1: Set<&&Id> = cons1.difference(&cons2).collect();
-            let extras2: Set<&&Id> = cons2.difference(&cons1).collect();
-
-            // Unify common cons.
-            for con in cons1.intersection(&cons2) {
-                let fields1 = var1_cons.get(*con).unwrap();
-                let fields2 = var2_cons.get(*con).unwrap();
-                if fields1.len() != fields2.len() {
-                    panic!("{}: Unable to unify variant constructors {} with different number of fields", loc_display(loc), con);
-                }
-                for (ty1, ty2) in fields1.iter().zip(fields2.iter()) {
-                    unify(ty1, ty2, cons, var_gen, level, loc);
-                }
-            }
-
-            if !extras1.is_empty() {
-                match &var2_extension {
-                    Some(Ty::Var(var)) => {
-                        // TODO: Not sure about level
-                        var2_extension = Some(Ty::Var(link_variant_extension(
-                            &extras1, &var1_cons, var, var_gen, level, loc,
-                        )));
-                    }
-                    _ => {
-                        panic!(
-                            "{}: Unable to unify variants with constructors {:?} with variant with constructors {:?}",
-                            loc_display(loc),
-                            cons1,
-                            cons2,
-                        );
-                    }
-                }
-            }
-
-            if !extras2.is_empty() {
-                match &var1_extension {
-                    Some(Ty::Var(var)) => {
-                        // TODO: Not sure about level
-                        var1_extension = Some(Ty::Var(link_variant_extension(
-                            &extras2, &var2_cons, var, var_gen, level, loc,
-                        )));
-                    }
-                    _ => {
-                        panic!(
-                            "{}: Unable to unify variants with constructors {:?} with variant with constructors {:?}",
-                            loc_display(loc),
-                            cons1,
-                            cons2
-                        );
-                    }
-                }
-            }
-
-            match (var1_extension, var2_extension) {
-                (None, None) => {}
-                (Some(ext1), None) => {
-                    unify(&ext1, &Ty::empty_variant(), cons, var_gen, level, loc);
-                }
-                (None, Some(ext2)) => {
-                    unify(&Ty::empty_variant(), &ext2, cons, var_gen, level, loc);
                 }
                 (Some(ext1), Some(ext2)) => {
                     unify(&ext1, &ext2, cons, var_gen, level, loc);
@@ -317,55 +230,31 @@ pub(super) fn unify(
     }
 }
 
-fn link_record_extension(
-    extra_fields: &Set<&&Id>,
-    field_values: &Map<Id, Ty>,
+fn link_extension(
+    kind: RecordOrVariant,
+    extra_labels: &Set<&&Id>,
+    label_values: &Map<Id, Ty>,
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> TyVarRef {
-    let extension_fields: Map<Id, Ty> = extra_fields
+    let extension_labels: Map<Id, Ty> = extra_labels
         .iter()
         .map(|extra_field| {
             (
                 (**extra_field).clone(),
-                field_values.get(**extra_field).unwrap().clone(),
+                label_values.get(**extra_field).unwrap().clone(),
             )
         })
         .collect();
     // TODO: Not sure about the level.
     let new_extension_var = var_gen.new_var(level, loc.clone());
-    let new_extension_ty = Ty::Record {
-        fields: extension_fields,
+    let new_extension_ty = Ty::Anonymous {
+        labels: extension_labels,
         extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
-    };
-    var.set_link(new_extension_ty);
-    new_extension_var
-}
-
-fn link_variant_extension(
-    extra_cons: &Set<&&Id>,
-    con_values: &Map<Id, Vec<Ty>>,
-    var: &TyVarRef,
-    var_gen: &mut TyVarGen,
-    level: u32,
-    loc: &ast::Loc,
-) -> TyVarRef {
-    let extension_cons: Map<Id, Vec<Ty>> = extra_cons
-        .iter()
-        .map(|extra_con| {
-            (
-                (**extra_con).clone(),
-                con_values.get(**extra_con).unwrap().clone(),
-            )
-        })
-        .collect();
-    // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, loc.clone());
-    let new_extension_ty = Ty::Variant {
-        cons: extension_cons,
-        extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
+        kind,
+        is_row: true,
     };
     var.set_link(new_extension_ty);
     new_extension_var

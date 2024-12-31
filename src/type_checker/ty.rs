@@ -56,25 +56,6 @@ pub enum Ty {
     /// Invariant: the vector is not empty.
     App(Id, TyArgs),
 
-    /// A record type, e.g. `(x: U32, y: U32)`, `(a: Str|r)`.
-    Record {
-        fields: Map<Id, Ty>,
-
-        /// When available, this will be a `Ty::Var` (a unification variable), `Ty::Con` (a rigid
-        /// type variable), or a `Ty::Record`, potentially with an extension. The field names with
-        /// all the extensions won't have duplicates.
-        extension: Option<Box<Ty>>,
-    },
-
-    Variant {
-        cons: Map<Id, Vec<Ty>>, // no named fields for now
-
-        /// Similar to `Record.extension`, when available, this will be a `Ty::Var` (a unification
-        /// variable), `Ty::Con` (a rigid type variable), or a `Ty::Variant`, potentially with an
-        /// extension. The constructor names with all the extensions won't have duplicates.
-        extension: Option<Box<Ty>>,
-    },
-
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
@@ -88,7 +69,36 @@ pub enum Ty {
 
     /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
     AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
+
+    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..R)`, `[Err1(Str), ..R]`.
+    Anonymous {
+        labels: Map<Id, Ty>,
+
+        /// Row extension. See `Extension` documentation.
+        extension: Extension,
+
+        kind: RecordOrVariant,
+
+        /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
+        /// has kind `*`.
+        is_row: bool,
+    },
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordOrVariant {
+    Record,
+    Variant,
+}
+
+/// A row extension for a `Ty::Record`, `Ty::Variant` or `Ty::Row`.
+///
+/// When available, this will be one of:
+///
+/// - `Ty::Var`: a unification variable.
+/// - `Ty::Con`: a rigid type variable.
+/// - `Ty::Row`: an extension.
+type Extension = Option<Box<Ty>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TyArgs {
@@ -115,6 +125,9 @@ pub struct TyVar {
     /// This is used to compare unification variables for equality.
     id: u32,
 
+    /// Kind of the variable.
+    kind: Kind,
+
     /// Depth of the scope the unification variable was craeted in.
     level: Cell<u32>,
 
@@ -124,6 +137,15 @@ pub struct TyVar {
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
     loc: ast::Loc,
+}
+
+/// Kind of a unification variable.
+///
+/// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Kind {
+    Star,
+    Row,
 }
 
 #[derive(Debug, Default)]
@@ -982,6 +1004,10 @@ impl TyVarRef {
         self.0.level.get()
     }
 
+    pub(super) fn kind(&self) -> Kind {
+        self.0.kind.clone()
+    }
+
     pub(super) fn link(&self) -> Option<Ty> {
         self.0.link.borrow().clone()
     }
@@ -1154,45 +1180,32 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Record { fields, extension } => {
-                write!(f, "(")?;
-                for (i, (name, ty)) in fields.iter().enumerate() {
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => {
+                let (left_delim, right_delim) = match kind {
+                    RecordOrVariant::Record => ('(', ')'),
+                    RecordOrVariant::Variant => ('[', ']'),
+                };
+
+                if *is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "{}", left_delim)?;
+                for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", name, ty)?;
+                    write!(f, "{}: {}", label_id, label_ty)?;
                 }
                 if let Some(ext) = extension {
                     write!(f, " | {}", ext)?;
                 }
-                write!(f, ")")
-            }
-
-            Ty::Variant { cons, extension } => {
-                write!(f, "[")?;
-                for (i, (con_name, fields)) in cons.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "{}", con_name)?;
-                    if !fields.is_empty() {
-                        write!(f, "(")?;
-                        for (i, field_ty) in fields.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "{}", field_ty)?;
-                        }
-                        write!(f, ")")?;
-                    }
-                }
-                if let Some(ext) = extension {
-                    if !cons.is_empty() {
-                        write!(f, ", ")?;
-                    }
-                    write!(f, "..{}", ext)?;
-                }
-                write!(f, "]")
+                write!(f, "{}", right_delim)
             }
 
             Ty::QVar(id) => write!(f, "'{}", id),

@@ -2,98 +2,62 @@ use crate::ast::Id;
 use crate::collections::{Map, ScopeMap};
 use crate::type_checker::ty::*;
 
-/// Returns all of the fields in the record including extensions, with extension variable (if
-/// exists).
-pub(crate) fn collect_record_fields(
+pub(crate) fn collect_rows(
     cons: &ScopeMap<Id, TyCon>,
-    record_ty: &Ty, // used in errors
-    fields: &Map<Id, Ty>,
+    ty: &Ty, // record or variant, used in errors
+    ty_kind: RecordOrVariant,
+    labels: &Map<Id, Ty>,
     mut extension: Option<Box<Ty>>,
 ) -> (Map<Id, Ty>, Option<Ty>) {
-    let mut all_fields: Map<Id, Ty> = fields
+    let mut all_labels: Map<Id, Ty> = labels
         .iter()
         .map(|(id, ty)| (id.clone(), ty.clone()))
         .collect();
 
     while let Some(ext) = extension {
         match *ext {
-            Ty::Record {
-                fields,
+            Ty::Anonymous {
+                labels,
                 extension: next_ext,
+                kind,
+                is_row,
             } => {
-                for (field_id, field_ty) in fields {
-                    if all_fields.insert(field_id, field_ty).is_some() {
-                        panic!("BUG: Duplicate field in record {}", record_ty);
+                assert_eq!(kind, ty_kind);
+                assert!(is_row);
+                for (label_id, label_ty) in labels {
+                    if all_labels.insert(label_id, label_ty).is_some() {
+                        panic!("BUG: Duplicate label in anonymous type {}", ty);
                     }
                 }
                 extension = next_ext;
             }
 
-            Ty::Var(var) => match var.normalize(cons) {
-                Ty::Record {
-                    fields,
-                    extension: next_ext,
-                } => {
-                    for (field_id, field_ty) in fields {
-                        if all_fields.insert(field_id, field_ty).is_some() {
-                            panic!("BUG: Duplicate field in record {}", record_ty);
+            Ty::Var(var) => {
+                assert_eq!(var.kind(), Kind::Row);
+                match var.normalize(cons) {
+                    Ty::Anonymous {
+                        labels,
+                        extension: next_ext,
+                        kind,
+                        is_row,
+                    } => {
+                        assert!(is_row);
+                        assert_eq!(kind, ty_kind);
+                        for (label_id, label_ty) in labels {
+                            if all_labels.insert(label_id, label_ty).is_some() {
+                                panic!("BUG: Duplicate field in anonymous type {}", ty);
+                            }
                         }
+                        extension = next_ext;
                     }
-                    extension = next_ext;
+
+                    other => return (all_labels, Some(other)),
                 }
-
-                other => return (all_fields, Some(other)),
-            },
-
-            other => return (all_fields, Some(other)),
-        }
-    }
-
-    (all_fields, None)
-}
-
-/// Similar to `collect_record_fields`, but collects variant constructors.
-pub(crate) fn collect_variant_cons(
-    cons: &ScopeMap<Id, TyCon>,
-    variant_ty: &Ty, // used in errors
-    var_cons: &Map<Id, Vec<Ty>>,
-    mut extension: Option<Box<Ty>>,
-) -> (Map<Id, Vec<Ty>>, Option<Ty>) {
-    let mut all_cons: Map<Id, Vec<Ty>> = var_cons.clone();
-
-    while let Some(ext) = extension {
-        match *ext {
-            Ty::Variant {
-                cons,
-                extension: next_ext,
-            } => {
-                for (con, fields) in cons {
-                    if all_cons.insert(con, fields).is_some() {
-                        panic!("BUG: Duplicate constructor in variant {}", variant_ty);
-                    }
-                }
-                extension = next_ext;
             }
 
-            Ty::Var(var) => match var.normalize(cons) {
-                Ty::Variant {
-                    cons,
-                    extension: next_ext,
-                } => {
-                    for (con, fields) in cons {
-                        if all_cons.insert(con, fields).is_some() {
-                            panic!("BUG: Duplicate constructor in variant {}", variant_ty);
-                        }
-                    }
-                    extension = next_ext;
-                }
-
-                other => return (all_cons, Some(other)),
-            },
-
-            other => return (all_cons, Some(other)),
+            other => return (all_labels, Some(other)),
         }
     }
 
-    (all_cons, None)
+    (all_labels, None)
 }
