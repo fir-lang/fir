@@ -297,20 +297,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
             TyArgs::Named(tys) => tys.values().for_each(|ty| prune_level(ty, max_level)),
         },
 
-        Ty::Record { fields, extension } => {
-            for field_ty in fields.values() {
-                prune_level(field_ty, max_level);
-            }
-            if let Some(ext) = extension {
-                prune_level(ext, max_level);
-            }
-        }
-
-        Ty::Variant { cons, extension } => {
-            for (_, fields) in cons {
-                for field_ty in fields {
-                    prune_level(field_ty, max_level);
-                }
+        Ty::Anonymous {
+            labels, extension, ..
+        } => {
+            for label_ty in labels.values() {
+                prune_level(label_ty, max_level);
             }
             if let Some(ext) = extension {
                 prune_level(ext, max_level);

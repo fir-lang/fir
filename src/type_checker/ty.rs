@@ -482,57 +482,8 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (
-            Ty::Record {
-                fields: fields1,
-                extension: extension1,
-            },
-            Ty::Record {
-                fields: fields2,
-                extension: extension2,
-            },
-        ) => {
-            let (fields1, extension1) = crate::type_checker::row_utils::collect_record_fields(
-                cons,
-                &ty1_normalized,
-                fields1,
-                extension1.clone(),
-            );
-            let (fields2, extension2) = crate::type_checker::row_utils::collect_record_fields(
-                cons,
-                &ty2_normalized,
-                fields2,
-                extension2.clone(),
-            );
-
-            let keys1: Set<&Id> = fields1.keys().collect();
-            let keys2: Set<&Id> = fields2.keys().collect();
-
-            if keys1 != keys2 {
-                return false;
-            }
-
-            for key in keys1 {
-                if !ty_eq_modulo_alpha(
-                    cons,
-                    extra_qvars,
-                    fields1.get(key).unwrap(),
-                    fields2.get(key).unwrap(),
-                    ty1_qvars,
-                    ty2_qvars,
-                    loc,
-                ) {
-                    return false;
-                }
-            }
-
-            match (extension1, extension2) {
-                (None, None) => true,
-                (Some(ext1), Some(ext2)) => {
-                    ty_eq_modulo_alpha(cons, extra_qvars, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
-                }
-                (None, Some(_)) | (Some(_), None) => false,
-            }
+        (Ty::Anonymous { .. }, Ty::Anonymous { .. }) => {
+            todo!()
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
@@ -594,16 +545,20 @@ fn ty_eq_modulo_alpha(
 
 impl Ty {
     pub(super) fn unit() -> Ty {
-        Ty::Record {
-            fields: Default::default(),
+        Ty::Anonymous {
+            labels: Default::default(),
             extension: None,
+            kind: RecordOrVariant::Record,
+            is_row: false,
         }
     }
 
     pub(super) fn empty_variant() -> Ty {
-        Ty::Variant {
-            cons: Default::default(),
+        Ty::Anonymous {
+            labels: Default::default(),
             extension: None,
+            kind: RecordOrVariant::Variant,
+            is_row: false,
         }
     }
 
@@ -644,25 +599,19 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields, extension } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
                 extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
-            },
-
-            Ty::Variant { cons, extension } => Ty::Variant {
-                cons: cons
-                    .iter()
-                    .map(|(id, fields)| {
-                        (
-                            id.clone(),
-                            fields.iter().map(|field| field.subst(var, ty)).collect(),
-                        )
-                    })
-                    .collect(),
-                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(qvar) => {
@@ -720,32 +669,21 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields, extension } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
                     .collect(),
                 extension: extension
                     .as_ref()
                     .map(|ext| Box::new(ext.subst_self(self_ty))),
-            },
-
-            Ty::Variant { cons, extension } => Ty::Variant {
-                cons: cons
-                    .iter()
-                    .map(|(name, fields)| {
-                        (
-                            name.clone(),
-                            fields
-                                .iter()
-                                .map(|field| field.subst_self(self_ty))
-                                .collect(),
-                        )
-                    })
-                    .collect(),
-                extension: extension
-                    .as_ref()
-                    .map(|ext| Box::new(ext.subst_self(self_ty))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
@@ -789,29 +727,21 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields, extension } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
-                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
+                    .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
                     .collect(),
                 extension: extension
                     .as_ref()
                     .map(|ext| Box::new(ext.subst_qvars(vars))),
-            },
-
-            Ty::Variant { cons, extension } => Ty::Variant {
-                cons: cons
-                    .iter()
-                    .map(|(name, fields)| {
-                        (
-                            name.clone(),
-                            fields.iter().map(|field| field.subst_qvars(vars)).collect(),
-                        )
-                    })
-                    .collect(),
-                extension: extension
-                    .as_ref()
-                    .map(|ext| Box::new(ext.subst_qvars(vars))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(id) => vars
@@ -903,35 +833,25 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields, extension } => {
-                let (fields, extension) = crate::type_checker::row_utils::collect_record_fields(
-                    cons,
-                    self,
-                    fields,
-                    extension.clone(),
-                );
-                Ty::Record {
-                    fields: fields
-                        .iter()
-                        .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
-                        .collect(),
-                    extension: extension.map(Box::new),
-                }
-            }
-
-            Ty::Variant {
-                cons: var_cons,
+            Ty::Anonymous {
+                labels,
                 extension,
+                kind,
+                is_row,
             } => {
-                let (var_cons, extension) = crate::type_checker::row_utils::collect_variant_cons(
+                assert_eq!(*is_row, false);
+                let (labels, extension) = crate::type_checker::row_utils::collect_rows(
                     cons,
                     self,
-                    var_cons,
+                    *kind,
+                    labels,
                     extension.clone(),
                 );
-                Ty::Variant {
-                    cons: var_cons,
+                Ty::Anonymous {
+                    labels,
                     extension: extension.map(Box::new),
+                    kind: *kind,
+                    is_row: false,
                 }
             }
 
@@ -964,8 +884,7 @@ impl Ty {
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
             Ty::Var(_)
-            | Ty::Record { .. }
-            | Ty::Variant { .. }
+            | Ty::Anonymous { .. }
             | Ty::QVar(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)

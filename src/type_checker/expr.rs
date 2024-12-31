@@ -132,19 +132,25 @@ pub(super) fn check_expr(
                         }
                     },
 
-                    Ty::Record { fields, extension } => {
-                        let (fields, _) = crate::type_checker::row_utils::collect_record_fields(
+                    Ty::Anonymous {
+                        labels,
+                        extension,
+                        kind: RecordOrVariant::Record,
+                        ..
+                    } => {
+                        let (labels, _) = crate::type_checker::row_utils::collect_rows(
                             tc_state.tys.tys.cons(),
                             &ty_normalized,
-                            fields,
+                            RecordOrVariant::Record,
+                            labels,
                             extension.clone(),
                         );
-                        match fields.get(&field) {
+                        match labels.get(&field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
                                 loc_display(&object.loc),
-                                fields.keys().collect::<Vec<_>>(),
+                                labels.keys().collect::<Vec<_>>(),
                                 field
                             ),
                         }
@@ -159,7 +165,7 @@ pub(super) fn check_expr(
                     | Ty::QVar(_)
                     | Ty::Fun(_, _)
                     | Ty::FunNamedArgs(_, _)
-                    | Ty::Variant { .. }) => {
+                    | Ty::Anonymous { .. }) => {
                         panic!(
                             "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),

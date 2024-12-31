@@ -1320,8 +1320,7 @@ fn resolve_preds(
             // TODO: Records can implement Debug, Eq, etc.
             Ty::QVar(_)
             | Ty::Var(_)
-            | Ty::Record { .. }
-            | Ty::Variant { .. }
+            | Ty::Anonymous { .. }
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
             | Ty::AssocTySelect { .. } => {
