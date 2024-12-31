@@ -451,7 +451,7 @@ pub struct ConstrExpr {
 #[derive(Debug, Clone)]
 pub struct VariantExpr {
     pub id: Id,
-    pub args: Vec<L<Expr>>,
+    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]

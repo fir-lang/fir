@@ -393,11 +393,15 @@ impl Expr {
                 buffer.push_str(id);
                 if !args.is_empty() {
                     buffer.push('(');
-                    for (i, expr) in args.iter().enumerate() {
-                        if i != 0 {
+                    for (i, arg) in args.iter().enumerate() {
+                        if let Some(name) = &arg.name {
+                            buffer.push_str(name);
+                            buffer.push_str(" = ");
+                        }
+                        arg.node.node.print(buffer, 0);
+                        if i != args.len() - 1 {
                             buffer.push_str(", ");
                         }
-                        expr.node.print(buffer, 0);
                     }
                     buffer.push(')');
                 }

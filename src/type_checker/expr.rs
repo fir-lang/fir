@@ -76,16 +76,45 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let arg_tys: Vec<Ty> = args
-                .iter_mut()
-                .map(|arg| check_expr(tc_state, arg, None, level, loop_depth))
-                .collect();
-            let ty = Ty::Variant {
-                cons: [(id.clone(), arg_tys)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(
-                    tc_state.var_gen.new_var(level, expr.loc.clone()),
-                ))),
+            let mut arg_tys: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(args.len(), Default::default());
+
+            for ast::Named { name, ref mut node } in args.iter_mut() {
+                let name = match name {
+                    Some(name) => name,
+                    None => panic!(
+                        "{}: Variant expression with unnamed args not supported yet",
+                        loc_display(&expr.loc)
+                    ),
+                };
+                let ty = check_expr(tc_state, node, None, level, loop_depth);
+                let old = arg_tys.insert(name.clone(), ty);
+                if old.is_some() {
+                    panic!(
+                        "{}: Variant expression with dupliate fields",
+                        loc_display(&expr.loc)
+                    );
+                }
+            }
+
+            let record_ty = Ty::Anonymous {
+                labels: arg_tys,
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: false,
             };
+
+            let ty = Ty::Anonymous {
+                labels: [(id.clone(), record_ty)].into_iter().collect(),
+                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                    level,
+                    Kind::Row,
+                    expr.loc.clone(),
+                )))),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            };
+
             unify_expected_ty(
                 ty,
                 expected_ty,
@@ -165,7 +194,7 @@ pub(super) fn check_expr(
                     | Ty::QVar(_)
                     | Ty::Fun(_, _)
                     | Ty::FunNamedArgs(_, _)
-                    | Ty::Variant { .. }) => {
+                    | Ty::Anonymous { .. }) => {
                         panic!(
                             "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),
@@ -480,7 +509,10 @@ pub(super) fn check_expr(
                 match part {
                     StringPart::Str(_) => continue,
                     StringPart::Expr(expr) => {
-                        let expr_var = tc_state.var_gen.new_var(level, expr.loc.clone());
+                        let expr_var =
+                            tc_state
+                                .var_gen
+                                .new_var(level, Kind::Star, expr.loc.clone());
                         tc_state.preds.add(Pred {
                             ty_var: expr_var.clone(),
                             trait_: Ty::to_str_id(),
@@ -624,9 +656,11 @@ pub(super) fn check_expr(
             // types of the expr fields when possible.
             let expected_fields = expected_ty.map(|expected_ty| {
                 match expected_ty.normalize(tc_state.tys.tys.cons()) {
-                    Ty::Record {
-                        fields: expected_fields,
+                    Ty::Anonymous {
+                        labels: expected_fields,
                         extension: _,
+                        kind: RecordOrVariant::Record,
+                        is_row: _,
                     } => expected_fields,
                     other => panic!(
                         "{}: Expected {}, found record expression",
@@ -648,9 +682,11 @@ pub(super) fn check_expr(
             }
 
             unify_expected_ty(
-                Ty::Record {
-                    fields: record_fields,
+                Ty::Anonymous {
+                    labels: record_fields,
                     extension: None,
+                    kind: RecordOrVariant::Record,
+                    is_row: false,
                 },
                 expected_ty,
                 tc_state.tys.tys.cons(),

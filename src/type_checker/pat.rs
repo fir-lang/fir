@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::Set;
+use crate::collections::{Map, Set};
 use crate::type_checker::apply::apply;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
@@ -101,9 +101,10 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         }
 
         ast::Pat::Record(fields) => {
-            let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
-            Ty::Record {
-                fields: fields
+            let extension_var =
+                Ty::Var(tc_state.var_gen.new_var(level, Kind::Row, pat.loc.clone()));
+            Ty::Anonymous {
+                labels: fields
                     .iter_mut()
                     .map(|named| {
                         (
@@ -113,26 +114,48 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     })
                     .collect(),
                 extension: Some(Box::new(extension_var)),
+                kind: RecordOrVariant::Record,
+                is_row: false,
             }
         }
 
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            let extension_var = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+            let extension_var =
+                Ty::Var(tc_state.var_gen.new_var(level, Kind::Row, pat.loc.clone()));
 
-            let mut field_tys: Vec<Ty> = Vec::with_capacity(fields.len());
+            let mut arg_tys: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(fields.len(), Default::default());
+
             for ast::Named { name, node } in fields.iter_mut() {
-                if name.is_some() {
+                let name = match name {
+                    Some(name) => name,
+                    None => panic!(
+                        "{}: Variant pattern with unnamed args not supported yet",
+                        loc_display(&pat.loc)
+                    ),
+                };
+                let ty = check_pat(tc_state, node, level);
+                let old = arg_tys.insert(name.clone(), ty);
+                if old.is_some() {
                     panic!(
-                        "{}: Variants with named fields not supported yet",
+                        "{}: Variant pattern with dupliate fields",
                         loc_display(&pat.loc)
                     );
                 }
-                field_tys.push(check_pat(tc_state, node, level));
             }
 
-            Ty::Variant {
-                cons: [(constr.clone(), field_tys)].into_iter().collect(),
+            let record_ty = Ty::Anonymous {
+                labels: arg_tys,
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            };
+
+            Ty::Anonymous {
+                labels: [(constr.clone(), record_ty)].into_iter().collect(),
                 extension: Some(Box::new(extension_var)),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
             }
         }
 
