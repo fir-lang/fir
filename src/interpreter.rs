@@ -375,7 +375,7 @@ impl Pgm {
         }
 
         // Initialize `record_ty_tags`.
-        let record_shapes: Set<RecordShape> = collect_records(&pgm);
+        let (record_shapes, variant_shapes) = collect_records(&pgm);
         let mut record_ty_tags: Map<RecordShape, u64> = Default::default();
 
         for record_shape in record_shapes {
@@ -828,8 +828,6 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_constr(ty_tag))
         }
 
-        ast::Expr::Variant(_) => todo!(),
-
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
@@ -1153,6 +1151,8 @@ fn eval<W: Write>(
             ControlFlow::Val(record)
         }
 
+        ast::Expr::Variant(_) => todo!(),
+
         ast::Expr::Range(_) => {
             panic!("Interpreter only supports range expressions in for loops")
         }
@@ -1365,13 +1365,13 @@ fn try_bind_pat(
             try_bind_field_pats(pgm, heap, fields, field_pats, value)
         }
 
-        ast::Pat::Variant(_) => todo!(),
-
         ast::Pat::Record(fields) => {
             let value_tag = heap[value];
             let value_fields = pgm.get_tag_fields(value_tag);
             try_bind_field_pats(pgm, heap, value_fields, fields, value)
         }
+
+        ast::Pat::Variant(_) => todo!(),
 
         ast::Pat::Str(str) => {
             debug_assert!(heap[value] == pgm.str_ty_tag);
