@@ -13,5 +13,5 @@ fn main() =
 #              ()
 #              (
 #                 Con("R")
-#                 Record { fields: {}, extension: None }
+#                 Anonymous { labels: {}, extension: None, kind: Record, is_row: false }
 #              )
