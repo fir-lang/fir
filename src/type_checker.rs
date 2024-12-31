@@ -17,7 +17,7 @@ use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
-pub use ty::{Ty, TyArgs};
+pub use ty::{RecordOrVariant, Ty, TyArgs};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};

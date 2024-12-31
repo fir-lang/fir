@@ -549,15 +549,6 @@ impl Ty {
         }
     }
 
-    pub(super) fn empty_variant() -> Ty {
-        Ty::Anonymous {
-            labels: Default::default(),
-            extension: None,
-            kind: RecordOrVariant::Variant,
-            is_row: false,
-        }
-    }
-
     pub(super) fn bool() -> Ty {
         Ty::Con(SmolStr::new_static("Bool"))
     }

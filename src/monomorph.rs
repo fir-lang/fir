@@ -41,7 +41,7 @@ fn print@I64@I64(a: I64, b: I64) = ...
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::{Ty, TyArgs};
+use crate::type_checker::{RecordOrVariant, Ty, TyArgs};
 
 use smol_str::SmolStr;
 
@@ -595,7 +595,7 @@ fn mono_expr(
             id: id.clone(),
             args: args
                 .iter()
-                .map(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm))
+                .map(|arg| arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm)))
                 .collect(),
         }),
 
@@ -1245,6 +1245,50 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }
 
+        Ty::Anonymous {
+            labels,
+            extension,
+            kind,
+            is_row,
+        } => {
+            assert!(extension.is_none(), "{:?}", extension);
+            assert_eq!(*is_row, false);
+            match kind {
+                RecordOrVariant::Record => ast::Type::Record {
+                    fields: labels
+                        .iter()
+                        .map(|(label_id, label_ty)| ast::Named {
+                            name: Some(label_id.clone()),
+                            node: ty_to_ast(label_ty, ty_map),
+                        })
+                        .collect(),
+                    extension: None,
+                },
+
+                RecordOrVariant::Variant => {
+                    // TODO FIXME: We can't distinguish a variant with a record field from a variant
+                    // with multiple fields.
+                    ast::Type::Variant {
+                        alts: labels
+                            .iter()
+                            .map(|(con_label, con_fields)| ast::VariantAlt {
+                                con: con_label.clone(),
+                                fields: match ty_to_ast(con_fields, ty_map) {
+                                    ast::Type::Record {
+                                        fields,
+                                        extension: _,
+                                    } => fields,
+                                    _ => panic!(),
+                                },
+                            })
+                            .collect(),
+                        extension: None,
+                    }
+                }
+            }
+        }
+
+        /*
         Ty::Record { fields, extension } => {
             assert!(extension.is_none(), "{:?}", extension);
             ast::Type::Record {
@@ -1278,7 +1322,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
                 extension: None,
             }
         }
-
+        */
         Ty::QVar(_var) => panic!(),
 
         Ty::Fun(_args, _ret) => todo!(),
