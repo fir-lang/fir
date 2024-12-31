@@ -10,8 +10,8 @@ fn main() =
 # expected stderr:
 # tests/RowsFail2.fir:4:5: Unable to unify types
 #              R and
-#              ()
+#              row()
 #              (
 #                 Con("R")
-#                 Anonymous { labels: {}, extension: None, kind: Record, is_row: false }
+#                 Anonymous { labels: {}, extension: None, kind: Record, is_row: true }
 #              )

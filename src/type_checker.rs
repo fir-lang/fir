@@ -17,7 +17,7 @@ use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
-pub use ty::{RecordOrVariant, Ty, TyArgs};
+pub use ty::{Kind, RecordOrVariant, Ty, TyArgs};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};
@@ -1530,7 +1530,7 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
                 ty_var_kinds(&field.node, kinds);
             }
             if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row);
+                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
             }
         }
 
@@ -1541,7 +1541,7 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
                 }
             }
             if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row);
+                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Variant));
             }
         }
 

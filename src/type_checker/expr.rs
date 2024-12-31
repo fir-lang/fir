@@ -108,7 +108,7 @@ pub(super) fn check_expr(
                 labels: [(id.clone(), record_ty)].into_iter().collect(),
                 extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
                     level,
-                    Kind::Row,
+                    Kind::Row(RecordOrVariant::Variant),
                     expr.loc.clone(),
                 )))),
                 kind: RecordOrVariant::Variant,

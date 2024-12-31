@@ -199,13 +199,22 @@ pub(super) fn unify(
                 }
             }
 
+            fn unit(kind: RecordOrVariant) -> Ty {
+                Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind,
+                    is_row: true,
+                }
+            }
+
             match (extension1, extension2) {
                 (None, None) => {}
                 (Some(ext1), None) => {
-                    unify(&ext1, &Ty::unit(), cons, var_gen, level, loc);
+                    unify(&ext1, &unit(*kind1), cons, var_gen, level, loc);
                 }
                 (None, Some(ext2)) => {
-                    unify(&Ty::unit(), &ext2, cons, var_gen, level, loc);
+                    unify(&unit(*kind2), &ext2, cons, var_gen, level, loc);
                 }
                 (Some(ext1), Some(ext2)) => {
                     unify(&ext1, &ext2, cons, var_gen, level, loc);
@@ -249,7 +258,7 @@ fn link_extension(
         })
         .collect();
     // TODO: Not sure about the level.
-    let new_extension_var = var_gen.new_var(level, Kind::Row, loc.clone());
+    let new_extension_var = var_gen.new_var(level, Kind::Row(kind), loc.clone());
     let new_extension_ty = Ty::Anonymous {
         labels: extension_labels,
         extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),

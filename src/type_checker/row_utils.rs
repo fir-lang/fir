@@ -33,7 +33,7 @@ pub(crate) fn collect_rows(
             }
 
             Ty::Var(var) => {
-                assert_eq!(var.kind(), Kind::Row);
+                assert!(matches!(var.kind(), Kind::Row(_)));
                 match var.normalize(cons) {
                     Ty::Anonymous {
                         labels,
@@ -41,7 +41,7 @@ pub(crate) fn collect_rows(
                         kind,
                         is_row,
                     } => {
-                        assert!(is_row);
+                        assert!(is_row, "{:#?}", ty);
                         assert_eq!(kind, ty_kind);
                         for (label_id, label_ty) in labels {
                             if all_labels.insert(label_id, label_ty).is_some() {

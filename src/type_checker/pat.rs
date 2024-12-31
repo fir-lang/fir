@@ -101,8 +101,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         }
 
         ast::Pat::Record(fields) => {
-            let extension_var =
-                Ty::Var(tc_state.var_gen.new_var(level, Kind::Row, pat.loc.clone()));
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(
+                level,
+                Kind::Row(RecordOrVariant::Record),
+                pat.loc.clone(),
+            ));
             Ty::Anonymous {
                 labels: fields
                     .iter_mut()
@@ -120,8 +123,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         }
 
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            let extension_var =
-                Ty::Var(tc_state.var_gen.new_var(level, Kind::Row, pat.loc.clone()));
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(
+                level,
+                Kind::Row(RecordOrVariant::Variant),
+                pat.loc.clone(),
+            ));
 
             let mut arg_tys: Map<Id, Ty> =
                 Map::with_capacity_and_hasher(fields.len(), Default::default());

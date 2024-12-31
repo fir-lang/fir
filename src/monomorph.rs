@@ -41,7 +41,7 @@ fn print@I64@I64(a: I64, b: I64) = ...
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::{RecordOrVariant, Ty, TyArgs};
+use crate::type_checker::{Kind, RecordOrVariant, Ty, TyArgs};
 
 use smol_str::SmolStr;
 
@@ -1202,11 +1202,17 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }),
 
-        Ty::Var(_var) => {
+        Ty::Var(var) => {
             // Ambiguous type, monomorphise as unit.
-            ast::Type::Record {
-                fields: vec![],
-                extension: None,
+            match var.kind() {
+                Kind::Star | Kind::Row(RecordOrVariant::Record) => ast::Type::Record {
+                    fields: vec![],
+                    extension: None,
+                },
+                Kind::Row(RecordOrVariant::Variant) => ast::Type::Variant {
+                    alts: vec![],
+                    extension: None,
+                },
             }
         }
 

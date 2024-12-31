@@ -144,7 +144,7 @@ pub struct TyVar {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Kind {
     Star,
-    Row,
+    Row(RecordOrVariant),
 }
 
 #[derive(Debug, Default)]
@@ -878,9 +878,8 @@ impl Ty {
                 labels,
                 extension,
                 kind,
-                is_row,
+                is_row: _,
             } => {
-                assert!(!(*is_row));
                 let (labels, extension) = crate::type_checker::row_utils::collect_rows(
                     cons,
                     self,
@@ -964,7 +963,7 @@ impl TyVarRef {
         self.0.level.get()
     }
 
-    pub(super) fn kind(&self) -> Kind {
+    pub fn kind(&self) -> Kind {
         self.0.kind.clone()
     }
 
