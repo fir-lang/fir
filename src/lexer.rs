@@ -92,7 +92,9 @@ lexgen::lexer! {
         "!=" = TokenKind::ExclamationEq,
         "/" = TokenKind::Slash,
 
-        $$ascii_uppercase ($$ascii_alphanumeric | '_')* = TokenKind::UpperId,
+        let upper_id = $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
+        '`' $upper_id = TokenKind::BacktickUpperId,
+        $upper_id = TokenKind::UpperId,
         ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
         // Literals

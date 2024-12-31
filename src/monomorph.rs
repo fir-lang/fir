@@ -39,9 +39,9 @@ fn print@I64@I64(a: I64, b: I64) = ...
 */
 
 use crate::ast::{self, Id};
-use crate::collections::Map;
+use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::{Ty, TyArgs};
+use crate::type_checker::{Kind, RecordOrVariant, Ty, TyArgs};
 
 use smol_str::SmolStr;
 
@@ -591,6 +591,14 @@ fn mono_expr(
                 .collect(),
         ),
 
+        ast::Expr::Variant(ast::VariantExpr { id, args }) => ast::Expr::Variant(ast::VariantExpr {
+            id: id.clone(),
+            args: args
+                .iter()
+                .map(|arg| arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm)))
+                .collect(),
+        }),
+
         ast::Expr::Return(expr) => {
             ast::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm))
         }
@@ -653,8 +661,11 @@ fn mono_method(
             assert!(args.is_empty());
             name
         }
-        ast::Type::Record { .. } => panic!(),
-        ast::Type::Fn(_) => panic!(), // syntactically invalid, can't happen
+
+        ast::Type::Record { .. } | ast::Type::Variant { .. } | ast::Type::Fn(_) => {
+            // syntactically invalid, can't happen
+            panic!()
+        }
     };
 
     let mono_ty_args: Vec<ast::Type> = ty_args
@@ -687,6 +698,7 @@ fn mono_method(
             )
         }
         ast::Type::Record { .. } => panic!(),
+        ast::Type::Variant { .. } => panic!(),
         ast::Type::Fn(_) => panic!(),
     }
 }
@@ -782,6 +794,19 @@ fn mono_pat(
                 })
                 .collect(),
         ),
+
+        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+            ast::Pat::Variant(ast::VariantPattern {
+                constr: constr.clone(),
+                fields: fields
+                    .iter()
+                    .map(|ast::Named { name, node }| ast::Named {
+                        name: name.clone(),
+                        node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm),
+                    })
+                    .collect(),
+            })
+        }
     }
 }
 
@@ -1052,12 +1077,82 @@ fn mono_ty(
             })
         }
 
-        ast::Type::Record { fields } => ast::Type::Record {
-            fields: fields
+        ast::Type::Record { fields, extension } => {
+            let mut names: Set<&Id> = Default::default();
+            for field in fields {
+                if let Some(name) = &field.name {
+                    let new = names.insert(name);
+                    if !new {
+                        panic!("Record has duplicate fields: {:?}", fields);
+                    }
+                }
+            }
+
+            let mut fields: Vec<ast::Named<ast::Type>> = fields
                 .iter()
                 .map(|named_ty| named_ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
-                .collect(),
-        },
+                .collect();
+
+            if let Some(extension) = extension {
+                match ty_map.get(extension) {
+                    Some(ast::Type::Record {
+                        fields: extra_fields,
+                        extension,
+                    }) => {
+                        assert!(extension.is_none());
+                        fields.extend(extra_fields.iter().cloned());
+                    }
+                    other => panic!("Record extension is not a record: {:?}", other),
+                }
+            }
+
+            ast::Type::Record {
+                fields,
+                extension: None,
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            let mut cons: Set<&Id> = Default::default();
+            for ast::VariantAlt { con, .. } in alts {
+                let new = cons.insert(con);
+                if !new {
+                    panic!("Variant has duplicate constructors: {:?}", alts);
+                }
+            }
+
+            let mut alts: Vec<ast::VariantAlt> = alts
+                .iter()
+                .map(|ast::VariantAlt { con, fields }| ast::VariantAlt {
+                    con: con.clone(),
+                    fields: fields
+                        .iter()
+                        .map(|ast::Named { name, node }| ast::Named {
+                            name: name.clone(),
+                            node: mono_ty(node, ty_map, poly_pgm, mono_pgm),
+                        })
+                        .collect(),
+                })
+                .collect();
+
+            if let Some(extension) = extension {
+                match ty_map.get(extension) {
+                    Some(ast::Type::Variant {
+                        alts: extra_alts,
+                        extension,
+                    }) => {
+                        assert!(extension.is_none());
+                        alts.extend(extra_alts.iter().cloned());
+                    }
+                    other => panic!("Variant extension is not a variant: {:?}", other),
+                }
+            }
+
+            ast::Type::Variant {
+                alts,
+                extension: None,
+            }
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
             args: args
@@ -1080,7 +1175,7 @@ fn ty_name(ty: &ast::Type) -> &str {
             }
             _ => "Ptr",
         },
-        ast::Type::Record { .. } => "Ptr",
+        ast::Type::Record { .. } | ast::Type::Variant { .. } => "Ptr",
         ast::Type::Fn(_) => "Ptr",
     }
 }
@@ -1107,9 +1202,18 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }),
 
-        Ty::Var(_var) => {
+        Ty::Var(var) => {
             // Ambiguous type, monomorphise as unit.
-            ast::Type::Record { fields: vec![] }
+            match var.kind() {
+                Kind::Star | Kind::Row(RecordOrVariant::Record) => ast::Type::Record {
+                    fields: vec![],
+                    extension: None,
+                },
+                Kind::Row(RecordOrVariant::Variant) => ast::Type::Variant {
+                    alts: vec![],
+                    extension: None,
+                },
+            }
         }
 
         Ty::App(con, args) => {
@@ -1147,8 +1251,84 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             })
         }
 
-        Ty::Record { fields: _ } => todo!(),
+        Ty::Anonymous {
+            labels,
+            extension: _,
+            kind,
+            is_row: _,
+        } => {
+            // TODO: Extension should be `None` or ambiguous.
+            // assert!(extension.is_none(), "{:?}", extension);
+            match kind {
+                RecordOrVariant::Record => ast::Type::Record {
+                    fields: labels
+                        .iter()
+                        .map(|(label_id, label_ty)| ast::Named {
+                            name: Some(label_id.clone()),
+                            node: ty_to_ast(label_ty, ty_map),
+                        })
+                        .collect(),
+                    extension: None,
+                },
 
+                RecordOrVariant::Variant => {
+                    // TODO FIXME: We can't distinguish a variant with a record field from a variant
+                    // with multiple fields.
+                    ast::Type::Variant {
+                        alts: labels
+                            .iter()
+                            .map(|(con_label, con_fields)| ast::VariantAlt {
+                                con: con_label.clone(),
+                                fields: match ty_to_ast(con_fields, ty_map) {
+                                    ast::Type::Record {
+                                        fields,
+                                        extension: _,
+                                    } => fields,
+                                    _ => panic!(),
+                                },
+                            })
+                            .collect(),
+                        extension: None,
+                    }
+                }
+            }
+        }
+
+        /*
+        Ty::Record { fields, extension } => {
+            assert!(extension.is_none(), "{:?}", extension);
+            ast::Type::Record {
+                fields: fields
+                    .iter()
+                    .map(|(field_id, field_ty)| ast::Named {
+                        name: Some(field_id.clone()),
+                        node: ty_to_ast(field_ty, ty_map),
+                    })
+                    .collect(),
+                extension: None,
+            }
+        }
+
+        Ty::Variant { cons, extension } => {
+            assert!(extension.is_none(), "{:?}", extension);
+            ast::Type::Variant {
+                alts: cons
+                    .iter()
+                    .map(|(con, args)| ast::VariantAlt {
+                        con: con.clone(),
+                        fields: args
+                            .iter()
+                            .map(|arg| ast::Named {
+                                name: None,
+                                node: ty_to_ast(arg, ty_map),
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+                extension: None,
+            }
+        }
+        */
         Ty::QVar(_var) => panic!(),
 
         Ty::Fun(_args, _ret) => todo!(),
@@ -1166,6 +1346,7 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
             Ty::Con(name.clone())
         }
         ast::Type::Record { .. } => todo!(),
+        ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
     }
 }

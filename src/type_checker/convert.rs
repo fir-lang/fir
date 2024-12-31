@@ -93,17 +93,84 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             panic!("{}: Unknown type {}", loc_display(loc), name);
         }
 
-        ast::Type::Record { fields } => Ty::Record {
-            fields: fields
-                .iter()
-                .map(|named_ty| {
-                    (
-                        named_ty.name.as_ref().unwrap().clone(),
-                        convert_ast_ty(tys, &named_ty.node, loc),
+        ast::Type::Record { fields, extension } => {
+            let mut ty_fields: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(fields.len(), Default::default());
+
+            for ast::Named { name, node } in fields {
+                let name = name.as_ref().unwrap_or_else(|| {
+                    panic!(
+                        "{}: Records with unnamed fields not supported yet",
+                        loc_display(loc)
                     )
-                })
-                .collect(),
-        },
+                });
+                let ty = convert_ast_ty(tys, node, loc);
+                let old = ty_fields.insert(name.clone(), ty);
+                if old.is_some() {
+                    panic!(
+                        "{}: Field {} defined multiple times in record",
+                        loc_display(loc),
+                        name
+                    );
+                }
+            }
+
+            Ty::Anonymous {
+                labels: ty_fields,
+                extension: extension.as_ref().map(|var| match tys.get_var(var) {
+                    Some(ty) => Box::new(ty.clone()),
+                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
+                }),
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            let mut ty_alts: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(alts.len(), Default::default());
+
+            for ast::VariantAlt { con, fields } in alts {
+                let mut record_labels: Map<Id, Ty> =
+                    Map::with_capacity_and_hasher(fields.len(), Default::default());
+
+                for ast::Named { name, node } in fields {
+                    let name = name.as_ref().unwrap_or_else(|| {
+                        panic!(
+                            "{}: Variants with unnamed fields not supported yet",
+                            loc_display(loc)
+                        )
+                    });
+                    let ty = convert_ast_ty(tys, node, loc);
+                    record_labels.insert(name.clone(), ty);
+                }
+                let record_ty = Ty::Anonymous {
+                    labels: record_labels,
+                    extension: None,
+                    kind: RecordOrVariant::Record,
+                    is_row: false,
+                };
+
+                let old = ty_alts.insert(con.clone(), record_ty);
+                if old.is_some() {
+                    panic!(
+                        "{}: Constructor {} defined multiple times in variant",
+                        loc_display(loc),
+                        con
+                    );
+                }
+            }
+
+            Ty::Anonymous {
+                labels: ty_alts,
+                extension: extension.as_ref().map(|var| match tys.get_var(var) {
+                    Some(ty) => Box::new(ty.clone()),
+                    None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
+                }),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            }
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun(
             args.iter()
@@ -150,11 +217,11 @@ pub(super) enum TyVarConversion {
 pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
     context_ast: &ast::Context,
+    var_kinds: &Map<Id, Kind>,
     conversion: TyVarConversion,
     loc: &ast::Loc,
-) -> Vec<(Id, Map<Id, Map<Id, Ty>>)> {
-    let mut context_converted: Vec<(Id, Map<Id, Map<Id, Ty>>)> =
-        Vec::with_capacity(context_ast.len());
+) -> Vec<(Id, QVar)> {
+    let mut context_converted: Vec<(Id, QVar)> = Vec::with_capacity(context_ast.len());
 
     // Bind type parameters.
     for ast::L {
@@ -196,7 +263,10 @@ pub(super) fn convert_and_bind_context(
             }
         }
 
-        if context_converted.iter().any(|(var, _)| var == &ty_var.node) {
+        if context_converted
+            .iter()
+            .any(|(qvar, _)| *qvar == ty_var.node)
+        {
             panic!(
                 "{}: Type variable {} is listed multiple times",
                 loc_display(loc),
@@ -204,7 +274,17 @@ pub(super) fn convert_and_bind_context(
             );
         }
 
-        context_converted.push((ty_var.node.clone(), trait_map));
+        // If a variable isn't in the kind map it means it's ambiguous (not used in the type), which
+        // we default as `*`.
+        let kind = var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star);
+
+        context_converted.push((
+            ty_var.node.clone(),
+            QVar {
+                kind,
+                bounds: trait_map,
+            },
+        ));
     }
 
     context_converted

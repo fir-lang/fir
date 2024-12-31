@@ -204,7 +204,7 @@ impl Type {
                 }
             }
 
-            Type::Record { fields } => {
+            Type::Record { fields, extension } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if let Some(name) = &field.name {
@@ -216,7 +216,44 @@ impl Type {
                         buffer.push_str(", ");
                     }
                 }
+                if let Some(extension) = extension {
+                    buffer.push('|');
+                    buffer.push_str(extension);
+                }
                 buffer.push(')');
+            }
+
+            Type::Variant { alts, extension } => {
+                buffer.push('[');
+                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push('`');
+                    buffer.push_str(con);
+                    if !fields.is_empty() {
+                        buffer.push('(');
+                        for (i, Named { name, node }) in fields.iter().enumerate() {
+                            if i != 0 {
+                                buffer.push_str(", ");
+                            }
+                            if let Some(name) = name {
+                                buffer.push_str(name);
+                                buffer.push_str(": ");
+                            }
+                            node.print(buffer);
+                        }
+                        buffer.push(')');
+                    }
+                }
+                if let Some(ext) = extension {
+                    if !alts.is_empty() {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push_str("..");
+                    buffer.push_str(ext);
+                }
+                buffer.push(']');
             }
 
             Type::Fn(FnType { args, ret }) => {
@@ -349,6 +386,25 @@ impl Expr {
             Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
+            }
+
+            Expr::Variant(VariantExpr { id, args }) => {
+                buffer.push('`');
+                buffer.push_str(id);
+                if !args.is_empty() {
+                    buffer.push('(');
+                    for (i, arg) in args.iter().enumerate() {
+                        if let Some(name) = &arg.name {
+                            buffer.push_str(name);
+                            buffer.push_str(" = ");
+                        }
+                        arg.node.node.print(buffer, 0);
+                        if i != args.len() - 1 {
+                            buffer.push_str(", ");
+                        }
+                    }
+                    buffer.push(')');
+                }
             }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
@@ -642,6 +698,24 @@ impl Pat {
                     buffer.push(']');
                 }
 
+                if !fields.is_empty() {
+                    buffer.push('(');
+                    for (i, field) in fields.iter().enumerate() {
+                        if let Some(name) = &field.name {
+                            buffer.push_str(name);
+                            buffer.push_str(" = ");
+                        }
+                        field.node.node.print(buffer);
+                        if i != fields.len() - 1 {
+                            buffer.push_str(", ");
+                        }
+                    }
+                    buffer.push(')');
+                }
+            }
+
+            Pat::Variant(VariantPattern { constr, fields }) => {
+                buffer.push_str(constr);
                 if !fields.is_empty() {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {

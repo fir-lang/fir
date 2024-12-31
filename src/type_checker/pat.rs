@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::Set;
+use crate::collections::{Map, Set};
 use crate::type_checker::apply::apply;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
@@ -9,12 +9,12 @@ use crate::type_checker::{loc_display, TcFunState};
 pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
     match &mut pat.node {
         ast::Pat::Var(var) => {
-            let ty = Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone()));
+            let ty = Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
             tc_state.env.insert(var.clone(), ty.clone());
             ty
         }
 
-        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, pat.loc.clone())),
+        ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
@@ -90,20 +90,80 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply(&con_ty, &pat_field_tys, tc_state.tys.tys.cons(), &pat.loc)
+            apply(
+                &con_ty,
+                &pat_field_tys,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            )
         }
 
-        ast::Pat::Record(fields) => Ty::Record {
-            fields: fields
-                .iter_mut()
-                .map(|named| {
-                    (
-                        named.name.as_ref().unwrap().clone(),
-                        check_pat(tc_state, &mut named.node, level),
-                    )
-                })
-                .collect(),
-        },
+        ast::Pat::Record(fields) => {
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(
+                level,
+                Kind::Row(RecordOrVariant::Record),
+                pat.loc.clone(),
+            ));
+            Ty::Anonymous {
+                labels: fields
+                    .iter_mut()
+                    .map(|named| {
+                        (
+                            named.name.as_ref().unwrap().clone(),
+                            check_pat(tc_state, &mut named.node, level),
+                        )
+                    })
+                    .collect(),
+                extension: Some(Box::new(extension_var)),
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            }
+        }
+
+        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+            let extension_var = Ty::Var(tc_state.var_gen.new_var(
+                level,
+                Kind::Row(RecordOrVariant::Variant),
+                pat.loc.clone(),
+            ));
+
+            let mut arg_tys: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(fields.len(), Default::default());
+
+            for ast::Named { name, node } in fields.iter_mut() {
+                let name = match name {
+                    Some(name) => name,
+                    None => panic!(
+                        "{}: Variant pattern with unnamed args not supported yet",
+                        loc_display(&pat.loc)
+                    ),
+                };
+                let ty = check_pat(tc_state, node, level);
+                let old = arg_tys.insert(name.clone(), ty);
+                if old.is_some() {
+                    panic!(
+                        "{}: Variant pattern with dupliate fields",
+                        loc_display(&pat.loc)
+                    );
+                }
+            }
+
+            let record_ty = Ty::Anonymous {
+                labels: arg_tys,
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: false,
+            };
+
+            Ty::Anonymous {
+                labels: [(constr.clone(), record_ty)].into_iter().collect(),
+                extension: Some(Box::new(extension_var)),
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            }
+        }
 
         ast::Pat::Str(_) => Ty::str(),
 
@@ -119,7 +179,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             let pat2_ty = check_pat(tc_state, pat2, level);
             // TODO: Check that the patterns bind the same variables of same types.
             // TODO: Any other checks here?
-            unify(&pat1_ty, &pat2_ty, tc_state.tys.tys.cons(), &pat.loc);
+            unify(
+                &pat1_ty,
+                &pat2_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
             pat1_ty
         }
     }

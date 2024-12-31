@@ -49,7 +49,14 @@ fn check_stmt(
                     loc_display(&stmt.loc)
                 );
             }
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
@@ -69,9 +76,23 @@ fn check_stmt(
 
             let pat_ty = check_pat(tc_state, lhs, level);
 
-            unify(&pat_ty, &rhs_ty, tc_state.tys.tys.cons(), &lhs.loc);
+            unify(
+                &pat_ty,
+                &rhs_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &lhs.loc,
+            );
 
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
@@ -128,8 +149,9 @@ fn check_stmt(
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
                     let object_ty = check_expr(tc_state, object, None, level, loop_depth);
 
-                    let lhs_ty: Ty = match object_ty.normalize(tc_state.tys.tys.cons()) {
-                        Ty::Con(con) => select_field(&con, &[], field, &lhs.loc, tc_state.tys)
+                    let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
+                    let lhs_ty: Ty = match &lhs_ty_normalized {
+                        Ty::Con(con) => select_field(con, &[], field, &lhs.loc, tc_state.tys)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
@@ -141,7 +163,7 @@ fn check_stmt(
 
                         Ty::App(con, args) => match args {
                             TyArgs::Positional(args) => {
-                                select_field(&con, &args, field, &lhs.loc, tc_state.tys)
+                                select_field(con, args, field, &lhs.loc, tc_state.tys)
                                     .unwrap_or_else(|| {
                                         panic!(
                                             "{}: Type {} does not have field {}",
@@ -154,15 +176,30 @@ fn check_stmt(
                             TyArgs::Named(_) => panic!(),
                         },
 
-                        Ty::Record { fields } => match fields.get(field) {
-                            Some(field_ty) => field_ty.clone(),
-                            None => panic!(
-                                "{}: Record with fields {:?} does not have field {}",
-                                loc_display(&object.loc),
-                                fields.keys().collect::<Vec<_>>(),
-                                field
-                            ),
-                        },
+                        Ty::Anonymous {
+                            labels,
+                            extension,
+                            kind: RecordOrVariant::Record,
+                            is_row,
+                        } => {
+                            assert!(!(*is_row));
+                            let (fields, _) = crate::type_checker::row_utils::collect_rows(
+                                tc_state.tys.tys.cons(),
+                                &lhs_ty_normalized,
+                                RecordOrVariant::Record,
+                                labels,
+                                extension.clone(),
+                            );
+                            match fields.get(field) {
+                                Some(field_ty) => field_ty.clone(),
+                                None => panic!(
+                                    "{}: Record with fields {:?} does not have field {}",
+                                    loc_display(&object.loc),
+                                    fields.keys().collect::<Vec<_>>(),
+                                    field
+                                ),
+                            }
+                        }
 
                         _ => panic!(),
                     };
@@ -207,7 +244,14 @@ fn check_stmt(
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
             }
 
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_depth),
@@ -227,12 +271,18 @@ fn check_stmt(
 
             // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
             // with fresh type `A`.
-            let iterator_ty = tc_state.var_gen.new_var(level, expr.loc.clone());
+            let iterator_ty = tc_state
+                .var_gen
+                .new_var(level, Kind::Star, expr.loc.clone());
 
             // TODO: loc should be the loc of `var`, which we don't have.
-            let item_ty = ty
-                .clone()
-                .unwrap_or_else(|| Ty::Var(tc_state.var_gen.new_var(level, expr.loc.clone())));
+            let item_ty = ty.clone().unwrap_or_else(|| {
+                Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, expr.loc.clone()),
+                )
+            });
 
             tc_state.preds.add(Pred {
                 ty_var: iterator_ty.clone(),
@@ -255,13 +305,27 @@ fn check_stmt(
             tc_state.env.insert(var.clone(), item_ty);
             check_stmts(tc_state, body, None, level, loop_depth + 1);
             tc_state.env.exit();
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
 
         ast::Stmt::While(ast::WhileStmt { cond, body }) => {
             check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_depth);
             check_stmts(tc_state, body, None, level, loop_depth + 1);
-            unify_expected_ty(Ty::unit(), expected_ty, tc_state.tys.tys.cons(), &stmt.loc)
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
         }
     }
 }

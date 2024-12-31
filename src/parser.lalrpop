@@ -18,6 +18,7 @@ extern {
 
     enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
+        BacktickUpperId => Token { kind: TokenKind::BacktickUpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
@@ -199,26 +200,35 @@ LType: L<Type> = {
     <l:@L> <ty:Type> <r:@R> => L::new(module, l, r, ty),
 }
 
-LTypeNoFn: L<Type> = {
-    <l:@L> <ty:TypeNoFn> <r:@R> => L::new(module, l, r, ty),
+LTypeNamed: L<Type> = {
+    <l:@L> <ty:TypeNamed> <r:@R> => L::new(module, l, r, ty),
 }
 
 Type: Type = {
-    <ty:TypeNoFn> => ty,
+    <ty:TypeNamed> => ty,
 
     "Fn" "(" <args:Sep<LType, ",">> ")" <ret:(":" <LType>)?> =>
         Type::Fn(FnType { args, ret: ret.map(|t| t.map(|t| Box::new(t))) }),
+
+    "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension },
+
+    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, },
 }
 
-TypeNoFn: Type = {
+TypeNamed: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
     <name:UpperId> "[" <args:Sep<TypeArg, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
+}
 
-    "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        Type::Record { fields },
+RowExtension: Option<Id> = {
+    => None,
+
+    ".." <id:UpperId> => Some(id.smol_str()),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {
@@ -234,6 +244,13 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
 RecordTypeField: Named<Type> = {
     <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
     <ty:Type> => Named { name: None, node: ty },
+}
+
+VariantAlt: VariantAlt = {
+    <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
+        VariantAlt { con: name.smol_str(), fields },
+    <name:UpperId> =>
+        VariantAlt { con: name.smol_str(), fields: vec![] },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -606,6 +623,16 @@ InlineExpr: Expr = {
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
+    <id:BacktickUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
+        Expr::Variant(VariantExpr {
+            id: id.text.as_str()[1..].into(),
+            args: match args {
+                Some(args) => args.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect(),
+                None => vec![],
+            },
+        }),
+
+    #[precedence(level = "4")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "*" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -622,7 +649,7 @@ InlineExpr: Expr = {
             op: BinOp::Divide,
         }),
 
-    #[precedence(level = "4")]
+    #[precedence(level = "5")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "+" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -638,7 +665,7 @@ InlineExpr: Expr = {
             op: BinOp::Subtract,
         }),
 
-    #[precedence(level = "5")]
+    #[precedence(level = "6")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "<<" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -654,7 +681,7 @@ InlineExpr: Expr = {
             op: BinOp::RightShift,
         }),
 
-    #[precedence(level = "6")]
+    #[precedence(level = "7")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -663,7 +690,7 @@ InlineExpr: Expr = {
             op: BinOp::BitAnd,
         }),
 
-    #[precedence(level = "7")]
+    #[precedence(level = "8")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "|" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -672,7 +699,7 @@ InlineExpr: Expr = {
             op: BinOp::BitOr,
         }),
 
-    #[precedence(level = "8")]
+    #[precedence(level = "9")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "==" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -716,7 +743,7 @@ InlineExpr: Expr = {
             op: BinOp::GtEq,
         }),
 
-    #[precedence(level = "9")]
+    #[precedence(level = "10")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -725,7 +752,7 @@ InlineExpr: Expr = {
             op: BinOp::And,
         }),
 
-    #[precedence(level = "10")]
+    #[precedence(level = "11")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
@@ -734,7 +761,7 @@ InlineExpr: Expr = {
             op: BinOp::Or,
         }),
 
-    #[precedence(level = "11")]
+    #[precedence(level = "12")]
     #[assoc(side = "left")]
     <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
         Expr::Range(RangeExpr {
@@ -750,7 +777,7 @@ InlineExpr: Expr = {
             inclusive: true,
         }),
 
-    #[precedence(level = "12")]
+    #[precedence(level = "13")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 }
@@ -793,6 +820,8 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
+    <var:VariantPattern> => Pat::Variant(var),
+
     "(" <fields:Sep<PatternField, ",">> ")" =>
         Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect()),
 
@@ -831,6 +860,20 @@ ConstrPattern: ConstrPattern = {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ty_args: vec![],
+        },
+}
+
+VariantPattern: VariantPattern = {
+    <constr:BacktickUpperId> =>
+        VariantPattern {
+            constr: constr.text.as_str()[1..].into(),
+            fields: vec![],
+        },
+
+    <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
+        VariantPattern {
+            constr: constr.text.as_str()[1..].into(),
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
         },
 }
 
@@ -884,7 +927,7 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNoFn> ":"
+    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNamed> ":"
             NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,

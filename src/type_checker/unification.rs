@@ -1,9 +1,17 @@
 use crate::ast::{self, Id};
-use crate::collections::{ScopeMap, Set};
+use crate::collections::{Map, ScopeMap, Set};
 use crate::type_checker::loc_display;
+use crate::type_checker::row_utils::*;
 use crate::type_checker::ty::*;
 
-pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::Loc) {
+pub(super) fn unify(
+    ty1: &Ty,
+    ty2: &Ty,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &mut TyVarGen,
+    level: u32,
+    loc: &ast::Loc,
+) {
     let ty1 = ty1.normalize(cons);
     if ty1.is_void() {
         return;
@@ -42,7 +50,7 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                         panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
                     }
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(arg1, arg2, cons, loc);
+                        unify(arg1, arg2, cons, var_gen, level, loc);
                     }
                 }
                 (TyArgs::Named(args1), TyArgs::Named(args2)) => {
@@ -53,7 +61,14 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
                     }
 
                     for key in keys1 {
-                        unify(args1.get(key).unwrap(), args2.get(key).unwrap(), cons, loc);
+                        unify(
+                            args1.get(key).unwrap(),
+                            args2.get(key).unwrap(),
+                            cons,
+                            var_gen,
+                            level,
+                            loc,
+                        );
                     }
                 }
                 _ => {
@@ -74,10 +89,10 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
             }
 
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(arg1, arg2, cons, loc);
+                unify(arg1, arg2, cons, var_gen, level, loc);
             }
 
-            unify(ret1, ret2, cons, loc);
+            unify(ret1, ret2, cons, var_gen, level, loc);
         }
 
         (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
@@ -109,40 +124,114 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
 
         (ty1, Ty::Var(var)) => link_var(var, ty1),
 
-        (Ty::Record { fields: fields1 }, Ty::Record { fields: fields2 }) => {
-            let keys1: Set<&Id> = fields1.keys().collect();
-            let keys2: Set<&Id> = fields2.keys().collect();
+        (
+            Ty::Anonymous {
+                labels: labels1,
+                extension: extension1,
+                kind: kind1,
+                is_row: is_row_1,
+            },
+            Ty::Anonymous {
+                labels: labels2,
+                extension: extension2,
+                kind: kind2,
+                is_row: is_row_2,
+            },
+        ) => {
+            // TODO: Are these type errors or bugs?
+            assert_eq!(kind1, kind2);
+            assert_eq!(is_row_1, is_row_2);
 
+            let (labels1, mut extension1) =
+                collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
+            let (labels2, mut extension2) =
+                collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
+
+            let keys1: Set<&Id> = labels1.keys().collect();
+            let keys2: Set<&Id> = labels2.keys().collect();
+
+            // Extra labels in one type will be added to the extension of the other.
             let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
             let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
 
+            // Unify common labels.
+            for key in keys1.intersection(&keys2) {
+                let ty1 = labels1.get(*key).unwrap();
+                let ty2 = labels2.get(*key).unwrap();
+                unify(ty1, ty2, cons, var_gen, level, loc);
+            }
+
+            let (kind_str, label_str) = match kind1 {
+                RecordOrVariant::Record => ("record", "field"),
+                RecordOrVariant::Variant => ("variant", "constructor"),
+            };
+
             if !extras1.is_empty() {
-                panic!(
-                    "{}: Unable to unify records: extra keys: {:?}",
-                    loc_display(loc),
-                    extras1
-                );
+                match &extension2 {
+                    Some(Ty::Var(var)) => {
+                        // TODO: Not sure about level
+                        extension2 = Some(Ty::Var(link_extension(
+                            *kind2, &extras1, &labels1, var, var_gen, level, loc,
+                        )));
+                    }
+                    _ => {
+                        panic!(
+                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
+                            loc_display(loc),
+                            kind_str,
+                            label_str,
+                            keys1,
+                            kind_str,
+                            label_str,
+                            keys2
+                        );
+                    }
+                }
             }
 
             if !extras2.is_empty() {
-                panic!(
-                    "{}: Unable to unify records: extra keys: {:?}",
-                    loc_display(loc),
-                    extras2
-                );
+                match &extension1 {
+                    Some(Ty::Var(var)) => {
+                        // TODO: Not sure about level
+                        extension1 = Some(Ty::Var(link_extension(
+                            *kind1, &extras2, &labels2, var, var_gen, level, loc,
+                        )));
+                    }
+                    _ => {
+                        panic!(
+                            "{}: Unable to unify {} with {}s {:?} with {} with {}s {:?}",
+                            loc_display(loc),
+                            kind_str,
+                            label_str,
+                            keys1,
+                            kind_str,
+                            label_str,
+                            keys2
+                        );
+                    }
+                }
             }
 
-            if keys1 != keys2 {
-                panic!(
-                    "{}: Unable to unify records: keys don't match",
-                    loc_display(loc)
-                );
+            fn unit(kind: RecordOrVariant) -> Ty {
+                Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind,
+                    is_row: true,
+                }
             }
 
-            for key in keys1 {
-                let ty1 = fields1.get(key).unwrap();
-                let ty2 = fields2.get(key).unwrap();
-                unify(ty1, ty2, cons, loc);
+            match (extension1, extension2) {
+                (None, None) => {}
+                (Some(ext1), None) => {
+                    unify(&ext1, &unit(*kind1), cons, var_gen, level, loc);
+                }
+                (None, Some(ext2)) => {
+                    unify(&unit(*kind2), &ext2, cons, var_gen, level, loc);
+                }
+                (Some(ext1), Some(ext2)) => {
+                    unify(&ext1, &ext2, cons, var_gen, level, loc);
+                }
             }
         }
 
@@ -163,16 +252,48 @@ pub(super) fn unify(ty1: &Ty, ty2: &Ty, cons: &ScopeMap<Id, TyCon>, loc: &ast::L
     }
 }
 
+fn link_extension(
+    kind: RecordOrVariant,
+    extra_labels: &Set<&&Id>,
+    label_values: &Map<Id, Ty>,
+    var: &TyVarRef,
+    var_gen: &mut TyVarGen,
+    level: u32,
+    loc: &ast::Loc,
+) -> TyVarRef {
+    let extension_labels: Map<Id, Ty> = extra_labels
+        .iter()
+        .map(|extra_field| {
+            (
+                (**extra_field).clone(),
+                label_values.get(**extra_field).unwrap().clone(),
+            )
+        })
+        .collect();
+    // TODO: Not sure about the level.
+    let new_extension_var = var_gen.new_var(level, Kind::Row(kind), loc.clone());
+    let new_extension_ty = Ty::Anonymous {
+        labels: extension_labels,
+        extension: Some(Box::new(Ty::Var(new_extension_var.clone()))),
+        kind,
+        is_row: true,
+    };
+    var.set_link(new_extension_ty);
+    new_extension_var
+}
+
 /// When we have an expected type during type inference (i.e. we're in 'checking' mode), this
 /// unifies the expected type with the inferred type, and returns one of the types.
 pub(super) fn unify_expected_ty(
     ty: Ty,
     expected_ty: Option<&Ty>,
     cons: &ScopeMap<Id, TyCon>,
+    var_gen: &mut TyVarGen,
+    level: u32,
     loc: &ast::Loc,
 ) -> Ty {
     if let Some(expected_ty) = expected_ty {
-        unify(&ty, expected_ty, cons, loc);
+        unify(&ty, expected_ty, cons, var_gen, level, loc);
     }
     ty
 }
@@ -198,9 +319,14 @@ fn prune_level(ty: &Ty, max_level: u32) {
             TyArgs::Named(tys) => tys.values().for_each(|ty| prune_level(ty, max_level)),
         },
 
-        Ty::Record { fields } => {
-            for field_ty in fields.values() {
-                prune_level(field_ty, max_level);
+        Ty::Anonymous {
+            labels, extension, ..
+        } => {
+            for label_ty in labels.values() {
+                prune_level(label_ty, max_level);
+            }
+            if let Some(ext) = extension {
+                prune_level(ext, max_level);
             }
         }
 

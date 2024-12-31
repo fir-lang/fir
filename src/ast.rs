@@ -157,11 +157,25 @@ pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
 
-    /// An anonymous record type, e.g. `(x: I32, y: I32)`.
-    Record { fields: Vec<Named<Type>> },
+    /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str|x)`.
+    Record {
+        fields: Vec<Named<Type>>,
+        extension: Option<Id>,
+    },
+
+    Variant {
+        alts: Vec<VariantAlt>,
+        extension: Option<Id>,
+    },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantAlt {
+    pub con: Id,
+    pub fields: Vec<Named<Type>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
@@ -278,6 +292,9 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
+    /// Matches a variant.
+    Variant(VariantPattern),
+
     Record(Vec<Named<L<Pat>>>),
 
     /// Underscore, aka. wildcard.
@@ -309,6 +326,12 @@ pub struct ConstrPattern {
 pub struct Constructor {
     pub type_: Id,
     pub constr: Option<Id>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantPattern {
+    pub constr: Id,
+    pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -355,6 +378,12 @@ pub enum Expr {
 
     /// A constructor: `Vec`, `Bool`, `I32`.
     Constr(ConstrExpr),
+
+    /// A variant application: "`A()", "`ParseError(...)".
+    ///
+    /// Because "`A" is type checked differently from "`A(1)", we parse variant applications as
+    /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
+    Variant(VariantExpr),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
@@ -417,6 +446,12 @@ pub struct ConstrExpr {
 
     /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct VariantExpr {
+    pub id: Id,
+    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -623,6 +658,7 @@ pub struct AssocTyDecl {
 }
 
 impl Type {
+    /// Substitute star-kinded `ty` for `var` in `self`.
     pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
         match ty {
             Type::Named(NamedType { name, args }) => {
@@ -651,7 +687,7 @@ impl Type {
                 }
             }
 
-            Type::Record { fields } => Type::Record {
+            Type::Record { fields, extension } => Type::Record {
                 fields: fields
                     .iter()
                     .map(|Named { name, node }| Named {
@@ -659,7 +695,11 @@ impl Type {
                         node: node.subst_var(var, ty),
                     })
                     .collect(),
+                // NB. This does not substitute row types.
+                extension: extension.clone(),
             },
+
+            Type::Variant { .. } => todo!(),
 
             Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
                 args: args

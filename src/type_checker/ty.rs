@@ -12,24 +12,8 @@ use smol_str::SmolStr;
 /// A type scheme.
 #[derive(Debug, Clone)]
 pub struct Scheme {
-    /// Generalized variables with predicates.
-    ///
-    /// `Vec` instead of `Map` as type arguments in explicit type applications are ordered. A type
-    /// variable cannot appear multiple times in the `Vec`.
-    ///
-    /// For now, all quantified variables have kind `*`.
-    ///
-    /// The bounds can refer to the associated types, e.g. `[A, I: Iterator[Item = A]]`.
-    ///
-    /// In the example `[A, I: Iterator[Item = A]]`, this field will be:
-    ///
-    /// ```ignore
-    /// [
-    ///     (A, {}),
-    ///     (I, {Iterator => {Item => A}})
-    /// ]
-    /// ```
-    pub(super) quantified_vars: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
+    /// Generalized variables with bounds.
+    pub(super) quantified_vars: Vec<(Id, QVar)>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -38,6 +22,21 @@ pub struct Scheme {
     /// Source code location of the variable with this type scheme. This is used in error messages
     /// and for debugging.
     pub(super) loc: ast::Loc,
+}
+
+/// Kind and bounds of a quantified type variable.
+#[derive(Debug, Clone)]
+pub struct QVar {
+    pub kind: Kind,
+
+    /// Bounds of the variable. E.g. in `I: ToStr + Iterator[Item = A]`:
+    /// ```ignore
+    /// {
+    ///     (ToStr => {}),
+    ///     (Iterator => {Item = A}),
+    /// }
+    /// ```
+    pub bounds: Map<Id, Map<Id, Ty>>,
 }
 
 /// A type checking type.
@@ -56,9 +55,6 @@ pub enum Ty {
     /// Invariant: the vector is not empty.
     App(Id, TyArgs),
 
-    /// A record type, e.g. `(x: U32, y: U32)`.
-    Record { fields: Map<Id, Ty> },
-
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
@@ -72,7 +68,36 @@ pub enum Ty {
 
     /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
     AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
+
+    /// An anonymous record or variant type or row type. E.g. `(a: Str, ..R)`, `[Err1(Str), ..R]`.
+    Anonymous {
+        labels: Map<Id, Ty>,
+
+        /// Row extension. See `Extension` documentation.
+        extension: Extension,
+
+        kind: RecordOrVariant,
+
+        /// Whether this is a row type. A row type has its own kind `row`. When not a row, the type
+        /// has kind `*`.
+        is_row: bool,
+    },
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordOrVariant {
+    Record,
+    Variant,
+}
+
+/// A row extension for a `Ty::Record`, `Ty::Variant` or `Ty::Row`.
+///
+/// When available, this will be one of:
+///
+/// - `Ty::Var`: a unification variable.
+/// - `Ty::Con`: a rigid type variable.
+/// - `Ty::Row`: an extension.
+type Extension = Option<Box<Ty>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TyArgs {
@@ -99,6 +124,9 @@ pub struct TyVar {
     /// This is used to compare unification variables for equality.
     id: u32,
 
+    /// Kind of the variable.
+    kind: Kind,
+
     /// Depth of the scope the unification variable was craeted in.
     level: Cell<u32>,
 
@@ -108,6 +136,15 @@ pub struct TyVar {
     /// Source code location of the type scheme that generated this type variable. This is used in
     /// error messages and for debugging.
     loc: ast::Loc,
+}
+
+/// Kind of a unification variable.
+///
+/// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Kind {
+    Star,
+    Row(RecordOrVariant),
 }
 
 #[derive(Debug, Default)]
@@ -266,17 +303,17 @@ impl Scheme {
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         // Instantiate quantified variables of the scheme.
-        for (var, _bounds) in &self.quantified_vars {
-            let instantiated_var = var_gen.new_var(level, self.loc.clone());
-            var_map.insert(var.clone(), Ty::Var(instantiated_var.clone()));
+        for (qvar, QVar { kind, bounds: _ }) in &self.quantified_vars {
+            let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
+            var_map.insert(qvar.clone(), Ty::Var(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
 
         // Add associated types, substitute instantiated types.
-        for (instantiation, (_var, bounds)) in
+        for (instantiation, (_qvar, QVar { kind: _, bounds })) in
             instantiations.iter().zip(self.quantified_vars.iter())
         {
-            for (trait_, assoc_tys) in bounds {
+            for (trait_, assoc_tys) in bounds.iter() {
                 let pred = Pred {
                     ty_var: instantiation.clone(),
                     trait_: trait_.clone(),
@@ -297,9 +334,9 @@ impl Scheme {
         assert_eq!(tys.len(), self.quantified_vars.len());
 
         let mut ty = self.ty.clone();
-        for ((quantified_var, bounds), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
+        for ((qvar, QVar { kind: _, bounds }), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
             assert!(bounds.is_empty());
-            ty = ty.subst(quantified_var, ty_);
+            ty = ty.subst(qvar, ty_);
         }
 
         ty
@@ -310,16 +347,13 @@ impl Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
-        debug_assert!(self
-            .quantified_vars
-            .iter()
-            .any(|(var_, _bounds)| var_ == var));
+        debug_assert!(self.quantified_vars.iter().any(|(qvar, _)| qvar == var));
 
         Scheme {
             quantified_vars: self
                 .quantified_vars
                 .iter()
-                .filter(|(var_, _bounds)| var_ != var)
+                .filter(|(qvar, _)| qvar != var)
                 .cloned()
                 .collect(),
             ty: self.ty.subst(var, ty),
@@ -356,14 +390,14 @@ impl Scheme {
             .quantified_vars
             .iter()
             .enumerate()
-            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
         let right_vars: Map<Id, u32> = other
             .quantified_vars
             .iter()
             .enumerate()
-            .map(|(i, (var, _bounds))| (var.clone(), i as u32))
+            .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
         ty_eq_modulo_alpha(
@@ -387,7 +421,9 @@ fn ty_eq_modulo_alpha(
     ty2_qvars: &Map<Id, u32>,
     loc: &ast::Loc,
 ) -> bool {
-    match (ty1.normalize(cons), ty2.normalize(cons)) {
+    let ty1_normalized = ty1.normalize(cons);
+    let ty2_normalized = ty2.normalize(cons);
+    match (&ty1_normalized, &ty2_normalized) {
         (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
 
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
@@ -442,43 +478,76 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::Record { fields: fields1 }, Ty::Record { fields: fields2 }) => {
-            let keys1: Set<&Id> = fields1.keys().collect();
-            let keys2: Set<&Id> = fields2.keys().collect();
+        (
+            Ty::Anonymous {
+                labels: labels1,
+                extension: extension1,
+                kind: kind1,
+                is_row: is_row1,
+            },
+            Ty::Anonymous {
+                labels: labels2,
+                extension: extension2,
+                kind: kind2,
+                is_row: is_row2,
+            },
+        ) => {
+            assert_eq!(is_row1, is_row2);
 
-            if keys1 != keys2 {
+            if kind1 != kind2 {
                 return false;
             }
 
-            for key in keys1 {
-                if !ty_eq_modulo_alpha(
-                    cons,
-                    extra_qvars,
-                    fields1.get(key).unwrap(),
-                    fields2.get(key).unwrap(),
-                    ty1_qvars,
-                    ty2_qvars,
-                    loc,
-                ) {
+            let (labels1, extension1) = crate::type_checker::row_utils::collect_rows(
+                cons,
+                ty1,
+                *kind1,
+                labels1,
+                extension1.clone(),
+            );
+
+            let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
+                cons,
+                ty2,
+                *kind2,
+                labels2,
+                extension2.clone(),
+            );
+
+            if labels1.keys().collect::<Set<_>>() != labels2.keys().collect() {
+                return false;
+            }
+
+            for (label1, ty1) in labels1 {
+                let ty2 = labels2.get(&label1).unwrap();
+                if !ty_eq_modulo_alpha(cons, extra_qvars, &ty1, ty2, ty1_qvars, ty2_qvars, loc) {
                     return false;
                 }
             }
 
-            true
+            match (extension1, extension2) {
+                (None, Some(_)) | (Some(_), None) => false,
+
+                (None, None) => true,
+
+                (Some(ext1), Some(ext2)) => {
+                    ty_eq_modulo_alpha(cons, extra_qvars, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
+                }
+            }
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
-            if qvar1 == qvar2 && extra_qvars.contains(&qvar1) {
+            if qvar1 == qvar2 && extra_qvars.contains(qvar1) {
                 return true;
             }
 
-            let qvar1_idx = ty1_qvars.get(&qvar1).unwrap_or_else(|| {
+            let qvar1_idx = ty1_qvars.get(qvar1).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_display(loc), qvar1, ty1_qvars, extra_qvars
                 )
             });
-            let qvar2_idx = ty2_qvars.get(&qvar2).unwrap_or_else(|| {
+            let qvar2_idx = ty2_qvars.get(qvar2).unwrap_or_else(|| {
                 panic!(
                     "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
                     loc_display(loc), qvar2, ty2_qvars, extra_qvars
@@ -498,7 +567,7 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         (Ty::FunNamedArgs(args1, ret1), Ty::FunNamedArgs(args2, ret2)) => {
@@ -517,7 +586,7 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, &ret1, &ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         _ => false,
@@ -526,8 +595,11 @@ fn ty_eq_modulo_alpha(
 
 impl Ty {
     pub(super) fn unit() -> Ty {
-        Ty::Record {
-            fields: Default::default(),
+        Ty::Anonymous {
+            labels: Default::default(),
+            extension: None,
+            kind: RecordOrVariant::Record,
+            is_row: false,
         }
     }
 
@@ -568,11 +640,19 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
                     .map(|(field, field_ty)| (field.clone(), field_ty.subst(var, ty)))
                     .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst(var, ty))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(qvar) => {
@@ -630,11 +710,21 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
                     .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
                     .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_self(self_ty))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
@@ -678,11 +768,21 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
-                fields: fields
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
                     .iter()
-                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_qvars(vars)))
+                    .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_qvars(vars)))
                     .collect(),
+                extension: extension
+                    .as_ref()
+                    .map(|ext| Box::new(ext.subst_qvars(vars))),
+                kind: *kind,
+                is_row: *is_row,
             },
 
             Ty::QVar(id) => vars
@@ -774,12 +874,26 @@ impl Ty {
                 },
             ),
 
-            Ty::Record { fields } => Ty::Record {
-                fields: fields
-                    .iter()
-                    .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
-                    .collect(),
-            },
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => {
+                let (labels, extension) = crate::type_checker::row_utils::collect_rows(
+                    cons,
+                    self,
+                    *kind,
+                    labels,
+                    extension.clone(),
+                );
+                Ty::Anonymous {
+                    labels,
+                    extension: extension.map(Box::new),
+                    kind: *kind,
+                    is_row: *is_row,
+                }
+            }
 
             Ty::Fun(args, ret) => Ty::Fun(
                 args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
@@ -810,7 +924,7 @@ impl Ty {
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
             Ty::Var(_)
-            | Ty::Record { .. }
+            | Ty::Anonymous { .. }
             | Ty::QVar(_)
             | Ty::Fun(_, _)
             | Ty::FunNamedArgs(_, _)
@@ -849,6 +963,10 @@ impl TyVarRef {
         self.0.level.get()
     }
 
+    pub fn kind(&self) -> Kind {
+        self.0.kind.clone()
+    }
+
     pub(super) fn link(&self) -> Option<Ty> {
         self.0.link.borrow().clone()
     }
@@ -864,7 +982,7 @@ impl TyVarRef {
 
     pub(super) fn normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         let link = match &*self.0.link.borrow() {
-            Some(link) => link.normalize(cons),
+            Some(link) => link.normalize(cons).deep_normalize(cons),
             None => return Ty::Var(self.clone()),
         };
         self.set_link(link.clone());
@@ -873,7 +991,7 @@ impl TyVarRef {
 }
 
 impl TyVarGen {
-    pub(super) fn new_var(&mut self, level: u32, loc: ast::Loc) -> TyVarRef {
+    pub(super) fn new_var(&mut self, level: u32, kind: Kind, loc: ast::Loc) -> TyVarRef {
         let id = self.next_id;
         self.next_id += 1;
         TyVarRef(Rc::new(TyVar {
@@ -881,6 +999,7 @@ impl TyVarGen {
             level: Cell::new(level),
             link: RefCell::new(None),
             loc,
+            kind,
         }))
     }
 }
@@ -1021,15 +1140,32 @@ impl fmt::Display for Ty {
                 write!(f, "]")
             }
 
-            Ty::Record { fields } => {
-                write!(f, "(")?;
-                for (i, (name, ty)) in fields.iter().enumerate() {
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => {
+                let (left_delim, right_delim) = match kind {
+                    RecordOrVariant::Record => ('(', ')'),
+                    RecordOrVariant::Variant => ('[', ']'),
+                };
+
+                if *is_row {
+                    write!(f, "row")?;
+                }
+
+                write!(f, "{}", left_delim)?;
+                for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", name, ty)?;
+                    write!(f, "{}: {}", label_id, label_ty)?;
                 }
-                write!(f, ")")
+                if let Some(ext) = extension {
+                    write!(f, " | {}", ext)?;
+                }
+                write!(f, "{}", right_delim)
             }
 
             Ty::QVar(id) => write!(f, "'{}", id),
@@ -1067,11 +1203,11 @@ impl fmt::Display for Scheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.quantified_vars.is_empty() {
             write!(f, "[")?;
-            for (i, (var, bounds)) in self.quantified_vars.iter().enumerate() {
+            for (i, (qvar, QVar { kind: _, bounds })) in self.quantified_vars.iter().enumerate() {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", var)?;
+                write!(f, "{}", qvar)?;
                 if !bounds.is_empty() {
                     write!(f, ": ")?;
                     for (j, (trait_, assoc_tys)) in bounds.iter().enumerate() {

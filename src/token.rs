@@ -16,6 +16,7 @@ impl Token {
 pub enum TokenKind {
     /// An identifier starting with an uppercase letter.
     UpperId,
+    BacktickUpperId,
 
     /// An identifier starting with a lowercase letter.
     LowerId,
