@@ -210,7 +210,12 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Type::Variant { .. } => todo!(),
+        ast::Type::Variant { alts, extension } => {
+            assert_eq!(extension, &None);
+            for ast::VariantAlt { con, fields } in alts {
+                variants.insert(VariantShape::from_con_and_fields(con, fields));
+            }
+        }
 
         ast::Type::Fn(ast::FnType { args, ret }) => {
             for arg in args {

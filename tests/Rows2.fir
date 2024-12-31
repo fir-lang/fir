@@ -24,3 +24,10 @@ fn main() =
     # R2 --> [C(Bool), ..R3]
     # Similar to the previous, R3 should be defaulted as [].
     poly_fn(`C(t = Bool.False))
+
+# expected stdout:
+# A(i=123)
+# B(s=hi)
+# A(i=123)
+# Other
+

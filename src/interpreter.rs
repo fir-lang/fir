@@ -13,9 +13,9 @@ use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
-use crate::collections::{Map, Set};
+use crate::collections::Map;
 use crate::interpolation::StringPart;
-use crate::record_collector::{collect_records, RecordShape};
+use crate::record_collector::{collect_records, RecordShape, VariantShape};
 use crate::utils::loc_display;
 
 use std::cmp::Ordering;
@@ -114,6 +114,8 @@ struct Pgm {
     /// This can be used to get the tag of a record, from a record pattern, value, or type.
     record_ty_tags: Map<RecordShape, u64>,
 
+    variant_ty_tags: Map<VariantShape, u64>,
+
     /// Associated functions, indexed by type tag, then function name.
     associated_funs: Vec<Map<Id, Fun>>,
 
@@ -161,6 +163,10 @@ enum ConInfo {
     Record {
         #[allow(unused)]
         shape: RecordShape,
+    },
+    Variant {
+        #[allow(unused)]
+        shape: VariantShape,
     },
 }
 
@@ -336,6 +342,10 @@ impl Pgm {
             }
         }
 
+        fn convert_variant(shape: &VariantShape) -> Fields {
+            convert_record(&shape.payload)
+        }
+
         let mut cons_by_tag: Vec<Con> = vec![];
 
         let mut ty_cons_sorted: Vec<(Id, TyCon)> = ty_cons
@@ -376,7 +386,8 @@ impl Pgm {
 
         // Initialize `record_ty_tags`.
         let (record_shapes, variant_shapes) = collect_records(&pgm);
-        let mut record_ty_tags: Map<RecordShape, u64> = Default::default();
+        let mut record_ty_tags: Map<RecordShape, u64> =
+            Map::with_capacity_and_hasher(record_shapes.len(), Default::default());
 
         for record_shape in record_shapes {
             let fields = convert_record(&record_shape);
@@ -388,6 +399,22 @@ impl Pgm {
                 alloc: None,
             });
             record_ty_tags.insert(record_shape, next_type_tag);
+            next_type_tag += 1;
+        }
+
+        let mut variant_ty_tags: Map<VariantShape, u64> =
+            Map::with_capacity_and_hasher(variant_shapes.len(), Default::default());
+
+        for variant_shape in variant_shapes {
+            let fields = convert_variant(&variant_shape);
+            cons_by_tag.push(Con {
+                info: ConInfo::Variant {
+                    shape: variant_shape.clone(),
+                },
+                fields,
+                alloc: None,
+            });
+            variant_ty_tags.insert(variant_shape, next_type_tag);
             next_type_tag += 1;
         }
 
@@ -457,6 +484,7 @@ impl Pgm {
             ty_cons,
             cons_by_tag,
             record_ty_tags,
+            variant_ty_tags,
             associated_funs: associated_funs_vec,
             associated_funs_by_idx,
             top_level_funs,
@@ -513,6 +541,7 @@ impl Pgm {
                 con_name: con_name.as_ref(),
             },
             ConInfo::Record { shape: _ } => todo!(),
+            ConInfo::Variant { shape: _ } => todo!(),
         }
     }
 }
@@ -1151,7 +1180,43 @@ fn eval<W: Write>(
             ControlFlow::Val(record)
         }
 
-        ast::Expr::Variant(_) => todo!(),
+        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
+            let variant_shape = VariantShape::from_con_and_fields(id, args);
+            let type_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
+            let variant = heap.allocate(args.len() + 1);
+            heap[variant] = type_tag;
+
+            if !args.is_empty() && args[0].name.is_some() {
+                let mut names: Vec<Id> = args
+                    .iter()
+                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
+                    .collect();
+                names.sort();
+
+                for (name_idx, name_) in names.iter().enumerate() {
+                    let expr = args
+                        .iter()
+                        .find_map(|ast::Named { name, node }| {
+                            if name.as_ref().unwrap() == name_ {
+                                Some(node)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap();
+
+                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+                    heap[variant + (name_idx as u64) + 1] = value;
+                }
+            } else {
+                for (idx, ast::Named { name: _, node }) in args.iter().enumerate() {
+                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
+                    heap[variant + (idx as u64) + 1] = value;
+                }
+            }
+
+            ControlFlow::Val(variant)
+        }
 
         ast::Expr::Range(_) => {
             panic!("Interpreter only supports range expressions in for loops")
@@ -1371,7 +1436,17 @@ fn try_bind_pat(
             try_bind_field_pats(pgm, heap, value_fields, fields, value)
         }
 
-        ast::Pat::Variant(_) => todo!(),
+        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+            let value_tag = heap[value];
+            let variant_shape = VariantShape::from_con_and_fields(constr, fields);
+            let variant_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
+
+            if value_tag != variant_tag {
+                return None;
+            }
+            let variant_fields = pgm.get_tag_fields(variant_tag);
+            try_bind_field_pats(pgm, heap, variant_fields, fields, value)
+        }
 
         ast::Pat::Str(str) => {
             debug_assert!(heap[value] == pgm.str_ty_tag);
@@ -1441,6 +1516,8 @@ fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
         } => write!(&mut s, "{}", ty_name).unwrap(),
 
         ConInfo::Record { .. } => {}
+
+        ConInfo::Variant { .. } => {}
     }
 
     write!(&mut s, "(").unwrap();

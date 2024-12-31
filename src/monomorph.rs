@@ -1253,7 +1253,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
 
         Ty::Anonymous {
             labels,
-            extension,
+            extension: _,
             kind,
             is_row: _,
         } => {
