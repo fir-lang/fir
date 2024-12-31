@@ -478,8 +478,62 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::Anonymous { .. }, Ty::Anonymous { .. }) => {
-            todo!()
+        (
+            Ty::Anonymous {
+                labels: labels1,
+                extension: extension1,
+                kind: kind1,
+                is_row: is_row1,
+            },
+            Ty::Anonymous {
+                labels: labels2,
+                extension: extension2,
+                kind: kind2,
+                is_row: is_row2,
+            },
+        ) => {
+            assert_eq!(is_row1, is_row2);
+
+            if kind1 != kind2 {
+                return false;
+            }
+
+            let (labels1, extension1) = crate::type_checker::row_utils::collect_rows(
+                cons,
+                ty1,
+                *kind1,
+                labels1,
+                extension1.clone(),
+            );
+
+            let (labels2, extension2) = crate::type_checker::row_utils::collect_rows(
+                cons,
+                ty2,
+                *kind2,
+                labels2,
+                extension2.clone(),
+            );
+
+            if labels1.keys().collect::<Set<_>>() != labels2.keys().collect() {
+                return false;
+            }
+
+            for (label1, ty1) in labels1 {
+                let ty2 = labels2.get(&label1).unwrap();
+                if !ty_eq_modulo_alpha(cons, extra_qvars, &ty1, ty2, ty1_qvars, ty2_qvars, loc) {
+                    return false;
+                }
+            }
+
+            match (extension1, extension2) {
+                (None, Some(_)) | (Some(_), None) => false,
+
+                (None, None) => true,
+
+                (Some(ext1), Some(ext2)) => {
+                    ty_eq_modulo_alpha(cons, extra_qvars, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
+                }
+            }
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
