@@ -1,4 +1,4 @@
-# Immuable, UTF-8 encoded strings.
+# Immutable, UTF-8 encoded strings.
 type Str:
     # UTF-8 encoding of the string.
     _bytes: Array[U8]
