@@ -157,12 +157,13 @@ pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
 
-    /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str|x)`.
+    /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
     Record {
         fields: Vec<Named<Type>>,
         extension: Option<Id>,
     },
 
+    /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
         alts: Vec<VariantAlt>,
         extension: Option<Id>,
