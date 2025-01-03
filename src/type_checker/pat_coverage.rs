@@ -1,6 +1,8 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{PgmTypes, TcFunState, Ty, TyArgs};
+use crate::type_checker::{row_utils, PgmTypes, TcFunState, Ty, TyArgs};
+
+use super::RecordOrVariant;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct CoveredPats {
@@ -108,6 +110,10 @@ impl Fields {
 impl CoveredPats {
     /// Return whether the covered patterns cover all possibles values of `ty`.
     pub fn is_exhaustive(&self, ty: &Ty, tc_state: &mut TcFunState, loc: &Loc) -> bool {
+        if self.matches_all {
+            return true;
+        }
+
         match ty {
             Ty::Con(ty_con) => match con_shape(ty_con, &tc_state.tys) {
                 ConShape::Product => {
@@ -198,11 +204,90 @@ impl CoveredPats {
             }
 
             Ty::Anonymous {
-                labels: _,
-                extension: _,
-                kind: _,
-                is_row: _,
-            } => todo!(),
+                labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row,
+            } => {
+                assert!(!*is_row);
+                let (labels, extension) = row_utils::collect_rows(
+                    tc_state.tys.tys.cons(),
+                    ty,
+                    RecordOrVariant::Variant,
+                    labels,
+                    extension.clone(),
+                );
+
+                if extension.is_some() {
+                    assert!(!self.matches_all); // checked above
+                    return false;
+                }
+
+                for (label, label_ty) in labels {
+                    // label_ty will be a rigid record type
+                    let label_fields = match &label_ty {
+                        Ty::Anonymous {
+                            labels,
+                            extension,
+                            kind,
+                            is_row,
+                        } => {
+                            assert!(extension.is_none());
+                            assert_eq!(*kind, RecordOrVariant::Record);
+                            assert!(!is_row);
+                            labels
+                        }
+                        _ => panic!(),
+                    };
+
+                    let field_pats: &Fields = match self.variants.get(&label) {
+                        Some(label_pat) => label_pat,
+                        None => return false,
+                    };
+
+                    for (field, field_ty) in label_fields {
+                        match field_pats.named.get(field) {
+                            Some(field_pat) => {
+                                if !field_pat.is_exhaustive(&field_ty, tc_state, loc) {
+                                    return false;
+                                }
+                            }
+                            None => return false,
+                        }
+                    }
+                }
+
+                true
+            }
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind: RecordOrVariant::Record,
+                is_row,
+            } => {
+                assert!(!*is_row);
+                let (labels, _extension) = row_utils::collect_rows(
+                    tc_state.tys.tys.cons(),
+                    ty,
+                    RecordOrVariant::Record,
+                    labels,
+                    extension.clone(),
+                );
+
+                for (label, label_ty) in labels {
+                    match self.records.named.get(&label) {
+                        Some(label_pats) => {
+                            if !label_pats.is_exhaustive(&label_ty, tc_state, loc) {
+                                return false;
+                            }
+                        }
+                        None => return false,
+                    }
+                }
+
+                true
+            }
 
             Ty::Var(_) => true,
 
