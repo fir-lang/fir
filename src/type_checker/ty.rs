@@ -1025,6 +1025,10 @@ impl TyCon {
     pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
         self.details.trait_details()
     }
+
+    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+        self.details.con_details()
+    }
 }
 
 impl TyConDetails {
@@ -1035,6 +1039,13 @@ impl TyConDetails {
     pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
         match self {
             TyConDetails::Trait(details) => Some(details),
+            _ => None,
+        }
+    }
+
+    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+        match self {
+            TyConDetails::Type(TypeDetails { cons }) => Some(cons),
             _ => None,
         }
     }

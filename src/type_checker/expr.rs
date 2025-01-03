@@ -704,7 +704,20 @@ pub(super) fn check_expr(
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             let scrut_ty = check_expr(tc_state, scrutinee, None, level, loop_depth);
 
+            if let Ty::Anonymous {
+                kind: RecordOrVariant::Variant,
+                ..
+            } = scrut_ty
+            {
+                println!(
+                    "Checking variant pattern match at {}",
+                    loc_display(&expr.loc)
+                );
+            }
+
             let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
+
+            let mut covered_pats = crate::type_checker::pat_coverage::CoveredPats::new();
 
             for ast::Alt {
                 pattern,
@@ -727,6 +740,10 @@ pub(super) fn check_expr(
                 }
 
                 rhs_tys.push(check_stmts(tc_state, rhs, None, level, loop_depth));
+
+                if guard.is_none() {
+                    covered_pats.add(&pattern.node);
+                }
             }
 
             for rhs_tys in rhs_tys.windows(2) {
