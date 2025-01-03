@@ -361,6 +361,13 @@ impl CoveredPats {
                 true
             }
 
+            Ty::App(_, _) | Ty::Con(_) => {
+                // Constructor doesn't have fields.
+                assert!(con_field_pats.named.is_empty());
+                assert!(con_field_pats.unnamed.is_empty());
+                true
+            }
+
             other => panic!("{:?}", other),
         }
     }

@@ -4,6 +4,7 @@ fn main() =
     match 'a':
         'b': panic("'a' == 'b'".toStr())
         'a': printStr("👍")
+        _: panic("Unexpected character")
 
     printStr('👍'._codePoint.toStr())
 
