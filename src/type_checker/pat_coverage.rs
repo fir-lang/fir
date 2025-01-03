@@ -115,7 +115,7 @@ impl CoveredPats {
         }
 
         match ty.normalize(tc_state.tys.tys.cons()) {
-            Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys) {
+            Ty::Con(ty_con) => match con_shape(&ty_con, tc_state.tys) {
                 ConShape::Product => {
                     let (con_fn_ty, con_fn_ty_args) = tc_state
                         .tys
@@ -164,7 +164,7 @@ impl CoveredPats {
                     TyArgs::Positional(args) => args,
                     TyArgs::Named(_) => panic!(),
                 };
-                match con_shape(&ty_con, &tc_state.tys) {
+                match con_shape(&ty_con, tc_state.tys) {
                     ConShape::Product => {
                         let (con_fn_ty, con_fn_ty_args) = tc_state
                             .tys
@@ -260,7 +260,7 @@ impl CoveredPats {
                     for (field, field_ty) in label_fields {
                         match field_pats.named.get(field) {
                             Some(field_pat) => {
-                                if !field_pat.is_exhaustive(&field_ty, tc_state, loc) {
+                                if !field_pat.is_exhaustive(field_ty, tc_state, loc) {
                                     return false;
                                 }
                             }
@@ -340,7 +340,7 @@ impl CoveredPats {
         for (field, field_ty) in label_fields {
             match field_pats.named.get(field) {
                 Some(field_pat) => {
-                    if !field_pat.is_exhaustive(&field_ty, tc_state, loc) {
+                    if !field_pat.is_exhaustive(field_ty, tc_state, loc) {
                         return false;
                     }
                 }
