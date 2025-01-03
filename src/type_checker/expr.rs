@@ -714,15 +714,57 @@ pub(super) fn check_expr(
                 rhs,
             } in alts
             {
-                let pat_ty = check_pat(tc_state, pattern, level);
-                unify(
-                    &pat_ty,
-                    &scrut_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &pattern.loc,
-                );
+                let mut handled_variant = false;
+
+                if let Ty::Anonymous {
+                    labels,
+                    extension,
+                    kind: RecordOrVariant::Variant,
+                    is_row,
+                } = scrut_ty.normalize(tc_state.tys.tys.cons())
+                {
+                    if let ast::Pat::Var(var) = &pattern.node {
+                        assert!(!is_row);
+                        let (scrut_labels, scrut_extension) =
+                            crate::type_checker::row_utils::collect_rows(
+                                tc_state.tys.tys.cons(),
+                                &scrut_ty,
+                                RecordOrVariant::Variant,
+                                &labels,
+                                extension,
+                            );
+
+                        let mut unhandled_scrut_labels: Map<Id, Ty> = Default::default();
+                        for (label, field) in scrut_labels {
+                            if !covered_pats.covers_variant(&label, &field, tc_state, &expr.loc) {
+                                unhandled_scrut_labels.insert(label, field);
+                            }
+                        }
+
+                        let scrut_ty = Ty::Anonymous {
+                            labels: unhandled_scrut_labels,
+                            extension: scrut_extension.map(Box::new),
+                            kind: RecordOrVariant::Variant,
+                            is_row: false,
+                        };
+
+                        tc_state.env.insert(var.clone(), scrut_ty);
+
+                        handled_variant = true;
+                    }
+                }
+
+                if !handled_variant {
+                    let pat_ty = check_pat(tc_state, pattern, level);
+                    unify(
+                        &pat_ty,
+                        &scrut_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &pattern.loc,
+                    );
+                }
 
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);

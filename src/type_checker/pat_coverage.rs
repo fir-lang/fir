@@ -309,6 +309,48 @@ impl CoveredPats {
         }
     }
 
+    pub fn covers_variant(
+        &self,
+        label: &Id,
+        field: &Ty,
+        tc_state: &mut TcFunState,
+        loc: &Loc,
+    ) -> bool {
+        // label_ty will be a rigid record type
+        let label_fields = match &field {
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => {
+                assert_eq!(*kind, RecordOrVariant::Record);
+                assert!(extension.is_none());
+                assert!(!is_row);
+                labels
+            }
+            _ => panic!(),
+        };
+
+        let field_pats: &Fields = match self.variants.get(label) {
+            Some(label_pat) => label_pat,
+            None => return false,
+        };
+
+        for (field, field_ty) in label_fields {
+            match field_pats.named.get(field) {
+                Some(field_pat) => {
+                    if !field_pat.is_exhaustive(&field_ty, tc_state, loc) {
+                        return false;
+                    }
+                }
+                None => return false,
+            }
+        }
+
+        true
+    }
+
     fn is_con_pat_exhaustive(
         &self,
         con_fn_ty: &Ty,
