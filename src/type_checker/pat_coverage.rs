@@ -114,20 +114,20 @@ impl CoveredPats {
             return true;
         }
 
-        match ty {
-            Ty::Con(ty_con) => match con_shape(ty_con, &tc_state.tys) {
+        match ty.normalize(tc_state.tys.tys.cons()) {
+            Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys) {
                 ConShape::Product => {
                     let (con_fn_ty, con_fn_ty_args) = tc_state
                         .tys
                         .top_schemes
-                        .get(ty_con)
+                        .get(&ty_con)
                         .unwrap()
                         .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
 
                     // Scrutinee type doesn't have arguments.
                     assert!(con_fn_ty_args.is_empty());
 
-                    self.is_con_pat_exhaustive(&con_fn_ty, ty_con, None, tc_state, loc)
+                    self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
                 ConShape::Sum(cons) => {
@@ -135,7 +135,7 @@ impl CoveredPats {
                         let (con_fn_ty, con_fn_ty_args) = tc_state
                             .tys
                             .associated_fn_schemes
-                            .get(ty_con)
+                            .get(&ty_con)
                             .unwrap()
                             .get(&con)
                             .unwrap()
@@ -146,7 +146,7 @@ impl CoveredPats {
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
-                            ty_con,
+                            &ty_con,
                             Some(&con),
                             tc_state,
                             loc,
@@ -164,12 +164,12 @@ impl CoveredPats {
                     TyArgs::Positional(args) => args,
                     TyArgs::Named(_) => panic!(),
                 };
-                match con_shape(ty_con, &tc_state.tys) {
+                match con_shape(&ty_con, &tc_state.tys) {
                     ConShape::Product => {
                         let (con_fn_ty, con_fn_ty_args) = tc_state
                             .tys
                             .top_schemes
-                            .get(ty_con)
+                            .get(&ty_con)
                             .unwrap()
                             .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
 
@@ -179,7 +179,7 @@ impl CoveredPats {
                             ty_var.set_link(ty_arg.clone());
                         }
 
-                        self.is_con_pat_exhaustive(&con_fn_ty, ty_con, None, tc_state, loc)
+                        self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                     }
 
                     ConShape::Sum(cons) => {
@@ -187,7 +187,7 @@ impl CoveredPats {
                             let (con_fn_ty, con_fn_ty_args) = tc_state
                                 .tys
                                 .associated_fn_schemes
-                                .get(ty_con)
+                                .get(&ty_con)
                                 .unwrap()
                                 .get(&con)
                                 .unwrap()
@@ -201,7 +201,7 @@ impl CoveredPats {
 
                             if !self.is_con_pat_exhaustive(
                                 &con_fn_ty,
-                                ty_con,
+                                &ty_con,
                                 Some(&con),
                                 tc_state,
                                 loc,
@@ -221,12 +221,12 @@ impl CoveredPats {
                 kind: RecordOrVariant::Variant,
                 is_row,
             } => {
-                assert!(!*is_row);
+                assert!(!is_row);
                 let (labels, extension) = row_utils::collect_rows(
                     tc_state.tys.tys.cons(),
                     ty,
                     RecordOrVariant::Variant,
-                    labels,
+                    &labels,
                     extension.clone(),
                 );
 
@@ -278,12 +278,12 @@ impl CoveredPats {
                 kind: RecordOrVariant::Record,
                 is_row,
             } => {
-                assert!(!*is_row);
+                assert!(!is_row);
                 let (labels, _extension) = row_utils::collect_rows(
                     tc_state.tys.tys.cons(),
                     ty,
                     RecordOrVariant::Record,
-                    labels,
+                    &labels,
                     extension.clone(),
                 );
 
