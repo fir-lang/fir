@@ -734,7 +734,12 @@ pub(super) fn check_expr(
                     covered_pats.add(&pattern.node);
                 }
 
-                let _exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
+                // let _exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
+            }
+
+            let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
+            if !exhaustive {
+                println!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
             }
 
             for rhs_tys in rhs_tys.windows(2) {

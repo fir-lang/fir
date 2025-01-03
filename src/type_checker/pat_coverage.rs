@@ -127,7 +127,7 @@ impl CoveredPats {
                     // Scrutinee type doesn't have arguments.
                     assert!(con_fn_ty_args.is_empty());
 
-                    self.is_con_pat_exhaustive(&con_fn_ty, ty_con, tc_state, loc)
+                    self.is_con_pat_exhaustive(&con_fn_ty, ty_con, None, tc_state, loc)
                 }
 
                 ConShape::Sum(cons) => {
@@ -144,7 +144,13 @@ impl CoveredPats {
                         // Scrutinee type doesn't have arguments.
                         assert!(con_fn_ty_args.is_empty());
 
-                        if !self.is_con_pat_exhaustive(&con_fn_ty, ty_con, tc_state, loc) {
+                        if !self.is_con_pat_exhaustive(
+                            &con_fn_ty,
+                            ty_con,
+                            Some(&con),
+                            tc_state,
+                            loc,
+                        ) {
                             return false;
                         }
                     }
@@ -173,7 +179,7 @@ impl CoveredPats {
                             ty_var.set_link(ty_arg.clone());
                         }
 
-                        self.is_con_pat_exhaustive(&con_fn_ty, ty_con, tc_state, loc)
+                        self.is_con_pat_exhaustive(&con_fn_ty, ty_con, None, tc_state, loc)
                     }
 
                     ConShape::Sum(cons) => {
@@ -193,7 +199,13 @@ impl CoveredPats {
                                 ty_var.set_link(ty_arg.clone());
                             }
 
-                            if !self.is_con_pat_exhaustive(&con_fn_ty, ty_con, tc_state, loc) {
+                            if !self.is_con_pat_exhaustive(
+                                &con_fn_ty,
+                                ty_con,
+                                Some(&con),
+                                tc_state,
+                                loc,
+                            ) {
                                 return false;
                             }
                         }
@@ -289,7 +301,7 @@ impl CoveredPats {
                 true
             }
 
-            Ty::Var(_) => true,
+            Ty::Var(_) => false,
 
             Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => panic!(),
 
@@ -301,12 +313,13 @@ impl CoveredPats {
         &self,
         con_fn_ty: &Ty,
         ty_con: &Id,
+        con: Option<&Id>,
         tc_state: &mut TcFunState,
         loc: &Loc,
     ) -> bool {
         let con_field_pats = match self.cons.get(&Con {
             ty: ty_con.clone(),
-            con: None,
+            con: con.cloned(),
         }) {
             Some(fields) => fields,
             None => return false,
@@ -348,7 +361,7 @@ impl CoveredPats {
                 true
             }
 
-            _ => panic!(),
+            other => panic!("{:?}", other),
         }
     }
 }
