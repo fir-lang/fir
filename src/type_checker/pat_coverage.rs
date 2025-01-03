@@ -361,7 +361,7 @@ enum ConShape {
 
 fn con_shape(ty_con: &Id, tys: &PgmTypes) -> ConShape {
     let cons = tys.tys.get_con(ty_con).unwrap().con_details().unwrap();
-    if cons.is_empty() {
+    if cons.len() == 1 {
         ConShape::Product
     } else {
         ConShape::Sum(cons.iter().map(|con| con.name.clone().unwrap()).collect())
