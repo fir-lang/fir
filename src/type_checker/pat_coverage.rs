@@ -5,7 +5,7 @@ use crate::type_checker::{row_utils, PgmTypes, TcFunState, Ty, TyArgs};
 use super::RecordOrVariant;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct CoveredPats {
+pub struct PatCoverage {
     cons: Map<Con, Fields>,
     records: Fields,
     variants: Map<Id, Fields>,
@@ -14,8 +14,8 @@ pub struct CoveredPats {
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 struct Fields {
-    named: Map<Id, CoveredPats>,
-    unnamed: Vec<CoveredPats>,
+    named: Map<Id, PatCoverage>,
+    unnamed: Vec<PatCoverage>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -33,7 +33,7 @@ impl Con {
     }
 }
 
-impl CoveredPats {
+impl PatCoverage {
     pub fn new() -> Self {
         Default::default()
     }
@@ -107,7 +107,7 @@ impl Fields {
     }
 }
 
-impl CoveredPats {
+impl PatCoverage {
     /// Return whether the covered patterns cover all possibles values of `ty`.
     pub fn is_exhaustive(&self, ty: &Ty, tc_state: &mut TcFunState, loc: &Loc) -> bool {
         if self.matches_all {
