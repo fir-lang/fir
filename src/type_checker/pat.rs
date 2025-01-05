@@ -1,6 +1,7 @@
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::type_checker::apply::apply;
+use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
 use crate::type_checker::{loc_display, TcFunState};
@@ -193,6 +194,86 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             pat1_ty
         }
     }
+}
+
+pub(super) fn refine_pat_binders(
+    tc_state: &mut TcFunState,
+    ty: &Ty,                    // type of the value being matched
+    pat: &mut ast::L<ast::Pat>, // the pattern beiing refined
+    coverage: &PatCoverage,     // coverage information of `pat`
+    level: u32,
+) {
+    match &pat.node {
+        ast::Pat::Var(var) => refine_var_pat(tc_state, ty, var, coverage, level),
+
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: ast::Constructor { type_, constr },
+            fields,
+            ty_args: _,
+        }) => {
+            let field_coverage = match coverage.get_con_fields(type_, constr.as_ref()) {
+                Some(coverage) => coverage,
+                None => return,
+            };
+
+            for (field_idx, field_pat) in fields.iter().enumerate() {
+                let field_pat_coverage = match &field_pat.name {
+                    Some(field_name) => field_coverage.get_named_field(field_name),
+                    None => field_coverage.get_positional_field(field_idx),
+                };
+
+                let field_pat_coverage = match field_pat_coverage {
+                    Some(coverage) => coverage,
+                    None => return,
+                };
+
+                let field_ty = match ty.normalize(tc_state.tys.tys.cons()) {
+                    Ty::Con(con_id) => {
+                        let con_details =
+                            match tc_state.tys.tys.get_con(&con_id).unwrap().con_details() {
+                                Some(details) => details,
+                                None => return,
+                            };
+                    }
+
+                    Ty::App(con, ty_args) => todo!(),
+
+                    Ty::Var(_)
+                    | Ty::QVar(_)
+                    | Ty::Fun(_, _)
+                    | Ty::FunNamedArgs(_, _)
+                    | Ty::AssocTySelect { .. }
+                    | Ty::Anonymous { .. } => {}
+                };
+            }
+        }
+
+        ast::Pat::Variant(variant_pattern) => todo!(),
+
+        ast::Pat::Record(vec) => todo!(),
+
+        ast::Pat::Ignore => todo!(),
+
+        ast::Pat::Str(_) => todo!(),
+
+        ast::Pat::Char(_) => todo!(),
+
+        ast::Pat::StrPfx(_, smol_str) => todo!(),
+
+        ast::Pat::Or(l, l1) => todo!(),
+    }
+
+    todo!()
+}
+
+fn refine_var_pat(
+    tc_state: &mut TcFunState,
+    ty: &Ty,
+    var: &Id,
+    coverage: &PatCoverage,
+    level: u32,
+) {
+    todo!()
 }
 
 fn check_pat_shape(

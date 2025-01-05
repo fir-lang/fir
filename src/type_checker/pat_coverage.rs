@@ -14,7 +14,7 @@ pub struct PatCoverage {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-struct Fields {
+pub struct Fields {
     named: Map<Id, PatCoverage>,
     unnamed: Vec<PatCoverage>,
 }
@@ -85,6 +85,13 @@ impl PatCoverage {
 
             ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
         }
+    }
+
+    pub fn get_con_fields(&self, ty: &Id, con: Option<&Id>) -> Option<&Fields> {
+        self.cons.get(&Con {
+            ty: ty.clone(),
+            con: con.cloned(),
+        })
     }
 }
 
@@ -581,5 +588,15 @@ pub fn refine_variants(ty: &Ty, coverage: &PatCoverage, tys: &PgmTypes, loc: &Lo
         | Ty::Fun(_, _)
         | Ty::FunNamedArgs(_, _)
         | Ty::AssocTySelect { .. } => (ty, false),
+    }
+}
+
+impl Fields {
+    pub fn get_named_field(&self, name: &Id) -> Option<&PatCoverage> {
+        self.named.get(name)
+    }
+
+    pub fn get_positional_field(&self, idx: usize) -> Option<&PatCoverage> {
+        self.unnamed.get(idx)
     }
 }
