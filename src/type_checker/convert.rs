@@ -33,64 +33,64 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 return ty.clone();
             }
 
-            if let Some(ty_con) = tys.get_con(name) {
-                if ty_con.arity() as usize != args.len() {
-                    panic!(
-                        "{}: Incorrect number of type arguments to {}, expected {}, found {}",
-                        loc_display(loc),
-                        name,
-                        ty_con.arity(),
-                        args.len()
-                    )
-                }
+            let ty_con = tys
+                .get_con(name)
+                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
 
-                let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
-                let mut converted_named_args: Map<Id, Ty> = Default::default();
-
-                for ast::L {
-                    loc: _,
-                    node: (name, ty),
-                } in args
-                {
-                    let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
-                    match name {
-                        Some(name) => {
-                            let old = converted_named_args.insert(name.clone(), ty);
-                            if old.is_some() {
-                                panic!(
-                                    "{}: Associated type argument {} defined multiple times",
-                                    loc_display(loc),
-                                    name
-                                );
-                            }
-                        }
-                        None => {
-                            converted_args.push(ty);
-                        }
-                    }
-                }
-
-                if !converted_args.is_empty() && !converted_named_args.is_empty() {
-                    panic!(
-                        "{}: Type cannot have both associated and positional arguments",
-                        loc_display(loc),
-                    );
-                }
-
-                if converted_args.is_empty() && converted_named_args.is_empty() {
-                    return Ty::Con(ty_con.id.clone());
-                }
-
-                let args = if converted_named_args.is_empty() {
-                    TyArgs::Positional(converted_args)
-                } else {
-                    TyArgs::Named(converted_named_args)
-                };
-
-                return Ty::App(ty_con.id.clone(), args);
+            if ty_con.arity() as usize != args.len() {
+                panic!(
+                    "{}: Incorrect number of type arguments to {}, expected {}, found {}",
+                    loc_display(loc),
+                    name,
+                    ty_con.arity(),
+                    args.len()
+                )
             }
 
-            panic!("{}: Unknown type {}", loc_display(loc), name);
+            let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
+            let mut converted_named_args: Map<Id, Ty> = Default::default();
+
+            for ast::L {
+                loc: _,
+                node: (name, ty),
+            } in args
+            {
+                let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+                match name {
+                    Some(name) => {
+                        let old = converted_named_args.insert(name.clone(), ty);
+                        if old.is_some() {
+                            panic!(
+                                "{}: Associated type argument {} defined multiple times",
+                                loc_display(loc),
+                                name
+                            );
+                        }
+                    }
+                    None => {
+                        converted_args.push(ty);
+                    }
+                }
+            }
+
+            if !converted_args.is_empty() && !converted_named_args.is_empty() {
+                panic!(
+                    "{}: Type cannot have both associated and positional arguments",
+                    loc_display(loc),
+                );
+            }
+
+            if converted_args.is_empty() && converted_named_args.is_empty() {
+                return Ty::Con(ty_con.id.clone());
+            }
+
+            let args = if converted_named_args.is_empty() {
+                TyArgs::Positional(converted_args)
+            } else {
+                TyArgs::Named(converted_named_args)
+            };
+
+            Ty::App(ty_con.id.clone(), args)
         }
 
         ast::Type::Record { fields, extension } => {
