@@ -93,6 +93,10 @@ impl PatCoverage {
             con: con.cloned(),
         })
     }
+
+    pub fn get_variant_fields(&self, var: &Id) -> Option<&Fields> {
+        self.variants.get(var)
+    }
 }
 
 impl Fields {
