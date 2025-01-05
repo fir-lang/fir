@@ -1,6 +1,7 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, PgmTypes, TcFunState, Ty, TyArgs};
+use crate::type_checker::{row_utils, ty, PgmTypes, TcFunState, Ty, TyArgs};
+use crate::utils::loc_display;
 
 use super::RecordOrVariant;
 
@@ -427,5 +428,158 @@ fn con_shape(ty_con: &Id, tys: &PgmTypes) -> ConShape {
         ConShape::Product
     } else {
         ConShape::Sum(cons.iter().map(|con| con.name.clone().unwrap()).collect())
+    }
+}
+
+/// Refine variant types in a scrutinee type (`ty`) based on the patterns covered (`coverage`).
+///
+/// Returns a new type with updated variants, and a `bool` indicating whether the type is fully
+/// covered by the patterns.
+pub fn refine_variants(ty: &Ty, coverage: &PatCoverage, tys: &PgmTypes, loc: &Loc) -> (Ty, bool) {
+    let ty = ty.normalize(tys.tys.cons());
+    match ty {
+        Ty::App(ty_con_id, args) => {
+            let ty_con = tys.tys.get_con(&ty_con_id).unwrap();
+            let con_shapes: &[ty::ConShape] = match ty_con.con_details() {
+                Some(details) => details,
+                None => return (Ty::App(ty_con_id, args), false),
+            };
+            if con_shapes.is_empty() {
+                return (Ty::App(ty_con_id, args), false);
+            }
+
+            /*
+            TODO:
+
+            We need to map constructor fields to type parameters of the type. E.g.
+
+            type Blah[T1, T2]:
+                A(I32, T1)
+                B(T2, Str)
+                C(T1, T2)
+
+            To be able to keep track of covered labels in `T1`, we need to know that `T1` is used in these
+            positions:
+
+                A(_ , <>)
+                C(<>, _ )
+
+            If e.g. labels X and Y are covered in these positions, then we can refine the scrutinee type from
+            `Blah[[X, Y, Z], ...]` to `Blah[[Z], ...]`.
+            */
+
+            for con in con_shapes {
+                let con_ = Con {
+                    ty: ty_con_id.clone(),
+                    con: con.name.clone(),
+                };
+                let con_field_pats = match coverage.cons.get(&con_) {
+                    Some(field_pats) => field_pats,
+                    None => todo!(),
+                };
+                match &con.fields {
+                    ty::ConFieldShape::Unnamed(arity) => {
+                        // TODO
+                    }
+                    ty::ConFieldShape::Named(names) => {
+                        // TODO
+                    }
+                }
+                todo!()
+            }
+
+            // if ty_con_details
+            todo!()
+        }
+
+        Ty::Anonymous {
+            labels,
+            extension,
+            kind: RecordOrVariant::Variant,
+            is_row,
+        } => {
+            assert!(!is_row);
+
+            if coverage.matches_all {
+                return (Ty::empty_variant(), true);
+            }
+
+            let mut unhandled_labels: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(labels.len(), Default::default());
+
+            'next_variant_label: for (label, label_ty) in labels {
+                match coverage.variants.get(&label) {
+                    Some(label_field_pats) => match &label_ty {
+                        Ty::Anonymous {
+                            labels,
+                            extension,
+                            kind,
+                            is_row,
+                        } => {
+                            assert!(!is_row);
+                            assert_eq!(*kind, RecordOrVariant::Record);
+                            assert!(extension.is_none());
+                            let mut all_fields_covered = true;
+                            let mut new_labels: Map<Id, Ty> =
+                                Map::with_capacity_and_hasher(labels.len(), Default::default());
+                            for (field_id, field_ty) in labels {
+                                match label_field_pats.named.get(field_id) {
+                                    Some(field_pat_coverage) => {
+                                        let (field_ty, field_covered) =
+                                            refine_variants(field_ty, field_pat_coverage, tys, loc);
+                                        all_fields_covered &= field_covered;
+                                        new_labels.insert(field_id.clone(), field_ty);
+                                    }
+                                    None => {
+                                        unhandled_labels.insert(label, label_ty);
+                                        continue 'next_variant_label;
+                                    }
+                                }
+                            }
+                            if !all_fields_covered {
+                                let new_label_ty = Ty::Anonymous {
+                                    labels: new_labels,
+                                    extension: None,
+                                    kind: RecordOrVariant::Record,
+                                    is_row: false,
+                                };
+                                unhandled_labels.insert(label, new_label_ty);
+                            }
+                        }
+                        _ => {
+                            unhandled_labels.insert(label, label_ty);
+                        }
+                    },
+                    None => {
+                        unhandled_labels.insert(label, label_ty);
+                    }
+                }
+            }
+
+            let empty = unhandled_labels.is_empty() && extension.is_none();
+            let new_variant = Ty::Anonymous {
+                labels: unhandled_labels,
+                extension,
+                kind: RecordOrVariant::Variant,
+                is_row: false,
+            };
+
+            (new_variant, empty)
+        }
+
+        Ty::Anonymous {
+            labels,
+            extension,
+            kind: RecordOrVariant::Record,
+            is_row,
+        } => todo!(),
+
+        Ty::QVar(_) => panic!("{}: BUG: QVar in refine_variants", loc_display(loc)),
+
+        Ty::Var(_)
+        | Ty::Con(_)
+        | Ty::Fun(_, _)
+        | Ty::FunNamedArgs(_, _)
+        | Ty::AssocTySelect { .. } => (ty, false),
     }
 }

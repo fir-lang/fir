@@ -221,6 +221,7 @@ pub(super) struct TypeDetails {
     pub(super) cons: Vec<ConShape>,
 }
 
+// TODO: Probably make this an enum with `product` and `sum` variants.
 #[derive(Debug, Clone)]
 pub(super) struct ConShape {
     pub(super) name: Option<Id>,
@@ -599,6 +600,15 @@ impl Ty {
             labels: Default::default(),
             extension: None,
             kind: RecordOrVariant::Record,
+            is_row: false,
+        }
+    }
+
+    pub(super) fn empty_variant() -> Ty {
+        Ty::Anonymous {
+            labels: Default::default(),
+            extension: None,
+            kind: RecordOrVariant::Variant,
             is_row: false,
         }
     }
