@@ -46,10 +46,12 @@ fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
             Result.Err(other)
 
 # Similar to `f6`, but the call site adds more error cases.
+# TODO: I'm not sure that this type is rigth.. Do we need an "absent" constraint
+# like `Errs \ E1`?
 # fn f7[Errs](f: Fn(): Result[[..Errs], ()]): Result[[E1, ..Errs], ()] =
 #     match f():
 #         Result.Err(err):
-#             Result.Err
+#             Result.Err(err)
 #
 #         Result.Ok(()):
 #             Result.Err(`E1)
@@ -61,6 +63,16 @@ fn f9[R](): [E1, ..R] = `E1
 fn f10[R](f: Fn([E1, E2, ..R]): ()) = ()
 
 fn f11(x: [E1, E2, E3]) = ()
+
+type SimpleError:
+    Error([A, B, C])
+    NotError(I32)
+
+fn f12(a: SimpleError): Result[[C], I32] =
+    match a:
+        SimpleError.Error(`A | `B): Result.Err(`C)
+        SimpleError.Error(other): Result.Err(other)
+        SimpleError.NotError(i): Result.Ok(i)
 
 fn main() =
     # Almost like function subtyping: a function that throws less can be passed
