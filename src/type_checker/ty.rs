@@ -371,6 +371,10 @@ impl Scheme {
         }
     }
 
+    pub fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
+        todo!()
+    }
+
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
     ///
     /// `extra_qvars` are quantified variables that can appear in both of the types in the same

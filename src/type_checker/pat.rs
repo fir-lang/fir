@@ -198,9 +198,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
 pub(super) fn refine_pat_binders(
     tc_state: &mut TcFunState,
-    ty: &Ty,                    // type of the value being matched
-    pat: &mut ast::L<ast::Pat>, // the pattern beiing refined
-    coverage: &PatCoverage,     // coverage information of `pat`
+    ty: &Ty,                // type of the value being matched
+    pat: &ast::L<ast::Pat>, // the pattern being refined
+    coverage: &PatCoverage, // coverage information of `pat`
     level: u32,
 ) {
     match &pat.node {
@@ -208,7 +208,7 @@ pub(super) fn refine_pat_binders(
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
-            fields,
+            fields: field_pats,
             ty_args: _,
         }) => {
             let field_coverage = match coverage.get_con_fields(type_, constr.as_ref()) {
@@ -216,7 +216,7 @@ pub(super) fn refine_pat_binders(
                 None => return,
             };
 
-            for (field_idx, field_pat) in fields.iter().enumerate() {
+            for (field_idx, field_pat) in field_pats.iter().enumerate() {
                 let field_pat_coverage = match &field_pat.name {
                     Some(field_name) => field_coverage.get_named_field(field_name),
                     None => field_coverage.get_positional_field(field_idx),
@@ -227,30 +227,85 @@ pub(super) fn refine_pat_binders(
                     None => return,
                 };
 
-                let field_ty = match ty.normalize(tc_state.tys.tys.cons()) {
+                let con_scheme = match constr {
+                    Some(con_id) => tc_state
+                        .tys
+                        .associated_fn_schemes
+                        .get(type_)
+                        .unwrap()
+                        .get(con_id)
+                        .unwrap(),
+                    None => tc_state.tys.top_schemes.get(type_).unwrap(),
+                };
+
+                let con_ty = match ty.normalize(tc_state.tys.tys.cons()) {
                     Ty::Con(con_id) => {
-                        let con_details =
-                            match tc_state.tys.tys.get_con(&con_id).unwrap().con_details() {
-                                Some(details) => details,
-                                None => return,
-                            };
+                        assert_eq!(&con_id, type_);
+                        assert!(con_scheme.quantified_vars.is_empty());
+
+                        // or just `con_scheme.ty`.
+                        con_scheme.subst_qvars(&Default::default())
                     }
 
-                    Ty::App(con, ty_args) => todo!(),
+                    Ty::App(con_id, ty_args) => {
+                        assert_eq!(&con_id, type_);
+                        let ty_args = match ty_args {
+                            TyArgs::Positional(args) => args,
+                            TyArgs::Named(_) => panic!(), // associated type syntax?
+                        };
+
+                        assert_eq!(con_scheme.quantified_vars.len(), ty_args.len());
+                        let mut var_map: Map<Id, Ty> =
+                            Map::with_capacity_and_hasher(ty_args.len(), Default::default());
+                        for ((var_id, _qvar), ty) in
+                            con_scheme.quantified_vars.iter().zip(ty_args.iter())
+                        {
+                            var_map.insert(var_id.clone(), ty.clone());
+                        }
+
+                        con_scheme.subst_qvars(&var_map)
+                    }
 
                     Ty::Var(_)
                     | Ty::QVar(_)
                     | Ty::Fun(_, _)
                     | Ty::FunNamedArgs(_, _)
                     | Ty::AssocTySelect { .. }
-                    | Ty::Anonymous { .. } => {}
+                    | Ty::Anonymous { .. } => return,
                 };
+
+                let field_ty: Ty = match con_ty {
+                    Ty::Fun(args, _) => {
+                        if field_pat.name.is_some() {
+                            panic!() // field pattern is named, but constructor doesn't have named fields
+                        }
+                        args.get(field_idx).cloned().unwrap()
+                    }
+
+                    Ty::FunNamedArgs(args, _) => {
+                        let field_name = match &field_pat.name {
+                            Some(name) => name,
+                            None => panic!(), // field pattern is not named, but constructor has named arguments
+                        };
+                        args.get(field_name).cloned().unwrap()
+                    }
+
+                    _ => return,
+                };
+
+                refine_pat_binders(
+                    tc_state,
+                    &field_ty,
+                    &field_pat.node,
+                    field_pat_coverage,
+                    level,
+                );
             }
         }
 
         ast::Pat::Variant(variant_pattern) => todo!(),
 
-        ast::Pat::Record(vec) => todo!(),
+        ast::Pat::Record(fields) => todo!(),
 
         ast::Pat::Ignore => todo!(),
 
