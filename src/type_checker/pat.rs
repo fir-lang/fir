@@ -407,18 +407,13 @@ pub(super) fn refine_pat_binders(
             } // field loop
         } // record
 
-        ast::Pat::Ignore => todo!(),
+        ast::Pat::Or(p1, p2) => {
+            refine_pat_binders(tc_state, ty, p1, coverage, level);
+            refine_pat_binders(tc_state, ty, p2, coverage, level);
+        }
 
-        ast::Pat::Str(_) => todo!(),
-
-        ast::Pat::Char(_) => todo!(),
-
-        ast::Pat::StrPfx(_, smol_str) => todo!(),
-
-        ast::Pat::Or(l, l1) => todo!(),
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
     }
-
-    todo!()
 }
 
 fn refine_var_pat(
