@@ -64,6 +64,20 @@ fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
 #         Result.Ok(()):
 #             Result.Err(`E1)
 
+fn f7_2[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[E1, ..Errs], ()] =
+    match f():
+        Result.Err(err):
+            Result.Err(err)
+
+        Result.Ok(()):
+            Result.Err(`E1)
+
+fn f7_arg_1(): Result[[E1, E2], ()] =
+    Result.Err(`E1)
+
+fn f7_arg_2[Errs](): Result[[E2, ..Errs], ()] =
+    Result.Err(`E2)
+
 fn f8(f: Fn(): [E1, E2]) = ()
 
 fn f9[R](): [E1, ..R] = `E1
@@ -90,5 +104,8 @@ fn main() =
     # Similar to the above, but for arguments: a function that handles more can
     # be passed as a function that handles less.
     f10(f11)
+
+    f7_2(f7_arg_1)
+    f7_2(f7_arg_2)
 
     ()
