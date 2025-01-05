@@ -437,7 +437,7 @@ pub(super) fn refine_pat_binders(
                 let field_pat_coverage =
                     variant_field_coverage.get_named_field(&field_name).unwrap();
                 let field_ty = variant_field_tys.get(&field_name).unwrap();
-                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
+                refine_pat_binders(tc_state, field_ty, &field_pat.node, field_pat_coverage);
             } // field loop
         } // variant
 
@@ -469,7 +469,7 @@ pub(super) fn refine_pat_binders(
                     None => return,
                 };
                 let field_ty = record_labels.get(&field_name).unwrap();
-                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
+                refine_pat_binders(tc_state, field_ty, &field_pat.node, field_pat_coverage);
             } // field loop
         } // record
 

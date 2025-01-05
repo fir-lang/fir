@@ -372,7 +372,12 @@ impl Scheme {
     }
 
     pub fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
-        todo!()
+        assert_eq!(vars.len(), self.quantified_vars.len());
+        for (k, _) in &self.quantified_vars {
+            assert!(vars.contains_key(k));
+        }
+
+        self.ty.subst_qvars(vars)
     }
 
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
@@ -608,6 +613,7 @@ impl Ty {
         }
     }
 
+    #[allow(unused)]
     pub(super) fn empty_variant() -> Ty {
         Ty::Anonymous {
             labels: Default::default(),

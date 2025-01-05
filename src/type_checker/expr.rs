@@ -1,7 +1,7 @@
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::pat::check_pat;
+use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
@@ -723,6 +723,8 @@ pub(super) fn check_expr(
                     level,
                     &pattern.loc,
                 );
+
+                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
 
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);
