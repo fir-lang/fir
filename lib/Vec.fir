@@ -1,9 +1,9 @@
-type Vec[T]:
-    _data: Array[T]
+type Vec[t]:
+    _data: Array[t]
     _len: U32
 
-impl[T] Vec[T]:
-    fn withCapacity(cap: U32): Vec[T] =
+impl[t] Vec[t]:
+    fn withCapacity(cap: U32): Vec[t] =
         Vec(_data = Array.new(cap), _len = 0)
 
     fn reserve(self, cap: U32) =
@@ -28,7 +28,7 @@ impl[T] Vec[T]:
         # In the compiled version we should actually clear the elements to allow garbage collection.
         self._len = 0
 
-    fn push(self, elem: T) =
+    fn push(self, elem: t) =
         let cap = self._data.len()
 
         if self._len == cap:
@@ -40,20 +40,20 @@ impl[T] Vec[T]:
         self._data.set(self._len, elem)
         self._len += 1
 
-    fn pop(self): Option[T] =
+    fn pop(self): Option[t] =
         if self._len == 0:
             return Option.None
 
         self._len -= 1
         Option.Some(self._data.get(self._len))
 
-    fn set(self, idx: U32, elem: T) =
+    fn set(self, idx: U32, elem: t) =
         if idx >= self._len:
             panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
         self._data.set(idx, elem)
 
-    fn get(self, idx: U32): T =
+    fn get(self, idx: U32): t =
         if idx >= self._len:
             panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
@@ -64,12 +64,12 @@ impl[T] Vec[T]:
         self.set(i, self.get(j))
         self.set(j, tmp)
 
-impl[T: Ord] Vec[T]:
+impl[t: Ord] Vec[t]:
     fn sort(self) =
         if self.len() != 0:
             _quicksort(self, 0, self.len() - 1)
 
-fn _quicksort[T: Ord](vec: Vec[T], low: U32, high: U32) =
+fn _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32) =
     if low >= high:
         return ()   # TODO: Allow returning without a value
 
@@ -80,7 +80,7 @@ fn _quicksort[T: Ord](vec: Vec[T], low: U32, high: U32) =
 
     _quicksort(vec, p + 1, high)
 
-fn _partition[T: Ord](vec: Vec[T], low: U32, high: U32): U32 =
+fn _partition[t: Ord](vec: Vec[t], low: U32, high: U32): U32 =
     let pivot = vec.get(high)
     let i = low
 
@@ -92,7 +92,7 @@ fn _partition[T: Ord](vec: Vec[T], low: U32, high: U32): U32 =
     vec.swap(i, high)
     i
 
-impl[T: ToStr] ToStr for Vec[T]:
+impl[t: ToStr] ToStr for Vec[t]:
     fn toStr(self): Str =
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')

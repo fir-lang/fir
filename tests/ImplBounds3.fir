@@ -1,23 +1,23 @@
-prim type Array[T]
+prim type Array[t]
 
 prim type U32
 
-trait Ord[T]:
-    fn cmp(self, other: T)
+trait Ord[t]:
+    fn cmp(self, other: t)
 
-type Vec[T]:
-    _data: Array[T]
+type Vec[t]:
+    _data: Array[t]
     _len: U32
 
-impl[T] Vec[T]:
+impl[t] Vec[t]:
     fn len(self): U32 =
         self._len
 
-impl[T: Ord] Vec[T]:
+impl[t: Ord] Vec[t]:
     fn sort(self) =
         _quicksort(self, 0, self.len())
 
-fn _quicksort[T: Ord](vec: Vec[T], low: U32, high: U32) =
+fn _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32) =
     ()
 
 # args: --typecheck --no-backtrace --no-prelude

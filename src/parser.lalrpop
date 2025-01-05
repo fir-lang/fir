@@ -150,7 +150,7 @@ TypeDeclRhs: TypeDeclRhs = {
 TypeParams: Vec<Id> = {
     => vec![],
 
-    "[" <params:Sep<UpperId, ",">> "]" =>
+    "[" <params:Sep<LowerId, ",">> "]" =>
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
@@ -207,6 +207,9 @@ LTypeNamed: L<Type> = {
 Type: Type = {
     <ty:TypeNamed> => ty,
 
+    <var:LowerId> =>
+        Type::Var(var.smol_str()),
+
     "Fn" "(" <args:Sep<LType, ",">> ")" <ret:(":" <LType>)?> =>
         Type::Fn(FnType { args, ret: ret.map(|t| t.map(|t| Box::new(t))) }),
 
@@ -228,7 +231,7 @@ TypeNamed: Type = {
 RowExtension: Option<Id> = {
     => None,
 
-    ".." <id:UpperId> => Some(id.smol_str()),
+    ".." <id:LowerId> => Some(id.smol_str()),
 }
 
 TypeArg: L<(Option<Id>, L<Type>)> = {
@@ -903,7 +906,7 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:UpperId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
+    <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:LowerId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
             NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
@@ -946,8 +949,8 @@ Context: Context = {
 }
 
 TypeWithBounds: L<(L<Id>, Vec<L<Type>>)> = {
-    <l:@L> <ty_param:LUpperId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
-    <l:@L> <ty_param:LUpperId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
+    <l:@L> <ty_param:LLowerId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
+    <l:@L> <ty_param:LLowerId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
 }
 
 ImplDeclItem: L<ImplDeclItem> = {

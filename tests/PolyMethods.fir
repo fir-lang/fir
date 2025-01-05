@@ -1,11 +1,11 @@
-trait T[A]:
-    fn f[B: ToStr](self, b: B)
+trait T[a]:
+    fn f[b: ToStr](self, b: b)
 
 type X:
     value: I32
 
 impl T for X:
-    fn f[Q: ToStr](self, q: Q) =
+    fn f[q: ToStr](self, q: q) =
         printStr("X.f called with q = `q`")
 
 fn main() =

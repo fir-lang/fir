@@ -1,13 +1,13 @@
-fn f1[R](): Result[[E1, ..R], ()] =
+fn f1[r](): Result[[E1, ..r], ()] =
     Result.Err(`E1)
 
-fn f2[R](): Result[[E1, E2, ..R], ()] =
+fn f2[r](): Result[[E1, E2, ..r], ()] =
     if Bool.True:
         Result.Err(`E1)
     else:
         Result.Err(`E2)
 
-fn f3[R](): Result[[E1, E2, ..R], ()] =
+fn f3[r](): Result[[E1, E2, ..r], ()] =
     let err = if Bool.True:
         `E1
     else:
@@ -37,7 +37,7 @@ fn f5Complex(): Result[[E2, E3], ()] =
         Result.Err(other):
             Result.Err(other)
 
-fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
+fn f6[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[..errs], ()] =
     match f():
         Result.Err(`E1) | Result.Ok(()):
             Result.Ok(())
@@ -48,15 +48,15 @@ fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
 # Similar to `f6`, but the call site adds more error cases.
 #
 # TODO: I'm not sure that this type is right.. Do we need an "absent" constraint
-# like `Errs \ E1`?
+# like `errs \ E1`?
 #
 # Currently this fails because we try to unify:
 #
-#   [E1, ..R1] ~ [..Errs]
+#   [E1, ..r1] ~ [..errs]
 #
-# and `E1` cannot be added to `Errs` as it's a rigid type variable.
+# and `E1` cannot be added to `errs` as it's a rigid type variable.
 #
-# fn f7[Errs](f: Fn(): Result[[..Errs], ()]): Result[[E1, ..Errs], ()] =
+# fn f7[errs](f: Fn(): Result[[..errs], ()]): Result[[E1, ..errs], ()] =
 #     match f():
 #         Result.Err(err):
 #             Result.Err(err)
@@ -64,7 +64,7 @@ fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
 #         Result.Ok(()):
 #             Result.Err(`E1)
 
-fn f7_2[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[E1, ..Errs], ()] =
+fn f7_2[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[E1, ..errs], ()] =
     match f():
         Result.Err(err):
             Result.Err(err)
@@ -75,14 +75,14 @@ fn f7_2[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[E1, ..Errs], ()] =
 fn f7_arg_1(): Result[[E1, E2], ()] =
     Result.Err(`E1)
 
-fn f7_arg_2[Errs](): Result[[E2, ..Errs], ()] =
+fn f7_arg_2[errs](): Result[[E2, ..errs], ()] =
     Result.Err(`E2)
 
 fn f8(f: Fn(): [E1, E2]) = ()
 
-fn f9[R](): [E1, ..R] = `E1
+fn f9[r](): [E1, ..r] = `E1
 
-fn f10[R](f: Fn([E1, E2, ..R]): ()) = ()
+fn f10[r](f: Fn([E1, E2, ..r]): ()) = ()
 
 fn f11(x: [E1, E2, E3]) = ()
 

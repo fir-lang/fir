@@ -1,5 +1,5 @@
-trait Step2[T: Ord]:
-    fn next(self): T
+trait Step2[t: Ord]:
+    fn next(self): t
 
 impl Step2 for U32:
     fn next(self): U32 = self + 1

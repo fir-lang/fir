@@ -5,7 +5,7 @@ prim type Str
 type A:
     A
 
-trait Test[A]:
+trait Test[a]:
     type T
     fn test(self): T
 

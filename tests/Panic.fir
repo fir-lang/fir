@@ -1,4 +1,4 @@
-fn test[T: ToStr]() =
+fn test[t: ToStr]() =
     printStr("Hi")
 
 fn optionInt(): Option[I32] = Option.Some(123)

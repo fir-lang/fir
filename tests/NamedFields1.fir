@@ -1,15 +1,15 @@
-type Result[T, E]:
+type Result[t, e]:
     Ok:
-        value: T
+        value: t
 
     Err:
-        value: E
+        value: e
 
 prim type I32
 
 prim type Str
 
-trait ToStr[T]:
+trait ToStr[t]:
     fn toStr(self): Str
 
 impl ToStr for I32:

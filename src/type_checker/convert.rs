@@ -22,14 +22,10 @@ here as helpers.
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
+            // TODO FIXME HACK: `tys` is also used to map an associated type `T` (a `Type::Named`)
+            // to `Self.T`, so we need to check var map here when converting a constructor.
             if let Some(ty) = tys.get_var(name) {
-                if !args.is_empty() {
-                    panic!(
-                        "{}: Type variable {} cannot be applied arguments",
-                        loc_display(loc),
-                        name
-                    );
-                }
+                assert!(args.is_empty());
                 return ty.clone();
             }
 
@@ -92,6 +88,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
             Ty::App(ty_con.id.clone(), args)
         }
+
+        ast::Type::Var(var) => tys
+            .get_var(var)
+            .unwrap_or_else(|| panic!("{}: Unknown type variable", loc_display(loc)))
+            .clone(),
 
         ast::Type::Record { fields, extension } => {
             let mut ty_fields: Map<Id, Ty> =

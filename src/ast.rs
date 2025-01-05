@@ -157,6 +157,11 @@ pub enum Type {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
     Named(NamedType),
 
+    /// A type variable.
+    ///
+    /// We don't have higher-kinded types for now, so type variables cannot be applied.
+    Var(Id),
+
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
     Record {
         fields: Vec<Named<Type>>,
@@ -662,29 +667,27 @@ impl Type {
     /// Substitute star-kinded `ty` for `var` in `self`.
     pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
         match ty {
-            Type::Named(NamedType { name, args }) => {
-                if name == var {
-                    assert!(args.is_empty());
+            Type::Named(NamedType { name, args }) => Type::Named(NamedType {
+                name: name.clone(),
+                args: args
+                    .iter()
+                    .map(
+                        |L {
+                             loc,
+                             node: (name, ty_),
+                         }| L {
+                            loc: loc.clone(),
+                            node: (name.clone(), ty_.map_as_ref(|ty__| ty__.subst_var(var, ty))),
+                        },
+                    )
+                    .collect(),
+            }),
+
+            Type::Var(var_) => {
+                if var == var_ {
                     ty.clone()
                 } else {
-                    Type::Named(NamedType {
-                        name: name.clone(),
-                        args: args
-                            .iter()
-                            .map(
-                                |L {
-                                     loc,
-                                     node: (name, ty_),
-                                 }| L {
-                                    loc: loc.clone(),
-                                    node: (
-                                        name.clone(),
-                                        ty_.map_as_ref(|ty__| ty__.subst_var(var, ty)),
-                                    ),
-                                },
-                            )
-                            .collect(),
-                    })
+                    Type::Var(var_.clone())
                 }
             }
 

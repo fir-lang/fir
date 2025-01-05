@@ -2,8 +2,8 @@ prim type I32
 
 prim fn printI32(i: I32)
 
-type Option[T]:
-    Some(T)
+type Option[t]:
+    Some(t)
     None
 
 fn test() =

@@ -6,7 +6,7 @@ type A:
 type B:
     i: I32
 
-trait Test[A]:
+trait Test[a]:
     type T
     fn test(self): T
 

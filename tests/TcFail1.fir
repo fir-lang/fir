@@ -1,7 +1,7 @@
 prim type Str
 prim type I32
 
-trait T[A]:
+trait T[a]:
     fn toStr(self): Str
 
 impl T for Str:

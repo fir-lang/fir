@@ -1,4 +1,4 @@
-fn test[R](r: (x: I32, y: I32, ..R)): (x: I32, y: I32) =
+fn test[r](r: (x: I32, y: I32, ..r)): (x: I32, y: I32) =
     printStr(r.x.toStr())
     printStr(r.y.toStr())
     r
@@ -9,9 +9,9 @@ fn main() =
 # args: --typecheck --no-backtrace
 # expected stderr:
 # tests/RowsFail2.fir:4:5: Unable to unify types
-#              R and
+#              r and
 #              row()
 #              (
-#                 Con("R")
+#                 Con("r")
 #                 Anonymous { labels: {}, extension: None, kind: Record, is_row: true }
 #              )

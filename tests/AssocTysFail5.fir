@@ -1,4 +1,4 @@
-trait Test[T]:
+trait Test[t]:
     type X
     fn test(self)
 

@@ -204,6 +204,8 @@ impl Type {
                 }
             }
 
+            Type::Var(var) => buffer.push_str(var),
+
             Type::Record { fields, extension } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {

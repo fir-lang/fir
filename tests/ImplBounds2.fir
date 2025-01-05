@@ -1,8 +1,8 @@
-type A[T]:
-    i: T
+type A[t]:
+    i: t
 
-impl[T1: ToStr] A[T1]:
-    fn test[T2: Eq](self, t2: T2) =
+impl[t1: ToStr] A[t1]:
+    fn test[t2: Eq](self, t2: t2) =
         printStr(self.i.toStr())
         printStr((t2 == t2).toStr())
 

@@ -1,7 +1,7 @@
-type A[T]:
-    i: T
+type A[t]:
+    i: t
 
-impl[T1: ToStr] A[T1]:
+impl[t1: ToStr] A[t1]:
     fn test(self) =
         printStr(self.i.toStr())
 

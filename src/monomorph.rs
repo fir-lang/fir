@@ -662,6 +662,8 @@ fn mono_method(
             name
         }
 
+        ast::Type::Var(_) => panic!(),
+
         ast::Type::Record { .. } | ast::Type::Variant { .. } | ast::Type::Fn(_) => {
             // syntactically invalid, can't happen
             panic!()
@@ -697,6 +699,7 @@ fn mono_method(
                 mono_object_ty,
             )
         }
+        ast::Type::Var(_) => panic!(),
         ast::Type::Record { .. } => panic!(),
         ast::Type::Variant { .. } => panic!(),
         ast::Type::Fn(_) => panic!(),
@@ -1077,6 +1080,11 @@ fn mono_ty(
             })
         }
 
+        ast::Type::Var(var) => ty_map
+            .get(var)
+            .unwrap_or_else(|| panic!("Unbound type variable {}", var))
+            .clone(),
+
         ast::Type::Record { fields, extension } => {
             let mut names: Set<&Id> = Default::default();
             for field in fields {
@@ -1175,6 +1183,7 @@ fn ty_name(ty: &ast::Type) -> &str {
             }
             _ => "Ptr",
         },
+        ast::Type::Var(_) => "Ptr",
         ast::Type::Record { .. } | ast::Type::Variant { .. } => "Ptr",
         ast::Type::Fn(_) => "Ptr",
     }
@@ -1345,6 +1354,7 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
             assert!(args.is_empty());
             Ty::Con(name.clone())
         }
+        ast::Type::Var(_) => todo!(),
         ast::Type::Record { .. } => todo!(),
         ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),

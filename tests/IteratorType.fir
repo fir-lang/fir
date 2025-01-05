@@ -6,31 +6,31 @@ impl I32:
     prim fn __eq(self, other: I32): Bool
     prim fn __add(self, other: I32): I32
 
-prim type Array[T]
+prim type Array[t]
 
-type Option[T]:
-    Some(T)
+type Option[t]:
+    Some(t)
     None
 
-impl[T] Array[T]:
-    prim fn new(len: I32): Array[T]
+impl[t] Array[t]:
+    prim fn new(len: I32): Array[t]
     prim fn len(self): I32
-    prim fn get(self, idx: I32): T
-    prim fn set(self, idx: I32, elem: T): T
+    prim fn get(self, idx: I32): t
+    prim fn set(self, idx: I32, elem: t): t
 
-type ArrayIter[T]:
-    array: Array[T]
+type ArrayIter[t]:
+    array: Array[t]
     idx: I32
 
-trait Iterator[T]:
+trait Iterator[t]:
     type Item
 
     fn next(self): Option[Item]
 
-impl[T] Iterator[ArrayIter[T]]:
-    type Item = T
+impl[t] Iterator[ArrayIter[t]]:
+    type Item = t
 
-    fn next(self): Option[T] =
+    fn next(self): Option[t] =
         if self.idx == self.array.len():
             Option.None
         else:

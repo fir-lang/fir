@@ -1,25 +1,25 @@
 fn main() = expectU32Item(RangeIterator(current = 0u32, end = 10u32))
 
-fn expectU32Item[I: Iterator[Item = U32]](iter: I) = ()
+fn expectU32Item[i: Iterator[Item = U32]](iter: i) = ()
 
 prim type U32
 
-type Option[T]:
+type Option[t]:
     None
-    Some(T)
+    Some(t)
 
-trait Iterator[T]:
+trait Iterator[t]:
     type Item
 
     fn next(self): Option[Item]
 
-type RangeIterator[T]:
-    current: T
-    end: T
+type RangeIterator[t]:
+    current: t
+    end: t
 
-impl[T] Iterator for RangeIterator[T]:
-    type Item = T
+impl[t] Iterator for RangeIterator[t]:
+    type Item = t
 
-    fn next(self): Option[T] = Option.None
+    fn next(self): Option[t] = Option.None
 
 # args: --typecheck --no-prelude

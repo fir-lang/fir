@@ -6,98 +6,98 @@ import StrBuf
 import Vec
 
 # The `+` operator.
-trait Add[T]:
-    fn __add(self, other: T): T
+trait Add[t]:
+    fn __add(self, other: t): t
 
 # The `-` operator.
-trait Sub[T]:
-    fn __sub(self, other: T): T
+trait Sub[t]:
+    fn __sub(self, other: t): t
 
 # The `*` operator.
-trait Mul[T]:
-    fn __mul(self, other: T): T
+trait Mul[t]:
+    fn __mul(self, other: t): t
 
 # The `/` operator.
-trait Div[T]:
-    fn __div(self, other: T): T
+trait Div[t]:
+    fn __div(self, other: t): t
 
 # The `==` operator.
-trait Eq[T]:
-    fn __eq(self, other: T): Bool
+trait Eq[t]:
+    fn __eq(self, other: t): Bool
 
-    fn __neq(self, other: T): Bool =
+    fn __neq(self, other: t): Bool =
         !self.__eq(other)
 
 # The `|` operator.
-trait BitOr[T]:
-    fn __bitor(self, other: T): T
+trait BitOr[t]:
+    fn __bitor(self, other: t): t
 
 # The `&` operator.
-trait BitAnd[T]:
-    fn __bitand(self, other: T): T
+trait BitAnd[t]:
+    fn __bitand(self, other: t): t
 
 # The `<<` operator.
-trait Shl[T]:
-    fn __shl(self, other: T): T
+trait Shl[t]:
+    fn __shl(self, other: t): t
 
 # The `>>` operator.
-trait Shr[T]:
-    fn __shr(self, other: T): T
+trait Shr[t]:
+    fn __shr(self, other: t): t
 
-trait Ord[T]:
-    fn cmp(self, other: T): Ordering
+trait Ord[t]:
+    fn cmp(self, other: t): Ordering
 
-    fn __lt(self, other: T): Bool =
+    fn __lt(self, other: t): Bool =
         match self.cmp(other):
             Ordering.Less: Bool.True
             _: Bool.False
 
-    fn __le(self, other: T): Bool =
+    fn __le(self, other: t): Bool =
         match self.cmp(other):
             Ordering.Less | Ordering.Equal: Bool.True
             _: Bool.False
 
-    fn __gt(self, other: T): Bool =
+    fn __gt(self, other: t): Bool =
         match self.cmp(other):
             Ordering.Greater: Bool.True
             _: Bool.False
 
-    fn __ge(self, other: T): Bool =
+    fn __ge(self, other: t): Bool =
         match self.cmp(other):
             Ordering.Greater | Ordering.Equal: Bool.True
             _: Bool.False
 
-trait ToStr[T]:
+trait ToStr[t]:
     fn toStr(self): Str
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
 type Void
 
-prim type Array[T]
+prim type Array[t]
 
-impl[T] Array[T]:
-    prim fn new(len: U32): Array[T]
+impl[t] Array[t]:
+    prim fn new(len: U32): Array[t]
     prim fn len(self): U32
-    prim fn get(self, idx: U32): T
-    prim fn set(self, idx: U32, elem: T)
+    prim fn get(self, idx: U32): t
+    prim fn set(self, idx: U32, elem: t)
 
 prim fn printStr(s: Str)
-prim fn panic[T: ToStr](msg: T): Void
+prim fn panic[t: ToStr](msg: t): Void
 
-type Option[T]:
+type Option[t]:
     None
-    Some(T)
+    Some(t)
 
-impl[T] Option[T]:
-    fn unwrap(self): T =
+impl[t] Option[t]:
+    fn unwrap(self): t =
         match self:
             Option.None: panic("Unwrapping Option.None")
             Option.Some(value): value
 
-type Result[E, T]:
-    Err(E)
-    Ok(T)
+type Result[e, t]:
+    Err(e)
+    Ok(t)
 
 type Ordering:
     Less

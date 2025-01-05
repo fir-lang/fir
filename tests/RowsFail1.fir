@@ -1,4 +1,4 @@
-fn test[R](r: (x: I32, y: I32, ..R)) =
+fn test[r](r: (x: I32, y: I32, ..r)) =
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 

@@ -4,11 +4,11 @@ type Bool:
 
 prim type I32
 
-trait Eq[T]:
-    fn __eq(self, other: T): Bool
+trait Eq[t]:
+    fn __eq(self, other: t): Bool
 
-trait Add[T]:
-    fn __add(self, other: T): T
+trait Add[t]:
+    fn __add(self, other: t): t
 
 impl Eq for I32:
     prim fn __eq(self, other: I32): Bool
@@ -16,29 +16,29 @@ impl Eq for I32:
 impl Add for I32:
     prim fn __add(self, other: I32): I32
 
-type Option[T]:
+type Option[t]:
     None
-    Some(T)
+    Some(t)
 
-trait Iterator[T]:
+trait Iterator[t]:
     type Item
 
     fn next(self): Option[Item]
 
-prim type Array[T]
+prim type Array[t]
 
-impl[T] Array[T]:
+impl[t] Array[t]:
     prim fn len(self): I32
-    prim fn get(self, idx: I32): T
+    prim fn get(self, idx: I32): t
 
-type ArrayIter[T]:
-    array: Array[T]
+type ArrayIter[t]:
+    array: Array[t]
     idx: I32
 
-impl[T] Iterator for ArrayIter[T]:
-    type Item = T
+impl[t] Iterator for ArrayIter[t]:
+    type Item = t
 
-    fn next(self): Option[T] =
+    fn next(self): Option[t] =
         if self.idx == self.array.len():
             Option.None
         else:

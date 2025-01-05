@@ -1,6 +1,6 @@
 prim type I32
 
-trait T[A]:
+trait T[a]:
     fn test(self): ()
 
     fn getI32(self): I32 =

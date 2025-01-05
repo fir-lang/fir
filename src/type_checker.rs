@@ -1526,6 +1526,10 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
             }
         }
 
+        ast::Type::Var(var) => {
+            kinds.insert(var.clone(), Kind::Star);
+        }
+
         ast::Type::Record { fields, extension } => {
             for field in fields {
                 ty_var_kinds(&field.node, kinds);

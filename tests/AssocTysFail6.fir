@@ -5,7 +5,7 @@ prim type Str
 impl I32:
     prim fn toStr(self): Str
 
-trait Test[T]:
+trait Test[t]:
     type Elem
 
     fn getElem(self): Elem
@@ -15,7 +15,7 @@ impl Test for I32:
 
     fn getElem(self): Str = self.toStr()
 
-fn expectI32Elem[X: Test[Elem = I32]](x: X): I32 = x.getElem()
+fn expectI32Elem[x: Test[Elem = I32]](x: x): I32 = x.getElem()
 
 fn main() =
     expectI32Elem(123i32)

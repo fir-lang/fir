@@ -1,6 +1,6 @@
 prim type I32
 
-trait T[A]:
+trait T[a]:
     fn a(self)
     fn b(self)
 

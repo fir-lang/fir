@@ -4,7 +4,7 @@ fn f1(args: [E1, E2, E3]): [E2, E3] =
         `E2: `E3
         `E3: `E3
 
-fn f2[R](args: [E1, ..R]): Option[[..R]] =
+fn f2[r](args: [E1, ..r]): Option[[..r]] =
     match args:
         `E1: Option.None
         other: Option.Some(other)

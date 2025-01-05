@@ -205,6 +205,8 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
             .iter()
             .for_each(|arg| visit_ty(&arg.node.1.node, records, variants)),
 
+        ast::Type::Var(_) => {}
+
         ast::Type::Record { fields, extension } => {
             assert_eq!(extension, &None);
             records.insert(RecordShape::from_named_things(fields));

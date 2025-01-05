@@ -1,25 +1,25 @@
-trait Iterator[T]:
+trait Iterator[t]:
     type Item
 
     fn next(self): Option[Item]
 
-trait Step[T]:
-    fn next(self): T
+trait Step[t]:
+    fn next(self): t
 
-fn range[T](start: T, end: T): RangeIterator[T] =
+fn range[t](start: t, end: t): RangeIterator[t] =
     RangeIterator(current = start, end = end)
 
-fn irange[T](start: T, end: T): InclusiveRangeIterator[T] =
+fn irange[t](start: t, end: t): InclusiveRangeIterator[t] =
     InclusiveRangeIterator(current = start, end = end)
 
-type RangeIterator[T]:
-    current: T
-    end: T
+type RangeIterator[t]:
+    current: t
+    end: t
 
-impl[T: Step + Ord] Iterator for RangeIterator[T]:
-    type Item = T
+impl[t: Step + Ord] Iterator for RangeIterator[t]:
+    type Item = t
 
-    fn next(self): Option[T] =
+    fn next(self): Option[t] =
         if self.current >= self.end:
             Option.None
         else:
@@ -27,14 +27,14 @@ impl[T: Step + Ord] Iterator for RangeIterator[T]:
             self.current = self.current.next()
             Option.Some(current)
 
-type InclusiveRangeIterator[T]:
-    current: T
-    end: T
+type InclusiveRangeIterator[t]:
+    current: t
+    end: t
 
-impl[T: Step + Ord] Iterator for InclusiveRangeIterator[T]:
-    type Item = T
+impl[t: Step + Ord] Iterator for InclusiveRangeIterator[t]:
+    type Item = t
 
-    fn next(self): Option[T] =
+    fn next(self): Option[t] =
         if self.current > self.end:
             Option.None
         else:
