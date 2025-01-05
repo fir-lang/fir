@@ -94,8 +94,12 @@ impl PatCoverage {
         })
     }
 
-    pub fn get_variant_fields(&self, var: &Id) -> Option<&Fields> {
-        self.variants.get(var)
+    pub fn get_variant_fields(&self, con: &Id) -> Option<&Fields> {
+        self.variants.get(con)
+    }
+
+    pub fn get_record_field(&self, field: &Id) -> Option<&PatCoverage> {
+        self.records.named.get(field)
     }
 }
 

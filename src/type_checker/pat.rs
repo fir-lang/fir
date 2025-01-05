@@ -369,7 +369,43 @@ pub(super) fn refine_pat_binders(
             } // field loop
         } // variant
 
-        ast::Pat::Record(fields) => todo!(),
+        ast::Pat::Record(fields) => {
+            let (record_labels, _) = match ty {
+                Ty::Anonymous {
+                    labels,
+                    extension,
+                    kind: RecordOrVariant::Record,
+                    is_row,
+                } => {
+                    assert!(!*is_row);
+                    crate::type_checker::row_utils::collect_rows(
+                        tc_state.tys.tys.cons(),
+                        ty,
+                        RecordOrVariant::Record,
+                        labels,
+                        extension.clone(),
+                    )
+                }
+
+                _ => return,
+            };
+
+            for field_pat in fields {
+                let field_name = field_pat.name.clone().unwrap(); // record fields need to be named
+                let field_pat_coverage = match coverage.get_record_field(&field_name) {
+                    Some(coverage) => coverage,
+                    None => return,
+                };
+                let field_ty = record_labels.get(&field_name).unwrap();
+                refine_pat_binders(
+                    tc_state,
+                    &field_ty,
+                    &field_pat.node,
+                    field_pat_coverage,
+                    level,
+                );
+            } // field loop
+        } // record
 
         ast::Pat::Ignore => todo!(),
 
