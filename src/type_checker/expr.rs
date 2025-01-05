@@ -1,7 +1,7 @@
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::pat::check_pat;
+use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
@@ -706,6 +706,8 @@ pub(super) fn check_expr(
 
             let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
+            let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
+
             for ast::Alt {
                 pattern,
                 guard,
@@ -722,11 +724,22 @@ pub(super) fn check_expr(
                     &pattern.loc,
                 );
 
+                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
+
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);
                 }
 
                 rhs_tys.push(check_stmts(tc_state, rhs, None, level, loop_depth));
+
+                if guard.is_none() {
+                    covered_pats.add(&pattern.node);
+                }
+            }
+
+            let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
+            if !exhaustive {
+                println!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
             }
 
             for rhs_tys in rhs_tys.windows(2) {

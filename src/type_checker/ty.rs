@@ -221,6 +221,7 @@ pub(super) struct TypeDetails {
     pub(super) cons: Vec<ConShape>,
 }
 
+// TODO: Probably make this an enum with `product` and `sum` variants.
 #[derive(Debug, Clone)]
 pub(super) struct ConShape {
     pub(super) name: Option<Id>,
@@ -368,6 +369,15 @@ impl Scheme {
             ty: self.ty.subst_self(ty),
             loc: self.loc.clone(),
         }
+    }
+
+    pub fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
+        assert_eq!(vars.len(), self.quantified_vars.len());
+        for (k, _) in &self.quantified_vars {
+            assert!(vars.contains_key(k));
+        }
+
+        self.ty.subst_qvars(vars)
     }
 
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
@@ -599,6 +609,16 @@ impl Ty {
             labels: Default::default(),
             extension: None,
             kind: RecordOrVariant::Record,
+            is_row: false,
+        }
+    }
+
+    #[allow(unused)]
+    pub(super) fn empty_variant() -> Ty {
+        Ty::Anonymous {
+            labels: Default::default(),
+            extension: None,
+            kind: RecordOrVariant::Variant,
             is_row: false,
         }
     }
@@ -1025,6 +1045,10 @@ impl TyCon {
     pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
         self.details.trait_details()
     }
+
+    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+        self.details.con_details()
+    }
 }
 
 impl TyConDetails {
@@ -1035,6 +1059,13 @@ impl TyConDetails {
     pub(super) fn trait_details(&self) -> Option<&TraitDetails> {
         match self {
             TyConDetails::Trait(details) => Some(details),
+            _ => None,
+        }
+    }
+
+    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+        match self {
+            TyConDetails::Type(TypeDetails { cons }) => Some(cons),
             _ => None,
         }
     }
