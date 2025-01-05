@@ -202,7 +202,6 @@ pub(super) fn refine_pat_binders(
     ty: &Ty,                // type of the value being matched
     pat: &ast::L<ast::Pat>, // the pattern being refined
     coverage: &PatCoverage, // coverage information of `pat`
-    level: u32,
 ) {
     match &pat.node {
         ast::Pat::Var(var) => {
@@ -325,13 +324,7 @@ pub(super) fn refine_pat_binders(
                     _ => return,
                 };
 
-                refine_pat_binders(
-                    tc_state,
-                    &field_ty,
-                    &field_pat.node,
-                    field_pat_coverage,
-                    level,
-                );
+                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
             } // field loop
         } // constr pattern
 
@@ -389,13 +382,7 @@ pub(super) fn refine_pat_binders(
                 let field_pat_coverage =
                     variant_field_coverage.get_named_field(&field_name).unwrap();
                 let field_ty = variant_field_tys.get(&field_name).unwrap();
-                refine_pat_binders(
-                    tc_state,
-                    &field_ty,
-                    &field_pat.node,
-                    field_pat_coverage,
-                    level,
-                );
+                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
             } // field loop
         } // variant
 
@@ -427,19 +414,13 @@ pub(super) fn refine_pat_binders(
                     None => return,
                 };
                 let field_ty = record_labels.get(&field_name).unwrap();
-                refine_pat_binders(
-                    tc_state,
-                    &field_ty,
-                    &field_pat.node,
-                    field_pat_coverage,
-                    level,
-                );
+                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
             } // field loop
         } // record
 
         ast::Pat::Or(p1, p2) => {
-            refine_pat_binders(tc_state, ty, p1, coverage, level);
-            refine_pat_binders(tc_state, ty, p2, coverage, level);
+            refine_pat_binders(tc_state, ty, p1, coverage);
+            refine_pat_binders(tc_state, ty, p2, coverage);
         }
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
