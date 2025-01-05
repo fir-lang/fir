@@ -735,8 +735,6 @@ pub(super) fn check_expr(
                 if guard.is_none() {
                     covered_pats.add(&pattern.node);
                 }
-
-                // let _exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
             }
 
             let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);

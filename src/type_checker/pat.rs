@@ -238,8 +238,6 @@ pub(super) fn refine_pat_binders(
                     }
                 };
 
-                // TODO: If the constructor (label) is fully covered in `coverage` skip it.
-                // Otherwise add it to `unhandled_labels`.
                 let (label_fields, label_field_extension) =
                     match &label_ty.normalize(tc_state.tys.tys.cons()) {
                         ty @ Ty::Anonymous {
