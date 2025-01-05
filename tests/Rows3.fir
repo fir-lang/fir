@@ -19,16 +19,7 @@ fn f4(): Result[[E1, E2, E3], ()] =
     f2()
     f3()
 
-# TODO: Type refinement
-# fn f5(): Result[[E2, E3], ()] =
-#     match f4():
-#         Result.Err(`E1) | Result.Ok(()):
-#             Result.Ok(())
-#
-#         Result.Err(other):
-#             Result.Err(other) # type of `other` should be refined as `[E2, E3]`
-
-fn f5(): Result[[E2, E3], ()] =
+fn f5Simple(): Result[[E2, E3], ()] =
     match f4():
         Result.Err(errs):
             match errs:
@@ -38,14 +29,21 @@ fn f5(): Result[[E2, E3], ()] =
         Result.Ok(()):
             Result.Ok(())
 
-# TODO: Type refinement, function expressions
-# fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
-#     match f():
-#         Result.Err(`E1) | Result.Ok(()):
-#             Result.Ok(())
-#
-#         Result.Err(other):
-#             Result.Err(other)
+fn f5Complex(): Result[[E2, E3], ()] =
+    match f4():
+        Result.Err(`E1) | Result.Ok(()):
+            Result.Ok(())
+
+        Result.Err(other):
+            Result.Err(other)
+
+fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
+    match f():
+        Result.Err(`E1) | Result.Ok(()):
+            Result.Ok(())
+
+        Result.Err(other):
+            Result.Err(other)
 
 # Similar to `f6`, but the call site adds more error cases.
 # fn f7[Errs](f: Fn(): Result[[..Errs], ()]): Result[[E1, ..Errs], ()] =
