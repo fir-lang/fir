@@ -2,6 +2,7 @@ use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::type_checker::apply::apply;
 use crate::type_checker::pat_coverage::PatCoverage;
+use crate::type_checker::row_utils::collect_rows;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
 use crate::type_checker::{loc_display, TcFunState};
@@ -205,7 +206,36 @@ pub(super) fn refine_pat_binders(
 ) {
     match &pat.node {
         ast::Pat::Var(var) => {
-            todo!()
+            let (labels, extension) = match ty.normalize(tc_state.tys.tys.cons()) {
+                Ty::Anonymous {
+                    labels,
+                    extension,
+                    kind: RecordOrVariant::Variant,
+                    is_row,
+                } => {
+                    assert!(!is_row);
+                    collect_rows(
+                        tc_state.tys.tys.cons(),
+                        ty,
+                        RecordOrVariant::Variant,
+                        &labels,
+                        extension.clone(),
+                    )
+                }
+                _ => return,
+            };
+
+            let num_labels = labels.len();
+            let mut unhandled_labels: Map<Id, Ty> =
+                Map::with_capacity_and_hasher(num_labels, Default::default());
+            for (label, label_ty) in labels {
+                // TODO: If the constructor (label) is fully covered in `coverage` skip it.
+                // Otherwise add it to `unhandled_labels`.
+            }
+
+            if (unhandled_labels.len() != num_labels) {
+                // TODO: refine `var` by binding it again with the new type.
+            }
         }
 
         ast::Pat::Constr(ast::ConstrPattern {
@@ -322,7 +352,7 @@ pub(super) fn refine_pat_binders(
                     is_row,
                 } => {
                     assert!(!*is_row);
-                    crate::type_checker::row_utils::collect_rows(
+                    collect_rows(
                         tc_state.tys.tys.cons(),
                         ty,
                         RecordOrVariant::Variant,
@@ -342,7 +372,7 @@ pub(super) fn refine_pat_binders(
                     is_row,
                 } => {
                     assert!(!*is_row);
-                    crate::type_checker::row_utils::collect_rows(
+                    collect_rows(
                         tc_state.tys.tys.cons(),
                         ty,
                         RecordOrVariant::Variant,
@@ -378,7 +408,7 @@ pub(super) fn refine_pat_binders(
                     is_row,
                 } => {
                     assert!(!*is_row);
-                    crate::type_checker::row_utils::collect_rows(
+                    collect_rows(
                         tc_state.tys.tys.cons(),
                         ty,
                         RecordOrVariant::Record,
@@ -414,16 +444,6 @@ pub(super) fn refine_pat_binders(
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
     }
-}
-
-fn refine_var_pat(
-    tc_state: &mut TcFunState,
-    ty: &Ty,
-    var: &Id,
-    coverage: &PatCoverage,
-    level: u32,
-) {
-    todo!()
 }
 
 fn check_pat_shape(
