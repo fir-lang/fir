@@ -46,8 +46,16 @@ fn f6[Errs](f: Fn(): Result[[E1, ..Errs], ()]): Result[[..Errs], ()] =
             Result.Err(other)
 
 # Similar to `f6`, but the call site adds more error cases.
-# TODO: I'm not sure that this type is rigth.. Do we need an "absent" constraint
+#
+# TODO: I'm not sure that this type is right.. Do we need an "absent" constraint
 # like `Errs \ E1`?
+#
+# Currently this fails because we try to unify:
+#
+#   [E1, ..R1] ~ [..Errs]
+#
+# and `E1` cannot be added to `Errs` as it's a rigid type variable.
+#
 # fn f7[Errs](f: Fn(): Result[[..Errs], ()]): Result[[E1, ..Errs], ()] =
 #     match f():
 #         Result.Err(err):
