@@ -225,15 +225,70 @@ pub(super) fn refine_pat_binders(
             };
 
             let num_labels = labels.len();
+
             let mut unhandled_labels: Map<Id, Ty> =
                 Map::with_capacity_and_hasher(num_labels, Default::default());
-            for (label, label_ty) in labels {
+
+            'variant_label_loop: for (label, label_ty) in labels {
+                let label_field_coverage = match coverage.get_variant_fields(&label) {
+                    Some(field_coverage) => field_coverage,
+                    None => {
+                        unhandled_labels.insert(label, label_ty);
+                        continue;
+                    }
+                };
+
                 // TODO: If the constructor (label) is fully covered in `coverage` skip it.
                 // Otherwise add it to `unhandled_labels`.
+                let (label_fields, label_field_extension) =
+                    match &label_ty.normalize(tc_state.tys.tys.cons()) {
+                        ty @ Ty::Anonymous {
+                            labels,
+                            extension,
+                            kind,
+                            is_row,
+                        } => {
+                            assert!(!is_row);
+                            assert_eq!(*kind, RecordOrVariant::Record);
+                            collect_rows(
+                                tc_state.tys.tys.cons(),
+                                ty,
+                                RecordOrVariant::Record,
+                                labels,
+                                extension.clone(),
+                            )
+                        }
+
+                        _ => return,
+                    };
+
+                assert!(label_field_extension.is_none());
+
+                for (field_label, field_ty) in label_fields {
+                    let field_coverage = match label_field_coverage.get_named_field(&field_label) {
+                        Some(field_coverage) => field_coverage,
+                        None => {
+                            unhandled_labels.insert(label, label_ty);
+                            continue 'variant_label_loop;
+                        }
+                    };
+
+                    if !field_coverage.is_exhaustive(&field_ty, tc_state, &pat.loc) {
+                        unhandled_labels.insert(label, label_ty);
+                        continue 'variant_label_loop;
+                    }
+                }
             }
 
-            if (unhandled_labels.len() != num_labels) {
-                // TODO: refine `var` by binding it again with the new type.
+            if unhandled_labels.len() != num_labels {
+                let new_variant = Ty::Anonymous {
+                    labels: unhandled_labels,
+                    extension: extension.map(Box::new),
+                    kind: RecordOrVariant::Variant,
+                    is_row: false,
+                };
+
+                tc_state.env.insert(var.clone(), new_variant);
             }
         }
 
