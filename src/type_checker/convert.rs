@@ -275,8 +275,8 @@ pub(super) fn convert_and_bind_context(
             );
         }
 
-        // If a variable isn't in the kind map it means it's ambiguous (not used in the type), which
-        // we default as `*`.
+        // TODO: Variables that don't appear in the arguments or return type won't have their kinds
+        // inferred. Assume those to have kind `*`.
         let kind = var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star);
 
         context_converted.push((

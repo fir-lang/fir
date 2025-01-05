@@ -220,12 +220,15 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     loc: trait_decl.node.ty.loc.clone(),
                 }];
 
-                // Type variables of a trait declaration will have kind `*`.
-                let var_kinds: Map<Id, Kind> = Default::default();
+                let trait_var_kinds: Map<Id, Kind> =
+                    [(trait_decl.node.ty.node.0.clone(), Kind::Star)]
+                        .into_iter()
+                        .collect();
+
                 let trait_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     &mut tys,
                     &trait_context_ast,
-                    &var_kinds,
+                    &trait_var_kinds,
                     TyVarConversion::ToQVar,
                     &trait_decl.loc,
                 );
@@ -291,11 +294,13 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             // New scope for function context.
                             tys.enter_scope();
 
-                            let var_kinds: Map<Id, Kind> = Default::default();
+                            let mut fun_var_kinds: Map<Id, Kind> = trait_var_kinds.clone();
+                            fun_var_kinds.extend(fun_sig_ty_var_kinds(&fun.sig));
+
                             let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                                 &mut tys,
                                 &fun.sig.type_params,
-                                &var_kinds,
+                                &fun_var_kinds,
                                 TyVarConversion::ToQVar,
                                 &item.loc,
                             );
@@ -383,10 +388,16 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
 
+        let impl_var_kinds: Map<Id, Kind> = impl_decl
+            .context
+            .iter()
+            .map(|var| (var.node.0.node.clone(), Kind::Star))
+            .collect();
+
         let _impl_context = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
-            &Default::default(), // TODO: not sure about var kinds
+            &impl_var_kinds,
             TyVarConversion::ToQVar,
             &decl.loc,
         );
@@ -518,10 +529,16 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         tys.enter_scope();
 
+        let impl_var_kinds: Map<Id, Kind> = impl_decl
+            .context
+            .iter()
+            .map(|var| (var.node.0.node.clone(), Kind::Star))
+            .collect();
+
         let _impl_context = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
-            &Default::default(), // TODO: not sure about var kinds
+            &impl_var_kinds,
             TyVarConversion::ToQVar,
             &decl.loc,
         );
@@ -599,11 +616,12 @@ fn collect_schemes(
                 node: ast::FunDecl { sig, body: _ },
                 loc,
             }) => {
-                let var_kinds = fun_sig_ty_var_kinds(sig);
+                let fun_var_kinds = fun_sig_ty_var_kinds(sig);
+
                 let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     tys,
                     &sig.type_params,
-                    &var_kinds,
+                    &fun_var_kinds,
                     TyVarConversion::ToQVar,
                     loc,
                 );
@@ -638,10 +656,17 @@ fn collect_schemes(
             }
 
             ast::TopDecl::Impl(impl_decl) => {
+                let impl_var_kinds: Map<Id, Kind> = impl_decl
+                    .node
+                    .context
+                    .iter()
+                    .map(|var| (var.node.0.node.clone(), Kind::Star))
+                    .collect();
+
                 let impl_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     tys,
                     &impl_decl.node.context,
-                    &Default::default(), // TODO
+                    &impl_var_kinds,
                     TyVarConversion::ToQVar,
                     &impl_decl.loc,
                 );
@@ -674,11 +699,13 @@ fn collect_schemes(
 
                     let sig = &fun.sig;
 
-                    let var_kinds = fun_sig_ty_var_kinds(sig);
+                    let mut fun_var_kinds = impl_var_kinds.clone();
+                    fun_var_kinds.extend(fun_sig_ty_var_kinds(sig));
+
                     let fun_context = convert_and_bind_context(
                         tys,
                         &sig.type_params,
-                        &var_kinds,
+                        &fun_var_kinds,
                         TyVarConversion::ToQVar,
                         &item.loc,
                     );
@@ -1025,10 +1052,17 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     tys.tys.enter_scope();
 
     // Bind trait type parameters.
+    let impl_var_kinds: Map<Id, Kind> = impl_
+        .node
+        .context
+        .iter()
+        .map(|var| (var.node.0.node.clone(), Kind::Star))
+        .collect();
+
     let impl_bounds = convert_and_bind_context(
         &mut tys.tys,
         &impl_.node.context,
-        &Default::default(), // TODO
+        &impl_var_kinds,
         TyVarConversion::ToOpaque,
         &impl_.loc,
     );
@@ -1515,9 +1549,6 @@ fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
     kinds
 }
 
-// TODO: This only generates row kinded variables for now, as we default the rest as `*`.
-// It will be easier to add `*` kinded variables here once we distinguish variables from
-// constructors syntactically (#33).
 fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
     match ty {
         ast::Type::Named(ast::NamedType { name: _, args }) => {
