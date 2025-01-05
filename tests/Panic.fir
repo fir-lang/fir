@@ -1,6 +1,3 @@
-fn test[t: ToStr]() =
-    printStr("Hi")
-
 fn optionInt(): Option[I32] = Option.Some(123)
 
 fn main() =
@@ -10,4 +7,4 @@ fn main() =
 
 # args: --no-backtrace
 # expected stderr:
-# tests/Panic.fir:9:25: PANIC: optionInt returned 123
+# tests/Panic.fir:6:25: PANIC: optionInt returned 123
