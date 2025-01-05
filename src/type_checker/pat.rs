@@ -6,6 +6,9 @@ use crate::type_checker::unification::unify;
 use crate::type_checker::{loc_display, TcFunState};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
+///
+/// `pat` is `mut` to be able to update type arguments in constructor patterns with fresh type
+/// variables of the constructor's instantiated type's arguments.
 pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
     match &mut pat.node {
         ast::Pat::Var(var) => {
