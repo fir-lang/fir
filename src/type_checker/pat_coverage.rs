@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, PgmTypes, TcFunState, Ty, TyArgs};
+use crate::type_checker::{row_utils, TcFunState, Ty, TyArgs, TyMap};
 
 use super::RecordOrVariant;
 
@@ -130,7 +130,7 @@ impl PatCoverage {
         }
 
         match ty.normalize(tc_state.tys.tys.cons()) {
-            Ty::Con(ty_con) => match con_shape(&ty_con, tc_state.tys) {
+            Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let (con_fn_ty, con_fn_ty_args) = tc_state
                         .tys
@@ -179,7 +179,7 @@ impl PatCoverage {
                     TyArgs::Positional(args) => args,
                     TyArgs::Named(_) => panic!(),
                 };
-                match con_shape(&ty_con, tc_state.tys) {
+                match con_shape(&ty_con, &tc_state.tys.tys) {
                     ConShape::Product => {
                         let (con_fn_ty, con_fn_ty_args) = tc_state
                             .tys
@@ -394,8 +394,8 @@ enum ConShape {
     Sum(Vec<Id>),
 }
 
-fn con_shape(ty_con: &Id, tys: &PgmTypes) -> ConShape {
-    let cons = tys.tys.get_con(ty_con).unwrap().con_details().unwrap();
+fn con_shape(ty_con: &Id, tys: &TyMap) -> ConShape {
+    let cons = tys.get_con(ty_con).unwrap().con_details().unwrap();
     if cons.len() == 1 {
         ConShape::Product
     } else {
