@@ -1342,8 +1342,6 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
 
         Ty::Fun(_args, _ret) => todo!(),
 
-        Ty::FunNamedArgs(_args, _ret) => todo!(),
-
         Ty::AssocTySelect { ty: _, assoc_ty: _ } => todo!(),
     }
 }

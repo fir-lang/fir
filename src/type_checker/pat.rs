@@ -342,7 +342,6 @@ pub(super) fn refine_pat_binders(
                 Ty::Var(_)
                 | Ty::QVar(_)
                 | Ty::Fun(_, _)
-                | Ty::FunNamedArgs(_, _)
                 | Ty::AssocTySelect { .. }
                 | Ty::Anonymous { .. } => return,
             };
@@ -360,18 +359,21 @@ pub(super) fn refine_pat_binders(
 
                 let field_ty: Ty = match &con_ty {
                     Ty::Fun(args, _) => {
-                        if field_pat.name.is_some() {
-                            panic!() // field pattern is named, but constructor doesn't have named fields
+                        match args {
+                            FunArgs::Positional(args) => {
+                                if field_pat.name.is_some() {
+                                    panic!() // field pattern is named, but constructor doesn't have named fields
+                                }
+                                args.get(field_idx).cloned().unwrap()
+                            }
+                            FunArgs::Named(args) => {
+                                let field_name = match &field_pat.name {
+                                    Some(name) => name,
+                                    None => panic!(), // field pattern is not named, but constructor has named arguments
+                                };
+                                args.get(field_name).cloned().unwrap()
+                            }
                         }
-                        args.get(field_idx).cloned().unwrap()
-                    }
-
-                    Ty::FunNamedArgs(args, _) => {
-                        let field_name = match &field_pat.name {
-                            Some(name) => name,
-                            None => panic!(), // field pattern is not named, but constructor has named arguments
-                        };
-                        args.get(field_name).cloned().unwrap()
                     }
 
                     _ => return,

@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, TcFunState, Ty, TyArgs, TyMap};
+use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyArgs, TyMap};
 
 use super::RecordOrVariant;
 
@@ -318,7 +318,7 @@ impl PatCoverage {
 
             Ty::Var(_) => false,
 
-            Ty::QVar(_) | Ty::Fun(_, _) | Ty::FunNamedArgs(_, _) => panic!(),
+            Ty::QVar(_) | Ty::Fun(_, _) => panic!(),
 
             Ty::AssocTySelect { .. } => todo!(),
         }
@@ -342,34 +342,37 @@ impl PatCoverage {
 
         match con_fn_ty {
             Ty::Fun(args, _) => {
-                // If we have a pattern for the constructor, it should have the
-                // right number of fields.
-                assert_eq!(args.len(), con_field_pats.unnamed.len());
+                match args {
+                    FunArgs::Positional(args) => {
+                        // If we have a pattern for the constructor, it should have the
+                        // right number of fields.
+                        assert_eq!(args.len(), con_field_pats.unnamed.len());
 
-                for (fun_arg, fun_arg_pat) in args.iter().zip(con_field_pats.unnamed.iter()) {
-                    if !fun_arg_pat.is_exhaustive(fun_arg, tc_state, loc) {
-                        return false;
+                        for (fun_arg, fun_arg_pat) in args.iter().zip(con_field_pats.unnamed.iter())
+                        {
+                            if !fun_arg_pat.is_exhaustive(fun_arg, tc_state, loc) {
+                                return false;
+                            }
+                        }
                     }
-                }
 
-                true
-            }
+                    FunArgs::Named(args) => {
+                        // Same as above.
+                        assert_eq!(
+                            args.keys().collect::<Set<_>>(),
+                            con_field_pats.named.keys().collect::<Set<_>>()
+                        );
 
-            Ty::FunNamedArgs(args, _) => {
-                // Same as above.
-                assert_eq!(
-                    args.keys().collect::<Set<_>>(),
-                    con_field_pats.named.keys().collect::<Set<_>>()
-                );
-
-                for (arg_name, arg_ty) in args.iter() {
-                    if !con_field_pats
-                        .named
-                        .get(arg_name)
-                        .unwrap()
-                        .is_exhaustive(arg_ty, tc_state, loc)
-                    {
-                        return false;
+                        for (arg_name, arg_ty) in args.iter() {
+                            if !con_field_pats
+                                .named
+                                .get(arg_name)
+                                .unwrap()
+                                .is_exhaustive(arg_ty, tc_state, loc)
+                            {
+                                return false;
+                            }
+                        }
                     }
                 }
 

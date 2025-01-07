@@ -190,11 +190,7 @@ pub(super) fn check_expr(
                         loc_display(&object.loc)
                     ),
 
-                    other @ (Ty::Var(_)
-                    | Ty::QVar(_)
-                    | Ty::Fun(_, _)
-                    | Ty::FunNamedArgs(_, _)
-                    | Ty::Anonymous { .. }) => {
+                    other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun(_, _) | Ty::Anonymous { .. }) => {
                         panic!(
                             "{}: Object {} in field selection does not have fields: {:?}",
                             loc_display(&object.loc),
@@ -304,76 +300,73 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    for arg in args.iter() {
-                        if arg.name.is_some() {
-                            panic!(
-                                "{}: Named argument applied to function that expects positional arguments",
-                                loc_display(&expr.loc),
-                            );
+                    match param_tys {
+                        FunArgs::Positional(param_tys) => {
+                            for arg in args.iter() {
+                                if arg.name.is_some() {
+                                    panic!(
+                                        "{}: Named argument applied to function that expects positional arguments",
+                                        loc_display(&expr.loc),
+                                    );
+                                }
+                            }
+
+                            let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
+                            for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
+                                let arg_ty = check_expr(
+                                    tc_state,
+                                    &mut arg.expr,
+                                    Some(param_ty),
+                                    level,
+                                    loop_depth,
+                                );
+                                arg_tys.push(arg_ty);
+                            }
                         }
-                    }
 
-                    let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
-                    for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
-                        let arg_ty =
-                            check_expr(tc_state, &mut arg.expr, Some(param_ty), level, loop_depth);
-                        arg_tys.push(arg_ty);
-                    }
-                    unify_expected_ty(
-                        *ret_ty,
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
-                    )
-                }
+                        FunArgs::Named(param_tys) => {
+                            for arg in args.iter() {
+                                if arg.name.is_none() {
+                                    panic!(
+                                        "{}: Positional argument applied to function that expects named arguments",
+                                        loc_display(&expr.loc),
+                                    );
+                                }
+                            }
 
-                Ty::FunNamedArgs(param_tys, ret_ty) => {
-                    if param_tys.len() != args.len() {
-                        panic!(
-                            "{}: Function with arity {} is passed {} args",
-                            loc_display(&expr.loc),
-                            param_tys.len(),
-                            args.len()
-                        );
-                    }
+                            let param_names: Set<&Id> = param_tys.keys().collect();
+                            let arg_names: Set<&Id> =
+                                args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
 
-                    for arg in args.iter() {
-                        if arg.name.is_none() {
-                            panic!(
-                                "{}: Positional argument applied to function that expects named arguments",
-                                loc_display(&expr.loc),
-                            );
+                            if param_names != arg_names {
+                                panic!(
+                                    "{}: Function expects arguments with names {:?}, but passed {:?}",
+                                    loc_display(&expr.loc),
+                                    param_names,
+                                    arg_names
+                                );
+                            }
+
+                            for arg in args {
+                                let arg_name: &Id = arg.name.as_ref().unwrap();
+                                let param_ty: &Ty = param_tys.get(arg_name).unwrap();
+                                let arg_ty = check_expr(
+                                    tc_state,
+                                    &mut arg.expr,
+                                    Some(param_ty),
+                                    level,
+                                    loop_depth,
+                                );
+                                unify(
+                                    &arg_ty,
+                                    param_ty,
+                                    tc_state.tys.tys.cons(),
+                                    tc_state.var_gen,
+                                    level,
+                                    &expr.loc,
+                                );
+                            }
                         }
-                    }
-
-                    let param_names: Set<&Id> = param_tys.keys().collect();
-                    let arg_names: Set<&Id> =
-                        args.iter().map(|arg| arg.name.as_ref().unwrap()).collect();
-
-                    if param_names != arg_names {
-                        panic!(
-                            "{}: Function expects arguments with names {:?}, but passed {:?}",
-                            loc_display(&expr.loc),
-                            param_names,
-                            arg_names
-                        );
-                    }
-
-                    for arg in args {
-                        let arg_name: &Id = arg.name.as_ref().unwrap();
-                        let param_ty: &Ty = param_tys.get(arg_name).unwrap();
-                        let arg_ty =
-                            check_expr(tc_state, &mut arg.expr, Some(param_ty), level, loop_depth);
-                        unify(
-                            &arg_ty,
-                            param_ty,
-                            tc_state.tys.tys.cons(),
-                            tc_state.var_gen,
-                            level,
-                            &expr.loc,
-                        );
                     }
 
                     unify_expected_ty(
@@ -876,7 +869,12 @@ fn check_field_select(
                 // `select_method`. Drop 'self' argument.
                 match method_ty {
                     Ty::Fun(mut args, ret) => {
-                        args.remove(0);
+                        match &mut args {
+                            FunArgs::Positional(args) => {
+                                args.remove(0);
+                            }
+                            FunArgs::Named(_) => panic!(),
+                        }
                         Ty::Fun(args, ret)
                     }
                     _ => panic!(
@@ -919,7 +917,7 @@ pub(super) fn select_field(
                 let con_ty = con_scheme.instantiate_with_tys(ty_args);
 
                 match con_ty {
-                    Ty::FunNamedArgs(fields, _) => Some(fields.get(field)?.clone()),
+                    Ty::Fun(FunArgs::Named(fields), _) => Some(fields.get(field)?.clone()),
                     _ => None,
                 }
             }

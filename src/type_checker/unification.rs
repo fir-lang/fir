@@ -81,15 +81,49 @@ pub(super) fn unify(
         (Ty::Fun(args1, ret1), Ty::Fun(args2, ret2)) => {
             if args1.len() != args2.len() {
                 panic!(
-                    "{}: Unable to unify functions {} and {} (argument numbers)",
+                    "{}: Unable to unify functions {} and {} (argument numbers don't match)",
                     loc_display(loc),
                     ty1,
                     ty2
                 );
             }
 
-            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                unify(arg1, arg2, cons, var_gen, level, loc);
+            match (args1, args2) {
+                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                        unify(arg1, arg2, cons, var_gen, level, loc);
+                    }
+                }
+
+                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                    let arg_names_1: Set<&Id> = args1.keys().collect();
+                    let arg_names_2: Set<&Id> = args2.keys().collect();
+                    if arg_names_1 != arg_names_2 {
+                        panic!(
+                            "{}: Unable to unify functions with different named arguments",
+                            loc_display(loc)
+                        );
+                    }
+
+                    for arg_name in arg_names_1 {
+                        unify(
+                            args1.get(arg_name).unwrap(),
+                            args2.get(arg_name).unwrap(),
+                            cons,
+                            var_gen,
+                            level,
+                            loc,
+                        );
+                    }
+                }
+
+                (FunArgs::Named(_), FunArgs::Positional(_))
+                | (FunArgs::Positional(_), FunArgs::Named(_)) => {
+                    panic!(
+                        "{}: Unable to unify functions with positional and named arguments",
+                        loc_display(loc)
+                    )
+                }
             }
 
             unify(ret1, ret2, cons, var_gen, level, loc);
@@ -333,15 +367,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
         Ty::Fun(args, ret) => {
-            for arg in args {
-                prune_level(arg, max_level);
-            }
-            prune_level(ret, max_level);
-        }
-
-        Ty::FunNamedArgs(args, ret) => {
-            for arg in args.values() {
-                prune_level(arg, max_level);
+            match args {
+                FunArgs::Positional(args) => {
+                    args.iter().for_each(|arg| prune_level(arg, max_level))
+                }
+                FunArgs::Named(args) => args.values().for_each(|arg| prune_level(arg, max_level)),
             }
             prune_level(ret, max_level);
         }

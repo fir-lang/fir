@@ -60,11 +60,8 @@ pub enum Ty {
     /// Instantiation converts these into unification variables (`Ty::Var`).
     QVar(Id),
 
-    /// A function type, e.g. `Fn(U32): Str`.
-    Fun(Vec<Ty>, Box<Ty>),
-
-    /// A function type with named arguments, e.g. `Fn(x: U32, y: U32): Str`.
-    FunNamedArgs(Map<Id, Ty>, Box<Ty>),
+    /// A function type, e.g. `Fn(U32): Str`, `Fn(x: U32, y: U32): T`.
+    Fun(FunArgs, Box<Ty>),
 
     /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
     AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
@@ -98,6 +95,22 @@ pub enum RecordOrVariant {
 /// - `Ty::Con`: a rigid type variable.
 /// - `Ty::Row`: an extension.
 type Extension = Option<Box<Ty>>;
+
+// Q: Same type as `TyArgs`, should we use the same type?
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FunArgs {
+    Positional(Vec<Ty>),
+    Named(Map<Id, Ty>),
+}
+
+impl FunArgs {
+    pub fn len(&self) -> usize {
+        match self {
+            FunArgs::Positional(args) => args.len(),
+            FunArgs::Named(args) => args.len(),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TyArgs {
@@ -571,29 +584,50 @@ fn ty_eq_modulo_alpha(
                 return false;
             }
 
-            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                if !ty_eq_modulo_alpha(cons, extra_qvars, arg1, arg2, ty1_qvars, ty2_qvars, loc) {
-                    return false;
+            match (args1, args2) {
+                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                        if !ty_eq_modulo_alpha(
+                            cons,
+                            extra_qvars,
+                            arg1,
+                            arg2,
+                            ty1_qvars,
+                            ty2_qvars,
+                            loc,
+                        ) {
+                            return false;
+                        }
+                    }
                 }
-            }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
-        }
+                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                    let names1: Set<&Id> = args1.keys().collect();
+                    let names2: Set<&Id> = args2.keys().collect();
 
-        (Ty::FunNamedArgs(args1, ret1), Ty::FunNamedArgs(args2, ret2)) => {
-            let names1: Set<&Id> = args1.keys().collect();
-            let names2: Set<&Id> = args2.keys().collect();
+                    if names1 != names2 {
+                        return false;
+                    }
 
-            if names1 != names2 {
-                return false;
-            }
-
-            for name in names1 {
-                let ty1 = args1.get(name).unwrap();
-                let ty2 = args2.get(name).unwrap();
-                if !ty_eq_modulo_alpha(cons, extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc) {
-                    return false;
+                    for name in names1 {
+                        let ty1 = args1.get(name).unwrap();
+                        let ty2 = args2.get(name).unwrap();
+                        if !ty_eq_modulo_alpha(
+                            cons,
+                            extra_qvars,
+                            ty1,
+                            ty2,
+                            ty1_qvars,
+                            ty2_qvars,
+                            loc,
+                        ) {
+                            return false;
+                        }
+                    }
                 }
+
+                (FunArgs::Named(_), FunArgs::Positional(_))
+                | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
             }
 
             ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
@@ -684,15 +718,16 @@ impl Ty {
             }
 
             Ty::Fun(args, ret) => Ty::Fun(
-                args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
-                Box::new(ret.subst(var, ty)),
-            ),
-
-            Ty::FunNamedArgs(named_args, ret) => Ty::FunNamedArgs(
-                named_args
-                    .iter()
-                    .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
-                    .collect(),
+                match args {
+                    FunArgs::Positional(args) => FunArgs::Positional(
+                        args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                    ),
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
+                            .collect(),
+                    ),
+                },
                 Box::new(ret.subst(var, ty)),
             ),
 
@@ -750,14 +785,16 @@ impl Ty {
             Ty::QVar(id) => Ty::QVar(id.clone()),
 
             Ty::Fun(args, ret) => Ty::Fun(
-                args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
-                Box::new(ret.subst_self(self_ty)),
-            ),
-
-            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
-                args.iter()
-                    .map(|(name, ty_)| (name.clone(), ty_.subst_self(self_ty)))
-                    .collect(),
+                match args {
+                    FunArgs::Positional(args) => FunArgs::Positional(
+                        args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
+                    ),
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(name, ty_)| (name.clone(), ty_.subst_self(self_ty)))
+                            .collect(),
+                    ),
+                },
                 Box::new(ret.subst_self(self_ty)),
             ),
 
@@ -811,14 +848,16 @@ impl Ty {
                 .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
 
             Ty::Fun(args, ret) => Ty::Fun(
-                args.iter().map(|arg| arg.subst_qvars(vars)).collect(),
-                Box::new(ret.subst_qvars(vars)),
-            ),
-
-            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
-                args.iter()
-                    .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
-                    .collect(),
+                match args {
+                    FunArgs::Positional(args) => {
+                        FunArgs::Positional(args.iter().map(|arg| arg.subst_qvars(vars)).collect())
+                    }
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
+                            .collect(),
+                    ),
+                },
                 Box::new(ret.subst_qvars(vars)),
             ),
 
@@ -916,14 +955,16 @@ impl Ty {
             }
 
             Ty::Fun(args, ret) => Ty::Fun(
-                args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
-                Box::new(ret.deep_normalize(cons)),
-            ),
-
-            Ty::FunNamedArgs(args, ret) => Ty::FunNamedArgs(
-                args.iter()
-                    .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
-                    .collect(),
+                match args {
+                    FunArgs::Positional(args) => FunArgs::Positional(
+                        args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
+                    ),
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(name, arg)| (name.clone(), arg.deep_normalize(cons)))
+                            .collect(),
+                    ),
+                },
                 Box::new(ret.deep_normalize(cons)),
             ),
 
@@ -947,7 +988,6 @@ impl Ty {
             | Ty::Anonymous { .. }
             | Ty::QVar(_)
             | Ty::Fun(_, _)
-            | Ty::FunNamedArgs(_, _)
             | Ty::AssocTySelect { .. } => None,
         }
     }
@@ -1203,22 +1243,23 @@ impl fmt::Display for Ty {
 
             Ty::Fun(args, ret) => {
                 write!(f, "Fn(")?;
-                for (i, arg) in args.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
+                match args {
+                    FunArgs::Positional(args) => {
+                        for (i, arg) in args.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{}", arg)?;
+                        }
                     }
-                    write!(f, "{}", arg)?;
-                }
-                write!(f, "): {}", ret)
-            }
-
-            Ty::FunNamedArgs(args, ret) => {
-                write!(f, "Fn(")?;
-                for (i, (name, ty)) in args.iter().enumerate() {
-                    if i > 0 {
-                        write!(f, ", ")?;
+                    FunArgs::Named(args) => {
+                        for (i, (name, ty)) in args.iter().enumerate() {
+                            if i > 0 {
+                                write!(f, ", ")?;
+                            }
+                            write!(f, "{}: {}", name, ty)?;
+                        }
                     }
-                    write!(f, "{}: {}", name, ty)?;
                 }
                 write!(f, "): {}", ret)
             }
