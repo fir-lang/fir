@@ -998,6 +998,26 @@ impl Ty {
             _ => false,
         }
     }
+
+    pub fn kind(&self) -> Kind {
+        match self {
+            Ty::Con(_) | Ty::App(_, _) | Ty::Fun(_, _) => Kind::Star,
+
+            Ty::Var(var) => var.kind(),
+
+            Ty::QVar(_) => panic!(),
+
+            Ty::AssocTySelect { .. } => todo!(),
+
+            Ty::Anonymous { is_row, kind, .. } => {
+                if *is_row {
+                    Kind::Row(*kind)
+                } else {
+                    Kind::Star
+                }
+            }
+        }
+    }
 }
 
 impl PartialEq for TyVar {
@@ -1303,5 +1323,15 @@ impl fmt::Display for Scheme {
             write!(f, "] ")?;
         }
         write!(f, "{}", self.ty)
+    }
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let str = match self {
+            Kind::Star => "*",
+            Kind::Row(_) => "row",
+        };
+        f.write_str(str)
     }
 }

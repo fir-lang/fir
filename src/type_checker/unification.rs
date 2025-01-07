@@ -22,6 +22,20 @@ pub(super) fn unify(
         return;
     }
 
+    let ty1_kind = ty1.kind();
+    let ty2_kind = ty2.kind();
+
+    if ty1_kind != ty2_kind {
+        panic!(
+            "{}: Unable to unify {} with kind {} with {} with kind {}",
+            loc_display(loc),
+            ty1,
+            ty1_kind,
+            ty2,
+            ty2_kind
+        );
+    }
+
     match (&ty1, &ty2) {
         (Ty::Con(con1), Ty::Con(con2)) => {
             if con1 != con2 {
