@@ -1,4 +1,4 @@
-fn main() =
+fn main()
     printStr("Hi")
 
 # expected stdout:

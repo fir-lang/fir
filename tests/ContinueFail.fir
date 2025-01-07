@@ -1,4 +1,4 @@
-fn main() =
+fn main()
     continue
 
 # args: --typecheck --no-prelude --no-backtrace

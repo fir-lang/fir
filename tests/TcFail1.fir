@@ -5,7 +5,7 @@ trait T[a]:
     fn toStr(self): Str
 
 impl T for Str:
-    fn toStr(self): I32 =
+    fn toStr(self): I32
         123
 
 # args: --typecheck --no-prelude --no-backtrace

@@ -1,4 +1,4 @@
-fn main() =
+fn main()
     match "test":
         "asdf": panic("")
         "test": printStr("OK")

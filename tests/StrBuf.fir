@@ -1,4 +1,4 @@
-fn main() =
+fn main()
     let buf = StrBuf.withCapacity(10u32)
     buf.push('A')
     printStr(buf.len().toStr())

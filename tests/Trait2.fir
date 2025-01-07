@@ -9,7 +9,7 @@ trait ToStr[a]:
 type A
 
 impl A:
-    fn f[a: ToStr](self, a: a) =
+    fn f[a: ToStr](self, a: a)
         printStr(a.toStr())
 
 # args: --typecheck --no-prelude

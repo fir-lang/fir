@@ -12,12 +12,12 @@ trait Test[a]:
 
 impl Test for A:
     type T = I32
-    fn test(self): T =
+    fn test(self): T
         123
 
 impl Test for B:
     type T = I32
-    fn test(self): I32 =
+    fn test(self): I32
         123
 
 # args: --typecheck --no-prelude

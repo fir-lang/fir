@@ -25,7 +25,7 @@ type Value:
     Bool(Bool)
     Num(I32)
 
-fn eval(term: Term): Value =
+fn eval(term: Term): Value
     match term:
         Term.True: Value.Bool(Bool.True)
 
@@ -60,24 +60,24 @@ fn eval(term: Term): Value =
                 Value.Num(value): Value.Bool(value == 0)
 
 impl Value:
-    fn toStr(self): Str =
+    fn toStr(self): Str
         match self:
             Value.Bool(value): value.toStr()
             Value.Num(value): value.toStr()
 
-fn parse(pgm: Str): Term =
+fn parse(pgm: Str): Term
     let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
         panic("Leftover code after parsing the program: \"`rest`\"")
     term
 
-fn skipWhitespace(pgm: Str): Str =
+fn skipWhitespace(pgm: Str): Str
     while pgm.len() > 0 && pgm.startsWith(" "):
         pgm = pgm.substr(1, pgm.len())
     pgm
 
 ## Parse the program, return the parsed term and the unparsed part of the program.
-fn parseWithRest(pgm: Str): (term: Term, rest: Str) =
+fn parseWithRest(pgm: Str): (term: Term, rest: Str)
     match skipWhitespace(pgm):
         "0" rest:
             (term = Term.Zero, rest = rest)
@@ -104,7 +104,7 @@ fn parseWithRest(pgm: Str): (term: Term, rest: Str) =
         _:
             panic("Invalid syntax: \"`pgm`\"")
 
-fn parseArg(pgm: Str): (arg: Term, rest: Str) =
+fn parseArg(pgm: Str): (arg: Term, rest: Str)
     # Skip "("
     if pgm.isEmpty():
         panic("Unexpected end of program while parsing arguments")
@@ -128,13 +128,13 @@ fn parseArg(pgm: Str): (arg: Term, rest: Str) =
 
     (arg = arg, rest = rest)
 
-fn expectKeyword(pgm: Str, kw: Str): Str =
+fn expectKeyword(pgm: Str, kw: Str): Str
     let pgm = skipWhitespace(pgm)
     if !pgm.startsWith(kw.toStr()):
         panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
 
-fn testMain() =
+fn testMain()
     main("0")
     main("succ(0)")
     main("succ(succ(0))")

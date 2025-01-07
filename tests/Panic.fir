@@ -1,6 +1,6 @@
 fn optionInt(): Option[I32] = Option.Some(123)
 
-fn main() =
+fn main()
     match optionInt():
         Option.None: ()
         Option.Some(i): panic("optionInt returned `i`")

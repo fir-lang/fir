@@ -23,7 +23,7 @@ fn getItem[a, x: GetItem[Item = a]](x: x): a = x.getItem()
 
 prim fn printStr(s: Str)
 
-fn main() =
+fn main()
     let box = Box(thing = 123u32)
     let item = getItem(box)
     printStr(item.toStr())

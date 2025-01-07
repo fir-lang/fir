@@ -9,7 +9,7 @@ trait Test[a]:
 
 impl[a] Test[a]:
     type T = I32
-    fn test(self): T =
+    fn test(self): T
         "hi"
 
 # args: --typecheck --no-prelude --no-backtrace

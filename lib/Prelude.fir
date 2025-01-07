@@ -25,7 +25,7 @@ trait Div[t]:
 trait Eq[t]:
     fn __eq(self, other: t): Bool
 
-    fn __neq(self, other: t): Bool =
+    fn __neq(self, other: t): Bool
         !self.__eq(other)
 
 # The `|` operator.
@@ -47,22 +47,22 @@ trait Shr[t]:
 trait Ord[t]:
     fn cmp(self, other: t): Ordering
 
-    fn __lt(self, other: t): Bool =
+    fn __lt(self, other: t): Bool
         match self.cmp(other):
             Ordering.Less: Bool.True
             _: Bool.False
 
-    fn __le(self, other: t): Bool =
+    fn __le(self, other: t): Bool
         match self.cmp(other):
             Ordering.Less | Ordering.Equal: Bool.True
             _: Bool.False
 
-    fn __gt(self, other: t): Bool =
+    fn __gt(self, other: t): Bool
         match self.cmp(other):
             Ordering.Greater: Bool.True
             _: Bool.False
 
-    fn __ge(self, other: t): Bool =
+    fn __ge(self, other: t): Bool
         match self.cmp(other):
             Ordering.Greater | Ordering.Equal: Bool.True
             _: Bool.False
@@ -90,7 +90,7 @@ type Option[t]:
     Some(t)
 
 impl[t] Option[t]:
-    fn unwrap(self): t =
+    fn unwrap(self): t
         match self:
             Option.None: panic("Unwrapping Option.None")
             Option.Some(value): value
@@ -109,7 +109,7 @@ type Bool:
     True
 
 impl ToStr for Bool:
-    fn toStr(self): Str =
+    fn toStr(self): Str
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"

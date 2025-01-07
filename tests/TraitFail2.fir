@@ -6,7 +6,7 @@ prim fn printStr(s: Str): ()
 trait ToStr[a]:
     fn toStr(self): Str
 
-fn f[a: ToStr](a: a) =
+fn f[a: ToStr](a: a)
     printStr(a.toStr())
 
 fn g() = f(123u32)

@@ -11,7 +11,7 @@ trait Test[a]:
 
 impl Test for A:
     type T = I32
-    fn test(self): Str =
+    fn test(self): Str
         "hi"
 
 # args: --typecheck --no-prelude --no-backtrace

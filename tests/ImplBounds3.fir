@@ -10,14 +10,14 @@ type Vec[t]:
     _len: U32
 
 impl[t] Vec[t]:
-    fn len(self): U32 =
+    fn len(self): U32
         self._len
 
 impl[t: Ord] Vec[t]:
-    fn sort(self) =
+    fn sort(self)
         _quicksort(self, 0, self.len())
 
-fn _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32) =
+fn _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32)
     ()
 
 # args: --typecheck --no-backtrace --no-prelude

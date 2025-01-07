@@ -30,7 +30,7 @@ trait Iterator[t]:
 impl[t] Iterator[ArrayIter[t]]:
     type Item = t
 
-    fn next(self): Option[t] =
+    fn next(self): Option[t]
         if self.idx == self.array.len():
             Option.None
         else:

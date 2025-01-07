@@ -1,8 +1,8 @@
-fn test[r](r: (x: I32, y: I32, ..r)) =
+fn test[r](r: (x: I32, y: I32, ..r))
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-fn main() =
+fn main()
     test((x = 123))
 
 # args: --typecheck --no-backtrace

@@ -15,7 +15,7 @@ trait ToStr[t]:
 impl ToStr for I32:
     prim fn toStr(self): Str
 
-fn resultToString(result: Result[I32, I32]): Str =
+fn resultToString(result: Result[I32, I32]): Str
     match result:
         Result.Ok(value = v):
             "Ok(`v`)"

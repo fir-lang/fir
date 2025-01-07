@@ -6,7 +6,7 @@ type Option[t]:
     Some(t)
     None
 
-fn test() =
+fn test()
     let x = Option.Some(123)
     match x:
         Option.Some(a): printI32(a)

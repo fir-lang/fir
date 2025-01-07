@@ -6,7 +6,7 @@ prim fn printStr(s: Str): ()
 trait ToStr[a]:
     fn toStr(self): Str
 
-fn f[a](a: a) =
+fn f[a](a: a)
     printStr(a.toStr())
 
 # args: --typecheck --no-prelude --no-backtrace

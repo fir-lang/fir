@@ -1,8 +1,8 @@
-fn main() =
+fn main()
     for i in irange(0u32, 5):
         test(i)
 
-fn test(len: U32) =
+fn test(len: U32)
     let vec = Vec.withCapacity(len)
     for i in range(0u32, len):
         vec.push(len - i)

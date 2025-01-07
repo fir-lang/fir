@@ -17,7 +17,7 @@ impl Test for I32:
 
 fn expectI32Elem[x: Test[Elem = I32]](x: x): I32 = x.getElem()
 
-fn main() =
+fn main()
     expectI32Elem(123i32)
     ()
 

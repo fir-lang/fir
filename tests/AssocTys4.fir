@@ -23,7 +23,7 @@ impl[t] GetItem for Box[t]:
 
 fn getItem[a, x: GetItem[Item = a]](x: x): a = x.getItem()
 
-fn main() =
+fn main()
     let box = Box(thing = 123u32)
     let item = getItem(box)
 

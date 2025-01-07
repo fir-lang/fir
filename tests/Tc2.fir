@@ -7,7 +7,7 @@ type A:
     i: I32
 
 impl T for A:
-    fn getI32(self): I32 =
+    fn getI32(self): I32
         self.i
 
 # args: --typecheck --no-prelude

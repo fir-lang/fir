@@ -4,7 +4,7 @@ fn test(i: I32): I32 = i
 
 fn blah(): Fn(I32): I32 = test
 
-fn f() =
+fn f()
     let x: Fn(I32): I32 = test
     test(123)
 

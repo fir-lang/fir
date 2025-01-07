@@ -1,4 +1,4 @@
-fn main() =
+fn main()
     printStr(('a' == 'a').toStr())
     printStr(('a' == 'b').toStr())
     match 'a':
@@ -31,16 +31,16 @@ fn main() =
     testIsAsciiAlphanumeric('[')
     testIsAsciiAlphanumeric('a')
 
-fn testIsAsciiUppercase(c: Char) =
+fn testIsAsciiUppercase(c: Char)
     printStr("`c`.isAsciiUppercase() = `c.isAsciiUppercase()`")
 
-fn testIsAsciiLowercase(c: Char) =
+fn testIsAsciiLowercase(c: Char)
     printStr("`c`.isAsciiLowercase() = `c.isAsciiLowercase()`")
 
-fn testIsAsciiDigit(c: Char) =
+fn testIsAsciiDigit(c: Char)
     printStr("`c`.isAsciiDigit() = `c.isAsciiDigit()`")
 
-fn testIsAsciiAlphanumeric(c: Char) =
+fn testIsAsciiAlphanumeric(c: Char)
     printStr("`c`.isAsciiAlphanumeric() = `c.isAsciiAlphanumeric()`")
 
 # expected stdout:

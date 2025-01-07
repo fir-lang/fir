@@ -11,7 +11,7 @@ type Str:
 
 impl Str:
     # Copied the bytes, does not validate UTF-8.
-    fn fromUtf8Vec(bytes: Vec[U8]): Str =
+    fn fromUtf8Vec(bytes: Vec[U8]): Str
         let copied = Array.new(bytes.len())
         for i in range(0u32, bytes.len()):
             copied.set(i, bytes.get(i))
@@ -22,7 +22,7 @@ impl Str:
 
     fn isEmpty(self): Bool = self.len() == 0
 
-    fn substr(self, byteStart: U32, byteEnd: U32): Str =
+    fn substr(self, byteStart: U32, byteEnd: U32): Str
         if byteStart > self.len():
             panic("Str.substr: byteStart (`byteStart`) > len (`self.len()`)")
 
@@ -38,7 +38,7 @@ impl Str:
             _len = byteEnd - byteStart,
         )
 
-    fn startsWith(self, prefix: Str): Bool =
+    fn startsWith(self, prefix: Str): Bool
         if self.len() < prefix.len():
             return Bool.False
 
@@ -50,7 +50,7 @@ impl Str:
 
     # Get the character at given byte index. Panics if the byte is not a first byte of a UTF-8
     # code point.
-    fn charAt(self, byteIndex: U32): Char =
+    fn charAt(self, byteIndex: U32): Char
         let byte = self._bytes.get(byteIndex)
 
         if byte < 128:
@@ -79,7 +79,7 @@ impl Str:
             let b3 = (self._bytes.get(byteIndex + 3) & 0b111111).asU32()
             Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
-    fn chars(self): CharIter =
+    fn chars(self): CharIter
         CharIter(
             _bytes = self._bytes,
             _idx = self._start,
@@ -87,7 +87,7 @@ impl Str:
         )
 
 impl Eq for Str:
-    fn __eq(self, other: Str): Bool =
+    fn __eq(self, other: Str): Bool
         if self.len() != other.len():
             return Bool.False
 
@@ -112,7 +112,7 @@ type CharIter:
 
 impl CharIter:
     # Get the slice of the original string, starting from the current iteration point.
-    fn asStr(self): Str =
+    fn asStr(self): Str
         Str(
             _bytes = self._bytes,
             _start = self._idx,
@@ -122,7 +122,7 @@ impl CharIter:
 impl Iterator for CharIter:
     type Item = Char
 
-    fn next(self): Option[Char] =
+    fn next(self): Option[Char]
         if self._idx == self._end:
             return Option.None
 
@@ -131,7 +131,7 @@ impl Iterator for CharIter:
         self._idx += charLength
         Option.Some(char)
 
-fn _charAt(bytes: Array[U8], idx: U32): Char =
+fn _charAt(bytes: Array[U8], idx: U32): Char
     let byte = bytes.get(idx)
 
     if byte < 128:

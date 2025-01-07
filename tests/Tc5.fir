@@ -4,7 +4,7 @@ type Bool:
     False
     True
 
-fn test(): I32 =
+fn test(): I32
     if Bool.True:
         return 123
 

@@ -2,7 +2,7 @@ type A[t]:
     i: t
 
 impl[t1: ToStr, t2] A[t1, t2]:
-    fn test(self) =
+    fn test(self)
         printStr(self.i.toStr())
 
 fn main() = A(i = 123i32).test()

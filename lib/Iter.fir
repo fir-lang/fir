@@ -6,10 +6,10 @@ trait Iterator[t]:
 trait Step[t]:
     fn next(self): t
 
-fn range[t](start: t, end: t): RangeIterator[t] =
+fn range[t](start: t, end: t): RangeIterator[t]
     RangeIterator(current = start, end = end)
 
-fn irange[t](start: t, end: t): InclusiveRangeIterator[t] =
+fn irange[t](start: t, end: t): InclusiveRangeIterator[t]
     InclusiveRangeIterator(current = start, end = end)
 
 type RangeIterator[t]:
@@ -19,7 +19,7 @@ type RangeIterator[t]:
 impl[t: Step + Ord] Iterator for RangeIterator[t]:
     type Item = t
 
-    fn next(self): Option[t] =
+    fn next(self): Option[t]
         if self.current >= self.end:
             Option.None
         else:
@@ -34,7 +34,7 @@ type InclusiveRangeIterator[t]:
 impl[t: Step + Ord] Iterator for InclusiveRangeIterator[t]:
     type Item = t
 
-    fn next(self): Option[t] =
+    fn next(self): Option[t]
         if self.current > self.end:
             Option.None
         else:
