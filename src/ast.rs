@@ -595,7 +595,7 @@ pub struct TraitDecl {
     pub name: L<Id>,
 
     /// Type parameter of the trait, with bounds.
-    pub ty: L<(Id, Vec<L<Type>>)>,
+    pub ty: TypeParam,
 
     pub items: Vec<L<TraitDeclItem>>,
 }

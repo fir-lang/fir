@@ -906,11 +906,11 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <bound_l:@L> <ty:LowerId> <bounds:(":" <Sep<LType, "+">>)?> <bound_r:@R> "]" ":"
+    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" ":"
             NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
-            ty: L::new(module, bound_l, bound_r, (ty.smol_str(), bounds.unwrap_or(vec![]))),
+            ty,
             items,
         })
 }

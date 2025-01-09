@@ -140,8 +140,8 @@ impl TraitDecl {
         buffer.push_str("trait ");
         buffer.push_str(&self.name.node);
         buffer.push('[');
-        buffer.push_str(&self.ty.node.0);
-        let bounds = &self.ty.node.1;
+        buffer.push_str(&self.ty.id.node);
+        let bounds = &self.ty.bounds;
         if !bounds.is_empty() {
             buffer.push_str(": ");
             for (i, bound) in bounds.iter().enumerate() {
