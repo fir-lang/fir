@@ -119,7 +119,7 @@ fn visit_trait_decl(
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
-    for ty in &trait_decl.ty.node.1 {
+    for ty in &trait_decl.ty.bounds {
         visit_ty(&ty.node, records, variants);
     }
     for item in &trait_decl.items {
@@ -144,7 +144,7 @@ fn visit_impl_decl(
     variants: &mut Set<VariantShape>,
 ) {
     for context_ty in &impl_decl.context {
-        for bound in &context_ty.node.1 {
+        for bound in &context_ty.bounds {
             visit_ty(&bound.node, records, variants);
         }
     }

@@ -242,7 +242,7 @@ fn mono_top_decl(
         .sig
         .type_params
         .iter()
-        .map(|ty_param| ty_param.node.0.node.clone())
+        .map(|ty_param| ty_param.id.node.clone())
         .zip(ty_args.iter().cloned())
         .collect();
 
@@ -869,7 +869,7 @@ fn mono_assoc_fn(
     let fun_ty_params = &fun.sig.type_params[fun.sig.type_params.len() - ty_args.len()..];
     for (ty_param, mono_ty) in fun_ty_params
         .iter()
-        .map(|ty_param| ty_param.node.0.node.clone())
+        .map(|ty_param| ty_param.id.node.clone())
         .zip(ty_args.iter().cloned())
     {
         ty_map.insert(ty_param, mono_ty);
