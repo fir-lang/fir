@@ -941,16 +941,19 @@ ImplDecl: L<ImplDecl> = {
     }
 }
 
-//  type Context = Vec<L<(L<Id>, Vec<L<Type>>)>>;
+// type Context = Vec<TypeParam>;
 Context: Context = {
     => vec![],
 
-    "[" <tys:Sep<TypeWithBounds, ",">> "]" => tys,
+    "[" <tys:Sep<TypeParam, ",">> "]" => tys,
 }
 
-TypeWithBounds: L<(L<Id>, Vec<L<Type>>)> = {
-    <l:@L> <ty_param:LLowerId> <r:@R> => L::new(module, l, r, (ty_param, vec![])),
-    <l:@L> <ty_param:LLowerId> ":" <tys:Sep<LType, "+">> <r:@R> => L::new(module, l, r, (ty_param, tys)),
+TypeParam: TypeParam = {
+    <id:LLowerId> =>
+        TypeParam { id, bounds: vec![] },
+
+    <id:LLowerId> ":" <bounds:Sep<LType, "+">> =>
+        TypeParam { id, bounds },
 }
 
 ImplDeclItem: L<ImplDeclItem> = {

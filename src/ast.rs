@@ -612,7 +612,21 @@ pub enum TraitDeclItem {
 /// Type parameters of a function or `impl` block.
 ///
 /// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
-pub type Context = Vec<L<(L<Id>, Vec<L<Type>>)>>;
+pub type Context = Vec<TypeParam>;
+
+/// A type parameter in a function, `impl`, or `trait` block.
+///
+/// Example: `I: Iterator[Item = A] + Debug`.
+#[derive(Debug, Clone)]
+pub struct TypeParam {
+    /// `I` in the example.
+    pub id: L<Id>,
+
+    /// `[Iterator[Item = A], Debug]` in the example.
+    ///
+    /// Reminder: associated types are parsed as named arguments.
+    pub bounds: Vec<L<Type>>,
+}
 
 /// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
 ///

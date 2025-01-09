@@ -144,7 +144,7 @@ fn visit_impl_decl(
     variants: &mut Set<VariantShape>,
 ) {
     for context_ty in &impl_decl.context {
-        for bound in &context_ty.node.1 {
+        for bound in &context_ty.bounds {
             visit_ty(&bound.node, records, variants);
         }
     }

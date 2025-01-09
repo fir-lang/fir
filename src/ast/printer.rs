@@ -812,15 +812,15 @@ impl ImplDeclItem {
     }
 }
 
-fn print_context(context: &[L<(L<Id>, Vec<L<Type>>)>], buffer: &mut String) {
+fn print_context(context: &[TypeParam], buffer: &mut String) {
     for (i, ty) in context.iter().enumerate() {
         if i != 0 {
             buffer.push_str(", ");
         }
-        buffer.push_str(&ty.node.0.node);
-        if !ty.node.1.is_empty() {
+        buffer.push_str(&ty.id.node);
+        if !ty.bounds.is_empty() {
             buffer.push_str(": ");
-            for (j, bound) in ty.node.1.iter().enumerate() {
+            for (j, bound) in ty.bounds.iter().enumerate() {
                 if j != 0 {
                     buffer.push_str(" + ");
                 }

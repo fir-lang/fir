@@ -209,15 +209,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 // Context syntax in trait declarations is simpler as we allow only one type
                 // parameter. Convert the syntax to the more general syntax accepted by the
                 // conversion function.
-                let trait_context_ast: ast::Context = vec![ast::L {
-                    node: (
-                        ast::L {
-                            node: trait_decl.node.ty.node.0.clone(),
-                            loc: trait_decl.node.ty.loc.clone(),
-                        },
-                        trait_decl.node.ty.node.1.clone(),
-                    ),
-                    loc: trait_decl.node.ty.loc.clone(),
+                let trait_context_ast: ast::Context = vec![ast::TypeParam {
+                    id: ast::L {
+                        node: trait_decl.node.ty.node.0.clone(),
+                        loc: trait_decl.node.ty.loc.clone(),
+                    },
+                    bounds: trait_decl.node.ty.node.1.clone(),
                 }];
 
                 let trait_var_kinds: Map<Id, Kind> =
@@ -391,7 +388,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let impl_var_kinds: Map<Id, Kind> = impl_decl
             .context
             .iter()
-            .map(|var| (var.node.0.node.clone(), Kind::Star))
+            .map(|param| (param.id.node.clone(), Kind::Star))
             .collect();
 
         let _impl_context = convert_and_bind_context(
@@ -532,7 +529,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let impl_var_kinds: Map<Id, Kind> = impl_decl
             .context
             .iter()
-            .map(|var| (var.node.0.node.clone(), Kind::Star))
+            .map(|param| (param.id.node.clone(), Kind::Star))
             .collect();
 
         let _impl_context = convert_and_bind_context(
@@ -660,7 +657,7 @@ fn collect_schemes(
                     .node
                     .context
                     .iter()
-                    .map(|var| (var.node.0.node.clone(), Kind::Star))
+                    .map(|param| (param.id.node.clone(), Kind::Star))
                     .collect();
 
                 let impl_context: Vec<(Id, QVar)> = convert_and_bind_context(
@@ -1058,7 +1055,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         .node
         .context
         .iter()
-        .map(|var| (var.node.0.node.clone(), Kind::Star))
+        .map(|param| (param.id.node.clone(), Kind::Star))
         .collect();
 
     let impl_bounds = convert_and_bind_context(
