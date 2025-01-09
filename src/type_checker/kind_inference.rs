@@ -1,7 +1,7 @@
 use crate::ast;
-use crate::collections::{Map, Set};
+use crate::collections::Map;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{FunArgs, Id, Kind, Ty, TyVar, TyVarGen, TyVarRef};
+use crate::type_checker::{FunArgs, Id, Kind, Ty, TyVarGen};
 use crate::utils::loc_display;
 
 use smol_str::SmolStr;
@@ -24,7 +24,10 @@ trait Blah[t]:
 
 Without considering the function we cannot infer the kind of `t`.
 */
+#[allow(unused)]
 pub fn infer_kinds(pgm: &mut ast::Module) {
+    // TODO: Add missing type parameters in context to context.
+
     let mut var_gen = TyVarGen::default();
 
     // `ty_arg_kinds[i]` maps type arguments of `types[i]` to their kinds.
@@ -151,7 +154,7 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
                 }
             }
 
-            ast::TopDecl::Fun(a) => todo!(),
+            ast::TopDecl::Fun(decl) => {}
 
             ast::TopDecl::Trait(l) => todo!(),
 
@@ -160,8 +163,6 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
             ast::TopDecl::Import(_) => {}
         }
     }
-
-    let types: Vec<TypeDecl> = collect_types(pgm);
 }
 
 // con_kinds: Kinds of type constructors.
@@ -288,44 +289,3 @@ fn ty_kind(
 const TY_STAR: Ty = Ty::Con(SmolStr::new_static("*"));
 const TY_RECORD_ROW: Ty = Ty::Con(SmolStr::new_static("row(record)"));
 const TY_VARIANT_ROW: Ty = Ty::Con(SmolStr::new_static("row(variant)"));
-
-/// A type declaration, abstracted for the purposes of kind inference.
-#[derive(Debug, Clone)]
-struct TypeDecl {
-    /// Type constructor.
-    con: Id,
-
-    /// Type constructor arguments with inferred kinds.
-    ///
-    /// These get assigned fresh unification variables. At the end of the inference, variables that
-    /// are not constrained are defaulted as `*`.
-    args: Set<Id>,
-}
-
-fn collect_types(pgm: &ast::Module) -> Vec<TypeDecl> {
-    fn type_decl(decl: &ast::TypeDecl) -> TypeDecl {
-        todo!()
-    }
-
-    fn trait_decl(decl: &ast::TraitDecl) -> TypeDecl {
-        todo!()
-    }
-
-    fn impl_decl(decl: &ast::ImplDecl) -> TypeDecl {
-        todo!()
-    }
-
-    pgm.iter()
-        .filter_map(|decl| match &decl.node {
-            ast::TopDecl::Type(d) => Some(type_decl(&d.node)),
-
-            ast::TopDecl::Trait(d) => Some(trait_decl(&d.node)),
-
-            ast::TopDecl::Impl(d) => Some(impl_decl(&d.node)),
-
-            ast::TopDecl::Fun(_) => None,
-
-            ast::TopDecl::Import(_) => panic!(), // imports should've been resolved at this point
-        })
-        .collect()
-}
