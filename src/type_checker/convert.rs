@@ -227,7 +227,12 @@ pub(super) fn convert_and_bind_context(
     let mut context_converted: Vec<(Id, QVar)> = Vec::with_capacity(context_ast.len());
 
     // Bind type parameters.
-    for ast::TypeParam { id, bounds: _ } in context_ast {
+    for ast::TypeParamWithBounds {
+        id,
+        kind: _,
+        bounds: _,
+    } in context_ast
+    {
         let id = &id.node;
         match conversion {
             TyVarConversion::ToOpaque => {
@@ -241,7 +246,12 @@ pub(super) fn convert_and_bind_context(
     }
 
     // Convert bounds.
-    for ast::TypeParam { id: ty_var, bounds } in context_ast {
+    for ast::TypeParamWithBounds {
+        id: ty_var,
+        kind: _,
+        bounds,
+    } in context_ast
+    {
         let mut trait_map: Map<Id, Map<Id, Ty>> = Default::default();
 
         for bound in bounds {

@@ -906,7 +906,7 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" ":"
+    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParamWithBounds> "]" ":"
             NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
@@ -941,19 +941,19 @@ ImplDecl: L<ImplDecl> = {
     }
 }
 
-// type Context = Vec<TypeParam>;
+// type Context = Vec<TypeParamWithBounds>;
 Context: Context = {
     => vec![],
 
-    "[" <tys:Sep<TypeParam, ",">> "]" => tys,
+    "[" <tys:Sep<TypeParamWithBounds, ",">> "]" => tys,
 }
 
-TypeParam: TypeParam = {
+TypeParamWithBounds: TypeParamWithBounds = {
     <id:LLowerId> =>
-        TypeParam { id, bounds: vec![] },
+        TypeParamWithBounds { id, kind: None, bounds: vec![] },
 
     <id:LLowerId> ":" <bounds:Sep<LType, "+">> =>
-        TypeParam { id, bounds },
+        TypeParamWithBounds { id, kind: None, bounds },
 }
 
 ImplDeclItem: L<ImplDeclItem> = {

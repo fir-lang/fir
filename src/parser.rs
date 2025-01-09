@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: ee8d301eb4c83d49cbd27f10a2c5491af825d619ec525bf758fca2f8486a681a
+// sha3: f344fd3d3c6d1e658f942d5d521cf965d6b7346070b825766d5667b905a76dc5
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -67,8 +67,8 @@ mod __parse__LExpr {
         Variant28(alloc::vec::Vec<Named<Type>>),
         Variant29(L<(Option<Id>, L<Type>)>),
         Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
+        Variant31(TypeParamWithBounds),
+        Variant32(alloc::vec::Vec<TypeParamWithBounds>),
         Variant33(VariantAlt),
         Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
@@ -107,7 +107,7 @@ mod __parse__LExpr {
         Variant68(Vec<(Option<Id>, L<Pat>)>),
         Variant69(Vec<Named<Type>>),
         Variant70(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant71(Vec<TypeParam>),
+        Variant71(Vec<TypeParamWithBounds>),
         Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
@@ -121,7 +121,7 @@ mod __parse__LExpr {
         Variant82(Vec<ConstructorDecl>),
         Variant83(L<TypeDecl>),
         Variant84(TypeDeclRhs),
-        Variant85(Option<TypeParam>),
+        Variant85(Option<TypeParamWithBounds>),
         Variant86(Vec<Id>),
         Variant87(Vec<Type>),
         Variant88(Option<VariantAlt>),
@@ -5554,7 +5554,7 @@ mod __parse__LExpr {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
+    ) -> (Loc, Option<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -5644,7 +5644,7 @@ mod __parse__LExpr {
     fn __pop_Variant31<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
+    ) -> (Loc, TypeParamWithBounds, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
@@ -5824,7 +5824,7 @@ mod __parse__LExpr {
     fn __pop_Variant71<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
+    ) -> (Loc, Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant71(__v), __r)) => (__l, __v, __r),
@@ -6004,7 +6004,7 @@ mod __parse__LExpr {
     fn __pop_Variant32<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
+    ) -> (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
@@ -7455,7 +7455,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",") = TypeParam, "," => ActionFn(265);
+        // (<TypeParamWithBounds> ",") = TypeParamWithBounds, "," => ActionFn(265);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -7474,7 +7474,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* =  => ActionFn(263);
+        // (<TypeParamWithBounds> ",")* =  => ActionFn(263);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action263::<>(module, &__start, &__end);
@@ -7490,7 +7490,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* = (<TypeParam> ",")+ => ActionFn(264);
+        // (<TypeParamWithBounds> ",")* = (<TypeParamWithBounds> ",")+ => ActionFn(264);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -7507,7 +7507,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = TypeParam, "," => ActionFn(383);
+        // (<TypeParamWithBounds> ",")+ = TypeParamWithBounds, "," => ActionFn(383);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -7526,7 +7526,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = (<TypeParam> ",")+, TypeParam, "," => ActionFn(384);
+        // (<TypeParamWithBounds> ",")+ = (<TypeParamWithBounds> ",")+, TypeParamWithBounds, "," => ActionFn(384);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
@@ -8391,7 +8391,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Context = "[", Sep<TypeParam, ",">, "]" => ActionFn(140);
+        // Context = "[", Sep<TypeParamWithBounds, ",">, "]" => ActionFn(140);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
@@ -11257,7 +11257,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = TypeParam => ActionFn(554);
+        // Sep<TypeParamWithBounds, ","> = TypeParamWithBounds => ActionFn(554);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -11274,7 +11274,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> =  => ActionFn(555);
+        // Sep<TypeParamWithBounds, ","> =  => ActionFn(555);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action555::<>(module, &__start, &__end);
@@ -11290,7 +11290,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+, TypeParam => ActionFn(556);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+, TypeParamWithBounds => ActionFn(556);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
@@ -11309,7 +11309,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+ => ActionFn(557);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+ => ActionFn(557);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -11981,7 +11981,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperId, "[", TypeParam, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
+        // TraitDecl = "trait", LUpperId, "[", TypeParamWithBounds, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant79(__symbols);
@@ -12434,7 +12434,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId => ActionFn(141);
+        // TypeParamWithBounds = LLowerId => ActionFn(141);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -12451,7 +12451,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
+        // TypeParamWithBounds = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant66(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -12471,7 +12471,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? = TypeParam => ActionFn(261);
+        // TypeParamWithBounds? = TypeParamWithBounds => ActionFn(261);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -12488,7 +12488,7 @@ mod __parse__LExpr {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? =  => ActionFn(262);
+        // TypeParamWithBounds? =  => ActionFn(262);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action262::<>(module, &__start, &__end);
@@ -12800,8 +12800,8 @@ mod __parse__LStmt {
         Variant28(alloc::vec::Vec<Named<Type>>),
         Variant29(L<(Option<Id>, L<Type>)>),
         Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
+        Variant31(TypeParamWithBounds),
+        Variant32(alloc::vec::Vec<TypeParamWithBounds>),
         Variant33(VariantAlt),
         Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
@@ -12840,7 +12840,7 @@ mod __parse__LStmt {
         Variant68(Vec<(Option<Id>, L<Pat>)>),
         Variant69(Vec<Named<Type>>),
         Variant70(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant71(Vec<TypeParam>),
+        Variant71(Vec<TypeParamWithBounds>),
         Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
@@ -12854,7 +12854,7 @@ mod __parse__LStmt {
         Variant82(Vec<ConstructorDecl>),
         Variant83(L<TypeDecl>),
         Variant84(TypeDeclRhs),
-        Variant85(Option<TypeParam>),
+        Variant85(Option<TypeParamWithBounds>),
         Variant86(Vec<Id>),
         Variant87(Vec<Type>),
         Variant88(Option<VariantAlt>),
@@ -18287,7 +18287,7 @@ mod __parse__LStmt {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
+    ) -> (Loc, Option<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -18377,7 +18377,7 @@ mod __parse__LStmt {
     fn __pop_Variant31<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
+    ) -> (Loc, TypeParamWithBounds, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
@@ -18557,7 +18557,7 @@ mod __parse__LStmt {
     fn __pop_Variant71<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
+    ) -> (Loc, Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant71(__v), __r)) => (__l, __v, __r),
@@ -18737,7 +18737,7 @@ mod __parse__LStmt {
     fn __pop_Variant32<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
+    ) -> (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
@@ -20188,7 +20188,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",") = TypeParam, "," => ActionFn(265);
+        // (<TypeParamWithBounds> ",") = TypeParamWithBounds, "," => ActionFn(265);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -20207,7 +20207,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* =  => ActionFn(263);
+        // (<TypeParamWithBounds> ",")* =  => ActionFn(263);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action263::<>(module, &__start, &__end);
@@ -20223,7 +20223,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* = (<TypeParam> ",")+ => ActionFn(264);
+        // (<TypeParamWithBounds> ",")* = (<TypeParamWithBounds> ",")+ => ActionFn(264);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -20240,7 +20240,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = TypeParam, "," => ActionFn(383);
+        // (<TypeParamWithBounds> ",")+ = TypeParamWithBounds, "," => ActionFn(383);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -20259,7 +20259,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = (<TypeParam> ",")+, TypeParam, "," => ActionFn(384);
+        // (<TypeParamWithBounds> ",")+ = (<TypeParamWithBounds> ",")+, TypeParamWithBounds, "," => ActionFn(384);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
@@ -21124,7 +21124,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Context = "[", Sep<TypeParam, ",">, "]" => ActionFn(140);
+        // Context = "[", Sep<TypeParamWithBounds, ",">, "]" => ActionFn(140);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
@@ -23990,7 +23990,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = TypeParam => ActionFn(554);
+        // Sep<TypeParamWithBounds, ","> = TypeParamWithBounds => ActionFn(554);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -24007,7 +24007,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> =  => ActionFn(555);
+        // Sep<TypeParamWithBounds, ","> =  => ActionFn(555);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action555::<>(module, &__start, &__end);
@@ -24023,7 +24023,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+, TypeParam => ActionFn(556);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+, TypeParamWithBounds => ActionFn(556);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
@@ -24042,7 +24042,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+ => ActionFn(557);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+ => ActionFn(557);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -24714,7 +24714,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperId, "[", TypeParam, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
+        // TraitDecl = "trait", LUpperId, "[", TypeParamWithBounds, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant79(__symbols);
@@ -25167,7 +25167,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId => ActionFn(141);
+        // TypeParamWithBounds = LLowerId => ActionFn(141);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -25184,7 +25184,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
+        // TypeParamWithBounds = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant66(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -25204,7 +25204,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? = TypeParam => ActionFn(261);
+        // TypeParamWithBounds? = TypeParamWithBounds => ActionFn(261);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -25221,7 +25221,7 @@ mod __parse__LStmt {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? =  => ActionFn(262);
+        // TypeParamWithBounds? =  => ActionFn(262);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action262::<>(module, &__start, &__end);
@@ -25533,8 +25533,8 @@ mod __parse__TopDecls {
         Variant28(alloc::vec::Vec<Named<Type>>),
         Variant29(L<(Option<Id>, L<Type>)>),
         Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
+        Variant31(TypeParamWithBounds),
+        Variant32(alloc::vec::Vec<TypeParamWithBounds>),
         Variant33(VariantAlt),
         Variant34(alloc::vec::Vec<VariantAlt>),
         Variant35(Loc),
@@ -25573,7 +25573,7 @@ mod __parse__TopDecls {
         Variant68(Vec<(Option<Id>, L<Pat>)>),
         Variant69(Vec<Named<Type>>),
         Variant70(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant71(Vec<TypeParam>),
+        Variant71(Vec<TypeParamWithBounds>),
         Variant72(Vec<VariantAlt>),
         Variant73(Stmt),
         Variant74(L<TopDecl>),
@@ -25587,7 +25587,7 @@ mod __parse__TopDecls {
         Variant82(Vec<ConstructorDecl>),
         Variant83(L<TypeDecl>),
         Variant84(TypeDeclRhs),
-        Variant85(Option<TypeParam>),
+        Variant85(Option<TypeParamWithBounds>),
         Variant86(Vec<Id>),
         Variant87(Vec<Type>),
         Variant88(Option<VariantAlt>),
@@ -31841,7 +31841,7 @@ mod __parse__TopDecls {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
+    ) -> (Loc, Option<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -31931,7 +31931,7 @@ mod __parse__TopDecls {
     fn __pop_Variant31<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
+    ) -> (Loc, TypeParamWithBounds, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
@@ -32111,7 +32111,7 @@ mod __parse__TopDecls {
     fn __pop_Variant71<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
+    ) -> (Loc, Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant71(__v), __r)) => (__l, __v, __r),
@@ -32291,7 +32291,7 @@ mod __parse__TopDecls {
     fn __pop_Variant32<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
+    ) -> (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
@@ -33742,7 +33742,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",") = TypeParam, "," => ActionFn(265);
+        // (<TypeParamWithBounds> ",") = TypeParamWithBounds, "," => ActionFn(265);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -33761,7 +33761,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* =  => ActionFn(263);
+        // (<TypeParamWithBounds> ",")* =  => ActionFn(263);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action263::<>(module, &__start, &__end);
@@ -33777,7 +33777,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")* = (<TypeParam> ",")+ => ActionFn(264);
+        // (<TypeParamWithBounds> ",")* = (<TypeParamWithBounds> ",")+ => ActionFn(264);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -33794,7 +33794,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = TypeParam, "," => ActionFn(383);
+        // (<TypeParamWithBounds> ",")+ = TypeParamWithBounds, "," => ActionFn(383);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant0(__symbols);
         let __sym0 = __pop_Variant31(__symbols);
@@ -33813,7 +33813,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // (<TypeParam> ",")+ = (<TypeParam> ",")+, TypeParam, "," => ActionFn(384);
+        // (<TypeParamWithBounds> ",")+ = (<TypeParamWithBounds> ",")+, TypeParamWithBounds, "," => ActionFn(384);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant31(__symbols);
@@ -34678,7 +34678,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Context = "[", Sep<TypeParam, ",">, "]" => ActionFn(140);
+        // Context = "[", Sep<TypeParamWithBounds, ",">, "]" => ActionFn(140);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant0(__symbols);
         let __sym1 = __pop_Variant71(__symbols);
@@ -37544,7 +37544,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = TypeParam => ActionFn(554);
+        // Sep<TypeParamWithBounds, ","> = TypeParamWithBounds => ActionFn(554);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -37561,7 +37561,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> =  => ActionFn(555);
+        // Sep<TypeParamWithBounds, ","> =  => ActionFn(555);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action555::<>(module, &__start, &__end);
@@ -37577,7 +37577,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+, TypeParam => ActionFn(556);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+, TypeParamWithBounds => ActionFn(556);
         assert!(__symbols.len() >= 2);
         let __sym1 = __pop_Variant31(__symbols);
         let __sym0 = __pop_Variant32(__symbols);
@@ -37596,7 +37596,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // Sep<TypeParam, ","> = (<TypeParam> ",")+ => ActionFn(557);
+        // Sep<TypeParamWithBounds, ","> = (<TypeParamWithBounds> ",")+ => ActionFn(557);
         let __sym0 = __pop_Variant32(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -38268,7 +38268,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TraitDecl = "trait", LUpperId, "[", TypeParam, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
+        // TraitDecl = "trait", LUpperId, "[", TypeParamWithBounds, "]", ":", NEWLINE, INDENT, TraitDeclItem+, DEDENT => ActionFn(496);
         assert!(__symbols.len() >= 10);
         let __sym9 = __pop_Variant0(__symbols);
         let __sym8 = __pop_Variant79(__symbols);
@@ -38721,7 +38721,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId => ActionFn(141);
+        // TypeParamWithBounds = LLowerId => ActionFn(141);
         let __sym0 = __pop_Variant17(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -38738,7 +38738,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
+        // TypeParamWithBounds = LLowerId, ":", Sep<LType, "+"> => ActionFn(142);
         assert!(__symbols.len() >= 3);
         let __sym2 = __pop_Variant66(__symbols);
         let __sym1 = __pop_Variant0(__symbols);
@@ -38758,7 +38758,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? = TypeParam => ActionFn(261);
+        // TypeParamWithBounds? = TypeParamWithBounds => ActionFn(261);
         let __sym0 = __pop_Variant31(__symbols);
         let __start = __sym0.0;
         let __end = __sym0.2;
@@ -38775,7 +38775,7 @@ mod __parse__TopDecls {
         _: core::marker::PhantomData<(&'a ())>,
     ) -> (usize, usize)
     {
-        // TypeParam? =  => ActionFn(262);
+        // TypeParamWithBounds? =  => ActionFn(262);
         let __start = __lookahead_start.cloned().or_else(|| __symbols.last().map(|s| s.2)).unwrap_or_default();
         let __end = __start;
         let __nt = super::__action262::<>(module, &__start, &__end);
@@ -41395,7 +41395,7 @@ fn __action135<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, name, _): (Loc, L<Id>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, TypeParam, Loc),
+    (_, ty, _): (Loc, TypeParamWithBounds, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -41491,7 +41491,7 @@ fn __action139<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 fn __action140<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, tys, _): (Loc, Vec<TypeParam>, Loc),
+    (_, tys, _): (Loc, Vec<TypeParamWithBounds>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Context {
     tys
@@ -41503,8 +41503,12 @@ fn __action140<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action141<'a>(module: &'a Rc<str>, (_, id, _): (Loc, L<Id>, Loc)) -> TypeParam {
-    TypeParam { id, bounds: vec![] }
+fn __action141<'a>(module: &'a Rc<str>, (_, id, _): (Loc, L<Id>, Loc)) -> TypeParamWithBounds {
+    TypeParamWithBounds {
+        id,
+        kind: None,
+        bounds: vec![],
+    }
 }
 
 #[allow(unused_variables)]
@@ -41518,8 +41522,12 @@ fn __action142<'a>(
     (_, id, _): (Loc, L<Id>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, bounds, _): (Loc, Vec<L<Type>>, Loc),
-) -> TypeParam {
-    TypeParam { id, bounds }
+) -> TypeParamWithBounds {
+    TypeParamWithBounds {
+        id,
+        kind: None,
+        bounds,
+    }
 }
 
 #[allow(unused_variables)]
@@ -41737,9 +41745,9 @@ fn __action155<'a>(
 )]
 fn __action156<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    (_, e, _): (Loc, Option<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+    (_, e, _): (Loc, Option<TypeParamWithBounds>, Loc),
+) -> Vec<TypeParamWithBounds> {
     match e {
         None => v,
         Some(e) => {
@@ -43202,7 +43210,10 @@ fn __action260<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action261<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, TypeParam, Loc)) -> Option<TypeParam> {
+fn __action261<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, TypeParamWithBounds, Loc),
+) -> Option<TypeParamWithBounds> {
     Some(__0)
 }
 
@@ -43216,7 +43227,7 @@ fn __action262<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<TypeParam> {
+) -> Option<TypeParamWithBounds> {
     None
 }
 
@@ -43230,7 +43241,7 @@ fn __action263<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     alloc::vec![]
 }
 
@@ -43242,8 +43253,8 @@ fn __action263<'a>(
 )]
 fn __action264<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, v, _): (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     v
 }
 
@@ -43255,9 +43266,9 @@ fn __action264<'a>(
 )]
 fn __action265<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, TypeParam, Loc),
+    (_, __0, _): (Loc, TypeParamWithBounds, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> TypeParam {
+) -> TypeParamWithBounds {
     __0
 }
 
@@ -43420,8 +43431,8 @@ fn __action276<'a>(
 )]
 fn __action277<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, TypeParam, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, __0, _): (Loc, TypeParamWithBounds, Loc),
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     alloc::vec![__0]
 }
 
@@ -43433,9 +43444,9 @@ fn __action277<'a>(
 )]
 fn __action278<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    (_, e, _): (Loc, TypeParam, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, v, _): (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+    (_, e, _): (Loc, TypeParamWithBounds, Loc),
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     {
         let mut v = v;
         v.push(e);
@@ -45426,9 +45437,9 @@ fn __action382<'a>(
 )]
 fn __action383<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, TypeParam, Loc),
+    __0: (Loc, TypeParamWithBounds, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action265(module, __0, __1);
@@ -45444,10 +45455,10 @@ fn __action383<'a>(
 )]
 fn __action384<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, TypeParam, Loc),
+    __0: (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+    __1: (Loc, TypeParamWithBounds, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<TypeParamWithBounds> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action265(module, __1, __2);
@@ -45461,7 +45472,10 @@ fn __action384<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action385<'a>(module: &'a Rc<str>, __0: (Loc, Option<TypeParam>, Loc)) -> Vec<TypeParam> {
+fn __action385<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<TypeParamWithBounds>, Loc),
+) -> Vec<TypeParamWithBounds> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action263(module, &__start0, &__end0);
@@ -45477,9 +45491,9 @@ fn __action385<'a>(module: &'a Rc<str>, __0: (Loc, Option<TypeParam>, Loc)) -> V
 )]
 fn __action386<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, Option<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+    __1: (Loc, Option<TypeParamWithBounds>, Loc),
+) -> Vec<TypeParamWithBounds> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action264(module, __0);
@@ -46643,7 +46657,7 @@ fn __action443<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, TypeParamWithBounds, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
@@ -47694,7 +47708,7 @@ fn __action496<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, L<Id>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, TypeParamWithBounds, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
@@ -48674,7 +48688,10 @@ fn __action553<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action554<'a>(module: &'a Rc<str>, __0: (Loc, TypeParam, Loc)) -> Vec<TypeParam> {
+fn __action554<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, TypeParamWithBounds, Loc),
+) -> Vec<TypeParamWithBounds> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action261(module, __0);
@@ -48688,7 +48705,11 @@ fn __action554<'a>(module: &'a Rc<str>, __0: (Loc, TypeParam, Loc)) -> Vec<TypeP
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action555<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<TypeParam> {
+fn __action555<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<TypeParamWithBounds> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action262(module, &__start0, &__end0);
@@ -48704,9 +48725,9 @@ fn __action555<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action556<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, TypeParam, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+    __1: (Loc, TypeParamWithBounds, Loc),
+) -> Vec<TypeParamWithBounds> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action261(module, __1);
@@ -48722,8 +48743,8 @@ fn __action556<'a>(
 )]
 fn __action557<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<TypeParamWithBounds>, Loc),
+) -> Vec<TypeParamWithBounds> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action262(module, &__start0, &__end0);

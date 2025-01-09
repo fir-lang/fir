@@ -6,6 +6,9 @@ show_recipes:
 format:
     cargo fmt
 
+check:
+    cargo check
+
 lint:
     cargo clippy --all-targets
 

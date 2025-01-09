@@ -4,7 +4,7 @@ mod printer;
 
 use crate::interpolation::StringPart;
 pub use crate::token::IntKind;
-use crate::type_checker::Ty;
+use crate::type_checker::{Kind, Ty};
 
 use std::rc::Rc;
 
@@ -595,7 +595,7 @@ pub struct TraitDecl {
     pub name: L<Id>,
 
     /// Type parameter of the trait, with bounds.
-    pub ty: TypeParam,
+    pub ty: TypeParamWithBounds,
 
     pub items: Vec<L<TraitDeclItem>>,
 }
@@ -612,15 +612,18 @@ pub enum TraitDeclItem {
 /// Type parameters of a function or `impl` block.
 ///
 /// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
-pub type Context = Vec<TypeParam>;
+pub type Context = Vec<TypeParamWithBounds>;
 
-/// A type parameter in a function, `impl`, or `trait` block.
+/// A type parameter in a `fn`, `impl`, or `trait` block.
 ///
 /// Example: `I: Iterator[Item = A] + Debug`.
 #[derive(Debug, Clone)]
-pub struct TypeParam {
+pub struct TypeParamWithBounds {
     /// `I` in the example.
     pub id: L<Id>,
+
+    /// Kind of the type parameter. Updated by `infer_kinds`.
+    pub kind: Option<Kind>,
 
     /// `[Iterator[Item = A], Debug]` in the example.
     ///

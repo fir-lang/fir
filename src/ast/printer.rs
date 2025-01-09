@@ -812,7 +812,7 @@ impl ImplDeclItem {
     }
 }
 
-fn print_context(context: &[TypeParam], buffer: &mut String) {
+fn print_context(context: &[TypeParamWithBounds], buffer: &mut String) {
     for (i, ty) in context.iter().enumerate() {
         if i != 0 {
             buffer.push_str(", ");
