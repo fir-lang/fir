@@ -4,6 +4,7 @@ mod apply;
 mod convert;
 mod expr;
 mod instantiation;
+mod kind_inference;
 mod pat;
 mod pat_coverage;
 mod row_utils;
