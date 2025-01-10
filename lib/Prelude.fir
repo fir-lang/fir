@@ -89,7 +89,7 @@ type Option[t]:
     None
     Some(t)
 
-impl[t] Option[t]:
+impl Option[t]:
     fn unwrap(self): t
         match self:
             Option.None: panic("Unwrapping Option.None")
