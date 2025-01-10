@@ -148,32 +148,40 @@ fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
 /*
 No higher kinds for now.
 
-Types, traits, and trait methods are checked together.
+Types and traits are checked together.
 
-Functions are checked separately, so uses of types in function types cannot influence inferred kinds.
+Functions (including trait methods) are checked separately, so uses of types in function types
+cannot influence inferred kinds.
 
 (TODO: I don't know why this is, but it's consistent with Haskell 98 kind inference.)
 
 Trait methods need to be checked with the types to be able to infer the right kinds in cases like:
 
 ```
-trait Blah[t]:
+# t : *
+trait Foo[t]:
+    fn f(self)
+
+# t : row(variant)
+trait Bar[t]:
     fn f(a: [..t])
 ```
 
 Without considering the function we cannot infer the kind of `t`.
+
+TODO: I'm not sure if row-kinded trait type parameters make sense. Do we have a use case for this?
 */
 #[allow(unused)]
 pub fn infer_kinds(pgm: &mut ast::Module) {
     let mut var_gen = TyVarGen::default();
 
-    // `ty_arg_kinds[i]` maps type arguments of `types[i]` to their kinds.
+    // `ty_arg_kinds[i]` maps type arguments of `pgm[i]` to their kinds.
     let mut ty_arg_kinds: Vec<Map<Id, Ty>> = vec![Default::default(); pgm.len()];
 
     // Maps type constructors to their kinds.
     let mut con_kinds: Map<Id, Ty> = Default::default();
 
-    // Add kinds of type constructors, with unification variables as the parmaeter kinds.
+    // Add kinds of type constructors, with unification variables as the parameter kinds.
     for (decl_idx, decl) in pgm.iter().enumerate() {
         match &decl.node {
             ast::TopDecl::Type(decl) => {
@@ -227,6 +235,7 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
     for (decl_idx, decl) in pgm.iter().enumerate() {
         match &decl.node {
             ast::TopDecl::Type(decl) => {
+                // NB. This will infer `prim` type type parameters as `*`.
                 let rhs = match &decl.node.rhs {
                     Some(rhs) => rhs,
                     None => continue,
@@ -240,22 +249,38 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
 
                                 ast::ConstructorFields::Named(tys) => {
                                     tys.iter().for_each(|(_, ty)| {
-                                        ty_kind(
+                                        let kind = ty_kind(
                                             &con_kinds,
                                             &ty_arg_kinds[decl_idx],
                                             &mut var_gen,
                                             ty,
                                             &ast::Loc::dummy(),
                                         );
+                                        unify(
+                                            &kind,
+                                            &TY_STAR,
+                                            &Default::default(),
+                                            &mut var_gen,
+                                            0,
+                                            &ast::Loc::dummy(),
+                                        );
                                     });
                                 }
 
                                 ast::ConstructorFields::Unnamed(tys) => tys.iter().for_each(|ty| {
-                                    ty_kind(
+                                    let kind = ty_kind(
                                         &con_kinds,
                                         &ty_arg_kinds[decl_idx],
                                         &mut var_gen,
                                         ty,
+                                        &ast::Loc::dummy(),
+                                    );
+                                    unify(
+                                        &kind,
+                                        &TY_STAR,
+                                        &Default::default(),
+                                        &mut var_gen,
+                                        0,
                                         &ast::Loc::dummy(),
                                     );
                                 }),
@@ -268,22 +293,38 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
 
                         ast::ConstructorFields::Named(tys) => {
                             tys.iter().for_each(|(_, ty)| {
-                                ty_kind(
+                                let kind = ty_kind(
                                     &con_kinds,
                                     &ty_arg_kinds[decl_idx],
                                     &mut var_gen,
                                     ty,
                                     &ast::Loc::dummy(),
                                 );
+                                unify(
+                                    &kind,
+                                    &TY_STAR,
+                                    &Default::default(),
+                                    &mut var_gen,
+                                    0,
+                                    &ast::Loc::dummy(),
+                                );
                             });
                         }
 
                         ast::ConstructorFields::Unnamed(tys) => tys.iter().for_each(|ty| {
-                            ty_kind(
+                            let kind = ty_kind(
                                 &con_kinds,
                                 &ty_arg_kinds[decl_idx],
                                 &mut var_gen,
                                 ty,
+                                &ast::Loc::dummy(),
+                            );
+                            unify(
+                                &kind,
+                                &TY_STAR,
+                                &Default::default(),
+                                &mut var_gen,
+                                0,
                                 &ast::Loc::dummy(),
                             );
                         }),
@@ -291,7 +332,49 @@ pub fn infer_kinds(pgm: &mut ast::Module) {
                 }
             }
 
-            ast::TopDecl::Fun(decl) => {}
+            ast::TopDecl::Fun(decl) => {
+                // Parameters with bounds will have kind `*`. The rest will be inferred.
+                let mut fun_context: Map<Id, Ty> = Default::default();
+                for ty_param in &decl.node.sig.type_params {
+                    let kind = if ty_param.bounds.is_empty() {
+                        Ty::Var(var_gen.new_var(0, Kind::Star, ast::Loc::dummy()))
+                    } else {
+                        TY_STAR.clone()
+                    };
+                    let old = fun_context.insert(ty_param.id.node.clone(), kind);
+                    assert!(old.is_none());
+                }
+
+                for (_, param) in decl.node.sig.params.iter() {
+                    let kind = ty_kind(
+                        &con_kinds,
+                        &fun_context,
+                        &mut var_gen,
+                        &param.node,
+                        &ast::Loc::dummy(),
+                    );
+                    unify(
+                        &kind,
+                        &TY_STAR,
+                        &Default::default(),
+                        &mut var_gen,
+                        0,
+                        &ast::Loc::dummy(),
+                    );
+                }
+
+                if let Some(ret) = &decl.node.sig.return_ty {
+                    let kind = ty_kind(&con_kinds, &fun_context, &mut var_gen, &ret.node, &ret.loc);
+                    unify(
+                        &kind,
+                        &TY_STAR,
+                        &Default::default(),
+                        &mut var_gen,
+                        0,
+                        &ast::Loc::dummy(),
+                    );
+                }
+            }
 
             ast::TopDecl::Trait(l) => todo!(),
 
