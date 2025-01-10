@@ -309,6 +309,15 @@ FunSig: FunSig = {
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
         },
+
+    "fn" <name:LLowerId> <type_params:Context> <return_ty:(":" <LType>)?> =>
+        FunSig {
+            name,
+            type_params,
+            self_: false,
+            params: vec![],
+            return_ty,
+        },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
