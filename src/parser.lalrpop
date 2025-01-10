@@ -301,23 +301,35 @@ FunSig: FunSig = {
     "fn" <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?> =>
+            <return_ty:(":" <LType>)?>
+            <exceptions:ExceptionType>
+            =>
         FunSig {
             name,
             type_params,
             self_: self_.is_some(),
             params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
             return_ty,
+            exceptions,
         },
 
-    "fn" <name:LLowerId> <type_params:Context> <return_ty:(":" <LType>)?> =>
+    "fn" <name:LLowerId> <type_params:Context> <return_ty:(":" <LType>)?> <exceptions:ExceptionType> =>
         FunSig {
             name,
             type_params,
             self_: false,
             params: vec![],
             return_ty,
+            exceptions,
         },
+}
+
+ExceptionType: Option<Type> = {
+    => None,
+
+    // TODO: Syntax temporarily using braces.. find a more consistent syntax.
+    "{" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "}" =>
+        Some(Type::Variant { alts, extension, }),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

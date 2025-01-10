@@ -61,7 +61,15 @@ pub enum Ty {
     QVar(Id),
 
     /// A function type, e.g. `Fn(U32): Str`, `Fn(x: U32, y: U32): T`.
-    Fun(FunArgs, Box<Ty>),
+    Fun {
+        args: FunArgs,
+
+        ret: Box<Ty>,
+
+        /// Exception type of a function is always a `row(variant)`-kinded type variable. In type
+        /// schemes, this will be a `QVar`.
+        exceptions: Box<Ty>,
+    },
 
     /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
     AssocTySelect { ty: Box<Ty>, assoc_ty: Id },

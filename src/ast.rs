@@ -243,6 +243,10 @@ pub struct FunSig {
 
     /// Optional return type.
     pub return_ty: Option<L<Type>>,
+
+    /// The exception signature. If exists, this will be a variant type. Store as `Type` to make it
+    /// easier to process with rest of the types.
+    pub exceptions: Option<L<Type>>,
 }
 
 #[derive(Debug, Clone)]

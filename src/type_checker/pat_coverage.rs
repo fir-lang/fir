@@ -318,7 +318,7 @@ impl PatCoverage {
 
             Ty::Var(_) => false,
 
-            Ty::QVar(_) | Ty::Fun(_, _) => panic!(),
+            Ty::QVar(_) | Ty::Fun  => panic!(),
 
             Ty::AssocTySelect { .. } => todo!(),
         }
