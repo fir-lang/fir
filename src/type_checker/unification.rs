@@ -78,7 +78,16 @@ pub(super) fn unify(
             }
         }
 
-        (Ty::Fun(args1, ret1), Ty::Fun(args2, ret2)) => {
+        (
+            Ty::Fun {
+                args: args1,
+                ret: ret1,
+            },
+            Ty::Fun {
+                args: args2,
+                ret: ret2,
+            },
+        ) => {
             if args1.len() != args2.len() {
                 panic!(
                     "{}: Unable to unify functions {} and {} (argument numbers don't match)",
@@ -366,7 +375,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
 
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
-        Ty::Fun(args, ret) => {
+        Ty::Fun { args, ret } => {
             match args {
                 FunArgs::Positional(args) => {
                     args.iter().for_each(|arg| prune_level(arg, max_level))

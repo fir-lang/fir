@@ -587,7 +587,16 @@ fn ty_eq_modulo_alpha(
             qvar1_idx == qvar2_idx
         }
 
-        (Ty::Fun(args1, ret1), Ty::Fun(args2, ret2)) => {
+        (
+            Ty::Fun {
+                args: args1,
+                ret: ret1,
+            },
+            Ty::Fun {
+                args: args2,
+                ret: ret2,
+            },
+        ) => {
             if args1.len() != args2.len() {
                 return false;
             }
@@ -725,8 +734,8 @@ impl Ty {
                 }
             }
 
-            Ty::Fun(args, ret) => Ty::Fun(
-                match args {
+            Ty::Fun { args, ret } => Ty::Fun {
+                args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
                     ),
@@ -736,8 +745,8 @@ impl Ty {
                             .collect(),
                     ),
                 },
-                Box::new(ret.subst(var, ty)),
-            ),
+                ret: Box::new(ret.subst(var, ty)),
+            },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.subst(var, ty)),
@@ -792,8 +801,8 @@ impl Ty {
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
 
-            Ty::Fun(args, ret) => Ty::Fun(
-                match args {
+            Ty::Fun { args, ret } => Ty::Fun {
+                args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
                     ),
@@ -803,8 +812,8 @@ impl Ty {
                             .collect(),
                     ),
                 },
-                Box::new(ret.subst_self(self_ty)),
-            ),
+                ret: Box::new(ret.subst_self(self_ty)),
+            },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.subst_self(self_ty)),
@@ -855,8 +864,8 @@ impl Ty {
                 .cloned()
                 .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
 
-            Ty::Fun(args, ret) => Ty::Fun(
-                match args {
+            Ty::Fun { args, ret } => Ty::Fun {
+                args: match args {
                     FunArgs::Positional(args) => {
                         FunArgs::Positional(args.iter().map(|arg| arg.subst_qvars(vars)).collect())
                     }
@@ -866,8 +875,8 @@ impl Ty {
                             .collect(),
                     ),
                 },
-                Box::new(ret.subst_qvars(vars)),
-            ),
+                ret: Box::new(ret.subst_qvars(vars)),
+            },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.subst_qvars(vars)),
@@ -962,8 +971,8 @@ impl Ty {
                 }
             }
 
-            Ty::Fun(args, ret) => Ty::Fun(
-                match args {
+            Ty::Fun { args, ret } => Ty::Fun {
+                args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
                     ),
@@ -973,8 +982,8 @@ impl Ty {
                             .collect(),
                     ),
                 },
-                Box::new(ret.deep_normalize(cons)),
-            ),
+                ret: Box::new(ret.deep_normalize(cons)),
+            },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty.deep_normalize(cons)),
@@ -995,7 +1004,7 @@ impl Ty {
             Ty::Var(_)
             | Ty::Anonymous { .. }
             | Ty::QVar(_)
-            | Ty::Fun(_, _)
+            | Ty::Fun { .. }
             | Ty::AssocTySelect { .. } => None,
         }
     }
@@ -1249,7 +1258,7 @@ impl fmt::Display for Ty {
 
             Ty::QVar(id) => write!(f, "'{}", id),
 
-            Ty::Fun(args, ret) => {
+            Ty::Fun { args, ret } => {
                 write!(f, "Fn(")?;
                 match args {
                     FunArgs::Positional(args) => {

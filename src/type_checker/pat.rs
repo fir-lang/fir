@@ -341,7 +341,7 @@ pub(super) fn refine_pat_binders(
 
                 Ty::Var(_)
                 | Ty::QVar(_)
-                | Ty::Fun(_, _)
+                | Ty::Fun { .. }
                 | Ty::AssocTySelect { .. }
                 | Ty::Anonymous { .. } => return,
             };
@@ -358,7 +358,7 @@ pub(super) fn refine_pat_binders(
                 };
 
                 let field_ty: Ty = match &con_ty {
-                    Ty::Fun(args, _) => {
+                    Ty::Fun { args, ret: _ } => {
                         match args {
                             FunArgs::Positional(args) => {
                                 if field_pat.name.is_some() {

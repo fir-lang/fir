@@ -1340,7 +1340,7 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
         */
         Ty::QVar(_var) => panic!(),
 
-        Ty::Fun(_args, _ret) => todo!(),
+        Ty::Fun { .. } => todo!(),
 
         Ty::AssocTySelect { ty: _, assoc_ty: _ } => todo!(),
     }

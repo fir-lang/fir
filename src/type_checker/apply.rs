@@ -11,7 +11,10 @@ pub(crate) fn apply(
     loc: &ast::Loc,
 ) -> Ty {
     match ty {
-        Ty::Fun(ty_args, ty_ret) => {
+        Ty::Fun {
+            args: ty_args,
+            ret: ty_ret,
+        } => {
             match ty_args {
                 FunArgs::Positional(ty_args) => {
                     assert_eq!(ty_args.len(), args.len());

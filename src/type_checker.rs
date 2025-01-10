@@ -314,7 +314,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 None => Ty::unit(),
                             };
 
-                            let fun_ty = Ty::Fun(FunArgs::Positional(arg_tys), Box::new(ret_ty));
+                            let fun_ty = Ty::Fun {
+                                args: FunArgs::Positional(arg_tys),
+                                ret: Box::new(ret_ty),
+                            };
 
                             tys.exit_scope();
 
@@ -626,7 +629,10 @@ fn collect_schemes(
                     None => Ty::unit(),
                 };
 
-                let fun_ty = Ty::Fun(FunArgs::Positional(arg_tys), Box::new(ret_ty));
+                let fun_ty = Ty::Fun {
+                    args: FunArgs::Positional(arg_tys),
+                    ret: Box::new(ret_ty),
+                };
 
                 let scheme = Scheme {
                     quantified_vars: fun_context,
@@ -718,7 +724,10 @@ fn collect_schemes(
                         None => Ty::unit(),
                     };
 
-                    let fun_ty = Ty::Fun(FunArgs::Positional(arg_tys), Box::new(ret_ty));
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                    };
 
                     let scheme = Scheme {
                         quantified_vars: impl_context
@@ -865,12 +874,14 @@ fn collect_schemes(
                             // TODO: loc should be con loc, add loc to cons
                             let ty = match convert_fields(tys, fields, &ty_decl.loc) {
                                 None => ret.clone(),
-                                Some(ConFields::Unnamed(tys)) => {
-                                    Ty::Fun(FunArgs::Positional(tys), Box::new(ret.clone()))
-                                }
-                                Some(ConFields::Named(tys)) => {
-                                    Ty::Fun(FunArgs::Named(tys), Box::new(ret.clone()))
-                                }
+                                Some(ConFields::Unnamed(tys)) => Ty::Fun {
+                                    args: FunArgs::Positional(tys),
+                                    ret: Box::new(ret.clone()),
+                                },
+                                Some(ConFields::Named(tys)) => Ty::Fun {
+                                    args: FunArgs::Named(tys),
+                                    ret: Box::new(ret.clone()),
+                                },
                             };
                             let var_kinds = constructor_decls_var_kinds(cons);
                             let scheme = Scheme {
@@ -911,12 +922,14 @@ fn collect_schemes(
                     ast::TypeDeclRhs::Product(fields) => {
                         let ty = match convert_fields(tys, fields, &ty_decl.loc) {
                             None => ret,
-                            Some(ConFields::Unnamed(tys)) => {
-                                Ty::Fun(FunArgs::Positional(tys), Box::new(ret.clone()))
-                            }
-                            Some(ConFields::Named(tys)) => {
-                                Ty::Fun(FunArgs::Named(tys), Box::new(ret.clone()))
-                            }
+                            Some(ConFields::Unnamed(tys)) => Ty::Fun {
+                                args: FunArgs::Positional(tys),
+                                ret: Box::new(ret.clone()),
+                            },
+                            Some(ConFields::Named(tys)) => Ty::Fun {
+                                args: FunArgs::Named(tys),
+                                ret: Box::new(ret.clone()),
+                            },
                         };
                         let var_kinds = constructor_fields_var_kinds(fields);
                         let scheme = Scheme {
@@ -1394,7 +1407,7 @@ fn resolve_preds(
             Ty::QVar(_)
             | Ty::Var(_)
             | Ty::Anonymous { .. }
-            | Ty::Fun(_, _)
+            | Ty::Fun { .. }
             | Ty::AssocTySelect { .. } => {
                 remaining_preds.add(Pred {
                     ty_var,
