@@ -324,12 +324,12 @@ FunSig: FunSig = {
         },
 }
 
-ExceptionType: Option<Type> = {
+ExceptionType: Option<L<Type>> = {
     => None,
 
     // TODO: Syntax temporarily using braces.. find a more consistent syntax.
-    "{" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "}" =>
-        Some(Type::Variant { alts, extension, }),
+    "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" =>
+        Some(L::new(module, l, r, Type::Variant { alts, extension, })),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
