@@ -318,7 +318,7 @@ impl PatCoverage {
 
             Ty::Var(_) => false,
 
-            Ty::QVar(_) | Ty::Fun(_, _) => panic!(),
+            Ty::QVar(_) | Ty::Fun { .. } => panic!(),
 
             Ty::AssocTySelect { .. } => todo!(),
         }
@@ -341,7 +341,7 @@ impl PatCoverage {
         };
 
         match con_fn_ty {
-            Ty::Fun(args, _) => {
+            Ty::Fun { args, ret: _ } => {
                 match args {
                     FunArgs::Positional(args) => {
                         // If we have a pattern for the constructor, it should have the
