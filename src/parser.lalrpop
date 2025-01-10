@@ -18,7 +18,7 @@ extern {
 
     enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
-        BacktickUpperId => Token { kind: TokenKind::BacktickUpperId, .. },
+        TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
@@ -635,7 +635,7 @@ InlineExpr: Expr = {
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     #[precedence(level = "3")]
-    <id:BacktickUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
+    <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
         Expr::Variant(VariantExpr {
             id: id.text.as_str()[1..].into(),
             args: match args {
@@ -876,13 +876,13 @@ ConstrPattern: ConstrPattern = {
 }
 
 VariantPattern: VariantPattern = {
-    <constr:BacktickUpperId> =>
+    <constr:TildeUpperId> =>
         VariantPattern {
             constr: constr.text.as_str()[1..].into(),
             fields: vec![],
         },
 
-    <constr:BacktickUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
+    <constr:TildeUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
         VariantPattern {
             constr: constr.text.as_str()[1..].into(),
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),

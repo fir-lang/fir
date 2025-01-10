@@ -1,7 +1,7 @@
 fn id(a: t): t = a
 
 fn f1(): Result[[E1, ..r], ()]
-    Result.Err(`E1)
+    Result.Err(~E1)
 
 type X[t]:
     a: t
