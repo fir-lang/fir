@@ -45,16 +45,16 @@ fn f6[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[..errs], ()]
         Result.Err(other):
             Result.Err(other)
 
-# Similar to ~f6~, but the call site adds more error cases.
+# Similar to `f6`, but the call site adds more error cases.
 #
 # TODO: I'm not sure that this type is right.. Do we need an "absent" constraint
-# like ~errs \ E1~?
+# like `errs \ E1`?
 #
 # Currently this fails because we try to unify:
 #
 #   [E1, ..r1] ~ [..errs]
 #
-# and ~E1~ cannot be added to ~errs~ as it's a rigid type variable.
+# and `E1` cannot be added to `errs` as it's a rigid type variable.
 #
 # fn f7[errs](f: Fn(): Result[[..errs], ()]): Result[[E1, ..errs], ()]
 #     match f():
