@@ -6,10 +6,10 @@ trait Iterator[t]:
 trait Step[t]:
     fn next(self): t
 
-fn range[t](start: t, end: t): RangeIterator[t]
+fn range(start: t, end: t): RangeIterator[t]
     RangeIterator(current = start, end = end)
 
-fn irange[t](start: t, end: t): InclusiveRangeIterator[t]
+fn irange(start: t, end: t): InclusiveRangeIterator[t]
     InclusiveRangeIterator(current = start, end = end)
 
 type RangeIterator[t]:

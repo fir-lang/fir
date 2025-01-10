@@ -76,7 +76,7 @@ type Void
 
 prim type Array[t]
 
-impl[t] Array[t]:
+impl Array[t]:
     prim fn new(len: U32): Array[t]
     prim fn len(self): U32
     prim fn get(self, idx: U32): t

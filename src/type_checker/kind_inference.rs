@@ -20,8 +20,10 @@ We allow omitting type parameters in these contexts:
         fn f1[t](self, a: t)
             ...
 
-There may be cases in traits and impl blocks where we can omit some of the type parameters, but we
-don't do it for now.
+- Impl blocks:
+
+    impl T[x]:
+        ...
 
 For now we modify the AST nodes to add missing type parameters.
 */
@@ -68,17 +70,76 @@ fn add_missing_type_params_fun(decl: &mut ast::FunDecl, bound_vars: &Set<Id>) {
 }
 
 fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
-    let bound_vars: Set<Id> = decl
+    let mut impl_context_vars: Set<Id> = decl
         .context
         .iter()
         .map(|param| param.id.node.clone())
         .collect();
 
+    // Add missing parameters to the `impl` block context.
+    let mut impl_context_fvs: Set<Id> = Default::default();
+    collect_fvs(&decl.ty.node, &mut impl_context_fvs);
+    for fv in impl_context_fvs.difference(&impl_context_vars) {
+        decl.context.push(ast::TypeParamWithBounds {
+            id: ast::L {
+                node: fv.clone(),
+                loc: ast::Loc::dummy(),
+            },
+            kind: None,
+            bounds: vec![],
+        });
+    }
+
+    // Add missing parameters to functions in the `impl` block.
+    impl_context_vars.extend(impl_context_fvs);
     for item in &mut decl.items {
         match &mut item.node {
             ast::ImplDeclItem::AssocTy(_) => {}
             ast::ImplDeclItem::Fun(fun_decl) => {
-                add_missing_type_params_fun(fun_decl, &bound_vars);
+                add_missing_type_params_fun(fun_decl, &impl_context_vars);
+            }
+        }
+    }
+}
+
+fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
+    match ty {
+        ast::Type::Named(ast::NamedType { name: _, args }) => {
+            for arg in args {
+                collect_fvs(&arg.node.1.node, fvs);
+            }
+        }
+
+        ast::Type::Var(var) => {
+            fvs.insert(var.clone());
+        }
+
+        ast::Type::Record { fields, extension } => {
+            for field in fields {
+                collect_fvs(&field.node, fvs);
+            }
+            if let Some(ext) = extension {
+                fvs.insert(ext.clone());
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            for alt in alts {
+                for field in &alt.fields {
+                    collect_fvs(&field.node, fvs);
+                }
+            }
+            if let Some(ext) = extension {
+                fvs.insert(ext.clone());
+            }
+        }
+
+        ast::Type::Fn(ast::FnType { args, ret }) => {
+            for arg in args {
+                collect_fvs(&arg.node, fvs);
+            }
+            if let Some(ret) = ret {
+                collect_fvs(&ret.node, fvs);
             }
         }
     }
@@ -365,46 +426,3 @@ fn ty_kind(
 const TY_STAR: Ty = Ty::Con(SmolStr::new_static("*"));
 const TY_RECORD_ROW: Ty = Ty::Con(SmolStr::new_static("row(record)"));
 const TY_VARIANT_ROW: Ty = Ty::Con(SmolStr::new_static("row(variant)"));
-
-fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
-    match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => {
-            for arg in args {
-                collect_fvs(&arg.node.1.node, fvs);
-            }
-        }
-
-        ast::Type::Var(var) => {
-            fvs.insert(var.clone());
-        }
-
-        ast::Type::Record { fields, extension } => {
-            for field in fields {
-                collect_fvs(&field.node, fvs);
-            }
-            if let Some(ext) = extension {
-                fvs.insert(ext.clone());
-            }
-        }
-
-        ast::Type::Variant { alts, extension } => {
-            for alt in alts {
-                for field in &alt.fields {
-                    collect_fvs(&field.node, fvs);
-                }
-            }
-            if let Some(ext) = extension {
-                fvs.insert(ext.clone());
-            }
-        }
-
-        ast::Type::Fn(ast::FnType { args, ret }) => {
-            for arg in args {
-                collect_fvs(&arg.node, fvs);
-            }
-            if let Some(ret) = ret {
-                collect_fvs(&ret.node, fvs);
-            }
-        }
-    }
-}
