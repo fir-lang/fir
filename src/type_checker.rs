@@ -4,6 +4,7 @@ mod apply;
 mod convert;
 mod expr;
 mod instantiation;
+mod kind_inference;
 mod pat;
 mod pat_coverage;
 mod row_utils;
@@ -51,6 +52,7 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
+    kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     for decl in module {
         match &mut decl.node {

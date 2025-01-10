@@ -2,7 +2,7 @@ type Vec[t]:
     _data: Array[t]
     _len: U32
 
-impl[t] Vec[t]:
+impl Vec[t]:
     fn withCapacity(cap: U32): Vec[t]
         Vec(_data = Array.new(cap), _len = 0)
 
