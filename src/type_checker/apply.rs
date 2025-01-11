@@ -14,6 +14,10 @@ pub(crate) fn apply(
         Ty::Fun {
             args: ty_args,
             ret: ty_ret,
+
+            // TODO: This function is only called on constructors, which don't throw exceptions. We
+            // should assert this somehow to catch if we call this on functions in the future.
+            exceptions: _,
         } => {
             match ty_args {
                 FunArgs::Positional(ty_args) => {

@@ -80,6 +80,9 @@ struct TcFunState<'a> {
     var_gen: &'a mut TyVarGen,
     tys: &'a PgmTypes,
     preds: &'a mut PredSet,
+
+    /// The current function's exception signature.
+    exceptions: Ty,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -1063,6 +1066,11 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let context = scheme.quantified_vars.iter().cloned().collect();
 
+    let exceptions = match &fun.node.sig.exceptions {
+        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+        None => fresh_exception_type(&mut var_gen, fun.loc.clone()),
+    };
+
     let mut tc_state = TcFunState {
         context: &context,
         return_ty: &ret_ty,
@@ -1070,6 +1078,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         var_gen: &mut var_gen,
         tys,
         preds: &mut preds,
+        exceptions,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
@@ -1193,6 +1202,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     .chain(fn_bounds.into_iter())
                     .collect();
 
+                let exceptions = match &fun.sig.exceptions {
+                    Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                    None => fresh_exception_type(&mut var_gen, ast::Loc::dummy()),
+                };
+
                 let mut tc_state = TcFunState {
                     context: &context,
                     return_ty: &ret_ty,
@@ -1200,6 +1214,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     var_gen: &mut var_gen,
                     tys,
                     preds: &mut preds,
+                    exceptions,
                 };
 
                 check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
@@ -1308,6 +1323,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     .chain(fn_bounds.into_iter())
                     .collect();
 
+                let exceptions = match &fun.sig.exceptions {
+                    Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                    None => fresh_exception_type(&mut var_gen, ast::Loc::dummy()),
+                };
+
                 let mut tc_state = TcFunState {
                     context: &context,
                     return_ty: &ret_ty,
@@ -1315,6 +1335,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     var_gen: &mut var_gen,
                     tys,
                     preds: &mut preds,
+                    exceptions,
                 };
 
                 check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
@@ -1337,6 +1358,19 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
+}
+
+fn fresh_exception_type(var_gen: &mut TyVarGen, loc: ast::Loc) -> Ty {
+    Ty::Anonymous {
+        labels: Default::default(),
+        extension: Some(Box::new(Ty::Var(var_gen.new_var(
+            0,
+            Kind::Row(RecordOrVariant::Variant),
+            loc,
+        )))),
+        kind: RecordOrVariant::Variant,
+        is_row: false,
+    }
 }
 
 /// We currently don't allow a type constructor to implement a trait multiple times with different

@@ -273,6 +273,7 @@ fn mono_top_decl(
                 self_: top_decl.sig.self_,
                 params,
                 return_ty,
+                exceptions: None,
             },
             body: None,
         },
@@ -916,6 +917,7 @@ fn mono_assoc_fn(
                     self_: fun.sig.self_,
                     params,
                     return_ty,
+                    exceptions: None,
                 },
                 body: None,
             },
@@ -1162,7 +1164,11 @@ fn mono_ty(
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions: _,
+        }) => ast::Type::Fn(ast::FnType {
             args: args
                 .iter()
                 .map(|arg| arg.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
@@ -1170,6 +1176,7 @@ fn mono_ty(
             ret: ret.as_ref().map(|ret| {
                 ret.map_as_ref(|ret| Box::new(mono_ty(ret, ty_map, poly_pgm, mono_pgm)))
             }),
+            exceptions: None,
         }),
     }
 }
