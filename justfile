@@ -9,6 +9,12 @@ format:
 lint:
     cargo clippy --all-targets
 
+check:
+    cargo check
+
+watch:
+    echo src/parser.lalrpop | entr -r lalrpop src/parser.lalrpop & cargo watch
+
 test: build
     cargo test
 
