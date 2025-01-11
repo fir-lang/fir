@@ -667,11 +667,12 @@ fn collect_schemes(
                             },
                         ));
                         Ty::Anonymous {
-                        labels: Default::default(),
-                        extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                        kind: RecordOrVariant::Variant,
-                        is_row: false,
-                    }},
+                            labels: Default::default(),
+                            extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                            kind: RecordOrVariant::Variant,
+                            is_row: false,
+                        }
+                    }
                 };
 
                 let fun_ty = Ty::Fun {
@@ -970,6 +971,13 @@ fn collect_schemes(
                                             },
                                         )
                                     })
+                                    .chain(std::iter::once((
+                                        EXN_QVAR_ID.clone(),
+                                        QVar {
+                                            kind: Kind::Row(RecordOrVariant::Variant),
+                                            bounds: Default::default(),
+                                        },
+                                    )))
                                     .collect(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -1020,6 +1028,13 @@ fn collect_schemes(
                                         },
                                     )
                                 })
+                                .chain(std::iter::once((
+                                    EXN_QVAR_ID.clone(),
+                                    QVar {
+                                        kind: Kind::Row(RecordOrVariant::Variant),
+                                        bounds: Default::default(),
+                                    },
+                                )))
                                 .collect(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
