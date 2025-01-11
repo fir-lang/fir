@@ -128,12 +128,19 @@ fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
             for arg in args {
                 collect_fvs(&arg.node, fvs);
             }
             if let Some(ret) = ret {
                 collect_fvs(&ret.node, fvs);
+            }
+            if let Some(exn) = exceptions {
+                collect_fvs(&exn.node, fvs);
             }
         }
     }

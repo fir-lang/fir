@@ -82,6 +82,8 @@ struct TcFunState<'a> {
     preds: &'a mut PredSet,
 }
 
+const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
+
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
 ///
@@ -314,9 +316,21 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 None => Ty::unit(),
                             };
 
+                            let exceptions = match &fun.sig.exceptions {
+                                Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+
+                                None => Ty::Anonymous {
+                                    labels: Default::default(),
+                                    extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                                    kind: RecordOrVariant::Variant,
+                                    is_row: false,
+                                },
+                            };
+
                             let fun_ty = Ty::Fun {
                                 args: FunArgs::Positional(arg_tys),
                                 ret: Box::new(ret_ty),
+                                exceptions: Box::new(exceptions),
                             };
 
                             tys.exit_scope();
@@ -629,9 +643,21 @@ fn collect_schemes(
                     None => Ty::unit(),
                 };
 
+                let exceptions = match &sig.exceptions {
+                    Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+
+                    None => Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                        kind: RecordOrVariant::Variant,
+                        is_row: false,
+                    },
+                };
+
                 let fun_ty = Ty::Fun {
                     args: FunArgs::Positional(arg_tys),
                     ret: Box::new(ret_ty),
+                    exceptions: Box::new(exceptions),
                 };
 
                 let scheme = Scheme {
@@ -724,9 +750,21 @@ fn collect_schemes(
                         None => Ty::unit(),
                     };
 
+                    let exceptions = match &fun.sig.exceptions {
+                        Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+
+                        None => Ty::Anonymous {
+                            labels: Default::default(),
+                            extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                            kind: RecordOrVariant::Variant,
+                            is_row: false,
+                        },
+                    };
+
                     let fun_ty = Ty::Fun {
                         args: FunArgs::Positional(arg_tys),
                         ret: Box::new(ret_ty),
+                        exceptions: Box::new(exceptions),
                     };
 
                     let scheme = Scheme {
@@ -877,10 +915,12 @@ fn collect_schemes(
                                 Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                     args: FunArgs::Positional(tys),
                                     ret: Box::new(ret.clone()),
+                                    exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
                                 },
                                 Some(ConFields::Named(tys)) => Ty::Fun {
                                     args: FunArgs::Named(tys),
                                     ret: Box::new(ret.clone()),
+                                    exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
                                 },
                             };
                             let var_kinds = constructor_decls_var_kinds(cons);
@@ -925,10 +965,12 @@ fn collect_schemes(
                             Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                 args: FunArgs::Positional(tys),
                                 ret: Box::new(ret.clone()),
+                                exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
                             },
                             Some(ConFields::Named(tys)) => Ty::Fun {
                                 args: FunArgs::Named(tys),
                                 ret: Box::new(ret.clone()),
+                                exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
                             },
                         };
                         let var_kinds = constructor_fields_var_kinds(fields);
@@ -1584,12 +1626,19 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
             for arg in args {
                 ty_var_kinds(&arg.node, kinds);
             }
             if let Some(ret) = ret {
                 ty_var_kinds(&ret.node, kinds);
+            }
+            if let Some(exn) = exceptions {
+                ty_var_kinds(&exn.node, kinds);
             }
         }
     }

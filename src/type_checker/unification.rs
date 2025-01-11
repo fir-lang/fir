@@ -82,10 +82,12 @@ pub(super) fn unify(
             Ty::Fun {
                 args: args1,
                 ret: ret1,
+                exceptions: exceptions1,
             },
             Ty::Fun {
                 args: args2,
                 ret: ret2,
+                exceptions: exceptions2,
             },
         ) => {
             if args1.len() != args2.len() {
@@ -134,6 +136,8 @@ pub(super) fn unify(
                     )
                 }
             }
+
+            unify(exceptions1, exceptions2, cons, var_gen, level, loc);
 
             unify(ret1, ret2, cons, var_gen, level, loc);
         }
@@ -375,7 +379,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
 
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
-        Ty::Fun { args, ret } => {
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => {
             match args {
                 FunArgs::Positional(args) => {
                     args.iter().for_each(|arg| prune_level(arg, max_level))
@@ -383,6 +391,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
                 FunArgs::Named(args) => args.values().for_each(|arg| prune_level(arg, max_level)),
             }
             prune_level(ret, max_level);
+            prune_level(exceptions, max_level);
         }
 
         Ty::AssocTySelect { ty, assoc_ty: _ } => {

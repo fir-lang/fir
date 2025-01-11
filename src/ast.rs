@@ -727,7 +727,11 @@ impl Type {
 
             Type::Variant { .. } => todo!(),
 
-            Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
+            Type::Fn(FnType {
+                args,
+                ret,
+                exceptions,
+            }) => Type::Fn(FnType {
                 args: args
                     .iter()
                     .map(|arg| arg.map_as_ref(|arg| arg.subst_var(var, ty)))
@@ -735,6 +739,9 @@ impl Type {
                 ret: ret
                     .as_ref()
                     .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_var(var, ty)))),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_var(var, ty)))),
             }),
         }
     }

@@ -358,7 +358,11 @@ pub(super) fn refine_pat_binders(
                 };
 
                 let field_ty: Ty = match &con_ty {
-                    Ty::Fun { args, ret: _ } => {
+                    Ty::Fun {
+                        args,
+                        ret: _,
+                        exceptions: _,
+                    } => {
                         match args {
                             FunArgs::Positional(args) => {
                                 if field_pat.name.is_some() {

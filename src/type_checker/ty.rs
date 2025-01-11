@@ -591,10 +591,12 @@ fn ty_eq_modulo_alpha(
             Ty::Fun {
                 args: args1,
                 ret: ret1,
+                exceptions: exceptions1,
             },
             Ty::Fun {
                 args: args2,
                 ret: ret2,
+                exceptions: exceptions2,
             },
         ) => {
             if args1.len() != args2.len() {
@@ -645,6 +647,18 @@ fn ty_eq_modulo_alpha(
 
                 (FunArgs::Named(_), FunArgs::Positional(_))
                 | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
+            }
+
+            if !ty_eq_modulo_alpha(
+                cons,
+                extra_qvars,
+                exceptions1,
+                exceptions2,
+                ty1_qvars,
+                ty2_qvars,
+                loc,
+            ) {
+                return false;
             }
 
             ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
@@ -734,7 +748,11 @@ impl Ty {
                 }
             }
 
-            Ty::Fun { args, ret } => Ty::Fun {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
@@ -746,6 +764,7 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst(var, ty)),
+                exceptions: Box::new(exceptions.subst(var, ty)),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -801,7 +820,11 @@ impl Ty {
 
             Ty::QVar(id) => Ty::QVar(id.clone()),
 
-            Ty::Fun { args, ret } => Ty::Fun {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
@@ -813,6 +836,7 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst_self(self_ty)),
+                exceptions: Box::new(exceptions.subst_self(self_ty)),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -864,7 +888,11 @@ impl Ty {
                 .cloned()
                 .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
 
-            Ty::Fun { args, ret } => Ty::Fun {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional(args) => {
                         FunArgs::Positional(args.iter().map(|arg| arg.subst_qvars(vars)).collect())
@@ -876,6 +904,7 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst_qvars(vars)),
+                exceptions: Box::new(exceptions.subst_qvars(vars)),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -971,7 +1000,11 @@ impl Ty {
                 }
             }
 
-            Ty::Fun { args, ret } => Ty::Fun {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
                 args: match args {
                     FunArgs::Positional(args) => FunArgs::Positional(
                         args.iter().map(|arg| arg.deep_normalize(cons)).collect(),
@@ -983,6 +1016,7 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.deep_normalize(cons)),
+                exceptions: Box::new(exceptions.deep_normalize(cons)),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -1258,7 +1292,11 @@ impl fmt::Display for Ty {
 
             Ty::QVar(id) => write!(f, "'{}", id),
 
-            Ty::Fun { args, ret } => {
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => {
                 write!(f, "Fn(")?;
                 match args {
                     FunArgs::Positional(args) => {
@@ -1278,7 +1316,7 @@ impl fmt::Display for Ty {
                         }
                     }
                 }
-                write!(f, "): {}", ret)
+                write!(f, ") {}: {}", exceptions, ret)
             }
 
             Ty::AssocTySelect { ty, assoc_ty } => {

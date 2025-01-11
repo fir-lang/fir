@@ -173,7 +173,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => Ty::Fun {
             args: FunArgs::Positional(
                 args.iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
@@ -183,6 +187,10 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
                 None => Ty::unit(),
             }),
+            exceptions: match exceptions {
+                Some(ty) => Box::new(convert_ast_ty(tys, &ty.node, &ty.loc)),
+                None => Box::new(Ty::empty_variant()),
+            },
         },
     }
 }

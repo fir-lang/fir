@@ -258,7 +258,11 @@ impl Type {
                 buffer.push(']');
             }
 
-            Type::Fn(FnType { args, ret }) => {
+            Type::Fn(FnType {
+                args,
+                ret,
+                exceptions,
+            }) => {
                 buffer.push_str("Fn(");
                 for (i, arg) in args.iter().enumerate() {
                     if i != 0 {
@@ -267,6 +271,11 @@ impl Type {
                     arg.node.print(buffer);
                 }
                 buffer.push(')');
+                if let Some(exn) = exceptions {
+                    buffer.push(' ');
+                    exn.node.print(buffer);
+                    buffer.push(' ');
+                }
                 if let Some(ret) = ret {
                     buffer.push_str(": ");
                     ret.node.print(buffer);
