@@ -1285,12 +1285,12 @@ impl fmt::Display for Ty {
                     write!(f, "{}: {}", label_id, label_ty)?;
                 }
                 if let Some(ext) = extension {
-                    write!(f, " | {}", ext)?;
+                    write!(f, ", ..{}", ext)?;
                 }
                 write!(f, "{}", right_delim)
             }
 
-            Ty::QVar(id) => write!(f, "'{}", id),
+            Ty::QVar(id) => write!(f, "{}", id),
 
             Ty::Fun {
                 args,

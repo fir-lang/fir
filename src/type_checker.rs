@@ -291,7 +291,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             let mut fun_var_kinds: Map<Id, Kind> = trait_var_kinds.clone();
                             fun_var_kinds.extend(fun_sig_ty_var_kinds(&fun.sig));
 
-                            let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                            let mut fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                                 &mut tys,
                                 &fun.sig.type_params,
                                 &fun_var_kinds,
@@ -322,12 +322,21 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             let exceptions = match &fun.sig.exceptions {
                                 Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
 
-                                None => Ty::Anonymous {
-                                    labels: Default::default(),
-                                    extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                                    kind: RecordOrVariant::Variant,
-                                    is_row: false,
-                                },
+                                None => {
+                                    fun_context.push((
+                                        EXN_QVAR_ID.clone(),
+                                        QVar {
+                                            kind: Kind::Row(RecordOrVariant::Variant),
+                                            bounds: Default::default(),
+                                        },
+                                    ));
+                                    Ty::Anonymous {
+                                        labels: Default::default(),
+                                        extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                                        kind: RecordOrVariant::Variant,
+                                        is_row: false,
+                                    }
+                                }
                             };
 
                             let fun_ty = Ty::Fun {
@@ -726,7 +735,7 @@ fn collect_schemes(
                     let mut fun_var_kinds = impl_var_kinds.clone();
                     fun_var_kinds.extend(fun_sig_ty_var_kinds(sig));
 
-                    let fun_context = convert_and_bind_context(
+                    let mut fun_context = convert_and_bind_context(
                         tys,
                         &sig.type_params,
                         &fun_var_kinds,
@@ -756,12 +765,21 @@ fn collect_schemes(
                     let exceptions = match &fun.sig.exceptions {
                         Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
 
-                        None => Ty::Anonymous {
-                            labels: Default::default(),
-                            extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                            kind: RecordOrVariant::Variant,
-                            is_row: false,
-                        },
+                        None => {
+                            fun_context.push((
+                                EXN_QVAR_ID.clone(),
+                                QVar {
+                                    kind: Kind::Row(RecordOrVariant::Variant),
+                                    bounds: Default::default(),
+                                },
+                            ));
+                            Ty::Anonymous {
+                                labels: Default::default(),
+                                extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
+                                kind: RecordOrVariant::Variant,
+                                is_row: false,
+                            }
+                        }
                     };
 
                     let fun_ty = Ty::Fun {
