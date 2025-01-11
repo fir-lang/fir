@@ -201,7 +201,11 @@ pub struct NamedType {
 #[derive(Debug, Clone)]
 pub struct FnType {
     pub args: Vec<L<Type>>,
+
     pub ret: Option<L<Box<Type>>>,
+
+    /// Same as `FunSig.exceptions`.
+    pub exceptions: Option<L<Box<Type>>>,
 }
 
 #[derive(Debug, Clone)]

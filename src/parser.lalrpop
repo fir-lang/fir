@@ -210,8 +210,8 @@ Type: Type = {
     <var:LowerId> =>
         Type::Var(var.smol_str()),
 
-    "Fn" "(" <args:Sep<LType, ",">> ")" <ret:(":" <LType>)?> =>
-        Type::Fn(FnType { args, ret: ret.map(|t| t.map(|t| Box::new(t))) }),
+    "Fn" "(" <args:Sep<LType, ",">> ")" <exceptions:ExceptionType> <ret:(":" <LType>)?>  =>
+        Type::Fn(FnType { args, ret: ret.map(|t| t.map(|t| Box::new(t))), exceptions: exceptions.map(|exn| exn.map(Box::new)) }),
 
     "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension },
@@ -301,8 +301,8 @@ FunSig: FunSig = {
     "fn" <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <return_ty:(":" <LType>)?>
             <exceptions:ExceptionType>
+            <return_ty:(":" <LType>)?>
             =>
         FunSig {
             name,
@@ -313,7 +313,7 @@ FunSig: FunSig = {
             exceptions,
         },
 
-    "fn" <name:LLowerId> <type_params:Context> <return_ty:(":" <LType>)?> <exceptions:ExceptionType> =>
+    "fn" <name:LLowerId> <type_params:Context> <exceptions:ExceptionType> <return_ty:(":" <LType>)?>  =>
         FunSig {
             name,
             type_params,
