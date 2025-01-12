@@ -279,7 +279,12 @@ pub(super) fn convert_and_bind_context(
 
         // TODO: Variables that don't appear in the arguments or return type won't have their kinds
         // inferred. Assume those to have kind `*`.
-        let kind = var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star);
+        // TODO FIXME HACK: Until we implement kind inference, handle `?exn` variables here.
+        let kind = if ty_var.node == crate::type_checker::EXN_QVAR_ID {
+            Kind::Row(RecordOrVariant::Variant)
+        } else {
+            var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star)
+        };
 
         context_converted.push((
             ty_var.node.clone(),
