@@ -187,7 +187,7 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast:
         .top
         .get(main)
         .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
-    mono_top_decl(main, &[], &poly_pgm, &mut mono_pgm);
+    mono_top_fn(main, &[], &poly_pgm, &mut mono_pgm);
 
     let mono_pgm = graph_to_pgm(mono_pgm);
 
@@ -222,15 +222,15 @@ fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
     })
 }
 
-fn mono_top_decl(
-    top_decl: &ast::FunDecl,
+fn mono_top_fn(
+    fun_decl: &ast::FunDecl,
     ty_args: &[ast::Type],
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    assert_eq!(top_decl.sig.type_params.len(), ty_args.len());
+    assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
 
-    let mono_fn_id = mono_id(&top_decl.sig.name.node, ty_args);
+    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
 
     // Check if we've already monomorphised this function.
     if mono_pgm.top.contains_key(&mono_fn_id) {
@@ -238,7 +238,7 @@ fn mono_top_decl(
     }
 
     // Add current function to mono_pgm without a body to avoid looping.
-    let ty_map: Map<Id, ast::Type> = top_decl
+    let ty_map: Map<Id, ast::Type> = fun_decl
         .sig
         .type_params
         .iter()
@@ -246,7 +246,7 @@ fn mono_top_decl(
         .zip(ty_args.iter().cloned())
         .collect();
 
-    let params: Vec<(Id, ast::L<ast::Type>)> = top_decl
+    let params: Vec<(Id, ast::L<ast::Type>)> = fun_decl
         .sig
         .params
         .iter()
@@ -258,7 +258,7 @@ fn mono_top_decl(
         })
         .collect();
 
-    let return_ty: Option<ast::L<ast::Type>> = top_decl
+    let return_ty: Option<ast::L<ast::Type>> = fun_decl
         .sig
         .return_ty
         .as_ref()
@@ -268,9 +268,9 @@ fn mono_top_decl(
         mono_fn_id.clone(),
         ast::FunDecl {
             sig: ast::FunSig {
-                name: top_decl.sig.name.set_node(mono_fn_id.clone()),
+                name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
                 type_params: vec![],
-                self_: top_decl.sig.self_,
+                self_: fun_decl.sig.self_,
                 params,
                 return_ty,
             },
@@ -279,7 +279,7 @@ fn mono_top_decl(
     );
 
     // Monomorphise function body.
-    let body = match &top_decl.body {
+    let body = match &fun_decl.body {
         Some(body) => body,
         None => return mono_fn_id,
     };
@@ -382,7 +382,7 @@ fn mono_expr(
                 }
             };
 
-            let mono_decl_id = mono_top_decl(
+            let mono_decl_id = mono_top_fn(
                 poly_decl,
                 &ty_args
                     .iter()
@@ -848,13 +848,13 @@ fn mono_named_l_pat(
 /// arguments.
 fn mono_assoc_fn(
     mono_ty_id: &Id,
-    fun: &ast::FunDecl,
+    fun_decl: &ast::FunDecl,
     ty_map: &Map<Id, ast::Type>,
     ty_args: &[ast::Type],
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    let mono_fn_id = mono_id(&fun.sig.name.node, ty_args);
+    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
 
     if mono_pgm
         .associated
@@ -866,7 +866,7 @@ fn mono_assoc_fn(
     }
 
     let mut ty_map = ty_map.clone();
-    let fun_ty_params = &fun.sig.type_params[fun.sig.type_params.len() - ty_args.len()..];
+    let fun_ty_params = &fun_decl.sig.type_params[fun_decl.sig.type_params.len() - ty_args.len()..];
     for (ty_param, mono_ty) in fun_ty_params
         .iter()
         .map(|ty_param| ty_param.id.node.clone())
@@ -875,7 +875,7 @@ fn mono_assoc_fn(
         ty_map.insert(ty_param, mono_ty);
     }
 
-    if fun.sig.self_ {
+    if fun_decl.sig.self_ {
         ty_map.insert(
             SmolStr::new("self"),
             ast::Type::Named(ast::NamedType {
@@ -885,7 +885,7 @@ fn mono_assoc_fn(
         );
     }
 
-    let params: Vec<(Id, ast::L<ast::Type>)> = fun
+    let params: Vec<(Id, ast::L<ast::Type>)> = fun_decl
         .sig
         .params
         .iter()
@@ -897,7 +897,7 @@ fn mono_assoc_fn(
         })
         .collect();
 
-    let return_ty: Option<ast::L<ast::Type>> = fun
+    let return_ty: Option<ast::L<ast::Type>> = fun_decl
         .sig
         .return_ty
         .as_ref()
@@ -911,9 +911,9 @@ fn mono_assoc_fn(
             mono_fn_id.clone(),
             ast::FunDecl {
                 sig: ast::FunSig {
-                    name: fun.sig.name.set_node(mono_fn_id.clone()),
+                    name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
                     type_params: vec![],
-                    self_: fun.sig.self_,
+                    self_: fun_decl.sig.self_,
                     params,
                     return_ty,
                 },
@@ -922,7 +922,7 @@ fn mono_assoc_fn(
         );
 
     // Monomorphise function body.
-    let body = match &fun.body {
+    let body = match &fun_decl.body {
         Some(body) => body,
         None => return mono_fn_id,
     };
