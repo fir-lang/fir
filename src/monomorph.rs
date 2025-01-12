@@ -230,54 +230,58 @@ fn mono_top_fn(
 ) -> Id {
     assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
 
-    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
+    // Don't monomorphise based on exception types. Adjust type parameters of the function and
+    // `ty_args` to drop rows for the exceptions.
+    let (ty_params, ty_args) = drop_exception_vars(&fun_decl.sig, ty_args);
+
+    let mono_fn_id = mono_id(&fun_decl.sig.name.node, &ty_args);
 
     // Check if we've already monomorphised this function.
     if mono_pgm.top.contains_key(&mono_fn_id) {
         return mono_fn_id;
     }
 
-    // Add current function to mono_pgm without a body to avoid looping.
-    let ty_map: Map<Id, ast::Type> = fun_decl
-        .sig
-        .type_params
+    let ty_map: Map<Id, ast::Type> = ty_params
         .iter()
         .map(|ty_param| ty_param.id.node.clone())
         .zip(ty_args.iter().cloned())
         .collect();
 
-    let params: Vec<(Id, ast::L<ast::Type>)> = fun_decl
-        .sig
-        .params
-        .iter()
-        .map(|(param_name, param_ty)| {
-            (
-                param_name.clone(),
-                param_ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)),
-            )
-        })
-        .collect();
+    // Add current function to mono_pgm without a body to avoid looping.
+    {
+        let params: Vec<(Id, ast::L<ast::Type>)> = fun_decl
+            .sig
+            .params
+            .iter()
+            .map(|(param_name, param_ty)| {
+                (
+                    param_name.clone(),
+                    param_ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)),
+                )
+            })
+            .collect();
 
-    let return_ty: Option<ast::L<ast::Type>> = fun_decl
-        .sig
-        .return_ty
-        .as_ref()
-        .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)));
+        let return_ty: Option<ast::L<ast::Type>> = fun_decl
+            .sig
+            .return_ty
+            .as_ref()
+            .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)));
 
-    mono_pgm.top.insert(
-        mono_fn_id.clone(),
-        ast::FunDecl {
-            sig: ast::FunSig {
-                name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
-                type_params: vec![],
-                self_: fun_decl.sig.self_,
-                params,
-                return_ty,
-                exceptions: None,
+        mono_pgm.top.insert(
+            mono_fn_id.clone(),
+            ast::FunDecl {
+                sig: ast::FunSig {
+                    name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
+                    type_params: vec![],
+                    self_: fun_decl.sig.self_,
+                    params,
+                    return_ty,
+                    exceptions: None,
+                },
+                body: None,
             },
-            body: None,
-        },
-    );
+        );
+    }
 
     // Monomorphise function body.
     let body = match &fun_decl.body {
@@ -855,7 +859,9 @@ fn mono_assoc_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
+    let (ty_params, ty_args) = drop_exception_vars(&fun_decl.sig, ty_args);
+
+    let mono_fn_id = mono_id(&fun_decl.sig.name.node, &ty_args);
 
     if mono_pgm
         .associated
@@ -867,7 +873,7 @@ fn mono_assoc_fn(
     }
 
     let mut ty_map = ty_map.clone();
-    let fun_ty_params = &fun_decl.sig.type_params[fun_decl.sig.type_params.len() - ty_args.len()..];
+    let fun_ty_params = &ty_params[ty_params.len() - ty_args.len()..];
     for (ty_param, mono_ty) in fun_ty_params
         .iter()
         .map(|ty_param| ty_param.id.node.clone())
@@ -948,7 +954,13 @@ fn mono_ty_decl(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    assert_eq!(ty_decl.type_params.len(), args.len());
+    assert_eq!(
+        ty_decl.type_params.len(),
+        args.len(),
+        "ty_decl = {:#?}, args = {:#?}",
+        ty_decl,
+        args
+    );
 
     let mono_ty_id = mono_id(&ty_decl.name, args);
 
@@ -1364,4 +1376,45 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
         ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
     }
+}
+
+/// Drop type parameters (and corresponding type arguments) that only occur in exception type
+/// of a function signature.
+fn drop_exception_vars(
+    sig: &ast::FunSig,
+    ty_args: &[ast::Type],
+) -> (Vec<ast::TypeParam>, Vec<ast::Type>) {
+    assert_eq!(sig.type_params.len(), ty_args.len());
+
+    // Free varibles in the exception type.
+    let exn_fvs: Set<Id> = match &sig.exceptions {
+        Some(exn) => exn.node.fvs(),
+        None => Default::default(),
+    };
+
+    // Free variables in the rest of the signature.
+    let mut sig_fvs: Set<Id> = Default::default();
+    for param in &sig.params {
+        param.1.node.fvs_(&mut sig_fvs);
+    }
+    if let Some(ret) = &sig.return_ty {
+        ret.node.fvs_(&mut sig_fvs);
+    }
+
+    // Free variables that only occur in the exception type.
+    let only_exn_fvs: Set<&Id> = exn_fvs.difference(&sig_fvs).collect();
+
+    let mut new_ty_params: Vec<ast::TypeParam> = Vec::with_capacity(sig.type_params.len());
+    let mut new_ty_args: Vec<ast::Type> = Vec::with_capacity(ty_args.len());
+
+    for (ty_param, ty_arg) in sig.type_params.iter().zip(ty_args.iter()) {
+        if only_exn_fvs.contains(&ty_param.id.node) {
+            continue;
+        }
+
+        new_ty_params.push(ty_param.clone());
+        new_ty_args.push(ty_arg.clone());
+    }
+
+    (new_ty_params, new_ty_args)
 }
