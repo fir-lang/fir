@@ -317,7 +317,7 @@ pub(super) fn refine_pat_binders(
                     assert!(con_scheme.quantified_vars.is_empty());
 
                     // or just `con_scheme.ty`.
-                    con_scheme.subst_qvars(&Default::default())
+                    con_scheme.instantiate_with_tys(&[])
                 }
 
                 Ty::App(con_id, ty_args) => {
@@ -327,16 +327,7 @@ pub(super) fn refine_pat_binders(
                         TyArgs::Named(_) => panic!(), // associated type syntax?
                     };
 
-                    assert_eq!(con_scheme.quantified_vars.len(), ty_args.len());
-                    let mut var_map: Map<Id, Ty> =
-                        Map::with_capacity_and_hasher(ty_args.len(), Default::default());
-                    for ((var_id, _qvar), ty) in
-                        con_scheme.quantified_vars.iter().zip(ty_args.iter())
-                    {
-                        var_map.insert(var_id.clone(), ty.clone());
-                    }
-
-                    con_scheme.subst_qvars(&var_map)
+                    con_scheme.instantiate_with_tys(&ty_args)
                 }
 
                 Ty::Var(_)
