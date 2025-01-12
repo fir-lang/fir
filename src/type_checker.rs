@@ -52,6 +52,7 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
+    add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     for decl in module {
@@ -71,6 +72,72 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     }
 
     tys
+}
+
+/// Add exception types to functions without one.
+fn add_exception_types(module: &mut ast::Module) {
+    // The row variable in the added exception type: `?exn` in `[..?exn]`.
+    fn row_type_param() -> ast::TypeParam {
+        ast::TypeParam {
+            id: ast::L {
+                loc: ast::Loc::dummy(),
+                node: EXN_QVAR_ID.clone(),
+            },
+            bounds: Default::default(),
+        }
+    }
+
+    // The default exception type: `[..?exn]`.
+    fn exn_type() -> ast::L<ast::Type> {
+        ast::L {
+            node: ast::Type::Variant {
+                alts: Default::default(),
+                extension: Some(EXN_QVAR_ID),
+            },
+            loc: ast::Loc::dummy(),
+        }
+    }
+
+    for decl in module {
+        match &mut decl.node {
+            ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
+                if fun.sig.exceptions.is_none() {
+                    fun.sig.type_params.push(row_type_param());
+                    fun.sig.exceptions = Some(exn_type());
+                }
+            }
+
+            ast::TopDecl::Trait(ast::L { node, .. }) => {
+                for item in &mut node.items {
+                    match &mut item.node {
+                        ast::TraitDeclItem::AssocTy(_) => {}
+                        ast::TraitDeclItem::Fun(fun) => {
+                            if fun.sig.exceptions.is_none() {
+                                fun.sig.type_params.push(row_type_param());
+                                fun.sig.exceptions = Some(exn_type());
+                            }
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Impl(ast::L { node, .. }) => {
+                for item in &mut node.items {
+                    match &mut item.node {
+                        ast::ImplDeclItem::AssocTy(_) => {}
+                        ast::ImplDeclItem::Fun(fun) => {
+                            if fun.sig.exceptions.is_none() {
+                                fun.sig.type_params.push(row_type_param());
+                                fun.sig.exceptions = Some(exn_type());
+                            }
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Import(_) | ast::TopDecl::Type(_) => {}
+        }
+    }
 }
 
 struct TcFunState<'a> {
@@ -291,7 +358,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             let mut fun_var_kinds: Map<Id, Kind> = trait_var_kinds.clone();
                             fun_var_kinds.extend(fun_sig_ty_var_kinds(&fun.sig));
 
-                            let mut fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                            let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                                 &mut tys,
                                 &fun.sig.type_params,
                                 &fun_var_kinds,
@@ -321,22 +388,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
                             let exceptions = match &fun.sig.exceptions {
                                 Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
-
-                                None => {
-                                    fun_context.push((
-                                        EXN_QVAR_ID.clone(),
-                                        QVar {
-                                            kind: Kind::Row(RecordOrVariant::Variant),
-                                            bounds: Default::default(),
-                                        },
-                                    ));
-                                    Ty::Anonymous {
-                                        labels: Default::default(),
-                                        extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                                        kind: RecordOrVariant::Variant,
-                                        is_row: false,
-                                    }
-                                }
+                                None => panic!(),
                             };
 
                             let fun_ty = Ty::Fun {
@@ -636,7 +688,7 @@ fn collect_schemes(
             }) => {
                 let fun_var_kinds = fun_sig_ty_var_kinds(sig);
 
-                let mut fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
                     tys,
                     &sig.type_params,
                     &fun_var_kinds,
@@ -657,22 +709,7 @@ fn collect_schemes(
 
                 let exceptions = match &sig.exceptions {
                     Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
-
-                    None => {
-                        fun_context.push((
-                            EXN_QVAR_ID.clone(),
-                            QVar {
-                                kind: Kind::Row(RecordOrVariant::Variant),
-                                bounds: Default::default(),
-                            },
-                        ));
-                        Ty::Anonymous {
-                            labels: Default::default(),
-                            extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                            kind: RecordOrVariant::Variant,
-                            is_row: false,
-                        }
-                    }
+                    None => panic!(),
                 };
 
                 let fun_ty = Ty::Fun {
@@ -744,7 +781,7 @@ fn collect_schemes(
                     let mut fun_var_kinds = impl_var_kinds.clone();
                     fun_var_kinds.extend(fun_sig_ty_var_kinds(sig));
 
-                    let mut fun_context = convert_and_bind_context(
+                    let fun_context = convert_and_bind_context(
                         tys,
                         &sig.type_params,
                         &fun_var_kinds,
@@ -773,22 +810,7 @@ fn collect_schemes(
 
                     let exceptions = match &fun.sig.exceptions {
                         Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
-
-                        None => {
-                            fun_context.push((
-                                EXN_QVAR_ID.clone(),
-                                QVar {
-                                    kind: Kind::Row(RecordOrVariant::Variant),
-                                    bounds: Default::default(),
-                                },
-                            ));
-                            Ty::Anonymous {
-                                labels: Default::default(),
-                                extension: Some(Box::new(Ty::QVar(EXN_QVAR_ID.clone()))),
-                                kind: RecordOrVariant::Variant,
-                                is_row: false,
-                            }
-                        }
+                        None => panic!(),
                     };
 
                     let fun_ty = Ty::Fun {
@@ -1109,7 +1131,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let exceptions = match &fun.node.sig.exceptions {
         Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-        None => fresh_exception_type(&mut var_gen, fun.loc.clone()),
+        None => panic!(),
     };
 
     let mut tc_state = TcFunState {
@@ -1245,7 +1267,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 let exceptions = match &fun.sig.exceptions {
                     Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                    None => fresh_exception_type(&mut var_gen, ast::Loc::dummy()),
+                    None => panic!(),
                 };
 
                 let mut tc_state = TcFunState {
@@ -1366,7 +1388,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 let exceptions = match &fun.sig.exceptions {
                     Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                    None => fresh_exception_type(&mut var_gen, ast::Loc::dummy()),
+                    None => panic!(),
                 };
 
                 let mut tc_state = TcFunState {
@@ -1399,19 +1421,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
-}
-
-fn fresh_exception_type(var_gen: &mut TyVarGen, loc: ast::Loc) -> Ty {
-    Ty::Anonymous {
-        labels: Default::default(),
-        extension: Some(Box::new(Ty::Var(var_gen.new_var(
-            0,
-            Kind::Row(RecordOrVariant::Variant),
-            loc,
-        )))),
-        kind: RecordOrVariant::Variant,
-        is_row: false,
-    }
 }
 
 /// We currently don't allow a type constructor to implement a trait multiple times with different
