@@ -2,7 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeMap, Set};
-use crate::type_checker::loc_display;
+use crate::type_checker::{loc_display, TcFunState};
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -344,15 +344,18 @@ impl Scheme {
         (self.ty.subst_qvars(&var_map), instantiations)
     }
 
-    pub(super) fn instantiate_with_tys(&self, tys: &[Ty]) -> Ty {
-        assert_eq!(tys.len(), self.quantified_vars.len());
-
-        let mut ty = self.ty.clone();
-        for ((qvar, QVar { kind: _, bounds }), ty_) in self.quantified_vars.iter().zip(tys.iter()) {
-            assert!(bounds.is_empty());
-            ty = ty.subst(qvar, ty_);
+    pub(super) fn instantiate_with_tys(
+        &self,
+        arg_tys: &[Ty],
+        tc_state: &mut TcFunState,
+        loc: &ast::Loc,
+        level: u32,
+    ) -> Ty {
+        let (ty, arg_vars) = self.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        assert!(arg_vars.len() >= arg_tys.len());
+        for (arg_var, arg_ty) in arg_vars.iter().zip(arg_tys.iter()) {
+            arg_var.set_link(arg_ty.clone());
         }
-
         ty
     }
 

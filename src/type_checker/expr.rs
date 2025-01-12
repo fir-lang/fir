@@ -720,7 +720,7 @@ pub(super) fn check_expr(
                     &pattern.loc,
                 );
 
-                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
+                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats, level);
 
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);
@@ -842,7 +842,7 @@ fn check_field_select(
         _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
     };
 
-    match select_field(ty_con, ty_args, &field_select.field, loc, tc_state.tys) {
+    match select_field(tc_state, ty_con, ty_args, &field_select.field, loc, level) {
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, &field_select.field, tc_state.tys, loc) {
             Some(scheme) => {
@@ -899,13 +899,15 @@ fn check_field_select(
 
 /// Try to select a field.
 pub(super) fn select_field(
+    tc_state: &mut TcFunState,
     ty_con: &Id,
     ty_args: &[Ty],
     field: &Id,
     loc: &ast::Loc,
-    tys: &PgmTypes,
+    level: u32,
 ) -> Option<Ty> {
-    let ty_con = tys
+    let ty_con = tc_state
+        .tys
         .tys
         .get_con(ty_con)
         .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), ty_con));
@@ -916,8 +918,8 @@ pub(super) fn select_field(
         TyConDetails::Type(TypeDetails { cons }) => match cons.len() {
             1 => {
                 let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
-                let con_scheme = tys.top_schemes.get(con_name)?;
-                let con_ty = con_scheme.instantiate_with_tys(ty_args);
+                let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
+                let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state, loc, level);
 
                 match con_ty {
                     Ty::Fun {

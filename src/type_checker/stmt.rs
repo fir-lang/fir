@@ -151,7 +151,7 @@ fn check_stmt(
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
-                        Ty::Con(con) => select_field(con, &[], field, &lhs.loc, tc_state.tys)
+                        Ty::Con(con) => select_field(tc_state, con, &[], field, &lhs.loc, level)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
@@ -163,7 +163,7 @@ fn check_stmt(
 
                         Ty::App(con, args) => match args {
                             TyArgs::Positional(args) => {
-                                select_field(con, args, field, &lhs.loc, tc_state.tys)
+                                select_field(tc_state, con, args, field, &lhs.loc, level)
                                     .unwrap_or_else(|| {
                                         panic!(
                                             "{}: Type {} does not have field {}",
