@@ -310,6 +310,10 @@ impl FunSig {
             param_ty.node.print(buffer);
         }
         buffer.push(')');
+        if let Some(exn) = &self.exceptions {
+            buffer.push(' ');
+            exn.node.print(buffer);
+        }
         if let Some(ret_ty) = &self.return_ty {
             buffer.push_str(": ");
             ret_ty.node.print(buffer);
