@@ -132,32 +132,22 @@ impl PatCoverage {
         match ty.normalize(tc_state.tys.tys.cons()) {
             Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
-                    let (con_fn_ty, con_fn_ty_args) = tc_state
-                        .tys
-                        .top_schemes
-                        .get(&ty_con)
-                        .unwrap()
-                        .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
-
-                    // Scrutinee type doesn't have arguments.
-                    assert!(con_fn_ty_args.is_empty());
-
+                    let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state, loc, 0);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
                 ConShape::Sum(cons) => {
                     for con in cons {
-                        let (con_fn_ty, con_fn_ty_args) = tc_state
+                        let con_scheme = tc_state
                             .tys
                             .associated_fn_schemes
                             .get(&ty_con)
                             .unwrap()
                             .get(&con)
-                            .unwrap()
-                            .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
+                            .unwrap();
 
-                        // Scrutinee type doesn't have arguments.
-                        assert!(con_fn_ty_args.is_empty());
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state, loc, 0);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -181,38 +171,23 @@ impl PatCoverage {
                 };
                 match con_shape(&ty_con, &tc_state.tys.tys) {
                     ConShape::Product => {
-                        let (con_fn_ty, con_fn_ty_args) = tc_state
-                            .tys
-                            .top_schemes
-                            .get(&ty_con)
-                            .unwrap()
-                            .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
-
-                        assert_eq!(ty_args.len(), con_fn_ty_args.len());
-
-                        for (ty_var, ty_arg) in con_fn_ty_args.iter().zip(ty_args.iter()) {
-                            ty_var.set_link(ty_arg.clone());
-                        }
-
+                        let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args, tc_state, loc, 0);
                         self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                     }
 
                     ConShape::Sum(cons) => {
                         for con in cons {
-                            let (con_fn_ty, con_fn_ty_args) = tc_state
+                            let con_scheme = tc_state
                                 .tys
                                 .associated_fn_schemes
                                 .get(&ty_con)
                                 .unwrap()
                                 .get(&con)
-                                .unwrap()
-                                .instantiate(0, tc_state.var_gen, tc_state.preds, loc);
+                                .unwrap();
 
-                            assert_eq!(ty_args.len(), con_fn_ty_args.len());
-
-                            for (ty_var, ty_arg) in con_fn_ty_args.iter().zip(ty_args.iter()) {
-                                ty_var.set_link(ty_arg.clone());
-                            }
+                            let con_fn_ty =
+                                con_scheme.instantiate_with_tys(&ty_args, tc_state, loc, 0);
 
                             if !self.is_con_pat_exhaustive(
                                 &con_fn_ty,
