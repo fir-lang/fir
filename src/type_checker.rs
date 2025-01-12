@@ -102,8 +102,18 @@ fn add_exception_types(module: &mut ast::Module) {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
                 if fun.sig.exceptions.is_none() {
-                    fun.sig.type_params.push(row_type_param());
-                    fun.sig.exceptions = Some(exn_type());
+                    if fun.sig.name.node == "main" {
+                        fun.sig.exceptions = Some(ast::L {
+                            node: ast::Type::Variant {
+                                alts: Default::default(),
+                                extension: None,
+                            },
+                            loc: ast::Loc::dummy(),
+                        });
+                    } else {
+                        fun.sig.type_params.push(row_type_param());
+                        fun.sig.exceptions = Some(exn_type());
+                    }
                 }
             }
 
