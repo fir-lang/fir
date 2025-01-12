@@ -1279,7 +1279,10 @@ impl fmt::Display for Ty {
                     write!(f, "{}: {}", label_id, label_ty)?;
                 }
                 if let Some(ext) = extension {
-                    write!(f, ", ..{}", ext)?;
+                    if !labels.is_empty() {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "..{}", ext)?;
                 }
                 write!(f, "{}", right_delim)
             }

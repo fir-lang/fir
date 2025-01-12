@@ -179,6 +179,7 @@ impl ImplDecl {
         for (i, item) in self.items.iter().enumerate() {
             if i != 0 {
                 buffer.push('\n');
+                buffer.push('\n');
             }
             buffer.push_str(&INDENTS[0..indent as usize + 4]);
             item.node.print(buffer, indent + 4);
@@ -234,7 +235,6 @@ impl Type {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    buffer.push('`');
                     buffer.push_str(con);
                     if !fields.is_empty() {
                         buffer.push('(');
@@ -388,10 +388,12 @@ impl Stmt {
                 buffer.push_str("while ");
                 cond.node.print(buffer, 0);
                 buffer.push_str(":\n");
-                for stmt in body {
+                for (i, stmt) in body.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push('\n');
+                    }
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
                     stmt.node.print(buffer, indent + 4);
-                    buffer.push('\n');
                 }
             }
         }
@@ -407,7 +409,7 @@ impl Expr {
             }
 
             Expr::Variant(VariantExpr { id, args }) => {
-                buffer.push('`');
+                buffer.push('~');
                 buffer.push_str(id);
                 if !args.is_empty() {
                     buffer.push('(');
@@ -659,29 +661,35 @@ impl Expr {
                 buffer.push_str("if ");
                 branches[0].0.node.print(buffer, 0);
                 buffer.push_str(":\n");
-                for stmt in &branches[0].1 {
+                for (i, stmt) in branches[0].1.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push('\n');
+                    }
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
                     stmt.node.print(buffer, indent + 4);
-                    buffer.push('\n');
                 }
                 for branch in &branches[1..] {
                     buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("elif ");
                     branch.0.node.print(buffer, 0);
                     buffer.push_str(":\n");
-                    for stmt in &branch.1 {
+                    for (i, stmt) in branch.1.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push('\n');
+                        }
                         buffer.push_str(&INDENTS[0..indent as usize + 4]);
                         stmt.node.print(buffer, indent + 4);
-                        buffer.push('\n');
                     }
                 }
                 if let Some(else_branch) = else_branch {
                     buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("else:\n");
-                    for stmt in else_branch {
+                    for (i, stmt) in else_branch.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push('\n');
+                        }
                         buffer.push_str(&INDENTS[0..indent as usize + 4]);
                         stmt.node.print(buffer, indent + 4);
-                        buffer.push('\n');
                     }
                 }
             }
@@ -803,7 +811,6 @@ impl TraitDeclItem {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
             TraitDeclItem::AssocTy(ty) => {
-                buffer.push_str(&INDENTS[0..indent as usize]);
                 buffer.push_str("type ");
                 buffer.push_str(ty);
             }

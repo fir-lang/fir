@@ -155,7 +155,10 @@ mod native {
 
         if print_checked_ast {
             let mut buffer = String::new();
-            for top_decl in &module {
+            for (i, top_decl) in module.iter().enumerate() {
+                if i != 0 {
+                    println!();
+                }
                 top_decl.node.print(&mut buffer, 0);
                 println!("{}", buffer);
                 buffer.clear();
@@ -167,7 +170,10 @@ mod native {
 
             if print_mono_ast {
                 let mut buffer = String::new();
-                for top_decl in &module {
+                for (i, top_decl) in module.iter().enumerate() {
+                    if i != 0 {
+                        println!();
+                    }
                     top_decl.node.print(&mut buffer, 0);
                     println!("{}", buffer);
                     buffer.clear();
