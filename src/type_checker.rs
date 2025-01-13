@@ -404,7 +404,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             let fun_ty = Ty::Fun {
                                 args: FunArgs::Positional(arg_tys),
                                 ret: Box::new(ret_ty),
-                                exceptions: Box::new(exceptions),
+                                exceptions: Some(Box::new(exceptions)),
                             };
 
                             tys.exit_scope();
@@ -725,7 +725,7 @@ fn collect_schemes(
                 let fun_ty = Ty::Fun {
                     args: FunArgs::Positional(arg_tys),
                     ret: Box::new(ret_ty),
-                    exceptions: Box::new(exceptions),
+                    exceptions: Some(Box::new(exceptions)),
                 };
 
                 let scheme = Scheme {
@@ -826,7 +826,7 @@ fn collect_schemes(
                     let fun_ty = Ty::Fun {
                         args: FunArgs::Positional(arg_tys),
                         ret: Box::new(ret_ty),
-                        exceptions: Box::new(exceptions),
+                        exceptions: Some(Box::new(exceptions)),
                     };
 
                     let scheme = Scheme {
@@ -977,12 +977,12 @@ fn collect_schemes(
                                 Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                     args: FunArgs::Positional(tys),
                                     ret: Box::new(ret.clone()),
-                                    exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
+                                    exceptions: None,
                                 },
                                 Some(ConFields::Named(tys)) => Ty::Fun {
                                     args: FunArgs::Named(tys),
                                     ret: Box::new(ret.clone()),
-                                    exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
+                                    exceptions: None,
                                 },
                             };
                             let var_kinds = constructor_decls_var_kinds(cons);
@@ -1003,13 +1003,6 @@ fn collect_schemes(
                                             },
                                         )
                                     })
-                                    .chain(std::iter::once((
-                                        EXN_QVAR_ID.clone(),
-                                        QVar {
-                                            kind: Kind::Row(RecordOrVariant::Variant),
-                                            bounds: Default::default(),
-                                        },
-                                    )))
                                     .collect(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
@@ -1034,12 +1027,12 @@ fn collect_schemes(
                             Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                 args: FunArgs::Positional(tys),
                                 ret: Box::new(ret.clone()),
-                                exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
+                                exceptions: None,
                             },
                             Some(ConFields::Named(tys)) => Ty::Fun {
                                 args: FunArgs::Named(tys),
                                 ret: Box::new(ret.clone()),
-                                exceptions: Box::new(Ty::QVar(EXN_QVAR_ID.clone())),
+                                exceptions: None,
                             },
                         };
                         let var_kinds = constructor_fields_var_kinds(fields);
@@ -1060,13 +1053,6 @@ fn collect_schemes(
                                         },
                                     )
                                 })
-                                .chain(std::iter::once((
-                                    EXN_QVAR_ID.clone(),
-                                    QVar {
-                                        kind: Kind::Row(RecordOrVariant::Variant),
-                                        bounds: Default::default(),
-                                    },
-                                )))
                                 .collect(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc

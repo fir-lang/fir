@@ -373,14 +373,16 @@ pub(super) fn check_expr(
                         }
                     }
 
-                    unify(
-                        &exceptions,
-                        &tc_state.exceptions,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
-                    );
+                    if let Some(exn) = &exceptions {
+                        unify(
+                            exn,
+                            &tc_state.exceptions,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        );
+                    }
 
                     unify_expected_ty(
                         *ret_ty,

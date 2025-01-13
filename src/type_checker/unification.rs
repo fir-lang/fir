@@ -137,7 +137,18 @@ pub(super) fn unify(
                 }
             }
 
-            unify(exceptions1, exceptions2, cons, var_gen, level, loc);
+            match (exceptions1, exceptions2) {
+                (None, None) => {}
+
+                (None, Some(_)) | (Some(_), None) => panic!(
+                    "{}: Unable to unify functions with different exception types",
+                    loc_display(loc)
+                ),
+
+                (Some(exceptions1), Some(exceptions2)) => {
+                    unify(exceptions1, exceptions2, cons, var_gen, level, loc);
+                }
+            }
 
             unify(ret1, ret2, cons, var_gen, level, loc);
         }
@@ -391,7 +402,9 @@ fn prune_level(ty: &Ty, max_level: u32) {
                 FunArgs::Named(args) => args.values().for_each(|arg| prune_level(arg, max_level)),
             }
             prune_level(ret, max_level);
-            prune_level(exceptions, max_level);
+            if let Some(exn) = exceptions {
+                prune_level(exn, max_level);
+            }
         }
 
         Ty::AssocTySelect { ty, assoc_ty: _ } => {

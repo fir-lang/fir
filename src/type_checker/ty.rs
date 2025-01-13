@@ -68,7 +68,9 @@ pub enum Ty {
 
         /// Exception type of a function is always a `row(variant)`-kinded type variable. In type
         /// schemes, this will be a `QVar`.
-        exceptions: Box<Ty>,
+        ///
+        /// Not available in constructors.
+        exceptions: Option<Box<Ty>>,
     },
 
     /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
@@ -643,16 +645,24 @@ fn ty_eq_modulo_alpha(
                 | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
             }
 
-            if !ty_eq_modulo_alpha(
-                cons,
-                extra_qvars,
-                exceptions1,
-                exceptions2,
-                ty1_qvars,
-                ty2_qvars,
-                loc,
-            ) {
-                return false;
+            match (exceptions1, exceptions2) {
+                (None, None) => {}
+
+                (None, Some(_)) | (Some(_), None) => return false,
+
+                (Some(exceptions1), Some(exceptions2)) => {
+                    if !ty_eq_modulo_alpha(
+                        cons,
+                        extra_qvars,
+                        exceptions1,
+                        exceptions2,
+                        ty1_qvars,
+                        ty2_qvars,
+                        loc,
+                    ) {
+                        return false;
+                    }
+                }
             }
 
             ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
@@ -758,7 +768,7 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst(var, ty)),
-                exceptions: Box::new(exceptions.subst(var, ty)),
+                exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -830,7 +840,9 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst_self(self_ty)),
-                exceptions: Box::new(exceptions.subst_self(self_ty)),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| Box::new(exn.subst_self(self_ty))),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -898,7 +910,9 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.subst_qvars(vars)),
-                exceptions: Box::new(exceptions.subst_qvars(vars)),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| Box::new(exn.subst_qvars(vars))),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -1010,7 +1024,9 @@ impl Ty {
                     ),
                 },
                 ret: Box::new(ret.deep_normalize(cons)),
-                exceptions: Box::new(exceptions.deep_normalize(cons)),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| Box::new(exn.deep_normalize(cons))),
             },
 
             Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
@@ -1313,7 +1329,11 @@ impl fmt::Display for Ty {
                         }
                     }
                 }
-                write!(f, ") {}: {}", exceptions, ret)
+                write!(f, ")")?;
+                if let Some(exn) = exceptions {
+                    write!(f, " {}", exn)?;
+                }
+                write!(f, ": {}", ret)
             }
 
             Ty::AssocTySelect { ty, assoc_ty } => {
