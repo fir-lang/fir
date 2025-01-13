@@ -134,7 +134,8 @@ fn expectKeyword(pgm: Str, kw: Str): Str
         panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
 
-fn testMain()
+# TODO: When calling `main` the exception type should be `[]`.
+fn testMain() {}: ()
     main("0")
     main("succ(0)")
     main("succ(succ(0))")
