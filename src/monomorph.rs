@@ -338,8 +338,14 @@ fn mono_stmt(
 
             mono_method(
                 expr_ty.as_ref().unwrap(),
-                &[],
                 &SmolStr::new_static("next"),
+                // `next` doesn't throw, pass empty row.
+                &[Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind: RecordOrVariant::Record,
+                    is_row: true,
+                }],
                 ty_map,
                 poly_pgm,
                 mono_pgm,
@@ -437,8 +443,8 @@ fn mono_expr(
         }) => {
             let (mono_method_id, mono_object_ty) = mono_method(
                 object_ty.as_ref().unwrap(),
-                ty_args,
                 method,
+                ty_args,
                 ty_map,
                 poly_pgm,
                 mono_pgm,
@@ -646,14 +652,14 @@ fn mono_expr(
 }
 
 fn mono_method(
-    poly_object_ty: &Ty,
-    ty_args: &[Ty],
+    poly_receiver_ty: &Ty,
     method: &Id,
+    method_ty_args: &[Ty],
     ty_map: &Map<Id, ast::Type>,
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> (Id, ast::Type) {
-    let poly_object_ty = ty_to_ast(poly_object_ty, ty_map);
+    let poly_object_ty = ty_to_ast(poly_receiver_ty, ty_map);
 
     let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
 
@@ -683,7 +689,7 @@ fn mono_method(
                 assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
             }
 
-            let mono_ty_args: Vec<ast::Type> = ty_args
+            let mono_ty_args: Vec<ast::Type> = method_ty_args
                 .iter()
                 .map(|ty_arg| {
                     mono_ty(
