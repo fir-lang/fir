@@ -671,11 +671,6 @@ fn mono_method(
         }
     };
 
-    let mono_ty_args: Vec<ast::Type> = ty_args
-        .iter()
-        .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
-        .collect();
-
     match &poly_object_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
             let ty_con = poly_pgm.ty.get(name).unwrap();
@@ -687,6 +682,18 @@ fn mono_method(
             for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
                 assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
             }
+
+            let mono_ty_args: Vec<ast::Type> = ty_args
+                .iter()
+                .map(|ty_arg| {
+                    mono_ty(
+                        &ty_to_ast(ty_arg, ty_map),
+                        &assoc_fn_ty_map,
+                        poly_pgm,
+                        mono_pgm,
+                    )
+                })
+                .collect();
 
             (
                 mono_assoc_fn(
