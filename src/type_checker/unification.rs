@@ -140,10 +140,9 @@ pub(super) fn unify(
             match (exceptions1, exceptions2) {
                 (None, None) => {}
 
-                (None, Some(_)) | (Some(_), None) => panic!(
-                    "{}: Unable to unify functions with different exception types",
-                    loc_display(loc)
-                ),
+                (None, Some(_)) | (Some(_), None) => {
+                    // None is the same as [..r] with a fresh r, so it unifies with everything.
+                }
 
                 (Some(exceptions1), Some(exceptions2)) => {
                     unify(exceptions1, exceptions2, cons, var_gen, level, loc);

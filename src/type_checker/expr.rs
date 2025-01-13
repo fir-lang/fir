@@ -539,7 +539,7 @@ pub(super) fn check_expr(
                                     }),
                                     object_ty: Some(part_ty),
                                     method: SmolStr::new_static("toStr"),
-                                    ty_args: vec![],
+                                    ty_args: vec![tc_state.exceptions.clone()],
                                 }),
                                 loc: expr.loc.clone(),
                             }),
