@@ -669,6 +669,7 @@ impl Expr {
                     stmt.node.print(buffer, indent + 4);
                 }
                 for branch in &branches[1..] {
+                    buffer.push('\n');
                     buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("elif ");
                     branch.0.node.print(buffer, 0);
@@ -682,6 +683,7 @@ impl Expr {
                     }
                 }
                 if let Some(else_branch) = else_branch {
+                    buffer.push('\n');
                     buffer.push_str(&INDENTS[0..indent as usize]);
                     buffer.push_str("else:\n");
                     for (i, stmt) in else_branch.iter().enumerate() {

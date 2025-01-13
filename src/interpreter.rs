@@ -765,7 +765,7 @@ fn exec<W: Write>(
                 let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
 
                 let next_method = pgm.associated_funs[heap[iter] as usize]
-                    .get("next")
+                    .get("next@Ptr")
                     .unwrap();
 
                 // Get the monomorphised `next` from the return type of the method.

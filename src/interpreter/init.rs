@@ -140,9 +140,9 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
     }
 
     let mut top_level_funs: Map<Id, Fun> = builtin_top_level_funs! {
-        "print" => BuiltinFun::Print,
-        "printStr" => BuiltinFun::PrintStr,
-        "panic@Ptr" => BuiltinFun::Panic,
+        "print@Ptr" => BuiltinFun::Print,
+        "printStr@Ptr" => BuiltinFun::PrintStr,
+        "panic@Ptr@Ptr" => BuiltinFun::Panic,
     };
 
     macro_rules! builtin_associated_funs {
@@ -154,7 +154,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                     let mut fun_map: Map<Id, Fun> = Default::default();
                     let mut idx = 0;
                     $(
-                        fun_map.insert(SmolStr::new($fname), Fun { idx, kind: FunKind::Builtin($fkind) });
+                        fun_map.insert(SmolStr::new($fname.to_string() + "@Ptr"), Fun { idx, kind: FunKind::Builtin($fkind) });
                         idx += 1;
                     )*
                     map.insert(SmolStr::new($type), fun_map);
