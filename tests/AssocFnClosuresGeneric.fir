@@ -18,4 +18,3 @@ fn main()
 # expected stdout:
 # T(i = 1, other = hi)
 # T(i = 2)
-
