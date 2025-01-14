@@ -40,13 +40,13 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 fn add_missing_type_params_fun(decl: &mut ast::FunDecl, bound_vars: &Set<Id>) {
     let mut fvs: Set<Id> = Default::default();
     for (_, param_ty) in &decl.sig.params {
-        param_ty.node.fvs_(&mut fvs);
+        collect_fvs(&param_ty.node, &mut fvs);
     }
     if let Some(exn) = &decl.sig.exceptions {
-        exn.node.fvs_(&mut fvs);
+        collect_fvs(&exn.node, &mut fvs);
     }
     if let Some(ret) = &decl.sig.return_ty {
-        ret.node.fvs_(&mut fvs);
+        collect_fvs(&ret.node, &mut fvs);
     }
 
     for fv in fvs.difference(bound_vars) {
@@ -76,7 +76,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
 
     // Add missing parameters to the `impl` block context.
     let mut impl_context_fvs: Set<Id> = Default::default();
-    decl.ty.node.fvs_(&mut impl_context_fvs);
+    collect_fvs(&decl.ty.node, &mut impl_context_fvs);
     for fv in impl_context_fvs.difference(&impl_context_vars) {
         decl.context.push(ast::TypeParam {
             id: ast::L {
@@ -94,6 +94,56 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
             ast::ImplDeclItem::AssocTy(_) => {}
             ast::ImplDeclItem::Fun(fun_decl) => {
                 add_missing_type_params_fun(fun_decl, &impl_context_vars);
+            }
+        }
+    }
+}
+
+fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
+    match ty {
+        ast::Type::Named(ast::NamedType { name: _, args }) => {
+            for arg in args {
+                collect_fvs(&arg.node.1.node, fvs);
+            }
+        }
+
+        ast::Type::Var(var) => {
+            fvs.insert(var.clone());
+        }
+
+        ast::Type::Record { fields, extension } => {
+            for field in fields {
+                collect_fvs(&field.node, fvs);
+            }
+            if let Some(ext) = extension {
+                fvs.insert(ext.clone());
+            }
+        }
+
+        ast::Type::Variant { alts, extension } => {
+            for alt in alts {
+                for field in &alt.fields {
+                    collect_fvs(&field.node, fvs);
+                }
+            }
+            if let Some(ext) = extension {
+                fvs.insert(ext.clone());
+            }
+        }
+
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
+            for arg in args {
+                collect_fvs(&arg.node, fvs);
+            }
+            if let Some(ret) = ret {
+                collect_fvs(&ret.node, fvs);
+            }
+            if let Some(exn) = exceptions {
+                collect_fvs(&exn.node, fvs);
             }
         }
     }

@@ -2,7 +2,6 @@
 
 pub mod printer;
 
-use crate::collections::Set;
 use crate::interpolation::StringPart;
 pub use crate::token::IntKind;
 use crate::type_checker::Ty;
@@ -751,62 +750,6 @@ impl Type {
         match self {
             Type::Named(named_type) => named_type,
             _ => panic!(),
-        }
-    }
-
-    pub fn fvs(&self) -> Set<Id> {
-        let mut set: Set<Id> = Default::default();
-        self.fvs_(&mut set);
-        set
-    }
-
-    pub fn fvs_(&self, fvs: &mut Set<Id>) {
-        match self {
-            Type::Named(NamedType { name: _, args }) => {
-                for arg in args {
-                    arg.node.1.node.fvs_(fvs);
-                }
-            }
-
-            Type::Var(var) => {
-                fvs.insert(var.clone());
-            }
-
-            Type::Record { fields, extension } => {
-                for field in fields {
-                    field.node.fvs_(fvs);
-                }
-                if let Some(ext) = extension {
-                    fvs.insert(ext.clone());
-                }
-            }
-
-            Type::Variant { alts, extension } => {
-                for alt in alts {
-                    for field in &alt.fields {
-                        field.node.fvs_(fvs);
-                    }
-                }
-                if let Some(ext) = extension {
-                    fvs.insert(ext.clone());
-                }
-            }
-
-            Type::Fn(FnType {
-                args,
-                ret,
-                exceptions,
-            }) => {
-                for arg in args {
-                    arg.node.fvs_(fvs);
-                }
-                if let Some(ret) = ret {
-                    ret.node.fvs_(fvs);
-                }
-                if let Some(exn) = exceptions {
-                    exn.node.fvs_(fvs);
-                }
-            }
         }
     }
 }

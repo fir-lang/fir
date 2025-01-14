@@ -718,7 +718,7 @@ fn collect_schemes(
                 };
 
                 let exceptions = match &sig.exceptions {
-                    Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                    Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
                     None => panic!(),
                 };
 
@@ -819,7 +819,7 @@ fn collect_schemes(
                     };
 
                     let exceptions = match &fun.sig.exceptions {
-                        Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
                         None => panic!(),
                     };
 
