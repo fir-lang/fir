@@ -1668,6 +1668,9 @@ fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
     for (_, param) in fun_sig.params.iter() {
         ty_var_kinds(&param.node, &mut kinds);
     }
+    if let Some(exn) = &fun_sig.exceptions {
+        ty_var_kinds(&exn.node, &mut kinds);
+    }
     if let Some(ret) = &fun_sig.return_ty {
         ty_var_kinds(&ret.node, &mut kinds);
     }
