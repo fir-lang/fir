@@ -710,7 +710,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::Try => {
             debug_assert_eq!(args.len(), 1);
             let cb = args[0];
-            todo!()
+            match call_closure(w, pgm, heap, &mut Default::default(), cb, &[], loc) {
+                ControlFlow::Val(val) => val,
+                ControlFlow::Unwind(val) => return FunRet::Unwind(val),
+                ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
+            }
         }
 
         BuiltinFun::Throw => {

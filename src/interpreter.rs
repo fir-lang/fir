@@ -617,6 +617,81 @@ fn call_ast_fun<W: Write>(
     }
 }
 
+fn call_closure<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    locals: &mut Map<Id, u64>,
+    fun: u64,
+    args: &[ast::CallArg],
+    loc: &Loc,
+) -> ControlFlow {
+    match heap[fun] {
+        CONSTR_TYPE_TAG => {
+            let constr_tag = heap[fun + 1];
+            allocate_object_from_tag(w, pgm, heap, locals, constr_tag, args)
+        }
+
+        TOP_FUN_TYPE_TAG => {
+            let top_fun_idx = heap[fun + 1];
+            let top_fun = &pgm.top_level_funs_by_idx[top_fun_idx as usize];
+            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
+            for arg in args {
+                assert!(arg.name.is_none());
+                arg_values.push(val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc
+                )));
+            }
+            call_fun(w, pgm, heap, top_fun, arg_values, loc).into_control_flow()
+        }
+
+        ASSOC_FUN_TYPE_TAG => {
+            let ty_tag = heap[fun + 1];
+            let fun_tag = heap[fun + 2];
+            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
+            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
+            for arg in args {
+                arg_values.push(val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc
+                )));
+            }
+            call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
+        }
+
+        METHOD_TYPE_TAG => {
+            let receiver = heap[fun + 1];
+            let fun_idx = heap[fun + 2];
+            let ty_tag = heap[receiver];
+            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_idx as usize];
+            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
+            arg_values.push(receiver);
+            for arg in args {
+                arg_values.push(val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc
+                )));
+            }
+            call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
+        }
+
+        _ => panic!("Function evaluated to non-callable"),
+    }
+}
+
 /// Allocate an object from type name and optional constructor name.
 fn allocate_object_from_names<W: Write>(
     w: &mut W,
@@ -1056,70 +1131,7 @@ fn eval<W: Write>(
             };
 
             // Slow path calls a closure.
-            match heap[fun] {
-                CONSTR_TYPE_TAG => {
-                    let constr_tag = heap[fun + 1];
-                    allocate_object_from_tag(w, pgm, heap, locals, constr_tag, args)
-                }
-
-                TOP_FUN_TYPE_TAG => {
-                    let top_fun_idx = heap[fun + 1];
-                    let top_fun = &pgm.top_level_funs_by_idx[top_fun_idx as usize];
-                    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-                    for arg in args {
-                        assert!(arg.name.is_none());
-                        arg_values.push(val!(eval(
-                            w,
-                            pgm,
-                            heap,
-                            locals,
-                            &arg.expr.node,
-                            &arg.expr.loc
-                        )));
-                    }
-                    call_fun(w, pgm, heap, top_fun, arg_values, loc).into_control_flow()
-                }
-
-                ASSOC_FUN_TYPE_TAG => {
-                    let ty_tag = heap[fun + 1];
-                    let fun_tag = heap[fun + 2];
-                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
-                    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-                    for arg in args {
-                        arg_values.push(val!(eval(
-                            w,
-                            pgm,
-                            heap,
-                            locals,
-                            &arg.expr.node,
-                            &arg.expr.loc
-                        )));
-                    }
-                    call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
-                }
-
-                METHOD_TYPE_TAG => {
-                    let receiver = heap[fun + 1];
-                    let fun_idx = heap[fun + 2];
-                    let ty_tag = heap[receiver];
-                    let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_idx as usize];
-                    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
-                    arg_values.push(receiver);
-                    for arg in args {
-                        arg_values.push(val!(eval(
-                            w,
-                            pgm,
-                            heap,
-                            locals,
-                            &arg.expr.node,
-                            &arg.expr.loc
-                        )));
-                    }
-                    call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
-                }
-
-                _ => panic!("Function evaluated to non-callable"),
-            }
+            call_closure(w, pgm, heap, locals, fun, args, loc)
         }
 
         ast::Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
