@@ -71,7 +71,7 @@ pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Op
         ),
     };
 
-    call(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
 
 macro_rules! generate_tags {
@@ -274,7 +274,8 @@ impl FunKind {
 
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
-#[derive(Debug)]
+/// Control flow within a function.
+#[derive(Debug, Clone, Copy)]
 enum ControlFlow {
     /// Continue with the next statement.
     Val(u64),
@@ -285,6 +286,24 @@ enum ControlFlow {
     Break,
 
     Continue,
+
+    Unwind(u64),
+}
+
+/// Function return value.
+#[derive(Debug, Clone, Copy)]
+enum FunRet {
+    Val(u64),
+    Unwind(u64),
+}
+
+impl FunRet {
+    fn into_control_flow(self) -> ControlFlow {
+        match self {
+            FunRet::Val(val) => ControlFlow::Val(val),
+            FunRet::Unwind(val) => ControlFlow::Unwind(val),
+        }
+    }
 }
 
 fn val_as_i8(val: u64) -> i8 {
@@ -326,6 +345,7 @@ macro_rules! val {
             ControlFlow::Ret(val) => return ControlFlow::Ret(val),
             ControlFlow::Break => return ControlFlow::Break,
             ControlFlow::Continue => return ControlFlow::Continue,
+            ControlFlow::Unwind(val) => return ControlFlow::Unwind(val),
         }
     };
 }
@@ -546,28 +566,28 @@ impl Pgm {
     }
 }
 
-fn call<W: Write>(
+fn call_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
     fun: &Fun,
     args: Vec<u64>,
     loc: &Loc,
-) -> u64 {
+) -> FunRet {
     match &fun.kind {
         FunKind::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
-        FunKind::Source(source) => call_source_fun(w, pgm, heap, source, args, loc),
+        FunKind::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
     }
 }
 
-fn call_source_fun<W: Write>(
+fn call_ast_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
     fun: &ast::FunDecl,
     args: Vec<u64>,
     loc: &Loc,
-) -> u64 {
+) -> FunRet {
     assert_eq!(
         fun.num_params(),
         args.len() as u32,
@@ -591,8 +611,9 @@ fn call_source_fun<W: Write>(
     }
 
     match exec(w, pgm, heap, &mut locals, &fun.body.as_ref().unwrap().node) {
-        ControlFlow::Val(val) | ControlFlow::Ret(val) => val,
+        ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break | ControlFlow::Continue => panic!(),
+        ControlFlow::Unwind(val) => FunRet::Unwind(val),
     }
 }
 
@@ -752,6 +773,7 @@ fn exec<W: Write>(
                     ControlFlow::Ret(val) => return ControlFlow::Ret(val),
                     ControlFlow::Break => break 0,
                     ControlFlow::Continue => continue,
+                    ControlFlow::Unwind(val) => return ControlFlow::Unwind(val),
                 }
             },
 
@@ -797,7 +819,11 @@ fn exec<W: Write>(
                     .unwrap();
 
                 loop {
-                    let next_item_option = call(w, pgm, heap, next_method, vec![iter], &expr.loc);
+                    let next_item_option =
+                        match call_fun(w, pgm, heap, next_method, vec![iter], &expr.loc) {
+                            FunRet::Val(val) => val,
+                            FunRet::Unwind(val) => return ControlFlow::Unwind(val),
+                        };
                     if heap[next_item_option] != some_tag {
                         break;
                     }
@@ -813,6 +839,10 @@ fn exec<W: Write>(
                         }
                         ControlFlow::Break => break,
                         ControlFlow::Continue => continue,
+                        ControlFlow::Unwind(val) => {
+                            locals.remove(var);
+                            return ControlFlow::Unwind(val);
+                        }
                     }
                 }
 
@@ -971,7 +1001,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
+                    return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
                 ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
@@ -1019,7 +1049,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    return ControlFlow::Val(call(w, pgm, heap, fun, arg_vals, loc));
+                    return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
                 _ => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
@@ -1047,7 +1077,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, top_fun, arg_values, loc))
+                    call_fun(w, pgm, heap, top_fun, arg_values, loc).into_control_flow()
                 }
 
                 ASSOC_FUN_TYPE_TAG => {
@@ -1065,7 +1095,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc))
+                    call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
                 }
 
                 METHOD_TYPE_TAG => {
@@ -1085,7 +1115,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
-                    ControlFlow::Val(call(w, pgm, heap, fun, arg_values, loc))
+                    call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
                 }
 
                 _ => panic!("Function evaluated to non-callable"),

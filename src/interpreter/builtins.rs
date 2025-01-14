@@ -102,6 +102,10 @@ pub enum BuiltinFun {
     U8AsI8,
     U8AsI32,
     U8AsU32,
+
+    // Exception handling
+    Try,
+    Throw,
 }
 
 macro_rules! array_new {
@@ -165,8 +169,8 @@ pub fn call_builtin_fun<W: Write>(
     fun: &BuiltinFun,
     args: Vec<u64>,
     loc: &Loc,
-) -> u64 {
-    match fun {
+) -> FunRet {
+    let val = match fun {
         BuiltinFun::Panic => {
             debug_assert!(args.len() <= 1);
 
@@ -702,5 +706,19 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U8AsI32 => i32_as_val(val_as_u8(args[0]) as i32),
 
         BuiltinFun::U8AsU32 => u32_as_val(val_as_u8(args[0]) as u32),
-    }
+
+        BuiltinFun::Try => {
+            debug_assert_eq!(args.len(), 1);
+            let cb = args[0];
+            todo!()
+        }
+
+        BuiltinFun::Throw => {
+            debug_assert_eq!(args.len(), 1);
+            let exn = args[0];
+            return FunRet::Unwind(exn);
+        }
+    };
+
+    FunRet::Val(val)
 }
