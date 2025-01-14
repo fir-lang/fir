@@ -94,6 +94,7 @@ mod native {
         let mut typecheck = false;
         let mut no_prelude = false;
         let mut no_backtrace = false;
+        let mut print_parsed_ast = false;
         let mut print_checked_ast = false;
         let mut print_mono_ast = false;
         let mut main: String = "main".to_string();
@@ -110,6 +111,9 @@ mod native {
                 }
                 "--no-backtrace" => {
                     no_backtrace = true;
+                }
+                "--print-parsed-ast" => {
+                    print_parsed_ast = true;
                 }
                 "--print-checked-ast" => {
                     print_checked_ast = true;
@@ -151,33 +155,21 @@ mod native {
             !no_prelude, // import_prelude
         );
 
+        if print_parsed_ast {
+            ast::printer::print_module(&module);
+        }
+
         type_checker::check_module(&mut module);
 
         if print_checked_ast {
-            let mut buffer = String::new();
-            for (i, top_decl) in module.iter().enumerate() {
-                if i != 0 {
-                    println!();
-                }
-                top_decl.node.print(&mut buffer, 0);
-                println!("{}", buffer);
-                buffer.clear();
-            }
+            ast::printer::print_module(&module);
         }
 
         if !typecheck {
             module = monomorph::monomorphise(&module, &main);
 
             if print_mono_ast {
-                let mut buffer = String::new();
-                for (i, top_decl) in module.iter().enumerate() {
-                    if i != 0 {
-                        println!();
-                    }
-                    top_decl.node.print(&mut buffer, 0);
-                    println!("{}", buffer);
-                    buffer.clear();
-                }
+                ast::printer::print_module(&module);
             }
 
             let input = args.get(2).map(|s| s.as_str());

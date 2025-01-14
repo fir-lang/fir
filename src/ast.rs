@@ -1,6 +1,6 @@
 #![allow(clippy::enum_variant_names)]
 
-mod printer;
+pub mod printer;
 
 use crate::collections::Set;
 use crate::interpolation::StringPart;
