@@ -8,3 +8,8 @@ fn main()
     match try(f1):
         Result.Err(~E1): printStr("OK")
         Result.Ok(()): panic("")
+
+# expected stdout:
+# tests/Exn1.fir:8:5: Unexhaustive pattern match
+# OK
+

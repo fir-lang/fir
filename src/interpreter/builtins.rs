@@ -711,8 +711,40 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let cb = args[0];
             match call_closure(w, pgm, heap, &mut Default::default(), cb, &[], loc) {
-                ControlFlow::Val(val) => val,
-                ControlFlow::Unwind(val) => return FunRet::Unwind(val),
+                ControlFlow::Val(val) => {
+                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
+
+                    let constr_idx = ty_con
+                        .value_constrs
+                        .iter()
+                        .enumerate()
+                        .find(|(_, constr)| {
+                            constr.name.as_ref() == Some(&SmolStr::new_static("Ok"))
+                        })
+                        .unwrap();
+
+                    let object = heap.allocate(1 + args.len());
+                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+                    heap[object + 1] = val;
+                    object
+                }
+                ControlFlow::Unwind(val) => {
+                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
+
+                    let constr_idx = ty_con
+                        .value_constrs
+                        .iter()
+                        .enumerate()
+                        .find(|(_, constr)| {
+                            constr.name.as_ref() == Some(&SmolStr::new_static("Err"))
+                        })
+                        .unwrap();
+
+                    let object = heap.allocate(1 + args.len());
+                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+                    heap[object + 1] = val;
+                    object
+                }
                 ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
             }
         }
