@@ -135,7 +135,7 @@ fn expectKeyword(pgm: Str, kw: Str): Str
     pgm.substr(kw.len(), pgm.len())
 
 # TODO: When calling `main` the exception type should be `[]`.
-fn testMain() {}: ()
+fn testMain(): {} ()
     main("0")
     main("succ(0)")
     main("succ(succ(0))")

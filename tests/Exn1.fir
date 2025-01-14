@@ -1,7 +1,7 @@
-fn f1() {E1, ..r}
+fn f1(): {E1, ..r}
     throw(~E1)
 
-fn f2() {E2, ..r}
+fn f2(): {E2, ..r}
     untry(Result.Err(~E2))
 
 fn main()
@@ -12,4 +12,3 @@ fn main()
 # expected stdout:
 # tests/Exn1.fir:8:5: Unexhaustive pattern match
 # OK
-
