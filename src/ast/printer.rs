@@ -1,5 +1,17 @@
 use crate::ast::*;
 
+pub fn print_module(module: &[L<TopDecl>]) {
+    let mut buffer = String::new();
+    for (i, top_decl) in module.iter().enumerate() {
+        if i != 0 {
+            println!();
+        }
+        top_decl.node.print(&mut buffer, 0);
+        println!("{}", buffer);
+        buffer.clear();
+    }
+}
+
 impl TopDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
