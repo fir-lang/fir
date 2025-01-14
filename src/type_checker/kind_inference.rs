@@ -42,6 +42,9 @@ fn add_missing_type_params_fun(decl: &mut ast::FunDecl, bound_vars: &Set<Id>) {
     for (_, param_ty) in &decl.sig.params {
         param_ty.node.fvs_(&mut fvs);
     }
+    if let Some(exn) = &decl.sig.exceptions {
+        exn.node.fvs_(&mut fvs);
+    }
     if let Some(ret) = &decl.sig.return_ty {
         ret.node.fvs_(&mut fvs);
     }
