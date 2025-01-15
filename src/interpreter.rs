@@ -610,7 +610,7 @@ fn call_ast_fun<W: Write>(
         arg_idx += 1;
     }
 
-    match exec(w, pgm, heap, &mut locals, &fun.body.as_ref().unwrap()) {
+    match exec(w, pgm, heap, &mut locals, fun.body.as_ref().unwrap()) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break | ControlFlow::Continue => panic!(),
         ControlFlow::Unwind(val) => FunRet::Unwind(val),
