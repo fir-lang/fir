@@ -315,6 +315,16 @@ FunSig: FunSig = {
             exceptions: ret.0,
             return_ty: ret.1,
         },
+
+    "fn" <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
+        FunSig {
+            name,
+            type_params,
+            self_: false,
+            params: vec![],
+            exceptions: ret.0,
+            return_ty: ret.1,
+        },
 }
 
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
