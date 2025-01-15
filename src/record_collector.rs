@@ -415,5 +415,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
                 }
             }
         }
+
+        ast::Expr::Fn(_) => todo!(),
     }
 }

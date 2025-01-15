@@ -393,9 +393,6 @@ Stmt: Stmt = {
             cond,
             body:statements,
         }),
-
-    // <fun:FunDecl> =>
-    //     Stmt::LetFn(fun),
 }
 
 Alts: Vec<Alt> = {
@@ -812,6 +809,12 @@ InlineExpr: Expr = {
     #[precedence(level = "13")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
+
+
+    "fn" <type_params:Context>
+            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+            <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+        todo!(),
 }
 
 ParenExpr: (Option<Id>, L<Expr>) = {

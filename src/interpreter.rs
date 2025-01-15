@@ -1308,6 +1308,8 @@ fn eval<W: Write>(
             heap[alloc + 1] = u32_as_val(*char as u32);
             ControlFlow::Val(alloc)
         }
+
+        ast::Expr::Fn(_) => todo!(),
     }
 }
 

@@ -444,6 +444,8 @@ pub enum Expr {
     Match(MatchExpr),
 
     If(IfExpr),
+
+    Fn(FnExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -589,6 +591,9 @@ pub enum BinOp {
 pub enum UnOp {
     Not,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FnExpr {}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {

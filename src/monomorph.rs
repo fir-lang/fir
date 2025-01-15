@@ -648,6 +648,8 @@ fn mono_expr(
                 .as_ref()
                 .map(|stmts| mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm)),
         }),
+
+        ast::Expr::Fn(_) => todo!(),
     }
 }
 

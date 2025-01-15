@@ -707,6 +707,8 @@ impl Expr {
                     }
                 }
             }
+
+            Expr::Fn(_) => todo!(),
         }
     }
 }

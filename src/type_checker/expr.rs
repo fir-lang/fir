@@ -834,6 +834,8 @@ pub(super) fn check_expr(
 
             branch_tys.pop().unwrap()
         }
+
+        ast::Expr::Fn(_) => todo!(),
     }
 }
 
