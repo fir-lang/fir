@@ -9,8 +9,8 @@ fn f3(): {E1, E2, ..r}
     f2()
 
 fn forEach(vec: Vec[t], f: Fn(t): {..r}): {..r}
-    for i in range(0u32, vec.len()):
-        f(vec.get(i))
+    for t in vec.iter():
+        f(t)
 
 fn throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
     if i & 1 == 0:
@@ -27,8 +27,8 @@ fn f4(): {OddNumberError(i: U32), ..r}
 #|
 TODO: Implement closures
 fn forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r}
-    for i in range(0u32, vec.len()):
-        match try({ f(vec.get(i)) }):
+    for t in vec.iter():
+        match try({ f(t) }):
             Result.Err(~Break): break
             Result.Err(other): return Result.Err(other)
             Result.OK(()): ()
