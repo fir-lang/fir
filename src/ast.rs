@@ -227,13 +227,10 @@ impl<T> Named<T> {
     }
 }
 
-/// Type signature part of a function declaration, including name, type parameters, parameters,
-/// return type.
+/// Type signature part of a function declaration: type parameters, value parameters, exception
+/// type, return type.
 #[derive(Debug, Clone)]
 pub struct FunSig {
-    /// Name of the function, e.g. in `fn f()` this is `f`.
-    pub name: L<Id>,
-
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
     ///
     /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
@@ -255,6 +252,7 @@ pub struct FunSig {
 
 #[derive(Debug, Clone)]
 pub struct FunDecl {
+    pub name: L<Id>,
     pub sig: FunSig,
     pub body: Option<L<Vec<L<Stmt>>>>,
 }

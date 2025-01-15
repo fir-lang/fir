@@ -274,20 +274,23 @@ FunDecl: L<FunDecl> = {
 
     <l:@L> <sig:FunSig> NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: Some(L::new(module, body_l, body_r, body)),
         }),
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: None,
         }),
 
     <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: Some(L {
                 loc: loc.clone(),
                 node:  vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }],
@@ -296,35 +299,30 @@ FunDecl: L<FunDecl> = {
     },
 }
 
-LFunSig: L<FunSig> = {
-    <l:@L> <sig:FunSig> <r:@R> =>
-        L::new(module, l, r, sig),
-}
-
-FunSig: FunSig = {
+FunSig: (L<Id>, FunSig) = {
     "fn" <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <ret:ReturnType>
             =>
-        FunSig {
-            name,
-            type_params,
-            self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            exceptions: ret.0,
-            return_ty: ret.1,
-        },
+        (name,
+            FunSig {
+                type_params,
+                self_: self_.is_some(),
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            }),
 
     "fn" <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
-        FunSig {
-            name,
-            type_params,
-            self_: false,
-            params: vec![],
-            exceptions: ret.0,
-            return_ty: ret.1,
-        },
+        (name,
+            FunSig {
+                type_params,
+                self_: false,
+                params: vec![],
+                exceptions: ret.0,
+                return_ty: ret.1,
+            })
 }
 
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {

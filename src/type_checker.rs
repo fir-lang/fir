@@ -102,7 +102,7 @@ fn add_exception_types(module: &mut ast::Module) {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
                 if fun.sig.exceptions.is_none() {
-                    if fun.sig.name.node == "main" {
+                    if fun.name.node == "main" {
                         fun.sig.exceptions = Some(ast::L {
                             node: ast::Type::Variant {
                                 alts: Default::default(),
@@ -419,7 +419,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 loc: item.loc.clone(),
                             };
 
-                            Some((fun.sig.name.node.clone(), {
+                            Some((fun.name.node.clone(), {
                                 let fun_decl = fun.clone();
                                 TraitMethod {
                                     scheme,
@@ -563,7 +563,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         for (method, method_decl) in trait_methods {
             if impl_decl.items.iter().any(|item| match &item.node {
                 ast::ImplDeclItem::AssocTy(_) => false,
-                ast::ImplDeclItem::Fun(fun) => &fun.sig.name.node == method,
+                ast::ImplDeclItem::Fun(fun) => &fun.name.node == method,
             }) {
                 continue;
             }
@@ -693,7 +693,7 @@ fn collect_schemes(
 
         match &decl.node {
             ast::TopDecl::Fun(ast::L {
-                node: ast::FunDecl { sig, body: _ },
+                node: ast::FunDecl { name, sig, body: _ },
                 loc,
             }) => {
                 let fun_var_kinds = fun_sig_ty_var_kinds(sig);
@@ -734,12 +734,12 @@ fn collect_schemes(
                     loc: loc.clone(),
                 };
 
-                let old = top_schemes.insert(sig.name.node.clone(), scheme);
+                let old = top_schemes.insert(name.node.clone(), scheme);
                 if old.is_some() {
                     panic!(
                         "{}: Function {} is defined multiple times",
                         loc_display(loc),
-                        sig.name.node
+                        name.node
                     );
                 }
             }
@@ -843,7 +843,7 @@ fn collect_schemes(
                         let old = method_schemes
                             .entry(self_ty_con_id.clone())
                             .or_default()
-                            .insert(fun.sig.name.node.clone(), scheme.clone());
+                            .insert(fun.name.node.clone(), scheme.clone());
 
                         // Add the type key to associated_fn_schemes to make lookups easier.
                         associated_fn_schemes
@@ -854,7 +854,7 @@ fn collect_schemes(
                             panic!(
                                 "{}: Method {} for type {} is defined multiple times",
                                 loc_display(&item.loc),
-                                fun.sig.name.node,
+                                fun.name.node,
                                 self_ty_con_id
                             );
                         }
@@ -862,7 +862,7 @@ fn collect_schemes(
                         let old = associated_fn_schemes
                             .entry(self_ty_con_id.clone())
                             .or_default()
-                            .insert(fun.sig.name.node.clone(), scheme.clone());
+                            .insert(fun.name.node.clone(), scheme.clone());
 
                         method_schemes.entry(self_ty_con_id.clone()).or_default();
 
@@ -870,7 +870,7 @@ fn collect_schemes(
                             panic!(
                                 "{}: Associated function {} for type {} is defined multiple times",
                                 loc_display(&item.loc),
-                                fun.sig.name.node,
+                                fun.name.node,
                                 self_ty_con_id
                             );
                         }
@@ -885,7 +885,7 @@ fn collect_schemes(
                         let trait_ty_con = tys.cons().get(&trait_id.node).unwrap();
                         let trait_details = trait_ty_con.trait_details().unwrap();
 
-                        let fun_name: &Id = &fun.sig.name.node;
+                        let fun_name: &Id = &fun.name.node;
 
                         let trait_fun_scheme = &trait_details
                             .methods
@@ -1089,11 +1089,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let scheme = tys
-        .top_schemes
-        .get(&fun.node.sig.name.node)
-        .unwrap()
-        .clone();
+    let scheme = tys.top_schemes.get(&fun.node.name.node).unwrap().clone();
 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
@@ -1298,7 +1294,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 ast::ImplDeclItem::AssocTy(_) => continue,
                 ast::ImplDeclItem::Fun(fun_decl) => fun_decl,
             };
-            let fun_id = &fun_decl.sig.name.node;
+            let fun_id = &fun_decl.name.node;
             match (
                 trait_method_ids.contains(fun_id),
                 implemented_method_ids.contains(fun_id),

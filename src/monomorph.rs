@@ -69,7 +69,7 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
             }
 
             ast::TopDecl::Fun(fun_decl) => {
-                let old = top.insert(fun_decl.node.sig.name.node.clone(), fun_decl.node);
+                let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
                 assert!(
                     old.is_none(),
                     "BUG: Top-level function declared multiple times"
@@ -89,7 +89,7 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
                             let old = associated
                                 .entry(ty_id.clone())
                                 .or_default()
-                                .insert(fun_decl.sig.name.node.clone(), fun_decl);
+                                .insert(fun_decl.name.node.clone(), fun_decl);
                             assert!(
                                 old.is_none(),
                                 "BUG: Associated function defined multiple times"
@@ -230,7 +230,7 @@ fn mono_top_fn(
 ) -> Id {
     assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
 
-    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
+    let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     // Check if we've already monomorphised this function.
     if mono_pgm.top.contains_key(&mono_fn_id) {
@@ -267,8 +267,8 @@ fn mono_top_fn(
     mono_pgm.top.insert(
         mono_fn_id.clone(),
         ast::FunDecl {
+            name: fun_decl.name.set_node(mono_fn_id.clone()),
             sig: ast::FunSig {
-                name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
                 type_params: vec![],
                 self_: fun_decl.sig.self_,
                 params,
@@ -870,7 +870,7 @@ fn mono_assoc_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    let mono_fn_id = mono_id(&fun_decl.sig.name.node, ty_args);
+    let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     if mono_pgm
         .associated
@@ -926,8 +926,8 @@ fn mono_assoc_fn(
         .insert(
             mono_fn_id.clone(),
             ast::FunDecl {
+                name: fun_decl.name.set_node(mono_fn_id.clone()),
                 sig: ast::FunSig {
-                    name: fun_decl.sig.name.set_node(mono_fn_id.clone()),
                     type_params: vec![],
                     self_: fun_decl.sig.self_,
                     params,

@@ -593,7 +593,7 @@ fn call_ast_fun<W: Write>(
         args.len() as u32,
         "{}, fun: {}",
         loc_display(loc),
-        fun.sig.name.node
+        fun.name.node
     );
 
     let mut locals: Map<Id, u64> = Default::default();
