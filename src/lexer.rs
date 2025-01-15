@@ -91,6 +91,9 @@ lexgen::lexer! {
         ">=" = TokenKind::RAngleEq,
         "!=" = TokenKind::ExclamationEq,
         "/" = TokenKind::Slash,
+        "~" = TokenKind::Tilde,
+        "%" = TokenKind::Percent,
+        "^" = TokenKind::Caret,
 
         let upper_id = $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
         '~' $upper_id = TokenKind::TildeUpperId,
