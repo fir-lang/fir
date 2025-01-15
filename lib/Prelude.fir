@@ -1,4 +1,5 @@
 import Char
+import Exn
 import Iter
 import Num
 import Str

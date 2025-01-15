@@ -102,6 +102,10 @@ pub enum BuiltinFun {
     U8AsI8,
     U8AsI32,
     U8AsU32,
+
+    // Exception handling
+    Try,
+    Throw,
 }
 
 macro_rules! array_new {
@@ -165,8 +169,8 @@ pub fn call_builtin_fun<W: Write>(
     fun: &BuiltinFun,
     args: Vec<u64>,
     loc: &Loc,
-) -> u64 {
-    match fun {
+) -> FunRet {
+    let val = match fun {
         BuiltinFun::Panic => {
             debug_assert!(args.len() <= 1);
 
@@ -702,5 +706,55 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U8AsI32 => i32_as_val(val_as_u8(args[0]) as i32),
 
         BuiltinFun::U8AsU32 => u32_as_val(val_as_u8(args[0]) as u32),
-    }
+
+        BuiltinFun::Try => {
+            debug_assert_eq!(args.len(), 1);
+            let cb = args[0];
+            match call_closure(w, pgm, heap, &mut Default::default(), cb, &[], loc) {
+                ControlFlow::Val(val) => {
+                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
+
+                    let constr_idx = ty_con
+                        .value_constrs
+                        .iter()
+                        .enumerate()
+                        .find(|(_, constr)| {
+                            constr.name.as_ref() == Some(&SmolStr::new_static("Ok"))
+                        })
+                        .unwrap();
+
+                    let object = heap.allocate(1 + args.len());
+                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+                    heap[object + 1] = val;
+                    object
+                }
+                ControlFlow::Unwind(val) => {
+                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
+
+                    let constr_idx = ty_con
+                        .value_constrs
+                        .iter()
+                        .enumerate()
+                        .find(|(_, constr)| {
+                            constr.name.as_ref() == Some(&SmolStr::new_static("Err"))
+                        })
+                        .unwrap();
+
+                    let object = heap.allocate(1 + args.len());
+                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+                    heap[object + 1] = val;
+                    object
+                }
+                ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
+            }
+        }
+
+        BuiltinFun::Throw => {
+            debug_assert_eq!(args.len(), 1);
+            let exn = args[0];
+            return FunRet::Unwind(exn);
+        }
+    };
+
+    FunRet::Val(val)
 }

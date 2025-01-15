@@ -33,7 +33,12 @@ pub(crate) fn collect_rows(
             }
 
             Ty::Var(var) => {
-                assert!(matches!(var.kind(), Kind::Row(_)));
+                assert!(
+                    matches!(var.kind(), Kind::Row(_)),
+                    "{:?} : {:?}",
+                    var,
+                    var.kind()
+                );
                 match var.normalize(cons) {
                     Ty::Anonymous {
                         labels,

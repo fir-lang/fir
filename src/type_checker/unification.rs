@@ -82,10 +82,12 @@ pub(super) fn unify(
             Ty::Fun {
                 args: args1,
                 ret: ret1,
+                exceptions: exceptions1,
             },
             Ty::Fun {
                 args: args2,
                 ret: ret2,
+                exceptions: exceptions2,
             },
         ) => {
             if args1.len() != args2.len() {
@@ -132,6 +134,18 @@ pub(super) fn unify(
                         "{}: Unable to unify functions with positional and named arguments",
                         loc_display(loc)
                     )
+                }
+            }
+
+            match (exceptions1, exceptions2) {
+                (None, None) => {}
+
+                (None, Some(_)) | (Some(_), None) => {
+                    // None is the same as [..r] with a fresh r, so it unifies with everything.
+                }
+
+                (Some(exceptions1), Some(exceptions2)) => {
+                    unify(exceptions1, exceptions2, cons, var_gen, level, loc);
                 }
             }
 
@@ -375,7 +389,11 @@ fn prune_level(ty: &Ty, max_level: u32) {
 
         Ty::QVar(_) => panic!("QVar in prune_level"),
 
-        Ty::Fun { args, ret } => {
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => {
             match args {
                 FunArgs::Positional(args) => {
                     args.iter().for_each(|arg| prune_level(arg, max_level))
@@ -383,6 +401,9 @@ fn prune_level(ty: &Ty, max_level: u32) {
                 FunArgs::Named(args) => args.values().for_each(|arg| prune_level(arg, max_level)),
             }
             prune_level(ret, max_level);
+            if let Some(exn) = exceptions {
+                prune_level(exn, max_level);
+            }
         }
 
         Ty::AssocTySelect { ty, assoc_ty: _ } => {

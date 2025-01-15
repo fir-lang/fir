@@ -201,7 +201,11 @@ pub struct NamedType {
 #[derive(Debug, Clone)]
 pub struct FnType {
     pub args: Vec<L<Type>>,
+
     pub ret: Option<L<Box<Type>>>,
+
+    /// Same as `FunSig.exceptions`.
+    pub exceptions: Option<L<Box<Type>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -243,6 +247,10 @@ pub struct FunSig {
 
     /// Optional return type.
     pub return_ty: Option<L<Type>>,
+
+    /// The exception signature. If exists, this will be a variant type. Store as `Type` to make it
+    /// easier to process with rest of the types.
+    pub exceptions: Option<L<Type>>,
 }
 
 #[derive(Debug, Clone)]
@@ -719,7 +727,11 @@ impl Type {
 
             Type::Variant { .. } => todo!(),
 
-            Type::Fn(FnType { args, ret }) => Type::Fn(FnType {
+            Type::Fn(FnType {
+                args,
+                ret,
+                exceptions,
+            }) => Type::Fn(FnType {
                 args: args
                     .iter()
                     .map(|arg| arg.map_as_ref(|arg| arg.subst_var(var, ty)))
@@ -727,6 +739,9 @@ impl Type {
                 ret: ret
                     .as_ref()
                     .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_var(var, ty)))),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_var(var, ty)))),
             }),
         }
     }

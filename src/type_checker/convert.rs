@@ -173,7 +173,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => Ty::Fun {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => Ty::Fun {
             args: FunArgs::Positional(
                 args.iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
@@ -183,6 +187,9 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
                 None => Ty::unit(),
             }),
+            exceptions: exceptions
+                .as_ref()
+                .map(|ty| Box::new(convert_ast_ty(tys, &ty.node, &ty.loc))),
         },
     }
 }
@@ -271,7 +278,12 @@ pub(super) fn convert_and_bind_context(
 
         // TODO: Variables that don't appear in the arguments or return type won't have their kinds
         // inferred. Assume those to have kind `*`.
-        let kind = var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star);
+        // TODO FIXME HACK: Until we implement kind inference, handle `?exn` variables here.
+        let kind = if ty_var.node == crate::type_checker::EXN_QVAR_ID {
+            Kind::Row(RecordOrVariant::Variant)
+        } else {
+            var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star)
+        };
 
         context_converted.push((
             ty_var.node.clone(),

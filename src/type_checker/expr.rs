@@ -293,6 +293,7 @@ pub(super) fn check_expr(
                 Ty::Fun {
                     args: param_tys,
                     ret: ret_ty,
+                    exceptions,
                 } => {
                     if param_tys.len() != args.len() {
                         panic!(
@@ -370,6 +371,17 @@ pub(super) fn check_expr(
                                 );
                             }
                         }
+                    }
+
+                    if let Some(exn) = &exceptions {
+                        unify(
+                            exn,
+                            &tc_state.exceptions,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        );
                     }
 
                     unify_expected_ty(
@@ -527,7 +539,7 @@ pub(super) fn check_expr(
                                     }),
                                     object_ty: Some(part_ty),
                                     method: SmolStr::new_static("toStr"),
-                                    ty_args: vec![],
+                                    ty_args: vec![tc_state.exceptions.clone()],
                                 }),
                                 loc: expr.loc.clone(),
                             }),
@@ -871,14 +883,22 @@ fn check_field_select(
                 // Type arguments of the receiver already substituted for type parameters in
                 // `select_method`. Drop 'self' argument.
                 match method_ty {
-                    Ty::Fun { mut args, ret } => {
+                    Ty::Fun {
+                        mut args,
+                        ret,
+                        exceptions,
+                    } => {
                         match &mut args {
                             FunArgs::Positional(args) => {
                                 args.remove(0);
                             }
                             FunArgs::Named(_) => panic!(),
                         }
-                        Ty::Fun { args, ret }
+                        Ty::Fun {
+                            args,
+                            ret,
+                            exceptions,
+                        }
                     }
                     _ => panic!(
                         "{}: Type of method is not a function type: {:?}",
@@ -924,6 +944,7 @@ pub(super) fn select_field(
                     Ty::Fun {
                         args: FunArgs::Named(fields),
                         ret: _,
+                        exceptions: _,
                     } => Some(fields.get(field)?.clone()),
                     _ => None,
                 }

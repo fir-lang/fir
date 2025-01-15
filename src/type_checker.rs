@@ -4,10 +4,10 @@ mod apply;
 mod convert;
 mod expr;
 mod instantiation;
-mod kind_inference;
+pub(crate) mod kind_inference;
 mod pat;
 mod pat_coverage;
-mod row_utils;
+pub(crate) mod row_utils;
 mod stmt;
 mod ty;
 mod ty_map;
@@ -52,6 +52,7 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
+    add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     for decl in module {
@@ -73,6 +74,82 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     tys
 }
 
+/// Add exception types to functions without one.
+fn add_exception_types(module: &mut ast::Module) {
+    // The row variable in the added exception type: `?exn` in `[..?exn]`.
+    fn row_type_param() -> ast::TypeParam {
+        ast::TypeParam {
+            id: ast::L {
+                loc: ast::Loc::dummy(),
+                node: EXN_QVAR_ID.clone(),
+            },
+            bounds: Default::default(),
+        }
+    }
+
+    // The default exception type: `[..?exn]`.
+    fn exn_type() -> ast::L<ast::Type> {
+        ast::L {
+            node: ast::Type::Variant {
+                alts: Default::default(),
+                extension: Some(EXN_QVAR_ID),
+            },
+            loc: ast::Loc::dummy(),
+        }
+    }
+
+    for decl in module {
+        match &mut decl.node {
+            ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
+                if fun.sig.exceptions.is_none() {
+                    if fun.sig.name.node == "main" {
+                        fun.sig.exceptions = Some(ast::L {
+                            node: ast::Type::Variant {
+                                alts: Default::default(),
+                                extension: None,
+                            },
+                            loc: ast::Loc::dummy(),
+                        });
+                    } else {
+                        fun.sig.type_params.push(row_type_param());
+                        fun.sig.exceptions = Some(exn_type());
+                    }
+                }
+            }
+
+            ast::TopDecl::Trait(ast::L { node, .. }) => {
+                for item in &mut node.items {
+                    match &mut item.node {
+                        ast::TraitDeclItem::AssocTy(_) => {}
+                        ast::TraitDeclItem::Fun(fun) => {
+                            if fun.sig.exceptions.is_none() {
+                                fun.sig.type_params.push(row_type_param());
+                                fun.sig.exceptions = Some(exn_type());
+                            }
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Impl(ast::L { node, .. }) => {
+                for item in &mut node.items {
+                    match &mut item.node {
+                        ast::ImplDeclItem::AssocTy(_) => {}
+                        ast::ImplDeclItem::Fun(fun) => {
+                            if fun.sig.exceptions.is_none() {
+                                fun.sig.type_params.push(row_type_param());
+                                fun.sig.exceptions = Some(exn_type());
+                            }
+                        }
+                    }
+                }
+            }
+
+            ast::TopDecl::Import(_) | ast::TopDecl::Type(_) => {}
+        }
+    }
+}
+
 struct TcFunState<'a> {
     context: &'a Map<Id, QVar>,
     return_ty: &'a Ty,
@@ -80,7 +157,12 @@ struct TcFunState<'a> {
     var_gen: &'a mut TyVarGen,
     tys: &'a PgmTypes,
     preds: &'a mut PredSet,
+
+    /// The current function's exception signature.
+    exceptions: Ty,
 }
+
+const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
 
 /// Collect type constructors (traits and data) and type schemes (top-level, associated, traits) of
 /// the program.
@@ -314,9 +396,15 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 None => Ty::unit(),
                             };
 
+                            let exceptions = match &fun.sig.exceptions {
+                                Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                                None => panic!(),
+                            };
+
                             let fun_ty = Ty::Fun {
                                 args: FunArgs::Positional(arg_tys),
                                 ret: Box::new(ret_ty),
+                                exceptions: Some(Box::new(exceptions)),
                             };
 
                             tys.exit_scope();
@@ -629,9 +717,15 @@ fn collect_schemes(
                     None => Ty::unit(),
                 };
 
+                let exceptions = match &sig.exceptions {
+                    Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                    None => panic!(),
+                };
+
                 let fun_ty = Ty::Fun {
                     args: FunArgs::Positional(arg_tys),
                     ret: Box::new(ret_ty),
+                    exceptions: Some(Box::new(exceptions)),
                 };
 
                 let scheme = Scheme {
@@ -724,9 +818,15 @@ fn collect_schemes(
                         None => Ty::unit(),
                     };
 
+                    let exceptions = match &fun.sig.exceptions {
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
                     let fun_ty = Ty::Fun {
                         args: FunArgs::Positional(arg_tys),
                         ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
                     };
 
                     let scheme = Scheme {
@@ -877,10 +977,12 @@ fn collect_schemes(
                                 Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                     args: FunArgs::Positional(tys),
                                     ret: Box::new(ret.clone()),
+                                    exceptions: None,
                                 },
                                 Some(ConFields::Named(tys)) => Ty::Fun {
                                     args: FunArgs::Named(tys),
                                     ret: Box::new(ret.clone()),
+                                    exceptions: None,
                                 },
                             };
                             let var_kinds = constructor_decls_var_kinds(cons);
@@ -925,10 +1027,12 @@ fn collect_schemes(
                             Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                 args: FunArgs::Positional(tys),
                                 ret: Box::new(ret.clone()),
+                                exceptions: None,
                             },
                             Some(ConFields::Named(tys)) => Ty::Fun {
                                 args: FunArgs::Named(tys),
                                 ret: Box::new(ret.clone()),
+                                exceptions: None,
                             },
                         };
                         let var_kinds = constructor_fields_var_kinds(fields);
@@ -1021,6 +1125,11 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let context = scheme.quantified_vars.iter().cloned().collect();
 
+    let exceptions = match &fun.node.sig.exceptions {
+        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+        None => panic!(),
+    };
+
     let mut tc_state = TcFunState {
         context: &context,
         return_ty: &ret_ty,
@@ -1028,6 +1137,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         var_gen: &mut var_gen,
         tys,
         preds: &mut preds,
+        exceptions,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
@@ -1151,6 +1261,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     .chain(fn_bounds.into_iter())
                     .collect();
 
+                let exceptions = match &fun.sig.exceptions {
+                    Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                    None => panic!(),
+                };
+
                 let mut tc_state = TcFunState {
                     context: &context,
                     return_ty: &ret_ty,
@@ -1158,6 +1273,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     var_gen: &mut var_gen,
                     tys,
                     preds: &mut preds,
+                    exceptions,
                 };
 
                 check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
@@ -1266,6 +1382,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     .chain(fn_bounds.into_iter())
                     .collect();
 
+                let exceptions = match &fun.sig.exceptions {
+                    Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                    None => panic!(),
+                };
+
                 let mut tc_state = TcFunState {
                     context: &context,
                     return_ty: &ret_ty,
@@ -1273,6 +1394,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     var_gen: &mut var_gen,
                     tys,
                     preds: &mut preds,
+                    exceptions,
                 };
 
                 check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
@@ -1546,6 +1668,9 @@ fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
     for (_, param) in fun_sig.params.iter() {
         ty_var_kinds(&param.node, &mut kinds);
     }
+    if let Some(exn) = &fun_sig.exceptions {
+        ty_var_kinds(&exn.node, &mut kinds);
+    }
     if let Some(ret) = &fun_sig.return_ty {
         ty_var_kinds(&ret.node, &mut kinds);
     }
@@ -1584,12 +1709,19 @@ fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
             for arg in args {
                 ty_var_kinds(&arg.node, kinds);
             }
             if let Some(ret) = ret {
                 ty_var_kinds(&ret.node, kinds);
+            }
+            if let Some(exn) = exceptions {
+                ty_var_kinds(&exn.node, kinds);
             }
         }
     }

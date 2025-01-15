@@ -273,7 +273,11 @@ impl Type {
                 buffer.push(']');
             }
 
-            Type::Fn(FnType { args, ret }) => {
+            Type::Fn(FnType {
+                args,
+                ret,
+                exceptions,
+            }) => {
                 buffer.push_str("Fn(");
                 for (i, arg) in args.iter().enumerate() {
                     if i != 0 {
@@ -282,6 +286,11 @@ impl Type {
                     arg.node.print(buffer);
                 }
                 buffer.push(')');
+                if let Some(exn) = exceptions {
+                    buffer.push(' ');
+                    exn.node.print(buffer);
+                    buffer.push(' ');
+                }
                 if let Some(ret) = ret {
                     buffer.push_str(": ");
                     ret.node.print(buffer);
@@ -316,6 +325,10 @@ impl FunSig {
             param_ty.node.print(buffer);
         }
         buffer.push(')');
+        if let Some(exn) = &self.exceptions {
+            buffer.push(' ');
+            exn.node.print(buffer);
+        }
         if let Some(ret_ty) = &self.return_ty {
             buffer.push_str(": ");
             ret_ty.node.print(buffer);

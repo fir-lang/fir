@@ -219,12 +219,19 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions,
+        }) => {
             for arg in args {
                 visit_ty(&arg.node, records, variants);
             }
             if let Some(ret) = ret {
                 visit_ty(&ret.node, records, variants);
+            }
+            if let Some(exn) = exceptions {
+                visit_ty(&exn.node, records, variants);
             }
         }
     }

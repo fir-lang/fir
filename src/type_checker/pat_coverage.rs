@@ -315,7 +315,11 @@ impl PatCoverage {
         };
 
         match con_fn_ty {
-            Ty::Fun { args, ret: _ } => {
+            Ty::Fun {
+                args,
+                ret: _,
+                exceptions: _,
+            } => {
                 match args {
                     FunArgs::Positional(args) => {
                         // If we have a pattern for the constructor, it should have the

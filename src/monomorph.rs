@@ -273,6 +273,7 @@ fn mono_top_fn(
                 self_: fun_decl.sig.self_,
                 params,
                 return_ty,
+                exceptions: None,
             },
             body: None,
         },
@@ -337,8 +338,14 @@ fn mono_stmt(
 
             mono_method(
                 expr_ty.as_ref().unwrap(),
-                &[],
                 &SmolStr::new_static("next"),
+                // `next` doesn't throw, pass empty row.
+                &[Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind: RecordOrVariant::Record,
+                    is_row: true,
+                }],
                 ty_map,
                 poly_pgm,
                 mono_pgm,
@@ -436,8 +443,8 @@ fn mono_expr(
         }) => {
             let (mono_method_id, mono_object_ty) = mono_method(
                 object_ty.as_ref().unwrap(),
-                ty_args,
                 method,
+                ty_args,
                 ty_map,
                 poly_pgm,
                 mono_pgm,
@@ -645,14 +652,14 @@ fn mono_expr(
 }
 
 fn mono_method(
-    poly_object_ty: &Ty,
-    ty_args: &[Ty],
+    poly_receiver_ty: &Ty,
     method: &Id,
+    method_ty_args: &[Ty],
     ty_map: &Map<Id, ast::Type>,
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> (Id, ast::Type) {
-    let poly_object_ty = ty_to_ast(poly_object_ty, ty_map);
+    let poly_object_ty = ty_to_ast(poly_receiver_ty, ty_map);
 
     let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
 
@@ -670,11 +677,6 @@ fn mono_method(
         }
     };
 
-    let mono_ty_args: Vec<ast::Type> = ty_args
-        .iter()
-        .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
-        .collect();
-
     match &poly_object_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
             let ty_con = poly_pgm.ty.get(name).unwrap();
@@ -686,6 +688,18 @@ fn mono_method(
             for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
                 assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
             }
+
+            let mono_ty_args: Vec<ast::Type> = method_ty_args
+                .iter()
+                .map(|ty_arg| {
+                    mono_ty(
+                        &ty_to_ast(ty_arg, ty_map),
+                        &assoc_fn_ty_map,
+                        poly_pgm,
+                        mono_pgm,
+                    )
+                })
+                .collect();
 
             (
                 mono_assoc_fn(
@@ -916,6 +930,7 @@ fn mono_assoc_fn(
                     self_: fun_decl.sig.self_,
                     params,
                     return_ty,
+                    exceptions: None,
                 },
                 body: None,
             },
@@ -1162,7 +1177,11 @@ fn mono_ty(
             }
         }
 
-        ast::Type::Fn(ast::FnType { args, ret }) => ast::Type::Fn(ast::FnType {
+        ast::Type::Fn(ast::FnType {
+            args,
+            ret,
+            exceptions: _,
+        }) => ast::Type::Fn(ast::FnType {
             args: args
                 .iter()
                 .map(|arg| arg.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)))
@@ -1170,6 +1189,7 @@ fn mono_ty(
             ret: ret.as_ref().map(|ret| {
                 ret.map_as_ref(|ret| Box::new(mono_ty(ret, ty_map, poly_pgm, mono_pgm)))
             }),
+            exceptions: None,
         }),
     }
 }
