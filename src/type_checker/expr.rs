@@ -732,7 +732,7 @@ pub(super) fn check_expr(
                     &pattern.loc,
                 );
 
-                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats, level);
+                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
 
                 if let Some(guard) = guard {
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_depth);
@@ -854,7 +854,7 @@ fn check_field_select(
         _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
     };
 
-    match select_field(tc_state, ty_con, ty_args, &field_select.field, loc, level) {
+    match select_field(tc_state, ty_con, ty_args, &field_select.field, loc) {
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, &field_select.field, tc_state.tys, loc) {
             Some(scheme) => {
@@ -924,7 +924,6 @@ pub(super) fn select_field(
     ty_args: &[Ty],
     field: &Id,
     loc: &ast::Loc,
-    level: u32,
 ) -> Option<Ty> {
     let ty_con = tc_state
         .tys
@@ -939,7 +938,7 @@ pub(super) fn select_field(
             1 => {
                 let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
                 let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
-                let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state, loc, level);
+                let con_ty = con_scheme.instantiate_with_tys(ty_args);
 
                 match con_ty {
                     Ty::Fun {

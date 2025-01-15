@@ -2,7 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeMap, Set};
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::loc_display;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -354,19 +354,14 @@ impl Scheme {
         (self.ty.subst_qvars(&var_map), instantiations)
     }
 
-    pub(super) fn instantiate_with_tys(
-        &self,
-        arg_tys: &[Ty],
-        tc_state: &mut TcFunState,
-        loc: &ast::Loc,
-        level: u32,
-    ) -> Ty {
-        let (ty, arg_vars) = self.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
-        assert!(arg_vars.len() >= arg_tys.len());
-        for (arg_var, arg_ty) in arg_vars.iter().zip(arg_tys.iter()) {
-            arg_var.set_link(arg_ty.clone());
+    pub(super) fn instantiate_with_tys(&self, arg_tys: &[Ty]) -> Ty {
+        assert!(self.quantified_vars.len() == arg_tys.len());
+        let mut var_map: Map<Id, Ty> =
+            Map::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
+        for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
+            var_map.insert(qvar.clone(), arg.clone());
         }
-        ty
+        self.ty.subst_qvars(&var_map)
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
