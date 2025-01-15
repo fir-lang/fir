@@ -14,4 +14,3 @@ impl T for Str:
 # tests/TcFail1.fir:8:5: Trait method implementation of toStr does not match the trait method type
 #                                 Trait method type:          [?exn] Fn(Str) [..?exn]: Str
 #                                 Implementation method type: [?exn] Fn(Str) [..?exn]: I32
-

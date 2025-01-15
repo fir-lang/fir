@@ -20,4 +20,3 @@ impl Test for A:
 # tests/AssocTysFail2.fir:14:5: Trait method implementation of test does not match the trait method type
 #                                 Trait method type:          [?exn] Fn(A) [..?exn]: A.T
 #                                 Implementation method type: [?exn] Fn(A) [..?exn]: Str
-

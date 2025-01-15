@@ -12,4 +12,3 @@ impl T for I32:
 # tests/TraitImplFail4.fir:7:5: Trait method implementation of a does not match the trait method type
 #                                 Trait method type:          [?exn] Fn(I32) [..?exn]: ()
 #                                 Implementation method type: [?exn] Fn(I32) [..?exn]: I32
-
