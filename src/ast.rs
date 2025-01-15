@@ -256,7 +256,7 @@ pub struct FunSig {
 #[derive(Debug, Clone)]
 pub struct FunDecl {
     pub sig: FunSig,
-    pub body: Option<L<Vec<L<Stmt>>>>,
+    pub body: Option<Vec<L<Stmt>>>,
 }
 
 impl FunDecl {

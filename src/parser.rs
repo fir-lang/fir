@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: bc7948465c856a215dd6e4cd9340ad52c29f1e8256005e15ace1d7a84f7fe066
+// sha3: e8c97d2f5e5ff898ce725175ad4922caf3c2081577594b32b9cf515af9a2224e
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -39776,7 +39776,7 @@ fn __action36<'a>(
         r,
         FunDecl {
             sig,
-            body: Some(L::new(module, body_l, body_r, body)),
+            body: Some(body),
         },
     )
 }
@@ -39821,16 +39821,13 @@ fn __action38<'a>(
             r,
             FunDecl {
                 sig,
-                body: Some(L {
+                body: Some(vec![L {
                     loc: loc.clone(),
-                    node: vec![L {
+                    node: Stmt::Expr(L {
                         loc: loc.clone(),
-                        node: Stmt::Expr(L {
-                            loc: loc.clone(),
-                            node: node,
-                        }),
-                    }],
-                }),
+                        node: node,
+                    }),
+                }]),
             },
         )
     }

@@ -275,7 +275,7 @@ FunDecl: L<FunDecl> = {
     <l:@L> <sig:FunSig> NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
             sig,
-            body: Some(L::new(module, body_l, body_r, body)),
+            body: Some(body),
         }),
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
@@ -288,10 +288,7 @@ FunDecl: L<FunDecl> = {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
             sig,
-            body: Some(L {
-                loc: loc.clone(),
-                node:  vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }],
-            })
+            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
         })
     },
 }

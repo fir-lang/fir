@@ -108,7 +108,7 @@ fn visit_fun_decl(
     visit_fun_sig(&fun_decl.sig, records, variants);
 
     if let Some(body) = &fun_decl.body {
-        for stmt in &body.node {
+        for stmt in body {
             visit_stmt(&stmt.node, records, variants);
         }
     }
