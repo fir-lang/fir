@@ -90,6 +90,12 @@ type Option[t]:
     None
     Some(t)
 
+impl[t: ToStr] ToStr for Option[t]:
+    fn toStr(self): Str
+        match self:
+            Option.None: "Option.None"
+            Option.Some(t): "Option.Some(`t.toStr()`)"
+
 impl Option[t]:
     fn unwrap(self): t
         match self:
@@ -100,10 +106,23 @@ type Result[e, t]:
     Err(e)
     Ok(t)
 
+impl[e: ToStr, t: ToStr] ToStr for Result[e, t]:
+    fn toStr(self): Str
+        match self:
+            Result.Err(e): "Result.Err(`e.toStr()`)"
+            Result.Ok(t): "Result.Ok(`t.toStr()`)"
+
 type Ordering:
     Less
     Equal
     Greater
+
+impl ToStr for Ordering:
+    fn toStr(self): Str
+        match self:
+            Ordering.Less: "Ordering.Less"
+            Ordering.Equal: "Ordering.Equal"
+            Ordering.Greater: "Ordering.Greater"
 
 type Bool:
     False
