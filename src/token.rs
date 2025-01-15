@@ -66,6 +66,7 @@ pub enum TokenKind {
     // Operators
     Amp,
     AmpAmp,
+    Caret,
     DotDot,
     DotDotEq,
     Eq,
@@ -77,6 +78,7 @@ pub enum TokenKind {
     LAngleEq,
     Minus,
     MinusEq,
+    Percent,
     Pipe,
     PipePipe,
     Plus,
@@ -87,6 +89,7 @@ pub enum TokenKind {
     Slash,
     Star,
     StarEq,
+    Tilde,
 
     // Literals
     String,
