@@ -64,6 +64,12 @@ impl Vec[t]:
         self.set(i, self.get(j))
         self.set(j, tmp)
 
+    fn iter(self): VecIter[t]
+        VecIter(
+            _vec = self,
+            _idx = 0,
+        )
+
 impl[t: Ord] Vec[t]:
     fn sort(self)
         if self.len() != 0:
@@ -102,3 +108,18 @@ impl[t: ToStr] ToStr for Vec[t]:
             buf.pushStr(self.get(i).toStr())
         buf.push(']')
         buf.toStr()
+
+type VecIter[t]:
+    _vec: Vec[t]
+    _idx: U32
+
+impl Iterator for VecIter[t]:
+    type Item = t
+
+    fn next(self): Option[t]
+        if self._idx >= self._vec.len():
+            return Option.None
+
+        let val = self._vec.get(self._idx)
+        self._idx += 1
+        Option.Some(val)
