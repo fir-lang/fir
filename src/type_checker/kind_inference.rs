@@ -27,7 +27,7 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
     for decl in pgm {
         match &mut decl.node {
             ast::TopDecl::Fun(decl) => {
-                add_missing_type_params_fun(&mut decl.node, &Default::default())
+                add_missing_type_params_fun(&mut decl.node.sig, &Default::default())
             }
 
             ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
@@ -37,26 +37,25 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
     }
 }
 
-fn add_missing_type_params_fun(decl: &mut ast::FunDecl, bound_vars: &Set<Id>) {
+fn add_missing_type_params_fun(sig: &mut ast::FunSig, bound_vars: &Set<Id>) {
     let mut fvs: Set<Id> = Default::default();
-    for (_, param_ty) in &decl.sig.params {
+    for (_, param_ty) in &sig.params {
         collect_fvs(&param_ty.node, &mut fvs);
     }
-    if let Some(exn) = &decl.sig.exceptions {
+    if let Some(exn) = &sig.exceptions {
         collect_fvs(&exn.node, &mut fvs);
     }
-    if let Some(ret) = &decl.sig.return_ty {
+    if let Some(ret) = &sig.return_ty {
         collect_fvs(&ret.node, &mut fvs);
     }
 
     for fv in fvs.difference(bound_vars) {
-        if !decl
-            .sig
+        if !sig
             .type_params
             .iter()
             .any(|ty_param| ty_param.id.node == *fv)
         {
-            decl.sig.type_params.push(ast::TypeParam {
+            sig.type_params.push(ast::TypeParam {
                 id: ast::L {
                     node: fv.clone(),
                     loc: ast::Loc::dummy(),
@@ -93,7 +92,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
         match &mut item.node {
             ast::ImplDeclItem::AssocTy(_) => {}
             ast::ImplDeclItem::Fun(fun_decl) => {
-                add_missing_type_params_fun(fun_decl, &impl_context_vars);
+                add_missing_type_params_fun(&mut fun_decl.sig, &impl_context_vars);
             }
         }
     }
