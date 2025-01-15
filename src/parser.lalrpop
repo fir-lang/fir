@@ -272,11 +272,11 @@ FunDecl: L<FunDecl> = {
 
     // TODO: comma parsing after `self` is not right.
 
-    <l:@L> <sig:FunSig> NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+    <l:@L> <sig:FunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
             name: sig.0,
             sig: sig.1,
-            body: Some(L::new(module, body_l, body_r, body)),
+            body: Some(body),
         }),
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
@@ -291,10 +291,7 @@ FunDecl: L<FunDecl> = {
         L::new(module, l, r, FunDecl {
             name: sig.0,
             sig: sig.1,
-            body: Some(L {
-                loc: loc.clone(),
-                node:  vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }],
-            })
+            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
         })
     },
 }
@@ -812,7 +809,16 @@ InlineExpr: Expr = {
     "fn" <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
-        todo!(),
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params,
+                self_: self_.is_some(),
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+        }),
 }
 
 ParenExpr: (Option<Id>, L<Expr>) = {

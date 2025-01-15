@@ -1137,9 +1137,9 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
-        check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
+        check_stmts(&mut tc_state, body, Some(&ret_ty), 0, 0);
 
-        for stmt in &mut body.node {
+        for stmt in body.iter_mut() {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
         }
     }
@@ -1272,9 +1272,9 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     exceptions,
                 };
 
-                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
+                check_stmts(&mut tc_state, body, Some(&ret_ty), 0, 0);
 
-                for stmt in &mut body.node {
+                for stmt in body.iter_mut() {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 
@@ -1393,9 +1393,9 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     exceptions,
                 };
 
-                check_stmts(&mut tc_state, &mut body.node, Some(&ret_ty), 0, 0);
+                check_stmts(&mut tc_state, body, Some(&ret_ty), 0, 0);
 
-                for stmt in &mut body.node {
+                for stmt in body.iter_mut() {
                     normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
                 }
 

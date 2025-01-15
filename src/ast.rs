@@ -254,7 +254,7 @@ pub struct FunSig {
 pub struct FunDecl {
     pub name: L<Id>,
     pub sig: FunSig,
-    pub body: Option<L<Vec<L<Stmt>>>>,
+    pub body: Option<Vec<L<Stmt>>>,
 }
 
 impl FunDecl {
@@ -590,8 +590,11 @@ pub enum UnOp {
     Not,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FnExpr {}
+#[derive(Debug, Clone)]
+pub struct FnExpr {
+    pub sig: FunSig,
+    pub body: Vec<L<Stmt>>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {

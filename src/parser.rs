@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 9527ad4ff0f6ee4fce7e0b44ce4efbfccba1876e0ae4eb634eb6ecb687c70c21
+// sha3: 5d6603afc395d9c33bc4b7c12c78b7488d960549017caa3a57515eab40bccc4d
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -40662,9 +40662,7 @@ fn __action36<'a>(
     (_, sig, _): (Loc, (L<Id>, FunSig), Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body_l, _): (Loc, Loc, Loc),
     (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
-    (_, body_r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<FunDecl> {
@@ -40675,7 +40673,7 @@ fn __action36<'a>(
         FunDecl {
             name: sig.0,
             sig: sig.1,
-            body: Some(L::new(module, body_l, body_r, body)),
+            body: Some(body),
         },
     )
 }
@@ -40730,16 +40728,13 @@ fn __action38<'a>(
             FunDecl {
                 name: sig.0,
                 sig: sig.1,
-                body: Some(L {
+                body: Some(vec![L {
                     loc: loc.clone(),
-                    node: vec![L {
+                    node: Stmt::Expr(L {
                         loc: loc.clone(),
-                        node: Stmt::Expr(L {
-                            loc: loc.clone(),
-                            node: node,
-                        }),
-                    }],
-                }),
+                        node: node,
+                    }),
+                }]),
             },
         )
     }
@@ -42197,7 +42192,19 @@ fn __action114<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
-    todo!()
+    Expr::Fn(FnExpr {
+        sig: FunSig {
+            type_params,
+            self_: self_.is_some(),
+            params: params
+                .into_iter()
+                .map(|(name, ty)| (name.smol_str(), ty))
+                .collect(),
+            exceptions: ret.0,
+            return_ty: ret.1,
+        },
+        body,
+    })
 }
 
 #[allow(unused_variables)]
@@ -46746,19 +46753,14 @@ fn __action396<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Vec<L<Stmt>>, Loc),
-    __4: (Loc, Loc, Loc),
-    __5: (Loc, Token, Loc),
-    __6: (Loc, Loc, Loc),
+    __4: (Loc, Token, Loc),
+    __5: (Loc, Loc, Loc),
 ) -> L<FunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
-    let __start1 = __2.2;
-    let __end1 = __3.0;
     let __temp0 = __action209(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action209(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action36(module, __temp0, __0, __1, __2, __temp1, __3, __4, __5, __6)
+    __action36(module, __temp0, __0, __1, __2, __3, __4, __5)
 }
 
 #[allow(unused_variables)]
@@ -47915,15 +47917,11 @@ fn __action451<'a>(
     __3: (Loc, Vec<L<Stmt>>, Loc),
     __4: (Loc, Token, Loc),
 ) -> L<FunDecl> {
-    let __start0 = __3.2;
-    let __end0 = __4.0;
-    let __start1 = __4.2;
-    let __end1 = __4.2;
+    let __start0 = __4.2;
+    let __end0 = __4.2;
     let __temp0 = __action208(module, &__start0, &__end0);
     let __temp0 = (__start0, __temp0, __end0);
-    let __temp1 = __action208(module, &__start1, &__end1);
-    let __temp1 = (__start1, __temp1, __end1);
-    __action396(module, __0, __1, __2, __3, __temp0, __4, __temp1)
+    __action396(module, __0, __1, __2, __3, __4, __temp0)
 }
 
 #[allow(unused_variables)]

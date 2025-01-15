@@ -285,7 +285,7 @@ fn mono_top_fn(
         None => return mono_fn_id,
     };
 
-    let mono_body = body.map_as_ref(|lstmts| mono_lstmts(lstmts, &ty_map, poly_pgm, mono_pgm));
+    let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
 
     mono_pgm.top.get_mut(&mono_fn_id).unwrap().body = Some(mono_body);
 
@@ -944,7 +944,7 @@ fn mono_assoc_fn(
         None => return mono_fn_id,
     };
 
-    let mono_body = body.map_as_ref(|lstmts| mono_lstmts(lstmts, &ty_map, poly_pgm, mono_pgm));
+    let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
 
     mono_pgm
         .associated
