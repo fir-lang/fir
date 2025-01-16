@@ -1,4 +1,4 @@
-fn test[t: Eq + ToStr](a: t)
+test[t: Eq + ToStr](a: t)
     printStr((a == a).toStr())
     printStr(a.toStr())
 
@@ -6,11 +6,11 @@ type A[t]:
     i: t
 
 impl[t: Eq + ToStr] A[t]:
-    fn test(self)
+    test(self)
         printStr((self.i == self.i).toStr())
         printStr(self.i.toStr())
 
-fn main()
+main()
     test(123i32)
     test(456u32)
 

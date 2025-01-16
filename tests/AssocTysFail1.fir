@@ -5,11 +5,11 @@ type A:
 
 trait Test[a]:
     type T
-    fn test(self): T
+    test(self): T
 
 impl[a] Test[a]:
     type T = I32
-    fn test(self): T
+    test(self): T
         "hi"
 
 # args: --typecheck --no-prelude --no-backtrace

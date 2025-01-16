@@ -10,12 +10,12 @@ prim type I32
 prim type Str
 
 trait ToStr[t]:
-    fn toStr(self): Str
+    toStr(self): Str
 
 impl ToStr for I32:
-    prim fn toStr(self): Str
+    prim toStr(self): Str
 
-fn resultToString(result: Result[I32, I32]): Str
+resultToString(result: Result[I32, I32]): Str
     match result:
         Result.Ok(value = v):
             "Ok(`v`)"

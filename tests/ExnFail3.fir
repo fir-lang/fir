@@ -1,4 +1,4 @@
-fn f1(): {..r}
+f1(): {..r}
     throw(~A)
 
 # args: --typecheck --no-backtrace

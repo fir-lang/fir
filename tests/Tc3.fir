@@ -1,16 +1,16 @@
 prim type I32
 
 trait T[a]:
-    fn test(self): ()
+    test(self): ()
 
-    fn getI32(self): I32
+    getI32(self): I32
         0
 
 type A:
     i: I32
 
 impl T for A:
-    fn test(self): ()
+    test(self): ()
         self.getI32()
         ()
 

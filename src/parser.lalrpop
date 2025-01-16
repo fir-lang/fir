@@ -297,7 +297,7 @@ FunDecl: L<FunDecl> = {
 }
 
 FunSig: (L<Id>, FunSig) = {
-    "fn" <name:LLowerId>
+    <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <ret:ReturnType>
@@ -311,7 +311,7 @@ FunSig: (L<Id>, FunSig) = {
                 return_ty: ret.1,
             }),
 
-    "fn" <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
+    <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
         (name,
             FunSig {
                 type_params,

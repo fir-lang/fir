@@ -1,30 +1,30 @@
-fn mono_fn(alts: [A(x: I32), B(y: Str)])
+mono_fn(alts: [A(x: I32), B(y: Str)])
     match alts:
         ~A(x = i): printStr("A(i=`i.toStr()`)")
         ~B(y = s): printStr("B(s=`s`)")
 
-fn poly_fn[r](alts: [A(x: I32), B(y: Str), ..r])
+poly_fn[r](alts: [A(x: I32), B(y: Str), ..r])
     match alts:
         ~A(x = i): printStr("A(i=`i.toStr()`)")
         ~B(y = s): printStr("B(s=`s`)")
         _: printStr("Other")
 
-fn if_variants_mono(): [A(x: I32), B(y: Str)]
+if_variants_mono(): [A(x: I32), B(y: Str)]
     if Bool.True:
         ~A(x = 123)
     else:
         ~B(y = "ahoy")
 
-fn if_variants_poly[r](): [A(x: I32), B(y: Str), ..r]
+if_variants_poly[r](): [A(x: I32), B(y: Str), ..r]
     if Bool.True:
         ~A(x = 123)
     else:
         ~B(y = "ahoy")
 
-fn poly_return[r](): [B(y: Str), ..r]
+poly_return[r](): [B(y: Str), ..r]
     ~B(y = "ahoy")
 
-fn main()
+main()
     mono_fn(~A(x = 123))
     mono_fn(~B(y = "hi"))
 

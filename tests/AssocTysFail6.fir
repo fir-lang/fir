@@ -3,21 +3,21 @@ prim type I32
 prim type Str
 
 impl I32:
-    prim fn toStr(self): Str
+    prim toStr(self): Str
 
 trait Test[t]:
     type Elem
 
-    fn getElem(self): Elem
+    getElem(self): Elem
 
 impl Test for I32:
     type Elem = Str
 
-    fn getElem(self): Str = self.toStr()
+    getElem(self): Str = self.toStr()
 
-fn expectI32Elem[x: Test[Elem = I32]](x: x): I32 = x.getElem()
+expectI32Elem[x: Test[Elem = I32]](x: x): I32 = x.getElem()
 
-fn main()
+main()
     expectI32Elem(123i32)
     ()
 

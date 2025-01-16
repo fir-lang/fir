@@ -7,11 +7,11 @@ type A:
 
 trait Test[a]:
     type T
-    fn test(self): T
+    test(self): T
 
 impl Test for A:
     type T = I32
-    fn test(self): Str
+    test(self): Str
         "hi"
 
 # args: --typecheck --no-prelude --no-backtrace

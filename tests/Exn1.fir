@@ -1,23 +1,23 @@
-fn f1(): {E1, ..r}
+f1(): {E1, ..r}
     throw(~E1)
 
-fn f2(): {E2, ..r}
+f2(): {E2, ..r}
     untry(Result.Err(~E2))
 
-fn f3(): {E1, E2, ..r}
+f3(): {E1, E2, ..r}
     f1()
     f2()
 
-fn forEach(vec: Vec[t], f: Fn(t): {..r}): {..r}
+forEach(vec: Vec[t], f: Fn(t): {..r}): {..r}
     for t in vec.iter():
         f(t)
 
-fn throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
+throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
     if i & 1 == 0:
         throw(~OddNumberError(i = i))
 
 # Implement closures and inline this function.
-fn f4(): {OddNumberError(i: U32), ..r}
+f4(): {OddNumberError(i: U32), ..r}
     let vec: Vec[U32] = Vec.withCapacity(3)
     vec.push(1)
     vec.push(2)
@@ -26,7 +26,7 @@ fn f4(): {OddNumberError(i: U32), ..r}
 
 #|
 TODO: Implement closures
-fn forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r}
+forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r}
     for t in vec.iter():
         match try({ f(t) }):
             Result.Err(~Break): break
@@ -34,7 +34,7 @@ fn forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r}
             Result.OK(()): ()
 |#
 
-fn main()
+main()
     match try(f1):
         Result.Err(~E1): printStr("OK")
         Result.Ok(()): panic("")

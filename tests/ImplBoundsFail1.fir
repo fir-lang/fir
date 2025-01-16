@@ -2,10 +2,10 @@ type A[t]:
     i: t
 
 impl[t1: ToStr, t2] A[t1, t2]:
-    fn test(self)
+    test(self)
         printStr(self.i.toStr())
 
-fn main() = A(i = 123i32).test()
+main() = A(i = 123i32).test()
 
 # args: --typecheck --no-backtrace
 # expected stderr:

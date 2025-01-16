@@ -2,10 +2,10 @@ prim type Str
 prim type I32
 
 trait T[a]:
-    fn toStr(self): Str
+    toStr(self): Str
 
 impl T for Str:
-    fn toStr(self): I32
+    toStr(self): I32
         123
 
 # args: --typecheck --no-prelude --no-backtrace

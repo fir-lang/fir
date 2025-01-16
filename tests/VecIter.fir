@@ -1,4 +1,4 @@
-fn main()
+main()
     let vec: Vec[U32] = Vec.withCapacity(10)
     vec.push(1)
     vec.push(2)
