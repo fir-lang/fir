@@ -846,6 +846,11 @@ pub(super) fn check_expr(
                 loc_display(&expr.loc)
             );
 
+            if sig.exceptions.is_none() {
+                sig.type_params.push(crate::type_checker::row_type_param());
+                sig.exceptions = Some(crate::type_checker::exn_type());
+            }
+
             tc_state.tys.tys.enter_scope(); // for type params
             tc_state.env.enter(); // for term params
 
@@ -890,10 +895,29 @@ pub(super) fn check_expr(
             tc_state.tys.tys.exit_scope();
             tc_state.env.exit();
 
+            // Convert rigid type variables to fresh unification variables. This is the same as
+            // creating a scheme for the function and then instantiating it.
+            let con_to_var: Map<Id, Ty> = sig
+                .type_params
+                .iter()
+                .map(|ty_param| {
+                    let kind = var_kinds.get(&ty_param.id.node).unwrap();
+                    let var = tc_state
+                        .var_gen
+                        .new_var(level, kind.clone(), expr.loc.clone());
+                    (ty_param.id.node.clone(), Ty::Var(var))
+                })
+                .collect();
+
             let ty = Ty::Fun {
-                args: FunArgs::Positional(param_tys),
-                ret: Box::new(ret_ty),
-                exceptions: Some(Box::new(exceptions)),
+                args: FunArgs::Positional(
+                    param_tys
+                        .iter()
+                        .map(|ty| ty.subst_cons(&con_to_var))
+                        .collect(),
+                ),
+                ret: Box::new(ret_ty.subst_cons(&con_to_var)),
+                exceptions: Some(Box::new(exceptions.subst_cons(&con_to_var))),
             };
 
             unify_expected_ty(

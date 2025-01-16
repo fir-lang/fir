@@ -76,28 +76,6 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
 
 /// Add exception types to functions without one.
 fn add_exception_types(module: &mut ast::Module) {
-    // The row variable in the added exception type: `?exn` in `[..?exn]`.
-    fn row_type_param() -> ast::TypeParam {
-        ast::TypeParam {
-            id: ast::L {
-                loc: ast::Loc::dummy(),
-                node: EXN_QVAR_ID.clone(),
-            },
-            bounds: Default::default(),
-        }
-    }
-
-    // The default exception type: `[..?exn]`.
-    fn exn_type() -> ast::L<ast::Type> {
-        ast::L {
-            node: ast::Type::Variant {
-                alts: Default::default(),
-                extension: Some(EXN_QVAR_ID),
-            },
-            loc: ast::Loc::dummy(),
-        }
-    }
-
     for decl in module {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
@@ -147,6 +125,28 @@ fn add_exception_types(module: &mut ast::Module) {
 
             ast::TopDecl::Import(_) | ast::TopDecl::Type(_) => {}
         }
+    }
+}
+
+// The row variable in the added exception type: `?exn` in `[..?exn]`.
+fn row_type_param() -> ast::TypeParam {
+    ast::TypeParam {
+        id: ast::L {
+            loc: ast::Loc::dummy(),
+            node: EXN_QVAR_ID.clone(),
+        },
+        bounds: Default::default(),
+    }
+}
+
+// The default exception type: `[..?exn]`.
+fn exn_type() -> ast::L<ast::Type> {
+    ast::L {
+        node: ast::Type::Variant {
+            alts: Default::default(),
+            extension: Some(EXN_QVAR_ID),
+        },
+        loc: ast::Loc::dummy(),
     }
 }
 

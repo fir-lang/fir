@@ -917,6 +917,74 @@ impl Ty {
         }
     }
 
+    pub(super) fn subst_cons(&self, cons: &Map<Id, Ty>) -> Ty {
+        match self {
+            Ty::Con(con) => match cons.get(con) {
+                Some(ty) => ty.clone(),
+                None => self.clone(),
+            },
+
+            Ty::Var(var) => Ty::Var(var.clone()),
+
+            Ty::App(ty, tys) => Ty::App(
+                ty.clone(),
+                match tys {
+                    TyArgs::Positional(tys) => {
+                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_cons(cons)).collect())
+                    }
+                    TyArgs::Named(tys) => TyArgs::Named(
+                        tys.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_cons(cons)))
+                            .collect(),
+                    ),
+                },
+            ),
+
+            Ty::Anonymous {
+                labels,
+                extension,
+                kind,
+                is_row,
+            } => Ty::Anonymous {
+                labels: labels
+                    .iter()
+                    .map(|(label_id, label_ty)| (label_id.clone(), label_ty.subst_cons(cons)))
+                    .collect(),
+                extension: extension.as_ref().map(|ext| Box::new(ext.subst_cons(cons))),
+                kind: *kind,
+                is_row: *is_row,
+            },
+
+            Ty::QVar(id) => Ty::QVar(id.clone()),
+
+            Ty::Fun {
+                args,
+                ret,
+                exceptions,
+            } => Ty::Fun {
+                args: match args {
+                    FunArgs::Positional(args) => {
+                        FunArgs::Positional(args.iter().map(|arg| arg.subst_cons(cons)).collect())
+                    }
+                    FunArgs::Named(args) => FunArgs::Named(
+                        args.iter()
+                            .map(|(name, ty)| (name.clone(), ty.subst_cons(cons)))
+                            .collect(),
+                    ),
+                },
+                ret: Box::new(ret.subst_cons(cons)),
+                exceptions: exceptions
+                    .as_ref()
+                    .map(|exn| Box::new(exn.subst_cons(cons))),
+            },
+
+            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty.subst_cons(cons)),
+                assoc_ty: assoc_ty.clone(),
+            },
+        }
+    }
+
     /// If the type is a unification variable, follow the links.
     ///
     /// Otherwise returns the original type.
