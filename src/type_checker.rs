@@ -150,16 +150,47 @@ fn add_exception_types(module: &mut ast::Module) {
     }
 }
 
+/// Type checking state for a single function (top-level, associated, or method).
 struct TcFunState<'a> {
-    context: &'a Map<Id, QVar>,
-    return_ty: &'a Ty,
+    /// Term environment.
     env: &'a mut ScopeMap<Id, Ty>,
-    var_gen: &'a mut TyVarGen,
-    tys: &'a PgmTypes,
-    preds: &'a mut PredSet,
 
-    /// The current function's exception signature.
+    /// Type environment.
+    tys: &'a PgmTypes,
+
+    /// The full context of the function, including `impl` context. E.g. in
+    /// ```ignore
+    /// impl[t: P1] A[t]:
+    ///     fn f[a: P2](self, a: a)
+    /// ```
+    /// this will be `{t => {P1}, a => {P2}}`.
+    ///
+    /// This is used to eagerly resolve predicates during type checking, to be able to resolve
+    /// associated types.
+    context: &'a Map<Id, QVar>,
+
+    /// Unification variable generator.
+    var_gen: &'a mut TyVarGen,
+
+    /// Exception type of the current function.
+    ///
+    /// Exceptions thrown by called functions are unified with this type.
+    ///
+    /// For now we don't do exception type inference, so this will always be a concrete type (with
+    /// rigid type variables).
     exceptions: Ty,
+
+    /// Return type of the current function.
+    ///
+    /// This is used when checking expressions in return position: in `return` expressions, in the
+    /// last statement of the function body etc.
+    return_ty: &'a Ty,
+
+    /// Predicates generated when checking the function body.
+    ///
+    /// After checking the body, these predicates should all be resolved by the function context and
+    /// trait environment (in `PgmTypes`).
+    preds: &'a mut PredSet,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
