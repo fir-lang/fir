@@ -806,13 +806,12 @@ InlineExpr: Expr = {
         Expr::Return(Box::new(expr)),
 
 
-    "fn" <type_params:Context>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+         <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params,
-                self_: self_.is_some(),
+                type_params: vec![],
+                self_: false,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,

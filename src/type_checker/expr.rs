@@ -1,7 +1,7 @@
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
-use crate::type_checker::convert::{convert_ast_ty, TyVarConversion};
+use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
@@ -838,30 +838,9 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Fn(ast::FnExpr { sig, body }) => {
-            assert!(
-                sig.type_params
-                    .iter()
-                    .all(|ast::TypeParam { id: _, bounds }| bounds.is_empty()),
-                "{}: Function expressions with bounds not supported yet",
-                loc_display(&expr.loc)
-            );
+            assert!(sig.type_params.is_empty());
 
-            if sig.exceptions.is_none() {
-                sig.type_params.push(crate::type_checker::row_type_param());
-                sig.exceptions = Some(crate::type_checker::exn_type());
-            }
-
-            tc_state.tys.tys.enter_scope(); // for type params
             tc_state.env.enter(); // for term params
-
-            let var_kinds = crate::type_checker::fun_sig_ty_var_kinds(sig);
-            let _fn_bounds = crate::type_checker::convert_and_bind_context(
-                &mut tc_state.tys.tys,
-                &sig.type_params,
-                &var_kinds,
-                TyVarConversion::ToOpaque,
-                &expr.loc,
-            );
 
             let ret_ty = match &sig.return_ty {
                 Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
@@ -870,7 +849,7 @@ pub(super) fn check_expr(
 
             let exceptions = match &sig.exceptions {
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
-                None => panic!(),
+                None => tc_state.exceptions.clone(),
             };
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
@@ -892,32 +871,12 @@ pub(super) fn check_expr(
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
             let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
 
-            tc_state.tys.tys.exit_scope();
             tc_state.env.exit();
 
-            // Convert rigid type variables to fresh unification variables. This is the same as
-            // creating a scheme for the function and then instantiating it.
-            let con_to_var: Map<Id, Ty> = sig
-                .type_params
-                .iter()
-                .map(|ty_param| {
-                    let kind = var_kinds.get(&ty_param.id.node).unwrap();
-                    let var = tc_state
-                        .var_gen
-                        .new_var(level, kind.clone(), expr.loc.clone());
-                    (ty_param.id.node.clone(), Ty::Var(var))
-                })
-                .collect();
-
             let ty = Ty::Fun {
-                args: FunArgs::Positional(
-                    param_tys
-                        .iter()
-                        .map(|ty| ty.subst_cons(&con_to_var))
-                        .collect(),
-                ),
-                ret: Box::new(ret_ty.subst_cons(&con_to_var)),
-                exceptions: Some(Box::new(exceptions.subst_cons(&con_to_var))),
+                args: FunArgs::Positional(param_tys),
+                ret: Box::new(ret_ty),
+                exceptions: Some(Box::new(exceptions)),
             };
 
             unify_expected_ty(
