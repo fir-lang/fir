@@ -1,6 +1,7 @@
 use crate::ast::{self, Id};
 use crate::collections::{Map, Set};
 use crate::interpolation::StringPart;
+use crate::type_checker::convert::{convert_ast_ty, TyVarConversion};
 use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
@@ -705,7 +706,8 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Return(expr) => {
-            check_expr(tc_state, expr, Some(tc_state.return_ty), level, loop_depth);
+            let return_ty = tc_state.return_ty.clone();
+            check_expr(tc_state, expr, Some(&return_ty), level, loop_depth);
             expected_ty.cloned().unwrap_or_else(Ty::unit)
         }
 
@@ -835,7 +837,74 @@ pub(super) fn check_expr(
             branch_tys.pop().unwrap()
         }
 
-        ast::Expr::Fn(_) => todo!(),
+        ast::Expr::Fn(ast::FnExpr { sig, body }) => {
+            assert!(
+                sig.type_params
+                    .iter()
+                    .all(|ast::TypeParam { id: _, bounds }| bounds.is_empty()),
+                "{}: Function expressions with bounds not supported yet",
+                loc_display(&expr.loc)
+            );
+
+            tc_state.tys.tys.enter_scope(); // for type params
+            tc_state.env.enter(); // for term params
+
+            let var_kinds = crate::type_checker::fun_sig_ty_var_kinds(sig);
+            let _fn_bounds = crate::type_checker::convert_and_bind_context(
+                &mut tc_state.tys.tys,
+                &sig.type_params,
+                &var_kinds,
+                TyVarConversion::ToOpaque,
+                &expr.loc,
+            );
+
+            let ret_ty = match &sig.return_ty {
+                Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
+                None => Ty::unit(),
+            };
+
+            let exceptions = match &sig.exceptions {
+                Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
+                None => panic!(),
+            };
+
+            let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
+            for (param_name, param_ty) in &sig.params {
+                let param_ty = convert_ast_ty(&tc_state.tys.tys, &param_ty.node, &expr.loc);
+                tc_state.env.insert(param_name.clone(), param_ty.clone());
+                param_tys.push(param_ty.clone());
+            }
+
+            let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());
+            let old_exceptions = replace(&mut tc_state.exceptions, exceptions.clone());
+            let old_preds = take(tc_state.preds);
+
+            check_stmts(tc_state, body, Some(&ret_ty), 0, 0);
+
+            let new_preds = replace(tc_state.preds, old_preds);
+            assert!(new_preds.into_preds().is_empty());
+
+            let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
+            let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
+
+            tc_state.tys.tys.exit_scope();
+            tc_state.env.exit();
+
+            let ty = Ty::Fun {
+                args: FunArgs::Positional(param_tys),
+                ret: Box::new(ret_ty),
+                exceptions: Some(Box::new(exceptions)),
+            };
+
+            unify_expected_ty(
+                ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
+        }
     }
 }
 

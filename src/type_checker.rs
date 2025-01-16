@@ -156,7 +156,7 @@ struct TcFunState<'a> {
     env: &'a mut ScopeMap<Id, Ty>,
 
     /// Type environment.
-    tys: &'a PgmTypes,
+    tys: &'a mut PgmTypes,
 
     /// The full context of the function, including `impl` context. E.g. in
     /// ```ignore
@@ -184,7 +184,7 @@ struct TcFunState<'a> {
     ///
     /// This is used when checking expressions in return position: in `return` expressions, in the
     /// last statement of the function body etc.
-    return_ty: &'a Ty,
+    return_ty: Ty,
 
     /// Predicates generated when checking the function body.
     ///
@@ -1159,7 +1159,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let mut tc_state = TcFunState {
         context: &context,
-        return_ty: &ret_ty,
+        return_ty: ret_ty.clone(),
         env: &mut env,
         var_gen: &mut var_gen,
         tys,
@@ -1295,7 +1295,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 let mut tc_state = TcFunState {
                     context: &context,
-                    return_ty: &ret_ty,
+                    return_ty: ret_ty.clone(),
                     env: &mut env,
                     var_gen: &mut var_gen,
                     tys,
@@ -1416,7 +1416,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 
                 let mut tc_state = TcFunState {
                     context: &context,
-                    return_ty: &ret_ty,
+                    return_ty: ret_ty.clone(),
                     env: &mut env,
                     var_gen: &mut var_gen,
                     tys,
