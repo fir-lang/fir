@@ -1,10 +1,10 @@
 prim type I32
 
 trait T[a]:
-    fn a(self)
+    a(self)
 
 impl T for I32:
-    fn a(self): I32 = 123
+    a(self): I32 = 123
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected exit status: 101

@@ -5,7 +5,7 @@ type Bool:
     False
     True
 
-fn toStr(self): Str
+toStr(self): Str
     Bool.False
 
 # args: --typecheck --no-prelude --no-backtrace

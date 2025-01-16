@@ -1,4 +1,4 @@
-fn main()
+main()
     let x = if Bool.True:
         (x = 123i32)
     else:

@@ -1,4 +1,4 @@
-fn main()
+main()
     break
 
 # args: --typecheck --no-prelude --no-backtrace

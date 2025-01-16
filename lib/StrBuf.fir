@@ -3,16 +3,16 @@ type StrBuf:
     _bytes: Vec[U8]
 
 impl StrBuf:
-    fn withCapacity(cap: U32): StrBuf
+    withCapacity(cap: U32): StrBuf
         StrBuf(_bytes = Vec.withCapacity(cap))
 
-    fn len(self): U32
+    len(self): U32
         self._bytes.len()
 
-    fn clear(self)
+    clear(self)
         self._bytes.clear()
 
-    fn push(self, char: Char)
+    push(self, char: Char)
         let code = char._codePoint
         let len = char.lenUtf8()
         if len == 1:
@@ -39,11 +39,11 @@ impl StrBuf:
             self._bytes.push(b2)
             self._bytes.push(b3)
 
-    fn pushStr(self, str: Str)
+    pushStr(self, str: Str)
         # TODO: Maybe consider memcpy-ing the bytes.
         self._bytes.reserve(str.len())
         for char in str.chars():
             self.push(char)
 
-    fn toStr(self): Str
+    toStr(self): Str
         Str.fromUtf8Vec(self._bytes)

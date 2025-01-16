@@ -14,7 +14,7 @@ Multi-line comment
 # Commented-out code:
 
 #|
-fn test() = a b # comments
+test() = a b # comments
 |#
 
-fn main() = ()
+main() = ()

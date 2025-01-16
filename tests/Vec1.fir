@@ -1,4 +1,4 @@
-fn main()
+main()
     let test = Vec.withCapacity(10u32)
 
     for i in range(0, 20):

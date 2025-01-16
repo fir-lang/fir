@@ -1,4 +1,4 @@
-fn main()
+main()
     let f = Vec.withCapacity
 
     let vec1 = f(10u32)

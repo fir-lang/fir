@@ -1,6 +1,6 @@
-fn main(): () = sayHi()
+main(): () = sayHi()
 
-fn sayHi() = printStr("Hi")
+sayHi() = printStr("Hi")
 
 # expected stdout:
 # Hi

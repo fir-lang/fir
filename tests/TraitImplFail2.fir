@@ -1,11 +1,11 @@
 prim type I32
 
 trait T[a]:
-    fn a(self)
+    a(self)
 
 impl T for I32:
-    fn a(self) = ()
-    fn b(self) = ()
+    a(self) = ()
+    b(self) = ()
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected stderr: tests/TraitImplFail2.fir:8:5: Trait T does not have a method named b
