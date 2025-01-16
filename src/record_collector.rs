@@ -416,6 +416,11 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Expr::Fn(_) => todo!(),
+        ast::Expr::Fn(ast::FnExpr { sig, body }) => {
+            visit_fun_sig(sig, records, variants);
+            for stmt in body {
+                visit_stmt(&stmt.node, records, variants);
+            }
+        }
     }
 }
