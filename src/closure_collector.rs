@@ -236,7 +236,7 @@ fn visit_expr(
         ast::Expr::String(parts) => {
             for part in parts.iter_mut() {
                 match part {
-                    crate::interpolation::StringPart::Str(_) => todo!(),
+                    crate::interpolation::StringPart::Str(_) => {}
                     crate::interpolation::StringPart::Expr(expr) => {
                         visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
                     }
