@@ -13,6 +13,7 @@ use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
+use crate::closure_collector::{collect_closures, Closure};
 use crate::collections::Map;
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
@@ -25,6 +26,9 @@ use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
 pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
+    let closures = collect_closures(&pgm);
+    dbg!(closures);
+
     let mut heap = Heap::new();
     let pgm = Pgm::new(pgm, &mut heap);
 

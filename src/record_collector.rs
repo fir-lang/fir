@@ -55,7 +55,7 @@ impl VariantShape {
     }
 }
 
-pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> (Set<RecordShape>, Set<VariantShape>) {
+pub fn collect_records(pgm: &ast::Module) -> (Set<RecordShape>, Set<VariantShape>) {
     let mut records: Set<RecordShape> = Default::default();
     let mut variants: Set<VariantShape> = Default::default();
 
