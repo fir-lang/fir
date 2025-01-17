@@ -707,16 +707,18 @@ fn call_closure<W: Write>(
                 closure_locals.insert(fv.clone(), fv_val);
             }
 
-            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
-            for arg in args {
-                arg_values.push(val!(eval(
+            for ((arg_name, _), arg_val) in closure.ast.sig.params.iter().zip(args.iter()) {
+                debug_assert!(arg_val.name.is_none()); // not supported yet
+                let arg_val = val!(eval(
                     w,
                     pgm,
                     heap,
                     locals,
-                    &arg.expr.node,
-                    &arg.expr.loc
-                )));
+                    &arg_val.expr.node,
+                    &arg_val.expr.loc
+                ));
+                let old = closure_locals.insert(arg_name.clone(), arg_val);
+                debug_assert!(old.is_none());
             }
 
             match exec(w, pgm, heap, &mut closure_locals, &closure.ast.body) {

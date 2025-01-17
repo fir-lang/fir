@@ -18,7 +18,6 @@ throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
 
 forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r} Result[[..r], ()]
     for t in vec.iter():
-
         match try(fn(): {Break, ..r} { f(t) }):
             Result.Err(~Break): break
             Result.Err(other): return Result.Err(other)
@@ -51,9 +50,32 @@ main()
         Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
         Result.Ok(()): ()
 
+    printStr("---")
+
+    forEachWithControlFlow(vec, fn(i: U32): {Break} {
+        printStr(i.toStr())
+    })
+
+    printStr("---")
+
+    forEachWithControlFlow(vec, fn(i: U32): {Break} {
+        printStr(i.toStr())
+        if i & 0b1 == 0:
+            throw(~Break)
+    })
+
+    ()
+
 # expected stdout:
 # tests/Exn1.fir:29:5: Unexhaustive pattern match
 # tests/Exn1.fir:33:5: Unexhaustive pattern match
 # OK
 # OK
 # Odd number: 2
+# ---
+# 1
+# 2
+# 3
+# ---
+# 1
+# 2
