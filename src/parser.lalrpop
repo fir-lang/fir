@@ -819,6 +819,19 @@ InlineExpr: Expr = {
             body,
             idx: 0,
         }),
+
+    "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: vec![],
+                exceptions: None,
+                return_ty: None,
+            },
+            body,
+            idx: 0,
+        }),
 }
 
 ParenExpr: (Option<Id>, L<Expr>) = {
