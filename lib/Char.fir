@@ -6,12 +6,19 @@ impl Eq for Char:
     __eq(self, other: Char): Bool
         self._codePoint == other._codePoint
 
+impl Ord for Char:
+    cmp(self, other: Char): Ordering
+        self._codePoint.cmp(other._codePoint)
+
 impl Char:
     fromU32(codePoint: U32): Option[Char]
         if codePoint >= 0x110000 || (codePoint >= 0xD800 && codePoint <= 0xDFFF):
             return Option.None
 
         Option.Some(Char(_codePoint = codePoint))
+
+    asU32(self): U32
+        self._codePoint
 
     lenUtf8(self): U32
         if self._codePoint < 0x80:
