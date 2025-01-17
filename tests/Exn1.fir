@@ -40,13 +40,7 @@ main()
     vec.push(2)
     vec.push(3)
 
-    match try(fn(): {OddNumberError(i: U32)} () {
-        let vec: Vec[U32] = Vec.withCapacity(3)
-        vec.push(1)
-        vec.push(2)
-        vec.push(3)
-        forEach(vec, throwOnOdd)
-    }):
+    match try(fn(): {OddNumberError(i: U32)} () { forEach(vec, throwOnOdd) }):
         Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
         Result.Ok(()): ()
 
