@@ -35,6 +35,20 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
         },
     );
 
+    ty_cons.insert(
+        SmolStr::new("#CLOSURE"),
+        TyCon {
+            value_constrs: vec![],
+            type_tag: CLOSURE_TYPE_TAG,
+        },
+    );
+
+    assert_eq!(
+        ty_cons.len(),
+        FIRST_TYPE_TAG as usize,
+        "BUG: ty_cons and built-in type tags are not in sync"
+    );
+
     let mut next_type_tag = FIRST_TYPE_TAG;
 
     fn convert_constr_fields(fields: &ast::ConstructorFields) -> Fields {
