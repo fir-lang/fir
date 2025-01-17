@@ -16,23 +16,15 @@ throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
     if i & 1 == 0:
         throw(~OddNumberError(i = i))
 
-# Implement closures and inline this function.
-f4(): {OddNumberError(i: U32), ..r}
-    let vec: Vec[U32] = Vec.withCapacity(3)
-    vec.push(1)
-    vec.push(2)
-    vec.push(3)
-    forEach(vec, throwOnOdd)
-
-#|
-TODO: Implement closures
-forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r}
+forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r} Result[[..r], ()]
     for t in vec.iter():
-        match try({ f(t) }):
+
+        match try(fn(): {Break, ..r} { f(t) }):
             Result.Err(~Break): break
             Result.Err(other): return Result.Err(other)
-            Result.OK(()): ()
-|#
+            Result.Ok(()): ()
+
+    Result.Ok(())
 
 main()
     match try(f1):
@@ -49,14 +41,19 @@ main()
     vec.push(2)
     vec.push(3)
 
-    match try(f4):
+    match try(fn(): {OddNumberError(i: U32)} () {
+        let vec: Vec[U32] = Vec.withCapacity(3)
+        vec.push(1)
+        vec.push(2)
+        vec.push(3)
+        forEach(vec, throwOnOdd)
+    }):
         Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
         Result.Ok(()): ()
 
 # expected stdout:
-# tests/Exn1.fir:38:5: Unexhaustive pattern match
-# tests/Exn1.fir:42:5: Unexhaustive pattern match
-# tests/Exn1.fir:52:5: Unexhaustive pattern match
+# tests/Exn1.fir:29:5: Unexhaustive pattern match
+# tests/Exn1.fir:33:5: Unexhaustive pattern match
 # OK
 # OK
 # Odd number: 2
