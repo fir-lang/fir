@@ -9,7 +9,7 @@ pub struct Closure {
 
 pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
     let mut closures: Vec<Closure> = vec![];
-    let mut top_vars: Set<Id> = collect_top_vars(pgm);
+    let top_vars: Set<Id> = collect_top_vars(pgm);
 
     for decl in pgm.iter_mut() {
         match &mut decl.node {
@@ -30,7 +30,7 @@ pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
                     match &mut item.node {
                         ast::TraitDeclItem::AssocTy(_) => {}
                         ast::TraitDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &mut top_vars)
+                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
                         }
                     }
                 }
@@ -50,7 +50,7 @@ pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
                     match &mut item.node {
                         ast::ImplDeclItem::AssocTy(_) => {}
                         ast::ImplDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &mut top_vars)
+                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
                         }
                     }
                 }
