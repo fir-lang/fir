@@ -3,6 +3,26 @@ main
         printStr("Hi")
     }
 
-    c1()
+    let val = "captured"
 
-# expected stdout: Hi
+    let c2 = fn() {
+        printStr(val)
+    }
+
+    c1()
+    c2()
+
+    val = "not captured"
+
+    c2 = fn() {
+        c2()
+        c1()
+    }
+
+    c2()
+
+# expected stdout:
+# Hi
+# captured
+# captured
+# Hi

@@ -185,7 +185,7 @@ fn visit_expr(
         }
 
         ast::Expr::Var(ast::VarExpr { id, ty_args: _ }) => {
-            if !top_vars.contains(id) && local_vars.is_bound(id) {
+            if !top_vars.contains(id) && !local_vars.is_bound(id) {
                 let idx = free_vars.len() as u32;
                 free_vars.insert(id.clone(), idx);
             }
