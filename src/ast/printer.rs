@@ -123,7 +123,7 @@ impl FunDecl {
         if self.body.is_none() {
             buffer.push_str("prim ");
         }
-        self.sig.print(buffer);
+        self.sig.print(&self.name.node, buffer);
         if let Some(body) = &self.body {
             buffer.push_str(" =\n");
             for (i, stmt) in body.iter().enumerate() {
@@ -301,9 +301,9 @@ impl Type {
 }
 
 impl FunSig {
-    pub fn print(&self, buffer: &mut String) {
+    pub fn print(&self, name: &Id, buffer: &mut String) {
         buffer.push_str("fn ");
-        buffer.push_str(&self.name.node);
+        buffer.push_str(name);
         if !self.type_params.is_empty() {
             buffer.push('[');
             print_context(&self.type_params, buffer);
@@ -707,6 +707,8 @@ impl Expr {
                     }
                 }
             }
+
+            Expr::Fn(_) => todo!(),
         }
     }
 }

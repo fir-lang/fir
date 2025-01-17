@@ -55,7 +55,7 @@ impl VariantShape {
     }
 }
 
-pub fn collect_records(pgm: &[ast::L<ast::TopDecl>]) -> (Set<RecordShape>, Set<VariantShape>) {
+pub fn collect_records(pgm: &ast::Module) -> (Set<RecordShape>, Set<VariantShape>) {
     let mut records: Set<RecordShape> = Default::default();
     let mut variants: Set<VariantShape> = Default::default();
 
@@ -413,6 +413,13 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
                 for stmt in else_branch {
                     visit_stmt(&stmt.node, records, variants);
                 }
+            }
+        }
+
+        ast::Expr::Fn(ast::FnExpr { sig, body, idx: _ }) => {
+            visit_fun_sig(sig, records, variants);
+            for stmt in body {
+                visit_stmt(&stmt.node, records, variants);
             }
         }
     }

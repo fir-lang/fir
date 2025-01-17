@@ -13,6 +13,7 @@ use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
+use crate::closure_collector::{collect_closures, Closure};
 use crate::collections::Map;
 use crate::interpolation::StringPart;
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
@@ -24,9 +25,11 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
+pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
+    let closures = collect_closures(&mut pgm);
+
     let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap);
+    let pgm = Pgm::new(pgm, &mut heap, closures);
 
     // Find the main function.
     let main_fun = pgm
@@ -94,6 +97,7 @@ generate_tags!(
     TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
     ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
     METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
+    CLOSURE_TYPE_TAG,
     FIRST_TYPE_TAG,     // First available type tag for user types.
 );
 
@@ -127,6 +131,8 @@ struct Pgm {
 
     /// Same as `top_level_funs`, but indexed by the function index.
     top_level_funs_by_idx: Vec<Fun>,
+
+    closures: Vec<Closure>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
@@ -351,7 +357,7 @@ macro_rules! val {
 }
 
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap) -> Pgm {
+    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, closures: Vec<Closure>) -> Pgm {
         // Initialize `ty_cons`.
         let (ty_cons, mut next_type_tag): (Map<Id, TyCon>, u64) = init::collect_types(&pgm);
 
@@ -522,6 +528,7 @@ impl Pgm {
             array_i32_ty_tag,
             array_u32_ty_tag,
             array_ptr_ty_tag,
+            closures,
         }
     }
 
@@ -593,7 +600,7 @@ fn call_ast_fun<W: Write>(
         args.len() as u32,
         "{}, fun: {}",
         loc_display(loc),
-        fun.sig.name.node
+        fun.name.node
     );
 
     let mut locals: Map<Id, u64> = Default::default();
@@ -686,6 +693,39 @@ fn call_closure<W: Write>(
                 )));
             }
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
+        }
+
+        CLOSURE_TYPE_TAG => {
+            let closure_idx = heap[fun + 1];
+            let closure = &pgm.closures[closure_idx as usize];
+
+            let mut closure_locals =
+                Map::with_capacity_and_hasher(closure.fvs.len(), Default::default());
+
+            for (fv, fv_idx) in &closure.fvs {
+                let fv_val = heap[fun + 2 + u64::from(*fv_idx)];
+                closure_locals.insert(fv.clone(), fv_val);
+            }
+
+            for ((arg_name, _), arg_val) in closure.ast.sig.params.iter().zip(args.iter()) {
+                debug_assert!(arg_val.name.is_none()); // not supported yet
+                let arg_val = val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg_val.expr.node,
+                    &arg_val.expr.loc
+                ));
+                let old = closure_locals.insert(arg_name.clone(), arg_val);
+                debug_assert!(old.is_none());
+            }
+
+            match exec(w, pgm, heap, &mut closure_locals, &closure.ast.body) {
+                ControlFlow::Val(val) | ControlFlow::Ret(val) => ControlFlow::Val(val),
+                ControlFlow::Break | ControlFlow::Continue => panic!(),
+                ControlFlow::Unwind(val) => ControlFlow::Unwind(val),
+            }
         }
 
         _ => panic!("Function evaluated to non-callable"),
@@ -1306,6 +1346,30 @@ fn eval<W: Write>(
             let alloc = heap.allocate(2);
             heap[alloc] = pgm.char_ty_tag;
             heap[alloc + 1] = u32_as_val(*char as u32);
+            ControlFlow::Val(alloc)
+        }
+
+        ast::Expr::Fn(ast::FnExpr {
+            sig: _,
+            body: _,
+            idx,
+        }) => {
+            let closure = &pgm.closures[*idx as usize];
+
+            let fv_values: Vec<(u64, u32)> = closure
+                .fvs
+                .iter()
+                .map(|(var, idx)| (*locals.get(var).unwrap(), *idx))
+                .collect();
+
+            let alloc = heap.allocate(2 + fv_values.len());
+            heap[alloc] = CLOSURE_TYPE_TAG;
+            heap[alloc + 1] = u32_as_val(*idx);
+
+            for (val, idx) in fv_values {
+                heap[alloc + 2 + u64::from(idx)] = val;
+            }
+
             ControlFlow::Val(alloc)
         }
     }

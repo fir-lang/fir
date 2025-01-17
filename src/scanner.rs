@@ -24,7 +24,9 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
             continue;
         }
 
-        if delimiter_stack.is_empty() && l.line != last_loc.line {
+        if matches!(delimiter_stack.last(), None | Some(Delimiter::Brace))
+            && l.line != last_loc.line
+        {
             // Generate a newline at the last line.
             new_tokens.push((
                 last_loc,
@@ -272,6 +274,37 @@ mod tests {
                 Newline,
                 Dedent,
                 LowerId,
+                Newline,
+            ]
+        );
+    }
+
+    #[test]
+    fn braces() {
+        // At the end of the input, we should terminate the open blocks.
+        let input = indoc! {"
+            fn() {
+                a
+                b
+            }
+        "};
+        let toks = scan_wo_locs(input);
+        #[rustfmt::skip]
+        assert_eq!(
+            toks,
+            vec![
+                Fn,
+                LParen,
+                RParen,
+                LBrace,
+                Newline,
+                Indent,
+                    LowerId, // a
+                    Newline,
+                    LowerId, // b
+                    Newline,
+                Dedent,
+                RBrace,
                 Newline,
             ]
         );

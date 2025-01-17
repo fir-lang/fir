@@ -272,56 +272,54 @@ FunDecl: L<FunDecl> = {
 
     // TODO: comma parsing after `self` is not right.
 
-    <l:@L> <sig:FunSig> NEWLINE INDENT <body_l:@L> <body:LStmts> <body_r:@R> DEDENT <r:@R> =>
+    <l:@L> <sig:FunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: Some(body),
         }),
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: None,
         }),
 
     <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
-            sig,
+            name: sig.0,
+            sig: sig.1,
             body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
         })
     },
 }
 
-LFunSig: L<FunSig> = {
-    <l:@L> <sig:FunSig> <r:@R> =>
-        L::new(module, l, r, sig),
-}
-
-FunSig: FunSig = {
+FunSig: (L<Id>, FunSig) = {
     <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
             <ret:ReturnType>
             =>
-        FunSig {
-            name,
-            type_params,
-            self_: self_.is_some(),
-            params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-            exceptions: ret.0,
-            return_ty: ret.1,
-        },
+        (name,
+            FunSig {
+                type_params,
+                self_: self_.is_some(),
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            }),
 
     <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
-        FunSig {
-            name,
-            type_params,
-            self_: false,
-            params: vec![],
-            exceptions: ret.0,
-            return_ty: ret.1,
-        },
+        (name,
+            FunSig {
+                type_params,
+                self_: false,
+                params: vec![],
+                exceptions: ret.0,
+                return_ty: ret.1,
+            })
 }
 
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
@@ -390,9 +388,6 @@ Stmt: Stmt = {
             cond,
             body:statements,
         }),
-
-    // <fun:FunDecl> =>
-    //     Stmt::LetFn(fun),
 }
 
 Alts: Vec<Alt> = {
@@ -809,6 +804,61 @@ InlineExpr: Expr = {
     #[precedence(level = "13")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
+
+
+    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+         <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+            idx: 0,
+        }),
+
+    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+         <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
+            idx: 0,
+        }),
+
+    "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: vec![],
+                exceptions: None,
+                return_ty: None,
+            },
+            body,
+            idx: 0,
+        }),
+
+    "{" <body:LInlineExpr> "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: vec![],
+                exceptions: None,
+                return_ty: None,
+            },
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
+            idx: 0,
+        }),
 }
 
 ParenExpr: (Option<Id>, L<Expr>) = {

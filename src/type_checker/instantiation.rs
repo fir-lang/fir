@@ -150,6 +150,16 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                 }
             }
         }
+
+        ast::Expr::Fn(ast::FnExpr {
+            sig: _,
+            body,
+            idx: _,
+        }) => {
+            for stmt in body {
+                normalize_instantiation_types(&mut stmt.node, cons);
+            }
+        }
     }
 }
 

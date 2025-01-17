@@ -35,6 +35,20 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
         },
     );
 
+    ty_cons.insert(
+        SmolStr::new("#CLOSURE"),
+        TyCon {
+            value_constrs: vec![],
+            type_tag: CLOSURE_TYPE_TAG,
+        },
+    );
+
+    assert_eq!(
+        ty_cons.len(),
+        FIRST_TYPE_TAG as usize,
+        "BUG: ty_cons and built-in type tags are not in sync"
+    );
+
     let mut next_type_tag = FIRST_TYPE_TAG;
 
     fn convert_constr_fields(fields: &ast::ConstructorFields) -> Fields {
@@ -277,7 +291,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
 
                 let idx = top_level_funs.len() as u64;
                 top_level_funs.insert(
-                    fun_decl.node.sig.name.node.clone(),
+                    fun_decl.node.name.node.clone(),
                     Fun {
                         idx,
                         kind: FunKind::Source(fun_decl.node),
@@ -312,7 +326,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                     let fun_map = associated_funs.entry(implementing_ty.clone()).or_default();
                     let fun_idx = fun_map.len();
                     fun_map.insert(
-                        fun_decl.sig.name.node.clone(),
+                        fun_decl.name.node.clone(),
                         Fun {
                             idx: fun_idx as u64,
                             kind: FunKind::Source(fun_decl),
