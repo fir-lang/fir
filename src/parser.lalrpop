@@ -820,6 +820,20 @@ InlineExpr: Expr = {
             idx: 0,
         }),
 
+    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+         <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
+            idx: 0,
+        }),
+
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
@@ -830,6 +844,19 @@ InlineExpr: Expr = {
                 return_ty: None,
             },
             body,
+            idx: 0,
+        }),
+
+    "{" <body:LInlineExpr> "}" =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                type_params: vec![],
+                self_: false,
+                params: vec![],
+                exceptions: None,
+                return_ty: None,
+            },
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
         }),
 }
