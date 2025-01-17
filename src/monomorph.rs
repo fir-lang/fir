@@ -644,9 +644,10 @@ fn mono_expr(
                 .map(|stmts| mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm)),
         }),
 
-        ast::Expr::Fn(ast::FnExpr { sig, body }) => {
+        ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
             assert!(sig.type_params.is_empty());
             assert!(!sig.self_);
+            assert_eq!(*idx, 0);
             ast::Expr::Fn(ast::FnExpr {
                 sig: ast::FunSig {
                     type_params: vec![],
@@ -660,6 +661,7 @@ fn mono_expr(
                     exceptions: mono_opt_l_ty(&sig.exceptions, ty_map, poly_pgm, mono_pgm),
                 },
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+                idx: 0,
             })
         }
     }

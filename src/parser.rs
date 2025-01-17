@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 54524a3abfbb2cf8346c58bab5f40cdc0308210dac2dc802b2352ab224b4c77b
+// sha3: ff8ca3834d431894a923e0c76fdd7dd4af1b356c106ff7d4d1ab478507b3d8da
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::parse_string_parts;
@@ -41509,6 +41509,7 @@ fn __action114<'a>(
             return_ty: ret.1,
         },
         body,
+        idx: 0,
     })
 }
 

@@ -817,6 +817,7 @@ InlineExpr: Expr = {
                 return_ty: ret.1,
             },
             body,
+            idx: 0,
         }),
 }
 

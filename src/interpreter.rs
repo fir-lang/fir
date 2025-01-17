@@ -25,12 +25,11 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
-    let closures = collect_closures(&pgm);
-    dbg!(closures);
+pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
+    let closures = collect_closures(&mut pgm);
 
     let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap);
+    let pgm = Pgm::new(pgm, &mut heap, closures);
 
     // Find the main function.
     let main_fun = pgm
@@ -98,6 +97,7 @@ generate_tags!(
     TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
     ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
     METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
+    CLOSURE_TYPE_TAG,
     FIRST_TYPE_TAG,     // First available type tag for user types.
 );
 
@@ -131,6 +131,8 @@ struct Pgm {
 
     /// Same as `top_level_funs`, but indexed by the function index.
     top_level_funs_by_idx: Vec<Fun>,
+
+    closures: Vec<Closure>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
@@ -355,7 +357,7 @@ macro_rules! val {
 }
 
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap) -> Pgm {
+    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, closures: Vec<Closure>) -> Pgm {
         // Initialize `ty_cons`.
         let (ty_cons, mut next_type_tag): (Map<Id, TyCon>, u64) = init::collect_types(&pgm);
 
@@ -526,6 +528,7 @@ impl Pgm {
             array_i32_ty_tag,
             array_u32_ty_tag,
             array_ptr_ty_tag,
+            closures,
         }
     }
 
@@ -1313,7 +1316,29 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        ast::Expr::Fn(_) => todo!(),
+        ast::Expr::Fn(ast::FnExpr {
+            sig: _,
+            body: _,
+            idx,
+        }) => {
+            let closure = &pgm.closures[*idx as usize];
+
+            let fv_values: Vec<(u64, u32)> = closure
+                .fvs
+                .iter()
+                .map(|(var, idx)| (*locals.get(var).unwrap(), *idx))
+                .collect();
+
+            let alloc = heap.allocate(2 + fv_values.len());
+            heap[alloc] = CLOSURE_TYPE_TAG;
+            heap[alloc + 1] = u32_as_val(*idx);
+
+            for (val, idx) in fv_values {
+                heap[alloc + 2 + u64::from(idx)] = val;
+            }
+
+            ControlFlow::Val(alloc)
+        }
     }
 }
 

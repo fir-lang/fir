@@ -837,8 +837,9 @@ pub(super) fn check_expr(
             branch_tys.pop().unwrap()
         }
 
-        ast::Expr::Fn(ast::FnExpr { sig, body }) => {
+        ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
             assert!(sig.type_params.is_empty());
+            assert_eq!(*idx, 0);
 
             tc_state.env.enter(); // for term params
 
