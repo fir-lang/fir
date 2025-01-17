@@ -253,16 +253,13 @@ fn mono_top_fn(
         .map(|(param_name, param_ty)| {
             (
                 param_name.clone(),
-                param_ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)),
+                mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
             )
         })
         .collect();
 
-    let return_ty: Option<ast::L<ast::Type>> = fun_decl
-        .sig
-        .return_ty
-        .as_ref()
-        .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)));
+    let return_ty: Option<ast::L<ast::Type>> =
+        mono_opt_l_ty(&fun_decl.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
 
     mono_pgm.top.insert(
         mono_fn_id.clone(),
@@ -304,22 +301,18 @@ fn mono_stmt(
         ast::Stmt::Continue => ast::Stmt::Continue,
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => ast::Stmt::Let(ast::LetStmt {
-            lhs: lhs.map_as_ref(|lhs| mono_pat(lhs, ty_map, poly_pgm, mono_pgm)),
-            ty: ty
-                .as_ref()
-                .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))),
-            rhs: rhs.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
+            lhs: mono_l_pat(lhs, ty_map, poly_pgm, mono_pgm),
+            ty: mono_opt_l_ty(ty, ty_map, poly_pgm, mono_pgm),
+            rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm),
         }),
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => ast::Stmt::Assign(ast::AssignStmt {
-            lhs: lhs.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
-            rhs: rhs.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
+            lhs: mono_l_expr(lhs, ty_map, poly_pgm, mono_pgm),
+            rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm),
             op: *op,
         }),
 
-        ast::Stmt::Expr(expr) => {
-            ast::Stmt::Expr(expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)))
-        }
+        ast::Stmt::Expr(expr) => ast::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
 
         ast::Stmt::For(ast::ForStmt {
             var,
@@ -363,7 +356,7 @@ fn mono_stmt(
         }
 
         ast::Stmt::While(ast::WhileStmt { cond, body }) => ast::Stmt::While(ast::WhileStmt {
-            cond: cond.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
+            cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
             body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
         }),
     }
@@ -620,8 +613,7 @@ fn mono_expr(
                          guard,
                          rhs,
                      }| ast::Alt {
-                        pattern: pattern
-                            .map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm)),
+                        pattern: mono_l_pat(pattern, ty_map, poly_pgm, mono_pgm),
                         guard: guard
                             .as_ref()
                             .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
@@ -806,9 +798,7 @@ fn mono_pat(
         ast::Pat::Record(fields) => ast::Pat::Record(
             fields
                 .iter()
-                .map(|named_pat| {
-                    named_pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
-                })
+                .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm))
                 .collect(),
         ),
 
@@ -906,16 +896,13 @@ fn mono_assoc_fn(
         .map(|(param_name, param_ty)| {
             (
                 param_name.clone(),
-                param_ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)),
+                mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
             )
         })
         .collect();
 
-    let return_ty: Option<ast::L<ast::Type>> = fun_decl
-        .sig
-        .return_ty
-        .as_ref()
-        .map(|ty| ty.map_as_ref(|ty| mono_ty(ty, &ty_map, poly_pgm, mono_pgm)));
+    let return_ty: Option<ast::L<ast::Type>> =
+        mono_opt_l_ty(&fun_decl.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
 
     mono_pgm
         .associated
@@ -1192,6 +1179,25 @@ fn mono_ty(
             exceptions: None,
         }),
     }
+}
+
+fn mono_l_ty(
+    ty: &ast::L<ast::Type>,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> ast::L<ast::Type> {
+    ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))
+}
+
+fn mono_opt_l_ty(
+    ty: &Option<ast::L<ast::Type>>,
+    ty_map: &Map<Id, ast::Type>,
+    poly_pgm: &PgmGraph,
+    mono_pgm: &mut PgmGraph,
+) -> Option<ast::L<ast::Type>> {
+    ty.as_ref()
+        .map(|ty| mono_l_ty(ty, ty_map, poly_pgm, mono_pgm))
 }
 
 fn ty_name(ty: &ast::Type) -> &str {
