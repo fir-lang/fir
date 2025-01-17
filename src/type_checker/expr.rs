@@ -663,19 +663,15 @@ pub(super) fn check_expr(
 
             // To give better error messages use the field types in the expected type as expected
             // types of the expr fields when possible.
-            let expected_fields = expected_ty.map(|expected_ty| {
+            let expected_fields = expected_ty.and_then(|expected_ty| {
                 match expected_ty.normalize(tc_state.tys.tys.cons()) {
                     Ty::Anonymous {
                         labels: expected_fields,
                         extension: _,
                         kind: RecordOrVariant::Record,
                         is_row: _,
-                    } => expected_fields,
-                    other => panic!(
-                        "{}: Expected {}, found record expression",
-                        loc_display(&expr.loc),
-                        other
-                    ),
+                    } => Some(expected_fields),
+                    _ => None,
                 }
             });
 

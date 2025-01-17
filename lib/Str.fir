@@ -86,6 +86,13 @@ impl Str:
             _end = self._start + self._len,
         )
 
+    charIndices(self): CharIndices
+        CharIndices(
+            _bytes = self._bytes,
+            _idx = self._start,
+            _end = self._start + self._len,
+        )
+
 impl Eq for Str:
     __eq(self, other: Str): Bool
         if self.len() != other.len():
@@ -130,6 +137,29 @@ impl Iterator for CharIter:
         let charLength = char.lenUtf8()
         self._idx += charLength
         Option.Some(char)
+
+type CharIndices:
+    # UTF-8 encoding of the string.
+    _bytes: Array[U8]
+
+    # Current index into `_bytes`.
+    _idx: U32
+
+    # End index.
+    _end: U32
+
+impl Iterator for CharIndices:
+    type Item = (char: Char, idx: U32)
+
+    next(self): Option[(char: Char, idx: U32)]
+        if self._idx == self._end:
+            return Option.None
+
+        let char = _charAt(self._bytes, self._idx)
+        let charLength = char.lenUtf8()
+        let idx = self._idx
+        self._idx += charLength
+        Option.Some((char = char, idx = idx))
 
 _charAt(bytes: Array[U8], idx: U32): Char
     let byte = bytes.get(idx)
