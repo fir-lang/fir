@@ -4,7 +4,6 @@ use crate::collections::{Map, ScopeSet, Set};
 #[derive(Debug)]
 pub struct Closure {
     pub ast: ast::FnExpr,
-    pub idx: u32,
     pub fvs: Map<Id, u32>,
 }
 
@@ -172,7 +171,6 @@ fn visit_expr(
                     body: body.clone(),
                     idx: closure_idx,
                 },
-                idx: closure_idx,
                 fvs: fn_free_vars.clone(),
             });
 

@@ -4,3 +4,5 @@ main
     }
 
     c1()
+
+# expected stdout: Hi

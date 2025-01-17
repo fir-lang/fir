@@ -695,6 +695,37 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
         }
 
+        CLOSURE_TYPE_TAG => {
+            let closure_idx = heap[fun + 1];
+            let closure = &pgm.closures[closure_idx as usize];
+
+            let mut closure_locals =
+                Map::with_capacity_and_hasher(closure.fvs.len(), Default::default());
+
+            for (fv, fv_idx) in &closure.fvs {
+                let fv_val = heap[fun + 2 + u64::from(*fv_idx)];
+                closure_locals.insert(fv.clone(), fv_val);
+            }
+
+            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
+            for arg in args {
+                arg_values.push(val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc
+                )));
+            }
+
+            match exec(w, pgm, heap, &mut closure_locals, &closure.ast.body) {
+                ControlFlow::Val(val) | ControlFlow::Ret(val) => ControlFlow::Val(val),
+                ControlFlow::Break | ControlFlow::Continue => panic!(),
+                ControlFlow::Unwind(val) => ControlFlow::Unwind(val),
+            }
+        }
+
         _ => panic!("Function evaluated to non-callable"),
     }
 }
