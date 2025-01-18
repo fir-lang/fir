@@ -70,22 +70,3 @@ need to have a garbage collector.
 
 Initially the compiler will only generate Wasm. In the long term we should have
 native backends as well.
-
-# Contributing
-
-If the design and goals sound interesting, this is a great time to start
-contributing to Fir.
-
-Currently we only have a simple interpreter that runs some simple programs, so
-the code is simple. If you are familiar with PL development than there should
-be nothing new or different.
-
-Some important tasks to be able to implement the bootstrapping compiler:
-
-- Implement a type checker in the interpreter:
-  [#7](https://github.com/fir-lang/fir/issues/7)
-
-- Implement tests: [#8](https://github.com/fir-lang/fir/issues/8)
-
-- Implement libraries needed for the bootstrapping compiler:
-  [#9](https://github.com/fir-lang/fir/issues/8)
