@@ -361,7 +361,14 @@ Stmt: Stmt = {
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LBlockExpr> =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
 
-    <lhs:LInlineExpr> <op:AssignOp> <rhs:LExpr> NEWLINE =>
+    <lhs:LInlineExpr> <op:AssignOp> <rhs:LInlineExpr> NEWLINE =>
+        Stmt::Assign(AssignStmt {
+            lhs,
+            rhs,
+            op,
+        }),
+
+    <lhs:LInlineExpr> <op:AssignOp> <rhs:LBlockExpr> =>
         Stmt::Assign(AssignStmt {
             lhs,
             rhs,

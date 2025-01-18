@@ -12,13 +12,13 @@ parseU32(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
 
         let digit = c.asU32() - '0'.asU32()
 
-        match checkedMul(result, 10):
+        result = match checkedMul(result, 10):
             Option.None: return Result.Err(~Overflow)
-            Option.Some(newResult): result = newResult
+            Option.Some(newResult): newResult
 
-        match checkedAdd(result, digit):
+        result = match checkedAdd(result, digit):
             Option.None: return Result.Err(~Overflow)
-            Option.Some(newResult): result = newResult
+            Option.Some(newResult): newResult
 
     Result.Ok(result)
 
@@ -101,13 +101,13 @@ parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
 
         let digit = c.asU32() - '0'.asU32()
 
-        match checkedMul(result, 10):
+        result = match checkedMul(result, 10):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): result = newResult
+            Option.Some(newResult): newResult
 
-        match checkedAdd(result, digit):
+        result = match checkedAdd(result, digit):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): result = newResult
+            Option.Some(newResult): newResult
 
     result
 
