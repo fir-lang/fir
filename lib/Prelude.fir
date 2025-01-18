@@ -112,6 +112,12 @@ impl[e: ToStr, t: ToStr] ToStr for Result[e, t]:
             Result.Err(e): "Result.Err(`e.toStr()`)"
             Result.Ok(t): "Result.Ok(`t.toStr()`)"
 
+impl[e, t] Result[e, t]:
+    mapErr(self, f: Fn(e): e2): Result[e2, t]
+        match self:
+            Result.Ok(a): Result.Ok(a)
+            Result.Err(e): Result.Err(f(e))
+
 type Ordering:
     Less
     Equal
