@@ -704,7 +704,13 @@ pub(super) fn check_expr(
         ast::Expr::Return(expr) => {
             let return_ty = tc_state.return_ty.clone();
             check_expr(tc_state, expr, Some(&return_ty), level, loop_depth);
-            expected_ty.cloned().unwrap_or_else(Ty::unit)
+            expected_ty.cloned().unwrap_or_else(|| {
+                Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, expr.loc.clone()),
+                )
+            })
         }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
