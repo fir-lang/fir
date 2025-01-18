@@ -105,6 +105,7 @@ pub enum BuiltinFun {
 
     // Exception handling
     Try,
+    TryU32,
     Throw,
 }
 
@@ -708,45 +709,11 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U8AsU32 => u32_as_val(val_as_u8(args[0]) as u32),
 
         BuiltinFun::Try => {
-            debug_assert_eq!(args.len(), 1);
-            let cb = args[0];
-            match call_closure(w, pgm, heap, &mut Default::default(), cb, &[], loc) {
-                ControlFlow::Val(val) => {
-                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
+            return try_(w, pgm, heap, args, loc, "Ptr");
+        }
 
-                    let constr_idx = ty_con
-                        .value_constrs
-                        .iter()
-                        .enumerate()
-                        .find(|(_, constr)| {
-                            constr.name.as_ref() == Some(&SmolStr::new_static("Ok"))
-                        })
-                        .unwrap();
-
-                    let object = heap.allocate(1 + args.len());
-                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
-                    heap[object + 1] = val;
-                    object
-                }
-                ControlFlow::Unwind(val) => {
-                    let ty_con = pgm.ty_cons.get("Result@Ptr@Ptr").unwrap();
-
-                    let constr_idx = ty_con
-                        .value_constrs
-                        .iter()
-                        .enumerate()
-                        .find(|(_, constr)| {
-                            constr.name.as_ref() == Some(&SmolStr::new_static("Err"))
-                        })
-                        .unwrap();
-
-                    let object = heap.allocate(1 + args.len());
-                    heap[object] = ty_con.type_tag + constr_idx.0 as u64;
-                    heap[object + 1] = val;
-                    object
-                }
-                ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
-            }
+        BuiltinFun::TryU32 => {
+            return try_(w, pgm, heap, args, loc, "U32");
         }
 
         BuiltinFun::Throw => {
@@ -757,4 +724,55 @@ pub fn call_builtin_fun<W: Write>(
     };
 
     FunRet::Val(val)
+}
+
+fn try_<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    args: Vec<u64>,
+    loc: &Loc,
+    val_ty: &str,
+) -> FunRet {
+    debug_assert_eq!(args.len(), 1);
+    let cb = args[0];
+    match call_closure(w, pgm, heap, &mut Default::default(), cb, &[], loc) {
+        ControlFlow::Val(val) => {
+            let ty_con = pgm
+                .ty_cons
+                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
+                .unwrap();
+
+            let constr_idx = ty_con
+                .value_constrs
+                .iter()
+                .enumerate()
+                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Ok")))
+                .unwrap();
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
+        ControlFlow::Unwind(val) => {
+            let ty_con = pgm
+                .ty_cons
+                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
+                .unwrap();
+
+            let constr_idx = ty_con
+                .value_constrs
+                .iter()
+                .enumerate()
+                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Err")))
+                .unwrap();
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
+        ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
+    }
 }

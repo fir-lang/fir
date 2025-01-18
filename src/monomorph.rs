@@ -695,7 +695,17 @@ fn mono_method(
             let ty_con = poly_pgm.ty.get(name).unwrap();
             assert_eq!(ty_con.type_params.len(), args.len());
 
-            let fun = poly_pgm.associated.get(name).unwrap().get(method).unwrap();
+            let fun = poly_pgm
+                .associated
+                .get(name)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "poly_pgm doesn't associated types for type {} (looking for method {})",
+                        name, method
+                    )
+                })
+                .get(method)
+                .unwrap();
 
             let mut assoc_fn_ty_map = ty_map.clone();
             for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {

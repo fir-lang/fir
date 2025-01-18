@@ -158,7 +158,9 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
         "printStr@Ptr" => BuiltinFun::PrintStr,
         "panic@Ptr@Ptr" => BuiltinFun::Panic,
         "try@Ptr@Ptr@Ptr" => BuiltinFun::Try,
+        "try@U32@Ptr@Ptr" => BuiltinFun::TryU32,
         "throw@Ptr@Ptr" => BuiltinFun::Throw,
+        "throw@U32@Ptr" => BuiltinFun::Throw,
     };
 
     macro_rules! builtin_associated_funs {
