@@ -126,7 +126,7 @@ parseWithExn(vec: Vec[Str], parseFn: Fn(Str): {..errs} a): {..errs} Vec[a]
     ret
 
 parseU32UsingExnVersion(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
-    try(fn(): {InvalidDigit, Overflow, EmptyInput, ..r} U32 { parseU32Exn(s) })
+    try({ parseU32Exn(s) })
 
 parseU32UsingResultVersion(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
     untry(parseU32(s))

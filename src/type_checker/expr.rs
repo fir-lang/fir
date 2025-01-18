@@ -847,12 +847,28 @@ pub(super) fn check_expr(
 
             let ret_ty = match &sig.return_ty {
                 Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
-                None => Ty::unit(),
+                None => Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level + 1, Kind::Star, expr.loc.clone()),
+                ),
             };
 
             let exceptions = match &sig.exceptions {
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
-                None => tc_state.exceptions.clone(),
+                None => {
+                    let row = tc_state.var_gen.new_var(
+                        level + 1,
+                        Kind::Row(RecordOrVariant::Variant),
+                        expr.loc.clone(),
+                    );
+                    Ty::Anonymous {
+                        labels: Default::default(),
+                        extension: Some(Box::new(Ty::Var(row))),
+                        kind: RecordOrVariant::Variant,
+                        is_row: false,
+                    }
+                }
             };
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
