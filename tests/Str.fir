@@ -14,15 +14,15 @@ main()
     printStr(s.charAt(3).toStr())
     printStr(s.charAt(6).toStr())
 
+    let substr = s.substr(1, s.len())
+    printStr(substr.charAt(0).toStr())
+    printStr(substr.charAt(2).toStr())
+    printStr(substr.charAt(5).toStr())
+
     printStr("---")
 
     for char in s.chars():
         printStr(char.toStr())
-
-    for charIdx in s.charIndices():
-        let char = charIdx.char
-        let idx = charIdx.idx
-        printStr("`idx.toStr()`: `char.toStr()`")
 
     printStr("---")
 
@@ -56,15 +56,14 @@ main()
 # 'α'
 # 'あ'
 # '💩'
+# 'α'
+# 'あ'
+# '💩'
 # ---
 # ' '
 # 'α'
 # 'あ'
 # '💩'
-# 0: ' '
-# 1: 'α'
-# 3: 'あ'
-# 6: '💩'
 # ---
 #  αあ💩
 # αあ💩

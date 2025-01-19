@@ -43,7 +43,7 @@ impl Str:
             return Bool.False
 
         for i in range(0u32, prefix.len()):
-            if self._bytes.get(i + self._start) != prefix._bytes.get(i + prefix._start):
+            if self._bytes.get(self._start + i) != prefix._bytes.get(prefix._start + i):
                 return Bool.False
 
         Bool.True
@@ -51,6 +51,7 @@ impl Str:
     # Get the character at given byte index. Panics if the byte is not a first byte of a UTF-8
     # code point.
     charAt(self, byteIndex: U32): Char
+        byteIndex += self._start
         let byte = self._bytes.get(byteIndex)
 
         if byte < 128:
@@ -88,9 +89,14 @@ impl Str:
 
     charIndices(self): CharIndices
         CharIndices(
-            _bytes = self._bytes,
-            _idx = self._start,
-            _end = self._start + self._len,
+            _str = self,
+            _idx = 0,
+        )
+
+    splitWhitespace(self): SplitWhitespace
+        SplitWhitespace(
+            _str = self,
+            _idx = 0,
         )
 
 impl Eq for Str:
@@ -139,23 +145,17 @@ impl Iterator for CharIter:
         Option.Some(char)
 
 type CharIndices:
-    # UTF-8 encoding of the string.
-    _bytes: Array[U8]
-
-    # Current index into `_bytes`.
+    _str: Str
     _idx: U32
-
-    # End index.
-    _end: U32
 
 impl Iterator for CharIndices:
     type Item = (char: Char, idx: U32)
 
     next(self): Option[(char: Char, idx: U32)]
-        if self._idx == self._end:
+        if self._idx == self._str.len():
             return Option.None
 
-        let char = _charAt(self._bytes, self._idx)
+        let char = self._str.charAt(self._idx)
         let charLength = char.lenUtf8()
         let idx = self._idx
         self._idx += charLength
@@ -189,3 +189,42 @@ _charAt(bytes: Array[U8], idx: U32): Char
         let b2 = (bytes.get(idx + 2) & 0b111111).asU32()
         let b3 = (bytes.get(idx + 3) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
+
+type SplitWhitespace:
+    _str: Str
+    _idx: U32
+
+impl Iterator for SplitWhitespace:
+    type Item = Str
+
+    next(self): Option[Str]
+        let wordStart = self._idx
+        let wordEnd = wordStart
+        let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
+
+        # Skip initial whitespace, initialize `wordStart` and `wordEnd`.
+        while Bool.True:
+            match charIdxIter.next():
+                Option.Some((char = char, idx = idx)):
+                    if !char.isAsciiWhitespace():
+                        wordStart = self._idx + idx
+                        wordEnd = wordStart
+                        break
+
+                Option.None:
+                    return Option.None
+
+        # Scan word, update `wordEnd`.
+        while Bool.True:
+            match charIdxIter.next():
+                Option.Some((char = char, idx = idx)):
+                    wordEnd = self._idx + idx
+                    if char.isAsciiWhitespace():
+                        break
+
+                Option.None:
+                    wordEnd += 1
+                    break
+
+        self._idx = wordEnd
+        Option.Some(self._str.substr(wordStart, wordEnd))
