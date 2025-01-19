@@ -1324,11 +1324,11 @@ impl fmt::Display for Ty {
                         }
                     }
                 }
-                write!(f, ")")?;
+                write!(f, "): ")?;
                 if let Some(exn) = exceptions {
-                    write!(f, " {}", exn)?;
+                    write!(f, "{} ", exn)?;
                 }
-                write!(f, ": {}", ret)
+                write!(f, "{}", ret)
             }
 
             Ty::AssocTySelect { ty, assoc_ty } => {

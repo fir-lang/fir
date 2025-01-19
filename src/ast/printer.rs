@@ -286,13 +286,16 @@ impl Type {
                     arg.node.print(buffer);
                 }
                 buffer.push(')');
+                if exceptions.is_some() || ret.is_some() {
+                    buffer.push_str(": ");
+                }
                 if let Some(exn) = exceptions {
-                    buffer.push(' ');
                     exn.node.print(buffer);
-                    buffer.push(' ');
                 }
                 if let Some(ret) = ret {
-                    buffer.push_str(": ");
+                    if exceptions.is_some() {
+                        buffer.push(' ');
+                    }
                     ret.node.print(buffer);
                 }
             }
@@ -325,12 +328,16 @@ impl FunSig {
             param_ty.node.print(buffer);
         }
         buffer.push(')');
+        if self.exceptions.is_some() || self.return_ty.is_some() {
+            buffer.push_str(": ");
+        }
         if let Some(exn) = &self.exceptions {
-            buffer.push(' ');
             exn.node.print(buffer);
         }
         if let Some(ret_ty) = &self.return_ty {
-            buffer.push_str(": ");
+            if self.exceptions.is_some() {
+                buffer.push(' ');
+            }
             ret_ty.node.print(buffer);
         }
     }
