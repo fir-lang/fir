@@ -139,8 +139,8 @@ lexgen::lexer! {
         // Escaped interpolation start
         "\\`" => |lexer| lexer.continue_(),
 
-        // Escaped double quote
-        '\\' '"' => |lexer| lexer.continue_(),
+        // Escape characters
+        '\\' ('"' | 'n' | 't' | 'r' | '\\') => |lexer| lexer.continue_(),
 
         _ => |lexer| lexer.continue_(),
     }

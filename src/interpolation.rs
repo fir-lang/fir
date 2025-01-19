@@ -52,7 +52,11 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
                 byte_idx: loc.byte_idx,
             };
 
-            parts.push(StringPart::Str(s[str_part_start..byte_idx].to_string()));
+            parts.push(StringPart::Str(copy_update_escapes(
+                s,
+                str_part_start,
+                byte_idx,
+            )));
 
             for (byte_idx, char) in chars.by_ref() {
                 if char == '\n' {
@@ -96,7 +100,11 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
     }
 
     if str_part_start != s.len() {
-        parts.push(StringPart::Str(s[str_part_start..s.len()].to_string()));
+        parts.push(StringPart::Str(copy_update_escapes(
+            s,
+            str_part_start,
+            s.len(),
+        )));
     }
 
     parts
@@ -117,6 +125,28 @@ fn update_loc(err_loc: &Loc, start_loc: &Loc) -> Loc {
             byte_idx,
         }
     }
+}
+
+fn copy_update_escapes(source: &str, start: usize, end: usize) -> String {
+    let mut ret = String::with_capacity(end - start);
+    let mut chars = source[start..end].chars();
+    while let Some(char) = chars.next() {
+        if char == '\\' {
+            // Lexer should make sure backslash is folled by one of the valid escape characters.
+            match chars.next().unwrap() {
+                '\\' => ret.push('\\'),
+                'n' => ret.push('\n'),
+                't' => ret.push('\t'),
+                'r' => ret.push('\r'),
+                '"' => ret.push('"'),
+                other => panic!("Weird escape character: {:?}", other),
+            }
+        } else {
+            ret.push(char);
+        }
+    }
+
+    ret
 }
 
 #[cfg(test)]

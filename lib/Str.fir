@@ -88,16 +88,13 @@ impl Str:
         )
 
     charIndices(self): CharIndices
-        CharIndices(
-            _str = self,
-            _idx = 0,
-        )
+        CharIndices(_str = self, _idx = 0)
 
     splitWhitespace(self): SplitWhitespace
-        SplitWhitespace(
-            _str = self,
-            _idx = 0,
-        )
+        SplitWhitespace(_str = self, _idx = 0)
+
+    lines(self): Lines
+        Lines(_str = self, _idx = 0)
 
 impl Eq for Str:
     __eq(self, other: Str): Bool
@@ -228,3 +225,35 @@ impl Iterator for SplitWhitespace:
 
         self._idx = wordEnd
         Option.Some(self._str.substr(wordStart, wordEnd))
+
+type Lines:
+    _str: Str
+    _idx: U32
+
+impl Iterator for Lines:
+    type Item = Str
+
+    next(self): Option[Str]
+        let lineStart = self._idx
+        let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
+
+        while Bool.True:
+            match charIdxIter.next():
+                Option.Some((char = '\n', idx = idx)):
+                    let substr = self._str.substr(lineStart, self._idx + idx)
+                    self._idx += idx + 1 # continue with the next char
+                    return Option.Some(substr)
+
+                Option.Some(_):
+                    ()
+
+                Option.None:
+                    break
+
+        let lineEnd = self._str.len()
+        self._idx = lineEnd
+
+        if lineStart == lineEnd:
+            Option.None
+        else:
+            Option.Some(self._str.substr(lineStart, lineEnd))
