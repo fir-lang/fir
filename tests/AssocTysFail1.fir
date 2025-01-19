@@ -7,7 +7,7 @@ trait Test[a]:
     type T
     test(self): T
 
-impl[a] Test[a]:
+impl Test for A:
     type T = I32
     test(self): T
         "hi"

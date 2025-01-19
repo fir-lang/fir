@@ -4,7 +4,7 @@ trait T[a]:
     a(self)
     b(self)
 
-impl T[I32]:
+impl T for I32:
     a(self) = ()
 
 # args: --typecheck --no-prelude --no-backtrace
