@@ -726,6 +726,8 @@ pub(super) fn check_expr(
                 rhs,
             } in alts
             {
+                tc_state.env.enter();
+
                 let pat_ty = check_pat(tc_state, pattern, level);
                 unify(
                     &pat_ty,
@@ -743,6 +745,8 @@ pub(super) fn check_expr(
                 }
 
                 rhs_tys.push(check_stmts(tc_state, rhs, None, level, loop_depth));
+
+                tc_state.env.exit();
 
                 if guard.is_none() {
                     covered_pats.add(&pattern.node);
