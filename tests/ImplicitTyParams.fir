@@ -13,4 +13,8 @@ impl X[t]:
     f3(self, other: t2): t2
         other
 
+trait Test[t]:
+    f: a
+    x: Fn(a): {..r} b
+
 main() = ()

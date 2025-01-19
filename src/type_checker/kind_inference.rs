@@ -32,7 +32,9 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 
             ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
 
-            ast::TopDecl::Type(_) | ast::TopDecl::Import(_) | ast::TopDecl::Trait(_) => {}
+            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node),
+
+            ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => {}
         }
     }
 }
@@ -93,6 +95,18 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
             ast::ImplDeclItem::AssocTy(_) => {}
             ast::ImplDeclItem::Fun(fun_decl) => {
                 add_missing_type_params_fun(&mut fun_decl.sig, &impl_context_vars);
+            }
+        }
+    }
+}
+
+fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
+    let trait_context_vars: Set<Id> = [decl.ty.id.node.clone()].into_iter().collect();
+    for item in &mut decl.items {
+        match &mut item.node {
+            ast::TraitDeclItem::AssocTy(_) => {}
+            ast::TraitDeclItem::Fun(fun_decl) => {
+                add_missing_type_params_fun(&mut fun_decl.sig, &trait_context_vars);
             }
         }
     }
