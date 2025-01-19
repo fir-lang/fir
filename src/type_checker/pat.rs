@@ -32,11 +32,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         }) => {
             debug_assert!(ty_args.is_empty());
 
-            let ty_con: &TyCon = tc_state
-                .tys
-                .tys
-                .get_con(pat_ty_name)
-                .unwrap_or_else(|| panic!("{}: Undefined type", loc_display(&pat.loc)));
+            let ty_con: &TyCon = tc_state.tys.tys.get_con(pat_ty_name).unwrap_or_else(|| {
+                panic!("{}: Undefined type {}", loc_display(&pat.loc), pat_ty_name)
+            });
 
             // Check that `con` exists and field shapes match.
             let con_scheme = match &ty_con.details {
