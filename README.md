@@ -52,11 +52,6 @@ with modern tooling (compiler, language server, documentation generator,
 formatter, build system, all in one executable), syntax, a batteries-included
 approach to the standard libraries, and an expressive type system.
 
-# Current status
-
-Currently only a simple interpreter is available. The interpreter does not have
-a type checker yet, it ignores all types.
-
 # Development plan
 
 We want to bootstrap Fir as quickly as possible.
