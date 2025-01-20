@@ -150,7 +150,7 @@ pub struct TyVar {
     /// Kind of the variable.
     kind: Kind,
 
-    /// Depth of the scope the unification variable was craeted in.
+    /// Binding level: depth of the scope the unification variable was created in.
     level: Cell<u32>,
 
     /// When unified with a type, this holds the type.
