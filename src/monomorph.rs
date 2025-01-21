@@ -549,16 +549,6 @@ fn mono_expr(
                 .collect(),
         }),
 
-        ast::Expr::Range(ast::RangeExpr {
-            from,
-            to,
-            inclusive,
-        }) => ast::Expr::Range(ast::RangeExpr {
-            from: mono_bl_expr(from, ty_map, poly_pgm, mono_pgm),
-            to: mono_bl_expr(to, ty_map, poly_pgm, mono_pgm),
-            inclusive: *inclusive,
-        }),
-
         ast::Expr::String(parts) => ast::Expr::String(
             parts
                 .iter()

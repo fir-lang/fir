@@ -793,22 +793,6 @@ InlineExpr: Expr = {
         }),
 
     #[precedence(level = "12")]
-    #[assoc(side = "left")]
-    <l1:@L> <from:InlineExpr> <r1:@R> ".." <l2:@L> <to:InlineExpr> <r2:@R> =>
-        Expr::Range(RangeExpr {
-            from: Box::new(L::new(module, l1, r1, from)),
-            to: Box::new(L::new(module, l2, r2, to)),
-            inclusive: false,
-        }),
-
-    <l1:@L> <from:InlineExpr> <r1:@R> "..=" <l2:@L> <to:InlineExpr> <r2:@R> =>
-        Expr::Range(RangeExpr {
-            from: Box::new(L::new(module, l1, r1, from)),
-            to: Box::new(L::new(module, l2, r2, to)),
-            inclusive: true,
-        }),
-
-    #[precedence(level = "13")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 

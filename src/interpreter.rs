@@ -35,7 +35,7 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args:
     let main_fun = pgm
         .top_level_funs
         .get(main)
-        .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
+        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
 
     // `main` doesn't have a call site, called by the interpreter.
     let call_loc = Loc {
@@ -732,7 +732,7 @@ fn call_closure<W: Write>(
             }
         }
 
-        _ => panic!("Function evaluated to non-callable"),
+        _ => panic!("{}: Function evaluated to non-callable", loc_display(loc)),
     }
 }
 
@@ -750,7 +750,7 @@ fn allocate_object_from_names<W: Write>(
     let ty_con = pgm
         .ty_cons
         .get(ty)
-        .unwrap_or_else(|| panic!("Undefined type {} at {}", ty, loc_display(loc)));
+        .unwrap_or_else(|| panic!("{}: Undefined type {}", loc_display(loc), ty));
 
     let constr_idx = match constr_name {
         Some(constr_name) => {
@@ -761,8 +761,10 @@ fn allocate_object_from_names<W: Write>(
                 .find(|(_, constr)| constr.name.as_ref() == Some(&constr_name))
                 .unwrap_or_else(|| {
                     panic!(
-                        "Type {} does not have a constructor named {}",
-                        ty, constr_name
+                        "{}: Type {} does not have a constructor named {}",
+                        loc_display(loc),
+                        ty,
+                        constr_name
                     )
                 });
 
@@ -861,7 +863,7 @@ fn exec<W: Write>(
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
                 match try_bind_pat(pgm, heap, lhs, val) {
                     Some(binds) => locals.extend(binds.into_iter()),
-                    None => panic!("Pattern binding at {} failed", loc_display(&stmt.loc)),
+                    None => panic!("{}: Pattern binding failed", loc_display(&stmt.loc)),
                 }
                 val
             }
@@ -1150,11 +1152,16 @@ fn eval<W: Write>(
                     let ty_con = pgm
                         .ty_cons
                         .get(ty)
-                        .unwrap_or_else(|| panic!("Undefined type: {}", ty));
+                        .unwrap_or_else(|| panic!("{}: Undefined type: {}", loc_display(loc), ty));
                     let fun = pgm.associated_funs[ty_con.type_tag as usize]
                         .get(member)
                         .unwrap_or_else(|| {
-                            panic!("Type {} does not have associated function {}", ty, member)
+                            panic!(
+                                "{}: Type {} does not have associated function {}",
+                                loc_display(loc),
+                                ty,
+                                member
+                            )
                         });
 
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
@@ -1304,10 +1311,6 @@ fn eval<W: Write>(
             ControlFlow::Val(variant)
         }
 
-        ast::Expr::Range(_) => {
-            panic!("Interpreter only supports range expressions in for loops")
-        }
-
         ast::Expr::Return(expr) => {
             ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
         }
@@ -1326,7 +1329,7 @@ fn eval<W: Write>(
                     return exec(w, pgm, heap, locals, rhs);
                 }
             }
-            panic!("Non-exhaustive pattern match");
+            panic!("{}: Non-exhaustive pattern match", loc_display(loc));
         }
 
         ast::Expr::If(ast::IfExpr {
