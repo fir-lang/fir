@@ -349,7 +349,36 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
             # Literals
 
             "\"" rest:
-                panic("String literal")
+                let startIdx = byteIdx
+                byteIdx += 1
+                while byteIdx < input.len():
+                    match input.charAt(byteIdx):
+                        '"':
+                            byteIdx += 1
+                            break
+
+                        '`':
+                            byteIdx += 1
+                            while byteIdx < input.len():
+                                match input.charAt(byteIdx):
+                                    '`':
+                                        byteIdx += 1
+                                        break
+
+                                    _:
+                                        byteIdx += 1
+
+                        '\\':
+                            byteIdx += 1
+                            match input.charAt(byteIdx):
+                                '`' | '"' | 'n' | 't' | 'r' | '\\':
+                                    byteIdx += 1
+                                _:
+                                    panic("Invalid escape")
+
+                        _: byteIdx += 1
+
+                tokens.push(Token(kind = TokenKind.String, text = input.substr(startIdx, byteIdx), byteIdx = startIdx))
 
             "'" rest:
                 let idx = byteIdx + 1
