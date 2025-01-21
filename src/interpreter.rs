@@ -25,7 +25,7 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: Option<&str>) {
+pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args: &[String]) {
     let closures = collect_closures(&mut pgm);
 
     let mut heap = Heap::new();
@@ -49,27 +49,31 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input
     };
 
     // Check if main takes an input argument.
-    let num_args = match &main_fun.kind {
+    let main_num_args = match &main_fun.kind {
         FunKind::Builtin(_) => panic!(),
         FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
     };
 
-    let arg_vec = match num_args {
-        0 => vec![],
-        1 => match input {
-            Some(input) => {
-                let input =
-                    heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, input.as_bytes());
-                vec![input]
+    let arg_vec: Vec<u64> = match main_num_args {
+        0 => {
+            if args.len() > 1 {
+                println!("WARNING: `main` does not take command line arguments, but command line arguments are passed to the interpreter");
             }
-            None => {
-                eprintln!("WARNING: main takes one argument, but no input was provided to the interpreter");
-                let input = heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, &[]);
-                vec![input]
+            vec![]
+        }
+        1 => {
+            let arg_vec = heap.allocate(2 + args.len());
+            heap[arg_vec] = pgm.array_ptr_ty_tag;
+            heap[arg_vec + 1] = args.len() as u64;
+            for (i, arg) in args.iter().enumerate() {
+                let arg_val =
+                    heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, arg.as_bytes());
+                heap[arg_vec + 2 + (i as u64)] = arg_val;
             }
-        },
+            vec![arg_vec]
+        }
         other => panic!(
-            "main needs to take 0 or 1 argument, but takes {} arguments",
+            "`main` needs to take 0 or 1 argument, but it takes {} arguments",
             other
         ),
     };

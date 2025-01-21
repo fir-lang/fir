@@ -83,6 +83,17 @@ impl Array[t]:
     prim get(self, idx: U32): t
     prim set(self, idx: U32, elem: t)
 
+impl[t: ToStr] ToStr for Array[t]:
+    toStr(self): Str
+        let buf = StrBuf.withCapacity(self.len() * 5 + 2)
+        buf.push('[')
+        for i in range(0u32, self.len()):
+            if i != 0:
+                buf.push(',')
+            buf.pushStr(self.get(i).toStr())
+        buf.push(']')
+        buf.toStr()
+
 prim printStr(s: Str)
 prim panic[t: ToStr](msg: t): Void
 

@@ -166,17 +166,19 @@ mod native {
             ast::printer::print_module(&module);
         }
 
-        if !typecheck {
-            module = monomorph::monomorphise(&module, &main);
-
-            if print_mono_ast {
-                ast::printer::print_module(&module);
-            }
-
-            let input = args.get(2).map(|s| s.as_str());
-            let mut w = std::io::stdout();
-            interpreter::run(&mut w, module, &main, input);
+        if typecheck {
+            return;
         }
+
+        module = monomorph::monomorphise(&module, &main);
+
+        if print_mono_ast {
+            ast::printer::print_module(&module);
+        }
+
+        let input: &[String] = &args[1..];
+        let mut w = std::io::stdout();
+        interpreter::run(&mut w, module, &main, input);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
