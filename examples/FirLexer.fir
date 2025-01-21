@@ -79,13 +79,10 @@ type TokenKind:
 
     # Literals
     String
-    Int:
-        kind: Option[IntKind]
-    HexInt:
-        kind: Option[IntKind]
-    BinInt:
-        kind: Option[IntKind]
-    Char
+    Int(Option[IntKind])
+    HexInt(Option[IntKind])
+    BinInt(Option[IntKind])
+    Char(Char)
 
 type IntKind:
     I8
@@ -351,6 +348,29 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
             ########################################################################################
             # Literals
 
+            "\"" rest:
+                panic("String literal")
+
+            "'" rest:
+                let idx = byteIdx + 1
+                let char = match input.charAt(idx):
+                    '\\':
+                        idx += 1
+                        match input.charAt(idx):
+                            '\'': '\''
+                            '\\': '\\'
+                            'n': '\n'
+                            't': '\t'
+                            'r': '\r'
+                            other: panic("Invalid escape character in character literal at `idx.toStr()`")
+                    c: c
+                idx += 1
+                if input.charAt(idx) != '\'':
+                    panic("Unterminated character literal at `idx.toStr()`")
+
+                tokens.push(Token(kind = TokenKind.Char(c), text = input.substr(byteIdx, idx + 1), byteIdx = byteIdx))
+                byteIdx = idx + 1
+
             "0b" rest:
                 panic("TODO")
 
@@ -391,7 +411,7 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
                             ()
 
                     tokens.push(Token(
-                        kind = TokenKind.Int(kind = Option.Some(typeSuffix)),
+                        kind = TokenKind.Int(Option.Some(typeSuffix)),
                         text = input.substr(digitsStart, digitsEnd),
                         byteIdx = byteIdx,
                     ))
