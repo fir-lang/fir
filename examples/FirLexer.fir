@@ -363,8 +363,8 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
                     byteIdx += 1
 
                     let digitsEnd = byteIdx
-                    while byteIdx < input.len():
-                        let c = input.charAt(byteIdx)
+                    while digitsEnd < input.len():
+                        let c = input.charAt(digitsEnd)
                         if c != '_' && !c.isAsciiDigit():
                             break
                         digitsEnd += 1
@@ -387,6 +387,8 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
                         "i32" rest:
                             typeSuffix = IntKind.I32
                             byteIdx += 3
+                        _:
+                            ()
 
                     tokens.push(Token(
                         kind = TokenKind.Int(kind = Option.Some(typeSuffix)),
@@ -394,8 +396,35 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
                         byteIdx = byteIdx,
                     ))
 
-                else:
-                    panic("TODO")
+                    continue
+
+                let uppercaseId = c.isAsciiUppercase()
+
+                # TODO: This is a bug in the Rust lexer as well: we should _a
+                # should be lowercase, _A should be uppercase.
+                let lowercaseId = c.isAsciiLowercase() || c == '_'
+
+                if uppercaseId || lowercaseId:
+                    let endIdx = byteIdx + 1
+                    while input.len() > endIdx && isIdCont(input.charAt(endIdx)):
+                        endIdx += 1
+                    let id = input.substr(byteIdx, endIdx)
+                    let kind = if uppercaseId:
+                        TokenKind.UpperId
+                    else:
+                        TokenKind.LowerId
+                    tokens.push(Token(
+                        kind = kind,
+                        text = id,
+                        byteIdx = byteIdx
+                    ))
+                    byteIdx = endIdx
+                    continue
+
+                panic("TODO: `c.toStr()` at `byteIdx.toStr()`")
+
+isIdCont(c: Char): Bool
+    c.isAsciiAlphanumeric() || c == '_'
 
 # TODO: Handle nested comments.
 skipMultiLineComment(input: Str, byteIdx: U32): U32
