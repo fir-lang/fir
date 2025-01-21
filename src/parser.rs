@@ -1,8 +1,8 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 230dcbc3a9aba5b7cec29a3ab009547a9f8de1d97b676729b03ef210611eccfb
+// sha3: 304558575d6ff12e21c6ba74f1a88bf7e2bd168e2421c4fb255a235896a1df94
 #![allow(clippy::all)]
 use crate::ast::*;
-use crate::interpolation::parse_string_parts;
+use crate::interpolation::{copy_update_escapes, parse_string_parts};
 use crate::parser_utils::parse_char_lit;
 use crate::token::*;
 use lexgen_util::{LexerError, Loc};
@@ -20,7 +20,7 @@ extern crate alloc;
 mod __parse__LExpr {
 
     use crate::ast::*;
-    use crate::interpolation::parse_string_parts;
+    use crate::interpolation::{copy_update_escapes, parse_string_parts};
     use crate::parser_utils::parse_char_lit;
     use crate::token::*;
     use std::convert::Infallible;
@@ -12954,7 +12954,7 @@ pub use self::__parse__LExpr::LExprParser;
 mod __parse__LStmt {
 
     use crate::ast::*;
-    use crate::interpolation::parse_string_parts;
+    use crate::interpolation::{copy_update_escapes, parse_string_parts};
     use crate::parser_utils::parse_char_lit;
     use crate::token::*;
     use std::convert::Infallible;
@@ -25888,7 +25888,7 @@ pub use self::__parse__LStmt::LStmtParser;
 mod __parse__TopDecls {
 
     use crate::ast::*;
-    use crate::interpolation::parse_string_parts;
+    use crate::interpolation::{copy_update_escapes, parse_string_parts};
     use crate::parser_utils::parse_char_lit;
     use crate::token::*;
     use std::convert::Infallible;
@@ -41901,7 +41901,7 @@ fn __action126<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Pat {
     clippy::just_underscores_and_digits
 )]
 fn __action127<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> Pat {
-    Pat::Str(str.text[1..str.text.len() - 1].to_string())
+    Pat::Str(copy_update_escapes(&str.text[1..str.text.len() - 1]))
 }
 
 #[allow(unused_variables)]
@@ -41925,7 +41925,10 @@ fn __action129<'a>(
     (_, str, _): (Loc, Token, Loc),
     (_, id, _): (Loc, Token, Loc),
 ) -> Pat {
-    Pat::StrPfx(str.text[1..str.text.len() - 1].to_string(), id.smol_str())
+    Pat::StrPfx(
+        copy_update_escapes(&str.text[1..str.text.len() - 1]),
+        id.smol_str(),
+    )
 }
 
 #[allow(unused_variables)]
