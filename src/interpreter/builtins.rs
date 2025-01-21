@@ -107,6 +107,8 @@ pub enum BuiltinFun {
     Try,
     TryU32,
     Throw,
+
+    ReadFileUtf8,
 }
 
 macro_rules! array_new {
@@ -720,6 +722,16 @@ pub fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
             return FunRet::Unwind(exn);
+        }
+
+        BuiltinFun::ReadFileUtf8 => {
+            debug_assert_eq!(args.len(), 1);
+            let file_path = args[0];
+            debug_assert_eq!(heap[file_path], pgm.str_ty_tag);
+            let file_path_bytes = heap.str_bytes(file_path);
+            let file_path_str = std::str::from_utf8(file_path_bytes).unwrap();
+            let contents = std::fs::read_to_string(file_path_str).unwrap();
+            heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, contents.as_bytes())
         }
     };
 

@@ -161,6 +161,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
         "try@U32@Ptr@Ptr" => BuiltinFun::TryU32,
         "throw@Ptr@Ptr" => BuiltinFun::Throw,
         "throw@U32@Ptr" => BuiltinFun::Throw,
+        "readFileUtf8@Ptr" => BuiltinFun::ReadFileUtf8,
     };
 
     macro_rules! builtin_associated_funs {

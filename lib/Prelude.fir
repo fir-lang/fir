@@ -139,3 +139,5 @@ impl ToStr for Bool:
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
+
+prim readFileUtf8(path: Str): Str
