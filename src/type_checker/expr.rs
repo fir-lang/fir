@@ -403,13 +403,6 @@ pub(super) fn check_expr(
             }
         }
 
-        ast::Expr::Range(ast::RangeExpr { .. }) => {
-            panic!(
-                "{}: Range expressions are currently only allowed in `for` loops",
-                loc_display(&expr.loc)
-            );
-        }
-
         ast::Expr::Int(ast::IntExpr {
             text,
             suffix,

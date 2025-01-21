@@ -420,9 +420,6 @@ pub enum Expr {
     /// A function call: `f(a)`.
     Call(CallExpr),
 
-    /// A range expression: `x .. y`.
-    Range(RangeExpr),
-
     Int(IntExpr),
 
     String(Vec<StringPart>),
@@ -522,13 +519,6 @@ pub struct AssocFnSelectExpr {
 
     /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct RangeExpr {
-    pub from: Box<L<Expr>>,
-    pub to: Box<L<Expr>>,
-    pub inclusive: bool,
 }
 
 #[derive(Debug, Clone)]

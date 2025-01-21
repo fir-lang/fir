@@ -1311,13 +1311,6 @@ fn eval<W: Write>(
             ControlFlow::Val(variant)
         }
 
-        ast::Expr::Range(_) => {
-            panic!(
-                "{}: Interpreter only supports range expressions in for loops",
-                loc_display(loc)
-            )
-        }
-
         ast::Expr::Return(expr) => {
             ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
         }

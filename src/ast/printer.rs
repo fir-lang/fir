@@ -510,20 +510,6 @@ impl Expr {
                 buffer.push(')');
             }
 
-            Expr::Range(RangeExpr {
-                from,
-                to,
-                inclusive,
-            }) => {
-                from.node.print(buffer, 0);
-                if *inclusive {
-                    buffer.push_str("..=");
-                } else {
-                    buffer.push_str("..");
-                }
-                to.node.print(buffer, 0);
-            }
-
             Expr::Int(IntExpr {
                 text,
                 suffix,

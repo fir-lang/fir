@@ -88,15 +88,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
-        ast::Expr::Range(ast::RangeExpr {
-            from,
-            to,
-            inclusive: _,
-        }) => {
-            normalize_expr(&mut from.node, cons);
-            normalize_expr(&mut to.node, cons);
-        }
-
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
             normalize_expr(&mut left.node, cons);
             normalize_expr(&mut right.node, cons);

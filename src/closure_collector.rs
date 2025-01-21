@@ -311,8 +311,6 @@ fn visit_expr(
                 local_vars.exit();
             }
         }
-
-        ast::Expr::Range(_) => panic!("TODO: Remove Range exprs"),
     }
 }
 

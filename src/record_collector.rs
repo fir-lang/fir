@@ -355,15 +355,6 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Expr::Range(ast::RangeExpr {
-            from,
-            to,
-            inclusive: _,
-        }) => {
-            visit_expr(&from.node, records, variants);
-            visit_expr(&to.node, records, variants);
-        }
-
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
             visit_expr(&left.node, records, variants);
             visit_expr(&right.node, records, variants);
