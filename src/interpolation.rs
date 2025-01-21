@@ -53,9 +53,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
             };
 
             parts.push(StringPart::Str(copy_update_escapes(
-                s,
-                str_part_start,
-                byte_idx,
+                &s[str_part_start..byte_idx],
             )));
 
             for (byte_idx, char) in chars.by_ref() {
@@ -101,9 +99,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
 
     if str_part_start != s.len() {
         parts.push(StringPart::Str(copy_update_escapes(
-            s,
-            str_part_start,
-            s.len(),
+            &s[str_part_start..s.len()],
         )));
     }
 
@@ -127,9 +123,9 @@ fn update_loc(err_loc: &Loc, start_loc: &Loc) -> Loc {
     }
 }
 
-fn copy_update_escapes(source: &str, start: usize, end: usize) -> String {
-    let mut ret = String::with_capacity(end - start);
-    let mut chars = source[start..end].chars();
+pub(crate) fn copy_update_escapes(s: &str) -> String {
+    let mut ret = String::with_capacity(s.len());
+    let mut chars = s.chars();
     while let Some(char) = chars.next() {
         if char == '\\' {
             // Lexer should make sure backslash is folled by one of the valid escape characters.
