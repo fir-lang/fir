@@ -171,6 +171,7 @@ impl I8:
     prim asU8(self): U8
     prim asI32(self): I32
     prim asU32(self): U32
+    prim abs(self): I8
 
 impl U32:
     prim asI8(self): I8
@@ -181,3 +182,4 @@ impl I32:
     prim asI8(self): I8
     prim asU8(self): U8
     prim asU32(self): U32
+    prim abs(self): I32

@@ -56,6 +56,7 @@ pub enum BuiltinFun {
     I32AsU8,
     I32AsU32,
     I32Neg,
+    I32Abs,
 
     // U32
     U32Add,
@@ -89,6 +90,7 @@ pub enum BuiltinFun {
     I8AsI32,
     I8AsU32,
     I8Neg,
+    I8Abs,
 
     // U8
     U8Add,
@@ -716,6 +718,10 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::I8Neg => i8_as_val(val_as_i8(args[0]).neg()),
 
         BuiltinFun::I32Neg => i32_as_val(val_as_i32(args[0]).neg()),
+
+        BuiltinFun::I8Abs => i8_as_val(val_as_i8(args[0]).abs()),
+
+        BuiltinFun::I32Abs => i32_as_val(val_as_i32(args[0]).abs()),
 
         BuiltinFun::Try => {
             return try_(w, pgm, heap, args, loc, "Ptr");
