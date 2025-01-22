@@ -814,14 +814,8 @@ fn collect_schemes(
                 match ty_name {
                     Some(ty_name) => {
                         let old = associated_fn_schemes
-                            .get_mut(&ty_name.node)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Type {} for associated function is not defined",
-                                    loc_display(loc),
-                                    ty_name.node
-                                )
-                            })
+                            .entry(ty_name.node.clone())
+                            .or_default()
                             .insert(name.node.clone(), scheme);
                         if old.is_some() {
                             panic!(
