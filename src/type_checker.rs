@@ -89,7 +89,6 @@ fn add_exception_types(module: &mut ast::Module) {
                             loc: ast::Loc::dummy(),
                         });
                     } else {
-                        fun.sig.type_params.push(row_type_param());
                         fun.sig.exceptions = Some(exn_type());
                     }
                 }
@@ -101,7 +100,6 @@ fn add_exception_types(module: &mut ast::Module) {
                         ast::TraitDeclItem::AssocTy(_) => {}
                         ast::TraitDeclItem::Fun(fun) => {
                             if fun.sig.exceptions.is_none() {
-                                fun.sig.type_params.push(row_type_param());
                                 fun.sig.exceptions = Some(exn_type());
                             }
                         }
@@ -115,7 +113,6 @@ fn add_exception_types(module: &mut ast::Module) {
                         ast::ImplDeclItem::AssocTy(_) => {}
                         ast::ImplDeclItem::Fun(fun) => {
                             if fun.sig.exceptions.is_none() {
-                                fun.sig.type_params.push(row_type_param());
                                 fun.sig.exceptions = Some(exn_type());
                             }
                         }
@@ -125,17 +122,6 @@ fn add_exception_types(module: &mut ast::Module) {
 
             ast::TopDecl::Import(_) | ast::TopDecl::Type(_) => {}
         }
-    }
-}
-
-// The row variable in the added exception type: `?exn` in `[..?exn]`.
-fn row_type_param() -> ast::TypeParam {
-    ast::TypeParam {
-        id: ast::L {
-            loc: ast::Loc::dummy(),
-            node: EXN_QVAR_ID.clone(),
-        },
-        bounds: Default::default(),
     }
 }
 
