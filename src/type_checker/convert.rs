@@ -91,7 +91,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
 
         ast::Type::Var(var) => tys
             .get_var(var)
-            .unwrap_or_else(|| panic!("{}: Unknown type variable", loc_display(loc)))
+            .unwrap_or_else(|| panic!("{}: Unknown type variable {}", loc_display(loc), var))
             .clone(),
 
         ast::Type::Record { fields, extension } => {
