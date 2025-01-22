@@ -231,8 +231,6 @@ pub(super) fn convert_and_bind_context(
     conversion: TyVarConversion,
     loc: &ast::Loc,
 ) -> Vec<(Id, QVar)> {
-    let mut context_converted: Vec<(Id, QVar)> = Vec::with_capacity(context_ast.len());
-
     // Bind type parameters.
     for ast::TypeParam { id, bounds: _ } in context_ast {
         let id = &id.node;
@@ -246,6 +244,8 @@ pub(super) fn convert_and_bind_context(
             }
         }
     }
+
+    let mut context_converted: Vec<(Id, QVar)> = Vec::with_capacity(context_ast.len());
 
     // Convert bounds.
     for ast::TypeParam { id: ty_var, bounds } in context_ast {

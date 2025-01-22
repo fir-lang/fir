@@ -729,6 +729,16 @@ fn collect_schemes(
                     },
                 loc,
             }) => {
+                let fun_var_kinds = fun_sig_ty_var_kinds(sig);
+
+                let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                    tys,
+                    &sig.type_params,
+                    &fun_var_kinds,
+                    TyVarConversion::ToQVar,
+                    loc,
+                );
+
                 // If this is a method without a `self` type, add type parameters of the type to
                 // function context and annotate `self`.
                 let mut self_ty: Option<Ty> = None;
@@ -767,26 +777,14 @@ fn collect_schemes(
                     }
                 }
 
-                // Because we require self type to be specified if the owning type has parameters,
-                // this doesn't need to consider `self` type.
-                let fun_var_kinds = fun_sig_ty_var_kinds(sig);
-
-                let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
-                    tys,
-                    &sig.type_params,
-                    &fun_var_kinds,
-                    TyVarConversion::ToQVar,
-                    loc,
-                );
-
                 let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
                     .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect();
 
-                if let Some(self_ty) = self_ty {
-                    arg_tys.insert(0, self_ty);
+                if let Some(self_ty) = &self_ty {
+                    arg_tys.insert(0, self_ty.clone());
                 }
 
                 let ret_ty: Ty = match &sig.return_ty {
@@ -813,17 +811,32 @@ fn collect_schemes(
 
                 match ty_name {
                     Some(ty_name) => {
-                        let old = associated_fn_schemes
-                            .entry(ty_name.node.clone())
-                            .or_default()
-                            .insert(name.node.clone(), scheme);
-                        if old.is_some() {
-                            panic!(
-                                "{}: Associated function {}.{} is defined multiple times",
-                                loc_display(loc),
-                                ty_name.node,
-                                name.node
-                            );
+                        if self_ty.is_some() {
+                            let old = method_schemes
+                                .entry(ty_name.node.clone())
+                                .or_default()
+                                .insert(name.node.clone(), scheme);
+                            if old.is_some() {
+                                panic!(
+                                    "{}: Method {}.{} is defined multiple times",
+                                    loc_display(loc),
+                                    ty_name.node,
+                                    name.node
+                                );
+                            }
+                        } else {
+                            let old = associated_fn_schemes
+                                .entry(ty_name.node.clone())
+                                .or_default()
+                                .insert(name.node.clone(), scheme);
+                            if old.is_some() {
+                                panic!(
+                                    "{}: Associated function {}.{} is defined multiple times",
+                                    loc_display(loc),
+                                    ty_name.node,
+                                    name.node
+                                );
+                            }
                         }
                     }
                     None => {
@@ -1168,7 +1181,28 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let scheme = tys.top_schemes.get(&fun.node.name.node).unwrap().clone();
+    let is_method = !matches!(fun.node.sig.self_, ast::SelfParam::No);
+
+    let scheme = match &fun.node.ty_name {
+        Some(ty_name) => {
+            if is_method {
+                tys.method_schemes
+                    .get(&ty_name.node)
+                    .unwrap()
+                    .get(&fun.node.name.node)
+                    .unwrap()
+                    .clone()
+            } else {
+                tys.associated_fn_schemes
+                    .get(&ty_name.node)
+                    .unwrap()
+                    .get(&fun.node.name.node)
+                    .unwrap()
+                    .clone()
+            }
+        }
+        None => tys.top_schemes.get(&fun.node.name.node).unwrap().clone(),
+    };
 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
@@ -1183,6 +1217,24 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     );
 
     let old_method_schemes = bind_type_params(&fn_bounds, tys, &fun.loc);
+
+    match &fun.node.sig.self_ {
+        ast::SelfParam::No => {}
+
+        ast::SelfParam::Inferred => {
+            env.insert(
+                SmolStr::new_static("self"),
+                Ty::Con(fun.node.ty_name.as_ref().unwrap().node.clone()),
+            );
+        }
+
+        ast::SelfParam::Explicit(ty) => {
+            env.insert(
+                SmolStr::new_static("self"),
+                convert_ast_ty(&tys.tys, ty, &fun.loc),
+            );
+        }
+    }
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.insert(
@@ -1668,6 +1720,12 @@ fn unbind_type_params(
 
 fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
     let mut kinds: Map<Id, Kind> = Default::default();
+    match &fun_sig.self_ {
+        ast::SelfParam::No | ast::SelfParam::Inferred => {}
+        ast::SelfParam::Explicit(ty) => {
+            ty_var_kinds(ty, &mut kinds);
+        }
+    }
     for (_, param) in fun_sig.params.iter() {
         ty_var_kinds(&param.node, &mut kinds);
     }

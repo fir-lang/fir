@@ -41,6 +41,10 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 
 fn add_missing_type_params_fun(sig: &mut ast::FunSig, bound_vars: &Set<Id>) {
     let mut fvs: Set<Id> = Default::default();
+    match &sig.self_ {
+        ast::SelfParam::No | ast::SelfParam::Inferred => {}
+        ast::SelfParam::Explicit(ty) => collect_fvs(ty, &mut fvs),
+    }
     for (_, param_ty) in &sig.params {
         collect_fvs(&param_ty.node, &mut fvs);
     }
