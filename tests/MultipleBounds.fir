@@ -5,10 +5,9 @@ test[t: Eq + ToStr](a: t)
 type A[t]:
     i: t
 
-impl[t: Eq + ToStr] A[t]:
-    test(self)
-        printStr((self.i == self.i).toStr())
-        printStr(self.i.toStr())
+A.test[t: Eq + ToStr](self: A[t])
+    printStr((self.i == self.i).toStr())
+    printStr(self.i.toStr())
 
 main()
     test(123i32)

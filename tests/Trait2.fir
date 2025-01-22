@@ -8,8 +8,7 @@ trait ToStr[a]:
 
 type A
 
-impl A:
-    f[a: ToStr](self, a: a)
-        printStr(a.toStr())
+A.f[a: ToStr](self, a: a)
+    printStr(a.toStr())
 
 # args: --typecheck --no-prelude

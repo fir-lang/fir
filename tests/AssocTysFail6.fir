@@ -2,8 +2,7 @@ prim type I32
 
 prim type Str
 
-impl I32:
-    prim toStr(self): Str
+prim I32.toStr(self): Str
 
 trait Test[t]:
     type Elem

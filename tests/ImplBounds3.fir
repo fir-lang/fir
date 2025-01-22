@@ -9,13 +9,11 @@ type Vec[t]:
     _data: Array[t]
     _len: U32
 
-impl[t] Vec[t]:
-    len(self): U32
-        self._len
+Vec.len(self: Vec[t]): U32
+    self._len
 
-impl[t: Ord] Vec[t]:
-    sort(self)
-        _quicksort(self, 0, self.len())
+Vec.sort[t: Ord](self: Vec[t])
+    _quicksort(self, 0, self.len())
 
 _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32)
     ()

@@ -9,9 +9,8 @@ trait T[a]:
 type A:
     i: I32
 
-impl T for A:
-    test(self): ()
-        self.getI32()
-        ()
+A.test(self): ()
+    self.getI32()
+    ()
 
 # args: --typecheck --no-prelude
