@@ -68,13 +68,25 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
                 assert!(old.is_none(), "BUG: Type declared multiple times");
             }
 
-            ast::TopDecl::Fun(fun_decl) => {
-                let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
-                assert!(
-                    old.is_none(),
-                    "BUG: Top-level function declared multiple times"
-                );
-            }
+            ast::TopDecl::Fun(fun_decl) => match &fun_decl.node.ty_name {
+                Some(ty_name) => {
+                    let old = associated
+                        .entry(ty_name.node.clone())
+                        .or_default()
+                        .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    assert!(
+                        old.is_none(),
+                        "BUG: Associated function or method declared multiple times"
+                    );
+                }
+                None => {
+                    let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    assert!(
+                        old.is_none(),
+                        "BUG: Top-level function declared multiple times"
+                    );
+                }
+            },
 
             ast::TopDecl::Impl(impl_decl) => {
                 let ty_id = match &impl_decl.node.ty.node {
