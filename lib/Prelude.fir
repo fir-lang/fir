@@ -14,6 +14,10 @@ trait Add[t]:
 trait Sub[t]:
     __sub(self, other: t): t
 
+# The unary `-` operator.
+trait Neg[t]:
+    __neg(self): t
+
 # The `*` operator.
 trait Mul[t]:
     __mul(self, other: t): t

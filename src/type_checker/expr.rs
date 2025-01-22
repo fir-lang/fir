@@ -621,8 +621,28 @@ pub(super) fn check_expr(
             check_expr(tc_state, expr, expected_ty, level, loop_depth)
         }
 
-        ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => match op {
-            ast::UnOp::Not => check_expr(tc_state, expr, Some(&Ty::bool()), level, loop_depth),
+        ast::Expr::UnOp(ast::UnOpExpr { op, expr: arg }) => match op {
+            ast::UnOp::Not => check_expr(tc_state, arg, Some(&Ty::bool()), level, loop_depth),
+
+            ast::UnOp::Neg => {
+                let desugared = ast::L {
+                    loc: expr.loc.clone(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: arg.loc.clone(),
+                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                object: arg.clone(),
+                                field: SmolStr::new_static("__neg"),
+                            }),
+                        }),
+                        args: vec![],
+                    }),
+                };
+
+                *expr = desugared;
+
+                check_expr(tc_state, expr, expected_ty, level, loop_depth)
+            }
         },
 
         ast::Expr::Record(fields) => {

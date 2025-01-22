@@ -1225,10 +1225,15 @@ fn eval<W: Write>(
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
             let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-            debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
 
             match op {
-                ast::UnOp::Not => ControlFlow::Val(pgm.bool_alloc(val == pgm.false_alloc)),
+                ast::UnOp::Not => {
+                    debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
+                    ControlFlow::Val(pgm.bool_alloc(val == pgm.false_alloc))
+                }
+                ast::UnOp::Neg => {
+                    panic!() // should be desugared
+                }
             }
         }
 

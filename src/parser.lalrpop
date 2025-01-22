@@ -653,6 +653,9 @@ InlineExpr: Expr = {
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
+    "-" <l:@L> <expr:InlineExpr> <r:@R> =>
+        Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
+
     #[precedence(level = "3")]
     <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
         Expr::Variant(VariantExpr {

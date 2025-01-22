@@ -30,6 +30,9 @@ impl Shl for I32:
 impl Shr for I32:
     prim __shr(self, shift: I32): I32
 
+impl Neg for I32:
+    prim __neg(self): I32
+
 impl ToStr for I32:
     prim toStr(self): Str
 
@@ -105,6 +108,9 @@ impl Shl for I8:
 
 impl Shr for I8:
     prim __shr(self, shift: I8): I8
+
+impl Neg for I8:
+    prim __neg(self): I8
 
 impl ToStr for I8:
     prim toStr(self): Str

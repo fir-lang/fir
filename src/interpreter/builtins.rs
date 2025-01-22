@@ -3,6 +3,7 @@ use crate::interpreter::*;
 use crate::utils::loc_display;
 
 use std::io::Write;
+use std::ops::Neg;
 
 use bytemuck::cast_slice;
 
@@ -54,6 +55,7 @@ pub enum BuiltinFun {
     I32AsI8,
     I32AsU8,
     I32AsU32,
+    I32Neg,
 
     // U32
     U32Add,
@@ -86,6 +88,7 @@ pub enum BuiltinFun {
     I8AsU8,
     I8AsI32,
     I8AsU32,
+    I8Neg,
 
     // U8
     U8Add,
@@ -709,6 +712,10 @@ pub fn call_builtin_fun<W: Write>(
         BuiltinFun::U8AsI32 => i32_as_val(val_as_u8(args[0]) as i32),
 
         BuiltinFun::U8AsU32 => u32_as_val(val_as_u8(args[0]) as u32),
+
+        BuiltinFun::I8Neg => i8_as_val(val_as_i8(args[0]).neg()),
+
+        BuiltinFun::I32Neg => i32_as_val(val_as_i32(args[0]).neg()),
 
         BuiltinFun::Try => {
             return try_(w, pgm, heap, args, loc, "Ptr");
