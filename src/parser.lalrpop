@@ -273,30 +273,33 @@ FunDecl: L<FunDecl> = {
 
     <l:@L> <sig:FunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
-            name: sig.0,
-            sig: sig.1,
+            ty_name: sig.0,
+            name: sig.1,
+            sig: sig.2,
             body: Some(body),
         }),
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
-            name: sig.0,
-            sig: sig.1,
+            ty_name: sig.0,
+            name: sig.1,
+            sig: sig.2,
             body: None,
         }),
 
     <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
-            name: sig.0,
-            sig: sig.1,
+            ty_name: sig.0,
+            name: sig.1,
+            sig: sig.2,
             body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
         })
     },
 }
 
-FunSig: (L<Id>, FunSig) = {
-    <l:@L> <name:LLowerId> <type_params:Context> "(" <params:Params> ")" <ret:ReturnType> => {
+FunSig: (Option<L<Id>>, L<Id>, FunSig) = {
+    <l:@L> <ty:LUpperId?> <name:LLowerId> <type_params:Context> "(" <params:Params> ")" <ret:ReturnType> => {
         let mut self_: SelfParam = SelfParam::No;
         let mut params_w_tys: Vec<(Id, L<Type>)> = Vec::with_capacity(params.len());
         for (i, (param_id, param_ty)) in params.into_iter().enumerate() {
@@ -319,25 +322,31 @@ FunSig: (L<Id>, FunSig) = {
                 }
             }
         }
-        (name,
+        (
+            ty,
+            name,
             FunSig {
                 type_params,
                 self_,
                 params: params_w_tys,
                 exceptions: ret.0,
                 return_ty: ret.1,
-            })
+            }
+        )
     },
 
-    <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
-        (name,
+    <ty:LUpperId?> <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
+        (
+            ty,
+            name,
             FunSig {
                 type_params,
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: ret.0,
                 return_ty: ret.1,
-            })
+            }
+        )
 }
 
 Params: Vec<(Id, Option<L<Type>>)> = {
@@ -1027,7 +1036,7 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNamed> ":"
+    <l:@L> "impl" <context:Context> <trait_:LUpperId> "for" <ty:LTypeNamed> ":"
             NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,

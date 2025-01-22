@@ -102,7 +102,7 @@ pub enum TopDecl {
     /// A type declaration: `type T = ...`.
     Type(L<TypeDecl>),
 
-    /// A function declaration: `fn f(...) = ...`.
+    /// A function declaration: `f(...) = ...`.
     Fun(L<FunDecl>),
 
     /// An import declaration.
@@ -264,8 +264,17 @@ pub enum SelfParam {
 
 #[derive(Debug, Clone)]
 pub struct FunDecl {
+    /// Only in top-level functions: if the function is an associated function, this is the name of
+    /// the type the function belongs.
+    pub ty_name: Option<L<Id>>,
+
+    /// Name of the function.
     pub name: L<Id>,
+
+    /// Type signature of the function.
     pub sig: FunSig,
+
+    /// Body of the function. Not available in `prim` functions.
     pub body: Option<Vec<L<Stmt>>>,
 }
 
@@ -651,37 +660,30 @@ pub struct TypeParam {
     pub bounds: Vec<L<Type>>,
 }
 
-/// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
+/// An `impl` block, implementing methods of a trait. Example:
 ///
 /// ```ignore
-/// impl[A] Vec[A]:
-///     # An associated function.
-///     fn withCapacity(cap: U32): Vec[A] = ...
-///
-///     # A method.
-///     fn push(self, elem: A) = ...
-///
-/// impl[A: ToStr] ToStr for Vec[A]:
-///   fn toStr(self): Str = ...
+/// impl[a: ToStr] ToStr for Vec[a]:
+///     toStr(self): Str = ...
 /// ```
 #[derive(Debug, Clone)]
 pub struct ImplDecl {
-    /// Type parameters of the type being implemented, with bounds.
+    /// Type parameters of the `impl` block.
     ///
-    /// In the first example, this is `[A]`. In the second example: `[A: ToStr]`.
+    /// In the example, this is `[a: ToStr]`.
     pub context: Context,
 
     /// If the `impl` block is for a trait, the trait name.
     ///
-    /// In the first example this is `None`. In the second this is `Some(ToStr)`.
-    pub trait_: Option<L<Id>>,
+    /// In the example this is `ToStr`.
+    pub trait_: L<Id>,
 
     /// The implementing type.
     ///
-    /// In both of the examples this is `Vec[A]`.
+    /// In the example, this is `Vec[a]`.
     pub ty: L<Type>,
 
-    /// Functions, methods, and associated types.
+    /// Methods and associated types.
     pub items: Vec<L<ImplDeclItem>>,
 }
 
