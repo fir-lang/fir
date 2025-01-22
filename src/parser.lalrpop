@@ -299,7 +299,7 @@ FunDecl: L<FunDecl> = {
 }
 
 FunSig: (Option<L<Id>>, L<Id>, FunSig) = {
-    <l:@L> <ty:LUpperId?> <name:LLowerId> <type_params:Context> "(" <params:Params> ")" <ret:ReturnType> => {
+    <l:@L> <ty:(<LUpperId> ".")?> <name:LLowerId> <type_params:Context> "(" <params:Params> ")" <ret:ReturnType> => {
         let mut self_: SelfParam = SelfParam::No;
         let mut params_w_tys: Vec<(Id, L<Type>)> = Vec::with_capacity(params.len());
         for (i, (param_id, param_ty)) in params.into_iter().enumerate() {
@@ -334,8 +334,7 @@ FunSig: (Option<L<Id>>, L<Id>, FunSig) = {
             }
         )
     },
-
-    <ty:LUpperId?> <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
+    <ty:(<LUpperId> ".")?> <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
         (
             ty,
             name,

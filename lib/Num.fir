@@ -162,24 +162,20 @@ impl Step for U8:
 #
 ################################################################################
 
-impl U8:
-    prim asI8(self): I8
-    prim asI32(self): I32
-    prim asU32(self): U32
+prim U8.asI8(self): I8
+prim U8.asI32(self): I32
+prim U8.asU32(self): U32
 
-impl I8:
-    prim asU8(self): U8
-    prim asI32(self): I32
-    prim asU32(self): U32
-    prim abs(self): I8
+prim I8.asU8(self): U8
+prim I8.asI32(self): I32
+prim I8.asU32(self): U32
+prim I8.abs(self): I8
 
-impl U32:
-    prim asI8(self): I8
-    prim asU8(self): U8
-    prim asI32(self): I32
+prim U32.asI8(self): I8
+prim U32.asU8(self): U8
+prim U32.asI32(self): I32
 
-impl I32:
-    prim asI8(self): I8
-    prim asU8(self): U8
-    prim asU32(self): U32
-    prim abs(self): I32
+prim I32.asI8(self): I8
+prim I32.asU8(self): U8
+prim I32.asU32(self): U32
+prim I32.abs(self): I32

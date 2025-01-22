@@ -2,78 +2,76 @@ type Vec[t]:
     _data: Array[t]
     _len: U32
 
-impl Vec[t]:
-    withCapacity(cap: U32): Vec[t]
-        Vec(_data = Array.new(cap), _len = 0)
+Vec.withCapacity(cap: U32): Vec[t]
+    Vec(_data = Array.new(cap), _len = 0)
 
-    reserve(self, cap: U32)
-        let len = self._len
-        let newCap = self._data.len()
-        while newCap - len < cap:
-            newCap *= 2
+Vec.reserve(self: Vec[t], cap: U32)
+    let len = self._len
+    let newCap = self._data.len()
+    while newCap - len < cap:
+        newCap *= 2
 
-        if newCap != self._data.len():
-            let newData = Array.new(newCap)
-            for i in range(0u32, self._data.len()):
-                newData.set(i, self._data.get(i))
-            self._data = newData
+    if newCap != self._data.len():
+        let newData = Array.new(newCap)
+        for i in range(0u32, self._data.len()):
+            newData.set(i, self._data.get(i))
+        self._data = newData
 
-    spareCapacity(self): U32
-        self._data.len() - self._len
+Vec.spareCapacity(self: Vec[t]): U32
+    self._data.len() - self._len
 
-    len(self): U32
-        self._len
+Vec.len(self: Vec[t]): U32
+    self._len
 
-    clear(self)
-        # In the compiled version we should actually clear the elements to allow garbage collection.
-        self._len = 0
+Vec.clear(self: Vec[t])
+    # In the compiled version we should actually clear the elements to allow garbage collection.
+    self._len = 0
 
-    push(self, elem: t)
-        let cap = self._data.len()
+Vec.push(self: Vec[t], elem: t)
+    let cap = self._data.len()
 
-        if self._len == cap:
-            let newData = Array.new(cap * 2)
-            for i in range(0u32, cap):
-                newData.set(i, self._data.get(i))
-            self._data = newData
+    if self._len == cap:
+        let newData = Array.new(cap * 2)
+        for i in range(0u32, cap):
+            newData.set(i, self._data.get(i))
+        self._data = newData
 
-        self._data.set(self._len, elem)
-        self._len += 1
+    self._data.set(self._len, elem)
+    self._len += 1
 
-    pop(self): Option[t]
-        if self._len == 0:
-            return Option.None
+Vec.pop(self: Vec[t]): Option[t]
+    if self._len == 0:
+        return Option.None
 
-        self._len -= 1
-        Option.Some(self._data.get(self._len))
+    self._len -= 1
+    Option.Some(self._data.get(self._len))
 
-    set(self, idx: U32, elem: t)
-        if idx >= self._len:
-            panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
+Vec.set(self: Vec[t], idx: U32, elem: t)
+    if idx >= self._len:
+        panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
-        self._data.set(idx, elem)
+    self._data.set(idx, elem)
 
-    get(self, idx: U32): t
-        if idx >= self._len:
-            panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
+Vec.get(self: Vec[t], idx: U32): t
+    if idx >= self._len:
+        panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
-        self._data.get(idx)
+    self._data.get(idx)
 
-    swap(self, i: U32, j: U32)
-        let tmp = self.get(i)
-        self.set(i, self.get(j))
-        self.set(j, tmp)
+Vec.swap(self: Vec[t], i: U32, j: U32)
+    let tmp = self.get(i)
+    self.set(i, self.get(j))
+    self.set(j, tmp)
 
-    iter(self): VecIter[t]
-        VecIter(
-            _vec = self,
-            _idx = 0,
-        )
+Vec.iter(self: Vec[t]): VecIter[t]
+    VecIter(
+        _vec = self,
+        _idx = 0,
+    )
 
-impl[t: Ord] Vec[t]:
-    sort(self)
-        if self.len() != 0:
-            _quicksort(self, 0, self.len() - 1)
+Vec.sort[t: Ord](self: Vec[t])
+    if self.len() != 0:
+        _quicksort(self, 0, self.len() - 1)
 
 _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32)
     if low >= high:
