@@ -236,8 +236,8 @@ pub struct FunSig {
     /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
     pub type_params: Context,
 
-    /// Whether the function has a `self` parameter.
-    pub self_: bool,
+    /// `self` parameter of the function.
+    pub self_: SelfParam,
 
     /// Parameters of the function.
     pub params: Vec<(Id, L<Type>)>,
@@ -251,6 +251,18 @@ pub struct FunSig {
 }
 
 #[derive(Debug, Clone)]
+pub enum SelfParam {
+    /// Function signature doesn't have a `self` type.
+    No,
+
+    /// Function signature has a `self` parameter, but without type signature.
+    Inferred,
+
+    /// Function signature has a `self` parameter with explicit type signature.
+    Explicit(L<Type>),
+}
+
+#[derive(Debug, Clone)]
 pub struct FunDecl {
     pub name: L<Id>,
     pub sig: FunSig,
@@ -259,7 +271,12 @@ pub struct FunDecl {
 
 impl FunDecl {
     pub fn num_params(&self) -> u32 {
-        self.sig.params.len() as u32 + if self.sig.self_ { 1 } else { 0 }
+        self.sig.params.len() as u32
+            + if !matches!(&self.sig.self_, SelfParam::No) {
+                1
+            } else {
+                0
+            }
     }
 }
 

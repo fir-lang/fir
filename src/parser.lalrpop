@@ -67,7 +67,6 @@ extern {
         "else" => Token { kind: TokenKind::Else, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "match" => Token { kind: TokenKind::Match, .. },
-        "self" => Token { kind: TokenKind::Self_, .. },
         "for" => Token { kind: TokenKind::For, .. },
         "while" => Token { kind: TokenKind::While, .. },
         "in" => Token { kind: TokenKind::In, .. },
@@ -297,29 +296,54 @@ FunDecl: L<FunDecl> = {
 }
 
 FunSig: (L<Id>, FunSig) = {
-    <name:LLowerId>
-            <type_params:Context>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
-            <ret:ReturnType>
-            =>
+    <l:@L> <name:LLowerId> <type_params:Context> "(" <params:Params> ")" <ret:ReturnType> => {
+        let mut self_: SelfParam = SelfParam::No;
+        let mut params_w_tys: Vec<(Id, L<Type>)> = Vec::with_capacity(params.len());
+        for (i, (param_id, param_ty)) in params.into_iter().enumerate() {
+            if param_id == "self" {
+                if i != 0 {
+                    panic!("{}:{}:{}: \"self\" argument needs to come first in the prameter list", module, l.line + 1, l.col + 1);
+                }
+                self_ = match param_ty {
+                    None => SelfParam::Inferred,
+                    Some(ty) => SelfParam::Explicit(ty),
+                };
+            } else {
+                match param_ty {
+                    None => {
+                        panic!("{}:{}:{}: Parameter {} needs a type signature", module, l.line + 1, l.col + 1, i);
+                    }
+                    Some(param_ty) => {
+                        params_w_tys.push((param_id, param_ty));
+                    }
+                }
+            }
+        }
         (name,
             FunSig {
                 type_params,
-                self_: self_.is_some(),
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                self_,
+                params: params_w_tys,
                 exceptions: ret.0,
                 return_ty: ret.1,
-            }),
+            })
+    },
 
     <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
         (name,
             FunSig {
                 type_params,
-                self_: false,
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: ret.0,
                 return_ty: ret.1,
             })
+}
+
+Params: Vec<(Id, Option<L<Type>>)> = {
+    <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> => {
+        params.into_iter().map(|(id, ty)| (id.smol_str(), ty)).collect()
+    },
 }
 
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
@@ -471,11 +495,12 @@ LInlineExpr: L<Expr> = {
 // Inline expressions can be made statements with a NEWLINE after them.
 InlineExpr: Expr = {
     #[precedence(level = "0")]
-    "self" =>
-        Expr::Self_,
-
     <id:LowerId> =>
-        Expr::Var(VarExpr { id: id.smol_str(), ty_args: vec![] }),
+        if id.smol_str() == "self" {
+            Expr::Self_
+        } else {
+            Expr::Var(VarExpr { id: id.smol_str(), ty_args: vec![] })
+        },
 
     <id:UpperId> =>
         Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
@@ -805,7 +830,7 @@ InlineExpr: Expr = {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 type_params: vec![],
-                self_: false,
+                self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
@@ -819,7 +844,7 @@ InlineExpr: Expr = {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 type_params: vec![],
-                self_: false,
+                self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
@@ -832,7 +857,7 @@ InlineExpr: Expr = {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 type_params: vec![],
-                self_: false,
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
                 return_ty: None,
@@ -845,7 +870,7 @@ InlineExpr: Expr = {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 type_params: vec![],
-                self_: false,
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
                 return_ty: None,

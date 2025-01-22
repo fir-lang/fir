@@ -610,7 +610,7 @@ fn call_ast_fun<W: Write>(
     let mut locals: Map<Id, u64> = Default::default();
 
     let mut arg_idx: usize = 0;
-    if fun.sig.self_ {
+    if !matches!(fun.sig.self_, ast::SelfParam::No) {
         locals.insert(Id::new("self"), args[0]);
         arg_idx += 1;
     }
