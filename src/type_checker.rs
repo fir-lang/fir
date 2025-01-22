@@ -1000,8 +1000,8 @@ fn collect_schemes(
                     ) {
                         panic!(
                             "{}: Trait method implementation of {} does not match the trait method type
-                            Trait method type:          {}
-                            Implementation method type: {}",
+                                Trait method type:          {}
+                                Implementation method type: {}",
                             loc_display(&item.loc),
                             fun_name,
                             trait_fun_scheme,
