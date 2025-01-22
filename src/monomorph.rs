@@ -134,27 +134,23 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
     }
 
     for (ty_id, funs) in associated {
-        pgm.push(ast::TopDecl::Impl(ast::L {
-            loc: ast::Loc::dummy(),
-            node: ast::ImplDecl {
-                context: vec![],
-                trait_: None,
-                ty: ast::L {
-                    loc: ast::Loc::dummy(),
-                    node: ast::Type::Named(ast::NamedType {
-                        name: ty_id,
-                        args: vec![],
-                    }),
-                },
-                items: funs
-                    .into_values()
-                    .map(|fun_decl| ast::L {
+        for (fun_id, fun_decl) in funs {
+            pgm.push(ast::TopDecl::Fun(ast::L {
+                loc: ast::Loc::dummy(),
+                node: ast::FunDecl {
+                    ty_name: Some(ast::L {
                         loc: ast::Loc::dummy(),
-                        node: ast::ImplDeclItem::Fun(fun_decl),
-                    })
-                    .collect(),
-            },
-        }))
+                        node: ty_id.clone(),
+                    }),
+                    name: ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: fun_id.clone(),
+                    },
+                    sig: fun_decl.sig,
+                    body: fun_decl.body,
+                },
+            }))
+        }
     }
 
     pgm
@@ -264,10 +260,11 @@ fn mono_top_fn(
     mono_pgm.top.insert(
         mono_fn_id.clone(),
         ast::FunDecl {
+            ty_name: None,
             name: fun_decl.name.set_node(mono_fn_id.clone()),
             sig: ast::FunSig {
                 type_params: vec![],
-                self_: fun_decl.sig.self_,
+                self_: fun_decl.sig.self_.clone(),
                 params,
                 return_ty,
                 exceptions: None,
@@ -633,12 +630,12 @@ fn mono_expr(
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
             assert!(sig.type_params.is_empty());
-            assert!(!sig.self_);
+            assert!(matches!(sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
             ast::Expr::Fn(ast::FnExpr {
                 sig: ast::FunSig {
                     type_params: vec![],
-                    self_: false,
+                    self_: ast::SelfParam::No,
                     params: sig
                         .params
                         .iter()
@@ -900,7 +897,7 @@ fn mono_assoc_fn(
         ty_map.insert(ty_param, mono_ty);
     }
 
-    if fun_decl.sig.self_ {
+    if !matches!(fun_decl.sig.self_, ast::SelfParam::No) {
         ty_map.insert(
             SmolStr::new("self"),
             ast::Type::Named(ast::NamedType {
@@ -932,10 +929,14 @@ fn mono_assoc_fn(
         .insert(
             mono_fn_id.clone(),
             ast::FunDecl {
+                ty_name: Some(ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: mono_ty_id.clone(),
+                }),
                 name: fun_decl.name.set_node(mono_fn_id.clone()),
                 sig: ast::FunSig {
                     type_params: vec![],
-                    self_: fun_decl.sig.self_,
+                    self_: fun_decl.sig.self_.clone(),
                     params,
                     return_ty,
                     exceptions: None,
