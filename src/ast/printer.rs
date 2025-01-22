@@ -323,7 +323,7 @@ impl FunSig {
             }
             SelfParam::Explicit(ty) => {
                 buffer.push_str("self: ");
-                ty.node.print(buffer);
+                ty.print(buffer);
                 if !self.params.is_empty() {
                     buffer.push_str(", ");
                 }

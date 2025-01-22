@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: f29e9af2bd7cc34226fd49342a8058ae56e0299b586cb3bc3b1dca66c78319db
+// sha3: 857086d3194941087844d3d0d094985a4bac0b38fdf0ba0424dd60262fbebb4f
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -41357,7 +41357,7 @@ fn __action39<'a>(
                 }
                 self_ = match param_ty {
                     None => SelfParam::Inferred,
-                    Some(ty) => SelfParam::Explicit(ty),
+                    Some(ty) => SelfParam::Explicit(ty.node),
                 };
             } else {
                 match param_ty {

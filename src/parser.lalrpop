@@ -309,7 +309,7 @@ FunSig: (Option<L<Id>>, L<Id>, FunSig) = {
                 }
                 self_ = match param_ty {
                     None => SelfParam::Inferred,
-                    Some(ty) => SelfParam::Explicit(ty),
+                    Some(ty) => SelfParam::Explicit(ty.node),
                 };
             } else {
                 match param_ty {

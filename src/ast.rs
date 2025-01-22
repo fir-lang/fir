@@ -259,7 +259,7 @@ pub enum SelfParam {
     Inferred,
 
     /// Function signature has a `self` parameter with explicit type signature.
-    Explicit(L<Type>),
+    Explicit(Type),
 }
 
 #[derive(Debug, Clone)]
