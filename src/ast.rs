@@ -637,15 +637,15 @@ pub struct TypeParam {
 /// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
 ///
 /// ```ignore
-/// impl[a] Vec[a]:
+/// impl[A] Vec[A]:
 ///     # An associated function.
-///     withCapacity(cap: U32): Vec[a] = ...
+///     fn withCapacity(cap: U32): Vec[A] = ...
 ///
 ///     # A method.
-///     push(self, elem: A) = ...
+///     fn push(self, elem: A) = ...
 ///
-/// impl[a: ToStr] ToStr for Vec[a]:
-///   toStr(self): Str = ...
+/// impl[A: ToStr] ToStr for Vec[A]:
+///   fn toStr(self): Str = ...
 /// ```
 #[derive(Debug, Clone)]
 pub struct ImplDecl {
