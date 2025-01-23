@@ -6,10 +6,10 @@ f1(): Result[[E1, ..r], ()]
 type X[t]:
     a: t
 
-X.f2(self: X[t], other: t): t
+X[t].f2(self, other: t): t
     self.a
 
-X.f3(self: X[t], other: t2): t2
+X[t].f3(self, other: t2): t2
     other
 
 trait Test[t]:

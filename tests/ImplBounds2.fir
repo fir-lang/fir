@@ -2,7 +2,7 @@ type A[t]:
     i: t
 
 
-A.test[t1: ToStr, t2: Eq](self: A[t1], t2: t2)
+A[t1: ToStr].test[t2: Eq](self, t2: t2)
     printStr(self.i.toStr())
     printStr((t2 == t2).toStr())
 

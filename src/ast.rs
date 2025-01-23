@@ -102,7 +102,7 @@ pub enum TopDecl {
     /// A type declaration: `type T = ...`.
     Type(L<TypeDecl>),
 
-    /// A function declaration: `f(...) = ...`.
+    /// A function declaration: `fn f(...) = ...`.
     Fun(L<FunDecl>),
 
     /// An import declaration.
@@ -236,8 +236,8 @@ pub struct FunSig {
     /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
     pub type_params: Context,
 
-    /// `self` parameter of the function.
-    pub self_: SelfParam,
+    /// Whether the function has a `self` parameter.
+    pub self_: bool,
 
     /// Parameters of the function.
     pub params: Vec<(Id, L<Type>)>,
@@ -251,41 +251,15 @@ pub struct FunSig {
 }
 
 #[derive(Debug, Clone)]
-pub enum SelfParam {
-    /// Function signature doesn't have a `self` type.
-    No,
-
-    /// Function signature has a `self` parameter, but without type signature.
-    Inferred,
-
-    /// Function signature has a `self` parameter with explicit type signature.
-    Explicit(Type),
-}
-
-#[derive(Debug, Clone)]
 pub struct FunDecl {
-    /// Only in top-level functions: if the function is an associated function, this is the name of
-    /// the type the function belongs.
-    pub ty_name: Option<L<Id>>,
-
-    /// Name of the function.
     pub name: L<Id>,
-
-    /// Type signature of the function.
     pub sig: FunSig,
-
-    /// Body of the function. Not available in `prim` functions.
     pub body: Option<Vec<L<Stmt>>>,
 }
 
 impl FunDecl {
     pub fn num_params(&self) -> u32 {
-        self.sig.params.len() as u32
-            + if !matches!(&self.sig.self_, SelfParam::No) {
-                1
-            } else {
-                0
-            }
+        self.sig.params.len() as u32 + if self.sig.self_ { 1 } else { 0 }
     }
 }
 
@@ -660,30 +634,37 @@ pub struct TypeParam {
     pub bounds: Vec<L<Type>>,
 }
 
-/// An `impl` block, implementing methods of a trait. Example:
+/// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
 ///
 /// ```ignore
+/// impl[a] Vec[a]:
+///     # An associated function.
+///     withCapacity(cap: U32): Vec[a] = ...
+///
+///     # A method.
+///     push(self, elem: A) = ...
+///
 /// impl[a: ToStr] ToStr for Vec[a]:
-///     toStr(self): Str = ...
+///   toStr(self): Str = ...
 /// ```
 #[derive(Debug, Clone)]
 pub struct ImplDecl {
-    /// Type parameters of the `impl` block.
+    /// Type parameters of the type being implemented, with bounds.
     ///
-    /// In the example, this is `[a: ToStr]`.
+    /// In the first example, this is `[A]`. In the second example: `[A: ToStr]`.
     pub context: Context,
 
     /// If the `impl` block is for a trait, the trait name.
     ///
-    /// In the example this is `ToStr`.
-    pub trait_: L<Id>,
+    /// In the first example this is `None`. In the second this is `Some(ToStr)`.
+    pub trait_: Option<L<Id>>,
 
     /// The implementing type.
     ///
-    /// In the example, this is `Vec[a]`.
+    /// In both of the examples this is `Vec[A]`.
     pub ty: L<Type>,
 
-    /// Methods and associated types.
+    /// Functions, methods, and associated types.
     pub items: Vec<L<ImplDeclItem>>,
 }
 

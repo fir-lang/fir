@@ -68,25 +68,13 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
                 assert!(old.is_none(), "BUG: Type declared multiple times");
             }
 
-            ast::TopDecl::Fun(fun_decl) => match &fun_decl.node.ty_name {
-                Some(ty_name) => {
-                    let old = associated
-                        .entry(ty_name.node.clone())
-                        .or_default()
-                        .insert(fun_decl.node.name.node.clone(), fun_decl.node);
-                    assert!(
-                        old.is_none(),
-                        "BUG: Associated function or method declared multiple times"
-                    );
-                }
-                None => {
-                    let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
-                    assert!(
-                        old.is_none(),
-                        "BUG: Top-level function declared multiple times"
-                    );
-                }
-            },
+            ast::TopDecl::Fun(fun_decl) => {
+                let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                assert!(
+                    old.is_none(),
+                    "BUG: Top-level function declared multiple times"
+                );
+            }
 
             ast::TopDecl::Impl(impl_decl) => {
                 let ty_id = match &impl_decl.node.ty.node {
@@ -146,23 +134,27 @@ fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
     }
 
     for (ty_id, funs) in associated {
-        for (fun_id, fun_decl) in funs {
-            pgm.push(ast::TopDecl::Fun(ast::L {
-                loc: ast::Loc::dummy(),
-                node: ast::FunDecl {
-                    ty_name: Some(ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ty_id.clone(),
+        pgm.push(ast::TopDecl::Impl(ast::L {
+            loc: ast::Loc::dummy(),
+            node: ast::ImplDecl {
+                context: vec![],
+                trait_: None,
+                ty: ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: ast::Type::Named(ast::NamedType {
+                        name: ty_id,
+                        args: vec![],
                     }),
-                    name: ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: fun_id.clone(),
-                    },
-                    sig: fun_decl.sig,
-                    body: fun_decl.body,
                 },
-            }))
-        }
+                items: funs
+                    .into_values()
+                    .map(|fun_decl| ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::ImplDeclItem::Fun(fun_decl),
+                    })
+                    .collect(),
+            },
+        }))
     }
 
     pgm
@@ -236,9 +228,6 @@ fn mono_top_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    // println!("mono_top_fn {}", fun_decl.name.node);
-    // println!("  ty_args = {:?}", ty_args);
-
     assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
 
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
@@ -275,11 +264,10 @@ fn mono_top_fn(
     mono_pgm.top.insert(
         mono_fn_id.clone(),
         ast::FunDecl {
-            ty_name: None,
             name: fun_decl.name.set_node(mono_fn_id.clone()),
             sig: ast::FunSig {
                 type_params: vec![],
-                self_: fun_decl.sig.self_.clone(),
+                self_: fun_decl.sig.self_,
                 params,
                 return_ty,
                 exceptions: None,
@@ -518,7 +506,7 @@ fn mono_expr(
                 &mono_ty_id,
                 fun_decl,
                 &assoc_fn_ty_map,
-                &mono_ty_args,
+                &mono_ty_args[ty_num_type_params..],
                 poly_pgm,
                 mono_pgm,
             );
@@ -645,12 +633,12 @@ fn mono_expr(
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
             assert!(sig.type_params.is_empty());
-            assert!(matches!(sig.self_, ast::SelfParam::No));
+            assert!(!sig.self_);
             assert_eq!(*idx, 0);
             ast::Expr::Fn(ast::FnExpr {
                 sig: ast::FunSig {
                     type_params: vec![],
-                    self_: ast::SelfParam::No,
+                    self_: false,
                     params: sig
                         .params
                         .iter()
@@ -891,22 +879,6 @@ fn mono_assoc_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
-    // println!("mono_assoc_fn {}.{}", mono_ty_id, fun_decl.name.node);
-    // println!(
-    //     "  fun ty args = {:?}",
-    //     fun_decl
-    //         .sig
-    //         .type_params
-    //         .iter()
-    //         .map(|ty| (
-    //             &ty.id.node,
-    //             ty.bounds.iter().map(|ty| &ty.node).collect::<Vec<_>>()
-    //         ))
-    //         .collect::<Vec<_>>()
-    // );
-    // println!("  ty_map = {:?}", ty_map);
-    // println!("  ty_args = {:?}", ty_args);
-
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     if mono_pgm
@@ -928,7 +900,7 @@ fn mono_assoc_fn(
         ty_map.insert(ty_param, mono_ty);
     }
 
-    if !matches!(fun_decl.sig.self_, ast::SelfParam::No) {
+    if fun_decl.sig.self_ {
         ty_map.insert(
             SmolStr::new("self"),
             ast::Type::Named(ast::NamedType {
@@ -960,14 +932,10 @@ fn mono_assoc_fn(
         .insert(
             mono_fn_id.clone(),
             ast::FunDecl {
-                ty_name: Some(ast::L {
-                    loc: ast::Loc::dummy(),
-                    node: mono_ty_id.clone(),
-                }),
                 name: fun_decl.name.set_node(mono_fn_id.clone()),
                 sig: ast::FunSig {
                     type_params: vec![],
-                    self_: fun_decl.sig.self_.clone(),
+                    self_: fun_decl.sig.self_,
                     params,
                     return_ty,
                     exceptions: None,
