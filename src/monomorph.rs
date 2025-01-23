@@ -236,6 +236,9 @@ fn mono_top_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
+    // println!("mono_top_fn {}", fun_decl.name.node);
+    // println!("  ty_args = {:?}", ty_args);
+
     assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
 
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
@@ -515,7 +518,7 @@ fn mono_expr(
                 &mono_ty_id,
                 fun_decl,
                 &assoc_fn_ty_map,
-                &mono_ty_args[ty_num_type_params..],
+                &mono_ty_args,
                 poly_pgm,
                 mono_pgm,
             );
@@ -888,6 +891,22 @@ fn mono_assoc_fn(
     poly_pgm: &PgmGraph,
     mono_pgm: &mut PgmGraph,
 ) -> Id {
+    // println!("mono_assoc_fn {}.{}", mono_ty_id, fun_decl.name.node);
+    // println!(
+    //     "  fun ty args = {:?}",
+    //     fun_decl
+    //         .sig
+    //         .type_params
+    //         .iter()
+    //         .map(|ty| (
+    //             &ty.id.node,
+    //             ty.bounds.iter().map(|ty| &ty.node).collect::<Vec<_>>()
+    //         ))
+    //         .collect::<Vec<_>>()
+    // );
+    // println!("  ty_map = {:?}", ty_map);
+    // println!("  ty_args = {:?}", ty_args);
+
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     if mono_pgm

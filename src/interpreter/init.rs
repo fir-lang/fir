@@ -296,14 +296,29 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                     continue;
                 }
 
-                let idx = top_level_funs.len() as u64;
-                top_level_funs.insert(
-                    fun_decl.node.name.node.clone(),
-                    Fun {
-                        idx,
-                        kind: FunKind::Source(fun_decl.node),
-                    },
-                );
+                match &fun_decl.node.ty_name {
+                    Some(ty_name) => {
+                        let fun_map = associated_funs.entry(ty_name.node.clone()).or_default();
+                        let fun_idx = fun_map.len();
+                        fun_map.insert(
+                            fun_decl.node.name.node.clone(),
+                            Fun {
+                                idx: fun_idx as u64,
+                                kind: FunKind::Source(fun_decl.node),
+                            },
+                        );
+                    }
+                    None => {
+                        let idx = top_level_funs.len() as u64;
+                        top_level_funs.insert(
+                            fun_decl.node.name.node.clone(),
+                            Fun {
+                                idx,
+                                kind: FunKind::Source(fun_decl.node),
+                            },
+                        );
+                    }
+                }
             }
 
             ast::TopDecl::Impl(impl_decl) => {
