@@ -12,11 +12,10 @@ type Option[t]:
     Some(t)
     None
 
-impl[t] Array[t]:
-    prim new(len: I32): Array[t]
-    prim len(self): I32
-    prim get(self, idx: I32): t
-    prim set(self, idx: I32, elem: t): t
+prim Array[t].new(len: I32): Array[t]
+prim Array[t].len(self): I32
+prim Array[t].get(self, idx: I32): t
+prim Array[t].set(self, idx: I32, elem: t)
 
 type ArrayIter[t]:
     array: Array[t]

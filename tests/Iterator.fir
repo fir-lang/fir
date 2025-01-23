@@ -27,9 +27,8 @@ trait Iterator[t]:
 
 prim type Array[t]
 
-impl[t] Array[t]:
-    prim len(self): I32
-    prim get(self, idx: I32): t
+prim Array[t].len(self): I32
+prim Array[t].get(self, idx: I32): t
 
 type ArrayIter[t]:
     array: Array[t]

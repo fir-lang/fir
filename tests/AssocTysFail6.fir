@@ -2,8 +2,7 @@ prim type I32
 
 prim type Str
 
-impl I32:
-    prim toStr(self): Str
+prim I32.toStr(self): Str
 
 trait Test[t]:
     type Elem
@@ -22,4 +21,4 @@ main()
     ()
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/AssocTysFail6.fir:21:5: Unable to unify types Str and I32
+# expected stderr: tests/AssocTysFail6.fir:20:5: Unable to unify types Str and I32

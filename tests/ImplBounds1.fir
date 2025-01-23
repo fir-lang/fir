@@ -1,9 +1,8 @@
 type A[t]:
     i: t
 
-impl[t1: ToStr] A[t1]:
-    test(self)
-        printStr(self.i.toStr())
+A[t1: ToStr].test(self)
+    printStr(self.i.toStr())
 
 main() = A(i = 123i32).test()
 
