@@ -21,4 +21,4 @@ main()
     ()
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/AssocTysFail6.fir:21:5: Unable to unify types Str and I32
+# expected stderr: tests/AssocTysFail6.fir:20:5: Unable to unify types Str and I32
