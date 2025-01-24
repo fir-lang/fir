@@ -507,11 +507,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             };
 
         // Check that associated types are defined only once.
-        let mut defined_assoc_tys: Set<Id> = Default::default();
+        let mut defined_assoc_tys: Map<Id, ast::Type> = Default::default();
         for item in &impl_decl.items {
             if let ast::ImplDeclItem::AssocTy(impl_assoc_ty) = &item.node {
-                let new = defined_assoc_tys.insert(impl_assoc_ty.name.clone());
-                if !new {
+                let old = defined_assoc_tys
+                    .insert(impl_assoc_ty.name.clone(), impl_assoc_ty.ty.node.clone());
+                if old.is_some() {
                     panic!(
                         "{}: Associated type {} is defined multiple times",
                         loc_display(&item.loc),
@@ -523,8 +524,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         // Check that all associated types of the trait are implemented, and no extra associated
         // types are defined.
-        if &defined_assoc_tys != trait_assoc_tys {
-            let extras: Set<&Id> = defined_assoc_tys.difference(trait_assoc_tys).collect();
+        let defined_assoc_tys_: Set<Id> = defined_assoc_tys.keys().cloned().collect();
+        if &defined_assoc_tys_ != trait_assoc_tys {
+            let extras: Set<&Id> = defined_assoc_tys_.difference(trait_assoc_tys).collect();
             if !extras.is_empty() {
                 panic!(
                     "{}: Extra associated types defined: {:?}",
@@ -533,7 +535,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 );
             }
 
-            let missing: Set<&Id> = trait_assoc_tys.difference(&defined_assoc_tys).collect();
+            let missing: Set<&Id> = trait_assoc_tys.difference(&defined_assoc_tys_).collect();
             if !missing.is_empty() {
                 panic!(
                     "{}: Missing associated types: {:?}",
@@ -543,7 +545,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
         }
 
-        // Type parameter of the trait, e.g. `T` in `trait Debug[T]: ...`.
+        // Type parameter of the trait, e.g. `t` in `trait Debug[t]: ...`.
         let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
 
         // Type constructor of the type implementing the trait.
@@ -571,30 +573,33 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
             if method_decl.fun_decl.node.body.is_some() {
                 let mut fun_decl = method_decl.fun_decl.clone();
+
+                let mut substs: Map<Id, ast::Type> = Default::default();
+                substs.insert(trait_ty_param.clone(), impl_decl.ty.node.clone());
+                substs.extend(defined_assoc_tys.clone());
+
                 // TODO: For now we only replace trait type param with self in the signature, but
                 // we should do it in the entire declaration.
+
                 fun_decl.node.sig.params = fun_decl
                     .node
                     .sig
                     .params
                     .into_iter()
-                    .map(|(param, param_ty)| {
-                        (
-                            param,
-                            param_ty.map(|ty| ty.subst_var(&trait_ty_param, &impl_decl.ty.node)),
-                        )
-                    })
+                    .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
                     .collect();
 
-                fun_decl.node.sig.exceptions =
-                    fun_decl.node.sig.exceptions.map(|exc| {
-                        exc.map(|exc| exc.subst_var(&trait_ty_param, &impl_decl.ty.node))
-                    });
+                fun_decl.node.sig.exceptions = fun_decl
+                    .node
+                    .sig
+                    .exceptions
+                    .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
 
-                fun_decl.node.sig.return_ty =
-                    fun_decl.node.sig.return_ty.map(|ret| {
-                        ret.map(|ret| ret.subst_var(&trait_ty_param, &impl_decl.ty.node))
-                    });
+                fun_decl.node.sig.return_ty = fun_decl
+                    .node
+                    .sig
+                    .return_ty
+                    .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
 
                 impl_decl.items.push(fun_decl.map(ast::ImplDeclItem::Fun));
             }

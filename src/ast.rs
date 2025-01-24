@@ -2,6 +2,7 @@
 
 pub mod printer;
 
+use crate::collections::Map;
 use crate::interpolation::StringPart;
 pub use crate::token::IntKind;
 use crate::type_checker::Ty;
@@ -685,10 +686,20 @@ pub struct AssocTyDecl {
 
 impl Type {
     /// Substitute star-kinded `ty` for `var` in `self`.
-    pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
+    pub fn subst_id(&self, var: &Id, ty: &Type) -> Type {
+        self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
+    }
+
+    pub fn subst_ids(&self, substs: &Map<Id, Type>) -> Type {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
-                name: name.clone(),
+                name: match substs.get(name) {
+                    Some(ty) => {
+                        assert!(args.is_empty());
+                        return ty.clone();
+                    }
+                    None => name.clone(),
+                },
                 args: args
                     .iter()
                     .map(
@@ -697,26 +708,23 @@ impl Type {
                              node: (name, ty_),
                          }| L {
                             loc: loc.clone(),
-                            node: (name.clone(), ty_.map_as_ref(|ty__| ty__.subst_var(var, ty))),
+                            node: (name.clone(), ty_.map_as_ref(|ty__| ty__.subst_ids(substs))),
                         },
                     )
                     .collect(),
             }),
 
-            Type::Var(var_) => {
-                if var == var_ {
-                    ty.clone()
-                } else {
-                    Type::Var(var_.clone())
-                }
-            }
+            Type::Var(var_) => match substs.get(var_) {
+                Some(ty) => ty.clone(),
+                None => Type::Var(var_.clone()),
+            },
 
             Type::Record { fields, extension } => Type::Record {
                 fields: fields
                     .iter()
                     .map(|Named { name, node }| Named {
                         name: name.clone(),
-                        node: node.subst_var(var, ty),
+                        node: node.subst_ids(substs),
                     })
                     .collect(),
                 // NB. This does not substitute row types.
@@ -732,7 +740,7 @@ impl Type {
                             .iter()
                             .map(|Named { name, node }| Named {
                                 name: name.clone(),
-                                node: node.subst_var(var, ty),
+                                node: node.subst_ids(substs),
                             })
                             .collect(),
                     })
@@ -748,14 +756,14 @@ impl Type {
             }) => Type::Fn(FnType {
                 args: args
                     .iter()
-                    .map(|arg| arg.map_as_ref(|arg| arg.subst_var(var, ty)))
+                    .map(|arg| arg.map_as_ref(|arg| arg.subst_ids(substs)))
                     .collect(),
                 ret: ret
                     .as_ref()
-                    .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_var(var, ty)))),
+                    .map(|ret| ret.map_as_ref(|ret| Box::new(ret.subst_ids(substs)))),
                 exceptions: exceptions
                     .as_ref()
-                    .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_var(var, ty)))),
+                    .map(|exn| exn.map_as_ref(|exn| Box::new(exn.subst_ids(substs)))),
             }),
         }
     }

@@ -3,6 +3,9 @@ trait Iterator[t]:
 
     next(self): Option[Item]
 
+    map(self, f: Fn(Item): b): Map[t, Item, b]
+        Map(iter = self, f = f)
+
 trait Step[t]:
     next(self): t
 
@@ -41,3 +44,15 @@ impl[t: Step + Ord] Iterator for InclusiveRangeIterator[t]:
             let current = self.current
             self.current = self.current.next()
             Option.Some(current)
+
+type Map[i, a, b]:
+    iter: i
+    f: Fn(a): b
+
+impl[a, b, i: Iterator[Item = a]] Iterator for Map[i, a, b]:
+    type Item = b
+
+    next(self): Option[b]
+        match self.iter.next():
+            Option.None: Option.None
+            Option.Some(a): Option.Some(self.f(a))
