@@ -686,7 +686,7 @@ pub struct AssocTyDecl {
 impl Type {
     /// Substitute star-kinded `ty` for `var` in `self`.
     pub fn subst_var(&self, var: &Id, ty: &Type) -> Type {
-        match ty {
+        match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: name.clone(),
                 args: args
