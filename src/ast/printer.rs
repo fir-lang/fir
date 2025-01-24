@@ -886,3 +886,117 @@ fn expr_parens(expr: &Expr) -> bool {
 }
 
 const INDENTS: &str = "                                                  ";
+
+use std::fmt::Display;
+
+impl Display for TopDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for TypeDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for TypeDeclRhs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for FunDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for ImportDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s);
+        f.write_str(&s)
+    }
+}
+
+impl Display for TraitDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for ImplDecl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s);
+        f.write_str(&s)
+    }
+}
+
+impl Display for FunSig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&SmolStr::new(""), &mut s);
+        f.write_str(&s)
+    }
+}
+
+impl Display for Stmt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for Pat {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s);
+        f.write_str(&s)
+    }
+}
+
+impl Display for TraitDeclItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
+
+impl Display for ImplDeclItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = String::new();
+        self.print(&mut s, 0);
+        f.write_str(&s)
+    }
+}
