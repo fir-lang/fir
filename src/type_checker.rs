@@ -331,10 +331,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     .map(|bound| convert_bound(&tys, bound))
                     .collect();
 
-                // E.g. `T` in `trait Debug[T]: ...`.
+                // E.g. `t` in `trait Debug[t]: ...`.
                 let self_ty_id: Id = trait_decl.node.ty.id.node.clone();
 
-                // The `QVar` for `T` in the example. `T` will be mapped to this when converting
+                // The `QVar` for `t` in the example. `t` will be mapped to this when converting
                 // types.
                 let self_ty = Ty::QVar(self_ty_id.clone());
 
@@ -354,23 +354,11 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     tys.insert_var(
                         assoc_ty.clone(),
                         Ty::AssocTySelect {
-                            ty: Box::new(Ty::Con("Self".into())),
+                            ty: Box::new(self_ty.clone()),
                             assoc_ty: assoc_ty.clone(),
                         },
                     );
                 }
-
-                // Bind `Self`.
-                tys.insert_con(
-                    "Self".into(),
-                    TyCon {
-                        id: "Self".into(),
-                        ty_params: vec![],
-                        assoc_tys: Default::default(),
-                        details: TyConDetails::Synonym(self_ty.clone()),
-                    },
-                );
-                tys.insert_var("Self".into(), Ty::Con("Self".into()));
 
                 let methods: Map<Id, TraitMethod> = trait_decl
                     .node
@@ -392,10 +380,6 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                                 TyVarConversion::ToQVar,
                                 &item.loc,
                             );
-
-                            if fun.sig.self_ {
-                                tys.insert_var(SmolStr::new_static("self"), self_ty.clone());
-                            }
 
                             let mut arg_tys: Vec<Ty> = fun
                                 .sig
@@ -780,16 +764,6 @@ fn collect_schemes(
                 let self_ty: Ty =
                     convert_ast_ty(tys, &impl_decl.node.ty.node, &impl_decl.node.ty.loc);
 
-                tys.insert_con(
-                    "Self".into(),
-                    TyCon {
-                        id: "Self".into(),
-                        ty_params: vec![],
-                        assoc_tys: Default::default(),
-                        details: TyConDetails::Synonym(self_ty.clone()),
-                    },
-                );
-
                 let (self_ty_con_id, _) = self_ty.con(tys.cons()).unwrap();
 
                 // If not in a trait impl block, make sure `self` is not a trait.
@@ -826,10 +800,6 @@ fn collect_schemes(
                         TyVarConversion::ToQVar,
                         &item.loc,
                     );
-
-                    if sig.self_ {
-                        tys.insert_var(SmolStr::new_static("self"), self_ty.clone());
-                    }
 
                     let mut arg_tys: Vec<Ty> = sig
                         .params
@@ -930,11 +900,10 @@ fn collect_schemes(
 
                         let trait_ty_param = &trait_ty_con.ty_params[0].0;
 
-                        // Type of the method in the trait declaration, with `self` type substituted for the
+                        // Type of the method in the trait declaration, with the self type substituted for the
                         // type implementing the trait.
-                        let mut trait_fun_scheme = trait_fun_scheme
-                            .subst(trait_ty_param, &self_ty, &item.loc)
-                            .subst_self(&self_ty);
+                        let mut trait_fun_scheme =
+                            trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
 
                         // Also add quantified variables of `impl`.
                         trait_fun_scheme
@@ -1233,16 +1202,6 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                     )
                 })
                 .clone();
-
-            tys.tys.insert_con(
-                "Self".into(),
-                TyCon {
-                    id: "Self".into(),
-                    ty_params: vec![],
-                    assoc_tys: Default::default(),
-                    details: TyConDetails::Synonym(self_ty.clone()),
-                },
-            );
 
             // Check method bodies.
             for item in &mut impl_.node.items {
