@@ -766,8 +766,8 @@ impl Ty {
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
             },
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.subst(var, ty)),
+            Ty::AssocTySelect { ty: ty_, assoc_ty } => Ty::AssocTySelect {
+                ty: Box::new(ty_.subst(var, ty)),
                 assoc_ty: assoc_ty.clone(),
             },
         }
