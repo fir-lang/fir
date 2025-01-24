@@ -586,6 +586,16 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     })
                     .collect();
 
+                fun_decl.node.sig.exceptions =
+                    fun_decl.node.sig.exceptions.map(|exc| {
+                        exc.map(|exc| exc.subst_var(&trait_ty_param, &impl_decl.ty.node))
+                    });
+
+                fun_decl.node.sig.return_ty =
+                    fun_decl.node.sig.return_ty.map(|ret| {
+                        ret.map(|ret| ret.subst_var(&trait_ty_param, &impl_decl.ty.node))
+                    });
+
                 impl_decl.items.push(fun_decl.map(ast::ImplDeclItem::Fun));
             }
         }

@@ -723,7 +723,23 @@ impl Type {
                 extension: extension.clone(),
             },
 
-            Type::Variant { .. } => todo!(),
+            Type::Variant { alts, extension } => Type::Variant {
+                alts: alts
+                    .iter()
+                    .map(|VariantAlt { con, fields }| VariantAlt {
+                        con: con.clone(),
+                        fields: fields
+                            .iter()
+                            .map(|Named { name, node }| Named {
+                                name: name.clone(),
+                                node: node.subst_var(var, ty),
+                            })
+                            .collect(),
+                    })
+                    .collect(),
+                // NB. This does not substitute row types.
+                extension: extension.clone(),
+            },
 
             Type::Fn(FnType {
                 args,
