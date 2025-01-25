@@ -1373,46 +1373,18 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             }
         }
 
-        /*
-        Ty::Record { fields, extension } => {
-            assert!(extension.is_none(), "{:?}", extension);
-            ast::Type::Record {
-                fields: fields
-                    .iter()
-                    .map(|(field_id, field_ty)| ast::Named {
-                        name: Some(field_id.clone()),
-                        node: ty_to_ast(field_ty, ty_map),
-                    })
-                    .collect(),
-                extension: None,
-            }
-        }
-
-        Ty::Variant { cons, extension } => {
-            assert!(extension.is_none(), "{:?}", extension);
-            ast::Type::Variant {
-                alts: cons
-                    .iter()
-                    .map(|(con, args)| ast::VariantAlt {
-                        con: con.clone(),
-                        fields: args
-                            .iter()
-                            .map(|arg| ast::Named {
-                                name: None,
-                                node: ty_to_ast(arg, ty_map),
-                            })
-                            .collect(),
-                    })
-                    .collect(),
-                extension: None,
-            }
-        }
-        */
-        Ty::QVar(_var) => panic!(),
-
         Ty::Fun { .. } => todo!(),
 
-        Ty::AssocTySelect { ty: _, assoc_ty: _ } => todo!(),
+        Ty::QVar(var) => {
+            // We never create a QVar from the AST types, and type arguments to poly functions
+            // should be instantiated types. So we should never see a QVAr.
+            panic!("QVar {} in monomorphiser", var)
+        }
+
+        Ty::AssocTySelect { ty, assoc_ty } => {
+            // Associated types should've been normalized away.
+            panic!("Associated type {}.{} in monomorphiser", ty, assoc_ty)
+        }
     }
 }
 
