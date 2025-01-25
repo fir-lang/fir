@@ -39,6 +39,14 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
         }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+            normalize_pat(&mut pat.node, cons);
+            normalize_expr(&mut cond.node, cons);
+            for stmt in body {
+                normalize_instantiation_types(&mut stmt.node, cons);
+            }
+        }
     }
 }
 

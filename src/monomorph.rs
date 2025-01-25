@@ -359,6 +359,14 @@ fn mono_stmt(
             cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
             body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
         }),
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+            ast::Stmt::WhileLet(ast::WhileLetStmt {
+                pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
+                cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
+                body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+            })
+        }
     }
 }
 

@@ -278,6 +278,14 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
                 visit_stmt(&stmt.node, records, variants);
             }
         }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+            visit_pat(&pat.node, records, variants);
+            visit_expr(&cond.node, records, variants);
+            for stmt in body {
+                visit_stmt(&stmt.node, records, variants);
+            }
+        }
     }
 }
 

@@ -898,6 +898,21 @@ fn exec<W: Write>(
                 }
             },
 
+            ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => loop {
+                let val = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
+                match try_bind_pat(pgm, heap, pat, val) {
+                    Some(binds) => locals.extend(binds.into_iter()),
+                    None => break 0, // FIXME: Return unit
+                }
+                match exec(w, pgm, heap, locals, body) {
+                    ControlFlow::Val(_val) => {}
+                    ControlFlow::Ret(val) => return ControlFlow::Ret(val),
+                    ControlFlow::Break => break 0,
+                    ControlFlow::Continue => continue,
+                    ControlFlow::Unwind(val) => return ControlFlow::Unwind(val),
+                }
+            },
+
             ast::Stmt::For(ast::ForStmt {
                 var,
                 ty: _,

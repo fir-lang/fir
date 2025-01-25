@@ -235,18 +235,11 @@ impl Iterator for Lines:
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 
-        while Bool.True:
-            match charIdxIter.next():
-                Option.Some((char = '\n', idx = idx)):
-                    let substr = self._str.substr(lineStart, self._idx + idx)
-                    self._idx += idx + 1 # continue with the next char
-                    return Option.Some(substr)
-
-                Option.Some(_):
-                    ()
-
-                Option.None:
-                    break
+        while let Option.Some((char = char, idx = idx)) = charIdxIter.next():
+            if char == '\n':
+                let substr = self._str.substr(lineStart, self._idx + idx)
+                self._idx += idx + 1 # continue with the next char
+                return Option.Some(substr)
 
         let lineEnd = self._str.len()
         self._idx = lineEnd

@@ -327,5 +327,35 @@ fn check_stmt(
                 &stmt.loc,
             )
         }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+            tc_state.env.enter();
+            let cond_ty = check_expr(tc_state, cond, None, level, loop_depth);
+            tc_state.env.exit();
+
+            let pat_ty = check_pat(tc_state, pat, level);
+
+            unify(
+                &pat_ty,
+                &cond_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
+
+            tc_state.env.enter();
+            check_stmts(tc_state, body, None, level, loop_depth + 1);
+            tc_state.env.exit();
+
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
+        }
     }
 }

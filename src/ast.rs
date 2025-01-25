@@ -272,6 +272,7 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
+    WhileLet(WhileLetStmt),
     Break,
     Continue,
 }
@@ -380,6 +381,13 @@ pub struct ForStmt {
 
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
+    pub cond: L<Expr>,
+    pub body: Vec<L<Stmt>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct WhileLetStmt {
+    pub pat: L<Pat>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }

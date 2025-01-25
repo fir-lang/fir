@@ -130,6 +130,18 @@ fn visit_stmt(
             local_vars.exit();
         }
 
+        ast::Stmt::WhileLet(ast::WhileLetStmt { pat: _, cond, body }) => {
+            local_vars.enter();
+            visit_expr(&mut cond.node, closures, top_vars, local_vars, free_vars);
+            local_vars.exit();
+
+            local_vars.enter();
+            for stmt in body.iter_mut() {
+                visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+            }
+            local_vars.exit();
+        }
+
         ast::Stmt::Break | ast::Stmt::Continue => {}
     }
 }

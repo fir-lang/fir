@@ -578,6 +578,13 @@ Stmt: Stmt = {
             cond,
             body:statements,
         }),
+
+    "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+        Stmt::WhileLet(WhileLetStmt {
+            pat,
+            cond,
+            body:statements,
+        }),
 }
 
 Alts: Vec<Alt> = {
