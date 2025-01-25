@@ -914,7 +914,7 @@ fn exec<W: Write>(
             },
 
             ast::Stmt::For(ast::ForStmt {
-                var,
+                pat,
                 ty: _,
                 expr,
                 expr_ty: _,
@@ -965,24 +965,32 @@ fn exec<W: Write>(
                     }
 
                     let value = heap[next_item_option + 1];
-                    locals.insert(var.clone(), value);
-
+                    let binds = try_bind_pat(pgm, heap, pat, value).unwrap_or_else(|| {
+                        panic!(
+                            "{}: For loop pattern failed to match item",
+                            loc_display(&pat.loc)
+                        )
+                    });
+                    locals.extend(binds.clone());
                     match exec(w, pgm, heap, locals, body) {
                         ControlFlow::Val(_) => {}
                         ControlFlow::Ret(val) => {
-                            locals.remove(var);
+                            for var in binds.keys() {
+                                locals.remove(var);
+                            }
                             return ControlFlow::Ret(val);
                         }
                         ControlFlow::Break => break,
                         ControlFlow::Continue => continue,
                         ControlFlow::Unwind(val) => {
-                            locals.remove(var);
+                            for var in binds.keys() {
+                                locals.remove(var);
+                            }
                             return ControlFlow::Unwind(val);
                         }
                     }
                 }
 
-                locals.remove(var);
                 0
             }
         };

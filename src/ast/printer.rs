@@ -382,14 +382,14 @@ impl Stmt {
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
             Stmt::For(ForStmt {
-                var,
+                pat,
                 ty,
                 expr,
                 expr_ty: _,
                 body,
             }) => {
                 buffer.push_str("for ");
-                buffer.push_str(var);
+                pat.node.print(buffer);
                 assert!(ty.is_none()); // TODO
                 buffer.push_str(" in ");
                 expr.node.print(buffer, 0);

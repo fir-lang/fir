@@ -257,7 +257,7 @@ fn check_stmt(
         ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_depth),
 
         ast::Stmt::For(ast::ForStmt {
-            var,
+            pat,
             ty,
             expr,
             expr_ty,
@@ -302,7 +302,17 @@ fn check_stmt(
             ));
 
             tc_state.env.enter();
-            tc_state.env.insert(var.clone(), item_ty);
+
+            let pat_ty = check_pat(tc_state, pat, level);
+            unify(
+                &pat_ty,
+                &item_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
+
             check_stmts(tc_state, body, None, level, loop_depth + 1);
             tc_state.env.exit();
             unify_expected_ty(

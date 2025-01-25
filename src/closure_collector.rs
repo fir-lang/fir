@@ -106,7 +106,7 @@ fn visit_stmt(
         }
 
         ast::Stmt::For(ast::ForStmt {
-            var,
+            pat,
             ty: _,
             expr,
             expr_ty: _,
@@ -114,7 +114,7 @@ fn visit_stmt(
         }) => {
             visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
             local_vars.enter();
-            local_vars.insert(var.clone());
+            bind_pat_binders(&pat.node, local_vars);
             for stmt in body {
                 visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
             }

@@ -257,12 +257,13 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
         ast::Stmt::Expr(expr) => visit_expr(&expr.node, records, variants),
 
         ast::Stmt::For(ast::ForStmt {
-            var: _,
+            pat,
             ty,
             expr,
             expr_ty: _,
             body,
         }) => {
+            visit_pat(&pat.node, records, variants);
             if let Some(ty) = ty {
                 visit_ty(ty, records, variants);
             }

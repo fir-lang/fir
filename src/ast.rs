@@ -372,7 +372,7 @@ pub enum AssignOp {
 
 #[derive(Debug, Clone)]
 pub struct ForStmt {
-    pub var: Id,
+    pub pat: L<Pat>,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
     pub expr_ty: Option<Ty>, // filled in by the type checker

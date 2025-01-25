@@ -564,9 +564,9 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
         Stmt::For(ForStmt {
-            var: id.smol_str(),
+            pat,
             ty: None,
             expr,
             expr_ty: None,

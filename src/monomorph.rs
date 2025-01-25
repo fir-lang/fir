@@ -315,7 +315,7 @@ fn mono_stmt(
         ast::Stmt::Expr(expr) => ast::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
 
         ast::Stmt::For(ast::ForStmt {
-            var,
+            pat,
             ty,
             expr,
             expr_ty,
@@ -345,7 +345,7 @@ fn mono_stmt(
             );
 
             ast::Stmt::For(ast::ForStmt {
-                var: var.clone(),
+                pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
                 ty: ty
                     .as_ref()
                     .map(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)),

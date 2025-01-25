@@ -20,12 +20,13 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         ast::Stmt::Expr(expr) => normalize_expr(&mut expr.node, cons),
 
         ast::Stmt::For(ast::ForStmt {
-            var: _,
+            pat,
             ty: _,
             expr,
             expr_ty,
             body,
         }) => {
+            normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut expr.node, cons);
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
