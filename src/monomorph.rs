@@ -296,9 +296,15 @@ fn mono_stmt(
     mono_pgm: &mut PgmGraph,
 ) -> ast::Stmt {
     match stmt {
-        ast::Stmt::Break => ast::Stmt::Break,
+        ast::Stmt::Break { label, level } => ast::Stmt::Break {
+            label: label.clone(),
+            level: *level,
+        },
 
-        ast::Stmt::Continue => ast::Stmt::Continue,
+        ast::Stmt::Continue { label, level } => ast::Stmt::Continue {
+            label: label.clone(),
+            level: *level,
+        },
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => ast::Stmt::Let(ast::LetStmt {
             lhs: mono_l_pat(lhs, ty_map, poly_pgm, mono_pgm),
@@ -315,6 +321,7 @@ fn mono_stmt(
         ast::Stmt::Expr(expr) => ast::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
 
         ast::Stmt::For(ast::ForStmt {
+            label,
             pat,
             ty,
             expr,
@@ -345,6 +352,7 @@ fn mono_stmt(
             );
 
             ast::Stmt::For(ast::ForStmt {
+                label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
                 ty: ty
                     .as_ref()
@@ -355,18 +363,25 @@ fn mono_stmt(
             })
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => ast::Stmt::While(ast::WhileStmt {
-            cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
-            body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
-        }),
-
-        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
-            ast::Stmt::WhileLet(ast::WhileLetStmt {
-                pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
+        ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
+            ast::Stmt::While(ast::WhileStmt {
+                label: label.clone(),
                 cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
             })
         }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label,
+            pat,
+            cond,
+            body,
+        }) => ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label: label.clone(),
+            pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
+            cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
+            body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+        }),
     }
 }
 

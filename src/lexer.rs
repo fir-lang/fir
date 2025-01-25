@@ -101,6 +101,8 @@ lexgen::lexer! {
         $upper_id = TokenKind::UpperId,
         ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
+        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')+ = TokenKind::Label,
+
         // Literals
         '"' => |lexer| {
             lexer.switch(LexerRule::String)

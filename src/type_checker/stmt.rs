@@ -1,4 +1,4 @@
-use crate::ast::{self, AssignOp};
+use crate::ast::{self, AssignOp, Id};
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};
 use crate::type_checker::pat::check_pat;
@@ -13,7 +13,7 @@ pub(super) fn check_stmts(
     stmts: &mut [ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
     level: u32,
-    loop_depth: u32,
+    loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -24,7 +24,7 @@ pub(super) fn check_stmts(
             stmt,
             if last { expected_ty } else { None },
             level,
-            loop_depth,
+            loop_stack,
         );
         if last {
             return stmt_ty;
@@ -39,16 +39,42 @@ fn check_stmt(
     stmt: &mut ast::L<ast::Stmt>,
     expected_ty: Option<&Ty>,
     level: u32,
-    loop_depth: u32,
+    loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     match &mut stmt.node {
-        ast::Stmt::Break | ast::Stmt::Continue => {
-            if loop_depth == 0 {
+        ast::Stmt::Break {
+            label,
+            level: loop_level,
+        }
+        | ast::Stmt::Continue {
+            label,
+            level: loop_level,
+        } => {
+            assert_eq!(*loop_level, 0);
+
+            if loop_stack.is_empty() {
                 panic!(
                     "{}: `break` or `continue` statement not inside a loop",
                     loc_display(&stmt.loc)
                 );
             }
+
+            if let Some(label) = label {
+                match loop_stack
+                    .iter()
+                    .rev()
+                    .enumerate()
+                    .find(|id| id.1.as_ref() == Some(label))
+                {
+                    Some((depth, _)) => {
+                        *loop_level = depth as u32;
+                    }
+                    None => {
+                        panic!("{}: no loop with label {}", loc_display(&stmt.loc), label);
+                    }
+                }
+            }
+
             unify_expected_ty(
                 Ty::unit(),
                 expected_ty,
@@ -70,7 +96,7 @@ fn check_stmt(
                 rhs,
                 pat_expected_ty.as_ref(),
                 level + 1,
-                loop_depth,
+                loop_stack,
             );
             tc_state.env.exit();
 
@@ -105,7 +131,7 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&var_ty), level, loop_depth);
+                            check_expr(tc_state, rhs, Some(&var_ty), level, loop_stack);
                             return Ty::unit();
                         }
 
@@ -143,11 +169,11 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_depth);
+                    check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    let object_ty = check_expr(tc_state, object, None, level, loop_depth);
+                    let object_ty = check_expr(tc_state, object, None, level, loop_stack);
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
@@ -206,7 +232,7 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&lhs_ty), level, loop_depth);
+                            check_expr(tc_state, rhs, Some(&lhs_ty), level, loop_stack);
                             return Ty::unit();
                         }
 
@@ -238,7 +264,7 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_depth);
+                    check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
@@ -254,9 +280,10 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_depth),
+        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_stack),
 
         ast::Stmt::For(ast::ForStmt {
+            label,
             pat,
             ty,
             expr,
@@ -298,7 +325,7 @@ fn check_stmt(
                 expr,
                 Some(&Ty::Var(iterator_ty.clone())),
                 level,
-                loop_depth,
+                loop_stack,
             ));
 
             tc_state.env.enter();
@@ -313,7 +340,10 @@ fn check_stmt(
                 &pat.loc,
             );
 
-            check_stmts(tc_state, body, None, level, loop_depth + 1);
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
+
             tc_state.env.exit();
             unify_expected_ty(
                 Ty::unit(),
@@ -325,9 +355,11 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
-            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_depth);
-            check_stmts(tc_state, body, None, level, loop_depth + 1);
+        ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
+            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
             unify_expected_ty(
                 Ty::unit(),
                 expected_ty,
@@ -338,9 +370,14 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label,
+            pat,
+            cond,
+            body,
+        }) => {
             tc_state.env.enter();
-            let cond_ty = check_expr(tc_state, cond, None, level, loop_depth);
+            let cond_ty = check_expr(tc_state, cond, None, level, loop_stack);
             tc_state.env.exit();
 
             let pat_ty = check_pat(tc_state, pat, level);
@@ -355,7 +392,9 @@ fn check_stmt(
             );
 
             tc_state.env.enter();
-            check_stmts(tc_state, body, None, level, loop_depth + 1);
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
             tc_state.env.exit();
 
             unify_expected_ty(

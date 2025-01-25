@@ -346,12 +346,20 @@ impl FunSig {
 impl Stmt {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Stmt::Break => {
+            Stmt::Break { label, level: _ } => {
                 buffer.push_str("break");
+                if let Some(label) = label {
+                    buffer.push_str(" \'");
+                    buffer.push_str(label);
+                }
             }
 
-            Stmt::Continue => {
+            Stmt::Continue { label, level: _ } => {
                 buffer.push_str("continue");
+                if let Some(label) = label {
+                    buffer.push_str(" \'");
+                    buffer.push_str(label);
+                }
             }
 
             Stmt::Let(LetStmt { lhs, ty, rhs }) => {
@@ -382,12 +390,18 @@ impl Stmt {
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
             Stmt::For(ForStmt {
+                label,
                 pat,
                 ty,
                 expr,
                 expr_ty: _,
                 body,
             }) => {
+                if let Some(label) = label {
+                    buffer.push('\'');
+                    buffer.push_str(label);
+                    buffer.push_str(": ");
+                }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
                 assert!(ty.is_none()); // TODO
@@ -403,7 +417,12 @@ impl Stmt {
                 }
             }
 
-            Stmt::While(WhileStmt { cond, body }) => {
+            Stmt::While(WhileStmt { label, cond, body }) => {
+                if let Some(label) = label {
+                    buffer.push('\'');
+                    buffer.push_str(label);
+                    buffer.push_str(": ");
+                }
                 buffer.push_str("while ");
                 cond.node.print(buffer, 0);
                 buffer.push_str(":\n");
@@ -416,7 +435,17 @@ impl Stmt {
                 }
             }
 
-            Stmt::WhileLet(WhileLetStmt { pat, cond, body }) => {
+            Stmt::WhileLet(WhileLetStmt {
+                label,
+                pat,
+                cond,
+                body,
+            }) => {
+                if let Some(label) = label {
+                    buffer.push('\'');
+                    buffer.push_str(label);
+                    buffer.push_str(": ");
+                }
                 buffer.push_str("while let ");
                 pat.node.print(buffer);
                 buffer.push_str(" = ");

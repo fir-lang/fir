@@ -5,7 +5,7 @@ use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
-        ast::Stmt::Break | ast::Stmt::Continue => {}
+        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
             normalize_pat(&mut lhs.node, cons);
@@ -20,6 +20,7 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         ast::Stmt::Expr(expr) => normalize_expr(&mut expr.node, cons),
 
         ast::Stmt::For(ast::ForStmt {
+            label: _,
             pat,
             ty: _,
             expr,
@@ -34,14 +35,23 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
             *expr_ty = Some(expr_ty.as_ref().unwrap().deep_normalize(cons));
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
+        ast::Stmt::While(ast::WhileStmt {
+            label: _,
+            cond,
+            body,
+        }) => {
             normalize_expr(&mut cond.node, cons);
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label: _,
+            pat,
+            cond,
+            body,
+        }) => {
             normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut cond.node, cons);
             for stmt in body {

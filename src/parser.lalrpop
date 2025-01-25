@@ -22,6 +22,7 @@ extern {
         UpperId => Token { kind: TokenKind::UpperId, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
+        Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
         "[" => Token { kind: TokenKind::LBracket, .. },
@@ -537,9 +538,9 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "break" NEWLINE => Stmt::Break,
+    "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
 
-    "continue" NEWLINE => Stmt::Continue,
+    "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
 
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
@@ -567,8 +568,9 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:LoopLabel?> "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::For(ForStmt {
+            label,
             pat,
             ty: None,
             expr,
@@ -576,21 +578,24 @@ Stmt: Stmt = {
             body,
         }),
 
-    "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:LoopLabel?> "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
+            label,
             cond,
             body,
         }),
 
-    "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:LoopLabel?> "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::WhileLet(WhileLetStmt {
+            label,
             pat,
             cond,
             body,
         }),
 
-    <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:LoopLabel?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
+            label,
             cond: L::new(module, l, r, Expr::ConstrSelect(ConstrSelectExpr {
                 ty: SmolStr::new_static("Bool"),
                 constr: SmolStr::new_static("True"),
@@ -598,6 +603,10 @@ Stmt: Stmt = {
             })),
             body,
         }),
+}
+
+LoopLabel: SmolStr = {
+    <label:Label> ":" => SmolStr::new(&label.smol_str().as_str()[1..])
 }
 
 Alts: Vec<Alt> = {

@@ -798,6 +798,6 @@ fn try_<W: Write>(
             heap[object + 1] = val;
             FunRet::Val(object)
         }
-        ControlFlow::Break | ControlFlow::Continue | ControlFlow::Ret(_) => panic!(),
+        ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
     }
 }

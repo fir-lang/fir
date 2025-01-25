@@ -273,8 +273,19 @@ pub enum Stmt {
     For(ForStmt),
     While(WhileStmt),
     WhileLet(WhileLetStmt),
-    Break,
-    Continue,
+    Break {
+        label: Option<Id>,
+
+        /// How many levels of loops to break. Parser initializes this as 0, type checker updates
+        /// based on the labels of enclosing loops.
+        level: u32,
+    },
+    Continue {
+        label: Option<Id>,
+
+        /// Same as `Break.level`.
+        level: u32,
+    },
 }
 
 /// A let statement: `let x: T = expr`.
@@ -372,6 +383,7 @@ pub enum AssignOp {
 
 #[derive(Debug, Clone)]
 pub struct ForStmt {
+    pub label: Option<Id>,
     pub pat: L<Pat>,
     pub ty: Option<Type>,
     pub expr: L<Expr>,
@@ -381,12 +393,14 @@ pub struct ForStmt {
 
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
+    pub label: Option<Id>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct WhileLetStmt {
+    pub label: Option<Id>,
     pub pat: L<Pat>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,

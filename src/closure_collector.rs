@@ -106,6 +106,7 @@ fn visit_stmt(
         }
 
         ast::Stmt::For(ast::ForStmt {
+            label: _,
             pat,
             ty: _,
             expr,
@@ -121,7 +122,11 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
+        ast::Stmt::While(ast::WhileStmt {
+            label: _,
+            cond,
+            body,
+        }) => {
             visit_expr(&mut cond.node, closures, top_vars, local_vars, free_vars);
             local_vars.enter();
             for stmt in body.iter_mut() {
@@ -130,7 +135,12 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt { pat: _, cond, body }) => {
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label: _,
+            pat: _,
+            cond,
+            body,
+        }) => {
             local_vars.enter();
             visit_expr(&mut cond.node, closures, top_vars, local_vars, free_vars);
             local_vars.exit();
@@ -142,7 +152,7 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::Break | ast::Stmt::Continue => {}
+        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
     }
 }
 

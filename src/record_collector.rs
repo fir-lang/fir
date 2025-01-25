@@ -239,7 +239,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
 
 fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match stmt {
-        ast::Stmt::Break | ast::Stmt::Continue => {}
+        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
             visit_pat(&lhs.node, records, variants);
@@ -257,6 +257,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
         ast::Stmt::Expr(expr) => visit_expr(&expr.node, records, variants),
 
         ast::Stmt::For(ast::ForStmt {
+            label: _,
             pat,
             ty,
             expr,
@@ -273,14 +274,23 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
+        ast::Stmt::While(ast::WhileStmt {
+            label: _,
+            cond,
+            body,
+        }) => {
             visit_expr(&cond.node, records, variants);
             for stmt in body {
                 visit_stmt(&stmt.node, records, variants);
             }
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt { pat, cond, body }) => {
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label: _,
+            pat,
+            cond,
+            body,
+        }) => {
             visit_pat(&pat.node, records, variants);
             visit_expr(&cond.node, records, variants);
             for stmt in body {
