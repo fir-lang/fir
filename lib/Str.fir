@@ -198,7 +198,7 @@ impl Iterator for SplitWhitespace:
         let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
 
         # Skip initial whitespace, initialize `wordStart` and `wordEnd`.
-        while Bool.True:
+        loop:
             match charIdxIter.next():
                 Option.Some((char = char, idx = idx)):
                     if !char.isAsciiWhitespace():
@@ -210,7 +210,7 @@ impl Iterator for SplitWhitespace:
                     return Option.None
 
         # Scan word, update `wordEnd`.
-        while Bool.True:
+        loop:
             match charIdxIter.next():
                 Option.Some((char = char, idx = idx)):
                     wordEnd = self._idx + idx

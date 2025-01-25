@@ -45,6 +45,7 @@ pub enum TokenKind {
     Type,
     Var,
     While,
+    Loop,
 
     // Delimiters
     LParen,

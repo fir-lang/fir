@@ -8,6 +8,8 @@ use crate::token::*;
 use std::convert::Infallible;
 use std::rc::Rc;
 
+use smol_str::SmolStr;
+
 use lexgen_util::{LexerError, Loc};
 
 grammar<'a>(module: &'a Rc<str>);
@@ -76,6 +78,7 @@ extern {
         "prim" => Token { kind: TokenKind::Prim, .. },
         "trait" => Token { kind: TokenKind::Trait, .. },
         "impl" => Token { kind: TokenKind::Impl, .. },
+        "loop" => Token { kind: TokenKind::Loop, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
@@ -564,26 +567,36 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::For(ForStmt {
             pat,
             ty: None,
             expr,
             expr_ty: None,
-            body: statements,
+            body,
         }),
 
-    "while" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
             cond,
-            body:statements,
+            body,
         }),
 
-    "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::WhileLet(WhileLetStmt {
             pat,
             cond,
-            body:statements,
+            body,
+        }),
+
+    <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Stmt::While(WhileStmt {
+            cond: L::new(module, l, r, Expr::ConstrSelect(ConstrSelectExpr {
+                ty: SmolStr::new_static("Bool"),
+                constr: SmolStr::new_static("True"),
+                ty_args: vec![],
+            })),
+            body,
         }),
 }
 

@@ -49,6 +49,7 @@ lexgen::lexer! {
         "type" = TokenKind::Type,
         "var" = TokenKind::Var,
         "while" = TokenKind::While,
+        "loop" = TokenKind::Loop,
 
         // Delimiters
         "(" = TokenKind::LParen,
