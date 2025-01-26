@@ -4,20 +4,6 @@ use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
 
-/*
-Variations of function types:
-
-Variation | Has type context | Has self type
-----------+------------------+---------------
-Top-level | No               | No
-Assoc     | Yes              | Yes (concrete)
-Trait     | Yes              | Yes (quantified)
-Impl      | Yes              | Yes (concrete)
-
-We don't do function type conversion here, functions should be converted manually using functions
-here as helpers.
-*/
-
 /// Convert an AST type to type checking type.
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
@@ -43,50 +29,16 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 )
             }
 
-            let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
-            let mut converted_named_args: TreeMap<Id, Ty> = Default::default();
+            let converted_args: Vec<Ty> = args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect();
 
-            for ast::L {
-                loc: _,
-                node: (name, ty),
-            } in args
-            {
-                let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
-                match name {
-                    Some(name) => {
-                        let old = converted_named_args.insert(name.clone(), ty);
-                        if old.is_some() {
-                            panic!(
-                                "{}: Associated type argument {} defined multiple times",
-                                loc_display(loc),
-                                name
-                            );
-                        }
-                    }
-                    None => {
-                        converted_args.push(ty);
-                    }
-                }
-            }
-
-            if !converted_args.is_empty() && !converted_named_args.is_empty() {
-                panic!(
-                    "{}: Type cannot have both associated and positional arguments",
-                    loc_display(loc),
-                );
-            }
-
-            if converted_args.is_empty() && converted_named_args.is_empty() {
+            if converted_args.is_empty() {
                 return Ty::Con(ty_con.id.clone());
             }
 
-            let args = if converted_named_args.is_empty() {
-                TyArgs::Positional(converted_args)
-            } else {
-                TyArgs::Named(converted_named_args)
-            };
-
-            Ty::App(ty_con.id.clone(), args)
+            Ty::App(ty_con.id.clone(), TyArgs::Positional(converted_args))
         }
 
         ast::Type::Var(var) => tys
