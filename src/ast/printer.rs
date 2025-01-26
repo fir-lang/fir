@@ -313,10 +313,20 @@ impl FunSig {
             buffer.push(']');
         }
         buffer.push('(');
-        if self.self_ {
-            buffer.push_str("self");
-            if !self.params.is_empty() {
-                buffer.push_str(", ");
+        match &self.self_ {
+            SelfParam::No => {}
+            SelfParam::Implicit => {
+                buffer.push_str("self");
+                if !self.params.is_empty() {
+                    buffer.push_str(", ");
+                }
+            }
+            SelfParam::Explicit(ty) => {
+                buffer.push_str("self: ");
+                ty.node.print(buffer);
+                if !self.params.is_empty() {
+                    buffer.push_str(", ");
+                }
             }
         }
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
