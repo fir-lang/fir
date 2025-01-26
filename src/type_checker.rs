@@ -865,11 +865,6 @@ fn collect_schemes(
                             .or_default()
                             .insert(fun.name.node.clone(), scheme.clone());
 
-                        // Add the type key to associated_fn_schemes to make lookups easier.
-                        associated_fn_schemes
-                            .entry(self_ty_con_id.clone())
-                            .or_default();
-
                         if old.is_some() {
                             panic!(
                                 "{}: Method {} for type {} is defined multiple times",
@@ -883,8 +878,6 @@ fn collect_schemes(
                             .entry(self_ty_con_id.clone())
                             .or_default()
                             .insert(fun.name.node.clone(), scheme.clone());
-
-                        method_schemes.entry(self_ty_con_id.clone()).or_default();
 
                         if old.is_some() {
                             panic!(
