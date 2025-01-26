@@ -634,7 +634,7 @@ pub struct TraitDecl {
     pub name: L<Id>,
 
     /// Type parameters of the trait.
-    pub ty: Vec<L<Id>>,
+    pub params: Vec<L<Id>>,
 
     /// Methods of the trait.
     pub items: Vec<L<FunDecl>>,

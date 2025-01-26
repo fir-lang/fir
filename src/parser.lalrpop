@@ -231,7 +231,7 @@ TypeNamed: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
-    <name:UpperId> "[" <args:Sep<TypeArg, ",">> "]" =>
+    <name:UpperId> "[" <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 }
 
@@ -304,13 +304,13 @@ FunDecl: L<FunDecl> = {
 
 FunSig: (L<Id>, FunSig) = {
     <name:LLowerId>
-            <type_params:Context>
+            <context:Context>
             <param_list:ParamList>
             <ret:ReturnType>
             => {
         (name,
             FunSig {
-                type_params,
+                context,
                 self_: param_list.0,
                 params: param_list.1,
                 exceptions: ret.0,
@@ -318,10 +318,10 @@ FunSig: (L<Id>, FunSig) = {
             })
     },
 
-    <name:LLowerId> <type_params:Context> <ret:ReturnType> => {
+    <name:LLowerId> <context:Context> <ret:ReturnType> => {
         (name,
             FunSig {
-                type_params,
+                context,
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: ret.0,
@@ -365,7 +365,7 @@ TopFunDecl: L<FunDecl> = {
 
 TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
     <parent_ty:ParentTy?> <name:LLowerId>
-            <type_params:Context>
+            <context:Context>
             <param_list:ParamList>
             <ret:ReturnType>
             => {
@@ -373,7 +373,7 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
             parent_ty,
             name,
             FunSig {
-                type_params,
+                context,
                 self_: param_list.0,
                 params: param_list.1,
                 exceptions: ret.0,
@@ -382,12 +382,12 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
         )
     },
 
-    <parent_ty:ParentTy?> <name:LLowerId> <type_params:Context> <ret:ReturnType> => {
+    <parent_ty:ParentTy?> <name:LLowerId> <context:Context> <ret:ReturnType> => {
         (
             parent_ty,
             name,
             FunSig {
-                type_params,
+                context,
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: ret.0,
@@ -923,7 +923,7 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
+                context: vec![],
                 self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
@@ -937,7 +937,7 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
+                context: vec![],
                 self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
@@ -950,7 +950,7 @@ InlineExpr: Expr = {
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
+                context: vec![],
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
@@ -963,7 +963,7 @@ InlineExpr: Expr = {
     "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
+                context: vec![],
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
@@ -1097,21 +1097,14 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" ":"
-            NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
+    // TODO: Allow empty trait declarations.
+    <l:@L> "trait" <name:LUpperId> "[" <params:Sep<LLowerId, ",">> "]" ":"
+            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
-            ty,
+            params,
             items,
         })
-}
-
-TraitDeclItem: L<TraitDeclItem> = {
-    <l:@L> "type" <name:UpperId> NEWLINE <r:@R> =>
-        L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str())),
-
-    <fun_decl:FunDecl> =>
-         fun_decl.map(TraitDeclItem::Fun),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1121,38 +1114,23 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:LUpperId> "for" <ty:LTypeNamed> ":"
-            NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
+    // TODO: Allow empty impl decls.
+    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" ":"
+            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
-            ty,
+            tys,
             items,
         })
     }
 }
 
-// type Context = Vec<TypeParam>;
+// type Context = Vec<L<Type>>;
 Context: Context = {
     => vec![],
 
-    "[" <tys:Sep<TypeParam, ",">> "]" => tys,
-}
-
-TypeParam: TypeParam = {
-    <id:LLowerId> =>
-        TypeParam { id, bounds: vec![] },
-
-    <id:LLowerId> ":" <bounds:Sep<LType, "+">> =>
-        TypeParam { id, bounds },
-}
-
-ImplDeclItem: L<ImplDeclItem> = {
-    <l:@L> "type" <name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
-        L::new(module, l, r, ImplDeclItem::AssocTy(AssocTyDecl { name: name.smol_str(), ty })),
-
-    <fun_decl:FunDecl> =>
-        fun_decl.map(ImplDeclItem::Fun),
+    "[" <tys:Sep<LType, ",">> "]" => tys,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
