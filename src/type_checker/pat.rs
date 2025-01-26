@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::*;
 use crate::type_checker::apply::apply;
 use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::row_utils::collect_rows;
@@ -132,8 +132,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 pat.loc.clone(),
             ));
 
-            let mut arg_tys: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(fields.len(), Default::default());
+            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, node } in fields.iter_mut() {
                 let name = match name {
@@ -224,8 +223,7 @@ pub(super) fn refine_pat_binders(
 
             let num_labels = labels.len();
 
-            let mut unhandled_labels: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(num_labels, Default::default());
+            let mut unhandled_labels: TreeMap<Id, Ty> = TreeMap::new();
 
             'variant_label_loop: for (label, label_ty) in labels {
                 let label_field_coverage = match coverage.get_variant_fields(&label) {

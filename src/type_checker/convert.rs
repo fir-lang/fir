@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::Map;
+use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
@@ -44,7 +44,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
 
             let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
-            let mut converted_named_args: Map<Id, Ty> = Default::default();
+            let mut converted_named_args: TreeMap<Id, Ty> = Default::default();
 
             for ast::L {
                 loc: _,
@@ -95,8 +95,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             .clone(),
 
         ast::Type::Record { fields, extension } => {
-            let mut ty_fields: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(fields.len(), Default::default());
+            let mut ty_fields: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, node } in fields {
                 let name = name.as_ref().unwrap_or_else(|| {
@@ -128,12 +127,10 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
         }
 
         ast::Type::Variant { alts, extension } => {
-            let mut ty_alts: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(alts.len(), Default::default());
+            let mut ty_alts: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::VariantAlt { con, fields } in alts {
-                let mut record_labels: Map<Id, Ty> =
-                    Map::with_capacity_and_hasher(fields.len(), Default::default());
+                let mut record_labels: TreeMap<Id, Ty> = TreeMap::new();
 
                 for ast::Named { name, node } in fields {
                     let name = name.as_ref().unwrap_or_else(|| {

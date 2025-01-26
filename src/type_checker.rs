@@ -23,7 +23,7 @@ pub use ty::{Kind, RecordOrVariant, Ty, TyArgs};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};
-use crate::collections::{Map, ScopeMap, Set};
+use crate::collections::*;
 
 use smol_str::SmolStr;
 
@@ -183,7 +183,7 @@ struct TcFunState<'a> {
     ///
     /// After checking the body, these predicates should all be resolved by the function context and
     /// trait environment (in `PgmTypes`).
-    preds: &'a mut PredSet,
+    preds: &'a mut Set<Pred>,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -1129,7 +1129,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         None => Ty::unit(),
     };
 
-    let mut preds: PredSet = Default::default();
+    let mut preds: Set<Pred> = Default::default();
 
     let context = scheme.quantified_vars.iter().cloned().collect();
 
@@ -1247,7 +1247,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                         None => Ty::unit(),
                     };
 
-                    let mut preds: PredSet = Default::default();
+                    let mut preds: Set<Pred> = Default::default();
                     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                     let mut var_gen = TyVarGen::default();
 
@@ -1370,7 +1370,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                         None => Ty::unit(),
                     };
 
-                    let mut preds: PredSet = Default::default();
+                    let mut preds: Set<Pred> = Default::default();
                     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
                     let mut var_gen = TyVarGen::default();
 
@@ -1436,19 +1436,20 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 fn resolve_preds(
     context: &Map<Id, QVar>,
     tys: &PgmTypes,
-    preds: PredSet,
+    preds: Set<Pred>,
     var_gen: &mut TyVarGen,
     level: u32,
-) -> PredSet {
-    let mut remaining_preds: PredSet = Default::default();
+) -> Set<Pred> {
+    let mut remaining_preds: Set<Pred> = Default::default();
 
     for Pred {
-        ty_var,
         trait_,
+        params,
         assoc_tys,
         loc,
-    } in preds.into_preds()
+    } in preds.into_iter()
     {
+        /*
         let ty_var_ty = ty_var.normalize(tys.tys.cons());
         match &ty_var_ty {
             Ty::Con(con) | Ty::App(con, _) => {
@@ -1547,6 +1548,7 @@ fn resolve_preds(
                 });
             }
         }
+        */
     }
 
     remaining_preds
@@ -1555,7 +1557,7 @@ fn resolve_preds(
 fn resolve_all_preds(
     context: &Map<Id, QVar>,
     tys: &PgmTypes,
-    preds: PredSet,
+    preds: Set<Pred>,
     var_gen: &mut TyVarGen,
     level: u32,
 ) {
@@ -1563,25 +1565,27 @@ fn resolve_all_preds(
     report_unresolved_preds(unresolved_preds, tys.tys.cons());
 }
 
-fn report_unresolved_preds(preds: PredSet, cons: &ScopeMap<Id, TyCon>) {
-    let preds = preds.into_preds();
-
+fn report_unresolved_preds(preds: Set<Pred>, cons: &ScopeMap<Id, TyCon>) {
     if preds.is_empty() {
         return;
     }
 
     for Pred {
-        ty_var,
         trait_,
+        params,
         assoc_tys: _,
         loc,
     } in preds
     {
         eprintln!(
-            "{}: Type {} does not implement trait {}",
+            "{}: Cannot resolve constraint {}[{}]",
             loc_display(&loc),
-            ty_var.normalize(cons),
-            trait_
+            trait_,
+            params
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<String>>()
+                .join(", "),
         );
     }
 

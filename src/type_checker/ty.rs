@@ -1,7 +1,7 @@
 //! Syntax for type checking types.
 
 use crate::ast::{self, Id};
-use crate::collections::{Map, ScopeMap, Set};
+use crate::collections::*;
 use crate::type_checker::loc_display;
 
 use std::cell::{Cell, RefCell};
@@ -40,7 +40,7 @@ pub struct QVar {
 }
 
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id),
@@ -78,7 +78,7 @@ pub enum Ty {
 
     /// An anonymous record or variant type or row type. E.g. `(a: Str, ..R)`, `[Err1(Str), ..R]`.
     Anonymous {
-        labels: Map<Id, Ty>,
+        labels: TreeMap<Id, Ty>,
 
         /// Row extension. See `Extension` documentation.
         extension: Extension,
@@ -91,7 +91,7 @@ pub enum Ty {
     },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RecordOrVariant {
     Record,
     Variant,
@@ -107,10 +107,10 @@ pub enum RecordOrVariant {
 type Extension = Option<Box<Ty>>;
 
 // Q: Same type as `TyArgs`, should we use the same type?
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
-    Named(Map<Id, Ty>),
+    Named(TreeMap<Id, Ty>),
 }
 
 impl FunArgs {
@@ -122,10 +122,10 @@ impl FunArgs {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum TyArgs {
     Positional(Vec<Ty>),
-    Named(Map<Id, Ty>),
+    Named(TreeMap<Id, Ty>),
 }
 
 /// A reference to a unification variable.
@@ -140,6 +140,8 @@ impl TyVarRef {
 }
 
 /// A unification variable.
+///
+/// Note: `Hash` and `Eq` are implemented based on `id`.
 #[derive(Debug, Clone)]
 pub struct TyVar {
     /// Identity of the unification variable.
@@ -259,55 +261,33 @@ pub(super) enum ConFieldShape {
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
 // TODO: Why do we need this? Why not use the type scheme from the env?
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(super) enum ConFields {
     Unnamed(Vec<Ty>),
-    Named(Map<Id, Ty>),
+    Named(TreeMap<Id, Ty>),
 }
 
-/// A predicate, e.g. `I: Iterator[Item = A]`.
-#[derive(Debug, Clone)]
+/// A predicate, e.g. `i: Iterator[Item = a]`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(super) struct Pred {
-    /// Type variable constrained by the predicate.
-    ///
-    /// `I` in the example.
-    ///
-    /// Note: location of this type variable is the declaration in the function definition, not the
-    /// use site that instantiated it.
-    pub(super) ty_var: TyVarRef,
-
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
     pub(super) trait_: Id,
 
+    /// The type parameters. `i` in the example.
+    ///
+    /// With multi-parameter traits, it will be possible to have more than one type in this list.
+    pub(super) params: Vec<Ty>,
+
     /// Types of the associated types of the trait.
     ///
     /// Not all associated types need to be in the map.
     ///
-    /// `{Item = A}`  in the exmaple.
-    pub(super) assoc_tys: Map<Id, Ty>,
+    /// `{Item = a}` in the example.
+    pub(super) assoc_tys: TreeMap<Id, Ty>,
 
     /// Location of the expression that created this predicate.
-    pub(super) loc: ast::Loc,
-}
-
-/// A predicate set.
-#[derive(Debug, Default, Clone)]
-pub(super) struct PredSet {
-    /// Maps type variables to traits to associated types of the trait.
-    preds: Map<TyVarRef, Map<Id, TraitBoundDetails>>,
-}
-
-// E.g. `Item = A` in `Iterator[Item = A]`.
-pub(super) type AssocTyMap = Map<Id, Ty>;
-
-#[derive(Debug, Clone)]
-pub(super) struct TraitBoundDetails {
-    /// Associated types of the bound. E.g. `Item = A` in `X: Iterator[Item = A]`.
-    pub(super) assoc_tys: AssocTyMap,
-
-    /// Location of the expression that generated the bound.
     pub(super) loc: ast::Loc,
 }
 
@@ -317,7 +297,7 @@ impl Scheme {
         &self,
         level: u32,
         var_gen: &mut TyVarGen,
-        preds: &mut PredSet,
+        preds: &mut Set<Pred>,
         loc: &ast::Loc,
     ) -> (Ty, Vec<TyVarRef>) {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
@@ -339,15 +319,15 @@ impl Scheme {
         {
             for (trait_, assoc_tys) in bounds.iter() {
                 let pred = Pred {
-                    ty_var: instantiation.clone(),
                     trait_: trait_.clone(),
+                    params: vec![Ty::Var(instantiation.clone())],
                     assoc_tys: assoc_tys
                         .iter()
                         .map(|(assoc_ty, ty)| (assoc_ty.clone(), ty.subst_qvars(&var_map)))
                         .collect(),
                     loc: loc.clone(),
                 };
-                preds.add(pred);
+                preds.insert(pred);
             }
         }
 
@@ -1170,46 +1150,6 @@ impl TyConDetails {
 impl TyArgs {
     pub(super) fn empty() -> Self {
         TyArgs::Positional(vec![])
-    }
-}
-
-impl PredSet {
-    pub(super) fn add(&mut self, pred: Pred) {
-        let Pred {
-            ty_var,
-            trait_,
-            assoc_tys,
-            loc,
-        } = pred;
-        let trait_map = self.preds.entry(ty_var.clone()).or_default();
-        let bound_details = TraitBoundDetails {
-            assoc_tys,
-            loc: loc.clone(),
-        };
-        let old = trait_map.insert(trait_.clone(), bound_details);
-        if old.is_some() {
-            panic!(
-                "{}: Type variable {:?} already has a constraint on trait {}",
-                loc_display(&loc),
-                ty_var,
-                trait_
-            );
-        }
-    }
-
-    pub(super) fn into_preds(mut self) -> Vec<Pred> {
-        let mut preds: Vec<Pred> = vec![];
-        for (ty_var, trait_map) in self.preds.drain() {
-            for (trait_, TraitBoundDetails { assoc_tys, loc }) in trait_map {
-                preds.push(Pred {
-                    ty_var: ty_var.clone(),
-                    trait_,
-                    assoc_tys,
-                    loc,
-                });
-            }
-        }
-        preds
     }
 }
 

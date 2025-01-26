@@ -296,14 +296,14 @@ fn check_stmt(
                 .as_ref()
                 .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc));
 
-            // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
+            // Expect the iterator to have fresh type `X` and add predicate `X: Iterator[Item = A]`
             // with fresh type `A`.
-            let iterator_ty = tc_state
+            let iterator_ty_var = tc_state
                 .var_gen
                 .new_var(level, Kind::Star, expr.loc.clone());
 
             // TODO: loc should be the loc of `var`, which we don't have.
-            let item_ty = ty.clone().unwrap_or_else(|| {
+            let item_ty_var = ty.clone().unwrap_or_else(|| {
                 Ty::Var(
                     tc_state
                         .var_gen
@@ -311,10 +311,10 @@ fn check_stmt(
                 )
             });
 
-            tc_state.preds.add(Pred {
-                ty_var: iterator_ty.clone(),
+            tc_state.preds.insert(Pred {
                 trait_: SmolStr::new_static("Iterator"),
-                assoc_tys: [(SmolStr::new_static("Item"), item_ty.clone())]
+                params: vec![Ty::Var(iterator_ty_var.clone())],
+                assoc_tys: [(SmolStr::new_static("Item"), item_ty_var.clone())]
                     .into_iter()
                     .collect(),
                 loc: stmt.loc.clone(),
@@ -323,7 +323,7 @@ fn check_stmt(
             *expr_ty = Some(check_expr(
                 tc_state,
                 expr,
-                Some(&Ty::Var(iterator_ty.clone())),
+                Some(&Ty::Var(iterator_ty_var.clone())),
                 level,
                 loop_stack,
             ));
@@ -333,7 +333,7 @@ fn check_stmt(
             let pat_ty = check_pat(tc_state, pat, level);
             unify(
                 &pat_ty,
-                &item_ty,
+                &item_ty_var,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,

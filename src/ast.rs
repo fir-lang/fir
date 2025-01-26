@@ -20,7 +20,7 @@ pub struct L<T> {
     pub node: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
     pub module: Rc<str>,
@@ -185,24 +185,21 @@ pub struct VariantAlt {
     pub fields: Vec<Named<Type>>,
 }
 
-/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
+/// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 #[derive(Debug, Clone)]
 pub struct NamedType {
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     pub name: Id,
 
-    /// Arguments and associated types of the tyep constructor. Examples:
-    ///
-    /// - In `I32`, `[]`.
-    /// - In `Vec[I32]`, `[(None, I32)]`.
-    /// - In `Iterator[Item = A]`, `[(Some(Item), A)]`.
-    pub args: Vec<L<(Option<Id>, L<Type>)>>,
+    /// Arguments of the type constructor.
+    pub args: Vec<L<Type>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FnType {
     pub args: Vec<L<Type>>,
 
+    /// Optional return type of the function. `()` when omitted.
     pub ret: Option<L<Box<Type>>>,
 
     /// Same as `FunSig.exceptions`.
@@ -232,10 +229,8 @@ impl<T> Named<T> {
 /// type, return type.
 #[derive(Debug, Clone)]
 pub struct FunSig {
-    /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
-    ///
-    /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
-    pub type_params: Context,
+    /// Predicates of the function, e.g. in `id[Debug[t]](a: t)` this is `[Debug[t]]`.
+    pub context: Context,
 
     /// Whether the function has a `self` parameter.
     pub self_: SelfParam,
@@ -260,9 +255,16 @@ pub(crate) enum SelfParam {
 
 #[derive(Debug, Clone)]
 pub struct FunDecl {
+    /// Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
     pub parent_ty: Option<L<Id>>,
+
+    /// Name of the function.
     pub name: L<Id>,
+
+    /// Type signature of the function.
     pub sig: FunSig,
+
+    /// Body (code) of the function. Not available in `prim` functions.
     pub body: Option<Vec<L<Stmt>>>,
 }
 
@@ -631,51 +633,32 @@ pub struct TraitDecl {
     /// Trait name.
     pub name: L<Id>,
 
-    /// Type parameter of the trait, with bounds.
-    pub ty: TypeParam,
+    /// Type parameters of the trait.
+    pub ty: Vec<L<Id>>,
 
-    pub items: Vec<L<TraitDeclItem>>,
+    /// Methods of the trait.
+    pub items: Vec<L<FunDecl>>,
 }
 
-#[derive(Debug, Clone)]
-pub enum TraitDeclItem {
-    /// An associated type, e.g. `type Item`.
-    AssocTy(Id),
-
-    /// A method, potentially with a body (default implementation).
-    Fun(FunDecl),
-}
-
-/// Type parameters of a function or `impl` block.
+/// Predicates of an `impl` or function..
 ///
-/// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
-pub type Context = Vec<TypeParam>;
-
-/// A type parameter in a function, `impl`, or `trait` block.
-///
-/// Example: `I: Iterator[Item = A] + Debug`.
-#[derive(Debug, Clone)]
-pub struct TypeParam {
-    /// `I` in the example.
-    pub id: L<Id>,
-
-    /// `[Iterator[Item = A], Debug]` in the example.
-    ///
-    /// Reminder: associated types are parsed as named arguments.
-    pub bounds: Vec<L<Type>>,
-}
+/// E.g. `[Iterator[coll, item], Debug[item]]`.
+pub type Context = Vec<L<Type>>;
 
 /// An `impl` block, implementing a trait for a type.
 ///
 /// ```ignore
-/// impl[a: ToStr] ToStr for Vec[a]:
+/// impl[ToStr[a]] ToStr[Vec[a]]:
 ///   toStr(self): Str = ...
+///
+/// impl Iterator[VecIter[a], a]:
+///   next(self): Option[a] = ...
 /// ```
 #[derive(Debug, Clone)]
 pub struct ImplDecl {
-    /// Type parameters of the type being implemented, with bounds.
+    /// Predicates of the `impl` block.
     ///
-    /// In the example: `[A: ToStr]`.
+    /// In the example: `[ToStr[a]]`.
     pub context: Context,
 
     /// The trait name.
@@ -683,28 +666,13 @@ pub struct ImplDecl {
     /// In the example: `ToStr`.
     pub trait_: L<Id>,
 
-    /// The implementing type.
+    /// Type parameters of the trait.
     ///
-    /// In the example: `Vec[a]`.
-    pub ty: L<Type>,
+    /// In the example: `[Vec[a]]`.
+    pub tys: Vec<L<Type>>,
 
-    /// Methods and associated types.
-    pub items: Vec<L<ImplDeclItem>>,
-}
-
-#[derive(Debug, Clone)]
-pub enum ImplDeclItem {
-    /// An associated type definition, e.g. `type Item = T`.
-    AssocTy(AssocTyDecl),
-
-    /// A function definition.
-    Fun(FunDecl),
-}
-
-#[derive(Debug, Clone)]
-pub struct AssocTyDecl {
-    pub name: Id,
-    pub ty: L<Type>,
+    /// Method implementations.
+    pub items: Vec<L<FunDecl>>,
 }
 
 impl Type {

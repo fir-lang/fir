@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{Map, ScopeMap, Set};
+use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::row_utils::*;
 use crate::type_checker::ty::*;
@@ -312,13 +312,13 @@ pub(super) fn unify(
 fn link_extension(
     kind: RecordOrVariant,
     extra_labels: &Set<&&Id>,
-    label_values: &Map<Id, Ty>,
+    label_values: &TreeMap<Id, Ty>,
     var: &TyVarRef,
     var_gen: &mut TyVarGen,
     level: u32,
     loc: &ast::Loc,
 ) -> TyVarRef {
-    let extension_labels: Map<Id, Ty> = extra_labels
+    let extension_labels: TreeMap<Id, Ty> = extra_labels
         .iter()
         .map(|extra_field| {
             (

@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::*;
 use crate::interpolation::StringPart;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::pat::{check_pat, refine_pat_binders};
@@ -77,8 +77,7 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let mut arg_tys: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(args.len(), Default::default());
+            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, ref mut node } in args.iter_mut() {
                 let name = match name {
@@ -515,9 +514,9 @@ pub(super) fn check_expr(
                             tc_state
                                 .var_gen
                                 .new_var(level, Kind::Star, expr.loc.clone());
-                        tc_state.preds.add(Pred {
-                            ty_var: expr_var.clone(),
+                        tc_state.preds.insert(Pred {
                             trait_: Ty::to_str_id(),
+                            params: vec![Ty::Var(expr_var.clone())],
                             assoc_tys: Default::default(),
                             loc: expr.loc.clone(),
                         });
@@ -688,7 +687,7 @@ pub(super) fn check_expr(
                 }
             });
 
-            let mut record_fields: Map<Id, Ty> = Default::default();
+            let mut record_fields: TreeMap<Id, Ty> = TreeMap::new();
             for field in fields.iter_mut() {
                 let field_name = field.name.as_ref().unwrap();
                 let expected_ty = expected_fields
@@ -902,7 +901,7 @@ pub(super) fn check_expr(
             check_stmts(tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
             let new_preds = replace(tc_state.preds, old_preds);
-            assert!(new_preds.into_preds().is_empty());
+            assert!(new_preds.is_empty());
 
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
             let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
