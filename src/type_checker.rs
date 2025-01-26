@@ -33,12 +33,19 @@ pub struct PgmTypes {
     /// Type schemes of top-level values.
     pub top_schemes: Map<Id, Scheme>,
 
-    /// Type schemes of associated functions and constructors.
+    /// Type schemes of associated functions, methods, and constructors.
+    ///
+    /// Methods take a `self` parameter. Associated functions don't. They can both be accessed as
+    /// `Type.fun`.
     pub associated_fn_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type schemes of methods.
     ///
-    /// Methods take a receiver.
+    /// Methods are associated functions that take a `self` parameter. These functions can be called
+    /// using method call syntax: `receiver.fun(arg2, arg3)`, which is the same as
+    /// `Ty.fun(receiver, arg2, arg3)`.
+    ///
+    /// Functions in this map will also be in `associated_fn_schemes`.
     pub method_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type constructor details.

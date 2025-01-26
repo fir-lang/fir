@@ -238,7 +238,7 @@ pub struct FunSig {
     pub type_params: Context,
 
     /// Whether the function has a `self` parameter.
-    pub self_: bool,
+    pub self_: SelfParam,
 
     /// Parameters of the function.
     pub params: Vec<(Id, L<Type>)>,
@@ -252,7 +252,15 @@ pub struct FunSig {
 }
 
 #[derive(Debug, Clone)]
+pub(crate) enum SelfParam {
+    No,
+    Implicit,
+    Explicit(L<Type>),
+}
+
+#[derive(Debug, Clone)]
 pub struct FunDecl {
+    pub parent_ty: Option<L<Id>>,
     pub name: L<Id>,
     pub sig: FunSig,
     pub body: Option<Vec<L<Stmt>>>,
@@ -657,37 +665,30 @@ pub struct TypeParam {
     pub bounds: Vec<L<Type>>,
 }
 
-/// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
+/// An `impl` block, implementing a trait for a type.
 ///
 /// ```ignore
-/// impl[A] Vec[A]:
-///     # An associated function.
-///     fn withCapacity(cap: U32): Vec[A] = ...
-///
-///     # A method.
-///     fn push(self, elem: A) = ...
-///
-/// impl[A: ToStr] ToStr for Vec[A]:
-///   fn toStr(self): Str = ...
+/// impl[a: ToStr] ToStr for Vec[a]:
+///   toStr(self): Str = ...
 /// ```
 #[derive(Debug, Clone)]
 pub struct ImplDecl {
     /// Type parameters of the type being implemented, with bounds.
     ///
-    /// In the first example, this is `[A]`. In the second example: `[A: ToStr]`.
+    /// In the example: `[A: ToStr]`.
     pub context: Context,
 
-    /// If the `impl` block is for a trait, the trait name.
+    /// The trait name.
     ///
-    /// In the first example this is `None`. In the second this is `Some(ToStr)`.
-    pub trait_: Option<L<Id>>,
+    /// In the example: `ToStr`.
+    pub trait_: L<Id>,
 
     /// The implementing type.
     ///
-    /// In both of the examples this is `Vec[A]`.
+    /// In the example: `Vec[a]`.
     pub ty: L<Type>,
 
-    /// Functions, methods, and associated types.
+    /// Methods and associated types.
     pub items: Vec<L<ImplDeclItem>>,
 }
 
