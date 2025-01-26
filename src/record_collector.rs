@@ -119,22 +119,8 @@ fn visit_trait_decl(
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
-    for ty in &trait_decl.ty.bounds {
-        visit_ty(&ty.node, records, variants);
-    }
     for item in &trait_decl.items {
-        visit_trait_decl_item(&item.node, records, variants);
-    }
-}
-
-fn visit_trait_decl_item(
-    item: &ast::TraitDeclItem,
-    records: &mut Set<RecordShape>,
-    variants: &mut Set<VariantShape>,
-) {
-    match item {
-        ast::TraitDeclItem::AssocTy(_) => {}
-        ast::TraitDeclItem::Fun(fun_decl) => visit_fun_decl(fun_decl, records, variants),
+        visit_fun_decl(&item.node, records, variants);
     }
 }
 
@@ -143,27 +129,14 @@ fn visit_impl_decl(
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
-    for context_ty in &impl_decl.context {
-        for bound in &context_ty.bounds {
-            visit_ty(&bound.node, records, variants);
-        }
+    for ty in &impl_decl.context {
+        visit_ty(&ty.node, records, variants);
     }
-
+    for ty in &impl_decl.tys {
+        visit_ty(&ty.node, records, variants);
+    }
     for item in &impl_decl.items {
-        visit_impl_decl_item(&item.node, records, variants);
-    }
-}
-
-fn visit_impl_decl_item(
-    item: &ast::ImplDeclItem,
-    records: &mut Set<RecordShape>,
-    variants: &mut Set<VariantShape>,
-) {
-    match item {
-        ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name: _, ty }) => {
-            visit_ty(&ty.node, records, variants)
-        }
-        ast::ImplDeclItem::Fun(fun_decl) => visit_fun_decl(fun_decl, records, variants),
+        visit_fun_decl(&item.node, records, variants);
     }
 }
 
@@ -203,7 +176,7 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
     match ty {
         ast::Type::Named(ast::NamedType { name: _, args }) => args
             .iter()
-            .for_each(|arg| visit_ty(&arg.node.1.node, records, variants)),
+            .for_each(|arg| visit_ty(&arg.node, records, variants)),
 
         ast::Type::Var(_) => {}
 

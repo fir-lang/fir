@@ -270,7 +270,10 @@ pub struct FunDecl {
 
 impl FunDecl {
     pub fn num_params(&self) -> u32 {
-        self.sig.params.len() as u32 + if self.sig.self_ { 1 } else { 0 }
+        (match self.sig.self_ {
+            SelfParam::No => 0,
+            SelfParam::Implicit | SelfParam::Explicit(_) => 1,
+        }) + (self.sig.params.len() as u32)
     }
 }
 
@@ -693,15 +696,10 @@ impl Type {
                 },
                 args: args
                     .iter()
-                    .map(
-                        |L {
-                             loc,
-                             node: (name, ty_),
-                         }| L {
-                            loc: loc.clone(),
-                            node: (name.clone(), ty_.map_as_ref(|ty__| ty__.subst_ids(substs))),
-                        },
-                    )
+                    .map(|L { loc, node: ty_ }| L {
+                        loc: loc.clone(),
+                        node: ty_.subst_ids(substs),
+                    })
                     .collect(),
             }),
 

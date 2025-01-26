@@ -22,17 +22,12 @@ pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
                 node:
                     ast::TraitDecl {
                         name: _,
-                        ty: _,
+                        params: _,
                         items,
                     },
             }) => {
                 for item in items {
-                    match &mut item.node {
-                        ast::TraitDeclItem::AssocTy(_) => {}
-                        ast::TraitDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
-                        }
-                    }
+                    visit_fun_decl(&mut item.node, &mut closures, &top_vars)
                 }
             }
 
@@ -42,17 +37,12 @@ pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
                     ast::ImplDecl {
                         context: _,
                         trait_: _,
-                        ty: _,
+                        tys: _,
                         items,
                     },
             }) => {
                 for item in items.iter_mut() {
-                    match &mut item.node {
-                        ast::ImplDeclItem::AssocTy(_) => {}
-                        ast::ImplDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
-                        }
-                    }
+                    visit_fun_decl(&mut item.node, &mut closures, &top_vars)
                 }
             }
 
