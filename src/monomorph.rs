@@ -1380,11 +1380,6 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             // should be instantiated types. So we should never see a QVAr.
             panic!("QVar {} in monomorphiser", var)
         }
-
-        Ty::AssocTySelect { ty, assoc_ty } => {
-            // Associated types should've been normalized away.
-            panic!("Associated type {}.{} in monomorphiser", ty, assoc_ty)
-        }
     }
 }
 

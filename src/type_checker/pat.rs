@@ -326,11 +326,7 @@ pub(super) fn refine_pat_binders(
                     con_scheme.instantiate_with_tys(&ty_args)
                 }
 
-                Ty::Var(_)
-                | Ty::QVar(_)
-                | Ty::Fun { .. }
-                | Ty::AssocTySelect { .. }
-                | Ty::Anonymous { .. } => return,
+                Ty::Var(_) | Ty::QVar(_) | Ty::Fun { .. } | Ty::Anonymous { .. } => return,
             };
 
             for (field_idx, field_pat) in field_pats.iter().enumerate() {
