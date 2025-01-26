@@ -20,7 +20,7 @@ pub struct L<T> {
     pub node: T,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
     pub module: Rc<str>,

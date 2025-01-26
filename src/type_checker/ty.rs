@@ -12,8 +12,11 @@ use smol_str::SmolStr;
 /// A type scheme.
 #[derive(Debug, Clone)]
 pub struct Scheme {
-    /// Generalized variables with bounds.
-    pub(super) quantified_vars: Vec<(Id, QVar)>,
+    /// Generalized variables with kinds.
+    pub(super) quantified_vars: Map<Id, Kind>,
+
+    /// Predicates.
+    pub(super) preds: TreeSet<Pred>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -24,23 +27,8 @@ pub struct Scheme {
     pub(super) loc: ast::Loc,
 }
 
-/// Kind and bounds of a quantified type variable.
-#[derive(Debug, Clone)]
-pub struct QVar {
-    pub kind: Kind,
-
-    /// Bounds of the variable. E.g. in `I: ToStr + Iterator[Item = A]`:
-    /// ```ignore
-    /// {
-    ///     (ToStr => {}),
-    ///     (Iterator => {Item = A}),
-    /// }
-    /// ```
-    pub bounds: Map<Id, Map<Id, Ty>>,
-}
-
 /// A type checking type.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
     Con(Id),
@@ -73,9 +61,6 @@ pub enum Ty {
         exceptions: Option<Box<Ty>>,
     },
 
-    /// Select an associated type of a type, e.g. in `T.Item` `ty` is `T`, `assoc_ty` is `Item`.
-    AssocTySelect { ty: Box<Ty>, assoc_ty: Id },
-
     /// An anonymous record or variant type or row type. E.g. `(a: Str, ..R)`, `[Err1(Str), ..R]`.
     Anonymous {
         labels: TreeMap<Id, Ty>,
@@ -91,7 +76,7 @@ pub enum Ty {
     },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum RecordOrVariant {
     Record,
     Variant,
@@ -107,7 +92,7 @@ pub enum RecordOrVariant {
 type Extension = Option<Box<Ty>>;
 
 // Q: Same type as `TyArgs`, should we use the same type?
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
@@ -122,14 +107,14 @@ impl FunArgs {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum TyArgs {
     Positional(Vec<Ty>),
     Named(TreeMap<Id, Ty>),
 }
 
 /// A reference to a unification variable.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct TyVarRef(Rc<TyVar>);
 
 impl TyVarRef {
@@ -188,11 +173,6 @@ pub struct TyCon {
     /// E.g. in `[A: Iterator[Item = B]]`, this is `[(A, {Iterator => {Item => B}})]`.
     pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
 
-    /// Associated types. Currently these can't have bounds.
-    // TODO: This should be `Trait -> Assoc type -> Ty` to allow same associated types in different
-    // traits.
-    pub(super) assoc_tys: Map<Id, Ty>,
-
     /// Methods for traits, constructor for sums, fields for products.
     ///
     /// Types can refer to `ty_params` and need to be substituted by the instantiated the types in
@@ -222,9 +202,6 @@ pub(super) enum TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: Map<Id, TraitMethod>,
-
-    /// Associated types of the trait.
-    pub(super) assoc_tys: Set<Id>,
 
     /// Types implementing the trait.
     ///
@@ -267,25 +244,16 @@ pub(super) enum ConFields {
     Named(TreeMap<Id, Ty>),
 }
 
-/// A predicate, e.g. `i: Iterator[Item = a]`.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// A predicate, e.g. `Iterator[coll, item]`.
+#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub(super) struct Pred {
     /// Trait of the predicate.
     ///
     /// `Iterator` in the example.
     pub(super) trait_: Id,
 
-    /// The type parameters. `i` in the example.
-    ///
-    /// With multi-parameter traits, it will be possible to have more than one type in this list.
+    /// The type parameters. `[coll, item]` in the example.
     pub(super) params: Vec<Ty>,
-
-    /// Types of the associated types of the trait.
-    ///
-    /// Not all associated types need to be in the map.
-    ///
-    /// `{Item = a}` in the example.
-    pub(super) assoc_tys: TreeMap<Id, Ty>,
 
     /// Location of the expression that created this predicate.
     pub(super) loc: ast::Loc,
@@ -303,32 +271,31 @@ impl Scheme {
         // TODO: We should rename type variables in a renaming pass, or disallow shadowing, or
         // handle shadowing here.
 
+        // Maps `QVar`s to instantiations.
         let mut var_map: Map<Id, Ty> = Default::default();
+
+        // Instantiated type parameters, in the same order as `self.quantified_vars`.
         let mut instantiations: Vec<TyVarRef> = Vec::with_capacity(self.quantified_vars.len());
 
         // Instantiate quantified variables of the scheme.
-        for (qvar, QVar { kind, bounds: _ }) in &self.quantified_vars {
+        for (qvar, kind) in &self.quantified_vars {
             let instantiated_var = var_gen.new_var(level, kind.clone(), self.loc.clone());
             var_map.insert(qvar.clone(), Ty::Var(instantiated_var.clone()));
             instantiations.push(instantiated_var);
         }
 
-        // Add associated types, substitute instantiated types.
-        for (instantiation, (_qvar, QVar { kind: _, bounds })) in
-            instantiations.iter().zip(self.quantified_vars.iter())
-        {
-            for (trait_, assoc_tys) in bounds.iter() {
-                let pred = Pred {
-                    trait_: trait_.clone(),
-                    params: vec![Ty::Var(instantiation.clone())],
-                    assoc_tys: assoc_tys
-                        .iter()
-                        .map(|(assoc_ty, ty)| (assoc_ty.clone(), ty.subst_qvars(&var_map)))
-                        .collect(),
-                    loc: loc.clone(),
-                };
-                preds.insert(pred);
-            }
+        // Generate predicates.
+        for pred in &self.preds {
+            let pred = Pred {
+                trait_: pred.trait_.clone(),
+                params: pred
+                    .params
+                    .iter()
+                    .map(|param| param.subst_qvars(&var_map))
+                    .collect(),
+                loc: loc.clone(),
+            };
+            preds.insert(pred);
         }
 
         (self.ty.subst_qvars(&var_map), instantiations)
@@ -355,8 +322,17 @@ impl Scheme {
             quantified_vars: self
                 .quantified_vars
                 .iter()
-                .filter(|(qvar, _)| qvar != var)
-                .cloned()
+                .filter(|(qvar, _)| *qvar != var)
+                .map(|(qvar, kind)| (qvar.clone(), kind.clone()))
+                .collect(),
+            preds: self
+                .preds
+                .iter()
+                .map(|pred| Pred {
+                    trait_: pred.trait_.clone(),
+                    params: pred.params.iter().map(|ty| ty.subst(var, ty)).collect(),
+                    loc: pred.loc.clone(),
+                })
                 .collect(),
             ty: self.ty.subst(var, ty),
             loc: self.loc.clone(),
@@ -736,11 +712,6 @@ impl Ty {
                 ret: Box::new(ret.subst(var, ty)),
                 exceptions: exceptions.as_ref().map(|exn| Box::new(exn.subst(var, ty))),
             },
-
-            Ty::AssocTySelect { ty: ty_, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty_.subst(var, ty)),
-                assoc_ty: assoc_ty.clone(),
-            },
         }
     }
 
@@ -806,11 +777,6 @@ impl Ty {
                     .as_ref()
                     .map(|exn| Box::new(exn.subst_qvars(vars))),
             },
-
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.subst_qvars(vars)),
-                assoc_ty: assoc_ty.clone(),
-            },
         }
     }
 
@@ -827,25 +793,6 @@ impl Ty {
                     TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
                 },
                 None => self.clone(),
-            },
-
-            Ty::AssocTySelect { ty, assoc_ty } => match ty.normalize(cons) {
-                Ty::Con(con) | Ty::App(con, _) => {
-                    let con = cons
-                        .get(&con)
-                        .unwrap_or_else(|| panic!("Unknown type constructor {}", con));
-                    match con.assoc_tys.get(assoc_ty) {
-                        Some(ty) => ty.clone(),
-                        None => panic!(
-                            "Associated type {} is not defined for type {}",
-                            assoc_ty, con.id
-                        ),
-                    }
-                }
-                ty => Ty::AssocTySelect {
-                    ty: Box::new(ty),
-                    assoc_ty: assoc_ty.clone(),
-                },
             },
 
             _ => self.clone(),
@@ -921,11 +868,6 @@ impl Ty {
                     .map(|exn| Box::new(exn.deep_normalize(cons))),
             },
 
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.deep_normalize(cons)),
-                assoc_ty: assoc_ty.clone(),
-            },
-
             Ty::QVar(_) => panic!(),
         }
     }
@@ -937,11 +879,7 @@ impl Ty {
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
-            Ty::Var(_)
-            | Ty::Anonymous { .. }
-            | Ty::QVar(_)
-            | Ty::Fun { .. }
-            | Ty::AssocTySelect { .. } => None,
+            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_) | Ty::Fun { .. } => None,
         }
     }
 
@@ -950,6 +888,18 @@ impl Ty {
             Ty::Con(con) => con == &SmolStr::new_static("Void"),
             _ => false,
         }
+    }
+}
+
+impl PartialOrd for TyVar {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for TyVar {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.id.cmp(&other.id)
     }
 }
 
@@ -1022,7 +972,6 @@ impl TyCon {
         TyCon {
             id,
             ty_params: vec![],
-            assoc_tys: Default::default(),
             details: TyConDetails::Type(TypeDetails { cons: vec![] }),
         }
     }
@@ -1187,10 +1136,6 @@ impl fmt::Display for Ty {
                 }
                 write!(f, "{}", ret)
             }
-
-            Ty::AssocTySelect { ty, assoc_ty } => {
-                write!(f, "{}.{}", ty, assoc_ty)
-            }
         }
     }
 }
@@ -1199,33 +1144,27 @@ impl fmt::Display for Scheme {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.quantified_vars.is_empty() {
             write!(f, "[")?;
-            for (i, (qvar, QVar { kind: _, bounds })) in self.quantified_vars.iter().enumerate() {
+            for (i, (qvar, kind)) in self.quantified_vars.iter().enumerate() {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}", qvar)?;
-                if !bounds.is_empty() {
-                    write!(f, ": ")?;
-                    for (j, (trait_, assoc_tys)) in bounds.iter().enumerate() {
-                        if j > 0 {
-                            write!(f, " + ")?;
-                        }
-                        write!(f, "{}", trait_)?;
-                        if !assoc_tys.is_empty() {
-                            write!(f, "[")?;
-                            for (k, (assoc_ty, ty)) in assoc_tys.iter().enumerate() {
-                                if k > 0 {
-                                    write!(f, ", ")?;
-                                }
-                                write!(f, "{} = {}", assoc_ty, ty)?;
-                            }
-                            write!(f, "]")?;
-                        }
-                    }
-                }
+                write!(f, "{}: {}", qvar, kind)?;
             }
             write!(f, "] ")?;
         }
         write!(f, "{}", self.ty)
+    }
+}
+
+impl fmt::Display for Kind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let str = match self {
+            Kind::Star => "*",
+            Kind::Row(kind) => match kind {
+                RecordOrVariant::Record => "row(record)",
+                RecordOrVariant::Variant => "row(variant)",
+            },
+        };
+        f.write_str(str)
     }
 }
