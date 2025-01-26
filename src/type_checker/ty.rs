@@ -363,15 +363,6 @@ impl Scheme {
         }
     }
 
-    /// Substitute `ty` for the `Self` type in the scheme.
-    pub(super) fn subst_self(&self, ty: &Ty) -> Scheme {
-        Scheme {
-            quantified_vars: self.quantified_vars.clone(),
-            ty: self.ty.subst_self(ty),
-            loc: self.loc.clone(),
-        }
-    }
-
     /// Compare two schemes for equality modulo alpha renaming of quantified types.
     ///
     /// `extra_qvars` are quantified variables that can appear in both of the types in the same
@@ -748,80 +739,6 @@ impl Ty {
 
             Ty::AssocTySelect { ty: ty_, assoc_ty } => Ty::AssocTySelect {
                 ty: Box::new(ty_.subst(var, ty)),
-                assoc_ty: assoc_ty.clone(),
-            },
-        }
-    }
-
-    /// Substitute `ty` for the `Self` type in the type.
-    fn subst_self(&self, self_ty: &Ty) -> Ty {
-        match self {
-            Ty::Con(id) => {
-                if id == &SmolStr::new_static("Self") {
-                    self_ty.clone()
-                } else {
-                    Ty::Con(id.clone())
-                }
-            }
-
-            Ty::Var(var) => Ty::Var(var.clone()),
-
-            Ty::App(ty, tys) => Ty::App(
-                ty.clone(),
-                match tys {
-                    TyArgs::Positional(tys) => {
-                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_self(self_ty)).collect())
-                    }
-                    TyArgs::Named(tys) => TyArgs::Named(
-                        tys.iter()
-                            .map(|(name, ty)| (name.clone(), ty.subst_self(self_ty)))
-                            .collect(),
-                    ),
-                },
-            ),
-
-            Ty::Anonymous {
-                labels,
-                extension,
-                kind,
-                is_row,
-            } => Ty::Anonymous {
-                labels: labels
-                    .iter()
-                    .map(|(field_id, field_ty)| (field_id.clone(), field_ty.subst_self(self_ty)))
-                    .collect(),
-                extension: extension
-                    .as_ref()
-                    .map(|ext| Box::new(ext.subst_self(self_ty))),
-                kind: *kind,
-                is_row: *is_row,
-            },
-
-            Ty::QVar(id) => Ty::QVar(id.clone()),
-
-            Ty::Fun {
-                args,
-                ret,
-                exceptions,
-            } => Ty::Fun {
-                args: match args {
-                    FunArgs::Positional(args) => FunArgs::Positional(
-                        args.iter().map(|arg| arg.subst_self(self_ty)).collect(),
-                    ),
-                    FunArgs::Named(args) => FunArgs::Named(
-                        args.iter()
-                            .map(|(name, ty_)| (name.clone(), ty_.subst_self(self_ty)))
-                            .collect(),
-                    ),
-                },
-                ret: Box::new(ret.subst_self(self_ty)),
-                exceptions: exceptions
-                    .as_ref()
-                    .map(|exn| Box::new(exn.subst_self(self_ty))),
-            },
-
-            Ty::AssocTySelect { ty, assoc_ty } => Ty::AssocTySelect {
-                ty: Box::new(ty.subst_self(self_ty)),
                 assoc_ty: assoc_ty.clone(),
             },
         }

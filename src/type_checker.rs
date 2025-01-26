@@ -1640,10 +1640,10 @@ fn bind_type_params(
                         .scheme
                         .subst(&trait_ty_param.0, &Ty::Con(var.clone()), loc);
 
-                tys.method_schemes.entry(var.clone()).or_default().insert(
-                    method_id.clone(),
-                    method_scheme.subst_self(&Ty::Con(var.clone())),
-                );
+                tys.method_schemes
+                    .entry(var.clone())
+                    .or_default()
+                    .insert(method_id.clone(), method_scheme);
             }
 
             for (assoc_ty_id, ty) in assoc_tys {
