@@ -155,16 +155,11 @@ impl TraitDecl {
         buffer.push_str("trait ");
         buffer.push_str(&self.name.node);
         buffer.push('[');
-        buffer.push_str(&self.ty.id.node);
-        let bounds = &self.ty.bounds;
-        if !bounds.is_empty() {
-            buffer.push_str(": ");
-            for (i, bound) in bounds.iter().enumerate() {
-                if i != 0 {
-                    buffer.push_str(" + ");
-                }
-                bound.node.print(buffer);
+        for (i, ty) in self.params.iter().enumerate() {
+            if i != 0 {
+                buffer.push_str(", ");
             }
+            buffer.push_str(&ty.node);
         }
         buffer.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
@@ -186,8 +181,15 @@ impl ImplDecl {
             buffer.push(']');
         }
         buffer.push(' ');
-        self.ty.node.print(buffer);
-        buffer.push_str(":\n");
+        buffer.push_str(&self.trait_.node);
+        buffer.push('[');
+        for (i, ty) in self.tys.iter().enumerate() {
+            if i != 0 {
+                buffer.push_str(", ")
+            }
+            ty.node.print(buffer);
+        }
+        buffer.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
             if i != 0 {
                 buffer.push('\n');
@@ -210,11 +212,7 @@ impl Type {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        if let Some(name) = &arg.node.0 {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.1.node.print(buffer);
+                        arg.node.print(buffer);
                     }
                     buffer.push(']');
                 }
@@ -307,9 +305,9 @@ impl FunSig {
     pub fn print(&self, name: &Id, buffer: &mut String) {
         buffer.push_str("fn ");
         buffer.push_str(name);
-        if !self.type_params.is_empty() {
+        if !self.context.is_empty() {
             buffer.push('[');
-            print_context(&self.type_params, buffer);
+            print_context(&self.context, buffer);
             buffer.push(']');
         }
         buffer.push('(');
@@ -871,49 +869,12 @@ impl Pat {
     }
 }
 
-impl TraitDeclItem {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        match self {
-            TraitDeclItem::AssocTy(ty) => {
-                buffer.push_str("type ");
-                buffer.push_str(ty);
-            }
-            TraitDeclItem::Fun(ty) => {
-                ty.print(buffer, indent);
-            }
-        }
-    }
-}
-
-impl ImplDeclItem {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        match self {
-            ImplDeclItem::AssocTy(AssocTyDecl { name, ty }) => {
-                buffer.push_str("type ");
-                buffer.push_str(name);
-                buffer.push_str(" = ");
-                ty.node.print(buffer);
-            }
-            ImplDeclItem::Fun(fun_decl) => fun_decl.print(buffer, indent),
-        }
-    }
-}
-
-fn print_context(context: &[TypeParam], buffer: &mut String) {
+fn print_context(context: &[L<Type>], buffer: &mut String) {
     for (i, ty) in context.iter().enumerate() {
         if i != 0 {
             buffer.push_str(", ");
         }
-        buffer.push_str(&ty.id.node);
-        if !ty.bounds.is_empty() {
-            buffer.push_str(": ");
-            for (j, bound) in ty.bounds.iter().enumerate() {
-                if j != 0 {
-                    buffer.push_str(" + ");
-                }
-                bound.node.print(buffer);
-            }
-        }
+        ty.node.print(buffer);
     }
 }
 
@@ -1035,22 +996,6 @@ impl Display for Pat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         self.print(&mut s);
-        f.write_str(&s)
-    }
-}
-
-impl Display for TraitDeclItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
-        f.write_str(&s)
-    }
-}
-
-impl Display for ImplDeclItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
         f.write_str(&s)
     }
 }
