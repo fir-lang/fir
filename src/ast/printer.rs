@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, type_checker::RecordOrVariant};
 
 pub fn print_module(module: &[L<TopDecl>]) {
     let mut buffer = String::new();
@@ -175,11 +175,7 @@ impl TraitDecl {
 impl ImplDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str("impl");
-        if !self.context.is_empty() {
-            buffer.push('[');
-            print_context(&self.context, buffer);
-            buffer.push(']');
-        }
+        print_context(&self.context, buffer);
         buffer.push(' ');
         buffer.push_str(&self.trait_.node);
         buffer.push('[');
@@ -305,11 +301,7 @@ impl FunSig {
     pub fn print(&self, name: &Id, buffer: &mut String) {
         buffer.push_str("fn ");
         buffer.push_str(name);
-        if !self.context.is_empty() {
-            buffer.push('[');
-            print_context(&self.context, buffer);
-            buffer.push(']');
-        }
+        print_context(&self.context, buffer);
         buffer.push('(');
         match &self.self_ {
             SelfParam::No => {}
@@ -869,13 +861,35 @@ impl Pat {
     }
 }
 
-fn print_context(context: &[L<Type>], buffer: &mut String) {
-    for (i, ty) in context.iter().enumerate() {
+fn print_context(context: &Context, buffer: &mut String) {
+    if context.type_params.is_empty() && context.preds.is_empty() {
+        return;
+    }
+
+    buffer.push('[');
+
+    for (i, (ty_param, kind)) in context.type_params.iter().enumerate() {
         if i != 0 {
+            buffer.push_str(", ");
+        }
+        buffer.push_str(ty_param);
+        buffer.push_str(": ");
+        let kind_str = match kind {
+            Kind::Star => "*",
+            Kind::Row(RecordOrVariant::Record) => "row(rec)",
+            Kind::Row(RecordOrVariant::Variant) => "row(var)",
+        };
+        buffer.push_str(kind_str);
+    }
+
+    for (i, ty) in context.preds.iter().enumerate() {
+        if !context.type_params.is_empty() || i != 0 {
             buffer.push_str(", ");
         }
         ty.node.print(buffer);
     }
+
+    buffer.push(']');
 }
 
 fn print_ty_args(args: &[Ty], buffer: &mut String) {

@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: 428f4eaf40f9f02fa6508d7868e390775e8019e8408348d69079f18bc610c7f2
+// sha3: fef1f3a9b7340fcc40bc62abc91971e4ae747c92cab6ad7edd5abeaba46656b1
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -42345,7 +42345,10 @@ fn __action123<'a>(
 ) -> Expr {
     Expr::Fn(FnExpr {
         sig: FunSig {
-            context: vec![],
+            context: Context {
+                type_params: vec![],
+                preds: vec![],
+            },
             self_: SelfParam::No,
             params: params
                 .into_iter()
@@ -42378,7 +42381,10 @@ fn __action124<'a>(
 ) -> Expr {
     Expr::Fn(FnExpr {
         sig: FunSig {
-            context: vec![],
+            context: Context {
+                type_params: vec![],
+                preds: vec![],
+            },
             self_: SelfParam::No,
             params: params
                 .into_iter()
@@ -42412,7 +42418,10 @@ fn __action125<'a>(
 ) -> Expr {
     Expr::Fn(FnExpr {
         sig: FunSig {
-            context: vec![],
+            context: Context {
+                type_params: vec![],
+                preds: vec![],
+            },
             self_: SelfParam::No,
             params: vec![],
             exceptions: None,
@@ -42437,7 +42446,10 @@ fn __action126<'a>(
 ) -> Expr {
     Expr::Fn(FnExpr {
         sig: FunSig {
-            context: vec![],
+            context: Context {
+                type_params: vec![],
+                preds: vec![],
+            },
             self_: SelfParam::No,
             params: vec![],
             exceptions: None,
@@ -42938,7 +42950,7 @@ fn __action155<'a>(
             ImplDecl {
                 context,
                 trait_,
-                ty,
+                tys,
                 items: vec![],
             },
         )
@@ -42952,7 +42964,10 @@ fn __action155<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action156<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Context {
-    vec![]
+    Context {
+        type_params: vec![],
+        preds: vec![],
+    }
 }
 
 #[allow(unused_variables)]
@@ -42967,7 +42982,10 @@ fn __action157<'a>(
     (_, tys, _): (Loc, Vec<L<Type>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Context {
-    tys
+    Context {
+        type_params: vec![],
+        preds: tys,
+    }
 }
 
 #[allow(unused_variables)]

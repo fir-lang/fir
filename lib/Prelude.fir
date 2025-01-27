@@ -6,6 +6,16 @@ import Str
 import StrBuf
 import Vec
 
+# A marker trait used to mark a type parameter as a record row.
+#
+# This is temporary until we implement kind inference. (#46)
+trait RecRow
+
+# A marker trait used to mark a type parameter as a variant row.
+#
+# This is temporary until we implement kind inference. (#46)
+trait VarRow
+
 # The `+` operator.
 trait Add[t]:
     __add(self, other: t): t

@@ -923,7 +923,7 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                context: vec![],
+                context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
@@ -937,7 +937,7 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                context: vec![],
+                context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
@@ -950,7 +950,7 @@ InlineExpr: Expr = {
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                context: vec![],
+                context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
@@ -963,7 +963,7 @@ InlineExpr: Expr = {
     "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                context: vec![],
+                context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
@@ -1135,17 +1135,16 @@ ImplDecl: L<ImplDecl> = {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
-            ty,
+            tys,
             items: vec![],
         })
     },
 }
 
-// type Context = Vec<L<Type>>;
 Context: Context = {
-    => vec![],
+    => Context { type_params: vec![], preds: vec![] },
 
-    "[" <tys:Sep<LType, ",">> "]" => tys,
+    "[" <tys:Sep<LType, ",">> "]" => Context { type_params: vec![], preds: tys },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
