@@ -1097,14 +1097,21 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    // TODO: Allow empty trait declarations.
     <l:@L> "trait" <name:LUpperId> "[" <params:Sep<LLowerId, ",">> "]" ":"
             NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             params,
             items,
-        })
+        }),
+
+    <l:@L> "trait" <name:LUpperId> "[" <params:Sep<LLowerId, ",">> "]" <r:@R> =>
+        L::new(module, l, r, TraitDecl {
+            name,
+            params,
+            items: vec![],
+        }),
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1114,7 +1121,6 @@ TraitDecl: L<TraitDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    // TODO: Allow empty impl decls.
     <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" ":"
             NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
@@ -1123,7 +1129,16 @@ ImplDecl: L<ImplDecl> = {
             tys,
             items,
         })
-    }
+    },
+
+    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" <r:@R> => {
+        L::new(module, l, r, ImplDecl {
+            context,
+            trait_,
+            ty,
+            items: vec![],
+        })
+    },
 }
 
 // type Context = Vec<L<Type>>;
