@@ -1196,7 +1196,15 @@ TraitDecl: L<TraitDecl> = {
             name,
             ty,
             items,
-        })
+        }),
+
+    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" <r:@R> =>
+        L::new(module, l, r, TraitDecl {
+            name,
+            ty,
+            items: vec![],
+        }),
+
 }
 
 TraitDeclItem: L<TraitDeclItem> = {
@@ -1222,7 +1230,16 @@ ImplDecl: L<ImplDecl> = {
             ty,
             items,
         })
-    }
+    },
+
+    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNamed>  <r:@R> => {
+        L::new(module, l, r, ImplDecl {
+            context,
+            trait_,
+            ty,
+            items: vec![],
+        })
+    },
 }
 
 // type Context = Vec<TypeParam>;
