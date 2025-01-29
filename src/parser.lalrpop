@@ -113,11 +113,11 @@ Sep1<T, S>: Vec<T> = {
     }
 };
 
-LUpperId: L<Id> = {
+LUpperId: L<ParsedId> = {
     <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
-LLowerId: L<Id> = {
+LLowerId: L<ParsedId> = {
     <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
@@ -127,7 +127,7 @@ LLowerId: L<Id> = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TypeDecl: L<TypeDecl> = {
+TypeDecl: L<ParsedTypeDecl> = {
     <l:@L> "type" <type_name:UpperId> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
@@ -143,7 +143,7 @@ TypeDecl: L<TypeDecl> = {
         }),
 }
 
-TypeDeclRhs: TypeDeclRhs = {
+TypeDeclRhs: ParsedTypeDeclRhs = {
     ":" NEWLINE INDENT <constrs:TypeConstrs> DEDENT =>
         TypeDeclRhs::Sum(constrs),
 
@@ -151,18 +151,18 @@ TypeDeclRhs: TypeDeclRhs = {
         TypeDeclRhs::Product(ConstructorFields::Named(named_fields)),
 }
 
-TypeParams: Vec<Id> = {
+TypeParams: Vec<ParsedId> = {
     => vec![],
 
     "[" <params:Sep<LowerId, ",">> "]" =>
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
-TypeConstrs: Vec<ConstructorDecl> = {
+TypeConstrs: Vec<ParsedConstructorDecl> = {
     ConstructorDecl+
 }
 
-ConstructorDecl: ConstructorDecl = {
+ConstructorDecl: ParsedConstructorDecl = {
     <name:UpperId> NEWLINE =>
         ConstructorDecl {
             name: name.smol_str(),
@@ -182,16 +182,16 @@ ConstructorDecl: ConstructorDecl = {
         },
 }
 
-NamedFields: Vec<(Id, Type)> = {
+NamedFields: Vec<(ParsedId, ParsedType)> = {
     (<NamedField> NEWLINE)+
 }
 
-NamedField: (Id, Type) = {
+NamedField: (ParsedId, ParsedType) = {
     <name:LowerId> ":" <type_:Type> =>
         (name.smol_str(), type_),
 }
 
-UnnamedFields: Vec<Type> = {
+UnnamedFields: Vec<ParsedType> = {
     <mut fields:UnnamedFields> "," <field:Type> => {
         fields.push(field);
         fields
@@ -200,15 +200,15 @@ UnnamedFields: Vec<Type> = {
     <field:Type> => vec![field],
 }
 
-LType: L<Type> = {
+LType: L<ParsedType> = {
     <l:@L> <ty:Type> <r:@R> => L::new(module, l, r, ty),
 }
 
-LTypeNamed: L<Type> = {
+LTypeNamed: L<ParsedType> = {
     <l:@L> <ty:TypeNamed> <r:@R> => L::new(module, l, r, ty),
 }
 
-Type: Type = {
+Type: ParsedType = {
     <ty:TypeNamed> => ty,
 
     <var:LowerId> =>
@@ -228,7 +228,7 @@ Type: Type = {
         Type::Variant { alts, extension, },
 }
 
-TypeNamed: Type = {
+TypeNamed: ParsedType = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
@@ -236,13 +236,13 @@ TypeNamed: Type = {
         Type::Named(NamedType { name: name.smol_str(), args }),
 }
 
-RowExtension: Option<Id> = {
+RowExtension: Option<ParsedId> = {
     => None,
 
     ".." <id:LowerId> => Some(id.smol_str()),
 }
 
-TypeArg: L<(Option<Id>, L<Type>)> = {
+TypeArg: L<(Option<ParsedId>, L<ParsedType>)> = {
     <l:@L> <name:UpperId> "=" <ty:LType> <r:@R> =>
         L::new(module, l, r, (Some(name.smol_str()), ty)),
 
@@ -252,12 +252,12 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
     },
 }
 
-RecordTypeField: Named<Type> = {
+RecordTypeField: Named<ParsedType, ParsedId> = {
     <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
     <ty:Type> => Named { name: None, node: ty },
 }
 
-VariantAlt: VariantAlt = {
+VariantAlt: ParsedVariantAlt = {
     <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
         VariantAlt { con: name.smol_str(), fields },
     <name:UpperId> =>
@@ -270,7 +270,7 @@ VariantAlt: VariantAlt = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FunDecl: L<FunDecl> = {
+FunDecl: L<ParsedFunDecl> = {
     // We need two productions here as with two optional bracketed type/pred
     // list we can't tell that one list means only type list.
 
@@ -300,7 +300,7 @@ FunDecl: L<FunDecl> = {
     },
 }
 
-FunSig: (L<Id>, FunSig) = {
+FunSig: (L<ParsedId>, ParsedFunSig) = {
     <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
@@ -326,12 +326,12 @@ FunSig: (L<Id>, FunSig) = {
             })
 }
 
-TopFunDecl: TopDecl = {
+TopFunDecl: ParsedTopDecl = {
     <l:@L> <sig:TopFunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> => {
-        let (parent_ty, parent_ty_ctx, name, sig): (Option<L<Id>>, Context, L<Id>, FunSig) = sig;
+        let (parent_ty, parent_ty_ctx, name, sig): (Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx.iter().map(
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx.iter().map(
                         |ty| L { loc: ty.id.loc.clone(), node: Type::Named(NamedType { name: ty.id.node.clone(), args: vec![] }) }).collect();
                 TopDecl::Impl(
                     L::new(module, l, r, ImplDecl {
@@ -367,7 +367,7 @@ TopFunDecl: TopDecl = {
         let (parent_ty, parent_ty_ctx, name, sig) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx.iter().map(
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx.iter().map(
                         |ty| L { loc: ty.id.loc.clone(), node: Type::Named(NamedType { name: ty.id.node.clone(), args: vec![] }) }).collect();
                 TopDecl::Impl(
                     L::new(module, l, r, ImplDecl {
@@ -402,7 +402,7 @@ TopFunDecl: TopDecl = {
         let (parent_ty, parent_ty_ctx, name, sig) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx.iter().map(
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx.iter().map(
                         |ty| L { loc: ty.id.loc.clone(), node: Type::Named(NamedType { name: ty.id.node.clone(), args: vec![] }) }).collect();
                 TopDecl::Impl(
                     L::new(module, l, r, ImplDecl {
@@ -433,7 +433,7 @@ TopFunDecl: TopDecl = {
     },
 }
 
-TopFunSig: (Option<L<Id>>, Context, L<Id>, FunSig) = {
+TopFunSig: (Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig) = {
     <parent_ty:ParentTy?> <name:LLowerId>
             <type_params:Context>
             "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
@@ -505,7 +505,7 @@ TopFunSig: (Option<L<Id>>, Context, L<Id>, FunSig) = {
     }
 }
 
-ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
+ReturnType: (Option<L<ParsedType>>, Option<L<ParsedType>>) = {
     => (None, None),
 
     ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" =>
@@ -518,7 +518,7 @@ ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
         (Some(L::new(module, l, r, Type::Variant { alts, extension, })), Some(ty)),
 }
 
-ParentTy: (L<Id>, Context) = {
+ParentTy: (L<ParsedId>, ParsedContext) = {
     <ty:LUpperId> <context:Context> "." => (ty, context)
 }
 
@@ -528,16 +528,16 @@ ParentTy: (L<Id>, Context) = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LStmts: Vec<L<Stmt>> = {
+LStmts: Vec<L<ParsedStmt>> = {
     <stmts:LStmt*> =>
         stmts,
 }
 
-pub LStmt: L<Stmt> = {
+pub LStmt: L<ParsedStmt> = {
     <l:@L> <stmt:Stmt> <r:@R> => L::new(module, l, r, stmt),
 }
 
-Stmt: Stmt = {
+Stmt: ParsedStmt = {
     "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
 
     "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
@@ -609,11 +609,11 @@ LoopLabel: SmolStr = {
     <label:Label> ":" => SmolStr::new(&label.smol_str().as_str()[1..])
 }
 
-Alts: Vec<Alt> = {
+Alts: Vec<ParsedAlt> = {
     Alt*
 }
 
-Alt: Alt = {
+Alt: ParsedAlt = {
     <pattern:LPat> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
         Alt {
             pattern,
@@ -642,22 +642,22 @@ AssignOp: AssignOp = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub LExpr: L<Expr> = {
+pub LExpr: L<ParsedExpr> = {
     <l:@L> <expr:Expr> <r:@R> => L::new(module, l, r, expr),
 }
 
-Expr: Expr = {
+Expr: ParsedExpr = {
     <expr:InlineExpr> => expr,
     <expr:BlockExpr>  => expr,
 }
 
-LBlockExpr: L<Expr> = {
+LBlockExpr: L<ParsedExpr> = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         L::new(module, l, r, expr),
 }
 
 // Block expressions are also statements, without a NEWLINE after them.
-BlockExpr: Expr = {
+BlockExpr: ParsedExpr = {
     "match" <expr:LInlineExpr> ":" NEWLINE INDENT <alts:Alts> DEDENT =>
         Expr::Match(MatchExpr {
             scrutinee: Box::new(expr),
@@ -675,13 +675,13 @@ BlockExpr: Expr = {
     },
 }
 
-LInlineExpr: L<Expr> = {
+LInlineExpr: L<ParsedExpr> = {
     <l:@L> <expr:InlineExpr> <r:@R> =>
         L::new(module, l, r, expr),
 }
 
 // Inline expressions can be made statements with a NEWLINE after them.
-InlineExpr: Expr = {
+InlineExpr: ParsedExpr = {
     #[precedence(level = "0")]
     "self" =>
         Expr::Self_,
@@ -1067,7 +1067,7 @@ InlineExpr: Expr = {
         }),
 }
 
-ParenExpr: (Option<Id>, L<Expr>) = {
+ParenExpr: (Option<ParsedId>, L<ParsedExpr>) = {
     <id:LowerId> "=" <expr:LExpr> =>
         (Some(id.smol_str()), expr),
 
@@ -1075,7 +1075,7 @@ ParenExpr: (Option<Id>, L<Expr>) = {
         (None, expr),
 }
 
-CallArg: CallArg = {
+CallArg: ParsedCallArg = {
     <name:LowerId> "=" <expr:LExpr> =>
         CallArg {
             name: Some(name.smol_str()),
@@ -1095,11 +1095,11 @@ CallArg: CallArg = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LPat: L<Pat> = {
+LPat: L<ParsedPat> = {
     <l:@L> <pat:Pat> <r:@R> => L::new(module, l, r, pat),
 }
 
-Pat: Pat = {
+Pat: ParsedPat = {
     #[precedence(level = "0")]
     <id:LowerId> => Pat::Var(id.smol_str()),
 
@@ -1130,7 +1130,7 @@ Pat: Pat = {
     }
 }
 
-Constructor: Constructor = {
+Constructor: ParsedConstructor = {
     <type_:UpperId> "." <constr:UpperId> =>
         Constructor { type_: type_.smol_str(), constr: Some(constr.smol_str()) },
 
@@ -1138,7 +1138,7 @@ Constructor: Constructor = {
         Constructor { type_: type_.smol_str(), constr: None },
 }
 
-ConstrPattern: ConstrPattern = {
+ConstrPattern: ParsedConstrPattern = {
     <constr:Constructor> =>
         ConstrPattern { constr, fields: vec![], ty_args: vec![] },
 
@@ -1150,7 +1150,7 @@ ConstrPattern: ConstrPattern = {
         },
 }
 
-VariantPattern: VariantPattern = {
+VariantPattern: ParsedVariantPattern = {
     <constr:TildeUpperId> =>
         VariantPattern {
             constr: constr.text.as_str()[1..].into(),
@@ -1164,7 +1164,7 @@ VariantPattern: VariantPattern = {
         },
 }
 
-PatternField: (Option<Id>, L<Pat>) = {
+PatternField: (Option<ParsedId>, L<ParsedPat>) = {
     <id:LowerId> "=" <pat:LPat> =>
         (Some(id.smol_str()), pat),
 
@@ -1178,7 +1178,7 @@ PatternField: (Option<Id>, L<Pat>) = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ImportDecl: L<ImportDecl> = {
+ImportDecl: L<ParsedImportDecl> = {
     <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R> =>
         L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
 }
@@ -1189,7 +1189,7 @@ ImportDecl: L<ImportDecl> = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TraitDecl: L<TraitDecl> = {
+TraitDecl: L<ParsedTraitDecl> = {
     <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" ":"
             NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
@@ -1207,7 +1207,7 @@ TraitDecl: L<TraitDecl> = {
 
 }
 
-TraitDeclItem: L<TraitDeclItem> = {
+TraitDeclItem: L<ParsedTraitDeclItem> = {
     <l:@L> "type" <name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str())),
 
@@ -1221,7 +1221,7 @@ TraitDeclItem: L<TraitDeclItem> = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ImplDecl: L<ImplDecl> = {
+ImplDecl: L<ParsedImplDecl> = {
     <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNamed> ":"
             NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
@@ -1243,13 +1243,13 @@ ImplDecl: L<ImplDecl> = {
 }
 
 // type Context = Vec<TypeParam>;
-Context: Context = {
+Context: ParsedContext = {
     => vec![],
 
     "[" <tys:Sep<TypeParam, ",">> "]" => tys,
 }
 
-TypeParam: TypeParam = {
+TypeParam: ParsedTypeParam = {
     <id:LLowerId> =>
         TypeParam { id, bounds: vec![] },
 
@@ -1257,7 +1257,7 @@ TypeParam: TypeParam = {
         TypeParam { id, bounds },
 }
 
-ImplDeclItem: L<ImplDeclItem> = {
+ImplDeclItem: L<ParsedImplDeclItem> = {
     <l:@L> "type" <name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
         L::new(module, l, r, ImplDeclItem::AssocTy(AssocTyDecl { name: name.smol_str(), ty })),
 
@@ -1271,11 +1271,11 @@ ImplDeclItem: L<ImplDeclItem> = {
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pub TopDecls: Vec<L<TopDecl>> = {
+pub TopDecls: Vec<L<ParsedTopDecl>> = {
     TopDecl*
 }
 
-TopDecl: L<TopDecl> = {
+TopDecl: L<ParsedTopDecl> = {
     NEWLINE* <l:@L> <type_decl:TypeDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Type(type_decl)),
 

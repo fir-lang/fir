@@ -11,7 +11,55 @@ use std::rc::Rc;
 
 use smol_str::SmolStr;
 
-pub type Id = SmolStr;
+pub type ParsedId = SmolStr;
+
+pub type ParsedModule = Module<ParsedId>;
+pub type ParsedTopDecl = TopDecl<ParsedId>;
+pub type ParsedTypeDecl = TypeDecl<ParsedId>;
+pub type ParsedTypeDeclRhs = TypeDeclRhs<ParsedId>;
+pub type ParsedConstructorDecl = ConstructorDecl<ParsedId>;
+pub type ParsedConstructorFields = ConstructorFields<ParsedId>;
+pub type ParsedType = Type<ParsedId>;
+pub type ParsedVariantAlt = VariantAlt<ParsedId>;
+pub type ParsedNamedType = NamedType<ParsedId>;
+pub type ParsedFnType = FnType<ParsedId>;
+pub type ParsedNamed<T> = Named<T, ParsedId>;
+pub type ParsedFunSig = FunSig<ParsedId>;
+pub type ParsedFunDecl = FunDecl<ParsedId>;
+pub type ParsedStmt = Stmt<ParsedId>;
+pub type ParsedLetStmt = LetStmt<ParsedId>;
+pub type ParsedMatchExpr = MatchExpr<ParsedId>;
+pub type ParsedAlt = Alt<ParsedId>;
+pub type ParsedPat = Pat<ParsedId>;
+pub type ParsedConstrPattern = ConstrPattern<ParsedId>;
+pub type ParsedConstructor = Constructor<ParsedId>;
+pub type ParsedVariantPattern = VariantPattern<ParsedId>;
+pub type ParsedIfExpr = IfExpr<ParsedId>;
+pub type ParsedAssignStmt = AssignStmt<ParsedId>;
+pub type ParsedForStmt = ForStmt<ParsedId>;
+pub type ParsedWhileStmt = WhileStmt<ParsedId>;
+pub type ParsedWhileLetStmt = WhileLetStmt<ParsedId>;
+pub type ParsedExpr = Expr<ParsedId>;
+pub type ParsedVarExpr = VarExpr<ParsedId>;
+pub type ParsedConstrExpr = ConstrExpr<ParsedId>;
+pub type ParsedVariantExpr = VariantExpr<ParsedId>;
+pub type ParsedCallExpr = CallExpr<ParsedId>;
+pub type ParsedCallArg = CallArg<ParsedId>;
+pub type ParsedFieldSelectExpr = FieldSelectExpr<ParsedId>;
+pub type ParsedMethodSelectExpr = MethodSelectExpr<ParsedId>;
+pub type ParsedConstrSelectExpr = ConstrSelectExpr<ParsedId>;
+pub type ParsedAssocFnSelectExpr = AssocFnSelectExpr<ParsedId>;
+pub type ParsedBinOpExpr = BinOpExpr<ParsedId>;
+pub type ParsedUnOpExpr = UnOpExpr<ParsedId>;
+pub type ParsedFnExpr = FnExpr<ParsedId>;
+pub type ParsedImportDecl = ImportDecl<ParsedId>;
+pub type ParsedTraitDecl = TraitDecl<ParsedId>;
+pub type ParsedTraitDeclItem = TraitDeclItem<ParsedId>;
+pub type ParsedContext = Context<ParsedId>;
+pub type ParsedTypeParam = TypeParam<ParsedId>;
+pub type ParsedImplDecl = ImplDecl<ParsedId>;
+pub type ParsedImplDeclItem = ImplDeclItem<ParsedId>;
+pub type ParsedAssocTyDecl = AssocTyDecl<ParsedId>;
 
 /// Things with location information.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -95,30 +143,30 @@ impl Loc {
     }
 }
 
-pub type Module = Vec<L<TopDecl>>;
+pub type Module<Id> = Vec<L<TopDecl<Id>>>;
 
 /// A top-level declaration.
 #[derive(Debug, Clone)]
-pub enum TopDecl {
+pub enum TopDecl<Id> {
     /// A type declaration: `type T = ...`.
-    Type(L<TypeDecl>),
+    Type(L<TypeDecl<Id>>),
 
     /// A function declaration: `fn f(...) = ...`.
-    Fun(L<FunDecl>),
+    Fun(L<FunDecl<Id>>),
 
     /// An import declaration.
-    Import(L<ImportDecl>),
+    Import(L<ImportDecl<Id>>),
 
     /// A trait declaration.
-    Trait(L<TraitDecl>),
+    Trait(L<TraitDecl<Id>>),
 
     /// An `impl` block, implementing a trait or associated methods for a type.
-    Impl(L<ImplDecl>),
+    Impl(L<ImplDecl<Id>>),
 }
 
 /// A type declaration: `type Vec[T] = ...`.
 #[derive(Debug, Clone)]
-pub struct TypeDecl {
+pub struct TypeDecl<Id> {
     /// The type name, e.g. `Vec`.
     pub name: Id,
 
@@ -126,37 +174,37 @@ pub struct TypeDecl {
     pub type_params: Vec<Id>,
 
     /// Constructors of the type.
-    pub rhs: Option<TypeDeclRhs>,
+    pub rhs: Option<TypeDeclRhs<Id>>,
 }
 
 /// Constructors of a type declaration.
 #[derive(Debug, Clone)]
-pub enum TypeDeclRhs {
+pub enum TypeDeclRhs<Id> {
     /// A sum type, with more than one constructor.
-    Sum(Vec<ConstructorDecl>),
+    Sum(Vec<ConstructorDecl<Id>>),
 
     /// A product type uses the type name as the constructor and only has fields.
-    Product(ConstructorFields),
+    Product(ConstructorFields<Id>),
 }
 
 /// A sum type constructor.
 #[derive(Debug, Clone)]
-pub struct ConstructorDecl {
+pub struct ConstructorDecl<Id> {
     pub name: Id,
-    pub fields: ConstructorFields,
+    pub fields: ConstructorFields<Id>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ConstructorFields {
+pub enum ConstructorFields<Id> {
     Empty,
-    Named(Vec<(Id, Type)>),
-    Unnamed(Vec<Type>),
+    Named(Vec<(Id, Type<Id>)>),
+    Unnamed(Vec<Type<Id>>),
 }
 
 #[derive(Debug, Clone)]
-pub enum Type {
+pub enum Type<Id> {
     /// A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
-    Named(NamedType),
+    Named(NamedType<Id>),
 
     /// A type variable.
     ///
@@ -165,29 +213,29 @@ pub enum Type {
 
     /// An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
     Record {
-        fields: Vec<Named<Type>>,
+        fields: Vec<Named<Type<Id>, Id>>,
         extension: Option<Id>,
     },
 
     /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
-        alts: Vec<VariantAlt>,
+        alts: Vec<VariantAlt<Id>>,
         extension: Option<Id>,
     },
 
     /// A function type: `Fn(I32): Bool`.
-    Fn(FnType),
+    Fn(FnType<Id>),
 }
 
 #[derive(Debug, Clone)]
-pub struct VariantAlt {
+pub struct VariantAlt<Id> {
     pub con: Id,
-    pub fields: Vec<Named<Type>>,
+    pub fields: Vec<Named<Type<Id>, Id>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[Item = A]`.
 #[derive(Debug, Clone)]
-pub struct NamedType {
+pub struct NamedType<Id> {
     /// Name of the type constructor, e.g. `I32`, `Vec`, `Iterator`.
     pub name: Id,
 
@@ -196,27 +244,27 @@ pub struct NamedType {
     /// - In `I32`, `[]`.
     /// - In `Vec[I32]`, `[(None, I32)]`.
     /// - In `Iterator[Item = A]`, `[(Some(Item), A)]`.
-    pub args: Vec<L<(Option<Id>, L<Type>)>>,
+    pub args: Vec<L<(Option<Id>, L<Type<Id>>)>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct FnType {
-    pub args: Vec<L<Type>>,
+pub struct FnType<Id> {
+    pub args: Vec<L<Type<Id>>>,
 
-    pub ret: Option<L<Box<Type>>>,
+    pub ret: Option<L<Box<Type<Id>>>>,
 
     /// Same as `FunSig.exceptions`.
-    pub exceptions: Option<L<Box<Type>>>,
+    pub exceptions: Option<L<Box<Type<Id>>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Named<T> {
+pub struct Named<T, Id> {
     pub name: Option<Id>,
     pub node: T,
 }
 
-impl<T> Named<T> {
-    pub fn map_as_ref<T2, F>(&self, f: F) -> Named<T2>
+impl<T, Id: Clone> Named<T, Id> {
+    pub fn map_as_ref<T2, F>(&self, f: F) -> Named<T2, Id>
     where
         F: FnOnce(&T) -> T2,
     {
@@ -231,48 +279,48 @@ impl<T> Named<T> {
 /// Type signature part of a function declaration: type parameters, value parameters, exception
 /// type, return type.
 #[derive(Debug, Clone)]
-pub struct FunSig {
+pub struct FunSig<Id> {
     /// Type parameters of the function, e.g. in `fn id[T: Debug](a: T)` this is `[T: Debug]`.
     ///
     /// The bound can refer to assocaited types, e.g. `[A, I: Iterator[Item = A]]`.
-    pub type_params: Context,
+    pub type_params: Context<Id>,
 
     /// Whether the function has a `self` parameter.
     pub self_: bool,
 
     /// Parameters of the function.
-    pub params: Vec<(Id, L<Type>)>,
+    pub params: Vec<(Id, L<Type<Id>>)>,
 
     /// Optional return type.
-    pub return_ty: Option<L<Type>>,
+    pub return_ty: Option<L<Type<Id>>>,
 
     /// The exception signature. If exists, this will be a variant type. Store as `Type` to make it
     /// easier to process with rest of the types.
-    pub exceptions: Option<L<Type>>,
+    pub exceptions: Option<L<Type<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct FunDecl {
+pub struct FunDecl<Id> {
     pub name: L<Id>,
-    pub sig: FunSig,
-    pub body: Option<Vec<L<Stmt>>>,
+    pub sig: FunSig<Id>,
+    pub body: Option<Vec<L<Stmt<Id>>>>,
 }
 
-impl FunDecl {
+impl<Id> FunDecl<Id> {
     pub fn num_params(&self) -> u32 {
         self.sig.params.len() as u32 + if self.sig.self_ { 1 } else { 0 }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum Stmt {
-    Let(LetStmt),
+pub enum Stmt<Id> {
+    Let(LetStmt<Id>),
     // LetFn(FunDecl),
-    Assign(AssignStmt),
-    Expr(L<Expr>),
-    For(ForStmt),
-    While(WhileStmt),
-    WhileLet(WhileLetStmt),
+    Assign(AssignStmt<Id>),
+    Expr(L<Expr<Id>>),
+    For(ForStmt<Id>),
+    While(WhileStmt<Id>),
+    WhileLet(WhileLetStmt<Id>),
     Break {
         label: Option<Id>,
 
@@ -290,37 +338,37 @@ pub enum Stmt {
 
 /// A let statement: `let x: T = expr`.
 #[derive(Debug, Clone)]
-pub struct LetStmt {
-    pub lhs: L<Pat>,
-    pub ty: Option<L<Type>>,
-    pub rhs: L<Expr>,
+pub struct LetStmt<Id> {
+    pub lhs: L<Pat<Id>>,
+    pub ty: Option<L<Type<Id>>>,
+    pub rhs: L<Expr<Id>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct MatchExpr {
-    pub scrutinee: Box<L<Expr>>,
-    pub alts: Vec<Alt>,
+pub struct MatchExpr<Id> {
+    pub scrutinee: Box<L<Expr<Id>>>,
+    pub alts: Vec<Alt<Id>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Alt {
-    pub pattern: L<Pat>,
-    pub guard: Option<L<Expr>>,
-    pub rhs: Vec<L<Stmt>>,
+pub struct Alt<Id> {
+    pub pattern: L<Pat<Id>>,
+    pub guard: Option<L<Expr<Id>>>,
+    pub rhs: Vec<L<Stmt<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Pat {
+pub enum Pat<Id> {
     /// Matches anything, binds it to variable.
     Var(Id),
 
     /// Matches a constructor.
-    Constr(ConstrPattern),
+    Constr(ConstrPattern<Id>),
 
     /// Matches a variant.
-    Variant(VariantPattern),
+    Variant(VariantPattern<Id>),
 
-    Record(Vec<Named<L<Pat>>>),
+    Record(Vec<Named<L<Pat<Id>>, Id>>),
 
     /// Underscore, aka. wildcard.
     Ignore,
@@ -335,41 +383,41 @@ pub enum Pat {
     StrPfx(String, Id),
 
     /// Or pattern: `<pat1> | <pat2>`.
-    Or(Box<L<Pat>>, Box<L<Pat>>),
+    Or(Box<L<Pat<Id>>>, Box<L<Pat<Id>>>),
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstrPattern {
-    pub constr: Constructor,
-    pub fields: Vec<Named<L<Pat>>>,
+pub struct ConstrPattern<Id> {
+    pub constr: Constructor<Id>,
+    pub fields: Vec<Named<L<Pat<Id>>, Id>>,
 
     /// Inferred type arguments of the constructor. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Constructor {
+pub struct Constructor<Id> {
     pub type_: Id,
     pub constr: Option<Id>,
 }
 
 #[derive(Debug, Clone)]
-pub struct VariantPattern {
+pub struct VariantPattern<Id> {
     pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
+    pub fields: Vec<Named<L<Pat<Id>>, Id>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct IfExpr {
+pub struct IfExpr<Id> {
     // At least one element
-    pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
-    pub else_branch: Option<Vec<L<Stmt>>>,
+    pub branches: Vec<(L<Expr<Id>>, Vec<L<Stmt<Id>>>)>,
+    pub else_branch: Option<Vec<L<Stmt<Id>>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct AssignStmt {
-    pub lhs: L<Expr>,
-    pub rhs: L<Expr>,
+pub struct AssignStmt<Id> {
+    pub lhs: L<Expr<Id>>,
+    pub rhs: L<Expr<Id>>,
     pub op: AssignOp,
 }
 
@@ -382,66 +430,66 @@ pub enum AssignOp {
 }
 
 #[derive(Debug, Clone)]
-pub struct ForStmt {
+pub struct ForStmt<Id> {
     pub label: Option<Id>,
-    pub pat: L<Pat>,
-    pub ty: Option<Type>,
-    pub expr: L<Expr>,
+    pub pat: L<Pat<Id>>,
+    pub ty: Option<Type<Id>>,
+    pub expr: L<Expr<Id>>,
     pub expr_ty: Option<Ty>, // filled in by the type checker
-    pub body: Vec<L<Stmt>>,
+    pub body: Vec<L<Stmt<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct WhileStmt {
+pub struct WhileStmt<Id> {
     pub label: Option<Id>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
+    pub cond: L<Expr<Id>>,
+    pub body: Vec<L<Stmt<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct WhileLetStmt {
+pub struct WhileLetStmt<Id> {
     pub label: Option<Id>,
-    pub pat: L<Pat>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
+    pub pat: L<Pat<Id>>,
+    pub cond: L<Expr<Id>>,
+    pub body: Vec<L<Stmt<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum Expr {
+pub enum Expr<Id> {
     /// A variable: `x`.
-    Var(VarExpr),
+    Var(VarExpr<Id>),
 
     /// A constructor: `Vec`, `Bool`, `I32`.
-    Constr(ConstrExpr),
+    Constr(ConstrExpr<Id>),
 
     /// A variant application: "`A()", "`ParseError(...)".
     ///
     /// Because "`A" is type checked differently from "`A(1)", we parse variant applications as
     /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr),
+    Variant(VariantExpr<Id>),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
     /// Parser generates this node for all expression of form `<expr>.<id>`, type checker converts
     /// method selection expressions to `MethodSelect`.
-    FieldSelect(FieldSelectExpr),
+    FieldSelect(FieldSelectExpr<Id>),
 
     /// A method selection: `<expr>.x` where `x` is a method.
     ///
     /// This node is generated by the type checker.
-    MethodSelect(MethodSelectExpr),
+    MethodSelect(MethodSelectExpr<Id>),
 
     /// A constructor selection: `Option.None`.
-    ConstrSelect(ConstrSelectExpr),
+    ConstrSelect(ConstrSelectExpr<Id>),
 
     /// An associated function or method selection:
     ///
     /// - Associated function: `Vec.withCapacity`.
     /// - Method: `Vec.push`.
-    AssocFnSelect(AssocFnSelectExpr),
+    AssocFnSelect(AssocFnSelectExpr<Id>),
 
     /// A function call: `f(a)`.
-    Call(CallExpr),
+    Call(CallExpr<Id>),
 
     Int(IntExpr),
 
@@ -451,23 +499,23 @@ pub enum Expr {
 
     Self_,
 
-    BinOp(BinOpExpr),
+    BinOp(BinOpExpr<Id>),
 
-    UnOp(UnOpExpr),
+    UnOp(UnOpExpr<Id>),
 
-    Record(Vec<Named<L<Expr>>>),
+    Record(Vec<Named<L<Expr<Id>>, Id>>),
 
-    Return(Box<L<Expr>>),
+    Return(Box<L<Expr<Id>>>),
 
-    Match(MatchExpr),
+    Match(MatchExpr<Id>),
 
-    If(IfExpr),
+    If(IfExpr<Id>),
 
-    Fn(FnExpr),
+    Fn(FnExpr<Id>),
 }
 
 #[derive(Debug, Clone)]
-pub struct VarExpr {
+pub struct VarExpr<Id> {
     pub id: Id,
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
@@ -475,7 +523,7 @@ pub struct VarExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstrExpr {
+pub struct ConstrExpr<Id> {
     pub id: Id,
 
     /// Inferred type arguments of the constructor. Filled by the type checker.
@@ -483,34 +531,34 @@ pub struct ConstrExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct VariantExpr {
+pub struct VariantExpr<Id> {
     pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
+    pub args: Vec<Named<L<Expr<Id>>, Id>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct CallExpr {
-    pub fun: Box<L<Expr>>,
-    pub args: Vec<CallArg>,
+pub struct CallExpr<Id> {
+    pub fun: Box<L<Expr<Id>>>,
+    pub args: Vec<CallArg<Id>>,
 }
 
 #[derive(Debug, Clone)]
-pub struct CallArg {
+pub struct CallArg<Id> {
     pub name: Option<Id>,
-    pub expr: L<Expr>,
+    pub expr: L<Expr<Id>>,
 }
 
 /// A field selection: `<expr>.x`.
 #[derive(Debug, Clone)]
-pub struct FieldSelectExpr {
-    pub object: Box<L<Expr>>,
+pub struct FieldSelectExpr<Id> {
+    pub object: Box<L<Expr<Id>>>,
     pub field: Id,
 }
 
 /// A method selection: `<expr>.x`.
 #[derive(Debug, Clone)]
-pub struct MethodSelectExpr {
-    pub object: Box<L<Expr>>,
+pub struct MethodSelectExpr<Id> {
+    pub object: Box<L<Expr<Id>>>,
 
     /// Type of `object`, filled in by the type checker.
     pub object_ty: Option<Ty>,
@@ -523,7 +571,7 @@ pub struct MethodSelectExpr {
 
 /// A constructor selection: `Option.None`.
 #[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
+pub struct ConstrSelectExpr<Id> {
     pub ty: Id,
     pub constr: Id,
 
@@ -536,7 +584,7 @@ pub struct ConstrSelectExpr {
 /// - Associated function: `Vec.withCapacity`.
 /// - Method: `Vec.push`.
 #[derive(Debug, Clone)]
-pub struct AssocFnSelectExpr {
+pub struct AssocFnSelectExpr<Id> {
     pub ty: Id,
     pub member: Id,
 
@@ -545,16 +593,16 @@ pub struct AssocFnSelectExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct BinOpExpr {
-    pub left: Box<L<Expr>>,
-    pub right: Box<L<Expr>>,
+pub struct BinOpExpr<Id> {
+    pub left: Box<L<Expr<Id>>>,
+    pub right: Box<L<Expr<Id>>>,
     pub op: BinOp,
 }
 
 #[derive(Debug, Clone)]
-pub struct UnOpExpr {
+pub struct UnOpExpr<Id> {
     pub op: UnOp,
-    pub expr: Box<L<Expr>>,
+    pub expr: Box<L<Expr<Id>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -605,56 +653,56 @@ pub enum UnOp {
 }
 
 #[derive(Debug, Clone)]
-pub struct FnExpr {
-    pub sig: FunSig,
-    pub body: Vec<L<Stmt>>,
+pub struct FnExpr<Id> {
+    pub sig: FunSig<Id>,
+    pub body: Vec<L<Stmt<Id>>>,
     pub idx: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ImportDecl {
+pub struct ImportDecl<Id> {
     /// Import path, e.g. `Fir.Prelude`.
     pub path: Vec<Id>,
     // TODO: Imported thing list, renaming (`as`).
 }
 
 #[derive(Debug, Clone)]
-pub struct TraitDecl {
+pub struct TraitDecl<Id> {
     /// Trait name.
     pub name: L<Id>,
 
     /// Type parameter of the trait, with bounds.
-    pub ty: TypeParam,
+    pub ty: TypeParam<Id>,
 
-    pub items: Vec<L<TraitDeclItem>>,
+    pub items: Vec<L<TraitDeclItem<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum TraitDeclItem {
+pub enum TraitDeclItem<Id> {
     /// An associated type, e.g. `type Item`.
     AssocTy(Id),
 
     /// A method, potentially with a body (default implementation).
-    Fun(FunDecl),
+    Fun(FunDecl<Id>),
 }
 
 /// Type parameters of a function or `impl` block.
 ///
 /// E.g. `[A, I: Iterator[Item = A]]` is represented as `[(A, []), (I, [Item = A])]`.
-pub type Context = Vec<TypeParam>;
+pub type Context<Id> = Vec<TypeParam<Id>>;
 
 /// A type parameter in a function, `impl`, or `trait` block.
 ///
 /// Example: `I: Iterator[Item = A] + Debug`.
 #[derive(Debug, Clone)]
-pub struct TypeParam {
+pub struct TypeParam<Id> {
     /// `I` in the example.
     pub id: L<Id>,
 
     /// `[Iterator[Item = A], Debug]` in the example.
     ///
     /// Reminder: associated types are parsed as named arguments.
-    pub bounds: Vec<L<Type>>,
+    pub bounds: Vec<L<Type<Id>>>,
 }
 
 /// An `impl` block, implementing associated functions or methods for a type, or a trait. Examples:
@@ -671,11 +719,11 @@ pub struct TypeParam {
 ///   fn toStr(self): Str = ...
 /// ```
 #[derive(Debug, Clone)]
-pub struct ImplDecl {
+pub struct ImplDecl<Id> {
     /// Type parameters of the type being implemented, with bounds.
     ///
     /// In the first example, this is `[A]`. In the second example: `[A: ToStr]`.
-    pub context: Context,
+    pub context: Context<Id>,
 
     /// If the `impl` block is for a trait, the trait name.
     ///
@@ -685,34 +733,34 @@ pub struct ImplDecl {
     /// The implementing type.
     ///
     /// In both of the examples this is `Vec[A]`.
-    pub ty: L<Type>,
+    pub ty: L<Type<Id>>,
 
     /// Functions, methods, and associated types.
-    pub items: Vec<L<ImplDeclItem>>,
+    pub items: Vec<L<ImplDeclItem<Id>>>,
 }
 
 #[derive(Debug, Clone)]
-pub enum ImplDeclItem {
+pub enum ImplDeclItem<Id> {
     /// An associated type definition, e.g. `type Item = T`.
-    AssocTy(AssocTyDecl),
+    AssocTy(AssocTyDecl<Id>),
 
     /// A function definition.
-    Fun(FunDecl),
+    Fun(FunDecl<Id>),
 }
 
 #[derive(Debug, Clone)]
-pub struct AssocTyDecl {
+pub struct AssocTyDecl<Id> {
     pub name: Id,
-    pub ty: L<Type>,
+    pub ty: L<Type<Id>>,
 }
 
-impl Type {
+impl<Id: Clone + std::hash::Hash + Eq> Type<Id> {
     /// Substitute star-kinded `ty` for `var` in `self`.
-    pub fn subst_id(&self, var: &Id, ty: &Type) -> Type {
+    pub fn subst_id(&self, var: &Id, ty: &Type<Id>) -> Type<Id> {
         self.subst_ids(&[(var.clone(), ty.clone())].into_iter().collect())
     }
 
-    pub fn subst_ids(&self, substs: &Map<Id, Type>) -> Type {
+    pub fn subst_ids(&self, substs: &Map<Id, Type<Id>>) -> Type<Id> {
         match self {
             Type::Named(NamedType { name, args }) => Type::Named(NamedType {
                 name: match substs.get(name) {
@@ -790,7 +838,7 @@ impl Type {
         }
     }
 
-    pub fn as_named_type(&self) -> &NamedType {
+    pub fn as_named_type(&self) -> &NamedType<Id> {
         match self {
             Type::Named(named_type) => named_type,
             _ => panic!(),

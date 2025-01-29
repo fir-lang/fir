@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: fb6ac498277922d71e5d27071c991b6b4afcf1885f8ef9ecd58adaa18e9d85a8
+// sha3: 4a515eac1dd708a08993fb981d41bfdd3659d53105a8c6f402331605cc6e90fa
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -40,100 +40,100 @@ mod __parse__LExpr {
      {
         Variant0(Token),
         Variant1(Option<Token>),
-        Variant2(Vec<(Option<Id>, L<Expr>)>),
-        Variant3(Option<Vec<(Option<Id>, L<Expr>)>>),
-        Variant4(L<Type>),
-        Variant5(Option<L<Type>>),
-        Variant6((L<Expr>, Vec<L<Stmt>>)),
-        Variant7(alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>),
-        Variant8(Vec<L<Stmt>>),
-        Variant9(Option<Vec<L<Stmt>>>),
+        Variant2(Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant3(Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>),
+        Variant4(L<ParsedType>),
+        Variant5(Option<L<ParsedType>>),
+        Variant6((L<ParsedExpr>, Vec<L<ParsedStmt>>)),
+        Variant7(alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>),
+        Variant8(Vec<L<ParsedStmt>>),
+        Variant9(Option<Vec<L<ParsedStmt>>>),
         Variant10((Token, Option<Token>)),
         Variant11(Option<(Token, Option<Token>)>),
-        Variant12((Token, L<Type>)),
-        Variant13(alloc::vec::Vec<(Token, L<Type>)>),
-        Variant14(CallArg),
-        Variant15(alloc::vec::Vec<CallArg>),
-        Variant16(alloc::vec::Vec<L<Type>>),
-        Variant17(L<Id>),
-        Variant18(Option<L<Id>>),
+        Variant12((Token, L<ParsedType>)),
+        Variant13(alloc::vec::Vec<(Token, L<ParsedType>)>),
+        Variant14(ParsedCallArg),
+        Variant15(alloc::vec::Vec<ParsedCallArg>),
+        Variant16(alloc::vec::Vec<L<ParsedType>>),
+        Variant17(L<ParsedId>),
+        Variant18(Option<L<ParsedId>>),
         Variant19(alloc::vec::Vec<Token>),
-        Variant20(Option<(Token, L<Type>)>),
-        Variant21((Id, Type)),
-        Variant22(alloc::vec::Vec<(Id, Type)>),
-        Variant23((Option<Id>, L<Expr>)),
-        Variant24(alloc::vec::Vec<(Option<Id>, L<Expr>)>),
-        Variant25((Option<Id>, L<Pat>)),
-        Variant26(alloc::vec::Vec<(Option<Id>, L<Pat>)>),
-        Variant27(Named<Type>),
-        Variant28(alloc::vec::Vec<Named<Type>>),
-        Variant29(L<(Option<Id>, L<Type>)>),
-        Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
-        Variant33(VariantAlt),
-        Variant34(alloc::vec::Vec<VariantAlt>),
+        Variant20(Option<(Token, L<ParsedType>)>),
+        Variant21((ParsedId, ParsedType)),
+        Variant22(alloc::vec::Vec<(ParsedId, ParsedType)>),
+        Variant23((Option<ParsedId>, L<ParsedExpr>)),
+        Variant24(alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant25((Option<ParsedId>, L<ParsedPat>)),
+        Variant26(alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant27(Named<ParsedType, ParsedId>),
+        Variant28(alloc::vec::Vec<Named<ParsedType, ParsedId>>),
+        Variant29(L<(Option<ParsedId>, L<ParsedType>)>),
+        Variant30(alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant31(ParsedTypeParam),
+        Variant32(alloc::vec::Vec<ParsedTypeParam>),
+        Variant33(ParsedVariantAlt),
+        Variant34(alloc::vec::Vec<ParsedVariantAlt>),
         Variant35(Loc),
-        Variant36(Alt),
-        Variant37(alloc::vec::Vec<Alt>),
-        Variant38(Vec<Alt>),
+        Variant36(ParsedAlt),
+        Variant37(alloc::vec::Vec<ParsedAlt>),
+        Variant38(Vec<ParsedAlt>),
         Variant39(AssignOp),
-        Variant40(Expr),
-        Variant41(Option<CallArg>),
-        Variant42(ConstrPattern),
-        Variant43(Constructor),
-        Variant44(ConstructorDecl),
-        Variant45(alloc::vec::Vec<ConstructorDecl>),
-        Variant46(Context),
-        Variant47(L<FunDecl>),
-        Variant48((L<Id>, FunSig)),
-        Variant49(L<ImplDecl>),
-        Variant50(L<ImplDeclItem>),
-        Variant51(alloc::vec::Vec<L<ImplDeclItem>>),
-        Variant52(L<ImportDecl>),
-        Variant53(L<Expr>),
-        Variant54(L<Pat>),
-        Variant55(L<Stmt>),
-        Variant56(alloc::vec::Vec<L<Stmt>>),
+        Variant40(ParsedExpr),
+        Variant41(Option<ParsedCallArg>),
+        Variant42(ParsedConstrPattern),
+        Variant43(ParsedConstructor),
+        Variant44(ParsedConstructorDecl),
+        Variant45(alloc::vec::Vec<ParsedConstructorDecl>),
+        Variant46(ParsedContext),
+        Variant47(L<ParsedFunDecl>),
+        Variant48((L<ParsedId>, ParsedFunSig)),
+        Variant49(L<ParsedImplDecl>),
+        Variant50(L<ParsedImplDeclItem>),
+        Variant51(alloc::vec::Vec<L<ParsedImplDeclItem>>),
+        Variant52(L<ParsedImportDecl>),
+        Variant53(L<ParsedExpr>),
+        Variant54(L<ParsedPat>),
+        Variant55(L<ParsedStmt>),
+        Variant56(alloc::vec::Vec<L<ParsedStmt>>),
         Variant57(SmolStr),
         Variant58(Option<SmolStr>),
-        Variant59(Vec<(Id, Type)>),
-        Variant60(Option<(Option<Id>, L<Expr>)>),
-        Variant61((L<Id>, Context)),
-        Variant62(Option<(L<Id>, Context)>),
-        Variant63(Pat),
-        Variant64(Option<(Option<Id>, L<Pat>)>),
-        Variant65(Option<Named<Type>>),
-        Variant66((Option<L<Type>>, Option<L<Type>>)),
-        Variant67(Option<Id>),
-        Variant68(Vec<(Token, L<Type>)>),
-        Variant69(Vec<CallArg>),
-        Variant70(Vec<L<Type>>),
+        Variant59(Vec<(ParsedId, ParsedType)>),
+        Variant60(Option<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant61((L<ParsedId>, ParsedContext)),
+        Variant62(Option<(L<ParsedId>, ParsedContext)>),
+        Variant63(ParsedPat),
+        Variant64(Option<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant65(Option<Named<ParsedType, ParsedId>>),
+        Variant66((Option<L<ParsedType>>, Option<L<ParsedType>>)),
+        Variant67(Option<ParsedId>),
+        Variant68(Vec<(Token, L<ParsedType>)>),
+        Variant69(Vec<ParsedCallArg>),
+        Variant70(Vec<L<ParsedType>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<(Option<Id>, L<Pat>)>),
-        Variant73(Vec<Named<Type>>),
-        Variant74(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant75(Vec<TypeParam>),
-        Variant76(Vec<VariantAlt>),
-        Variant77(Stmt),
-        Variant78(L<TopDecl>),
-        Variant79(alloc::vec::Vec<L<TopDecl>>),
-        Variant80(Vec<L<TopDecl>>),
-        Variant81(TopDecl),
-        Variant82((Option<L<Id>>, Context, L<Id>, FunSig)),
-        Variant83(L<TraitDecl>),
-        Variant84(L<TraitDeclItem>),
-        Variant85(alloc::vec::Vec<L<TraitDeclItem>>),
-        Variant86(Type),
-        Variant87(Option<L<(Option<Id>, L<Type>)>>),
-        Variant88(Vec<ConstructorDecl>),
-        Variant89(L<TypeDecl>),
-        Variant90(TypeDeclRhs),
-        Variant91(Option<TypeParam>),
-        Variant92(Vec<Id>),
-        Variant93(Vec<Type>),
-        Variant94(Option<VariantAlt>),
-        Variant95(VariantPattern),
+        Variant72(Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant73(Vec<Named<ParsedType, ParsedId>>),
+        Variant74(Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant75(Vec<ParsedTypeParam>),
+        Variant76(Vec<ParsedVariantAlt>),
+        Variant77(ParsedStmt),
+        Variant78(L<ParsedTopDecl>),
+        Variant79(alloc::vec::Vec<L<ParsedTopDecl>>),
+        Variant80(Vec<L<ParsedTopDecl>>),
+        Variant81(ParsedTopDecl),
+        Variant82((Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig)),
+        Variant83(L<ParsedTraitDecl>),
+        Variant84(L<ParsedTraitDeclItem>),
+        Variant85(alloc::vec::Vec<L<ParsedTraitDeclItem>>),
+        Variant86(ParsedType),
+        Variant87(Option<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant88(Vec<ParsedConstructorDecl>),
+        Variant89(L<ParsedTypeDecl>),
+        Variant90(ParsedTypeDeclRhs),
+        Variant91(Option<ParsedTypeParam>),
+        Variant92(Vec<ParsedId>),
+        Variant93(Vec<ParsedType>),
+        Variant94(Option<ParsedVariantAlt>),
+        Variant95(ParsedVariantPattern),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -1962,7 +1962,7 @@ mod __parse__LExpr {
         type Token = Token;
         type TokenIndex = usize;
         type Symbol = __Symbol<>;
-        type Success = L<Expr>;
+        type Success = L<ParsedExpr>;
         type StateIndex = i16;
         type Action = i16;
         type ReduceIndex = i16;
@@ -4549,7 +4549,7 @@ mod __parse__LExpr {
             &self,
             module: &'a Rc<str>,
             __tokens0: __TOKENS,
-        ) -> Result<L<Expr>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
+        ) -> Result<L<ParsedExpr>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
             let __tokens = __tokens0.into_iter();
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
@@ -4604,7 +4604,7 @@ mod __parse__LExpr {
         __states: &mut alloc::vec::Vec<i16>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
         _: core::marker::PhantomData<(&'a ())>,
-    ) -> Option<Result<L<Expr>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
+    ) -> Option<Result<L<ParsedExpr>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
@@ -5816,20 +5816,10 @@ mod __parse__LExpr {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant21<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Id, Type), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant6<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Expr>, Vec<L<Stmt>>), Loc)
+    ) -> (Loc, (L<ParsedExpr>, Vec<L<ParsedStmt>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant6(__v), __r)) => (__l, __v, __r),
@@ -5839,7 +5829,7 @@ mod __parse__LExpr {
     fn __pop_Variant61<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, Context), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedContext), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant61(__v), __r)) => (__l, __v, __r),
@@ -5849,37 +5839,17 @@ mod __parse__LExpr {
     fn __pop_Variant48<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, FunSig), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant48(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant23<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Expr>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant25<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Pat>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant82<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc)
+    ) -> (Loc, (Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant82(__v), __r)) => (__l, __v, __r),
@@ -5889,17 +5859,47 @@ mod __parse__LExpr {
     fn __pop_Variant66<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Type>>, Option<L<Type>>), Loc)
+    ) -> (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant66(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant23<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant25<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedPat>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant21<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (ParsedId, ParsedType), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant12<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Token, L<Type>), Loc)
+    ) -> (Loc, (Token, L<ParsedType>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant12(__v), __r)) => (__l, __v, __r),
@@ -5916,16 +5916,6 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant36<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Alt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant39<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -5936,70 +5926,10 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant14<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, CallArg, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant42<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstrPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant43<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Constructor, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant44<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstructorDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant46<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Context, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant40<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Expr, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant29<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<(Option<Id>, L<Type>)>, Loc)
+    ) -> (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant29(__v), __r)) => (__l, __v, __r),
@@ -6009,7 +5939,7 @@ mod __parse__LExpr {
     fn __pop_Variant53<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Expr>, Loc)
+    ) -> (Loc, L<ParsedExpr>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant53(__v), __r)) => (__l, __v, __r),
@@ -6019,7 +5949,7 @@ mod __parse__LExpr {
     fn __pop_Variant47<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<FunDecl>, Loc)
+    ) -> (Loc, L<ParsedFunDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant47(__v), __r)) => (__l, __v, __r),
@@ -6029,7 +5959,7 @@ mod __parse__LExpr {
     fn __pop_Variant17<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Id>, Loc)
+    ) -> (Loc, L<ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant17(__v), __r)) => (__l, __v, __r),
@@ -6039,7 +5969,7 @@ mod __parse__LExpr {
     fn __pop_Variant49<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDecl>, Loc)
+    ) -> (Loc, L<ParsedImplDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant49(__v), __r)) => (__l, __v, __r),
@@ -6049,7 +5979,7 @@ mod __parse__LExpr {
     fn __pop_Variant50<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDeclItem>, Loc)
+    ) -> (Loc, L<ParsedImplDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant50(__v), __r)) => (__l, __v, __r),
@@ -6059,7 +5989,7 @@ mod __parse__LExpr {
     fn __pop_Variant52<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImportDecl>, Loc)
+    ) -> (Loc, L<ParsedImportDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant52(__v), __r)) => (__l, __v, __r),
@@ -6069,7 +5999,7 @@ mod __parse__LExpr {
     fn __pop_Variant54<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Pat>, Loc)
+    ) -> (Loc, L<ParsedPat>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant54(__v), __r)) => (__l, __v, __r),
@@ -6079,7 +6009,7 @@ mod __parse__LExpr {
     fn __pop_Variant55<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Stmt>, Loc)
+    ) -> (Loc, L<ParsedStmt>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant55(__v), __r)) => (__l, __v, __r),
@@ -6089,7 +6019,7 @@ mod __parse__LExpr {
     fn __pop_Variant78<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TopDecl>, Loc)
+    ) -> (Loc, L<ParsedTopDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant78(__v), __r)) => (__l, __v, __r),
@@ -6099,7 +6029,7 @@ mod __parse__LExpr {
     fn __pop_Variant83<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDecl>, Loc)
+    ) -> (Loc, L<ParsedTraitDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant83(__v), __r)) => (__l, __v, __r),
@@ -6109,7 +6039,7 @@ mod __parse__LExpr {
     fn __pop_Variant84<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDeclItem>, Loc)
+    ) -> (Loc, L<ParsedTraitDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant84(__v), __r)) => (__l, __v, __r),
@@ -6119,7 +6049,7 @@ mod __parse__LExpr {
     fn __pop_Variant4<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Type>, Loc)
+    ) -> (Loc, L<ParsedType>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant4(__v), __r)) => (__l, __v, __r),
@@ -6129,7 +6059,7 @@ mod __parse__LExpr {
     fn __pop_Variant89<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TypeDecl>, Loc)
+    ) -> (Loc, L<ParsedTypeDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant89(__v), __r)) => (__l, __v, __r),
@@ -6149,7 +6079,7 @@ mod __parse__LExpr {
     fn __pop_Variant27<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Named<Type>, Loc)
+    ) -> (Loc, Named<ParsedType, ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant27(__v), __r)) => (__l, __v, __r),
@@ -6159,7 +6089,7 @@ mod __parse__LExpr {
     fn __pop_Variant62<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(L<Id>, Context)>, Loc)
+    ) -> (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant62(__v), __r)) => (__l, __v, __r),
@@ -6169,7 +6099,7 @@ mod __parse__LExpr {
     fn __pop_Variant60<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant60(__v), __r)) => (__l, __v, __r),
@@ -6179,7 +6109,7 @@ mod __parse__LExpr {
     fn __pop_Variant64<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant64(__v), __r)) => (__l, __v, __r),
@@ -6189,7 +6119,7 @@ mod __parse__LExpr {
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Option<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant20(__v), __r)) => (__l, __v, __r),
@@ -6206,30 +6136,10 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant41<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant67<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant87<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant87(__v), __r)) => (__l, __v, __r),
@@ -6239,7 +6149,7 @@ mod __parse__LExpr {
     fn __pop_Variant18<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Id>>, Loc)
+    ) -> (Loc, Option<L<ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant18(__v), __r)) => (__l, __v, __r),
@@ -6249,7 +6159,7 @@ mod __parse__LExpr {
     fn __pop_Variant5<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Type>>, Loc)
+    ) -> (Loc, Option<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant5(__v), __r)) => (__l, __v, __r),
@@ -6259,10 +6169,50 @@ mod __parse__LExpr {
     fn __pop_Variant65<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Named<Type>>, Loc)
+    ) -> (Loc, Option<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant65(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant41<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant67<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant91<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant94<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -6286,30 +6236,10 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant91<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant94<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant3<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<(Option<Id>, L<Expr>)>>, Loc)
+    ) -> (Loc, Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant3(__v), __r)) => (__l, __v, __r),
@@ -6319,20 +6249,160 @@ mod __parse__LExpr {
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<L<Stmt>>>, Loc)
+    ) -> (Loc, Option<Vec<L<ParsedStmt>>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant9(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant36<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant14<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedCallArg, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant42<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstrPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant43<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructor, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant44<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructorDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant46<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedContext, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant40<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedExpr, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant63<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Pat, Loc)
+    ) -> (Loc, ParsedPat, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant63(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant77<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedStmt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant81<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTopDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant86<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedType, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant90<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeDeclRhs, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant31<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeParam, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant33<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant95<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -6346,16 +6416,6 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant77<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Stmt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant0<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -6366,80 +6426,10 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant81<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TopDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant86<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Type, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant90<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeDeclRhs, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant31<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantAlt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant95<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant59<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant2<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant2(__v), __r)) => (__l, __v, __r),
@@ -6449,67 +6439,37 @@ mod __parse__LExpr {
     fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant59<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant68<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant68(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant38<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant69<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant92<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant74<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant74(__v), __r)) => (__l, __v, __r),
@@ -6519,7 +6479,7 @@ mod __parse__LExpr {
     fn __pop_Variant8<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Stmt>>, Loc)
+    ) -> (Loc, Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant8(__v), __r)) => (__l, __v, __r),
@@ -6529,7 +6489,7 @@ mod __parse__LExpr {
     fn __pop_Variant80<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant80(__v), __r)) => (__l, __v, __r),
@@ -6539,7 +6499,7 @@ mod __parse__LExpr {
     fn __pop_Variant70<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Type>>, Loc)
+    ) -> (Loc, Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant70(__v), __r)) => (__l, __v, __r),
@@ -6549,10 +6509,80 @@ mod __parse__LExpr {
     fn __pop_Variant73<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Named<Type>>, Loc)
+    ) -> (Loc, Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant73(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant38<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant69<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant92<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant93<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedType>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant75<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant76<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -6566,50 +6596,10 @@ mod __parse__LExpr {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant93<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Type>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant75<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant76<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant22<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant7<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant7(__v), __r)) => (__l, __v, __r),
@@ -6619,7 +6609,7 @@ mod __parse__LExpr {
     fn __pop_Variant24<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant24(__v), __r)) => (__l, __v, __r),
@@ -6629,57 +6619,37 @@ mod __parse__LExpr {
     fn __pop_Variant26<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant26(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant22<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant13<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant13(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant37<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant15<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant45<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant30<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant30(__v), __r)) => (__l, __v, __r),
@@ -6689,7 +6659,7 @@ mod __parse__LExpr {
     fn __pop_Variant51<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant51(__v), __r)) => (__l, __v, __r),
@@ -6699,7 +6669,7 @@ mod __parse__LExpr {
     fn __pop_Variant56<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Stmt>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant56(__v), __r)) => (__l, __v, __r),
@@ -6709,7 +6679,7 @@ mod __parse__LExpr {
     fn __pop_Variant79<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant79(__v), __r)) => (__l, __v, __r),
@@ -6719,7 +6689,7 @@ mod __parse__LExpr {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -6729,7 +6699,7 @@ mod __parse__LExpr {
     fn __pop_Variant16<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant16(__v), __r)) => (__l, __v, __r),
@@ -6739,10 +6709,60 @@ mod __parse__LExpr {
     fn __pop_Variant28<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Named<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant28(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant37<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant15<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant45<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant32<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -6753,26 +6773,6 @@ mod __parse__LExpr {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant19(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant32<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant34<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -14254,100 +14254,100 @@ mod __parse__LStmt {
      {
         Variant0(Token),
         Variant1(Option<Token>),
-        Variant2(Vec<(Option<Id>, L<Expr>)>),
-        Variant3(Option<Vec<(Option<Id>, L<Expr>)>>),
-        Variant4(L<Type>),
-        Variant5(Option<L<Type>>),
-        Variant6((L<Expr>, Vec<L<Stmt>>)),
-        Variant7(alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>),
-        Variant8(Vec<L<Stmt>>),
-        Variant9(Option<Vec<L<Stmt>>>),
+        Variant2(Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant3(Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>),
+        Variant4(L<ParsedType>),
+        Variant5(Option<L<ParsedType>>),
+        Variant6((L<ParsedExpr>, Vec<L<ParsedStmt>>)),
+        Variant7(alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>),
+        Variant8(Vec<L<ParsedStmt>>),
+        Variant9(Option<Vec<L<ParsedStmt>>>),
         Variant10((Token, Option<Token>)),
         Variant11(Option<(Token, Option<Token>)>),
-        Variant12((Token, L<Type>)),
-        Variant13(alloc::vec::Vec<(Token, L<Type>)>),
-        Variant14(CallArg),
-        Variant15(alloc::vec::Vec<CallArg>),
-        Variant16(alloc::vec::Vec<L<Type>>),
-        Variant17(L<Id>),
-        Variant18(Option<L<Id>>),
+        Variant12((Token, L<ParsedType>)),
+        Variant13(alloc::vec::Vec<(Token, L<ParsedType>)>),
+        Variant14(ParsedCallArg),
+        Variant15(alloc::vec::Vec<ParsedCallArg>),
+        Variant16(alloc::vec::Vec<L<ParsedType>>),
+        Variant17(L<ParsedId>),
+        Variant18(Option<L<ParsedId>>),
         Variant19(alloc::vec::Vec<Token>),
-        Variant20(Option<(Token, L<Type>)>),
-        Variant21((Id, Type)),
-        Variant22(alloc::vec::Vec<(Id, Type)>),
-        Variant23((Option<Id>, L<Expr>)),
-        Variant24(alloc::vec::Vec<(Option<Id>, L<Expr>)>),
-        Variant25((Option<Id>, L<Pat>)),
-        Variant26(alloc::vec::Vec<(Option<Id>, L<Pat>)>),
-        Variant27(Named<Type>),
-        Variant28(alloc::vec::Vec<Named<Type>>),
-        Variant29(L<(Option<Id>, L<Type>)>),
-        Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
-        Variant33(VariantAlt),
-        Variant34(alloc::vec::Vec<VariantAlt>),
+        Variant20(Option<(Token, L<ParsedType>)>),
+        Variant21((ParsedId, ParsedType)),
+        Variant22(alloc::vec::Vec<(ParsedId, ParsedType)>),
+        Variant23((Option<ParsedId>, L<ParsedExpr>)),
+        Variant24(alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant25((Option<ParsedId>, L<ParsedPat>)),
+        Variant26(alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant27(Named<ParsedType, ParsedId>),
+        Variant28(alloc::vec::Vec<Named<ParsedType, ParsedId>>),
+        Variant29(L<(Option<ParsedId>, L<ParsedType>)>),
+        Variant30(alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant31(ParsedTypeParam),
+        Variant32(alloc::vec::Vec<ParsedTypeParam>),
+        Variant33(ParsedVariantAlt),
+        Variant34(alloc::vec::Vec<ParsedVariantAlt>),
         Variant35(Loc),
-        Variant36(Alt),
-        Variant37(alloc::vec::Vec<Alt>),
-        Variant38(Vec<Alt>),
+        Variant36(ParsedAlt),
+        Variant37(alloc::vec::Vec<ParsedAlt>),
+        Variant38(Vec<ParsedAlt>),
         Variant39(AssignOp),
-        Variant40(Expr),
-        Variant41(Option<CallArg>),
-        Variant42(ConstrPattern),
-        Variant43(Constructor),
-        Variant44(ConstructorDecl),
-        Variant45(alloc::vec::Vec<ConstructorDecl>),
-        Variant46(Context),
-        Variant47(L<FunDecl>),
-        Variant48((L<Id>, FunSig)),
-        Variant49(L<ImplDecl>),
-        Variant50(L<ImplDeclItem>),
-        Variant51(alloc::vec::Vec<L<ImplDeclItem>>),
-        Variant52(L<ImportDecl>),
-        Variant53(L<Expr>),
-        Variant54(L<Pat>),
-        Variant55(L<Stmt>),
-        Variant56(alloc::vec::Vec<L<Stmt>>),
+        Variant40(ParsedExpr),
+        Variant41(Option<ParsedCallArg>),
+        Variant42(ParsedConstrPattern),
+        Variant43(ParsedConstructor),
+        Variant44(ParsedConstructorDecl),
+        Variant45(alloc::vec::Vec<ParsedConstructorDecl>),
+        Variant46(ParsedContext),
+        Variant47(L<ParsedFunDecl>),
+        Variant48((L<ParsedId>, ParsedFunSig)),
+        Variant49(L<ParsedImplDecl>),
+        Variant50(L<ParsedImplDeclItem>),
+        Variant51(alloc::vec::Vec<L<ParsedImplDeclItem>>),
+        Variant52(L<ParsedImportDecl>),
+        Variant53(L<ParsedExpr>),
+        Variant54(L<ParsedPat>),
+        Variant55(L<ParsedStmt>),
+        Variant56(alloc::vec::Vec<L<ParsedStmt>>),
         Variant57(SmolStr),
         Variant58(Option<SmolStr>),
-        Variant59(Vec<(Id, Type)>),
-        Variant60(Option<(Option<Id>, L<Expr>)>),
-        Variant61((L<Id>, Context)),
-        Variant62(Option<(L<Id>, Context)>),
-        Variant63(Pat),
-        Variant64(Option<(Option<Id>, L<Pat>)>),
-        Variant65(Option<Named<Type>>),
-        Variant66((Option<L<Type>>, Option<L<Type>>)),
-        Variant67(Option<Id>),
-        Variant68(Vec<(Token, L<Type>)>),
-        Variant69(Vec<CallArg>),
-        Variant70(Vec<L<Type>>),
+        Variant59(Vec<(ParsedId, ParsedType)>),
+        Variant60(Option<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant61((L<ParsedId>, ParsedContext)),
+        Variant62(Option<(L<ParsedId>, ParsedContext)>),
+        Variant63(ParsedPat),
+        Variant64(Option<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant65(Option<Named<ParsedType, ParsedId>>),
+        Variant66((Option<L<ParsedType>>, Option<L<ParsedType>>)),
+        Variant67(Option<ParsedId>),
+        Variant68(Vec<(Token, L<ParsedType>)>),
+        Variant69(Vec<ParsedCallArg>),
+        Variant70(Vec<L<ParsedType>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<(Option<Id>, L<Pat>)>),
-        Variant73(Vec<Named<Type>>),
-        Variant74(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant75(Vec<TypeParam>),
-        Variant76(Vec<VariantAlt>),
-        Variant77(Stmt),
-        Variant78(L<TopDecl>),
-        Variant79(alloc::vec::Vec<L<TopDecl>>),
-        Variant80(Vec<L<TopDecl>>),
-        Variant81(TopDecl),
-        Variant82((Option<L<Id>>, Context, L<Id>, FunSig)),
-        Variant83(L<TraitDecl>),
-        Variant84(L<TraitDeclItem>),
-        Variant85(alloc::vec::Vec<L<TraitDeclItem>>),
-        Variant86(Type),
-        Variant87(Option<L<(Option<Id>, L<Type>)>>),
-        Variant88(Vec<ConstructorDecl>),
-        Variant89(L<TypeDecl>),
-        Variant90(TypeDeclRhs),
-        Variant91(Option<TypeParam>),
-        Variant92(Vec<Id>),
-        Variant93(Vec<Type>),
-        Variant94(Option<VariantAlt>),
-        Variant95(VariantPattern),
+        Variant72(Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant73(Vec<Named<ParsedType, ParsedId>>),
+        Variant74(Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant75(Vec<ParsedTypeParam>),
+        Variant76(Vec<ParsedVariantAlt>),
+        Variant77(ParsedStmt),
+        Variant78(L<ParsedTopDecl>),
+        Variant79(alloc::vec::Vec<L<ParsedTopDecl>>),
+        Variant80(Vec<L<ParsedTopDecl>>),
+        Variant81(ParsedTopDecl),
+        Variant82((Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig)),
+        Variant83(L<ParsedTraitDecl>),
+        Variant84(L<ParsedTraitDeclItem>),
+        Variant85(alloc::vec::Vec<L<ParsedTraitDeclItem>>),
+        Variant86(ParsedType),
+        Variant87(Option<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant88(Vec<ParsedConstructorDecl>),
+        Variant89(L<ParsedTypeDecl>),
+        Variant90(ParsedTypeDeclRhs),
+        Variant91(Option<ParsedTypeParam>),
+        Variant92(Vec<ParsedId>),
+        Variant93(Vec<ParsedType>),
+        Variant94(Option<ParsedVariantAlt>),
+        Variant95(ParsedVariantPattern),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -16176,7 +16176,7 @@ mod __parse__LStmt {
         type Token = Token;
         type TokenIndex = usize;
         type Symbol = __Symbol<>;
-        type Success = L<Stmt>;
+        type Success = L<ParsedStmt>;
         type StateIndex = i16;
         type Action = i16;
         type ReduceIndex = i16;
@@ -18763,7 +18763,7 @@ mod __parse__LStmt {
             &self,
             module: &'a Rc<str>,
             __tokens0: __TOKENS,
-        ) -> Result<L<Stmt>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
+        ) -> Result<L<ParsedStmt>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
             let __tokens = __tokens0.into_iter();
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
@@ -18818,7 +18818,7 @@ mod __parse__LStmt {
         __states: &mut alloc::vec::Vec<i16>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
         _: core::marker::PhantomData<(&'a ())>,
-    ) -> Option<Result<L<Stmt>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
+    ) -> Option<Result<L<ParsedStmt>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
@@ -20030,20 +20030,10 @@ mod __parse__LStmt {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant21<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Id, Type), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant6<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Expr>, Vec<L<Stmt>>), Loc)
+    ) -> (Loc, (L<ParsedExpr>, Vec<L<ParsedStmt>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant6(__v), __r)) => (__l, __v, __r),
@@ -20053,7 +20043,7 @@ mod __parse__LStmt {
     fn __pop_Variant61<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, Context), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedContext), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant61(__v), __r)) => (__l, __v, __r),
@@ -20063,37 +20053,17 @@ mod __parse__LStmt {
     fn __pop_Variant48<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, FunSig), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant48(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant23<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Expr>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant25<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Pat>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant82<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc)
+    ) -> (Loc, (Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant82(__v), __r)) => (__l, __v, __r),
@@ -20103,17 +20073,47 @@ mod __parse__LStmt {
     fn __pop_Variant66<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Type>>, Option<L<Type>>), Loc)
+    ) -> (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant66(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant23<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant25<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedPat>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant21<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (ParsedId, ParsedType), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant12<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Token, L<Type>), Loc)
+    ) -> (Loc, (Token, L<ParsedType>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant12(__v), __r)) => (__l, __v, __r),
@@ -20130,16 +20130,6 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant36<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Alt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant39<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -20150,70 +20140,10 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant14<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, CallArg, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant42<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstrPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant43<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Constructor, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant44<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstructorDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant46<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Context, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant40<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Expr, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant29<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<(Option<Id>, L<Type>)>, Loc)
+    ) -> (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant29(__v), __r)) => (__l, __v, __r),
@@ -20223,7 +20153,7 @@ mod __parse__LStmt {
     fn __pop_Variant53<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Expr>, Loc)
+    ) -> (Loc, L<ParsedExpr>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant53(__v), __r)) => (__l, __v, __r),
@@ -20233,7 +20163,7 @@ mod __parse__LStmt {
     fn __pop_Variant47<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<FunDecl>, Loc)
+    ) -> (Loc, L<ParsedFunDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant47(__v), __r)) => (__l, __v, __r),
@@ -20243,7 +20173,7 @@ mod __parse__LStmt {
     fn __pop_Variant17<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Id>, Loc)
+    ) -> (Loc, L<ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant17(__v), __r)) => (__l, __v, __r),
@@ -20253,7 +20183,7 @@ mod __parse__LStmt {
     fn __pop_Variant49<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDecl>, Loc)
+    ) -> (Loc, L<ParsedImplDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant49(__v), __r)) => (__l, __v, __r),
@@ -20263,7 +20193,7 @@ mod __parse__LStmt {
     fn __pop_Variant50<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDeclItem>, Loc)
+    ) -> (Loc, L<ParsedImplDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant50(__v), __r)) => (__l, __v, __r),
@@ -20273,7 +20203,7 @@ mod __parse__LStmt {
     fn __pop_Variant52<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImportDecl>, Loc)
+    ) -> (Loc, L<ParsedImportDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant52(__v), __r)) => (__l, __v, __r),
@@ -20283,7 +20213,7 @@ mod __parse__LStmt {
     fn __pop_Variant54<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Pat>, Loc)
+    ) -> (Loc, L<ParsedPat>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant54(__v), __r)) => (__l, __v, __r),
@@ -20293,7 +20223,7 @@ mod __parse__LStmt {
     fn __pop_Variant55<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Stmt>, Loc)
+    ) -> (Loc, L<ParsedStmt>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant55(__v), __r)) => (__l, __v, __r),
@@ -20303,7 +20233,7 @@ mod __parse__LStmt {
     fn __pop_Variant78<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TopDecl>, Loc)
+    ) -> (Loc, L<ParsedTopDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant78(__v), __r)) => (__l, __v, __r),
@@ -20313,7 +20243,7 @@ mod __parse__LStmt {
     fn __pop_Variant83<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDecl>, Loc)
+    ) -> (Loc, L<ParsedTraitDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant83(__v), __r)) => (__l, __v, __r),
@@ -20323,7 +20253,7 @@ mod __parse__LStmt {
     fn __pop_Variant84<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDeclItem>, Loc)
+    ) -> (Loc, L<ParsedTraitDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant84(__v), __r)) => (__l, __v, __r),
@@ -20333,7 +20263,7 @@ mod __parse__LStmt {
     fn __pop_Variant4<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Type>, Loc)
+    ) -> (Loc, L<ParsedType>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant4(__v), __r)) => (__l, __v, __r),
@@ -20343,7 +20273,7 @@ mod __parse__LStmt {
     fn __pop_Variant89<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TypeDecl>, Loc)
+    ) -> (Loc, L<ParsedTypeDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant89(__v), __r)) => (__l, __v, __r),
@@ -20363,7 +20293,7 @@ mod __parse__LStmt {
     fn __pop_Variant27<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Named<Type>, Loc)
+    ) -> (Loc, Named<ParsedType, ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant27(__v), __r)) => (__l, __v, __r),
@@ -20373,7 +20303,7 @@ mod __parse__LStmt {
     fn __pop_Variant62<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(L<Id>, Context)>, Loc)
+    ) -> (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant62(__v), __r)) => (__l, __v, __r),
@@ -20383,7 +20313,7 @@ mod __parse__LStmt {
     fn __pop_Variant60<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant60(__v), __r)) => (__l, __v, __r),
@@ -20393,7 +20323,7 @@ mod __parse__LStmt {
     fn __pop_Variant64<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant64(__v), __r)) => (__l, __v, __r),
@@ -20403,7 +20333,7 @@ mod __parse__LStmt {
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Option<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant20(__v), __r)) => (__l, __v, __r),
@@ -20420,30 +20350,10 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant41<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant67<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant87<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant87(__v), __r)) => (__l, __v, __r),
@@ -20453,7 +20363,7 @@ mod __parse__LStmt {
     fn __pop_Variant18<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Id>>, Loc)
+    ) -> (Loc, Option<L<ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant18(__v), __r)) => (__l, __v, __r),
@@ -20463,7 +20373,7 @@ mod __parse__LStmt {
     fn __pop_Variant5<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Type>>, Loc)
+    ) -> (Loc, Option<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant5(__v), __r)) => (__l, __v, __r),
@@ -20473,10 +20383,50 @@ mod __parse__LStmt {
     fn __pop_Variant65<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Named<Type>>, Loc)
+    ) -> (Loc, Option<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant65(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant41<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant67<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant91<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant94<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -20500,30 +20450,10 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant91<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant94<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant3<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<(Option<Id>, L<Expr>)>>, Loc)
+    ) -> (Loc, Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant3(__v), __r)) => (__l, __v, __r),
@@ -20533,20 +20463,160 @@ mod __parse__LStmt {
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<L<Stmt>>>, Loc)
+    ) -> (Loc, Option<Vec<L<ParsedStmt>>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant9(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant36<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant14<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedCallArg, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant42<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstrPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant43<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructor, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant44<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructorDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant46<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedContext, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant40<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedExpr, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant63<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Pat, Loc)
+    ) -> (Loc, ParsedPat, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant63(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant77<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedStmt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant81<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTopDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant86<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedType, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant90<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeDeclRhs, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant31<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeParam, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant33<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant95<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -20560,16 +20630,6 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant77<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Stmt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant0<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -20580,80 +20640,10 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant81<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TopDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant86<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Type, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant90<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeDeclRhs, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant31<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantAlt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant95<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant59<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant2<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant2(__v), __r)) => (__l, __v, __r),
@@ -20663,67 +20653,37 @@ mod __parse__LStmt {
     fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant59<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant68<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant68(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant38<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant69<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant92<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant74<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant74(__v), __r)) => (__l, __v, __r),
@@ -20733,7 +20693,7 @@ mod __parse__LStmt {
     fn __pop_Variant8<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Stmt>>, Loc)
+    ) -> (Loc, Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant8(__v), __r)) => (__l, __v, __r),
@@ -20743,7 +20703,7 @@ mod __parse__LStmt {
     fn __pop_Variant80<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant80(__v), __r)) => (__l, __v, __r),
@@ -20753,7 +20713,7 @@ mod __parse__LStmt {
     fn __pop_Variant70<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Type>>, Loc)
+    ) -> (Loc, Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant70(__v), __r)) => (__l, __v, __r),
@@ -20763,10 +20723,80 @@ mod __parse__LStmt {
     fn __pop_Variant73<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Named<Type>>, Loc)
+    ) -> (Loc, Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant73(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant38<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant69<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant92<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant93<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedType>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant75<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant76<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -20780,50 +20810,10 @@ mod __parse__LStmt {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant93<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Type>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant75<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant76<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant22<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant7<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant7(__v), __r)) => (__l, __v, __r),
@@ -20833,7 +20823,7 @@ mod __parse__LStmt {
     fn __pop_Variant24<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant24(__v), __r)) => (__l, __v, __r),
@@ -20843,57 +20833,37 @@ mod __parse__LStmt {
     fn __pop_Variant26<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant26(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant22<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant13<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant13(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant37<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant15<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant45<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant30<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant30(__v), __r)) => (__l, __v, __r),
@@ -20903,7 +20873,7 @@ mod __parse__LStmt {
     fn __pop_Variant51<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant51(__v), __r)) => (__l, __v, __r),
@@ -20913,7 +20883,7 @@ mod __parse__LStmt {
     fn __pop_Variant56<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Stmt>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant56(__v), __r)) => (__l, __v, __r),
@@ -20923,7 +20893,7 @@ mod __parse__LStmt {
     fn __pop_Variant79<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant79(__v), __r)) => (__l, __v, __r),
@@ -20933,7 +20903,7 @@ mod __parse__LStmt {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -20943,7 +20913,7 @@ mod __parse__LStmt {
     fn __pop_Variant16<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant16(__v), __r)) => (__l, __v, __r),
@@ -20953,10 +20923,60 @@ mod __parse__LStmt {
     fn __pop_Variant28<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Named<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant28(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant37<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant15<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant45<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant32<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -20967,26 +20987,6 @@ mod __parse__LStmt {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant19(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant32<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant34<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -28468,100 +28468,100 @@ mod __parse__TopDecls {
      {
         Variant0(Token),
         Variant1(Option<Token>),
-        Variant2(Vec<(Option<Id>, L<Expr>)>),
-        Variant3(Option<Vec<(Option<Id>, L<Expr>)>>),
-        Variant4(L<Type>),
-        Variant5(Option<L<Type>>),
-        Variant6((L<Expr>, Vec<L<Stmt>>)),
-        Variant7(alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>),
-        Variant8(Vec<L<Stmt>>),
-        Variant9(Option<Vec<L<Stmt>>>),
+        Variant2(Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant3(Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>),
+        Variant4(L<ParsedType>),
+        Variant5(Option<L<ParsedType>>),
+        Variant6((L<ParsedExpr>, Vec<L<ParsedStmt>>)),
+        Variant7(alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>),
+        Variant8(Vec<L<ParsedStmt>>),
+        Variant9(Option<Vec<L<ParsedStmt>>>),
         Variant10((Token, Option<Token>)),
         Variant11(Option<(Token, Option<Token>)>),
-        Variant12((Token, L<Type>)),
-        Variant13(alloc::vec::Vec<(Token, L<Type>)>),
-        Variant14(CallArg),
-        Variant15(alloc::vec::Vec<CallArg>),
-        Variant16(alloc::vec::Vec<L<Type>>),
-        Variant17(L<Id>),
-        Variant18(Option<L<Id>>),
+        Variant12((Token, L<ParsedType>)),
+        Variant13(alloc::vec::Vec<(Token, L<ParsedType>)>),
+        Variant14(ParsedCallArg),
+        Variant15(alloc::vec::Vec<ParsedCallArg>),
+        Variant16(alloc::vec::Vec<L<ParsedType>>),
+        Variant17(L<ParsedId>),
+        Variant18(Option<L<ParsedId>>),
         Variant19(alloc::vec::Vec<Token>),
-        Variant20(Option<(Token, L<Type>)>),
-        Variant21((Id, Type)),
-        Variant22(alloc::vec::Vec<(Id, Type)>),
-        Variant23((Option<Id>, L<Expr>)),
-        Variant24(alloc::vec::Vec<(Option<Id>, L<Expr>)>),
-        Variant25((Option<Id>, L<Pat>)),
-        Variant26(alloc::vec::Vec<(Option<Id>, L<Pat>)>),
-        Variant27(Named<Type>),
-        Variant28(alloc::vec::Vec<Named<Type>>),
-        Variant29(L<(Option<Id>, L<Type>)>),
-        Variant30(alloc::vec::Vec<L<(Option<Id>, L<Type>)>>),
-        Variant31(TypeParam),
-        Variant32(alloc::vec::Vec<TypeParam>),
-        Variant33(VariantAlt),
-        Variant34(alloc::vec::Vec<VariantAlt>),
+        Variant20(Option<(Token, L<ParsedType>)>),
+        Variant21((ParsedId, ParsedType)),
+        Variant22(alloc::vec::Vec<(ParsedId, ParsedType)>),
+        Variant23((Option<ParsedId>, L<ParsedExpr>)),
+        Variant24(alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant25((Option<ParsedId>, L<ParsedPat>)),
+        Variant26(alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant27(Named<ParsedType, ParsedId>),
+        Variant28(alloc::vec::Vec<Named<ParsedType, ParsedId>>),
+        Variant29(L<(Option<ParsedId>, L<ParsedType>)>),
+        Variant30(alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant31(ParsedTypeParam),
+        Variant32(alloc::vec::Vec<ParsedTypeParam>),
+        Variant33(ParsedVariantAlt),
+        Variant34(alloc::vec::Vec<ParsedVariantAlt>),
         Variant35(Loc),
-        Variant36(Alt),
-        Variant37(alloc::vec::Vec<Alt>),
-        Variant38(Vec<Alt>),
+        Variant36(ParsedAlt),
+        Variant37(alloc::vec::Vec<ParsedAlt>),
+        Variant38(Vec<ParsedAlt>),
         Variant39(AssignOp),
-        Variant40(Expr),
-        Variant41(Option<CallArg>),
-        Variant42(ConstrPattern),
-        Variant43(Constructor),
-        Variant44(ConstructorDecl),
-        Variant45(alloc::vec::Vec<ConstructorDecl>),
-        Variant46(Context),
-        Variant47(L<FunDecl>),
-        Variant48((L<Id>, FunSig)),
-        Variant49(L<ImplDecl>),
-        Variant50(L<ImplDeclItem>),
-        Variant51(alloc::vec::Vec<L<ImplDeclItem>>),
-        Variant52(L<ImportDecl>),
-        Variant53(L<Expr>),
-        Variant54(L<Pat>),
-        Variant55(L<Stmt>),
-        Variant56(alloc::vec::Vec<L<Stmt>>),
+        Variant40(ParsedExpr),
+        Variant41(Option<ParsedCallArg>),
+        Variant42(ParsedConstrPattern),
+        Variant43(ParsedConstructor),
+        Variant44(ParsedConstructorDecl),
+        Variant45(alloc::vec::Vec<ParsedConstructorDecl>),
+        Variant46(ParsedContext),
+        Variant47(L<ParsedFunDecl>),
+        Variant48((L<ParsedId>, ParsedFunSig)),
+        Variant49(L<ParsedImplDecl>),
+        Variant50(L<ParsedImplDeclItem>),
+        Variant51(alloc::vec::Vec<L<ParsedImplDeclItem>>),
+        Variant52(L<ParsedImportDecl>),
+        Variant53(L<ParsedExpr>),
+        Variant54(L<ParsedPat>),
+        Variant55(L<ParsedStmt>),
+        Variant56(alloc::vec::Vec<L<ParsedStmt>>),
         Variant57(SmolStr),
         Variant58(Option<SmolStr>),
-        Variant59(Vec<(Id, Type)>),
-        Variant60(Option<(Option<Id>, L<Expr>)>),
-        Variant61((L<Id>, Context)),
-        Variant62(Option<(L<Id>, Context)>),
-        Variant63(Pat),
-        Variant64(Option<(Option<Id>, L<Pat>)>),
-        Variant65(Option<Named<Type>>),
-        Variant66((Option<L<Type>>, Option<L<Type>>)),
-        Variant67(Option<Id>),
-        Variant68(Vec<(Token, L<Type>)>),
-        Variant69(Vec<CallArg>),
-        Variant70(Vec<L<Type>>),
+        Variant59(Vec<(ParsedId, ParsedType)>),
+        Variant60(Option<(Option<ParsedId>, L<ParsedExpr>)>),
+        Variant61((L<ParsedId>, ParsedContext)),
+        Variant62(Option<(L<ParsedId>, ParsedContext)>),
+        Variant63(ParsedPat),
+        Variant64(Option<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant65(Option<Named<ParsedType, ParsedId>>),
+        Variant66((Option<L<ParsedType>>, Option<L<ParsedType>>)),
+        Variant67(Option<ParsedId>),
+        Variant68(Vec<(Token, L<ParsedType>)>),
+        Variant69(Vec<ParsedCallArg>),
+        Variant70(Vec<L<ParsedType>>),
         Variant71(Vec<Token>),
-        Variant72(Vec<(Option<Id>, L<Pat>)>),
-        Variant73(Vec<Named<Type>>),
-        Variant74(Vec<L<(Option<Id>, L<Type>)>>),
-        Variant75(Vec<TypeParam>),
-        Variant76(Vec<VariantAlt>),
-        Variant77(Stmt),
-        Variant78(L<TopDecl>),
-        Variant79(alloc::vec::Vec<L<TopDecl>>),
-        Variant80(Vec<L<TopDecl>>),
-        Variant81(TopDecl),
-        Variant82((Option<L<Id>>, Context, L<Id>, FunSig)),
-        Variant83(L<TraitDecl>),
-        Variant84(L<TraitDeclItem>),
-        Variant85(alloc::vec::Vec<L<TraitDeclItem>>),
-        Variant86(Type),
-        Variant87(Option<L<(Option<Id>, L<Type>)>>),
-        Variant88(Vec<ConstructorDecl>),
-        Variant89(L<TypeDecl>),
-        Variant90(TypeDeclRhs),
-        Variant91(Option<TypeParam>),
-        Variant92(Vec<Id>),
-        Variant93(Vec<Type>),
-        Variant94(Option<VariantAlt>),
-        Variant95(VariantPattern),
+        Variant72(Vec<(Option<ParsedId>, L<ParsedPat>)>),
+        Variant73(Vec<Named<ParsedType, ParsedId>>),
+        Variant74(Vec<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant75(Vec<ParsedTypeParam>),
+        Variant76(Vec<ParsedVariantAlt>),
+        Variant77(ParsedStmt),
+        Variant78(L<ParsedTopDecl>),
+        Variant79(alloc::vec::Vec<L<ParsedTopDecl>>),
+        Variant80(Vec<L<ParsedTopDecl>>),
+        Variant81(ParsedTopDecl),
+        Variant82((Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig)),
+        Variant83(L<ParsedTraitDecl>),
+        Variant84(L<ParsedTraitDeclItem>),
+        Variant85(alloc::vec::Vec<L<ParsedTraitDeclItem>>),
+        Variant86(ParsedType),
+        Variant87(Option<L<(Option<ParsedId>, L<ParsedType>)>>),
+        Variant88(Vec<ParsedConstructorDecl>),
+        Variant89(L<ParsedTypeDecl>),
+        Variant90(ParsedTypeDeclRhs),
+        Variant91(Option<ParsedTypeParam>),
+        Variant92(Vec<ParsedId>),
+        Variant93(Vec<ParsedType>),
+        Variant94(Option<ParsedVariantAlt>),
+        Variant95(ParsedVariantPattern),
     }
     const __ACTION: &[i16] = &[
         // State 0
@@ -31366,7 +31366,7 @@ mod __parse__TopDecls {
         type Token = Token;
         type TokenIndex = usize;
         type Symbol = __Symbol<>;
-        type Success = Vec<L<TopDecl>>;
+        type Success = Vec<L<ParsedTopDecl>>;
         type StateIndex = i16;
         type Action = i16;
         type ReduceIndex = i16;
@@ -33953,7 +33953,7 @@ mod __parse__TopDecls {
             &self,
             module: &'a Rc<str>,
             __tokens0: __TOKENS,
-        ) -> Result<Vec<L<TopDecl>>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
+        ) -> Result<Vec<L<ParsedTopDecl>>, __lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>
         {
             let __tokens = __tokens0.into_iter();
             let mut __tokens = __tokens.map(|t| __ToTriple::to_triple(t));
@@ -34008,7 +34008,7 @@ mod __parse__TopDecls {
         __states: &mut alloc::vec::Vec<i16>,
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>,
         _: core::marker::PhantomData<(&'a ())>,
-    ) -> Option<Result<Vec<L<TopDecl>>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
+    ) -> Option<Result<Vec<L<ParsedTopDecl>>,__lalrpop_util::ParseError<Loc, Token, LexerError<Infallible>>>>
     {
         let (__pop_states, __nonterminal) = match __action {
             0 => {
@@ -35220,20 +35220,10 @@ mod __parse__TopDecls {
     fn __symbol_type_mismatch() -> ! {
         panic!("symbol type mismatch")
     }
-    fn __pop_Variant21<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Id, Type), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant6<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Expr>, Vec<L<Stmt>>), Loc)
+    ) -> (Loc, (L<ParsedExpr>, Vec<L<ParsedStmt>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant6(__v), __r)) => (__l, __v, __r),
@@ -35243,7 +35233,7 @@ mod __parse__TopDecls {
     fn __pop_Variant61<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, Context), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedContext), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant61(__v), __r)) => (__l, __v, __r),
@@ -35253,37 +35243,17 @@ mod __parse__TopDecls {
     fn __pop_Variant48<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (L<Id>, FunSig), Loc)
+    ) -> (Loc, (L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant48(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant23<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Expr>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant25<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<Id>, L<Pat>), Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant82<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc)
+    ) -> (Loc, (Option<L<ParsedId>>, ParsedContext, L<ParsedId>, ParsedFunSig), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant82(__v), __r)) => (__l, __v, __r),
@@ -35293,17 +35263,47 @@ mod __parse__TopDecls {
     fn __pop_Variant66<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Option<L<Type>>, Option<L<Type>>), Loc)
+    ) -> (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant66(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant23<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant23(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant25<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (Option<ParsedId>, L<ParsedPat>), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant25(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant21<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, (ParsedId, ParsedType), Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant21(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant12<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, (Token, L<Type>), Loc)
+    ) -> (Loc, (Token, L<ParsedType>), Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant12(__v), __r)) => (__l, __v, __r),
@@ -35320,16 +35320,6 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant36<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Alt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant39<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -35340,70 +35330,10 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant14<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, CallArg, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant42<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstrPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant43<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Constructor, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant44<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, ConstructorDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant46<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Context, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant40<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Expr, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant29<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<(Option<Id>, L<Type>)>, Loc)
+    ) -> (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant29(__v), __r)) => (__l, __v, __r),
@@ -35413,7 +35343,7 @@ mod __parse__TopDecls {
     fn __pop_Variant53<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Expr>, Loc)
+    ) -> (Loc, L<ParsedExpr>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant53(__v), __r)) => (__l, __v, __r),
@@ -35423,7 +35353,7 @@ mod __parse__TopDecls {
     fn __pop_Variant47<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<FunDecl>, Loc)
+    ) -> (Loc, L<ParsedFunDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant47(__v), __r)) => (__l, __v, __r),
@@ -35433,7 +35363,7 @@ mod __parse__TopDecls {
     fn __pop_Variant17<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Id>, Loc)
+    ) -> (Loc, L<ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant17(__v), __r)) => (__l, __v, __r),
@@ -35443,7 +35373,7 @@ mod __parse__TopDecls {
     fn __pop_Variant49<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDecl>, Loc)
+    ) -> (Loc, L<ParsedImplDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant49(__v), __r)) => (__l, __v, __r),
@@ -35453,7 +35383,7 @@ mod __parse__TopDecls {
     fn __pop_Variant50<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImplDeclItem>, Loc)
+    ) -> (Loc, L<ParsedImplDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant50(__v), __r)) => (__l, __v, __r),
@@ -35463,7 +35393,7 @@ mod __parse__TopDecls {
     fn __pop_Variant52<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<ImportDecl>, Loc)
+    ) -> (Loc, L<ParsedImportDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant52(__v), __r)) => (__l, __v, __r),
@@ -35473,7 +35403,7 @@ mod __parse__TopDecls {
     fn __pop_Variant54<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Pat>, Loc)
+    ) -> (Loc, L<ParsedPat>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant54(__v), __r)) => (__l, __v, __r),
@@ -35483,7 +35413,7 @@ mod __parse__TopDecls {
     fn __pop_Variant55<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Stmt>, Loc)
+    ) -> (Loc, L<ParsedStmt>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant55(__v), __r)) => (__l, __v, __r),
@@ -35493,7 +35423,7 @@ mod __parse__TopDecls {
     fn __pop_Variant78<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TopDecl>, Loc)
+    ) -> (Loc, L<ParsedTopDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant78(__v), __r)) => (__l, __v, __r),
@@ -35503,7 +35433,7 @@ mod __parse__TopDecls {
     fn __pop_Variant83<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDecl>, Loc)
+    ) -> (Loc, L<ParsedTraitDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant83(__v), __r)) => (__l, __v, __r),
@@ -35513,7 +35443,7 @@ mod __parse__TopDecls {
     fn __pop_Variant84<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TraitDeclItem>, Loc)
+    ) -> (Loc, L<ParsedTraitDeclItem>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant84(__v), __r)) => (__l, __v, __r),
@@ -35523,7 +35453,7 @@ mod __parse__TopDecls {
     fn __pop_Variant4<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<Type>, Loc)
+    ) -> (Loc, L<ParsedType>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant4(__v), __r)) => (__l, __v, __r),
@@ -35533,7 +35463,7 @@ mod __parse__TopDecls {
     fn __pop_Variant89<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, L<TypeDecl>, Loc)
+    ) -> (Loc, L<ParsedTypeDecl>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant89(__v), __r)) => (__l, __v, __r),
@@ -35553,7 +35483,7 @@ mod __parse__TopDecls {
     fn __pop_Variant27<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Named<Type>, Loc)
+    ) -> (Loc, Named<ParsedType, ParsedId>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant27(__v), __r)) => (__l, __v, __r),
@@ -35563,7 +35493,7 @@ mod __parse__TopDecls {
     fn __pop_Variant62<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(L<Id>, Context)>, Loc)
+    ) -> (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant62(__v), __r)) => (__l, __v, __r),
@@ -35573,7 +35503,7 @@ mod __parse__TopDecls {
     fn __pop_Variant60<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant60(__v), __r)) => (__l, __v, __r),
@@ -35583,7 +35513,7 @@ mod __parse__TopDecls {
     fn __pop_Variant64<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant64(__v), __r)) => (__l, __v, __r),
@@ -35593,7 +35523,7 @@ mod __parse__TopDecls {
     fn __pop_Variant20<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Option<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant20(__v), __r)) => (__l, __v, __r),
@@ -35610,30 +35540,10 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant41<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant67<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant87<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant87(__v), __r)) => (__l, __v, __r),
@@ -35643,7 +35553,7 @@ mod __parse__TopDecls {
     fn __pop_Variant18<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Id>>, Loc)
+    ) -> (Loc, Option<L<ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant18(__v), __r)) => (__l, __v, __r),
@@ -35653,7 +35563,7 @@ mod __parse__TopDecls {
     fn __pop_Variant5<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<L<Type>>, Loc)
+    ) -> (Loc, Option<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant5(__v), __r)) => (__l, __v, __r),
@@ -35663,10 +35573,50 @@ mod __parse__TopDecls {
     fn __pop_Variant65<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Named<Type>>, Loc)
+    ) -> (Loc, Option<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant65(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant41<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant41(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant67<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant67(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant91<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant94<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Option<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -35690,30 +35640,10 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant91<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant91(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant94<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant94(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant3<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<(Option<Id>, L<Expr>)>>, Loc)
+    ) -> (Loc, Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant3(__v), __r)) => (__l, __v, __r),
@@ -35723,20 +35653,160 @@ mod __parse__TopDecls {
     fn __pop_Variant9<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Option<Vec<L<Stmt>>>, Loc)
+    ) -> (Loc, Option<Vec<L<ParsedStmt>>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant9(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant36<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant36(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant14<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedCallArg, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant14(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant42<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstrPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant42(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant43<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructor, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant43(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant44<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedConstructorDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant44(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant46<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedContext, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant46(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant40<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedExpr, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant40(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant63<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Pat, Loc)
+    ) -> (Loc, ParsedPat, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant63(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant77<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedStmt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant81<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTopDecl, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant86<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedType, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant90<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeDeclRhs, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant31<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedTypeParam, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant33<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantAlt, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant95<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, ParsedVariantPattern, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -35750,16 +35820,6 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant77<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Stmt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant77(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant0<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
@@ -35770,80 +35830,10 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant81<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TopDecl, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant81(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant86<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Type, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant86(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant90<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeDeclRhs, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant90(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant31<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, TypeParam, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant31(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant33<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantAlt, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant33(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant95<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, VariantPattern, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant95(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant59<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant2<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant2(__v), __r)) => (__l, __v, __r),
@@ -35853,67 +35843,37 @@ mod __parse__TopDecls {
     fn __pop_Variant72<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant72(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant59<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant59(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant68<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant68(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant38<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant69<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant88<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant92<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Id>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant74<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant74(__v), __r)) => (__l, __v, __r),
@@ -35923,7 +35883,7 @@ mod __parse__TopDecls {
     fn __pop_Variant8<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Stmt>>, Loc)
+    ) -> (Loc, Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant8(__v), __r)) => (__l, __v, __r),
@@ -35933,7 +35893,7 @@ mod __parse__TopDecls {
     fn __pop_Variant80<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant80(__v), __r)) => (__l, __v, __r),
@@ -35943,7 +35903,7 @@ mod __parse__TopDecls {
     fn __pop_Variant70<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<L<Type>>, Loc)
+    ) -> (Loc, Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant70(__v), __r)) => (__l, __v, __r),
@@ -35953,10 +35913,80 @@ mod __parse__TopDecls {
     fn __pop_Variant73<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Named<Type>>, Loc)
+    ) -> (Loc, Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant73(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant38<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant38(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant69<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant69(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant88<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant88(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant92<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedId>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant92(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant93<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedType>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant75<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant76<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -35970,50 +36000,10 @@ mod __parse__TopDecls {
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant93<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<Type>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant93(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant75<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant75(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant76<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant76(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant22<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Id, Type)>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant7<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant7(__v), __r)) => (__l, __v, __r),
@@ -36023,7 +36013,7 @@ mod __parse__TopDecls {
     fn __pop_Variant24<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant24(__v), __r)) => (__l, __v, __r),
@@ -36033,57 +36023,37 @@ mod __parse__TopDecls {
     fn __pop_Variant26<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant26(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
+    fn __pop_Variant22<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant22(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
     fn __pop_Variant13<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc)
+    ) -> (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant13(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
-    fn __pop_Variant37<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Alt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant15<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<CallArg>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant45<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<ConstructorDecl>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
     fn __pop_Variant30<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant30(__v), __r)) => (__l, __v, __r),
@@ -36093,7 +36063,7 @@ mod __parse__TopDecls {
     fn __pop_Variant51<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant51(__v), __r)) => (__l, __v, __r),
@@ -36103,7 +36073,7 @@ mod __parse__TopDecls {
     fn __pop_Variant56<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Stmt>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant56(__v), __r)) => (__l, __v, __r),
@@ -36113,7 +36083,7 @@ mod __parse__TopDecls {
     fn __pop_Variant79<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TopDecl>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant79(__v), __r)) => (__l, __v, __r),
@@ -36123,7 +36093,7 @@ mod __parse__TopDecls {
     fn __pop_Variant85<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant85(__v), __r)) => (__l, __v, __r),
@@ -36133,7 +36103,7 @@ mod __parse__TopDecls {
     fn __pop_Variant16<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<L<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<L<ParsedType>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant16(__v), __r)) => (__l, __v, __r),
@@ -36143,10 +36113,60 @@ mod __parse__TopDecls {
     fn __pop_Variant28<
     >(
         __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<Named<Type>>, Loc)
+    ) -> (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc)
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant28(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant37<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant37(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant15<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedCallArg>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant15(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant45<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedConstructorDecl>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant45(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant32<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
+            _ => __symbol_type_mismatch()
+        }
+    }
+    fn __pop_Variant34<
+    >(
+        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
+    ) -> (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc)
+     {
+        match __symbols.pop() {
+            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -36157,26 +36177,6 @@ mod __parse__TopDecls {
      {
         match __symbols.pop() {
             Some((__l, __Symbol::Variant19(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant32<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<TypeParam>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant32(__v), __r)) => (__l, __v, __r),
-            _ => __symbol_type_mismatch()
-        }
-    }
-    fn __pop_Variant34<
-    >(
-        __symbols: &mut alloc::vec::Vec<(Loc,__Symbol<>,Loc)>
-    ) -> (Loc, alloc::vec::Vec<VariantAlt>, Loc)
-     {
-        match __symbols.pop() {
-            Some((__l, __Symbol::Variant34(__v), __r)) => (__l, __v, __r),
             _ => __symbol_type_mismatch()
         }
     }
@@ -43640,7 +43640,7 @@ pub use self::__parse__TopDecls::TopDeclsParser;
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action0<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Stmt>, Loc)) -> L<Stmt> {
+fn __action0<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<ParsedStmt>, Loc)) -> L<ParsedStmt> {
     __0
 }
 
@@ -43650,7 +43650,7 @@ fn __action0<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Stmt>, Loc)) -> L<Stm
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action1<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Expr>, Loc)) -> L<Expr> {
+fn __action1<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<ParsedExpr>, Loc)) -> L<ParsedExpr> {
     __0
 }
 
@@ -43660,7 +43660,10 @@ fn __action1<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Expr>, Loc)) -> L<Exp
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action2<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Vec<L<TopDecl>>, Loc)) -> Vec<L<TopDecl>> {
+fn __action2<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, Vec<L<ParsedTopDecl>>, Loc),
+) -> Vec<L<ParsedTopDecl>> {
     __0
 }
 
@@ -43675,7 +43678,7 @@ fn __action3<'a>(
     (_, l, _): (Loc, Loc, Loc),
     (_, id, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Id> {
+) -> L<ParsedId> {
     L::new(module, l, r, id.smol_str())
 }
 
@@ -43690,7 +43693,7 @@ fn __action4<'a>(
     (_, l, _): (Loc, Loc, Loc),
     (_, id, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Id> {
+) -> L<ParsedId> {
     L::new(module, l, r, id.smol_str())
 }
 
@@ -43705,10 +43708,10 @@ fn __action5<'a>(
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, Token, Loc),
-    (_, type_params, _): (Loc, Vec<Id>, Loc),
-    (_, rhs, _): (Loc, TypeDeclRhs, Loc),
+    (_, type_params, _): (Loc, Vec<ParsedId>, Loc),
+    (_, rhs, _): (Loc, ParsedTypeDeclRhs, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     L::new(
         module,
         l,
@@ -43733,10 +43736,10 @@ fn __action6<'a>(
     (_, _, _): (Loc, Option<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, type_name, _): (Loc, Token, Loc),
-    (_, type_params, _): (Loc, Vec<Id>, Loc),
+    (_, type_params, _): (Loc, Vec<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     L::new(
         module,
         l,
@@ -43760,9 +43763,9 @@ fn __action7<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, constrs, _): (Loc, Vec<ConstructorDecl>, Loc),
+    (_, constrs, _): (Loc, Vec<ParsedConstructorDecl>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> TypeDeclRhs {
+) -> ParsedTypeDeclRhs {
     TypeDeclRhs::Sum(constrs)
 }
 
@@ -43777,9 +43780,9 @@ fn __action8<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, named_fields, _): (Loc, Vec<(Id, Type)>, Loc),
+    (_, named_fields, _): (Loc, Vec<(ParsedId, ParsedType)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> TypeDeclRhs {
+) -> ParsedTypeDeclRhs {
     TypeDeclRhs::Product(ConstructorFields::Named(named_fields))
 }
 
@@ -43789,7 +43792,7 @@ fn __action8<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action9<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Id> {
+fn __action9<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<ParsedId> {
     vec![]
 }
 
@@ -43804,7 +43807,7 @@ fn __action10<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, params, _): (Loc, Vec<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Vec<Id> {
+) -> Vec<ParsedId> {
     params.into_iter().map(|id| id.smol_str()).collect()
 }
 
@@ -43816,8 +43819,8 @@ fn __action10<'a>(
 )]
 fn __action11<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
-) -> Vec<ConstructorDecl> {
+    (_, __0, _): (Loc, alloc::vec::Vec<ParsedConstructorDecl>, Loc),
+) -> Vec<ParsedConstructorDecl> {
     __0
 }
 
@@ -43831,7 +43834,7 @@ fn __action12<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> ConstructorDecl {
+) -> ParsedConstructorDecl {
     ConstructorDecl {
         name: name.smol_str(),
         fields: ConstructorFields::Empty,
@@ -43850,9 +43853,9 @@ fn __action13<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, named_fields, _): (Loc, Vec<(Id, Type)>, Loc),
+    (_, named_fields, _): (Loc, Vec<(ParsedId, ParsedType)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> ConstructorDecl {
+) -> ParsedConstructorDecl {
     ConstructorDecl {
         name: name.smol_str(),
         fields: ConstructorFields::Named(named_fields),
@@ -43869,11 +43872,11 @@ fn __action14<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<Type>, Loc),
+    (_, fields, _): (Loc, Vec<ParsedType>, Loc),
     (_, _, _): (Loc, Option<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> ConstructorDecl {
+) -> ParsedConstructorDecl {
     ConstructorDecl {
         name: name.smol_str(),
         fields: ConstructorFields::Unnamed(fields),
@@ -43888,8 +43891,8 @@ fn __action14<'a>(
 )]
 fn __action15<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, alloc::vec::Vec<(Id, Type)>, Loc),
-) -> Vec<(Id, Type)> {
+    (_, __0, _): (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc),
+) -> Vec<(ParsedId, ParsedType)> {
     __0
 }
 
@@ -43903,8 +43906,8 @@ fn __action16<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, type_, _): (Loc, Type, Loc),
-) -> (Id, Type) {
+    (_, type_, _): (Loc, ParsedType, Loc),
+) -> (ParsedId, ParsedType) {
     (name.smol_str(), type_)
 }
 
@@ -43916,10 +43919,10 @@ fn __action16<'a>(
 )]
 fn __action17<'a>(
     module: &'a Rc<str>,
-    (_, mut fields, _): (Loc, Vec<Type>, Loc),
+    (_, mut fields, _): (Loc, Vec<ParsedType>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, field, _): (Loc, Type, Loc),
-) -> Vec<Type> {
+    (_, field, _): (Loc, ParsedType, Loc),
+) -> Vec<ParsedType> {
     {
         fields.push(field);
         fields
@@ -43932,7 +43935,7 @@ fn __action17<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action18<'a>(module: &'a Rc<str>, (_, field, _): (Loc, Type, Loc)) -> Vec<Type> {
+fn __action18<'a>(module: &'a Rc<str>, (_, field, _): (Loc, ParsedType, Loc)) -> Vec<ParsedType> {
     vec![field]
 }
 
@@ -43945,9 +43948,9 @@ fn __action18<'a>(module: &'a Rc<str>, (_, field, _): (Loc, Type, Loc)) -> Vec<T
 fn __action19<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, ty, _): (Loc, Type, Loc),
+    (_, ty, _): (Loc, ParsedType, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Type> {
+) -> L<ParsedType> {
     L::new(module, l, r, ty)
 }
 
@@ -43960,9 +43963,9 @@ fn __action19<'a>(
 fn __action20<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, ty, _): (Loc, Type, Loc),
+    (_, ty, _): (Loc, ParsedType, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Type> {
+) -> L<ParsedType> {
     L::new(module, l, r, ty)
 }
 
@@ -43972,7 +43975,7 @@ fn __action20<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action21<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Type, Loc)) -> Type {
+fn __action21<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, ParsedType, Loc)) -> ParsedType {
     ty
 }
 
@@ -43982,7 +43985,7 @@ fn __action21<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Type, Loc)) -> Type {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action22<'a>(module: &'a Rc<str>, (_, var, _): (Loc, Token, Loc)) -> Type {
+fn __action22<'a>(module: &'a Rc<str>, (_, var, _): (Loc, Token, Loc)) -> ParsedType {
     Type::Var(var.smol_str())
 }
 
@@ -43996,10 +43999,10 @@ fn __action23<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, args, _): (Loc, Vec<L<Type>>, Loc),
+    (_, args, _): (Loc, Vec<L<ParsedType>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> Type {
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> ParsedType {
     Type::Fn(FnType {
         args,
         exceptions: ret.0.map(|t| t.map(Box::new)),
@@ -44016,10 +44019,10 @@ fn __action23<'a>(
 fn __action24<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
-    (_, extension, _): (Loc, Option<Id>, Loc),
+    (_, fields, _): (Loc, Vec<Named<ParsedType, ParsedId>>, Loc),
+    (_, extension, _): (Loc, Option<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Type {
+) -> ParsedType {
     Type::Record { fields, extension }
 }
 
@@ -44032,10 +44035,10 @@ fn __action24<'a>(
 fn __action25<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, alts, _): (Loc, Vec<VariantAlt>, Loc),
-    (_, extension, _): (Loc, Option<Id>, Loc),
+    (_, alts, _): (Loc, Vec<ParsedVariantAlt>, Loc),
+    (_, extension, _): (Loc, Option<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Type {
+) -> ParsedType {
     Type::Variant { alts, extension }
 }
 
@@ -44045,7 +44048,7 @@ fn __action25<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action26<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> Type {
+fn __action26<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> ParsedType {
     Type::Named(NamedType {
         name: name.smol_str(),
         args: vec![],
@@ -44062,9 +44065,9 @@ fn __action27<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, args, _): (Loc, Vec<L<(Option<Id>, L<Type>)>>, Loc),
+    (_, args, _): (Loc, Vec<L<(Option<ParsedId>, L<ParsedType>)>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Type {
+) -> ParsedType {
     Type::Named(NamedType {
         name: name.smol_str(),
         args,
@@ -44077,7 +44080,7 @@ fn __action27<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action28<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<Id> {
+fn __action28<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<ParsedId> {
     None
 }
 
@@ -44091,7 +44094,7 @@ fn __action29<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, id, _): (Loc, Token, Loc),
-) -> Option<Id> {
+) -> Option<ParsedId> {
     Some(id.smol_str())
 }
 
@@ -44106,9 +44109,9 @@ fn __action30<'a>(
     (_, l, _): (Loc, Loc, Loc),
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<(Option<Id>, L<Type>)> {
+) -> L<(Option<ParsedId>, L<ParsedType>)> {
     L::new(module, l, r, (Some(name.smol_str()), ty))
 }
 
@@ -44120,8 +44123,8 @@ fn __action30<'a>(
 )]
 fn __action31<'a>(
     module: &'a Rc<str>,
-    (_, ty, _): (Loc, L<Type>, Loc),
-) -> L<(Option<Id>, L<Type>)> {
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
+) -> L<(Option<ParsedId>, L<ParsedType>)> {
     {
         let loc = ty.loc.clone();
         L {
@@ -44141,8 +44144,8 @@ fn __action32<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, Type, Loc),
-) -> Named<Type> {
+    (_, ty, _): (Loc, ParsedType, Loc),
+) -> Named<ParsedType, ParsedId> {
     Named {
         name: Some(name.smol_str()),
         node: ty,
@@ -44155,7 +44158,10 @@ fn __action32<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action33<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Type, Loc)) -> Named<Type> {
+fn __action33<'a>(
+    module: &'a Rc<str>,
+    (_, ty, _): (Loc, ParsedType, Loc),
+) -> Named<ParsedType, ParsedId> {
     Named {
         name: None,
         node: ty,
@@ -44172,9 +44178,9 @@ fn __action34<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<Named<Type>>, Loc),
+    (_, fields, _): (Loc, Vec<Named<ParsedType, ParsedId>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> VariantAlt {
+) -> ParsedVariantAlt {
     VariantAlt {
         con: name.smol_str(),
         fields,
@@ -44187,7 +44193,7 @@ fn __action34<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action35<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> VariantAlt {
+fn __action35<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> ParsedVariantAlt {
     VariantAlt {
         con: name.smol_str(),
         fields: vec![],
@@ -44203,13 +44209,13 @@ fn __action35<'a>(module: &'a Rc<str>, (_, name, _): (Loc, Token, Loc)) -> Varia
 fn __action36<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, sig, _): (Loc, (L<Id>, FunSig), Loc),
+    (_, sig, _): (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     L::new(
         module,
         l,
@@ -44232,10 +44238,10 @@ fn __action37<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Option<Token>, Loc),
-    (_, sig, _): (Loc, (L<Id>, FunSig), Loc),
+    (_, sig, _): (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     L::new(
         module,
         l,
@@ -44257,12 +44263,12 @@ fn __action37<'a>(
 fn __action38<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, sig, _): (Loc, (L<Id>, FunSig), Loc),
+    (_, sig, _): (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     {
         let L { loc, node } = rhs;
         L::new(
@@ -44292,14 +44298,14 @@ fn __action38<'a>(
 )]
 fn __action39<'a>(
     module: &'a Rc<str>,
-    (_, name, _): (Loc, L<Id>, Loc),
-    (_, type_params, _): (Loc, Context, Loc),
+    (_, name, _): (Loc, L<ParsedId>, Loc),
+    (_, type_params, _): (Loc, ParsedContext, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, self_, _): (Loc, Option<(Token, Option<Token>)>, Loc),
-    (_, params, _): (Loc, Vec<(Token, L<Type>)>, Loc),
+    (_, params, _): (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (L<Id>, FunSig) {
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (L<ParsedId>, ParsedFunSig) {
     (
         name,
         FunSig {
@@ -44323,10 +44329,10 @@ fn __action39<'a>(
 )]
 fn __action40<'a>(
     module: &'a Rc<str>,
-    (_, name, _): (Loc, L<Id>, Loc),
-    (_, type_params, _): (Loc, Context, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (L<Id>, FunSig) {
+    (_, name, _): (Loc, L<ParsedId>, Loc),
+    (_, type_params, _): (Loc, ParsedContext, Loc),
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (L<ParsedId>, ParsedFunSig) {
     (
         name,
         FunSig {
@@ -44348,18 +44354,32 @@ fn __action40<'a>(
 fn __action41<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, sig, _): (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    (_, sig, _): (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     {
-        let (parent_ty, parent_ty_ctx, name, sig): (Option<L<Id>>, Context, L<Id>, FunSig) = sig;
+        let (parent_ty, parent_ty_ctx, name, sig): (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx
                     .iter()
                     .map(|ty| L {
                         loc: ty.id.loc.clone(),
@@ -44428,15 +44448,24 @@ fn __action42<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Option<Token>, Loc),
-    (_, sig, _): (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    (_, sig, _): (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     {
         let (parent_ty, parent_ty_ctx, name, sig) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx
                     .iter()
                     .map(|ty| L {
                         loc: ty.id.loc.clone(),
@@ -44504,18 +44533,27 @@ fn __action42<'a>(
 fn __action43<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, sig, _): (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    (_, sig, _): (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     (_, _, _): (Loc, Token, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     {
         let L { loc, node } = rhs;
         let (parent_ty, parent_ty_ctx, name, sig) = sig;
         match parent_ty {
             Some(parent_ty) => {
-                let type_params: Vec<L<Type>> = parent_ty_ctx
+                let type_params: Vec<L<ParsedType>> = parent_ty_ctx
                     .iter()
                     .map(|ty| L {
                         loc: ty.id.loc.clone(),
@@ -44594,15 +44632,20 @@ fn __action43<'a>(
 )]
 fn __action44<'a>(
     module: &'a Rc<str>,
-    (_, parent_ty, _): (Loc, Option<(L<Id>, Context)>, Loc),
-    (_, name, _): (Loc, L<Id>, Loc),
-    (_, type_params, _): (Loc, Context, Loc),
+    (_, parent_ty, _): (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc),
+    (_, name, _): (Loc, L<ParsedId>, Loc),
+    (_, type_params, _): (Loc, ParsedContext, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, self_, _): (Loc, Option<(Token, Option<Token>)>, Loc),
-    (_, params, _): (Loc, Vec<(Token, L<Type>)>, Loc),
+    (_, params, _): (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     {
         match parent_ty {
             Some((ty, ty_ctx)) => (
@@ -44647,11 +44690,16 @@ fn __action44<'a>(
 )]
 fn __action45<'a>(
     module: &'a Rc<str>,
-    (_, parent_ty, _): (Loc, Option<(L<Id>, Context)>, Loc),
-    (_, name, _): (Loc, L<Id>, Loc),
-    (_, type_params, _): (Loc, Context, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    (_, parent_ty, _): (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc),
+    (_, name, _): (Loc, L<ParsedId>, Loc),
+    (_, type_params, _): (Loc, ParsedContext, Loc),
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     {
         match parent_ty {
             Some((ty, ty_ctx)) => (
@@ -44692,7 +44740,7 @@ fn __action46<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> (Option<L<Type>>, Option<L<Type>>) {
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     (None, None)
 }
 
@@ -44707,11 +44755,11 @@ fn __action47<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, alts, _): (Loc, Vec<VariantAlt>, Loc),
-    (_, extension, _): (Loc, Option<Id>, Loc),
+    (_, alts, _): (Loc, Vec<ParsedVariantAlt>, Loc),
+    (_, extension, _): (Loc, Option<ParsedId>, Loc),
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     (
         Some(L::new(module, l, r, Type::Variant { alts, extension })),
         None,
@@ -44727,8 +44775,8 @@ fn __action47<'a>(
 fn __action48<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     (None, Some(ty))
 }
 
@@ -44743,12 +44791,12 @@ fn __action49<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, alts, _): (Loc, Vec<VariantAlt>, Loc),
-    (_, extension, _): (Loc, Option<Id>, Loc),
+    (_, alts, _): (Loc, Vec<ParsedVariantAlt>, Loc),
+    (_, extension, _): (Loc, Option<ParsedId>, Loc),
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     (
         Some(L::new(module, l, r, Type::Variant { alts, extension })),
         Some(ty),
@@ -44763,10 +44811,10 @@ fn __action49<'a>(
 )]
 fn __action50<'a>(
     module: &'a Rc<str>,
-    (_, ty, _): (Loc, L<Id>, Loc),
-    (_, context, _): (Loc, Context, Loc),
+    (_, ty, _): (Loc, L<ParsedId>, Loc),
+    (_, context, _): (Loc, ParsedContext, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (L<Id>, Context) {
+) -> (L<ParsedId>, ParsedContext) {
     (ty, context)
 }
 
@@ -44778,8 +44826,8 @@ fn __action50<'a>(
 )]
 fn __action51<'a>(
     module: &'a Rc<str>,
-    (_, stmts, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-) -> Vec<L<Stmt>> {
+    (_, stmts, _): (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc),
+) -> Vec<L<ParsedStmt>> {
     stmts
 }
 
@@ -44792,9 +44840,9 @@ fn __action51<'a>(
 fn __action52<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, stmt, _): (Loc, Stmt, Loc),
+    (_, stmt, _): (Loc, ParsedStmt, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Stmt> {
+) -> L<ParsedStmt> {
     L::new(module, l, r, stmt)
 }
 
@@ -44809,7 +44857,7 @@ fn __action53<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, label, _): (Loc, Option<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Break {
         label: label.map(|l| SmolStr::new(&l.smol_str()[1..])),
         level: 0,
@@ -44827,7 +44875,7 @@ fn __action54<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, label, _): (Loc, Option<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Continue {
         label: label.map(|l| SmolStr::new(&l.smol_str()[1..])),
         level: 0,
@@ -44843,12 +44891,12 @@ fn __action54<'a>(
 fn __action55<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, lhs, _): (Loc, L<Pat>, Loc),
-    (_, ty, _): (Loc, Option<L<Type>>, Loc),
+    (_, lhs, _): (Loc, L<ParsedPat>, Loc),
+    (_, ty, _): (Loc, Option<L<ParsedType>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Let(LetStmt { lhs, ty, rhs })
 }
 
@@ -44861,11 +44909,11 @@ fn __action55<'a>(
 fn __action56<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, lhs, _): (Loc, L<Pat>, Loc),
-    (_, ty, _): (Loc, Option<L<Type>>, Loc),
+    (_, lhs, _): (Loc, L<ParsedPat>, Loc),
+    (_, ty, _): (Loc, Option<L<ParsedType>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
-) -> Stmt {
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
+) -> ParsedStmt {
     Stmt::Let(LetStmt { lhs, ty, rhs })
 }
 
@@ -44877,11 +44925,11 @@ fn __action56<'a>(
 )]
 fn __action57<'a>(
     module: &'a Rc<str>,
-    (_, lhs, _): (Loc, L<Expr>, Loc),
+    (_, lhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, op, _): (Loc, AssignOp, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Assign(AssignStmt { lhs, rhs, op })
 }
 
@@ -44893,10 +44941,10 @@ fn __action57<'a>(
 )]
 fn __action58<'a>(
     module: &'a Rc<str>,
-    (_, lhs, _): (Loc, L<Expr>, Loc),
+    (_, lhs, _): (Loc, L<ParsedExpr>, Loc),
     (_, op, _): (Loc, AssignOp, Loc),
-    (_, rhs, _): (Loc, L<Expr>, Loc),
-) -> Stmt {
+    (_, rhs, _): (Loc, L<ParsedExpr>, Loc),
+) -> ParsedStmt {
     Stmt::Assign(AssignStmt { lhs, rhs, op })
 }
 
@@ -44909,10 +44957,10 @@ fn __action58<'a>(
 fn __action59<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Expr(L::new(module, l, r, expr))
 }
 
@@ -44925,9 +44973,9 @@ fn __action59<'a>(
 fn __action60<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::Expr(L::new(module, l, r, expr))
 }
 
@@ -44941,15 +44989,15 @@ fn __action61<'a>(
     module: &'a Rc<str>,
     (_, label, _): (Loc, Option<SmolStr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, pat, _): (Loc, L<Pat>, Loc),
+    (_, pat, _): (Loc, L<ParsedPat>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, expr, _): (Loc, L<Expr>, Loc),
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::For(ForStmt {
         label,
         pat,
@@ -44970,13 +45018,13 @@ fn __action62<'a>(
     module: &'a Rc<str>,
     (_, label, _): (Loc, Option<SmolStr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, cond, _): (Loc, L<Expr>, Loc),
+    (_, cond, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::While(WhileStmt { label, cond, body })
 }
 
@@ -44991,15 +45039,15 @@ fn __action63<'a>(
     (_, label, _): (Loc, Option<SmolStr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, pat, _): (Loc, L<Pat>, Loc),
+    (_, pat, _): (Loc, L<ParsedPat>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, cond, _): (Loc, L<Expr>, Loc),
+    (_, cond, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::WhileLet(WhileLetStmt {
         label,
         pat,
@@ -45023,9 +45071,9 @@ fn __action64<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     Stmt::While(WhileStmt {
         label,
         cond: L::new(
@@ -45062,7 +45110,10 @@ fn __action65<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action66<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
+fn __action66<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, alloc::vec::Vec<ParsedAlt>, Loc),
+) -> Vec<ParsedAlt> {
     __0
 }
 
@@ -45074,13 +45125,13 @@ fn __action66<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, alloc::vec::Vec<Alt>, 
 )]
 fn __action67<'a>(
     module: &'a Rc<str>,
-    (_, pattern, _): (Loc, L<Pat>, Loc),
+    (_, pattern, _): (Loc, L<ParsedPat>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, stmts, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, stmts, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Alt {
+) -> ParsedAlt {
     Alt {
         pattern,
         guard: None,
@@ -45096,10 +45147,10 @@ fn __action67<'a>(
 )]
 fn __action68<'a>(
     module: &'a Rc<str>,
-    (_, pattern, _): (Loc, L<Pat>, Loc),
+    (_, pattern, _): (Loc, L<ParsedPat>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, stmt, _): (Loc, L<Stmt>, Loc),
-) -> Alt {
+    (_, stmt, _): (Loc, L<ParsedStmt>, Loc),
+) -> ParsedAlt {
     Alt {
         pattern,
         guard: None,
@@ -45156,9 +45207,9 @@ fn __action72<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Assign
 fn __action73<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Expr> {
+) -> L<ParsedExpr> {
     L::new(module, l, r, expr)
 }
 
@@ -45168,7 +45219,7 @@ fn __action73<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action74<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, Expr, Loc)) -> Expr {
+fn __action74<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     expr
 }
 
@@ -45178,7 +45229,7 @@ fn __action74<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, Expr, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action75<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, Expr, Loc)) -> Expr {
+fn __action75<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     expr
 }
 
@@ -45191,9 +45242,9 @@ fn __action75<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, Expr, Loc)) -> Expr {
 fn __action76<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Expr> {
+) -> L<ParsedExpr> {
     L::new(module, l, r, expr)
 }
 
@@ -45206,13 +45257,13 @@ fn __action76<'a>(
 fn __action77<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, expr, _): (Loc, L<Expr>, Loc),
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, alts, _): (Loc, Vec<Alt>, Loc),
+    (_, alts, _): (Loc, Vec<ParsedAlt>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::Match(MatchExpr {
         scrutinee: Box::new(expr),
         alts,
@@ -45228,15 +45279,19 @@ fn __action77<'a>(
 fn __action78<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, cond, _): (Loc, L<Expr>, Loc),
+    (_, cond, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, then_, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, then_, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, mut branches, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-    (_, else_branch, _): (Loc, Option<Vec<L<Stmt>>>, Loc),
-) -> Expr {
+    (_, mut branches, _): (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
+    (_, else_branch, _): (Loc, Option<Vec<L<ParsedStmt>>>, Loc),
+) -> ParsedExpr {
     {
         branches.insert(0, (cond, then_));
         Expr::If(IfExpr {
@@ -45255,9 +45310,9 @@ fn __action78<'a>(
 fn __action79<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Expr> {
+) -> L<ParsedExpr> {
     L::new(module, l, r, expr)
 }
 
@@ -45267,7 +45322,7 @@ fn __action79<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action80<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Expr {
+fn __action80<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> ParsedExpr {
     Expr::Self_
 }
 
@@ -45277,7 +45332,7 @@ fn __action80<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action81<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
+fn __action81<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> ParsedExpr {
     Expr::Var(VarExpr {
         id: id.smol_str(),
         ty_args: vec![],
@@ -45290,7 +45345,7 @@ fn __action81<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action82<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
+fn __action82<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> ParsedExpr {
     Expr::Constr(ConstrExpr {
         id: id.smol_str(),
         ty_args: vec![],
@@ -45306,9 +45361,9 @@ fn __action82<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
 fn __action83<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, mut exprs, _): (Loc, Vec<(Option<Id>, L<Expr>)>, Loc),
+    (_, mut exprs, _): (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     {
         match exprs.len() {
             0 => Expr::Record(vec![]),
@@ -45332,7 +45387,7 @@ fn __action83<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action84<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
+fn __action84<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> ParsedExpr {
     {
         let kind = match int.kind {
             TokenKind::Int(int_kind) => int_kind,
@@ -45381,7 +45436,7 @@ fn __action84<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action85<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
+fn __action85<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> ParsedExpr {
     {
         let kind = match int.kind {
             TokenKind::HexInt(int_kind) => int_kind,
@@ -45431,7 +45486,7 @@ fn __action85<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action86<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
+fn __action86<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> ParsedExpr {
     {
         let kind = match int.kind {
             TokenKind::BinInt(int_kind) => int_kind,
@@ -45485,7 +45540,7 @@ fn __action87<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, string, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     {
         let l = Loc {
             line: l.line,
@@ -45506,7 +45561,7 @@ fn __action87<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action88<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Expr {
+fn __action88<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> ParsedExpr {
     Expr::Char(parse_char_lit(&char.text))
 }
 
@@ -45519,12 +45574,12 @@ fn __action88<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Expr 
 fn __action89<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, fun, _): (Loc, Expr, Loc),
+    (_, fun, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, args, _): (Loc, Vec<CallArg>, Loc),
+    (_, args, _): (Loc, Vec<ParsedCallArg>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::Call(CallExpr {
         fun: Box::new(L::new(module, l, r, fun)),
         args,
@@ -45540,11 +45595,11 @@ fn __action89<'a>(
 fn __action90<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, field, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     match expr {
         Expr::Constr(ConstrExpr { id, ty_args: _ }) => Expr::AssocFnSelect(AssocFnSelectExpr {
             ty: id,
@@ -45567,10 +45622,10 @@ fn __action90<'a>(
 )]
 fn __action91<'a>(
     module: &'a Rc<str>,
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, constr, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     {
         match expr {
             Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => {
@@ -45596,9 +45651,9 @@ fn __action92<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::UnOp(UnOpExpr {
         op: UnOp::Not,
         expr: Box::new(L::new(module, l, r, expr)),
@@ -45615,9 +45670,9 @@ fn __action93<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, expr, _): (Loc, Expr, Loc),
+    (_, expr, _): (Loc, ParsedExpr, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::UnOp(UnOpExpr {
         op: UnOp::Neg,
         expr: Box::new(L::new(module, l, r, expr)),
@@ -45630,7 +45685,7 @@ fn __action93<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action94<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action94<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45643,8 +45698,8 @@ fn __action94<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action95<'a>(
     module: &'a Rc<str>,
     (_, id, _): (Loc, Token, Loc),
-    (_, args, _): (Loc, Option<Vec<(Option<Id>, L<Expr>)>>, Loc),
-) -> Expr {
+    (_, args, _): (Loc, Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>>, Loc),
+) -> ParsedExpr {
     Expr::Variant(VariantExpr {
         id: id.text.as_str()[1..].into(),
         args: match args {
@@ -45666,7 +45721,7 @@ fn __action95<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action96<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action96<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45679,13 +45734,13 @@ fn __action96<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action97<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45702,13 +45757,13 @@ fn __action97<'a>(
 fn __action98<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45722,7 +45777,7 @@ fn __action98<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action99<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action99<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45735,13 +45790,13 @@ fn __action99<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action100<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45758,13 +45813,13 @@ fn __action100<'a>(
 fn __action101<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45778,7 +45833,7 @@ fn __action101<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action102<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action102<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45791,13 +45846,13 @@ fn __action102<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action103<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45814,13 +45869,13 @@ fn __action103<'a>(
 fn __action104<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45834,7 +45889,7 @@ fn __action104<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action105<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action105<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45847,13 +45902,13 @@ fn __action105<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action106<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45867,7 +45922,7 @@ fn __action106<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action107<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action107<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45880,13 +45935,13 @@ fn __action107<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action108<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45900,7 +45955,7 @@ fn __action108<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action109<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action109<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -45913,13 +45968,13 @@ fn __action109<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action110<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45936,13 +45991,13 @@ fn __action110<'a>(
 fn __action111<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45959,13 +46014,13 @@ fn __action111<'a>(
 fn __action112<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -45982,13 +46037,13 @@ fn __action112<'a>(
 fn __action113<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -46005,13 +46060,13 @@ fn __action113<'a>(
 fn __action114<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -46028,13 +46083,13 @@ fn __action114<'a>(
 fn __action115<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -46048,7 +46103,7 @@ fn __action115<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action116<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action116<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -46061,13 +46116,13 @@ fn __action116<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action117<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -46081,7 +46136,7 @@ fn __action117<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action118<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action118<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -46094,13 +46149,13 @@ fn __action118<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action119<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, left, _): (Loc, Expr, Loc),
+    (_, left, _): (Loc, ParsedExpr, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, right, _): (Loc, Expr, Loc),
+    (_, right, _): (Loc, ParsedExpr, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::BinOp(BinOpExpr {
         left: Box::new(L::new(module, l1, r1, left)),
         right: Box::new(L::new(module, l2, r2, right)),
@@ -46114,7 +46169,7 @@ fn __action119<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action120<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action120<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -46127,8 +46182,8 @@ fn __action120<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
 fn __action121<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> Expr {
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
+) -> ParsedExpr {
     Expr::Return(Box::new(expr))
 }
 
@@ -46142,16 +46197,16 @@ fn __action122<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, params, _): (Loc, Vec<(Token, L<Type>)>, Loc),
+    (_, params, _): (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-    (_, _, _): (Loc, Token, Loc),
-    (_, _, _): (Loc, Token, Loc),
-    (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+    (_, _, _): (Loc, Token, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+) -> ParsedExpr {
     Expr::Fn(FnExpr {
         sig: FunSig {
             type_params: vec![],
@@ -46178,13 +46233,13 @@ fn __action123<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, params, _): (Loc, Vec<(Token, L<Type>)>, Loc),
+    (_, params, _): (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ret, _): (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
+    (_, ret, _): (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, L<Expr>, Loc),
+    (_, body, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::Fn(FnExpr {
         sig: FunSig {
             type_params: vec![],
@@ -46215,10 +46270,10 @@ fn __action124<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, body, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::Fn(FnExpr {
         sig: FunSig {
             type_params: vec![],
@@ -46241,9 +46296,9 @@ fn __action124<'a>(
 fn __action125<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, body, _): (Loc, L<Expr>, Loc),
+    (_, body, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     Expr::Fn(FnExpr {
         sig: FunSig {
             type_params: vec![],
@@ -46266,7 +46321,7 @@ fn __action125<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action126<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Expr, Loc)) -> Expr {
+fn __action126<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedExpr, Loc)) -> ParsedExpr {
     __0
 }
 
@@ -46280,8 +46335,8 @@ fn __action127<'a>(
     module: &'a Rc<str>,
     (_, id, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> (Option<Id>, L<Expr>) {
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
+) -> (Option<ParsedId>, L<ParsedExpr>) {
     (Some(id.smol_str()), expr)
 }
 
@@ -46293,8 +46348,8 @@ fn __action127<'a>(
 )]
 fn __action128<'a>(
     module: &'a Rc<str>,
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> (Option<Id>, L<Expr>) {
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
+) -> (Option<ParsedId>, L<ParsedExpr>) {
     (None, expr)
 }
 
@@ -46308,8 +46363,8 @@ fn __action129<'a>(
     module: &'a Rc<str>,
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, expr, _): (Loc, L<Expr>, Loc),
-) -> CallArg {
+    (_, expr, _): (Loc, L<ParsedExpr>, Loc),
+) -> ParsedCallArg {
     CallArg {
         name: Some(name.smol_str()),
         expr,
@@ -46322,7 +46377,7 @@ fn __action129<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action130<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, L<Expr>, Loc)) -> CallArg {
+fn __action130<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, L<ParsedExpr>, Loc)) -> ParsedCallArg {
     CallArg { name: None, expr }
 }
 
@@ -46335,9 +46390,9 @@ fn __action130<'a>(module: &'a Rc<str>, (_, expr, _): (Loc, L<Expr>, Loc)) -> Ca
 fn __action131<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
-    (_, pat, _): (Loc, Pat, Loc),
+    (_, pat, _): (Loc, ParsedPat, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<Pat> {
+) -> L<ParsedPat> {
     L::new(module, l, r, pat)
 }
 
@@ -46347,7 +46402,7 @@ fn __action131<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action132<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Pat {
+fn __action132<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> ParsedPat {
     Pat::Var(id.smol_str())
 }
 
@@ -46357,7 +46412,10 @@ fn __action132<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Pat {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action133<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, ConstrPattern, Loc)) -> Pat {
+fn __action133<'a>(
+    module: &'a Rc<str>,
+    (_, constr, _): (Loc, ParsedConstrPattern, Loc),
+) -> ParsedPat {
     Pat::Constr(constr)
 }
 
@@ -46367,7 +46425,10 @@ fn __action133<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, ConstrPattern, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action134<'a>(module: &'a Rc<str>, (_, var, _): (Loc, VariantPattern, Loc)) -> Pat {
+fn __action134<'a>(
+    module: &'a Rc<str>,
+    (_, var, _): (Loc, ParsedVariantPattern, Loc),
+) -> ParsedPat {
     Pat::Variant(var)
 }
 
@@ -46380,9 +46441,9 @@ fn __action134<'a>(module: &'a Rc<str>, (_, var, _): (Loc, VariantPattern, Loc))
 fn __action135<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<(Option<Id>, L<Pat>)>, Loc),
+    (_, fields, _): (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Pat {
+) -> ParsedPat {
     Pat::Record(
         fields
             .into_iter()
@@ -46397,7 +46458,7 @@ fn __action135<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action136<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Pat {
+fn __action136<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> ParsedPat {
     Pat::Ignore
 }
 
@@ -46407,7 +46468,7 @@ fn __action136<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Pat {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action137<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> Pat {
+fn __action137<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> ParsedPat {
     Pat::Str(copy_update_escapes(&str.text[1..str.text.len() - 1]))
 }
 
@@ -46417,7 +46478,7 @@ fn __action137<'a>(module: &'a Rc<str>, (_, str, _): (Loc, Token, Loc)) -> Pat {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action138<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> Pat {
+fn __action138<'a>(module: &'a Rc<str>, (_, char, _): (Loc, Token, Loc)) -> ParsedPat {
     Pat::Char(parse_char_lit(&char.text))
 }
 
@@ -46431,7 +46492,7 @@ fn __action139<'a>(
     module: &'a Rc<str>,
     (_, str, _): (Loc, Token, Loc),
     (_, id, _): (Loc, Token, Loc),
-) -> Pat {
+) -> ParsedPat {
     Pat::StrPfx(
         copy_update_escapes(&str.text[1..str.text.len() - 1]),
         id.smol_str(),
@@ -46447,13 +46508,13 @@ fn __action139<'a>(
 fn __action140<'a>(
     module: &'a Rc<str>,
     (_, l1, _): (Loc, Loc, Loc),
-    (_, p1, _): (Loc, Pat, Loc),
+    (_, p1, _): (Loc, ParsedPat, Loc),
     (_, r1, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, l2, _): (Loc, Loc, Loc),
-    (_, p2, _): (Loc, Pat, Loc),
+    (_, p2, _): (Loc, ParsedPat, Loc),
     (_, r2, _): (Loc, Loc, Loc),
-) -> Pat {
+) -> ParsedPat {
     {
         Pat::Or(
             Box::new(L::new(module, l1, r1, p1)),
@@ -46468,7 +46529,7 @@ fn __action140<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action141<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Pat, Loc)) -> Pat {
+fn __action141<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, ParsedPat, Loc)) -> ParsedPat {
     __0
 }
 
@@ -46483,7 +46544,7 @@ fn __action142<'a>(
     (_, type_, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, constr, _): (Loc, Token, Loc),
-) -> Constructor {
+) -> ParsedConstructor {
     Constructor {
         type_: type_.smol_str(),
         constr: Some(constr.smol_str()),
@@ -46496,7 +46557,7 @@ fn __action142<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action143<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> Constructor {
+fn __action143<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> ParsedConstructor {
     Constructor {
         type_: type_.smol_str(),
         constr: None,
@@ -46509,7 +46570,10 @@ fn __action143<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> Con
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action144<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Constructor, Loc)) -> ConstrPattern {
+fn __action144<'a>(
+    module: &'a Rc<str>,
+    (_, constr, _): (Loc, ParsedConstructor, Loc),
+) -> ParsedConstrPattern {
     ConstrPattern {
         constr,
         fields: vec![],
@@ -46525,11 +46589,11 @@ fn __action144<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Constructor, Loc))
 )]
 fn __action145<'a>(
     module: &'a Rc<str>,
-    (_, constr, _): (Loc, Constructor, Loc),
+    (_, constr, _): (Loc, ParsedConstructor, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<(Option<Id>, L<Pat>)>, Loc),
+    (_, fields, _): (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> ConstrPattern {
+) -> ParsedConstrPattern {
     ConstrPattern {
         constr,
         fields: fields
@@ -46546,7 +46610,7 @@ fn __action145<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action146<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Token, Loc)) -> VariantPattern {
+fn __action146<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Token, Loc)) -> ParsedVariantPattern {
     VariantPattern {
         constr: constr.text.as_str()[1..].into(),
         fields: vec![],
@@ -46563,9 +46627,9 @@ fn __action147<'a>(
     module: &'a Rc<str>,
     (_, constr, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, fields, _): (Loc, Vec<(Option<Id>, L<Pat>)>, Loc),
+    (_, fields, _): (Loc, Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> VariantPattern {
+) -> ParsedVariantPattern {
     VariantPattern {
         constr: constr.text.as_str()[1..].into(),
         fields: fields
@@ -46585,8 +46649,8 @@ fn __action148<'a>(
     module: &'a Rc<str>,
     (_, id, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, pat, _): (Loc, L<Pat>, Loc),
-) -> (Option<Id>, L<Pat>) {
+    (_, pat, _): (Loc, L<ParsedPat>, Loc),
+) -> (Option<ParsedId>, L<ParsedPat>) {
     (Some(id.smol_str()), pat)
 }
 
@@ -46596,7 +46660,10 @@ fn __action148<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action149<'a>(module: &'a Rc<str>, (_, pat, _): (Loc, L<Pat>, Loc)) -> (Option<Id>, L<Pat>) {
+fn __action149<'a>(
+    module: &'a Rc<str>,
+    (_, pat, _): (Loc, L<ParsedPat>, Loc),
+) -> (Option<ParsedId>, L<ParsedPat>) {
     (None, pat)
 }
 
@@ -46613,7 +46680,7 @@ fn __action150<'a>(
     (_, path, _): (Loc, Vec<Token>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<ImportDecl> {
+) -> L<ParsedImportDecl> {
     L::new(
         module,
         l,
@@ -46634,17 +46701,17 @@ fn __action151<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, name, _): (Loc, L<Id>, Loc),
+    (_, name, _): (Loc, L<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, TypeParam, Loc),
-    (_, _, _): (Loc, Token, Loc),
-    (_, _, _): (Loc, Token, Loc),
+    (_, ty, _): (Loc, ParsedTypeParam, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, items, _): (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, _, _): (Loc, Token, Loc),
+    (_, items, _): (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     L::new(module, l, r, TraitDecl { name, ty, items })
 }
 
@@ -46658,12 +46725,12 @@ fn __action152<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, name, _): (Loc, L<Id>, Loc),
+    (_, name, _): (Loc, L<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, TypeParam, Loc),
+    (_, ty, _): (Loc, ParsedTypeParam, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     L::new(
         module,
         l,
@@ -46689,7 +46756,7 @@ fn __action153<'a>(
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TraitDeclItem> {
+) -> L<ParsedTraitDeclItem> {
     L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str()))
 }
 
@@ -46701,8 +46768,8 @@ fn __action153<'a>(
 )]
 fn __action154<'a>(
     module: &'a Rc<str>,
-    (_, fun_decl, _): (Loc, L<FunDecl>, Loc),
-) -> L<TraitDeclItem> {
+    (_, fun_decl, _): (Loc, L<ParsedFunDecl>, Loc),
+) -> L<ParsedTraitDeclItem> {
     fun_decl.map(TraitDeclItem::Fun)
 }
 
@@ -46716,16 +46783,16 @@ fn __action155<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, context, _): (Loc, Context, Loc),
-    (_, trait_, _): (Loc, Option<L<Id>>, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
+    (_, context, _): (Loc, ParsedContext, Loc),
+    (_, trait_, _): (Loc, Option<L<ParsedId>>, Loc),
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, items, _): (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    (_, items, _): (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     {
         L::new(
             module,
@@ -46751,11 +46818,11 @@ fn __action156<'a>(
     module: &'a Rc<str>,
     (_, l, _): (Loc, Loc, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, context, _): (Loc, Context, Loc),
-    (_, trait_, _): (Loc, Option<L<Id>>, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
+    (_, context, _): (Loc, ParsedContext, Loc),
+    (_, trait_, _): (Loc, Option<L<ParsedId>>, Loc),
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     {
         L::new(
             module,
@@ -46777,7 +46844,7 @@ fn __action156<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action157<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Context {
+fn __action157<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> ParsedContext {
     vec![]
 }
 
@@ -46790,9 +46857,9 @@ fn __action157<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 fn __action158<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, tys, _): (Loc, Vec<TypeParam>, Loc),
+    (_, tys, _): (Loc, Vec<ParsedTypeParam>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Context {
+) -> ParsedContext {
     tys
 }
 
@@ -46802,7 +46869,7 @@ fn __action158<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action159<'a>(module: &'a Rc<str>, (_, id, _): (Loc, L<Id>, Loc)) -> TypeParam {
+fn __action159<'a>(module: &'a Rc<str>, (_, id, _): (Loc, L<ParsedId>, Loc)) -> ParsedTypeParam {
     TypeParam { id, bounds: vec![] }
 }
 
@@ -46814,10 +46881,10 @@ fn __action159<'a>(module: &'a Rc<str>, (_, id, _): (Loc, L<Id>, Loc)) -> TypePa
 )]
 fn __action160<'a>(
     module: &'a Rc<str>,
-    (_, id, _): (Loc, L<Id>, Loc),
+    (_, id, _): (Loc, L<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, bounds, _): (Loc, Vec<L<Type>>, Loc),
-) -> TypeParam {
+    (_, bounds, _): (Loc, Vec<L<ParsedType>>, Loc),
+) -> ParsedTypeParam {
     TypeParam { id, bounds }
 }
 
@@ -46833,10 +46900,10 @@ fn __action161<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, name, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, ty, _): (Loc, L<Type>, Loc),
+    (_, ty, _): (Loc, L<ParsedType>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<ImplDeclItem> {
+) -> L<ParsedImplDeclItem> {
     L::new(
         module,
         l,
@@ -46856,8 +46923,8 @@ fn __action161<'a>(
 )]
 fn __action162<'a>(
     module: &'a Rc<str>,
-    (_, fun_decl, _): (Loc, L<FunDecl>, Loc),
-) -> L<ImplDeclItem> {
+    (_, fun_decl, _): (Loc, L<ParsedFunDecl>, Loc),
+) -> L<ParsedImplDeclItem> {
     fun_decl.map(ImplDeclItem::Fun)
 }
 
@@ -46869,8 +46936,8 @@ fn __action162<'a>(
 )]
 fn __action163<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> Vec<L<TopDecl>> {
+    (_, __0, _): (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc),
+) -> Vec<L<ParsedTopDecl>> {
     __0
 }
 
@@ -46884,9 +46951,9 @@ fn __action164<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, type_decl, _): (Loc, L<TypeDecl>, Loc),
+    (_, type_decl, _): (Loc, L<ParsedTypeDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     L::new(module, l, r, TopDecl::Type(type_decl))
 }
 
@@ -46900,9 +46967,9 @@ fn __action165<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, fun_decl, _): (Loc, TopDecl, Loc),
+    (_, fun_decl, _): (Loc, ParsedTopDecl, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     L::new(module, l, r, fun_decl)
 }
 
@@ -46916,9 +46983,9 @@ fn __action166<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, import_decl, _): (Loc, L<ImportDecl>, Loc),
+    (_, import_decl, _): (Loc, L<ParsedImportDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     L::new(module, l, r, TopDecl::Import(import_decl))
 }
 
@@ -46932,9 +46999,9 @@ fn __action167<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, trait_decl, _): (Loc, L<TraitDecl>, Loc),
+    (_, trait_decl, _): (Loc, L<ParsedTraitDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     L::new(module, l, r, TopDecl::Trait(trait_decl))
 }
 
@@ -46948,9 +47015,9 @@ fn __action168<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, alloc::vec::Vec<Token>, Loc),
     (_, l, _): (Loc, Loc, Loc),
-    (_, impl_decl, _): (Loc, L<ImplDecl>, Loc),
+    (_, impl_decl, _): (Loc, L<ParsedImplDecl>, Loc),
     (_, r, _): (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     L::new(module, l, r, TopDecl::Impl(impl_decl))
 }
 
@@ -46991,7 +47058,7 @@ fn __action171<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<TopDecl>> {
+) -> alloc::vec::Vec<L<ParsedTopDecl>> {
     alloc::vec![]
 }
 
@@ -47003,8 +47070,8 @@ fn __action171<'a>(
 )]
 fn __action172<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc),
+) -> alloc::vec::Vec<L<ParsedTopDecl>> {
     v
 }
 
@@ -47016,9 +47083,9 @@ fn __action172<'a>(
 )]
 fn __action173<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    (_, e, _): (Loc, Option<L<Type>>, Loc),
-) -> Vec<L<Type>> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    (_, e, _): (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     match e {
         None => v,
         Some(e) => {
@@ -47036,9 +47103,9 @@ fn __action173<'a>(
 )]
 fn __action174<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    (_, e, _): (Loc, Option<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+    (_, e, _): (Loc, Option<ParsedTypeParam>, Loc),
+) -> Vec<ParsedTypeParam> {
     match e {
         None => v,
         Some(e) => {
@@ -47058,7 +47125,7 @@ fn __action175<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<ImplDeclItem>> {
+) -> alloc::vec::Vec<L<ParsedImplDeclItem>> {
     alloc::vec![]
 }
 
@@ -47070,8 +47137,8 @@ fn __action175<'a>(
 )]
 fn __action176<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
-) -> alloc::vec::Vec<L<ImplDeclItem>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
+) -> alloc::vec::Vec<L<ParsedImplDeclItem>> {
     v
 }
 
@@ -47081,7 +47148,10 @@ fn __action176<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action177<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Id>, Loc)) -> Option<L<Id>> {
+fn __action177<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, L<ParsedId>, Loc),
+) -> Option<L<ParsedId>> {
     Some(__0)
 }
 
@@ -47091,7 +47161,11 @@ fn __action177<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Id>, Loc)) -> Optio
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action178<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<L<Id>> {
+fn __action178<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Option<L<ParsedId>> {
     None
 }
 
@@ -47103,9 +47177,9 @@ fn __action178<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action179<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Id>, Loc),
+    (_, __0, _): (Loc, L<ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> L<Id> {
+) -> L<ParsedId> {
     __0
 }
 
@@ -47117,8 +47191,8 @@ fn __action179<'a>(
 )]
 fn __action180<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<TraitDeclItem>, Loc),
-) -> alloc::vec::Vec<L<TraitDeclItem>> {
+    (_, __0, _): (Loc, L<ParsedTraitDeclItem>, Loc),
+) -> alloc::vec::Vec<L<ParsedTraitDeclItem>> {
     alloc::vec![__0]
 }
 
@@ -47130,9 +47204,9 @@ fn __action180<'a>(
 )]
 fn __action181<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc),
-    (_, e, _): (Loc, L<TraitDeclItem>, Loc),
-) -> alloc::vec::Vec<L<TraitDeclItem>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc),
+    (_, e, _): (Loc, L<ParsedTraitDeclItem>, Loc),
+) -> alloc::vec::Vec<L<ParsedTraitDeclItem>> {
     {
         let mut v = v;
         v.push(e);
@@ -47168,9 +47242,9 @@ fn __action182<'a>(
 )]
 fn __action183<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-    (_, e, _): (Loc, Option<(Option<Id>, L<Pat>)>, Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+    (_, e, _): (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     match e {
         None => v,
         Some(e) => {
@@ -47188,8 +47262,8 @@ fn __action183<'a>(
 )]
 fn __action184<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, Vec<(Option<Id>, L<Expr>)>, Loc),
-) -> Option<Vec<(Option<Id>, L<Expr>)>> {
+    (_, __0, _): (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>> {
     Some(__0)
 }
 
@@ -47203,7 +47277,7 @@ fn __action185<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<Vec<(Option<Id>, L<Expr>)>> {
+) -> Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>> {
     None
 }
 
@@ -47216,9 +47290,9 @@ fn __action185<'a>(
 fn __action186<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, __0, _): (Loc, Vec<(Option<Id>, L<Expr>)>, Loc),
+    (_, __0, _): (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     __0
 }
 
@@ -47230,9 +47304,9 @@ fn __action186<'a>(
 )]
 fn __action187<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
-    (_, e, _): (Loc, Option<CallArg>, Loc),
-) -> Vec<CallArg> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+    (_, e, _): (Loc, Option<ParsedCallArg>, Loc),
+) -> Vec<ParsedCallArg> {
     match e {
         None => v,
         Some(e) => {
@@ -47250,9 +47324,9 @@ fn __action187<'a>(
 )]
 fn __action188<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-    (_, e, _): (Loc, Option<(Option<Id>, L<Expr>)>, Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+    (_, e, _): (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     match e {
         None => v,
         Some(e) => {
@@ -47270,8 +47344,8 @@ fn __action188<'a>(
 )]
 fn __action189<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, Vec<L<Stmt>>, Loc),
-) -> Option<Vec<L<Stmt>>> {
+    (_, __0, _): (Loc, Vec<L<ParsedStmt>>, Loc),
+) -> Option<Vec<L<ParsedStmt>>> {
     Some(__0)
 }
 
@@ -47285,7 +47359,7 @@ fn __action190<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<Vec<L<Stmt>>> {
+) -> Option<Vec<L<ParsedStmt>>> {
     None
 }
 
@@ -47301,9 +47375,9 @@ fn __action191<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, __0, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, __0, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Vec<L<Stmt>> {
+) -> Vec<L<ParsedStmt>> {
     __0
 }
 
@@ -47317,7 +47391,7 @@ fn __action192<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     alloc::vec![]
 }
 
@@ -47329,8 +47403,12 @@ fn __action192<'a>(
 )]
 fn __action193<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+    (_, v, _): (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     v
 }
 
@@ -47343,13 +47421,13 @@ fn __action193<'a>(
 fn __action194<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, __0, _): (Loc, L<Expr>, Loc),
+    (_, __0, _): (Loc, L<ParsedExpr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, __1, _): (Loc, Vec<L<Stmt>>, Loc),
+    (_, __1, _): (Loc, Vec<L<ParsedStmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (L<Expr>, Vec<L<Stmt>>) {
+) -> (L<ParsedExpr>, Vec<L<ParsedStmt>>) {
     (__0, __1)
 }
 
@@ -47363,7 +47441,7 @@ fn __action195<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<Alt> {
+) -> alloc::vec::Vec<ParsedAlt> {
     alloc::vec![]
 }
 
@@ -47375,8 +47453,8 @@ fn __action195<'a>(
 )]
 fn __action196<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
-) -> alloc::vec::Vec<Alt> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedAlt>, Loc),
+) -> alloc::vec::Vec<ParsedAlt> {
     v
 }
 
@@ -47406,7 +47484,10 @@ fn __action198<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action199<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Type>, Loc)) -> Option<L<Type>> {
+fn __action199<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
+) -> Option<L<ParsedType>> {
     Some(__0)
 }
 
@@ -47416,7 +47497,11 @@ fn __action199<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Type>, Loc)) -> Opt
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action200<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<L<Type>> {
+fn __action200<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Option<L<ParsedType>> {
     None
 }
 
@@ -47429,8 +47514,8 @@ fn __action200<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 fn __action201<'a>(
     module: &'a Rc<str>,
     (_, _, _): (Loc, Token, Loc),
-    (_, __0, _): (Loc, L<Type>, Loc),
-) -> L<Type> {
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
+) -> L<ParsedType> {
     __0
 }
 
@@ -47464,7 +47549,7 @@ fn __action204<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<Stmt>> {
+) -> alloc::vec::Vec<L<ParsedStmt>> {
     alloc::vec![]
 }
 
@@ -47476,8 +47561,8 @@ fn __action204<'a>(
 )]
 fn __action205<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-) -> alloc::vec::Vec<L<Stmt>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc),
+) -> alloc::vec::Vec<L<ParsedStmt>> {
     v
 }
 
@@ -47489,8 +47574,8 @@ fn __action205<'a>(
 )]
 fn __action206<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (L<Id>, Context), Loc),
-) -> Option<(L<Id>, Context)> {
+    (_, __0, _): (Loc, (L<ParsedId>, ParsedContext), Loc),
+) -> Option<(L<ParsedId>, ParsedContext)> {
     Some(__0)
 }
 
@@ -47504,7 +47589,7 @@ fn __action207<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<(L<Id>, Context)> {
+) -> Option<(L<ParsedId>, ParsedContext)> {
     None
 }
 
@@ -47516,9 +47601,9 @@ fn __action207<'a>(
 )]
 fn __action208<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
-    (_, e, _): (Loc, Option<(Token, L<Type>)>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
+    (_, e, _): (Loc, Option<(Token, L<ParsedType>)>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     match e {
         None => v,
         Some(e) => {
@@ -47538,8 +47623,8 @@ fn __action209<'a>(
     module: &'a Rc<str>,
     (_, __0, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, __1, _): (Loc, L<Type>, Loc),
-) -> (Token, L<Type>) {
+    (_, __1, _): (Loc, L<ParsedType>, Loc),
+) -> (Token, L<ParsedType>) {
     (__0, __1)
 }
 
@@ -47592,9 +47677,13 @@ fn __action212<'a>(
 )]
 fn __action213<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-    (_, e, _): (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    (_, mut v, _): (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+    (_, e, _): (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     match e {
         None => v,
         Some(e) => {
@@ -47612,9 +47701,9 @@ fn __action213<'a>(
 )]
 fn __action214<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-    (_, e, _): (Loc, Option<VariantAlt>, Loc),
-) -> Vec<VariantAlt> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+    (_, e, _): (Loc, Option<ParsedVariantAlt>, Loc),
+) -> Vec<ParsedVariantAlt> {
     match e {
         None => v,
         Some(e) => {
@@ -47632,9 +47721,9 @@ fn __action214<'a>(
 )]
 fn __action215<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-    (_, e, _): (Loc, Option<Named<Type>>, Loc),
-) -> Vec<Named<Type>> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+    (_, e, _): (Loc, Option<Named<ParsedType, ParsedId>>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     match e {
         None => v,
         Some(e) => {
@@ -47652,9 +47741,9 @@ fn __action215<'a>(
 )]
 fn __action216<'a>(
     module: &'a Rc<str>,
-    (_, mut v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    (_, e, _): (Loc, Option<L<Type>>, Loc),
-) -> Vec<L<Type>> {
+    (_, mut v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    (_, e, _): (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     match e {
         None => v,
         Some(e) => {
@@ -47672,8 +47761,8 @@ fn __action216<'a>(
 )]
 fn __action217<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Id, Type), Loc),
-) -> alloc::vec::Vec<(Id, Type)> {
+    (_, __0, _): (Loc, (ParsedId, ParsedType), Loc),
+) -> alloc::vec::Vec<(ParsedId, ParsedType)> {
     alloc::vec![__0]
 }
 
@@ -47685,9 +47774,9 @@ fn __action217<'a>(
 )]
 fn __action218<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Id, Type)>, Loc),
-    (_, e, _): (Loc, (Id, Type), Loc),
-) -> alloc::vec::Vec<(Id, Type)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc),
+    (_, e, _): (Loc, (ParsedId, ParsedType), Loc),
+) -> alloc::vec::Vec<(ParsedId, ParsedType)> {
     {
         let mut v = v;
         v.push(e);
@@ -47703,9 +47792,9 @@ fn __action218<'a>(
 )]
 fn __action219<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Id, Type), Loc),
+    (_, __0, _): (Loc, (ParsedId, ParsedType), Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (Id, Type) {
+) -> (ParsedId, ParsedType) {
     __0
 }
 
@@ -47737,8 +47826,8 @@ fn __action221<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action222<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, ConstructorDecl, Loc),
-) -> alloc::vec::Vec<ConstructorDecl> {
+    (_, __0, _): (Loc, ParsedConstructorDecl, Loc),
+) -> alloc::vec::Vec<ParsedConstructorDecl> {
     alloc::vec![__0]
 }
 
@@ -47750,9 +47839,9 @@ fn __action222<'a>(
 )]
 fn __action223<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<ConstructorDecl>, Loc),
-    (_, e, _): (Loc, ConstructorDecl, Loc),
-) -> alloc::vec::Vec<ConstructorDecl> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedConstructorDecl>, Loc),
+    (_, e, _): (Loc, ParsedConstructorDecl, Loc),
+) -> alloc::vec::Vec<ParsedConstructorDecl> {
     {
         let mut v = v;
         v.push(e);
@@ -47883,7 +47972,7 @@ fn __action234<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     alloc::vec![]
 }
 
@@ -47895,8 +47984,8 @@ fn __action234<'a>(
 )]
 fn __action235<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     v
 }
 
@@ -47908,9 +47997,9 @@ fn __action235<'a>(
 )]
 fn __action236<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Type>, Loc),
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> L<Type> {
+) -> L<ParsedType> {
     __0
 }
 
@@ -47922,8 +48011,8 @@ fn __action236<'a>(
 )]
 fn __action237<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, Named<Type>, Loc),
-) -> Option<Named<Type>> {
+    (_, __0, _): (Loc, Named<ParsedType, ParsedId>, Loc),
+) -> Option<Named<ParsedType, ParsedId>> {
     Some(__0)
 }
 
@@ -47937,7 +48026,7 @@ fn __action238<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<Named<Type>> {
+) -> Option<Named<ParsedType, ParsedId>> {
     None
 }
 
@@ -47951,7 +48040,7 @@ fn __action239<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<Named<Type>> {
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     alloc::vec![]
 }
 
@@ -47963,8 +48052,8 @@ fn __action239<'a>(
 )]
 fn __action240<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-) -> alloc::vec::Vec<Named<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     v
 }
 
@@ -47976,9 +48065,9 @@ fn __action240<'a>(
 )]
 fn __action241<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, Named<Type>, Loc),
+    (_, __0, _): (Loc, Named<ParsedType, ParsedId>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> Named<Type> {
+) -> Named<ParsedType, ParsedId> {
     __0
 }
 
@@ -47988,7 +48077,10 @@ fn __action241<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action242<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, VariantAlt, Loc)) -> Option<VariantAlt> {
+fn __action242<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, ParsedVariantAlt, Loc),
+) -> Option<ParsedVariantAlt> {
     Some(__0)
 }
 
@@ -48002,7 +48094,7 @@ fn __action243<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<VariantAlt> {
+) -> Option<ParsedVariantAlt> {
     None
 }
 
@@ -48016,7 +48108,7 @@ fn __action244<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<VariantAlt> {
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     alloc::vec![]
 }
 
@@ -48028,8 +48120,8 @@ fn __action244<'a>(
 )]
 fn __action245<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-) -> alloc::vec::Vec<VariantAlt> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     v
 }
 
@@ -48041,9 +48133,9 @@ fn __action245<'a>(
 )]
 fn __action246<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, VariantAlt, Loc),
+    (_, __0, _): (Loc, ParsedVariantAlt, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> VariantAlt {
+) -> ParsedVariantAlt {
     __0
 }
 
@@ -48055,8 +48147,8 @@ fn __action246<'a>(
 )]
 fn __action247<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<(Option<Id>, L<Type>)>, Loc),
-) -> Option<L<(Option<Id>, L<Type>)>> {
+    (_, __0, _): (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
+) -> Option<L<(Option<ParsedId>, L<ParsedType>)>> {
     Some(__0)
 }
 
@@ -48070,7 +48162,7 @@ fn __action248<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<L<(Option<Id>, L<Type>)>> {
+) -> Option<L<(Option<ParsedId>, L<ParsedType>)>> {
     None
 }
 
@@ -48084,7 +48176,7 @@ fn __action249<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     alloc::vec![]
 }
 
@@ -48096,8 +48188,12 @@ fn __action249<'a>(
 )]
 fn __action250<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+    (_, v, _): (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     v
 }
 
@@ -48109,9 +48205,9 @@ fn __action250<'a>(
 )]
 fn __action251<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<(Option<Id>, L<Type>)>, Loc),
+    (_, __0, _): (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> L<(Option<Id>, L<Type>)> {
+) -> L<(Option<ParsedId>, L<ParsedType>)> {
     __0
 }
 
@@ -48123,8 +48219,8 @@ fn __action251<'a>(
 )]
 fn __action252<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Token, L<Type>), Loc),
-) -> Option<(Token, L<Type>)> {
+    (_, __0, _): (Loc, (Token, L<ParsedType>), Loc),
+) -> Option<(Token, L<ParsedType>)> {
     Some(__0)
 }
 
@@ -48138,7 +48234,7 @@ fn __action253<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<(Token, L<Type>)> {
+) -> Option<(Token, L<ParsedType>)> {
     None
 }
 
@@ -48152,7 +48248,7 @@ fn __action254<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     alloc::vec![]
 }
 
@@ -48164,8 +48260,8 @@ fn __action254<'a>(
 )]
 fn __action255<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     v
 }
 
@@ -48177,9 +48273,9 @@ fn __action255<'a>(
 )]
 fn __action256<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Token, L<Type>), Loc),
+    (_, __0, _): (Loc, (Token, L<ParsedType>), Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (Token, L<Type>) {
+) -> (Token, L<ParsedType>) {
     __0
 }
 
@@ -48191,8 +48287,8 @@ fn __action256<'a>(
 )]
 fn __action257<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Stmt>, Loc),
-) -> alloc::vec::Vec<L<Stmt>> {
+    (_, __0, _): (Loc, L<ParsedStmt>, Loc),
+) -> alloc::vec::Vec<L<ParsedStmt>> {
     alloc::vec![__0]
 }
 
@@ -48204,9 +48300,9 @@ fn __action257<'a>(
 )]
 fn __action258<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Stmt>>, Loc),
-    (_, e, _): (Loc, L<Stmt>, Loc),
-) -> alloc::vec::Vec<L<Stmt>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc),
+    (_, e, _): (Loc, L<ParsedStmt>, Loc),
+) -> alloc::vec::Vec<L<ParsedStmt>> {
     {
         let mut v = v;
         v.push(e);
@@ -48220,7 +48316,10 @@ fn __action258<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action259<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Alt, Loc)) -> alloc::vec::Vec<Alt> {
+fn __action259<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, ParsedAlt, Loc),
+) -> alloc::vec::Vec<ParsedAlt> {
     alloc::vec![__0]
 }
 
@@ -48232,9 +48331,9 @@ fn __action259<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Alt, Loc)) -> alloc::
 )]
 fn __action260<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<Alt>, Loc),
-    (_, e, _): (Loc, Alt, Loc),
-) -> alloc::vec::Vec<Alt> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedAlt>, Loc),
+    (_, e, _): (Loc, ParsedAlt, Loc),
+) -> alloc::vec::Vec<ParsedAlt> {
     {
         let mut v = v;
         v.push(e);
@@ -48250,8 +48349,8 @@ fn __action260<'a>(
 )]
 fn __action261<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+    (_, __0, _): (Loc, (L<ParsedExpr>, Vec<L<ParsedStmt>>), Loc),
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     alloc::vec![__0]
 }
 
@@ -48263,9 +48362,13 @@ fn __action261<'a>(
 )]
 fn __action262<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-    (_, e, _): (Loc, (L<Expr>, Vec<L<Stmt>>), Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+    (_, v, _): (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
+    (_, e, _): (Loc, (L<ParsedExpr>, Vec<L<ParsedStmt>>), Loc),
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     {
         let mut v = v;
         v.push(e);
@@ -48281,8 +48384,8 @@ fn __action262<'a>(
 )]
 fn __action263<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Expr>), Loc),
-) -> Option<(Option<Id>, L<Expr>)> {
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
+) -> Option<(Option<ParsedId>, L<ParsedExpr>)> {
     Some(__0)
 }
 
@@ -48296,7 +48399,7 @@ fn __action264<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<(Option<Id>, L<Expr>)> {
+) -> Option<(Option<ParsedId>, L<ParsedExpr>)> {
     None
 }
 
@@ -48310,7 +48413,7 @@ fn __action265<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     alloc::vec![]
 }
 
@@ -48322,8 +48425,8 @@ fn __action265<'a>(
 )]
 fn __action266<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     v
 }
 
@@ -48335,9 +48438,9 @@ fn __action266<'a>(
 )]
 fn __action267<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Expr>), Loc),
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (Option<Id>, L<Expr>) {
+) -> (Option<ParsedId>, L<ParsedExpr>) {
     __0
 }
 
@@ -48347,7 +48450,10 @@ fn __action267<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action268<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, CallArg, Loc)) -> Option<CallArg> {
+fn __action268<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, ParsedCallArg, Loc),
+) -> Option<ParsedCallArg> {
     Some(__0)
 }
 
@@ -48357,7 +48463,11 @@ fn __action268<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, CallArg, Loc)) -> Opt
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action269<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<CallArg> {
+fn __action269<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Option<ParsedCallArg> {
     None
 }
 
@@ -48371,7 +48481,7 @@ fn __action270<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<CallArg> {
+) -> alloc::vec::Vec<ParsedCallArg> {
     alloc::vec![]
 }
 
@@ -48383,8 +48493,8 @@ fn __action270<'a>(
 )]
 fn __action271<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
-) -> alloc::vec::Vec<CallArg> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+) -> alloc::vec::Vec<ParsedCallArg> {
     v
 }
 
@@ -48396,9 +48506,9 @@ fn __action271<'a>(
 )]
 fn __action272<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, CallArg, Loc),
+    (_, __0, _): (Loc, ParsedCallArg, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> CallArg {
+) -> ParsedCallArg {
     __0
 }
 
@@ -48410,8 +48520,8 @@ fn __action272<'a>(
 )]
 fn __action273<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Pat>), Loc),
-) -> Option<(Option<Id>, L<Pat>)> {
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
+) -> Option<(Option<ParsedId>, L<ParsedPat>)> {
     Some(__0)
 }
 
@@ -48425,7 +48535,7 @@ fn __action274<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<(Option<Id>, L<Pat>)> {
+) -> Option<(Option<ParsedId>, L<ParsedPat>)> {
     None
 }
 
@@ -48439,7 +48549,7 @@ fn __action275<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     alloc::vec![]
 }
 
@@ -48451,8 +48561,8 @@ fn __action275<'a>(
 )]
 fn __action276<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     v
 }
 
@@ -48464,9 +48574,9 @@ fn __action276<'a>(
 )]
 fn __action277<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Pat>), Loc),
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> (Option<Id>, L<Pat>) {
+) -> (Option<ParsedId>, L<ParsedPat>) {
     __0
 }
 
@@ -48539,8 +48649,8 @@ fn __action282<'a>(
 )]
 fn __action283<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<ImplDeclItem>, Loc),
-) -> alloc::vec::Vec<L<ImplDeclItem>> {
+    (_, __0, _): (Loc, L<ParsedImplDeclItem>, Loc),
+) -> alloc::vec::Vec<L<ParsedImplDeclItem>> {
     alloc::vec![__0]
 }
 
@@ -48552,9 +48662,9 @@ fn __action283<'a>(
 )]
 fn __action284<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
-    (_, e, _): (Loc, L<ImplDeclItem>, Loc),
-) -> alloc::vec::Vec<L<ImplDeclItem>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
+    (_, e, _): (Loc, L<ParsedImplDeclItem>, Loc),
+) -> alloc::vec::Vec<L<ParsedImplDeclItem>> {
     {
         let mut v = v;
         v.push(e);
@@ -48568,7 +48678,10 @@ fn __action284<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action285<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, TypeParam, Loc)) -> Option<TypeParam> {
+fn __action285<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, ParsedTypeParam, Loc),
+) -> Option<ParsedTypeParam> {
     Some(__0)
 }
 
@@ -48582,7 +48695,7 @@ fn __action286<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Option<TypeParam> {
+) -> Option<ParsedTypeParam> {
     None
 }
 
@@ -48596,7 +48709,7 @@ fn __action287<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<ParsedTypeParam> {
     alloc::vec![]
 }
 
@@ -48608,8 +48721,8 @@ fn __action287<'a>(
 )]
 fn __action288<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+) -> alloc::vec::Vec<ParsedTypeParam> {
     v
 }
 
@@ -48621,9 +48734,9 @@ fn __action288<'a>(
 )]
 fn __action289<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, TypeParam, Loc),
+    (_, __0, _): (Loc, ParsedTypeParam, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> TypeParam {
+) -> ParsedTypeParam {
     __0
 }
 
@@ -48633,7 +48746,10 @@ fn __action289<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action290<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Type>, Loc)) -> Option<L<Type>> {
+fn __action290<'a>(
+    module: &'a Rc<str>,
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
+) -> Option<L<ParsedType>> {
     Some(__0)
 }
 
@@ -48643,7 +48759,11 @@ fn __action290<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, L<Type>, Loc)) -> Opt
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action291<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Option<L<Type>> {
+fn __action291<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Option<L<ParsedType>> {
     None
 }
 
@@ -48657,7 +48777,7 @@ fn __action292<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     alloc::vec![]
 }
 
@@ -48669,8 +48789,8 @@ fn __action292<'a>(
 )]
 fn __action293<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     v
 }
 
@@ -48682,9 +48802,9 @@ fn __action293<'a>(
 )]
 fn __action294<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Type>, Loc),
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
     (_, _, _): (Loc, Token, Loc),
-) -> L<Type> {
+) -> L<ParsedType> {
     __0
 }
 
@@ -48696,8 +48816,8 @@ fn __action294<'a>(
 )]
 fn __action295<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<TopDecl>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>> {
+    (_, __0, _): (Loc, L<ParsedTopDecl>, Loc),
+) -> alloc::vec::Vec<L<ParsedTopDecl>> {
     alloc::vec![__0]
 }
 
@@ -48709,9 +48829,9 @@ fn __action295<'a>(
 )]
 fn __action296<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-    (_, e, _): (Loc, L<TopDecl>, Loc),
-) -> alloc::vec::Vec<L<TopDecl>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc),
+    (_, e, _): (Loc, L<ParsedTopDecl>, Loc),
+) -> alloc::vec::Vec<L<ParsedTopDecl>> {
     {
         let mut v = v;
         v.push(e);
@@ -48755,8 +48875,8 @@ fn __action298<'a>(
 )]
 fn __action299<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Type>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     alloc::vec![__0]
 }
 
@@ -48768,9 +48888,9 @@ fn __action299<'a>(
 )]
 fn __action300<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    (_, e, _): (Loc, L<Type>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    (_, e, _): (Loc, L<ParsedType>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     {
         let mut v = v;
         v.push(e);
@@ -48786,8 +48906,8 @@ fn __action300<'a>(
 )]
 fn __action301<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, TypeParam, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, __0, _): (Loc, ParsedTypeParam, Loc),
+) -> alloc::vec::Vec<ParsedTypeParam> {
     alloc::vec![__0]
 }
 
@@ -48799,9 +48919,9 @@ fn __action301<'a>(
 )]
 fn __action302<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    (_, e, _): (Loc, TypeParam, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+    (_, e, _): (Loc, ParsedTypeParam, Loc),
+) -> alloc::vec::Vec<ParsedTypeParam> {
     {
         let mut v = v;
         v.push(e);
@@ -48845,8 +48965,8 @@ fn __action304<'a>(
 )]
 fn __action305<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Pat>), Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     alloc::vec![__0]
 }
 
@@ -48858,9 +48978,9 @@ fn __action305<'a>(
 )]
 fn __action306<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-    (_, e, _): (Loc, (Option<Id>, L<Pat>), Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+    (_, e, _): (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     {
         let mut v = v;
         v.push(e);
@@ -48876,8 +48996,8 @@ fn __action306<'a>(
 )]
 fn __action307<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, CallArg, Loc),
-) -> alloc::vec::Vec<CallArg> {
+    (_, __0, _): (Loc, ParsedCallArg, Loc),
+) -> alloc::vec::Vec<ParsedCallArg> {
     alloc::vec![__0]
 }
 
@@ -48889,9 +49009,9 @@ fn __action307<'a>(
 )]
 fn __action308<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<CallArg>, Loc),
-    (_, e, _): (Loc, CallArg, Loc),
-) -> alloc::vec::Vec<CallArg> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+    (_, e, _): (Loc, ParsedCallArg, Loc),
+) -> alloc::vec::Vec<ParsedCallArg> {
     {
         let mut v = v;
         v.push(e);
@@ -48907,8 +49027,8 @@ fn __action308<'a>(
 )]
 fn __action309<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Option<Id>, L<Expr>), Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+    (_, __0, _): (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     alloc::vec![__0]
 }
 
@@ -48920,9 +49040,9 @@ fn __action309<'a>(
 )]
 fn __action310<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-    (_, e, _): (Loc, (Option<Id>, L<Expr>), Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+    (_, e, _): (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     {
         let mut v = v;
         v.push(e);
@@ -48938,8 +49058,8 @@ fn __action310<'a>(
 )]
 fn __action311<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, (Token, L<Type>), Loc),
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+    (_, __0, _): (Loc, (Token, L<ParsedType>), Loc),
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     alloc::vec![__0]
 }
 
@@ -48951,9 +49071,9 @@ fn __action311<'a>(
 )]
 fn __action312<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
-    (_, e, _): (Loc, (Token, L<Type>), Loc),
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+    (_, v, _): (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
+    (_, e, _): (Loc, (Token, L<ParsedType>), Loc),
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     {
         let mut v = v;
         v.push(e);
@@ -48969,8 +49089,8 @@ fn __action312<'a>(
 )]
 fn __action313<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<(Option<Id>, L<Type>)>, Loc),
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+    (_, __0, _): (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     alloc::vec![__0]
 }
 
@@ -48982,9 +49102,13 @@ fn __action313<'a>(
 )]
 fn __action314<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-    (_, e, _): (Loc, L<(Option<Id>, L<Type>)>, Loc),
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+    (_, v, _): (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+    (_, e, _): (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     {
         let mut v = v;
         v.push(e);
@@ -49000,8 +49124,8 @@ fn __action314<'a>(
 )]
 fn __action315<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, VariantAlt, Loc),
-) -> alloc::vec::Vec<VariantAlt> {
+    (_, __0, _): (Loc, ParsedVariantAlt, Loc),
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     alloc::vec![__0]
 }
 
@@ -49013,9 +49137,9 @@ fn __action315<'a>(
 )]
 fn __action316<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-    (_, e, _): (Loc, VariantAlt, Loc),
-) -> alloc::vec::Vec<VariantAlt> {
+    (_, v, _): (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+    (_, e, _): (Loc, ParsedVariantAlt, Loc),
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     {
         let mut v = v;
         v.push(e);
@@ -49031,8 +49155,8 @@ fn __action316<'a>(
 )]
 fn __action317<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, Named<Type>, Loc),
-) -> alloc::vec::Vec<Named<Type>> {
+    (_, __0, _): (Loc, Named<ParsedType, ParsedId>, Loc),
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     alloc::vec![__0]
 }
 
@@ -49044,9 +49168,9 @@ fn __action317<'a>(
 )]
 fn __action318<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-    (_, e, _): (Loc, Named<Type>, Loc),
-) -> alloc::vec::Vec<Named<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+    (_, e, _): (Loc, Named<ParsedType, ParsedId>, Loc),
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     {
         let mut v = v;
         v.push(e);
@@ -49062,8 +49186,8 @@ fn __action318<'a>(
 )]
 fn __action319<'a>(
     module: &'a Rc<str>,
-    (_, __0, _): (Loc, L<Type>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, __0, _): (Loc, L<ParsedType>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     alloc::vec![__0]
 }
 
@@ -49075,9 +49199,9 @@ fn __action319<'a>(
 )]
 fn __action320<'a>(
     module: &'a Rc<str>,
-    (_, v, _): (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    (_, e, _): (Loc, L<Type>, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+    (_, v, _): (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    (_, e, _): (Loc, L<ParsedType>, Loc),
+) -> alloc::vec::Vec<L<ParsedType>> {
     {
         let mut v = v;
         v.push(e);
@@ -49155,11 +49279,11 @@ fn __action325<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Type>, Loc),
+    __2: (Loc, Vec<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-) -> ConstructorDecl {
+) -> ParsedConstructorDecl {
     let __start0 = __3.0;
     let __end0 = __3.2;
     let __temp0 = __action220(module, __3);
@@ -49177,10 +49301,10 @@ fn __action326<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Type>, Loc),
+    __2: (Loc, Vec<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-) -> ConstructorDecl {
+) -> ParsedConstructorDecl {
     let __start0 = __2.2;
     let __end0 = __3.0;
     let __temp0 = __action221(module, &__start0, &__end0);
@@ -49198,10 +49322,10 @@ fn __action327<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, (L<Id>, FunSig), Loc),
+    __2: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action225(module, __1);
@@ -49218,10 +49342,10 @@ fn __action327<'a>(
 fn __action328<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
-    __1: (Loc, (L<Id>, FunSig), Loc),
+    __1: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action226(module, &__start0, &__end0);
@@ -49239,10 +49363,19 @@ fn __action329<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __2: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __3: (Loc, Token, Loc),
     __4: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action225(module, __1);
@@ -49259,10 +49392,19 @@ fn __action329<'a>(
 fn __action330<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
-    __1: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __1: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action226(module, &__start0, &__end0);
@@ -49282,10 +49424,10 @@ fn __action331<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<Id>, Loc),
+    __4: (Loc, Vec<ParsedId>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action225(module, __1);
@@ -49304,10 +49446,10 @@ fn __action332<'a>(
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
+    __3: (Loc, Vec<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action226(module, &__start0, &__end0);
@@ -49324,9 +49466,9 @@ fn __action332<'a>(
 fn __action333<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Vec<(Option<Id>, L<Expr>)>, Loc),
+    __1: (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
     __2: (Loc, Token, Loc),
-) -> Option<Vec<(Option<Id>, L<Expr>)>> {
+) -> Option<Vec<(Option<ParsedId>, L<ParsedExpr>)>> {
     let __start0 = __0.0;
     let __end0 = __2.2;
     let __temp0 = __action186(module, __0, __1, __2);
@@ -49344,9 +49486,9 @@ fn __action334<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<(Option<Id>, L<Expr>)>, Loc),
+    __2: (Loc, Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
     __3: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __1.0;
     let __end0 = __3.2;
     let __temp0 = __action333(module, __1, __2, __3);
@@ -49360,7 +49502,7 @@ fn __action334<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action335<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
+fn __action335<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action185(module, &__start0, &__end0);
@@ -49377,8 +49519,8 @@ fn __action335<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
 fn __action336<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Type>, Loc),
-) -> Option<L<Type>> {
+    __1: (Loc, L<ParsedType>, Loc),
+) -> Option<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action201(module, __0, __1);
@@ -49395,13 +49537,13 @@ fn __action336<'a>(
 fn __action337<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Pat>, Loc),
+    __1: (Loc, L<ParsedPat>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Expr>, Loc),
+    __5: (Loc, L<ParsedExpr>, Loc),
     __6: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __2.0;
     let __end0 = __3.2;
     let __temp0 = __action336(module, __2, __3);
@@ -49418,11 +49560,11 @@ fn __action337<'a>(
 fn __action338<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Pat>, Loc),
+    __1: (Loc, L<ParsedPat>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Expr>, Loc),
+    __3: (Loc, L<ParsedExpr>, Loc),
     __4: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __1.2;
     let __end0 = __2.0;
     let __temp0 = __action200(module, &__start0, &__end0);
@@ -49439,12 +49581,12 @@ fn __action338<'a>(
 fn __action339<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Pat>, Loc),
+    __1: (Loc, L<ParsedPat>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Expr>, Loc),
-) -> Stmt {
+    __5: (Loc, L<ParsedExpr>, Loc),
+) -> ParsedStmt {
     let __start0 = __2.0;
     let __end0 = __3.2;
     let __temp0 = __action336(module, __2, __3);
@@ -49461,10 +49603,10 @@ fn __action339<'a>(
 fn __action340<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Pat>, Loc),
+    __1: (Loc, L<ParsedPat>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Expr>, Loc),
-) -> Stmt {
+    __3: (Loc, L<ParsedExpr>, Loc),
+) -> ParsedStmt {
     let __start0 = __1.2;
     let __end0 = __2.0;
     let __temp0 = __action200(module, &__start0, &__end0);
@@ -49481,13 +49623,13 @@ fn __action340<'a>(
 fn __action341<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     let __start0 = __0.0;
     let __end0 = __6.2;
     let __temp0 = __action194(module, __0, __1, __2, __3, __4, __5, __6);
@@ -49503,15 +49645,19 @@ fn __action341<'a>(
 )]
 fn __action342<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
+    __0: (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, Vec<L<Stmt>>, Loc),
+    __6: (Loc, Vec<L<ParsedStmt>>, Loc),
     __7: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)> {
+) -> alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)> {
     let __start0 = __1.0;
     let __end0 = __7.2;
     let __temp0 = __action194(module, __1, __2, __3, __4, __5, __6, __7);
@@ -49528,14 +49674,14 @@ fn __action342<'a>(
 fn __action343<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, Option<Vec<L<Stmt>>>, Loc),
-) -> Expr {
+    __7: (Loc, Option<Vec<L<ParsedStmt>>>, Loc),
+) -> ParsedExpr {
     let __start0 = __6.2;
     let __end0 = __7.0;
     let __temp0 = __action192(module, &__start0, &__end0);
@@ -49552,15 +49698,19 @@ fn __action343<'a>(
 fn __action344<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-    __8: (Loc, Option<Vec<L<Stmt>>>, Loc),
-) -> Expr {
+    __7: (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
+    __8: (Loc, Option<Vec<L<ParsedStmt>>>, Loc),
+) -> ParsedExpr {
     let __start0 = __7.0;
     let __end0 = __7.2;
     let __temp0 = __action193(module, __7);
@@ -49580,9 +49730,9 @@ fn __action345<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<L<Stmt>>, Loc),
+    __4: (Loc, Vec<L<ParsedStmt>>, Loc),
     __5: (Loc, Token, Loc),
-) -> Option<Vec<L<Stmt>>> {
+) -> Option<Vec<L<ParsedStmt>>> {
     let __start0 = __0.0;
     let __end0 = __5.2;
     let __temp0 = __action191(module, __0, __1, __2, __3, __4, __5);
@@ -49599,19 +49749,19 @@ fn __action345<'a>(
 fn __action346<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
     __8: (Loc, Token, Loc),
     __9: (Loc, Token, Loc),
     __10: (Loc, Token, Loc),
-    __11: (Loc, Vec<L<Stmt>>, Loc),
+    __11: (Loc, Vec<L<ParsedStmt>>, Loc),
     __12: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __7.0;
     let __end0 = __12.2;
     let __temp0 = __action345(module, __7, __8, __9, __10, __11, __12);
@@ -49628,13 +49778,13 @@ fn __action346<'a>(
 fn __action347<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __6.2;
     let __end0 = __6.2;
     let __temp0 = __action190(module, &__start0, &__end0);
@@ -49651,20 +49801,24 @@ fn __action347<'a>(
 fn __action348<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
+    __7: (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
     __8: (Loc, Token, Loc),
     __9: (Loc, Token, Loc),
     __10: (Loc, Token, Loc),
     __11: (Loc, Token, Loc),
-    __12: (Loc, Vec<L<Stmt>>, Loc),
+    __12: (Loc, Vec<L<ParsedStmt>>, Loc),
     __13: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __8.0;
     let __end0 = __13.2;
     let __temp0 = __action345(module, __8, __9, __10, __11, __12, __13);
@@ -49681,14 +49835,18 @@ fn __action348<'a>(
 fn __action349<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, alloc::vec::Vec<(L<Expr>, Vec<L<Stmt>>)>, Loc),
-) -> Expr {
+    __7: (
+        Loc,
+        alloc::vec::Vec<(L<ParsedExpr>, Vec<L<ParsedStmt>>)>,
+        Loc,
+    ),
+) -> ParsedExpr {
     let __start0 = __7.2;
     let __end0 = __7.2;
     let __temp0 = __action190(module, &__start0, &__end0);
@@ -49736,15 +49894,15 @@ fn __action351<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Option<(Token
 )]
 fn __action352<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __5: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (L<Id>, FunSig) {
+    __7: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (L<ParsedId>, ParsedFunSig) {
     let __start0 = __3.0;
     let __end0 = __4.2;
     let __temp0 = __action350(module, __3, __4);
@@ -49760,14 +49918,14 @@ fn __action352<'a>(
 )]
 fn __action353<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __4: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (L<Id>, FunSig) {
+    __6: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (L<ParsedId>, ParsedFunSig) {
     let __start0 = __3.0;
     let __end0 = __3.2;
     let __temp0 = __action351(module, __3);
@@ -49783,13 +49941,13 @@ fn __action353<'a>(
 )]
 fn __action354<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __3: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (L<Id>, FunSig) {
+    __5: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (L<ParsedId>, ParsedFunSig) {
     let __start0 = __2.2;
     let __end0 = __3.0;
     let __temp0 = __action211(module, &__start0, &__end0);
@@ -49805,16 +49963,21 @@ fn __action354<'a>(
 )]
 fn __action355<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(L<Id>, Context)>, Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __6: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __8: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __4.0;
     let __end0 = __5.2;
     let __temp0 = __action350(module, __4, __5);
@@ -49830,15 +49993,20 @@ fn __action355<'a>(
 )]
 fn __action356<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(L<Id>, Context)>, Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __5: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __7: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __4.0;
     let __end0 = __4.2;
     let __temp0 = __action351(module, __4);
@@ -49854,14 +50022,19 @@ fn __action356<'a>(
 )]
 fn __action357<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(L<Id>, Context)>, Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, Option<(L<ParsedId>, ParsedContext)>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __4: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __6: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __3.2;
     let __end0 = __4.0;
     let __temp0 = __action211(module, &__start0, &__end0);
@@ -49879,9 +50052,9 @@ fn __action358<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
-) -> (Token, L<Type>) {
+) -> (Token, L<ParsedType>) {
     let __start0 = __0.0;
     let __end0 = __2.2;
     let __temp0 = __action209(module, __0, __1, __2);
@@ -49899,8 +50072,8 @@ fn __action359<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
-) -> Option<(Token, L<Type>)> {
+    __2: (Loc, L<ParsedType>, Loc),
+) -> Option<(Token, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
     let __temp0 = __action209(module, __0, __1, __2);
@@ -49918,9 +50091,9 @@ fn __action360<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __3.2;
     let __temp0 = __action358(module, __0, __1, __2, __3);
@@ -49936,12 +50109,12 @@ fn __action360<'a>(
 )]
 fn __action361<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
+    __0: (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Token, L<Type>)> {
+) -> alloc::vec::Vec<(Token, L<ParsedType>)> {
     let __start0 = __1.0;
     let __end0 = __4.2;
     let __temp0 = __action358(module, __1, __2, __3, __4);
@@ -49957,8 +50130,8 @@ fn __action361<'a>(
 )]
 fn __action362<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(Token, L<Type>)>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    __0: (Loc, Option<(Token, L<ParsedType>)>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action254(module, &__start0, &__end0);
@@ -49974,9 +50147,9 @@ fn __action362<'a>(
 )]
 fn __action363<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
-    __1: (Loc, Option<(Token, L<Type>)>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    __0: (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
+    __1: (Loc, Option<(Token, L<ParsedType>)>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action255(module, __0);
@@ -49992,9 +50165,9 @@ fn __action363<'a>(
 )]
 fn __action364<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, CallArg, Loc),
+    __0: (Loc, ParsedCallArg, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<CallArg> {
+) -> alloc::vec::Vec<ParsedCallArg> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action272(module, __0, __1);
@@ -50010,10 +50183,10 @@ fn __action364<'a>(
 )]
 fn __action365<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
-    __1: (Loc, CallArg, Loc),
+    __0: (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+    __1: (Loc, ParsedCallArg, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<CallArg> {
+) -> alloc::vec::Vec<ParsedCallArg> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action272(module, __1, __2);
@@ -50027,7 +50200,10 @@ fn __action365<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action366<'a>(module: &'a Rc<str>, __0: (Loc, Option<CallArg>, Loc)) -> Vec<CallArg> {
+fn __action366<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<ParsedCallArg>, Loc),
+) -> Vec<ParsedCallArg> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action270(module, &__start0, &__end0);
@@ -50043,9 +50219,9 @@ fn __action366<'a>(module: &'a Rc<str>, __0: (Loc, Option<CallArg>, Loc)) -> Vec
 )]
 fn __action367<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
-    __1: (Loc, Option<CallArg>, Loc),
-) -> Vec<CallArg> {
+    __0: (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+    __1: (Loc, Option<ParsedCallArg>, Loc),
+) -> Vec<ParsedCallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action271(module, __0);
@@ -50061,9 +50237,9 @@ fn __action367<'a>(
 )]
 fn __action368<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Type>, Loc),
+    __0: (Loc, L<ParsedType>, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action294(module, __0, __1);
@@ -50079,10 +50255,10 @@ fn __action368<'a>(
 )]
 fn __action369<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, L<Type>, Loc),
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, L<ParsedType>, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action294(module, __1, __2);
@@ -50096,7 +50272,10 @@ fn __action369<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action370<'a>(module: &'a Rc<str>, __0: (Loc, Option<L<Type>>, Loc)) -> Vec<L<Type>> {
+fn __action370<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action292(module, &__start0, &__end0);
@@ -50112,9 +50291,9 @@ fn __action370<'a>(module: &'a Rc<str>, __0: (Loc, Option<L<Type>>, Loc)) -> Vec
 )]
 fn __action371<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, Option<L<Type>>, Loc),
-) -> Vec<L<Type>> {
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action293(module, __0);
@@ -50130,9 +50309,9 @@ fn __action371<'a>(
 )]
 fn __action372<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Type>, Loc),
+    __0: (Loc, L<ParsedType>, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action236(module, __0, __1);
@@ -50148,10 +50327,10 @@ fn __action372<'a>(
 )]
 fn __action373<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, L<Type>, Loc),
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, L<ParsedType>, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<Type>> {
+) -> alloc::vec::Vec<L<ParsedType>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action236(module, __1, __2);
@@ -50165,7 +50344,10 @@ fn __action373<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action374<'a>(module: &'a Rc<str>, __0: (Loc, Option<L<Type>>, Loc)) -> Vec<L<Type>> {
+fn __action374<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action234(module, &__start0, &__end0);
@@ -50181,9 +50363,9 @@ fn __action374<'a>(module: &'a Rc<str>, __0: (Loc, Option<L<Type>>, Loc)) -> Vec
 )]
 fn __action375<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, Option<L<Type>>, Loc),
-) -> Vec<L<Type>> {
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, Option<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action235(module, __0);
@@ -50199,9 +50381,9 @@ fn __action375<'a>(
 )]
 fn __action376<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
     __1: (Loc, Token, Loc),
-) -> Option<L<Id>> {
+) -> Option<L<ParsedId>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action179(module, __0, __1);
@@ -50219,17 +50401,17 @@ fn __action377<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Context, Loc),
-    __3: (Loc, L<Id>, Loc),
+    __2: (Loc, ParsedContext, Loc),
+    __3: (Loc, L<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Type>, Loc),
+    __5: (Loc, L<ParsedType>, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
     __8: (Loc, Token, Loc),
-    __9: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __9: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __10: (Loc, Token, Loc),
     __11: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __3.0;
     let __end0 = __4.2;
     let __temp0 = __action376(module, __3, __4);
@@ -50249,15 +50431,15 @@ fn __action378<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Context, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __2: (Loc, ParsedContext, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __7: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __8: (Loc, Token, Loc),
     __9: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __2.2;
     let __end0 = __3.0;
     let __temp0 = __action178(module, &__start0, &__end0);
@@ -50277,12 +50459,12 @@ fn __action379<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Context, Loc),
-    __3: (Loc, L<Id>, Loc),
+    __2: (Loc, ParsedContext, Loc),
+    __3: (Loc, L<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Type>, Loc),
+    __5: (Loc, L<ParsedType>, Loc),
     __6: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __3.0;
     let __end0 = __4.2;
     let __temp0 = __action376(module, __3, __4);
@@ -50300,10 +50482,10 @@ fn __action380<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Loc, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Context, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __2: (Loc, ParsedContext, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __2.2;
     let __end0 = __3.0;
     let __temp0 = __action178(module, &__start0, &__end0);
@@ -50390,8 +50572,8 @@ fn __action385<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    __2: (Loc, L<ParsedType>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __2.2;
     let __temp0 = __action359(module, __0, __1, __2);
@@ -50409,7 +50591,7 @@ fn __action386<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Vec<(Token, L<Type>)> {
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action253(module, &__start0, &__end0);
@@ -50425,11 +50607,11 @@ fn __action386<'a>(
 )]
 fn __action387<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
+    __0: (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    __3: (Loc, L<ParsedType>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = __1.0;
     let __end0 = __3.2;
     let __temp0 = __action359(module, __1, __2, __3);
@@ -50445,8 +50627,8 @@ fn __action387<'a>(
 )]
 fn __action388<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Token, L<Type>)>, Loc),
-) -> Vec<(Token, L<Type>)> {
+    __0: (Loc, alloc::vec::Vec<(Token, L<ParsedType>)>, Loc),
+) -> Vec<(Token, L<ParsedType>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action253(module, &__start0, &__end0);
@@ -50462,9 +50644,9 @@ fn __action388<'a>(
 )]
 fn __action389<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Id, Type), Loc),
+    __0: (Loc, (ParsedId, ParsedType), Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Id, Type)> {
+) -> alloc::vec::Vec<(ParsedId, ParsedType)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action219(module, __0, __1);
@@ -50480,10 +50662,10 @@ fn __action389<'a>(
 )]
 fn __action390<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Id, Type)>, Loc),
-    __1: (Loc, (Id, Type), Loc),
+    __0: (Loc, alloc::vec::Vec<(ParsedId, ParsedType)>, Loc),
+    __1: (Loc, (ParsedId, ParsedType), Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Id, Type)> {
+) -> alloc::vec::Vec<(ParsedId, ParsedType)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action219(module, __1, __2);
@@ -50499,9 +50681,9 @@ fn __action390<'a>(
 )]
 fn __action391<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<Id>, L<Expr>), Loc),
+    __0: (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action267(module, __0, __1);
@@ -50517,10 +50699,10 @@ fn __action391<'a>(
 )]
 fn __action392<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-    __1: (Loc, (Option<Id>, L<Expr>), Loc),
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+    __1: (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Expr>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action267(module, __1, __2);
@@ -50536,8 +50718,8 @@ fn __action392<'a>(
 )]
 fn __action393<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(Option<Id>, L<Expr>)>, Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    __0: (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action265(module, &__start0, &__end0);
@@ -50553,9 +50735,9 @@ fn __action393<'a>(
 )]
 fn __action394<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-    __1: (Loc, Option<(Option<Id>, L<Expr>)>, Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+    __1: (Loc, Option<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action266(module, __0);
@@ -50571,9 +50753,9 @@ fn __action394<'a>(
 )]
 fn __action395<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<Id>, L<Pat>), Loc),
+    __0: (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action277(module, __0, __1);
@@ -50589,10 +50771,10 @@ fn __action395<'a>(
 )]
 fn __action396<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-    __1: (Loc, (Option<Id>, L<Pat>), Loc),
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+    __1: (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<(Option<Id>, L<Pat>)> {
+) -> alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action277(module, __1, __2);
@@ -50608,8 +50790,8 @@ fn __action396<'a>(
 )]
 fn __action397<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<(Option<Id>, L<Pat>)>, Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    __0: (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action275(module, &__start0, &__end0);
@@ -50625,9 +50807,9 @@ fn __action397<'a>(
 )]
 fn __action398<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-    __1: (Loc, Option<(Option<Id>, L<Pat>)>, Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+    __1: (Loc, Option<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action276(module, __0);
@@ -50643,9 +50825,9 @@ fn __action398<'a>(
 )]
 fn __action399<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Named<Type>, Loc),
+    __0: (Loc, Named<ParsedType, ParsedId>, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<Named<Type>> {
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action241(module, __0, __1);
@@ -50661,10 +50843,10 @@ fn __action399<'a>(
 )]
 fn __action400<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-    __1: (Loc, Named<Type>, Loc),
+    __0: (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+    __1: (Loc, Named<ParsedType, ParsedId>, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<Named<Type>> {
+) -> alloc::vec::Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action241(module, __1, __2);
@@ -50678,7 +50860,10 @@ fn __action400<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action401<'a>(module: &'a Rc<str>, __0: (Loc, Option<Named<Type>>, Loc)) -> Vec<Named<Type>> {
+fn __action401<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<Named<ParsedType, ParsedId>>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action239(module, &__start0, &__end0);
@@ -50694,9 +50879,9 @@ fn __action401<'a>(module: &'a Rc<str>, __0: (Loc, Option<Named<Type>>, Loc)) ->
 )]
 fn __action402<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-    __1: (Loc, Option<Named<Type>>, Loc),
-) -> Vec<Named<Type>> {
+    __0: (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+    __1: (Loc, Option<Named<ParsedType, ParsedId>>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action240(module, __0);
@@ -50712,9 +50897,9 @@ fn __action402<'a>(
 )]
 fn __action403<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<(Option<Id>, L<Type>)>, Loc),
+    __0: (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action251(module, __0, __1);
@@ -50730,10 +50915,14 @@ fn __action403<'a>(
 )]
 fn __action404<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-    __1: (Loc, L<(Option<Id>, L<Type>)>, Loc),
+    __0: (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+    __1: (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<L<(Option<Id>, L<Type>)>> {
+) -> alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action251(module, __1, __2);
@@ -50749,8 +50938,8 @@ fn __action404<'a>(
 )]
 fn __action405<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    __0: (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action249(module, &__start0, &__end0);
@@ -50766,9 +50955,13 @@ fn __action405<'a>(
 )]
 fn __action406<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-    __1: (Loc, Option<L<(Option<Id>, L<Type>)>>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    __0: (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+    __1: (Loc, Option<L<(Option<ParsedId>, L<ParsedType>)>>, Loc),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action250(module, __0);
@@ -50784,9 +50977,9 @@ fn __action406<'a>(
 )]
 fn __action407<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, TypeParam, Loc),
+    __0: (Loc, ParsedTypeParam, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<ParsedTypeParam> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action289(module, __0, __1);
@@ -50802,10 +50995,10 @@ fn __action407<'a>(
 )]
 fn __action408<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, TypeParam, Loc),
+    __0: (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+    __1: (Loc, ParsedTypeParam, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<TypeParam> {
+) -> alloc::vec::Vec<ParsedTypeParam> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action289(module, __1, __2);
@@ -50819,7 +51012,10 @@ fn __action408<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action409<'a>(module: &'a Rc<str>, __0: (Loc, Option<TypeParam>, Loc)) -> Vec<TypeParam> {
+fn __action409<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<ParsedTypeParam>, Loc),
+) -> Vec<ParsedTypeParam> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action287(module, &__start0, &__end0);
@@ -50835,9 +51031,9 @@ fn __action409<'a>(module: &'a Rc<str>, __0: (Loc, Option<TypeParam>, Loc)) -> V
 )]
 fn __action410<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, Option<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+    __1: (Loc, Option<ParsedTypeParam>, Loc),
+) -> Vec<ParsedTypeParam> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action288(module, __0);
@@ -50922,9 +51118,9 @@ fn __action414<'a>(
 )]
 fn __action415<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, VariantAlt, Loc),
+    __0: (Loc, ParsedVariantAlt, Loc),
     __1: (Loc, Token, Loc),
-) -> alloc::vec::Vec<VariantAlt> {
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     let __start0 = __0.0;
     let __end0 = __1.2;
     let __temp0 = __action246(module, __0, __1);
@@ -50940,10 +51136,10 @@ fn __action415<'a>(
 )]
 fn __action416<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-    __1: (Loc, VariantAlt, Loc),
+    __0: (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+    __1: (Loc, ParsedVariantAlt, Loc),
     __2: (Loc, Token, Loc),
-) -> alloc::vec::Vec<VariantAlt> {
+) -> alloc::vec::Vec<ParsedVariantAlt> {
     let __start0 = __1.0;
     let __end0 = __2.2;
     let __temp0 = __action246(module, __1, __2);
@@ -50957,7 +51153,10 @@ fn __action416<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action417<'a>(module: &'a Rc<str>, __0: (Loc, Option<VariantAlt>, Loc)) -> Vec<VariantAlt> {
+fn __action417<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Option<ParsedVariantAlt>, Loc),
+) -> Vec<ParsedVariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action244(module, &__start0, &__end0);
@@ -50973,9 +51172,9 @@ fn __action417<'a>(module: &'a Rc<str>, __0: (Loc, Option<VariantAlt>, Loc)) -> 
 )]
 fn __action418<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-    __1: (Loc, Option<VariantAlt>, Loc),
-) -> Vec<VariantAlt> {
+    __0: (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+    __1: (Loc, Option<ParsedVariantAlt>, Loc),
+) -> Vec<ParsedVariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action245(module, __0);
@@ -50991,13 +51190,13 @@ fn __action418<'a>(
 )]
 fn __action419<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<L<Stmt>>, Loc),
+    __3: (Loc, Vec<L<ParsedStmt>>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51014,10 +51213,10 @@ fn __action419<'a>(
 fn __action420<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, (L<Id>, FunSig), Loc),
+    __1: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51033,10 +51232,10 @@ fn __action420<'a>(
 )]
 fn __action421<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51052,12 +51251,12 @@ fn __action421<'a>(
 )]
 fn __action422<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51074,17 +51273,17 @@ fn __action422<'a>(
 fn __action423<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
+    __4: (Loc, L<ParsedType>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __8: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __9: (Loc, Token, Loc),
     __10: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51103,15 +51302,15 @@ fn __action423<'a>(
 fn __action424<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __6: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __7: (Loc, Token, Loc),
     __8: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51128,12 +51327,12 @@ fn __action424<'a>(
 fn __action425<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
+    __4: (Loc, L<ParsedType>, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51150,10 +51349,10 @@ fn __action425<'a>(
 fn __action426<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51172,10 +51371,10 @@ fn __action427<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<ImplDeclItem> {
+) -> L<ParsedImplDeclItem> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51195,7 +51394,7 @@ fn __action428<'a>(
     __1: (Loc, Vec<Token>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<ImportDecl> {
+) -> L<ParsedImportDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51209,7 +51408,7 @@ fn __action428<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action429<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
+fn __action429<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51225,12 +51424,12 @@ fn __action429<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> Expr {
 )]
 fn __action430<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<CallArg>, Loc),
+    __3: (Loc, Vec<ParsedCallArg>, Loc),
     __4: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51246,11 +51445,11 @@ fn __action430<'a>(
 )]
 fn __action431<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51266,12 +51465,12 @@ fn __action431<'a>(
 )]
 fn __action432<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51291,12 +51490,12 @@ fn __action432<'a>(
 )]
 fn __action433<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51317,9 +51516,9 @@ fn __action433<'a>(
 fn __action434<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Expr, Loc),
+    __1: (Loc, ParsedExpr, Loc),
     __2: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51336,9 +51535,9 @@ fn __action434<'a>(
 fn __action435<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Expr, Loc),
+    __1: (Loc, ParsedExpr, Loc),
     __2: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51354,12 +51553,12 @@ fn __action435<'a>(
 )]
 fn __action436<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51379,12 +51578,12 @@ fn __action436<'a>(
 )]
 fn __action437<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51404,12 +51603,12 @@ fn __action437<'a>(
 )]
 fn __action438<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51429,12 +51628,12 @@ fn __action438<'a>(
 )]
 fn __action439<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51454,12 +51653,12 @@ fn __action439<'a>(
 )]
 fn __action440<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51479,12 +51678,12 @@ fn __action440<'a>(
 )]
 fn __action441<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51504,12 +51703,12 @@ fn __action441<'a>(
 )]
 fn __action442<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51529,12 +51728,12 @@ fn __action442<'a>(
 )]
 fn __action443<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51554,12 +51753,12 @@ fn __action443<'a>(
 )]
 fn __action444<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51579,12 +51778,12 @@ fn __action444<'a>(
 )]
 fn __action445<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51604,12 +51803,12 @@ fn __action445<'a>(
 )]
 fn __action446<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51629,12 +51828,12 @@ fn __action446<'a>(
 )]
 fn __action447<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51654,12 +51853,12 @@ fn __action447<'a>(
 )]
 fn __action448<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51679,12 +51878,12 @@ fn __action448<'a>(
 )]
 fn __action449<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Expr, Loc),
+    __3: (Loc, ParsedExpr, Loc),
     __4: (Loc, Loc, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51702,7 +51901,11 @@ fn __action449<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action450<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
+fn __action450<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedExpr, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedExpr> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51716,7 +51919,11 @@ fn __action450<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action451<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
+fn __action451<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedExpr, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedExpr> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51730,7 +51937,11 @@ fn __action451<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action452<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> L<Expr> {
+fn __action452<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedExpr, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedExpr> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51744,7 +51955,11 @@ fn __action452<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action453<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Loc, Loc)) -> L<Id> {
+fn __action453<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedId> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51758,7 +51973,11 @@ fn __action453<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Loc, 
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action454<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc), __1: (Loc, Loc, Loc)) -> L<Pat> {
+fn __action454<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedPat, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedPat> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51772,7 +51991,11 @@ fn __action454<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc), __1: (Loc, Loc, Lo
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action455<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc), __1: (Loc, Loc, Loc)) -> L<Stmt> {
+fn __action455<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedStmt, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedStmt> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51786,7 +52009,11 @@ fn __action455<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action456<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc), __1: (Loc, Loc, Loc)) -> L<Type> {
+fn __action456<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedType, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedType> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51800,7 +52027,11 @@ fn __action456<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action457<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc), __1: (Loc, Loc, Loc)) -> L<Type> {
+fn __action457<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedType, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedType> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51814,7 +52045,11 @@ fn __action457<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc), __1: (Loc, Loc, L
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action458<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Loc, Loc)) -> L<Id> {
+fn __action458<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Loc, Loc),
+) -> L<ParsedId> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51830,11 +52065,11 @@ fn __action458<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Loc, 
 )]
 fn __action459<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Pat, Loc),
+    __0: (Loc, ParsedPat, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Pat, Loc),
-) -> Pat {
+    __3: (Loc, ParsedPat, Loc),
+) -> ParsedPat {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __start1 = __2.2;
@@ -51860,11 +52095,11 @@ fn __action460<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<VariantAlt>, Loc),
-    __3: (Loc, Option<Id>, Loc),
+    __2: (Loc, Vec<ParsedVariantAlt>, Loc),
+    __3: (Loc, Option<ParsedId>, Loc),
     __4: (Loc, Loc, Loc),
     __5: (Loc, Token, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     let __start0 = __1.2;
     let __end0 = __2.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51882,12 +52117,12 @@ fn __action461<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<VariantAlt>, Loc),
-    __3: (Loc, Option<Id>, Loc),
+    __2: (Loc, Vec<ParsedVariantAlt>, Loc),
+    __3: (Loc, Option<ParsedId>, Loc),
     __4: (Loc, Loc, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, L<Type>, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+    __6: (Loc, L<ParsedType>, Loc),
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     let __start0 = __1.2;
     let __end0 = __2.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51903,10 +52138,10 @@ fn __action461<'a>(
 )]
 fn __action462<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Loc, Loc),
     __2: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51920,7 +52155,11 @@ fn __action462<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action463<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Loc, Loc)) -> Stmt {
+fn __action463<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedExpr, Loc),
+    __1: (Loc, Loc, Loc),
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51942,9 +52181,9 @@ fn __action464<'a>(
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, Vec<L<Stmt>>, Loc),
+    __6: (Loc, Vec<L<ParsedStmt>>, Loc),
     __7: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51961,9 +52200,9 @@ fn __action464<'a>(
 fn __action465<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TypeDecl>, Loc),
+    __1: (Loc, L<ParsedTypeDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51980,9 +52219,9 @@ fn __action465<'a>(
 fn __action466<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, TopDecl, Loc),
+    __1: (Loc, ParsedTopDecl, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -51999,9 +52238,9 @@ fn __action466<'a>(
 fn __action467<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImportDecl>, Loc),
+    __1: (Loc, L<ParsedImportDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52018,9 +52257,9 @@ fn __action467<'a>(
 fn __action468<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TraitDecl>, Loc),
+    __1: (Loc, L<ParsedTraitDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52037,9 +52276,9 @@ fn __action468<'a>(
 fn __action469<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImplDecl>, Loc),
+    __1: (Loc, L<ParsedImplDecl>, Loc),
     __2: (Loc, Loc, Loc),
-) -> L<TopDecl> {
+) -> L<ParsedTopDecl> {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52055,13 +52294,22 @@ fn __action469<'a>(
 )]
 fn __action470<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<L<Stmt>>, Loc),
+    __3: (Loc, Vec<L<ParsedStmt>>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52078,10 +52326,19 @@ fn __action470<'a>(
 fn __action471<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __1: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52097,10 +52354,19 @@ fn __action471<'a>(
 )]
 fn __action472<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
     __2: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52116,12 +52382,21 @@ fn __action472<'a>(
 )]
 fn __action473<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Loc, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52138,17 +52413,17 @@ fn __action473<'a>(
 fn __action474<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Id>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, ParsedTypeParam, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc),
+    __8: (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc),
     __9: (Loc, Token, Loc),
     __10: (Loc, Loc, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52167,12 +52442,12 @@ fn __action474<'a>(
 fn __action475<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Id>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, ParsedTypeParam, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52192,7 +52467,7 @@ fn __action476<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<TraitDeclItem> {
+) -> L<ParsedTraitDeclItem> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52210,9 +52485,9 @@ fn __action477<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Loc, Loc),
-) -> L<(Option<Id>, L<Type>)> {
+) -> L<(Option<ParsedId>, L<ParsedType>)> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52230,10 +52505,10 @@ fn __action478<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Id>, Loc),
-    __3: (Loc, TypeDeclRhs, Loc),
+    __2: (Loc, Vec<ParsedId>, Loc),
+    __3: (Loc, ParsedTypeDeclRhs, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52252,10 +52527,10 @@ fn __action479<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
+    __3: (Loc, Vec<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52273,10 +52548,10 @@ fn __action480<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Id>, Loc),
+    __2: (Loc, Vec<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Loc, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action228(module, &__start0, &__end0);
@@ -52292,12 +52567,12 @@ fn __action480<'a>(
 )]
 fn __action481<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<L<Stmt>>, Loc),
+    __3: (Loc, Vec<L<ParsedStmt>>, Loc),
     __4: (Loc, Token, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52314,9 +52589,9 @@ fn __action481<'a>(
 fn __action482<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, (L<Id>, FunSig), Loc),
+    __1: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __2: (Loc, Token, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52332,9 +52607,9 @@ fn __action482<'a>(
 )]
 fn __action483<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52350,11 +52625,11 @@ fn __action483<'a>(
 )]
 fn __action484<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, FunSig), Loc),
+    __0: (Loc, (L<ParsedId>, ParsedFunSig), Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
-) -> L<FunDecl> {
+) -> L<ParsedFunDecl> {
     let __start0 = __3.2;
     let __end0 = __3.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52371,16 +52646,16 @@ fn __action484<'a>(
 fn __action485<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
+    __4: (Loc, L<ParsedType>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __8: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __9: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __9.2;
     let __end0 = __9.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52399,14 +52674,14 @@ fn __action485<'a>(
 fn __action486<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __6: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __7: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __7.2;
     let __end0 = __7.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52423,11 +52698,11 @@ fn __action486<'a>(
 fn __action487<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
-) -> L<ImplDecl> {
+    __4: (Loc, L<ParsedType>, Loc),
+) -> L<ParsedImplDecl> {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52444,9 +52719,9 @@ fn __action487<'a>(
 fn __action488<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
-) -> L<ImplDecl> {
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
+) -> L<ParsedImplDecl> {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52465,9 +52740,9 @@ fn __action489<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Type>, Loc),
+    __3: (Loc, L<ParsedType>, Loc),
     __4: (Loc, Token, Loc),
-) -> L<ImplDeclItem> {
+) -> L<ParsedImplDeclItem> {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52486,7 +52761,7 @@ fn __action490<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Vec<Token>, Loc),
     __2: (Loc, Token, Loc),
-) -> L<ImportDecl> {
+) -> L<ParsedImportDecl> {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52502,11 +52777,11 @@ fn __action490<'a>(
 )]
 fn __action491<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<CallArg>, Loc),
+    __2: (Loc, Vec<ParsedCallArg>, Loc),
     __3: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52522,10 +52797,10 @@ fn __action491<'a>(
 )]
 fn __action492<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-) -> Expr {
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52541,10 +52816,10 @@ fn __action492<'a>(
 )]
 fn __action493<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52564,10 +52839,10 @@ fn __action493<'a>(
 )]
 fn __action494<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52585,7 +52860,11 @@ fn __action494<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action495<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action495<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52599,7 +52878,11 @@ fn __action495<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action496<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr, Loc)) -> Expr {
+fn __action496<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52615,10 +52898,10 @@ fn __action496<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Expr,
 )]
 fn __action497<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52638,10 +52921,10 @@ fn __action497<'a>(
 )]
 fn __action498<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52661,10 +52944,10 @@ fn __action498<'a>(
 )]
 fn __action499<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52684,10 +52967,10 @@ fn __action499<'a>(
 )]
 fn __action500<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52707,10 +52990,10 @@ fn __action500<'a>(
 )]
 fn __action501<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52730,10 +53013,10 @@ fn __action501<'a>(
 )]
 fn __action502<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52753,10 +53036,10 @@ fn __action502<'a>(
 )]
 fn __action503<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52776,10 +53059,10 @@ fn __action503<'a>(
 )]
 fn __action504<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52799,10 +53082,10 @@ fn __action504<'a>(
 )]
 fn __action505<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52822,10 +53105,10 @@ fn __action505<'a>(
 )]
 fn __action506<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52845,10 +53128,10 @@ fn __action506<'a>(
 )]
 fn __action507<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52868,10 +53151,10 @@ fn __action507<'a>(
 )]
 fn __action508<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52891,10 +53174,10 @@ fn __action508<'a>(
 )]
 fn __action509<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52914,10 +53197,10 @@ fn __action509<'a>(
 )]
 fn __action510<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Expr, Loc),
+    __0: (Loc, ParsedExpr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Expr, Loc),
-) -> Expr {
+    __2: (Loc, ParsedExpr, Loc),
+) -> ParsedExpr {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __start1 = __2.2;
@@ -52935,7 +53218,7 @@ fn __action510<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action511<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action511<'a>(module: &'a Rc<str>, __0: (Loc, ParsedExpr, Loc)) -> L<ParsedExpr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52949,7 +53232,7 @@ fn __action511<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action512<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action512<'a>(module: &'a Rc<str>, __0: (Loc, ParsedExpr, Loc)) -> L<ParsedExpr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52963,7 +53246,7 @@ fn __action512<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action513<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
+fn __action513<'a>(module: &'a Rc<str>, __0: (Loc, ParsedExpr, Loc)) -> L<ParsedExpr> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52977,7 +53260,7 @@ fn __action513<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> L<Expr> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action514<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
+fn __action514<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<ParsedId> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -52991,7 +53274,7 @@ fn __action514<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action515<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
+fn __action515<'a>(module: &'a Rc<str>, __0: (Loc, ParsedPat, Loc)) -> L<ParsedPat> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53005,7 +53288,7 @@ fn __action515<'a>(module: &'a Rc<str>, __0: (Loc, Pat, Loc)) -> L<Pat> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action516<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
+fn __action516<'a>(module: &'a Rc<str>, __0: (Loc, ParsedStmt, Loc)) -> L<ParsedStmt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53019,7 +53302,7 @@ fn __action516<'a>(module: &'a Rc<str>, __0: (Loc, Stmt, Loc)) -> L<Stmt> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action517<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
+fn __action517<'a>(module: &'a Rc<str>, __0: (Loc, ParsedType, Loc)) -> L<ParsedType> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53033,7 +53316,7 @@ fn __action517<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action518<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
+fn __action518<'a>(module: &'a Rc<str>, __0: (Loc, ParsedType, Loc)) -> L<ParsedType> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53047,7 +53330,7 @@ fn __action518<'a>(module: &'a Rc<str>, __0: (Loc, Type, Loc)) -> L<Type> {
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action519<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
+fn __action519<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<ParsedId> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53063,10 +53346,10 @@ fn __action519<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc)) -> L<Id> {
 )]
 fn __action520<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, Pat, Loc),
+    __0: (Loc, ParsedPat, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Pat, Loc),
-) -> Pat {
+    __2: (Loc, ParsedPat, Loc),
+) -> ParsedPat {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53084,10 +53367,10 @@ fn __action521<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<VariantAlt>, Loc),
-    __3: (Loc, Option<Id>, Loc),
+    __2: (Loc, Vec<ParsedVariantAlt>, Loc),
+    __3: (Loc, Option<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     let __start0 = __3.2;
     let __end0 = __4.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53105,11 +53388,11 @@ fn __action522<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<VariantAlt>, Loc),
-    __3: (Loc, Option<Id>, Loc),
+    __2: (Loc, Vec<ParsedVariantAlt>, Loc),
+    __3: (Loc, Option<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Type>, Loc),
-) -> (Option<L<Type>>, Option<L<Type>>) {
+    __5: (Loc, L<ParsedType>, Loc),
+) -> (Option<L<ParsedType>>, Option<L<ParsedType>>) {
     let __start0 = __3.2;
     let __end0 = __4.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53123,7 +53406,11 @@ fn __action522<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action523<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action523<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedExpr, Loc),
+    __1: (Loc, Token, Loc),
+) -> ParsedStmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53137,7 +53424,7 @@ fn __action523<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc), __1: (Loc, Token,
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action524<'a>(module: &'a Rc<str>, __0: (Loc, Expr, Loc)) -> Stmt {
+fn __action524<'a>(module: &'a Rc<str>, __0: (Loc, ParsedExpr, Loc)) -> ParsedStmt {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53158,9 +53445,9 @@ fn __action525<'a>(
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __1.2;
     let __end0 = __2.0;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53177,8 +53464,8 @@ fn __action525<'a>(
 fn __action526<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TypeDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedTypeDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53195,8 +53482,8 @@ fn __action526<'a>(
 fn __action527<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, TopDecl, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, ParsedTopDecl, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53213,8 +53500,8 @@ fn __action527<'a>(
 fn __action528<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImportDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedImportDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53231,8 +53518,8 @@ fn __action528<'a>(
 fn __action529<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TraitDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedTraitDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53249,8 +53536,8 @@ fn __action529<'a>(
 fn __action530<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImplDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedImplDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53266,12 +53553,21 @@ fn __action530<'a>(
 )]
 fn __action531<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<L<Stmt>>, Loc),
+    __3: (Loc, Vec<L<ParsedStmt>>, Loc),
     __4: (Loc, Token, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53288,9 +53584,18 @@ fn __action531<'a>(
 fn __action532<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __1: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __2: (Loc, Token, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53306,9 +53611,18 @@ fn __action532<'a>(
 )]
 fn __action533<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __1.2;
     let __end0 = __1.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53324,11 +53638,20 @@ fn __action533<'a>(
 )]
 fn __action534<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<L<Id>>, Context, L<Id>, FunSig), Loc),
+    __0: (
+        Loc,
+        (
+            Option<L<ParsedId>>,
+            ParsedContext,
+            L<ParsedId>,
+            ParsedFunSig,
+        ),
+        Loc,
+    ),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
-) -> TopDecl {
+) -> ParsedTopDecl {
     let __start0 = __3.2;
     let __end0 = __3.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53345,16 +53668,16 @@ fn __action534<'a>(
 fn __action535<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Id>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, ParsedTypeParam, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, alloc::vec::Vec<L<TraitDeclItem>>, Loc),
+    __8: (Loc, alloc::vec::Vec<L<ParsedTraitDeclItem>>, Loc),
     __9: (Loc, Token, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     let __start0 = __9.2;
     let __end0 = __9.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53373,11 +53696,11 @@ fn __action535<'a>(
 fn __action536<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Id>, Loc),
+    __1: (Loc, L<ParsedId>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, TypeParam, Loc),
+    __3: (Loc, ParsedTypeParam, Loc),
     __4: (Loc, Token, Loc),
-) -> L<TraitDecl> {
+) -> L<ParsedTraitDecl> {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53396,7 +53719,7 @@ fn __action537<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-) -> L<TraitDeclItem> {
+) -> L<ParsedTraitDeclItem> {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53414,8 +53737,8 @@ fn __action538<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Type>, Loc),
-) -> L<(Option<Id>, L<Type>)> {
+    __2: (Loc, L<ParsedType>, Loc),
+) -> L<(Option<ParsedId>, L<ParsedType>)> {
     let __start0 = __2.2;
     let __end0 = __2.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53433,9 +53756,9 @@ fn __action539<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Id>, Loc),
-    __3: (Loc, TypeDeclRhs, Loc),
-) -> L<TypeDecl> {
+    __2: (Loc, Vec<ParsedId>, Loc),
+    __3: (Loc, ParsedTypeDeclRhs, Loc),
+) -> L<ParsedTypeDecl> {
     let __start0 = __3.2;
     let __end0 = __3.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53454,9 +53777,9 @@ fn __action540<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<Id>, Loc),
+    __3: (Loc, Vec<ParsedId>, Loc),
     __4: (Loc, Token, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __4.2;
     let __end0 = __4.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53474,9 +53797,9 @@ fn __action541<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, Vec<Id>, Loc),
+    __2: (Loc, Vec<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-) -> L<TypeDecl> {
+) -> L<ParsedTypeDecl> {
     let __start0 = __3.2;
     let __end0 = __3.2;
     let __temp0 = __action227(module, &__start0, &__end0);
@@ -53490,7 +53813,7 @@ fn __action541<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action542<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Alt> {
+fn __action542<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<ParsedAlt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action195(module, &__start0, &__end0);
@@ -53504,7 +53827,10 @@ fn __action542<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action543<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -> Vec<Alt> {
+fn __action543<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<ParsedAlt>, Loc),
+) -> Vec<ParsedAlt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action196(module, __0);
@@ -53518,7 +53844,7 @@ fn __action543<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Alt>, Loc)) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action544<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg> {
+fn __action544<'a>(module: &'a Rc<str>, __0: (Loc, ParsedCallArg, Loc)) -> Vec<ParsedCallArg> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action268(module, __0);
@@ -53532,7 +53858,11 @@ fn __action544<'a>(module: &'a Rc<str>, __0: (Loc, CallArg, Loc)) -> Vec<CallArg
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action545<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<CallArg> {
+fn __action545<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<ParsedCallArg> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action269(module, &__start0, &__end0);
@@ -53548,9 +53878,9 @@ fn __action545<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action546<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<CallArg>, Loc),
-    __1: (Loc, CallArg, Loc),
-) -> Vec<CallArg> {
+    __0: (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+    __1: (Loc, ParsedCallArg, Loc),
+) -> Vec<ParsedCallArg> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action268(module, __1);
@@ -53564,7 +53894,10 @@ fn __action546<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action547<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc)) -> Vec<CallArg> {
+fn __action547<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<ParsedCallArg>, Loc),
+) -> Vec<ParsedCallArg> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action269(module, &__start0, &__end0);
@@ -53581,15 +53914,15 @@ fn __action547<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<CallArg>, Loc
 fn __action548<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
+    __4: (Loc, L<ParsedType>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
     __8: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __7.2;
     let __end0 = __8.0;
     let __temp0 = __action175(module, &__start0, &__end0);
@@ -53606,16 +53939,16 @@ fn __action548<'a>(
 fn __action549<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Id>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedId>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Type>, Loc),
+    __4: (Loc, L<ParsedType>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __8: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __9: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __8.0;
     let __end0 = __8.2;
     let __temp0 = __action176(module, __8);
@@ -53632,13 +53965,13 @@ fn __action549<'a>(
 fn __action550<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __5.2;
     let __end0 = __6.0;
     let __temp0 = __action175(module, &__start0, &__end0);
@@ -53655,14 +53988,14 @@ fn __action550<'a>(
 fn __action551<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, L<Type>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, L<ParsedType>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, alloc::vec::Vec<L<ImplDeclItem>>, Loc),
+    __6: (Loc, alloc::vec::Vec<L<ParsedImplDeclItem>>, Loc),
     __7: (Loc, Token, Loc),
-) -> L<ImplDecl> {
+) -> L<ParsedImplDecl> {
     let __start0 = __6.0;
     let __end0 = __6.2;
     let __temp0 = __action176(module, __6);
@@ -53676,7 +54009,11 @@ fn __action551<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action552<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Stmt>> {
+fn __action552<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<L<ParsedStmt>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action204(module, &__start0, &__end0);
@@ -53690,7 +54027,10 @@ fn __action552<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action553<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc)) -> Vec<L<Stmt>> {
+fn __action553<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<L<ParsedStmt>>, Loc),
+) -> Vec<L<ParsedStmt>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action205(module, __0);
@@ -53704,7 +54044,7 @@ fn __action553<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Stmt>>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action554<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>> {
+fn __action554<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedType>, Loc)) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action290(module, __0);
@@ -53718,7 +54058,11 @@ fn __action554<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action555<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Type>> {
+fn __action555<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<L<ParsedType>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action291(module, &__start0, &__end0);
@@ -53734,9 +54078,9 @@ fn __action555<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action556<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, L<Type>, Loc),
-) -> Vec<L<Type>> {
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, L<ParsedType>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action290(module, __1);
@@ -53750,7 +54094,10 @@ fn __action556<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action557<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc)) -> Vec<L<Type>> {
+fn __action557<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action291(module, &__start0, &__end0);
@@ -53764,7 +54111,7 @@ fn __action557<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action558<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>> {
+fn __action558<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedType>, Loc)) -> Vec<L<ParsedType>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action290(module, __0);
@@ -53778,7 +54125,11 @@ fn __action558<'a>(module: &'a Rc<str>, __0: (Loc, L<Type>, Loc)) -> Vec<L<Type>
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action559<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<Type>> {
+fn __action559<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<L<ParsedType>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action291(module, &__start0, &__end0);
@@ -53794,9 +54145,9 @@ fn __action559<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action560<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<Type>>, Loc),
-    __1: (Loc, L<Type>, Loc),
-) -> Vec<L<Type>> {
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+    __1: (Loc, L<ParsedType>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action290(module, __1);
@@ -53810,7 +54161,10 @@ fn __action560<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action561<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<L<Type>>, Loc)) -> Vec<L<Type>> {
+fn __action561<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, alloc::vec::Vec<L<ParsedType>>, Loc),
+) -> Vec<L<ParsedType>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action291(module, &__start0, &__end0);
@@ -53829,7 +54183,7 @@ fn __action562<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action202(module, __1);
@@ -53843,7 +54197,11 @@ fn __action562<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action563<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action563<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> ParsedStmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action203(module, &__start0, &__end0);
@@ -53862,7 +54220,7 @@ fn __action564<'a>(
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action202(module, __1);
@@ -53876,7 +54234,11 @@ fn __action564<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action565<'a>(module: &'a Rc<str>, __0: (Loc, Token, Loc), __1: (Loc, Token, Loc)) -> Stmt {
+fn __action565<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Token, Loc),
+    __1: (Loc, Token, Loc),
+) -> ParsedStmt {
     let __start0 = __0.2;
     let __end0 = __1.0;
     let __temp0 = __action203(module, &__start0, &__end0);
@@ -53894,15 +54256,15 @@ fn __action566<'a>(
     module: &'a Rc<str>,
     __0: (Loc, SmolStr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Pat>, Loc),
+    __2: (Loc, L<ParsedPat>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Expr>, Loc),
+    __4: (Loc, L<ParsedExpr>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, Vec<L<Stmt>>, Loc),
+    __8: (Loc, Vec<L<ParsedStmt>>, Loc),
     __9: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action197(module, __0);
@@ -53919,15 +54281,15 @@ fn __action566<'a>(
 fn __action567<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Pat>, Loc),
+    __1: (Loc, L<ParsedPat>, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Expr>, Loc),
+    __3: (Loc, L<ParsedExpr>, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, Vec<L<Stmt>>, Loc),
+    __7: (Loc, Vec<L<ParsedStmt>>, Loc),
     __8: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action198(module, &__start0, &__end0);
@@ -53945,13 +54307,13 @@ fn __action568<'a>(
     module: &'a Rc<str>,
     __0: (Loc, SmolStr, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Expr>, Loc),
+    __2: (Loc, L<ParsedExpr>, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, Vec<L<Stmt>>, Loc),
+    __6: (Loc, Vec<L<ParsedStmt>>, Loc),
     __7: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action197(module, __0);
@@ -53968,13 +54330,13 @@ fn __action568<'a>(
 fn __action569<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
-    __1: (Loc, L<Expr>, Loc),
+    __1: (Loc, L<ParsedExpr>, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action198(module, &__start0, &__end0);
@@ -53993,15 +54355,15 @@ fn __action570<'a>(
     __0: (Loc, SmolStr, Loc),
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, L<Pat>, Loc),
+    __3: (Loc, L<ParsedPat>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, L<Expr>, Loc),
+    __5: (Loc, L<ParsedExpr>, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
     __8: (Loc, Token, Loc),
-    __9: (Loc, Vec<L<Stmt>>, Loc),
+    __9: (Loc, Vec<L<ParsedStmt>>, Loc),
     __10: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action197(module, __0);
@@ -54021,15 +54383,15 @@ fn __action571<'a>(
     module: &'a Rc<str>,
     __0: (Loc, Token, Loc),
     __1: (Loc, Token, Loc),
-    __2: (Loc, L<Pat>, Loc),
+    __2: (Loc, L<ParsedPat>, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, L<Expr>, Loc),
+    __4: (Loc, L<ParsedExpr>, Loc),
     __5: (Loc, Token, Loc),
     __6: (Loc, Token, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, Vec<L<Stmt>>, Loc),
+    __8: (Loc, Vec<L<ParsedStmt>>, Loc),
     __9: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action198(module, &__start0, &__end0);
@@ -54052,9 +54414,9 @@ fn __action572<'a>(
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<L<Stmt>>, Loc),
+    __5: (Loc, Vec<L<ParsedStmt>>, Loc),
     __6: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action197(module, __0);
@@ -54074,9 +54436,9 @@ fn __action573<'a>(
     __1: (Loc, Token, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<L<Stmt>>, Loc),
+    __4: (Loc, Vec<L<ParsedStmt>>, Loc),
     __5: (Loc, Token, Loc),
-) -> Stmt {
+) -> ParsedStmt {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action198(module, &__start0, &__end0);
@@ -54150,7 +54512,7 @@ fn __action577<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc))
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action578<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDecl> {
+fn __action578<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedTypeDecl>, Loc)) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action169(module, &__start0, &__end0);
@@ -54167,8 +54529,8 @@ fn __action578<'a>(module: &'a Rc<str>, __0: (Loc, L<TypeDecl>, Loc)) -> L<TopDe
 fn __action579<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TypeDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedTypeDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action170(module, __0);
@@ -54182,7 +54544,7 @@ fn __action579<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action580<'a>(module: &'a Rc<str>, __0: (Loc, TopDecl, Loc)) -> L<TopDecl> {
+fn __action580<'a>(module: &'a Rc<str>, __0: (Loc, ParsedTopDecl, Loc)) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action169(module, &__start0, &__end0);
@@ -54199,8 +54561,8 @@ fn __action580<'a>(module: &'a Rc<str>, __0: (Loc, TopDecl, Loc)) -> L<TopDecl> 
 fn __action581<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, TopDecl, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, ParsedTopDecl, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action170(module, __0);
@@ -54214,7 +54576,7 @@ fn __action581<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action582<'a>(module: &'a Rc<str>, __0: (Loc, L<ImportDecl>, Loc)) -> L<TopDecl> {
+fn __action582<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedImportDecl>, Loc)) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action169(module, &__start0, &__end0);
@@ -54231,8 +54593,8 @@ fn __action582<'a>(module: &'a Rc<str>, __0: (Loc, L<ImportDecl>, Loc)) -> L<Top
 fn __action583<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImportDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedImportDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action170(module, __0);
@@ -54246,7 +54608,7 @@ fn __action583<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action584<'a>(module: &'a Rc<str>, __0: (Loc, L<TraitDecl>, Loc)) -> L<TopDecl> {
+fn __action584<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedTraitDecl>, Loc)) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action169(module, &__start0, &__end0);
@@ -54263,8 +54625,8 @@ fn __action584<'a>(module: &'a Rc<str>, __0: (Loc, L<TraitDecl>, Loc)) -> L<TopD
 fn __action585<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<TraitDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedTraitDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action170(module, __0);
@@ -54278,7 +54640,7 @@ fn __action585<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action586<'a>(module: &'a Rc<str>, __0: (Loc, L<ImplDecl>, Loc)) -> L<TopDecl> {
+fn __action586<'a>(module: &'a Rc<str>, __0: (Loc, L<ParsedImplDecl>, Loc)) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action169(module, &__start0, &__end0);
@@ -54295,8 +54657,8 @@ fn __action586<'a>(module: &'a Rc<str>, __0: (Loc, L<ImplDecl>, Loc)) -> L<TopDe
 fn __action587<'a>(
     module: &'a Rc<str>,
     __0: (Loc, alloc::vec::Vec<Token>, Loc),
-    __1: (Loc, L<ImplDecl>, Loc),
-) -> L<TopDecl> {
+    __1: (Loc, L<ParsedImplDecl>, Loc),
+) -> L<ParsedTopDecl> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action170(module, __0);
@@ -54312,8 +54674,8 @@ fn __action587<'a>(
 )]
 fn __action588<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<Id>, L<Expr>), Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    __0: (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action263(module, __0);
@@ -54331,7 +54693,7 @@ fn __action589<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Vec<(Option<Id>, L<Expr>)> {
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action264(module, &__start0, &__end0);
@@ -54347,9 +54709,9 @@ fn __action589<'a>(
 )]
 fn __action590<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-    __1: (Loc, (Option<Id>, L<Expr>), Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+    __1: (Loc, (Option<ParsedId>, L<ParsedExpr>), Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action263(module, __1);
@@ -54365,8 +54727,8 @@ fn __action590<'a>(
 )]
 fn __action591<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Expr>)>, Loc),
-) -> Vec<(Option<Id>, L<Expr>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedExpr>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedExpr>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action264(module, &__start0, &__end0);
@@ -54382,16 +54744,21 @@ fn __action591<'a>(
 )]
 fn __action592<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, Context), Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, (L<ParsedId>, ParsedContext), Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __6: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __7: (Loc, Token, Loc),
-    __8: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __8: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action206(module, __0);
@@ -54407,15 +54774,20 @@ fn __action592<'a>(
 )]
 fn __action593<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __5: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __7: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action207(module, &__start0, &__end0);
@@ -54431,15 +54803,20 @@ fn __action593<'a>(
 )]
 fn __action594<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, Context), Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, (L<ParsedId>, ParsedContext), Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __5: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __6: (Loc, Token, Loc),
-    __7: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __7: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action206(module, __0);
@@ -54455,14 +54832,19 @@ fn __action594<'a>(
 )]
 fn __action595<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __4: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __6: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action207(module, &__start0, &__end0);
@@ -54478,14 +54860,19 @@ fn __action595<'a>(
 )]
 fn __action596<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, Context), Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
+    __0: (Loc, (L<ParsedId>, ParsedContext), Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
     __3: (Loc, Token, Loc),
-    __4: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __4: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __5: (Loc, Token, Loc),
-    __6: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __6: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action206(module, __0);
@@ -54501,13 +54888,18 @@ fn __action596<'a>(
 )]
 fn __action597<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
     __2: (Loc, Token, Loc),
-    __3: (Loc, Vec<(Token, L<Type>)>, Loc),
+    __3: (Loc, Vec<(Token, L<ParsedType>)>, Loc),
     __4: (Loc, Token, Loc),
-    __5: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __5: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action207(module, &__start0, &__end0);
@@ -54523,11 +54915,16 @@ fn __action597<'a>(
 )]
 fn __action598<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (L<Id>, Context), Loc),
-    __1: (Loc, L<Id>, Loc),
-    __2: (Loc, Context, Loc),
-    __3: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __0: (Loc, (L<ParsedId>, ParsedContext), Loc),
+    __1: (Loc, L<ParsedId>, Loc),
+    __2: (Loc, ParsedContext, Loc),
+    __3: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action206(module, __0);
@@ -54543,10 +54940,15 @@ fn __action598<'a>(
 )]
 fn __action599<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<Id>, Loc),
-    __1: (Loc, Context, Loc),
-    __2: (Loc, (Option<L<Type>>, Option<L<Type>>), Loc),
-) -> (Option<L<Id>>, Context, L<Id>, FunSig) {
+    __0: (Loc, L<ParsedId>, Loc),
+    __1: (Loc, ParsedContext, Loc),
+    __2: (Loc, (Option<L<ParsedType>>, Option<L<ParsedType>>), Loc),
+) -> (
+    Option<L<ParsedId>>,
+    ParsedContext,
+    L<ParsedId>,
+    ParsedFunSig,
+) {
     let __start0 = __0.0;
     let __end0 = __0.0;
     let __temp0 = __action207(module, &__start0, &__end0);
@@ -54562,8 +54964,8 @@ fn __action599<'a>(
 )]
 fn __action600<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, (Option<Id>, L<Pat>), Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    __0: (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action273(module, __0);
@@ -54581,7 +54983,7 @@ fn __action601<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Vec<(Option<Id>, L<Pat>)> {
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action274(module, &__start0, &__end0);
@@ -54597,9 +54999,9 @@ fn __action601<'a>(
 )]
 fn __action602<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-    __1: (Loc, (Option<Id>, L<Pat>), Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+    __1: (Loc, (Option<ParsedId>, L<ParsedPat>), Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action273(module, __1);
@@ -54615,8 +55017,8 @@ fn __action602<'a>(
 )]
 fn __action603<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<(Option<Id>, L<Pat>)>, Loc),
-) -> Vec<(Option<Id>, L<Pat>)> {
+    __0: (Loc, alloc::vec::Vec<(Option<ParsedId>, L<ParsedPat>)>, Loc),
+) -> Vec<(Option<ParsedId>, L<ParsedPat>)> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action274(module, &__start0, &__end0);
@@ -54630,7 +55032,10 @@ fn __action603<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action604<'a>(module: &'a Rc<str>, __0: (Loc, Named<Type>, Loc)) -> Vec<Named<Type>> {
+fn __action604<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, Named<ParsedType, ParsedId>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action237(module, __0);
@@ -54644,7 +55049,11 @@ fn __action604<'a>(module: &'a Rc<str>, __0: (Loc, Named<Type>, Loc)) -> Vec<Nam
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action605<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<Named<Type>> {
+fn __action605<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action238(module, &__start0, &__end0);
@@ -54660,9 +55069,9 @@ fn __action605<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action606<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-    __1: (Loc, Named<Type>, Loc),
-) -> Vec<Named<Type>> {
+    __0: (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+    __1: (Loc, Named<ParsedType, ParsedId>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action237(module, __1);
@@ -54678,8 +55087,8 @@ fn __action606<'a>(
 )]
 fn __action607<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<Named<Type>>, Loc),
-) -> Vec<Named<Type>> {
+    __0: (Loc, alloc::vec::Vec<Named<ParsedType, ParsedId>>, Loc),
+) -> Vec<Named<ParsedType, ParsedId>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action238(module, &__start0, &__end0);
@@ -54693,7 +55102,11 @@ fn __action607<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action608<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<L<TopDecl>> {
+fn __action608<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<L<ParsedTopDecl>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action171(module, &__start0, &__end0);
@@ -54709,8 +55122,8 @@ fn __action608<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action609<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<TopDecl>>, Loc),
-) -> Vec<L<TopDecl>> {
+    __0: (Loc, alloc::vec::Vec<L<ParsedTopDecl>>, Loc),
+) -> Vec<L<ParsedTopDecl>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action172(module, __0);
@@ -54726,8 +55139,8 @@ fn __action609<'a>(
 )]
 fn __action610<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, L<(Option<Id>, L<Type>)>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    __0: (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action247(module, __0);
@@ -54745,7 +55158,7 @@ fn __action611<'a>(
     module: &'a Rc<str>,
     __lookbehind: &Loc,
     __lookahead: &Loc,
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action248(module, &__start0, &__end0);
@@ -54761,9 +55174,13 @@ fn __action611<'a>(
 )]
 fn __action612<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-    __1: (Loc, L<(Option<Id>, L<Type>)>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    __0: (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+    __1: (Loc, L<(Option<ParsedId>, L<ParsedType>)>, Loc),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action247(module, __1);
@@ -54779,8 +55196,12 @@ fn __action612<'a>(
 )]
 fn __action613<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<L<(Option<Id>, L<Type>)>>, Loc),
-) -> Vec<L<(Option<Id>, L<Type>)>> {
+    __0: (
+        Loc,
+        alloc::vec::Vec<L<(Option<ParsedId>, L<ParsedType>)>>,
+        Loc,
+    ),
+) -> Vec<L<(Option<ParsedId>, L<ParsedType>)>> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action248(module, &__start0, &__end0);
@@ -54794,7 +55215,7 @@ fn __action613<'a>(
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action614<'a>(module: &'a Rc<str>, __0: (Loc, TypeParam, Loc)) -> Vec<TypeParam> {
+fn __action614<'a>(module: &'a Rc<str>, __0: (Loc, ParsedTypeParam, Loc)) -> Vec<ParsedTypeParam> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action285(module, __0);
@@ -54808,7 +55229,11 @@ fn __action614<'a>(module: &'a Rc<str>, __0: (Loc, TypeParam, Loc)) -> Vec<TypeP
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action615<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<TypeParam> {
+fn __action615<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<ParsedTypeParam> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action286(module, &__start0, &__end0);
@@ -54824,9 +55249,9 @@ fn __action615<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action616<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-    __1: (Loc, TypeParam, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+    __1: (Loc, ParsedTypeParam, Loc),
+) -> Vec<ParsedTypeParam> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action285(module, __1);
@@ -54842,8 +55267,8 @@ fn __action616<'a>(
 )]
 fn __action617<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<TypeParam>, Loc),
-) -> Vec<TypeParam> {
+    __0: (Loc, alloc::vec::Vec<ParsedTypeParam>, Loc),
+) -> Vec<ParsedTypeParam> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action286(module, &__start0, &__end0);
@@ -54917,7 +55342,10 @@ fn __action621<'a>(module: &'a Rc<str>, __0: (Loc, alloc::vec::Vec<Token>, Loc))
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action622<'a>(module: &'a Rc<str>, __0: (Loc, VariantAlt, Loc)) -> Vec<VariantAlt> {
+fn __action622<'a>(
+    module: &'a Rc<str>,
+    __0: (Loc, ParsedVariantAlt, Loc),
+) -> Vec<ParsedVariantAlt> {
     let __start0 = __0.0;
     let __end0 = __0.2;
     let __temp0 = __action242(module, __0);
@@ -54931,7 +55359,11 @@ fn __action622<'a>(module: &'a Rc<str>, __0: (Loc, VariantAlt, Loc)) -> Vec<Vari
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action623<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -> Vec<VariantAlt> {
+fn __action623<'a>(
+    module: &'a Rc<str>,
+    __lookbehind: &Loc,
+    __lookahead: &Loc,
+) -> Vec<ParsedVariantAlt> {
     let __start0 = *__lookbehind;
     let __end0 = *__lookahead;
     let __temp0 = __action243(module, &__start0, &__end0);
@@ -54947,9 +55379,9 @@ fn __action623<'a>(module: &'a Rc<str>, __lookbehind: &Loc, __lookahead: &Loc) -
 )]
 fn __action624<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-    __1: (Loc, VariantAlt, Loc),
-) -> Vec<VariantAlt> {
+    __0: (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+    __1: (Loc, ParsedVariantAlt, Loc),
+) -> Vec<ParsedVariantAlt> {
     let __start0 = __1.0;
     let __end0 = __1.2;
     let __temp0 = __action242(module, __1);
@@ -54965,8 +55397,8 @@ fn __action624<'a>(
 )]
 fn __action625<'a>(
     module: &'a Rc<str>,
-    __0: (Loc, alloc::vec::Vec<VariantAlt>, Loc),
-) -> Vec<VariantAlt> {
+    __0: (Loc, alloc::vec::Vec<ParsedVariantAlt>, Loc),
+) -> Vec<ParsedVariantAlt> {
     let __start0 = __0.2;
     let __end0 = __0.2;
     let __temp0 = __action243(module, &__start0, &__end0);
