@@ -279,7 +279,7 @@ mod wasm {
         module = monomorph::monomorphise(&module, "main".into());
 
         let mut w = WasmOutput;
-        interpreter::run(&mut w, module, "main", Some(input.trim()));
+        interpreter::run(&mut w, module, "main", input.trim());
     }
 
     #[wasm_bindgen(js_name = "version")]
