@@ -79,7 +79,7 @@ jobs:
             override: true
 
       - name: Install goldentests
-        run: cargo install goldentests --features binary
+        run: cargo install --git https://github.com/osa1/golden-tests --features=binary
 
       - name: Run tests
         run: |
