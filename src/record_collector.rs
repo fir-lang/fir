@@ -129,7 +129,7 @@ fn visit_impl_decl(
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
-    for ty in &impl_decl.context {
+    for ty in &impl_decl.context.preds {
         visit_ty(&ty.node, records, variants);
     }
     for ty in &impl_decl.tys {

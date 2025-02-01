@@ -23,6 +23,7 @@ pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
                     ast::TraitDecl {
                         name: _,
                         params: _,
+                        kinds: _,
                         items,
                     },
             }) => {
