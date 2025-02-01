@@ -511,7 +511,7 @@ fn collect_schemes(
 ) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
-    let mut method_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
+    let mut method_schemes: Map<Id, Vec<Scheme>> = Default::default();
 
     for decl in module {
         // New scope for type and function contexts.
@@ -608,9 +608,9 @@ fn collect_schemes(
                             ast::SelfParam::No => {}
                             ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
                                 method_schemes
-                                    .entry(parent_ty.node.clone())
+                                    .entry(name.node.clone())
                                     .or_default()
-                                    .insert(name.node.clone(), scheme);
+                                    .push(scheme);
                             }
                         }
                     }
@@ -621,154 +621,6 @@ fn collect_schemes(
                                 "{}: {} is defined multiple times",
                                 loc_display(loc),
                                 name.node
-                            );
-                        }
-                    }
-                }
-            }
-
-            ast::TopDecl::Impl(impl_decl) => {
-                let impl_context: Set<Pred> =
-                    convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
-
-                let self_ty: Ty =
-                    convert_ast_ty(tys, &impl_decl.node.ty.node, &impl_decl.node.ty.loc);
-
-                let (self_ty_con_id, _) = self_ty.con(tys.cons()).unwrap();
-
-                for fun in &impl_decl.node.items {
-                    assert_eq!(tys.len_scopes(), 2); // top-level, impl
-                    tys.enter_scope();
-
-                    let sig = &fun.node.sig;
-
-                    let mut fun_var_kinds = impl_var_kinds.clone();
-                    fun_var_kinds.extend(fun_sig_ty_var_kinds(sig));
-
-                    let fun_context = convert_and_bind_context(
-                        tys,
-                        &sig.type_params,
-                        &fun_var_kinds,
-                        TyVarConversion::ToQVar,
-                        &fun.loc,
-                    );
-
-                    let mut arg_tys: Vec<Ty> = sig
-                        .params
-                        .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
-                        .collect();
-
-                    if sig.self_ {
-                        arg_tys.insert(0, self_ty.clone());
-                    }
-
-                    let ret_ty: Ty = match &sig.return_ty {
-                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let exceptions = match &fun.node.sig.exceptions {
-                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
-                        None => panic!(),
-                    };
-
-                    let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
-                        ret: Box::new(ret_ty),
-                        exceptions: Some(Box::new(exceptions)),
-                    };
-
-                    let scheme = Scheme {
-                        quantified_vars: impl_context
-                            .iter()
-                            .cloned()
-                            .chain(fun_context.into_iter())
-                            .collect(),
-                        ty: fun_ty,
-                        loc: fun.loc.clone(),
-                    };
-
-                    if sig.self_ {
-                        let old = method_schemes
-                            .entry(self_ty_con_id.clone())
-                            .or_default()
-                            .insert(fun.name.node.clone(), scheme.clone());
-
-                        if old.is_some() {
-                            panic!(
-                                "{}: Method {} for type {} is defined multiple times",
-                                loc_display(&fun.loc),
-                                fun.node.name.node,
-                                self_ty_con_id
-                            );
-                        }
-                    } else {
-                        let old = associated_fn_schemes
-                            .entry(self_ty_con_id.clone())
-                            .or_default()
-                            .insert(fun.name.node.clone(), scheme.clone());
-
-                        if old.is_some() {
-                            panic!(
-                                "{}: Associated function {} for type {} is defined multiple times",
-                                loc_display(&item.loc),
-                                fun.name.node,
-                                self_ty_con_id
-                            );
-                        }
-                    }
-
-                    tys.exit_scope();
-                    assert_eq!(tys.len_scopes(), 2); // top-level, impl
-
-                    // If this is a trait method, check that the type matches the method type in
-                    // the trait.
-                    if let Some(trait_id) = &impl_decl.node.trait_ {
-                        let trait_ty_con = tys.cons().get(&trait_id.node).unwrap();
-                        let trait_details = trait_ty_con.trait_details().unwrap();
-
-                        let fun_name: &Id = &fun.name.node;
-
-                        let trait_fun_scheme = &trait_details
-                            .methods
-                            .get(fun_name)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Trait {} does not have a method named {}",
-                                    loc_display(&item.loc),
-                                    trait_ty_con.id,
-                                    fun_name
-                                )
-                            })
-                            .scheme;
-
-                        let trait_ty_param = &trait_ty_con.ty_params[0].0;
-
-                        // Type of the method in the trait declaration, with the self type substituted for the
-                        // type implementing the trait.
-                        let mut trait_fun_scheme =
-                            trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
-
-                        // Also add quantified variables of `impl`.
-                        trait_fun_scheme
-                            .quantified_vars
-                            .splice(0..0, impl_context.iter().cloned());
-
-                        if !trait_fun_scheme.eq_modulo_alpha(
-                            tys.cons(),
-                            &Default::default(),
-                            &scheme,
-                            &item.loc,
-                        ) {
-                            panic!(
-                                "{}: Trait method implementation of {} does not match the trait method type
-                                Trait method type:          {}
-                                Implementation method type: {}",
-                                loc_display(&item.loc),
-                                fun_name,
-                                trait_fun_scheme,
-                                scheme
                             );
                         }
                     }
@@ -911,7 +763,7 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Trait(_) | ast::TopDecl::Import(_) => {
+            ast::TopDecl::Impl(_) | ast::TopDecl::Trait(_) | ast::TopDecl::Import(_) => {
                 tys.exit_scope();
                 continue;
             }
