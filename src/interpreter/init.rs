@@ -71,6 +71,7 @@ pub fn collect_types(pgm: &[L<ast::TopDecl>]) -> (Map<Id, TyCon>, u64) {
         let ast::TypeDecl {
             name,
             type_params: _,
+            type_param_kinds: _,
             rhs,
         } = match &decl.node {
             ast::TopDecl::Type(ty_decl) => &ty_decl.node,
@@ -307,7 +308,7 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                let implementing_ty = match &impl_decl.node.ty.node {
+                let implementing_ty = match &impl_decl.node.tys[0].node {
                     ast::Type::Named(ast::NamedType { name, args: _ }) => name,
 
                     ast::Type::Var(_)
@@ -319,13 +320,8 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                     }
                 };
 
-                for item in impl_decl.node.items {
-                    let fun_decl = match item.node {
-                        ast::ImplDeclItem::AssocTy(_) => continue,
-                        ast::ImplDeclItem::Fun(fun) => fun,
-                    };
-
-                    if fun_decl.body.is_none() {
+                for fun_decl in impl_decl.node.items {
+                    if fun_decl.node.body.is_none() {
                         // Built-in function, should be added above.
                         continue;
                     }
@@ -333,10 +329,10 @@ pub fn collect_funs(pgm: Vec<L<ast::TopDecl>>) -> (Map<Id, Fun>, Map<Id, Map<Id,
                     let fun_map = associated_funs.entry(implementing_ty.clone()).or_default();
                     let fun_idx = fun_map.len();
                     fun_map.insert(
-                        fun_decl.name.node.clone(),
+                        fun_decl.node.name.node.clone(),
                         Fun {
                             idx: fun_idx as u64,
-                            kind: FunKind::Source(fun_decl),
+                            kind: FunKind::Source(fun_decl.node),
                         },
                     );
                 }

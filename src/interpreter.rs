@@ -657,9 +657,12 @@ fn call_ast_fun<W: Write>(
     let mut locals: Map<Id, u64> = Default::default();
 
     let mut arg_idx: usize = 0;
-    if fun.sig.self_ {
-        locals.insert(Id::new("self"), args[0]);
-        arg_idx += 1;
+    match fun.sig.self_ {
+        ast::SelfParam::No => {}
+        ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+            locals.insert(Id::new("self"), args[0]);
+            arg_idx += 1;
+        }
     }
 
     for (param_name, _param_type) in &fun.sig.params {
