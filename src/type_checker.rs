@@ -787,7 +787,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     tys.tys.enter_scope();
 
     // The predicates that we assume to hold in the function body.
-    let assumptions = convert_and_bind_context(
+    let assumps = convert_and_bind_context(
         &mut tys.tys,
         &fun.node.sig.context,
         TyVarConversion::ToOpaque,
@@ -829,7 +829,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    resolve_all_preds(&assumptions, tys, preds, &mut var_gen, 0);
+    resolve_all_preds(&assumps, tys, preds, &mut var_gen, 0);
 
     tys.tys.exit_scope();
 }
@@ -844,10 +844,8 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let impl_bounds =
+    let impl_assumps =
         convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToOpaque);
-
-    let self_ty = convert_ast_ty(&tys.tys, &impl_.node.ty.node, &impl_.loc);
 
     let trait_ty_con_id = &impl_.node.trait_;
 
@@ -875,7 +873,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
         tys.tys.enter_scope();
 
         // Bind function type parameters.
-        let assumptions = convert_and_bind_context(
+        let fun_assumps = convert_and_bind_context(
             &mut tys.tys,
             &fun.node.sig.context,
             TyVarConversion::ToOpaque,
@@ -892,22 +890,37 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
             let mut var_gen = TyVarGen::default();
 
-            env.insert(SmolStr::new_static("self"), self_ty.clone());
+            match &fun.node.sig.self_ {
+                ast::SelfParam::No => {}
+                ast::SelfParam::Implicit => {
+                    // TODO: We can use the `self` type from the trait declaration here.
+                    panic!(
+                        "{}: `self` parameters without type signatures are not supported yet",
+                        loc_display(&fun.loc)
+                    );
+                }
+                ast::SelfParam::Explicit(ty) => {
+                    env.insert(
+                        SmolStr::new("self"),
+                        convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                    );
+                }
+            }
 
-            for (param_name, param_ty) in &fun.sig.params {
+            for (param_name, param_ty) in &fun.node.sig.params {
                 env.insert(
                     param_name.clone(),
-                    convert_ast_ty(&tys.tys, &param_ty.node, &item.loc),
+                    convert_ast_ty(&tys.tys, &param_ty.node, &param_ty.loc),
                 );
             }
 
-            let context = impl_bounds
+            let assumps = impl_assumps
                 .iter()
                 .cloned()
-                .chain(fn_bounds.into_iter())
+                .chain(fun_assumps.into_iter())
                 .collect();
 
-            let exceptions = match &fun.sig.exceptions {
+            let exceptions = match &fun.node.sig.exceptions {
                 Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
                 None => panic!(),
             };
@@ -927,7 +940,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
             }
 
-            resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
+            resolve_all_preds(&assumps, tys, preds, &mut var_gen, 0);
         }
 
         tys.tys.exit_scope();
@@ -984,11 +997,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
 /// With this restriction resolving predicates is just a matter of checking for
 /// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 fn resolve_preds(
-    context: &Map<Id, QVar>,
-    tys: &PgmTypes,
-    preds: Set<Pred>,
-    var_gen: &mut TyVarGen,
-    level: u32,
+    _assumps: &Set<Pred>,
+    _tys: &PgmTypes,
+    _preds: Set<Pred>,
+    _var_gen: &mut TyVarGen,
+    _level: u32,
 ) -> Set<Pred> {
     todo!()
     /*
@@ -1106,7 +1119,7 @@ fn resolve_preds(
 }
 
 fn resolve_all_preds(
-    _assumptions: &Set<Pred>,
+    _assumps: &Set<Pred>,
     _tys: &PgmTypes,
     _preds: Set<Pred>,
     _var_gen: &mut TyVarGen,
