@@ -168,10 +168,8 @@ pub struct TyCon {
     /// Name of the type.
     pub id: Id,
 
-    /// Type parameters with bounds.
-    ///
-    /// E.g. in `[A: Iterator[Item = B]]`, this is `[(A, {Iterator => {Item => B}})]`.
-    pub(super) ty_params: Vec<(Id, Map<Id, Map<Id, Ty>>)>,
+    /// Type parameters with kinds.
+    pub(super) ty_params: Vec<(Id, Kind)>,
 
     /// Methods for traits, constructor for sums, fields for products.
     ///

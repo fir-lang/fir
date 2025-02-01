@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: c0c78df9187cf6cf9d1e1b0639ea0aaf995546ab58fb0e4a5ec692ec66af1e59
+// sha3: 06ffb4957316410a188fb7a7fedb6b4cf226863423b90125ee3a6502b1062e62
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -40062,6 +40062,7 @@ fn __action5<'a>(
         TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: Some(rhs),
         },
     )
@@ -40090,6 +40091,7 @@ fn __action6<'a>(
         TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: None,
         },
     )
@@ -42839,7 +42841,7 @@ fn __action152<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, name, _): (Loc, L<Id>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, params, _): (Loc, Vec<L<Id>>, Loc),
+    (_, type_params, _): (Loc, Vec<L<Id>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -42854,8 +42856,8 @@ fn __action152<'a>(
         r,
         TraitDecl {
             name,
-            params,
-            kinds: vec![],
+            type_params,
+            type_param_kinds: vec![],
             items,
         },
     )
@@ -42873,7 +42875,7 @@ fn __action153<'a>(
     (_, _, _): (Loc, Token, Loc),
     (_, name, _): (Loc, L<Id>, Loc),
     (_, _, _): (Loc, Token, Loc),
-    (_, params, _): (Loc, Vec<L<Id>>, Loc),
+    (_, type_params, _): (Loc, Vec<L<Id>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, r, _): (Loc, Loc, Loc),
 ) -> L<TraitDecl> {
@@ -42883,8 +42885,8 @@ fn __action153<'a>(
         r,
         TraitDecl {
             name,
-            params,
-            kinds: vec![],
+            type_params,
+            type_param_kinds: vec![],
             items: vec![],
         },
     )

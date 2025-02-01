@@ -188,12 +188,15 @@ fn collect_types(module: &mut ast::Module) -> PgmTypes {
 fn collect_cons(module: &mut ast::Module) -> TyMap {
     let mut tys: TyMap = Default::default();
 
-    // Collect all type constructors first, then add bounds, fields, and methods.
+    // Collect all type constructors first, then add fields and methods.
     for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
+                assert_eq!(
+                    ty_decl.node.type_params.len(),
+                    ty_decl.node.type_param_kinds.len()
+                );
                 let ty_name = ty_decl.node.name.clone();
-                let ty_params = ty_decl.node.type_params.clone();
                 if tys.has_con(&ty_name) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -205,19 +208,24 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params
-                            .into_iter()
-                            .map(|ty| (ty, Default::default()))
+                        ty_params: ty_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .cloned()
+                            .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                     },
                 );
             }
 
             ast::TopDecl::Trait(trait_decl) => {
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
+                );
                 let ty_name = trait_decl.node.name.node.clone();
-                let ty_params = vec![trait_decl.node.ty.id.clone()];
                 if tys.has_con(&ty_name) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -226,32 +234,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     );
                 }
 
-                let mut assoc_tys: Set<Id> = Default::default();
-                for item in &trait_decl.node.items {
-                    if let ast::TraitDeclItem::AssocTy(assoc_ty_id) = &item.node {
-                        let new = assoc_tys.insert(assoc_ty_id.clone());
-                        if !new {
-                            panic!(
-                                "{}: Associated type {} is defined multiple times",
-                                loc_display(&item.loc),
-                                assoc_ty_id
-                            );
-                        }
-                    }
-                }
-
                 tys.insert_con(
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params
-                            .into_iter()
-                            .map(|ty| (ty.node, Default::default()))
+                        ty_params: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|node| node.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
-                            assoc_tys,
                             implementing_tys: Default::default(),
                         }),
                     },
@@ -262,7 +257,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add bounds, fields, methods.
+    // Add fields and methods.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
     for decl in module.iter() {

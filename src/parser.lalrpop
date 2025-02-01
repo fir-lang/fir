@@ -131,6 +131,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
 
@@ -138,6 +139,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: None,
         }),
 }
@@ -1097,20 +1099,20 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <params:Sep<LLowerId, ",">> "]" ":"
+    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" ":"
             NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
-            params,
-            kinds: vec![],
+            type_params,
+            type_param_kinds: vec![],
             items,
         }),
 
-    <l:@L> "trait" <name:LUpperId> "[" <params:Sep<LLowerId, ",">> "]" <r:@R> =>
+    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
-            params,
-            kinds: vec![],
+            type_params,
+            type_param_kinds: vec![],
             items: vec![],
         }),
 

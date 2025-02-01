@@ -116,14 +116,17 @@ pub enum TopDecl {
     Impl(L<ImplDecl>),
 }
 
-/// A type declaration: `type Vec[T] = ...`.
+/// A type declaration: `type Vec[t]: ...`.
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
-    /// The type name, e.g. `Vec`.
+    /// The type name. `Vec` in the example.
     pub name: Id,
 
-    /// Type parameters, e.g. `[T]`.
+    /// Type parameters of the type. `[t]` in the example.
     pub type_params: Vec<Id>,
+
+    /// Kinds of `type_params`. Filled in by kind inference.
+    pub type_param_kinds: Vec<Kind>,
 
     /// Constructors of the type.
     pub rhs: Option<TypeDeclRhs>,
@@ -638,10 +641,10 @@ pub struct TraitDecl {
     pub name: L<Id>,
 
     /// Type parameters of the trait.
-    pub params: Vec<L<Id>>,
+    pub type_params: Vec<L<Id>>,
 
-    /// Kinds of type parameters in `params`. Filled in by kind inference.
-    pub kinds: Vec<Kind>,
+    /// Kinds of `type_params`. Filled in by kind inference.
+    pub type_param_kinds: Vec<Kind>,
 
     /// Methods of the trait.
     pub items: Vec<L<FunDecl>>,

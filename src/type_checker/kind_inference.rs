@@ -81,11 +81,11 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
 }
 
 fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
-    assert!(decl.kinds.is_empty());
+    assert!(decl.type_param_kinds.is_empty());
 
     let mut trait_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
     let mut trait_context_vars: Set<Id> = Default::default();
-    for param in &decl.params {
+    for param in &decl.type_params {
         trait_context_var_kinds.insert(param.node.clone(), None);
         trait_context_vars.insert(param.node.clone());
     }
@@ -94,8 +94,8 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
         add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds);
     }
 
-    decl.kinds = decl
-        .params
+    decl.type_param_kinds = decl
+        .type_params
         .iter()
         .map(|id| {
             trait_context_var_kinds

@@ -155,7 +155,7 @@ impl TraitDecl {
         buffer.push_str("trait ");
         buffer.push_str(&self.name.node);
         buffer.push('[');
-        for (i, ty) in self.params.iter().enumerate() {
+        for (i, ty) in self.type_params.iter().enumerate() {
             if i != 0 {
                 buffer.push_str(", ");
             }
