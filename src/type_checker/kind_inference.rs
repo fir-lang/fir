@@ -7,7 +7,7 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
     for decl in pgm {
         match &mut decl.node {
             ast::TopDecl::Fun(decl) => {
-                add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default())
+                add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)
             }
 
             ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
@@ -28,7 +28,11 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 //
 // When checking an `impl`, the kinds of type parameters in `tvs` should all be specified before
 // calling this function.
-fn add_missing_type_params_fun(sig: &mut ast::FunSig, tvs: &mut Map<Id, Option<Kind>>) {
+fn add_missing_type_params_fun(
+    sig: &mut ast::FunSig,
+    tvs: &mut Map<Id, Option<Kind>>,
+    _loc: &ast::Loc,
+) {
     let bound_vars: Set<Id> = tvs.keys().cloned().collect();
 
     for pred in &sig.context.preds {
@@ -70,7 +74,10 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     let impl_context_vars: Set<Id> = impl_context_var_kinds.keys().cloned().collect();
 
     for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds);
+        add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds, &fun.loc);
+
+        // Drop function variables added to the map.
+        impl_context_var_kinds.retain(|id, _| impl_context_vars.contains(id));
     }
 
     decl.context.type_params = impl_context_vars
@@ -87,13 +94,17 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
 
     let mut trait_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
     let mut trait_context_vars: Set<Id> = Default::default();
+
     for param in &decl.type_params {
         trait_context_var_kinds.insert(param.node.clone(), None);
         trait_context_vars.insert(param.node.clone());
     }
 
     for fun in &mut decl.items {
-        add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds);
+        add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds, &fun.loc);
+
+        // Drop function variables added to the map.
+        trait_context_var_kinds.retain(|id, _| trait_context_vars.contains(id));
     }
 
     decl.type_param_kinds = decl

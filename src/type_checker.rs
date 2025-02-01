@@ -99,7 +99,10 @@ fn add_exception_types(module: &mut ast::Module) {
                             loc: ast::Loc::dummy(),
                         });
                     } else {
-                        fun.sig.exceptions = Some(exn_type());
+                        fun.sig.exceptions = Some(exn_type(
+                            fun.name.loc.module.clone(),
+                            fun.name.loc.line_start,
+                        ));
                     }
                 }
             }
@@ -107,7 +110,8 @@ fn add_exception_types(module: &mut ast::Module) {
             ast::TopDecl::Trait(ast::L { node, .. }) => {
                 for fun in &mut node.items {
                     if fun.node.sig.exceptions.is_none() {
-                        fun.node.sig.exceptions = Some(exn_type());
+                        fun.node.sig.exceptions =
+                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
                     }
                 }
             }
@@ -115,7 +119,8 @@ fn add_exception_types(module: &mut ast::Module) {
             ast::TopDecl::Impl(ast::L { node, .. }) => {
                 for fun in &mut node.items {
                     if fun.node.sig.exceptions.is_none() {
-                        fun.node.sig.exceptions = Some(exn_type());
+                        fun.node.sig.exceptions =
+                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
                     }
                 }
             }
@@ -126,13 +131,21 @@ fn add_exception_types(module: &mut ast::Module) {
 }
 
 // The default exception type: `[..?exn]`.
-fn exn_type() -> ast::L<ast::Type> {
+fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
     ast::L {
         node: ast::Type::Variant {
             alts: Default::default(),
             extension: Some(EXN_QVAR_ID),
         },
-        loc: ast::Loc::dummy(),
+        loc: ast::Loc {
+            module,
+            line_start: line,
+            col_start: 0,
+            byte_offset_start: 0,
+            line_end: line,
+            col_end: 0,
+            byte_offset_end: 0,
+        },
     }
 }
 
@@ -308,88 +321,89 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     preds: vec![],
                 };
 
-                let _trait_context: Set<Pred> =
-                    convert_and_bind_context(&mut tys, &trait_context_ast, TyVarConversion::ToQVar);
+                let _trait_context: Set<Pred> = convert_and_bind_context(
+                    &mut tys,
+                    &trait_context_ast,
+                    TyVarConversion::ToQVar,
+                    &trait_decl.loc,
+                );
 
-                let methods: Map<Id, TraitMethod> = trait_decl
-                    .node
-                    .items
-                    .iter()
-                    .map(|fun| {
-                        // New scope for function context.
-                        tys.enter_scope();
+                let mut methods: Map<Id, TraitMethod> =
+                    Map::with_capacity_and_hasher(trait_decl.node.items.len(), Default::default());
 
-                        let fun_preds: Set<Pred> = convert_and_bind_context(
-                            &mut tys,
-                            &fun.node.sig.context,
-                            TyVarConversion::ToQVar,
-                        );
+                for fun in &trait_decl.node.items {
+                    // New scope for function context.
+                    tys.enter_scope();
 
-                        let mut arg_tys: Vec<Ty> = fun
-                            .node
-                            .sig
-                            .params
-                            .iter()
-                            .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
-                            .collect();
+                    let fun_preds: Set<Pred> = convert_and_bind_context(
+                        &mut tys,
+                        &fun.node.sig.context,
+                        TyVarConversion::ToQVar,
+                        &fun.loc,
+                    );
 
-                        match &fun.node.sig.self_ {
-                            ast::SelfParam::No => {}
-                            ast::SelfParam::Implicit => {
-                                panic!(
-                                    "{}: Trait methods can't have implicit self type",
-                                    loc_display(&fun.loc)
-                                );
-                            }
-                            ast::SelfParam::Explicit(ty) => {
-                                arg_tys.insert(0, convert_ast_ty(&tys, &ty.node, &ty.loc));
-                            }
+                    let mut arg_tys: Vec<Ty> = fun
+                        .node
+                        .sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &fun.node.sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => {
+                            panic!(
+                                "{}: Trait methods can't have implicit self type",
+                                loc_display(&fun.loc)
+                            );
                         }
+                        ast::SelfParam::Explicit(ty) => {
+                            arg_tys.insert(0, convert_ast_ty(&tys, &ty.node, &ty.loc));
+                        }
+                    }
 
-                        let ret_ty: Ty = match &fun.node.sig.return_ty {
-                            Some(ret_ty) => convert_ast_ty(&tys, &ret_ty.node, &ret_ty.loc),
-                            None => Ty::unit(),
-                        };
+                    let ret_ty: Ty = match &fun.node.sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(&tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
 
-                        let exceptions = match &fun.node.sig.exceptions {
-                            Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
-                            None => panic!(),
-                        };
+                    let exceptions = match &fun.node.sig.exceptions {
+                        Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
 
-                        let fun_ty = Ty::Fun {
-                            args: FunArgs::Positional(arg_tys),
-                            ret: Box::new(ret_ty),
-                            exceptions: Some(Box::new(exceptions)),
-                        };
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
 
-                        tys.exit_scope();
+                    tys.exit_scope();
 
-                        let scheme = Scheme {
-                            quantified_vars: trait_decl
-                                .node
-                                .type_params
-                                .iter()
-                                .map(|id| id.node.clone())
-                                .zip(trait_decl.node.type_param_kinds.iter().cloned())
-                                .chain(fun.node.sig.context.type_params.iter().cloned())
-                                .collect(),
-                            preds: fun_preds,
-                            ty: fun_ty,
-                            loc: fun.loc.clone(),
-                        };
+                    let scheme = Scheme {
+                        quantified_vars: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|id| id.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                            .chain(fun.node.sig.context.type_params.iter().cloned())
+                            .collect(),
+                        preds: fun_preds,
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
 
-                        (fun.node.name.node.clone(), {
-                            TraitMethod {
-                                scheme,
-                                fun_decl: fun.clone(),
-                            }
-                        })
-                    })
-                    .collect();
+                    methods.insert(fun.node.name.node.clone(), {
+                        TraitMethod {
+                            scheme,
+                            fun_decl: fun.clone(),
+                        }
+                    });
+                }
 
                 let ty_con = tys.get_con_mut(&trait_decl.node.name.node).unwrap();
-                assert_eq!(ty_con.ty_params.len(), 1);
-
                 ty_con.details = TyConDetails::Trait(TraitDetails { methods });
 
                 tys.exit_scope();
@@ -424,8 +438,12 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             .collect();
         */
 
-        let _impl_context =
-            convert_and_bind_context(&mut tys, &impl_decl.context, TyVarConversion::ToQVar);
+        let _impl_context = convert_and_bind_context(
+            &mut tys,
+            &impl_decl.context,
+            TyVarConversion::ToQVar,
+            &decl.loc,
+        );
 
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap_or_else(|| {
             panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id)
@@ -532,7 +550,7 @@ fn collect_schemes(
                 loc,
             }) => {
                 let fun_preds: Set<Pred> =
-                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
+                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar, loc);
 
                 let mut arg_tys: Vec<Ty> = sig
                     .params
@@ -773,6 +791,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         &mut tys.tys,
         &fun.node.sig.context,
         TyVarConversion::ToOpaque,
+        &fun.loc,
     );
 
     for (param_name, param_ty) in &fun.node.sig.params {
@@ -826,8 +845,12 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let impl_assumps =
-        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToOpaque);
+    let impl_assumps = convert_and_bind_context(
+        &mut tys.tys,
+        &impl_.node.context,
+        TyVarConversion::ToOpaque,
+        &impl_.loc,
+    );
 
     let trait_ty_con_id = &impl_.node.trait_;
 
@@ -859,6 +882,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
             &mut tys.tys,
             &fun.node.sig.context,
             TyVarConversion::ToOpaque,
+            &fun.loc,
         );
 
         // Check the body.
