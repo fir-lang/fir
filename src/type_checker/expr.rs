@@ -125,20 +125,11 @@ pub(super) fn check_expr(
             )
         }
 
+        // <object:Expr>.<field:Id>.
+        // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
                 let object_ty = check_expr(tc_state, object, None, level, loop_stack);
-
-                // To be able to select a field or method of a type made precise via a unification
-                // to an associated type, try to resolve predicates right before selecting the field
-                // or method.
-                *tc_state.preds = super::resolve_preds(
-                    tc_state.context,
-                    tc_state.tys,
-                    take(tc_state.preds),
-                    tc_state.var_gen,
-                    level,
-                );
 
                 let field = field.clone();
                 let expr_loc = expr.loc.clone();
@@ -262,7 +253,14 @@ pub(super) fn check_expr(
                 .get(ty)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(&expr.loc), ty))
                 .get(member)
-                .or_else(|| tc_state.tys.method_schemes.get(ty).unwrap().get(member))
+                .or_else(|| {
+                    tc_state
+                        .tys
+                        .associated_fn_schemes
+                        .get(ty)
+                        .unwrap()
+                        .get(member)
+                })
                 .unwrap_or_else(|| {
                     panic!(
                         "{}: Type {} does not have associated function {}",
@@ -512,7 +510,6 @@ pub(super) fn check_expr(
                         tc_state.preds.insert(Pred {
                             trait_: Ty::to_str_id(),
                             params: vec![Ty::Var(expr_var.clone())],
-                            assoc_tys: Default::default(),
                             loc: expr.loc.clone(),
                         });
                         let part_ty =
@@ -851,7 +848,9 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
-            assert!(sig.type_params.is_empty());
+            assert!(sig.context.type_params.is_empty());
+            assert!(sig.context.preds.is_empty());
+            assert!(matches!(&sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
 
             tc_state.env.enter(); // for term params
@@ -938,6 +937,7 @@ fn check_field_select(
         _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
     };
 
+    // TODO: What if we have a method and a field with the same name?
     match select_field(tc_state, ty_con, ty_args, &field_select.field, loc) {
         Some(ty) => ty,
         None => match select_method(ty_con, ty_args, &field_select.field, tc_state.tys, loc) {
@@ -1029,7 +1029,7 @@ pub(super) fn select_field(
                         args: FunArgs::Named(fields),
                         ret: _,
                         exceptions: _,
-                    } => Some(fields.get(field)?.clone()),
+                    } => fields.get(field).cloned(),
                     _ => None,
                 }
             }
