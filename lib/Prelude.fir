@@ -18,72 +18,72 @@ trait VarRow[t]
 
 # The `+` operator.
 trait Add[t]:
-    __add(self, other: t): t
+    __add(self: t, other: t): t
 
 # The `-` operator.
 trait Sub[t]:
-    __sub(self, other: t): t
+    __sub(self: t, other: t): t
 
 # The unary `-` operator.
 trait Neg[t]:
-    __neg(self): t
+    __neg(self: t): t
 
 # The `*` operator.
 trait Mul[t]:
-    __mul(self, other: t): t
+    __mul(self: t, other: t): t
 
 # The `/` operator.
 trait Div[t]:
-    __div(self, other: t): t
+    __div(self: t, other: t): t
 
 # The `==` operator.
 trait Eq[t]:
-    __eq(self, other: t): Bool
+    __eq(self: t, other: t): Bool
 
-    __neq(self, other: t): Bool
+    __neq(self: t, other: t): Bool
         !self.__eq(other)
 
 # The `|` operator.
 trait BitOr[t]:
-    __bitor(self, other: t): t
+    __bitor(self: t, other: t): t
 
 # The `&` operator.
 trait BitAnd[t]:
-    __bitand(self, other: t): t
+    __bitand(self: t, other: t): t
 
 # The `<<` operator.
 trait Shl[t]:
-    __shl(self, other: t): t
+    __shl(self: t, other: t): t
 
 # The `>>` operator.
 trait Shr[t]:
-    __shr(self, other: t): t
+    __shr(self: t, other: t): t
 
 trait Ord[t]:
-    cmp(self, other: t): Ordering
+    cmp(self: t, other: t): Ordering
 
-    __lt(self, other: t): Bool
+    __lt(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Less: Bool.True
             _: Bool.False
 
-    __le(self, other: t): Bool
+    __le(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Less | Ordering.Equal: Bool.True
             _: Bool.False
 
-    __gt(self, other: t): Bool
+    __gt(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Greater: Bool.True
             _: Bool.False
 
-    __ge(self, other: t): Bool
+    __ge(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Greater | Ordering.Equal: Bool.True
             _: Bool.False
 
 trait ToStr[t]:
-    toStr(self): Str
+    toStr(self: t): Str
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
