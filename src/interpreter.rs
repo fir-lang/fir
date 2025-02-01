@@ -25,6 +25,7 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args: &[String]) {
     let closures = collect_closures(&mut pgm);
 
@@ -71,6 +72,52 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args:
                 heap[arg_vec + 2 + (i as u64)] = arg_val;
             }
             vec![arg_vec]
+        }
+        other => panic!(
+            "`main` needs to take 0 or 1 argument, but it takes {} arguments",
+            other
+        ),
+    };
+
+    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: &str) {
+    let closures = collect_closures(&mut pgm);
+
+    let mut heap = Heap::new();
+    let pgm = Pgm::new(pgm, &mut heap, closures);
+
+    // Find the main function.
+    let main_fun = pgm
+        .top_level_funs
+        .get(main)
+        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
+
+    // `main` doesn't have a call site, called by the interpreter.
+    let call_loc = Loc {
+        module: "".into(),
+        line_start: 0,
+        col_start: 0,
+        byte_offset_start: 0,
+        line_end: 0,
+        col_end: 0,
+        byte_offset_end: 0,
+    };
+
+    // Check if main takes an input argument.
+    let main_num_args = match &main_fun.kind {
+        FunKind::Builtin(_) => panic!(),
+        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
+    };
+
+    let arg_vec: Vec<u64> = match main_num_args {
+        0 => {
+            vec![]
+        }
+        1 => {
+            vec![heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, input.as_bytes())]
         }
         other => panic!(
             "`main` needs to take 0 or 1 argument, but it takes {} arguments",
