@@ -30,23 +30,26 @@ use smol_str::SmolStr;
 /// Type constructors and types in the program.
 #[derive(Debug)]
 pub struct PgmTypes {
-    /// Type schemes of top-level values.
+    /// Type schemes of top-level functions.
+    ///
+    /// These functions don't take a `self` parameter and can't be called as methods.
     pub top_schemes: Map<Id, Scheme>,
 
-    /// Type schemes of associated functions, methods, and constructors.
+    /// Type schemes of associated functions.
     ///
-    /// Methods take a `self` parameter. Associated functions don't. They can both be accessed as
-    /// `Type.fun`.
+    /// These include methods (associated functions with a `self` parameter).
     pub associated_fn_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type schemes of methods.
     ///
-    /// Methods are associated functions that take a `self` parameter. These functions can be called
-    /// using method call syntax: `receiver.fun(arg2, arg3)`, which is the same as
-    /// `Ty.fun(receiver, arg2, arg3)`.
+    /// These are associated functions (so they're also in `associated_fn_schemes`) that take a
+    /// `self` parameter.
     ///
-    /// Functions in this map will also be in `associated_fn_schemes`.
-    pub method_schemes: Map<Id, Map<Id, Scheme>>,
+    /// The first parameters of the function types here are the `self` types.
+    ///
+    /// Because these schemes are only used in method call syntax, the keys are not type names but
+    /// method names. The values are type schemes of methods with the name.
+    pub method_schemes: Map<Id, Vec<Scheme>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -102,27 +105,17 @@ fn add_exception_types(module: &mut ast::Module) {
             }
 
             ast::TopDecl::Trait(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match &mut item.node {
-                        ast::TraitDeclItem::AssocTy(_) => {}
-                        ast::TraitDeclItem::Fun(fun) => {
-                            if fun.sig.exceptions.is_none() {
-                                fun.sig.exceptions = Some(exn_type());
-                            }
-                        }
+                for fun in &mut node.items {
+                    if fun.node.sig.exceptions.is_none() {
+                        fun.node.sig.exceptions = Some(exn_type());
                     }
                 }
             }
 
             ast::TopDecl::Impl(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match &mut item.node {
-                        ast::ImplDeclItem::AssocTy(_) => {}
-                        ast::ImplDeclItem::Fun(fun) => {
-                            if fun.sig.exceptions.is_none() {
-                                fun.sig.exceptions = Some(exn_type());
-                            }
-                        }
+                for fun in &mut node.items {
+                    if fun.node.sig.exceptions.is_none() {
+                        fun.node.sig.exceptions = Some(exn_type());
                     }
                 }
             }
@@ -150,17 +143,6 @@ struct TcFunState<'a> {
 
     /// Type environment.
     tys: &'a mut PgmTypes,
-
-    /// The full context of the function, including `impl` context. E.g. in
-    /// ```ignore
-    /// impl[t: P1] A[t]:
-    ///     fn f[a: P2](self, a: a)
-    /// ```
-    /// this will be `{t => {P1}, a => {P2}}`.
-    ///
-    /// This is used to eagerly resolve predicates during type checking, to be able to resolve
-    /// associated types.
-    context: &'a Map<Id, QVar>,
 
     /// Unification variable generator.
     var_gen: &'a mut TyVarGen,
@@ -703,7 +685,7 @@ fn collect_schemes(
 ) -> (
     Map<Id, Scheme>,
     Map<Id, Map<Id, Scheme>>,
-    Map<Id, Map<Id, Scheme>>,
+    Map<Id, Vec<Scheme>>,
 ) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();

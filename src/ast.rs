@@ -254,6 +254,7 @@ pub(crate) enum SelfParam {
 }
 
 #[derive(Debug, Clone)]
+
 pub struct FunDecl {
     /// Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
     pub parent_ty: Option<L<Id>>,
