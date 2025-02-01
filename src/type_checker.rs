@@ -529,15 +529,42 @@ fn collect_schemes(
                     },
                 loc,
             }) => {
-                let fun_var_kinds = fun_sig_ty_var_kinds(sig);
+                let fun_preds: Set<Pred> =
+                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar);
 
-                let fun_context: Set<Pred> = convert_and_bind_context(tys, &fun_var_kinds, loc);
-
-                let arg_tys: Vec<Ty> = sig
+                let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
                     .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect();
+
+                match sig.self_ {
+                    ast::SelfParam::No => {}
+                    ast::SelfParam::Implicit => {
+                        // The parent type should have no type arguments.
+                        match parent_ty {
+                            Some(parent_ty) => {
+                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap_or_else(||
+                                    panic!("{}: Unknown type {}", loc_display(&decl.loc), &parent_ty.node));
+                                if !parent_ty_con.ty_params.is_empty() {
+                                    panic!(
+                                        "{}: Can't infer `self` type as the parent type {} has type parameters",
+                                        loc_display(&decl.loc),
+                                        &parent_ty.node
+                                    );
+                                }
+                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone()));
+                            }
+                            None => panic!(
+                                "{}: Function with `self` type needs to have to be an associated function",
+                                loc_display(&decl.loc)
+                            ),
+                        }
+                    }
+                    ast::SelfParam::Explicit(ty) => {
+                        arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                    }
+                }
 
                 let ret_ty: Ty = match &sig.return_ty {
                     Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
@@ -556,52 +583,58 @@ fn collect_schemes(
                 };
 
                 let scheme = Scheme {
-                    quantified_vars: fun_context,
+                    quantified_vars: sig.context.type_params.iter().cloned().collect(),
+                    preds: fun_preds,
                     ty: fun_ty,
                     loc: loc.clone(),
                 };
 
-                let old = top_schemes.insert(name.node.clone(), scheme);
-                if old.is_some() {
-                    panic!(
-                        "{}: Function {} is defined multiple times",
-                        loc_display(loc),
-                        name.node
-                    );
+                match parent_ty {
+                    Some(parent_ty) => {
+                        let old = associated_fn_schemes
+                            .entry(parent_ty.node.clone())
+                            .or_default()
+                            .insert(name.node.clone(), scheme);
+                        if old.is_some() {
+                            panic!(
+                                "{}: {}.{} is defined multiple times",
+                                loc_display(loc),
+                                parent_ty.node,
+                                name.node
+                            );
+                        }
+
+                        match sig.self_ {
+                            ast::SelfParam::No => {}
+                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                                method_schemes
+                                    .entry(parent_ty.node.clone())
+                                    .or_default()
+                                    .insert(name.node.clone(), scheme);
+                            }
+                        }
+                    }
+                    None => {
+                        let old = top_schemes.insert(name.node.clone(), scheme);
+                        if old.is_some() {
+                            panic!(
+                                "{}: {} is defined multiple times",
+                                loc_display(loc),
+                                name.node
+                            );
+                        }
+                    }
                 }
             }
 
             ast::TopDecl::Impl(impl_decl) => {
-                let impl_var_kinds: Map<Id, Kind> = impl_decl
-                    .node
-                    .context
-                    .iter()
-                    .map(|param| (param.id.node.clone(), Kind::Star))
-                    .collect();
-
-                let impl_context: Vec<(Id, QVar)> = convert_and_bind_context(
-                    tys,
-                    &impl_decl.node.context,
-                    &impl_var_kinds,
-                    TyVarConversion::ToQVar,
-                    &impl_decl.loc,
-                );
+                let impl_context: Set<Pred> =
+                    convert_and_bind_context(tys, &impl_decl.node.context, TyVarConversion::ToQVar);
 
                 let self_ty: Ty =
                     convert_ast_ty(tys, &impl_decl.node.ty.node, &impl_decl.node.ty.loc);
 
                 let (self_ty_con_id, _) = self_ty.con(tys.cons()).unwrap();
-
-                // If not in a trait impl block, make sure `self` is not a trait.
-                if impl_decl.node.trait_.is_none()
-                    && tys.cons().get(&self_ty_con_id).map(|con| con.is_trait()) == Some(true)
-                {
-                    panic!(
-                        "{}: Type constructor {} in trait `impl` block is not a trait",
-                        loc_display(&impl_decl.loc),
-                        self_ty_con_id
-                    );
-                }
 
                 for fun in &impl_decl.node.items {
                     assert_eq!(tys.len_scopes(), 2); // top-level, impl
