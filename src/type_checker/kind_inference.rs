@@ -38,6 +38,13 @@ fn add_missing_type_params_fun(
     for pred in &sig.context.preds {
         collect_tvs(&pred.node, &pred.loc, tvs);
     }
+    match &sig.self_ {
+        ast::SelfParam::No |
+        ast::SelfParam::Implicit => {}
+        ast::SelfParam::Explicit(ty) => {
+            collect_tvs(&ty.node, &ty.loc, tvs);
+        }
+    }
     for (_, param_ty) in &sig.params {
         collect_tvs(&param_ty.node, &param_ty.loc, tvs);
     }
