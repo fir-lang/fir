@@ -309,6 +309,224 @@ pub(super) fn unify(
     }
 }
 
+/// Try to unify `ty1` with the `ty2`, without updating `ty2`.
+///
+/// This does not panic on errors. Returns whether unification was successful.
+pub(super) fn try_unify_one_way(
+    ty1: &Ty,
+    ty2: &Ty,
+    cons: &ScopeMap<Id, TyCon>,
+    var_gen: &mut TyVarGen,
+    level: u32,
+    loc: &ast::Loc,
+) -> bool {
+    let ty1 = ty1.normalize(cons);
+    let ty2 = ty2.normalize(cons);
+    match (&ty1, &ty2) {
+        (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
+
+        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+            if con1 != con2 {
+                return false;
+            }
+
+            match (args1, args2) {
+                (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
+                    if args1.len() != args2.len() {
+                        return false;
+                    }
+                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                        if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
+                            return false;
+                        }
+                    }
+                    true
+                }
+                (TyArgs::Named(args1), TyArgs::Named(args2)) => {
+                    let keys1: Set<&Id> = args1.keys().collect();
+                    let keys2: Set<&Id> = args2.keys().collect();
+                    if keys1 != keys2 {
+                        return false;
+                    }
+
+                    for key in keys1 {
+                        if !try_unify_one_way(
+                            args1.get(key).unwrap(),
+                            args2.get(key).unwrap(),
+                            cons,
+                            var_gen,
+                            level,
+                            loc,
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    true
+                }
+
+                _ => false,
+            }
+        }
+
+        (
+            Ty::Fun {
+                args: args1,
+                ret: ret1,
+                exceptions: exceptions1,
+            },
+            Ty::Fun {
+                args: args2,
+                ret: ret2,
+                exceptions: exceptions2,
+            },
+        ) => {
+            if args1.len() != args2.len() {
+                return false;
+            }
+
+            match (args1, args2) {
+                (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
+                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                        if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
+                            return false;
+                        }
+                    }
+                }
+
+                (FunArgs::Named(args1), FunArgs::Named(args2)) => {
+                    let arg_names_1: Set<&Id> = args1.keys().collect();
+                    let arg_names_2: Set<&Id> = args2.keys().collect();
+                    if arg_names_1 != arg_names_2 {
+                        return false;
+                    }
+
+                    for arg_name in arg_names_1 {
+                        if !try_unify_one_way(
+                            args1.get(arg_name).unwrap(),
+                            args2.get(arg_name).unwrap(),
+                            cons,
+                            var_gen,
+                            level,
+                            loc,
+                        ) {
+                            return false;
+                        }
+                    }
+                }
+
+                (FunArgs::Named(_), FunArgs::Positional(_))
+                | (FunArgs::Positional(_), FunArgs::Named(_)) => return false,
+            }
+
+            match (exceptions1, exceptions2) {
+                (None, None) => {}
+
+                (None, Some(_)) | (Some(_), None) => {
+                    // None is the same as [..r] with a fresh r, so it unifies with everything.
+                }
+
+                (Some(exceptions1), Some(exceptions2)) => {
+                    if !try_unify_one_way(exceptions1, exceptions2, cons, var_gen, level, loc) {
+                        return false;
+                    }
+                }
+            }
+
+            try_unify_one_way(ret1, ret2, cons, var_gen, level, loc)
+        }
+
+        (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
+            panic!("{}: QVar {} during unification", loc_display(loc), var);
+        }
+
+        (Ty::Var(var), ty2) => {
+            link_var(var, ty2);
+            true
+        }
+
+        (
+            Ty::Anonymous {
+                labels: labels1,
+                extension: extension1,
+                kind: kind1,
+                is_row: is_row_1,
+            },
+            Ty::Anonymous {
+                labels: labels2,
+                extension: extension2,
+                kind: kind2,
+                is_row: is_row_2,
+            },
+        ) => {
+            // TODO: Are these type errors or bugs?
+            assert_eq!(kind1, kind2);
+            assert_eq!(is_row_1, is_row_2);
+
+            let (labels1, mut extension1) =
+                collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
+            let (labels2, extension2) =
+                collect_rows(cons, &ty2, *kind2, labels2, extension2.clone());
+
+            let keys1: Set<&Id> = labels1.keys().collect();
+            let keys2: Set<&Id> = labels2.keys().collect();
+
+            // Extra labels in one type will be added to the extension of the other.
+            let extras1: Set<&&Id> = keys1.difference(&keys2).collect();
+            let extras2: Set<&&Id> = keys2.difference(&keys1).collect();
+
+            // Unify common labels.
+            for key in keys1.intersection(&keys2) {
+                let ty1 = labels1.get(*key).unwrap();
+                let ty2 = labels2.get(*key).unwrap();
+                if !try_unify_one_way(ty1, ty2, cons, var_gen, level, loc) {
+                    return false;
+                }
+            }
+
+            if !extras1.is_empty() {
+                return false;
+            }
+
+            if !extras2.is_empty() {
+                match &extension1 {
+                    Some(Ty::Var(var)) => {
+                        // TODO: Not sure about level
+                        extension1 = Some(Ty::Var(link_extension(
+                            *kind1, &extras2, &labels2, var, var_gen, level, loc,
+                        )));
+                    }
+                    _ => {
+                        return false;
+                    }
+                }
+            }
+
+            fn unit(kind: RecordOrVariant) -> Ty {
+                Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind,
+                    is_row: true,
+                }
+            }
+
+            match (extension1, extension2) {
+                (None, None) => true,
+                (Some(ext1), None) => {
+                    try_unify_one_way(&ext1, &unit(*kind1), cons, var_gen, level, loc)
+                }
+                (None, Some(_)) => false,
+                (Some(ext1), Some(ext2)) => {
+                    try_unify_one_way(&ext1, &ext2, cons, var_gen, level, loc)
+                }
+            }
+        }
+
+        (_, _) => false,
+    }
+}
+
 fn link_extension(
     kind: RecordOrVariant,
     extra_labels: &Set<&&Id>,

@@ -5,8 +5,8 @@ use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
-use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{loc_display, PgmTypes, TcFunState};
+use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
+use crate::type_checker::{loc_display, TcFunState};
 
 use std::mem::{replace, take};
 
@@ -938,66 +938,67 @@ fn check_field_select(
     };
 
     // TODO: What if we have a method and a field with the same name?
-    match select_field(tc_state, ty_con, ty_args, &field_select.field, loc) {
-        Some(ty) => ty,
-        None => match select_method(ty_con, ty_args, &field_select.field, tc_state.tys, loc) {
-            Some(scheme) => {
-                let (method_ty, method_ty_args) =
-                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
-                // Instantiates an associated function.
-                object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
-                    // Replace detached field_select field with some random expr to avoid
-                    // cloning.
-                    object: Box::new(replace(
-                        &mut field_select.object,
-                        ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: ast::Expr::Self_,
-                        },
-                    )),
-                    object_ty: Some(if ty_args.is_empty() {
-                        Ty::Con(ty_con.clone())
-                    } else {
-                        Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
-                    }),
-                    method: field_select.field.clone(),
-                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
-                });
+    if let Some(field_ty) = select_field(tc_state, ty_con, ty_args, &field_select.field, loc) {
+        return field_ty;
+    }
 
-                // Type arguments of the receiver already substituted for type parameters in
-                // `select_method`. Drop 'self' argument.
-                match method_ty {
+    match select_method(tc_state, ty_con, ty_args, &field_select.field, loc, level) {
+        Some(scheme) => {
+            let (method_ty, method_ty_args) =
+                scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+            // Instantiates an associated function.
+            object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                // Replace detached field_select field with some random expr to avoid
+                // cloning.
+                object: Box::new(replace(
+                    &mut field_select.object,
+                    ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::Self_,
+                    },
+                )),
+                object_ty: Some(if ty_args.is_empty() {
+                    Ty::Con(ty_con.clone())
+                } else {
+                    Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+                }),
+                method: field_select.field.clone(),
+                ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+            });
+
+            // Type arguments of the receiver already substituted for type parameters in
+            // `select_method`. Drop 'self' argument.
+            match method_ty {
+                Ty::Fun {
+                    mut args,
+                    ret,
+                    exceptions,
+                } => {
+                    match &mut args {
+                        FunArgs::Positional(args) => {
+                            args.remove(0);
+                        }
+                        FunArgs::Named(_) => panic!(),
+                    }
                     Ty::Fun {
-                        mut args,
+                        args,
                         ret,
                         exceptions,
-                    } => {
-                        match &mut args {
-                            FunArgs::Positional(args) => {
-                                args.remove(0);
-                            }
-                            FunArgs::Named(_) => panic!(),
-                        }
-                        Ty::Fun {
-                            args,
-                            ret,
-                            exceptions,
-                        }
                     }
-                    _ => panic!(
-                        "{}: Type of method is not a function type: {:?}",
-                        loc_display(loc),
-                        method_ty
-                    ),
                 }
+                _ => panic!(
+                    "{}: Type of method is not a function type: {:?}",
+                    loc_display(loc),
+                    method_ty
+                ),
             }
-            None => panic!(
-                "{}: Type {} does not have field or method {}",
-                loc_display(loc),
-                ty_con,
-                field
-            ),
-        },
+        }
+        None => panic!(
+            "{}: Type {} does not have field or method {}",
+            loc_display(loc),
+            ty_con,
+            field
+        ),
     }
 }
 
@@ -1052,33 +1053,39 @@ pub(super) fn select_field(
     }
 }
 
-/// Try to select a method. Does not select associated functions.
+/// Try to select a method (direct or trait). Does not select associated functions.
 fn select_method(
-    ty_con: &Id,
-    ty_args: &[Ty],
-    field: &Id,
-    tys: &PgmTypes,
+    tc_state: &mut TcFunState,
+    ty_con: &Id,    // receiver ty con
+    ty_args: &[Ty], // receiver ty args
+    method: &Id,
     loc: &ast::Loc,
+    level: u32,
 ) -> Option<Scheme> {
-    let ty_con = tys.tys.get_con(ty_con).unwrap();
-    assert_eq!(ty_con.ty_params.len(), ty_args.len());
-
-    let ty_methods = tys.method_schemes.get(&ty_con.id)?;
-    let mut scheme = ty_methods.get(field)?.clone();
-
-    // Replace the first type parameters of the scheme with `ty_args`.
-    assert!(ty_args.len() <= scheme.quantified_vars.len());
-
-    let substituted_quantified_vars: Vec<Id> = scheme
-        .quantified_vars
-        .iter()
-        .take(ty_args.len())
-        .map(|(qvar, _)| qvar.clone())
-        .collect();
-
-    for (quantified_var, ty_arg) in substituted_quantified_vars.iter().zip(ty_args.iter()) {
-        scheme = scheme.subst(quantified_var, ty_arg, loc);
+    {
+        let ty_con = tc_state.tys.tys.get_con(ty_con).unwrap();
+        assert_eq!(ty_con.ty_params.len(), ty_args.len());
     }
 
-    Some(scheme)
+    let receiver = if ty_args.is_empty() {
+        Ty::Con(ty_con.clone())
+    } else {
+        Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+    };
+
+    for candidate in tc_state.tys.method_schemes.get(method)? {
+        let (ty, _) = candidate.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        if try_unify_one_way(
+            &ty,
+            &receiver,
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            level,
+            loc,
+        ) {
+            return Some(candidate.clone());
+        }
+    }
+
+    None
 }
