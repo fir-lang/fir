@@ -292,31 +292,28 @@ fn check_stmt(
         }) => {
             assert!(expr_ty.is_none());
 
-            let ty = ty
-                .as_ref()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc));
-
-            // Expect the iterator to have fresh type `X` and add predicate `X: Iterator[Item = A]`
-            // with fresh type `A`.
+            // Fresh `iter` for the predicate `Iterator[iter, item]`.
             let iterator_ty_var = tc_state
                 .var_gen
                 .new_var(level, Kind::Star, expr.loc.clone());
 
-            // TODO: loc should be the loc of `var`, which we don't have.
-            let item_ty_var = ty.clone().unwrap_or_else(|| {
-                Ty::Var(
-                    tc_state
-                        .var_gen
-                        .new_var(level, Kind::Star, expr.loc.clone()),
-                )
-            });
+            // The type `item` for the predicate `Iterator[iter, item]`. This will the the pattern
+            // type (when available) or a fresh type variable.
+            let item_ty_var = ty
+                .as_ref()
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc))
+                .unwrap_or_else(|| {
+                    Ty::Var(
+                        tc_state
+                            .var_gen
+                            .new_var(level, Kind::Star, expr.loc.clone()),
+                    )
+                });
 
+            // Add predicate `Iterator[iter, item]`.
             tc_state.preds.insert(Pred {
                 trait_: SmolStr::new_static("Iterator"),
-                params: vec![Ty::Var(iterator_ty_var.clone())],
-                assoc_tys: [(SmolStr::new_static("Item"), item_ty_var.clone())]
-                    .into_iter()
-                    .collect(),
+                params: vec![Ty::Var(iterator_ty_var.clone()), item_ty_var.clone()],
                 loc: stmt.loc.clone(),
             });
 
