@@ -538,7 +538,7 @@ fn collect_schemes(
                     .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect();
 
-                match sig.self_ {
+                match &sig.self_ {
                     ast::SelfParam::No => {}
                     ast::SelfParam::Implicit => {
                         // The parent type should have no type arguments.
@@ -591,6 +591,16 @@ fn collect_schemes(
 
                 match parent_ty {
                     Some(parent_ty) => {
+                        match sig.self_ {
+                            ast::SelfParam::No => {}
+                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                                method_schemes
+                                    .entry(name.node.clone())
+                                    .or_default()
+                                    .push(scheme.clone());
+                            }
+                        }
+
                         let old = associated_fn_schemes
                             .entry(parent_ty.node.clone())
                             .or_default()
@@ -602,16 +612,6 @@ fn collect_schemes(
                                 parent_ty.node,
                                 name.node
                             );
-                        }
-
-                        match sig.self_ {
-                            ast::SelfParam::No => {}
-                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
-                                method_schemes
-                                    .entry(name.node.clone())
-                                    .or_default()
-                                    .push(scheme);
-                            }
                         }
                     }
                     None => {
@@ -679,25 +679,15 @@ fn collect_schemes(
                                     exceptions: None,
                                 },
                             };
-                            let var_kinds = constructor_decls_var_kinds(cons);
                             let scheme = Scheme {
                                 quantified_vars: ty_decl
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|ty_param| {
-                                        (
-                                            ty_param.clone(),
-                                            QVar {
-                                                kind: var_kinds
-                                                    .get(ty_param)
-                                                    .cloned()
-                                                    .unwrap_or(Kind::Star),
-                                                bounds: Default::default(),
-                                            },
-                                        )
-                                    })
+                                    .cloned()
+                                    .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                     .collect(),
+                                preds: Default::default(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
@@ -729,25 +719,15 @@ fn collect_schemes(
                                 exceptions: None,
                             },
                         };
-                        let var_kinds = constructor_fields_var_kinds(fields);
                         let scheme = Scheme {
                             quantified_vars: ty_decl
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_param| {
-                                    (
-                                        ty_param.clone(),
-                                        QVar {
-                                            kind: var_kinds
-                                                .get(ty_param)
-                                                .cloned()
-                                                .unwrap_or(Kind::Star),
-                                            bounds: Default::default(),
-                                        },
-                                    )
-                                })
+                                .cloned()
+                                .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
+                            preds: Default::default(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
                         };
