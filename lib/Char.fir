@@ -2,11 +2,11 @@
 type Char:
     _codePoint: U32
 
-impl Eq for Char:
+impl Eq[Char]:
     __eq(self, other: Char): Bool
         self._codePoint == other._codePoint
 
-impl Ord for Char:
+impl Ord[Char]:
     cmp(self, other: Char): Ordering
         self._codePoint.cmp(other._codePoint)
 
@@ -46,7 +46,7 @@ Char.isAsciiDigit(self): Bool
 Char.isAsciiAlphanumeric(self): Bool
     self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
 
-impl ToStr for Char:
+impl ToStr[Char]:
     toStr(self): Str
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
         strBuf.push('\'')

@@ -7,7 +7,7 @@ mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
-mod monomorph;
+// mod monomorph;
 mod parser;
 mod parser_utils;
 mod record_collector;
@@ -141,11 +141,13 @@ mod native {
             return;
         }
 
+        /*
         module = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
             ast::printer::print_module(&module);
         }
+        */
 
         let mut w = std::io::stdout();
         program_args.insert(0, program);

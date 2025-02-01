@@ -95,7 +95,7 @@ Str.splitWhitespace(self): SplitWhitespace
 Str.lines(self): Lines
     Lines(_str = self, _idx = 0)
 
-impl Eq for Str:
+impl Eq[Str]:
     __eq(self, other: Str): Bool
         if self.len() != other.len():
             return Bool.False
@@ -106,7 +106,7 @@ impl Eq for Str:
 
         Bool.True
 
-impl ToStr for Str:
+impl ToStr[Str]:
     toStr(self): Str = self
 
 type CharIter:
@@ -127,9 +127,7 @@ CharIter.asStr(self): Str
         _len = self._end - self._idx
     )
 
-impl Iterator for CharIter:
-    type Item = Char
-
+impl Iterator[CharIter, Char]:
     next(self): Option[Char]
         if self._idx == self._end:
             return Option.None
@@ -143,9 +141,7 @@ type CharIndices:
     _str: Str
     _idx: U32
 
-impl Iterator for CharIndices:
-    type Item = (char: Char, idx: U32)
-
+impl Iterator[CharIndices, (char: Char, idx: U32)]:
     next(self): Option[(char: Char, idx: U32)]
         if self._idx == self._str.len():
             return Option.None
@@ -189,9 +185,7 @@ type SplitWhitespace:
     _str: Str
     _idx: U32
 
-impl Iterator for SplitWhitespace:
-    type Item = Str
-
+impl Iterator[SplitWhitespace, Str]:
     next(self): Option[Str]
         let wordStart = self._idx
         let wordEnd = wordStart
@@ -228,9 +222,7 @@ type Lines:
     _str: Str
     _idx: U32
 
-impl Iterator for Lines:
-    type Item = Str
-
+impl Iterator[Lines, Str]:
     next(self): Option[Str]
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()

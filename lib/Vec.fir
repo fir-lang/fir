@@ -2,10 +2,10 @@ type Vec[t]:
     _data: Array[t]
     _len: U32
 
-Vec[t].withCapacity(cap: U32): Vec[t]
+Vec.withCapacity(cap: U32): Vec[t]
     Vec(_data = Array.new(cap), _len = 0)
 
-Vec[t].reserve(self, cap: U32)
+Vec.reserve(self: Vec[t], cap: U32)
     let len = self._len
     let newCap = self._data.len()
     while newCap - len < cap:
@@ -17,17 +17,17 @@ Vec[t].reserve(self, cap: U32)
             newData.set(i, self._data.get(i))
         self._data = newData
 
-Vec[t].spareCapacity(self): U32
+Vec.spareCapacity(self: Vec[t]): U32
     self._data.len() - self._len
 
-Vec[t].len(self): U32
+Vec.len(self: Vec[t]): U32
     self._len
 
-Vec[t].clear(self)
+Vec.clear(self: Vec[t])
     # In the compiled version we should actually clear the elements to allow garbage collection.
     self._len = 0
 
-Vec[t].push(self, elem: t)
+Vec.push(self: Vec[t], elem: t)
     let cap = self._data.len()
 
     if self._len == cap:
@@ -39,41 +39,41 @@ Vec[t].push(self, elem: t)
     self._data.set(self._len, elem)
     self._len += 1
 
-Vec[t].pop(self): Option[t]
+Vec.pop(self: Vec[t]): Option[t]
     if self._len == 0:
         return Option.None
 
     self._len -= 1
     Option.Some(self._data.get(self._len))
 
-Vec[t].set(self, idx: U32, elem: t)
+Vec.set(self: Vec[t], idx: U32, elem: t)
     if idx >= self._len:
         panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
     self._data.set(idx, elem)
 
-Vec[t].get(self, idx: U32): t
+Vec.get(self: Vec[t], idx: U32): t
     if idx >= self._len:
         panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
 
     self._data.get(idx)
 
-Vec[t].swap(self, i: U32, j: U32)
+Vec.swap(self: Vec[t], i: U32, j: U32)
     let tmp = self.get(i)
     self.set(i, self.get(j))
     self.set(j, tmp)
 
-Vec[t].iter(self): VecIter[t]
+Vec.iter(self: Vec[t]): VecIter[t]
     VecIter(
         _vec = self,
         _idx = 0,
     )
 
-Vec[t: Ord].sort(self)
+Vec.sort[Ord[t]](self: Vec[t])
     if self.len() != 0:
         _quicksort(self, 0, self.len() - 1)
 
-_quicksort[t: Ord](vec: Vec[t], low: U32, high: U32)
+_quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32)
     if low >= high:
         return ()   # TODO: Allow returning without a value
 
@@ -84,7 +84,7 @@ _quicksort[t: Ord](vec: Vec[t], low: U32, high: U32)
 
     _quicksort(vec, p + 1, high)
 
-_partition[t: Ord](vec: Vec[t], low: U32, high: U32): U32
+_partition[Ord[t]](vec: Vec[t], low: U32, high: U32): U32
     let pivot = vec.get(high)
     let i = low
 
@@ -96,7 +96,7 @@ _partition[t: Ord](vec: Vec[t], low: U32, high: U32): U32
     vec.swap(i, high)
     i
 
-impl[t: ToStr] ToStr for Vec[t]:
+impl[ToStr[t]] ToStr[Vec[t]]:
     toStr(self): Str
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
@@ -111,9 +111,7 @@ type VecIter[t]:
     _vec: Vec[t]
     _idx: U32
 
-impl Iterator for VecIter[t]:
-    type Item = t
-
+impl Iterator[VecIter[t], t]:
     next(self): Option[t]
         if self._idx >= self._vec.len():
             return Option.None

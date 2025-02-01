@@ -91,12 +91,12 @@ type Void
 
 prim type Array[t]
 
-prim Array[t].new(len: U32): Array[t]
-prim Array[t].len(self): U32
-prim Array[t].get(self, idx: U32): t
-prim Array[t].set(self, idx: U32, elem: t)
+prim Array.new(len: U32): Array[t]
+prim Array.len(self: Array[t]): U32
+prim Array.get(self: Array[t], idx: U32): t
+prim Array.set(self: Array[t], idx: U32, elem: t)
 
-impl[t: ToStr] ToStr for Array[t]:
+impl[ToStr[t]] ToStr[Array[t]]:
     toStr(self): Str
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
@@ -108,19 +108,19 @@ impl[t: ToStr] ToStr for Array[t]:
         buf.toStr()
 
 prim printStr(s: Str)
-prim panic[t: ToStr](msg: t): Void
+prim panic[ToStr[t]](msg: t): Void
 
 type Option[t]:
     None
     Some(t)
 
-impl[t: ToStr] ToStr for Option[t]:
+impl[ToStr[t]] ToStr[Option[t]]:
     toStr(self): Str
         match self:
             Option.None: "Option.None"
             Option.Some(t): "Option.Some(`t.toStr()`)"
 
-Option[t].unwrap(self): t
+Option.unwrap(self: Option[t]): t
     match self:
         Option.None: panic("Unwrapping Option.None")
         Option.Some(value): value
@@ -129,13 +129,13 @@ type Result[e, t]:
     Err(e)
     Ok(t)
 
-impl[e: ToStr, t: ToStr] ToStr for Result[e, t]:
+impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
     toStr(self): Str
         match self:
             Result.Err(e): "Result.Err(`e.toStr()`)"
             Result.Ok(t): "Result.Ok(`t.toStr()`)"
 
-Result[e, t].mapErr(self, f: Fn(e): e2): Result[e2, t]
+Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
     match self:
         Result.Ok(a): Result.Ok(a)
         Result.Err(e): Result.Err(f(e))
@@ -145,7 +145,7 @@ type Ordering:
     Equal
     Greater
 
-impl ToStr for Ordering:
+impl ToStr[Ordering]:
     toStr(self): Str
         match self:
             Ordering.Less: "Ordering.Less"
@@ -156,7 +156,7 @@ type Bool:
     False
     True
 
-impl ToStr for Bool:
+impl ToStr[Bool]:
     toStr(self): Str
         match self:
             Bool.True: "Bool.True"
