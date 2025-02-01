@@ -1,33 +1,13 @@
 use crate::ast;
-use crate::collections::Set;
-use crate::type_checker::Id;
+use crate::collections::*;
+use crate::type_checker::{Id, Kind, RecordOrVariant};
+use crate::utils::loc_display;
 
-/*
-We allow omitting type parameters in these contexts:
-
-- Top-level functions: `t` in
-
-    fn f1[t](a: t)
-        ...
-
-- Associated functions: same as above, but in an associated function:
-
-    impl T:
-        fn f1[t](self, a: t)
-            ...
-
-- Impl blocks:
-
-    impl T[x]:
-        ...
-
-For now we modify the AST nodes to add missing type parameters.
-*/
 pub fn add_missing_type_params(pgm: &mut ast::Module) {
     for decl in pgm {
         match &mut decl.node {
             ast::TopDecl::Fun(decl) => {
-                add_missing_type_params_fun(&mut decl.node.sig, &Default::default())
+                add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default())
             }
 
             ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
@@ -39,108 +19,179 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
     }
 }
 
-fn add_missing_type_params_fun(sig: &mut ast::FunSig, bound_vars: &Set<Id>) {
-    let mut fvs: Set<Id> = Default::default();
+// `tvs` are the variables bound in the enclosing `trait` or `impl` context.
+//
+// When checking a `trait`, the updated kinds in `tvs` will be used as the kinds `trait` type
+// parameters.
+//
+// When checking an `impl`, the kinds of type parameters in `tvs` should all be specified before
+// calling this function.
+fn add_missing_type_params_fun(sig: &mut ast::FunSig, tvs: &mut Map<Id, Option<Kind>>) {
+    let bound_vars: Set<Id> = tvs.keys().cloned().collect();
+
+    for pred in &sig.context.preds {
+        collect_tvs(&pred.node, &pred.loc, tvs);
+    }
     for (_, param_ty) in &sig.params {
-        collect_fvs(&param_ty.node, &mut fvs);
+        collect_tvs(&param_ty.node, &param_ty.loc, tvs);
     }
     if let Some(exn) = &sig.exceptions {
-        collect_fvs(&exn.node, &mut fvs);
+        collect_tvs(&exn.node, &exn.loc, tvs);
     }
     if let Some(ret) = &sig.return_ty {
-        collect_fvs(&ret.node, &mut fvs);
+        collect_tvs(&ret.node, &ret.loc, tvs);
     }
 
-    for fv in fvs.difference(bound_vars) {
-        if !sig
-            .type_params
-            .iter()
-            .any(|ty_param| ty_param.id.node == *fv)
-        {
-            sig.type_params.push(ast::TypeParam {
-                id: ast::L {
-                    node: fv.clone(),
-                    loc: ast::Loc::dummy(),
-                },
-                bounds: vec![],
-            });
-        }
+    let tvs_set: Set<Id> = tvs.keys().cloned().collect();
+
+    let diff = tvs_set.difference(&bound_vars);
+
+    for fv in diff {
+        let fv_kind = tvs.get(fv).unwrap().clone().unwrap_or(Kind::Star);
+        sig.context.type_params.push(((*fv).clone(), fv_kind));
     }
 }
 
 fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
-    let mut impl_context_vars: Set<Id> = decl
-        .context
-        .iter()
-        .map(|param| param.id.node.clone())
+    assert!(decl.context.type_params.is_empty()); // first time visiting this impl
+
+    let mut impl_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
+    for pred in &decl.context.preds {
+        collect_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
+    }
+
+    // Default kinds before checking functions.
+    impl_context_var_kinds
+        .values_mut()
+        .for_each(|kind| *kind = Some(kind.clone().unwrap_or(Kind::Star)));
+
+    let impl_context_vars: Set<Id> = impl_context_var_kinds.keys().cloned().collect();
+
+    for fun in &mut decl.items {
+        add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds);
+    }
+
+    decl.context.type_params = impl_context_vars
+        .into_iter()
+        .map(|id| {
+            let kind = impl_context_var_kinds.get(&id).unwrap().clone().unwrap();
+            (id, kind)
+        })
         .collect();
-
-    // Add missing parameters to the `impl` block context.
-    let mut impl_context_fvs: Set<Id> = Default::default();
-    collect_fvs(&decl.ty.node, &mut impl_context_fvs);
-    for fv in impl_context_fvs.difference(&impl_context_vars) {
-        decl.context.push(ast::TypeParam {
-            id: ast::L {
-                node: fv.clone(),
-                loc: ast::Loc::dummy(),
-            },
-            bounds: vec![],
-        });
-    }
-
-    // Add missing parameters to functions in the `impl` block.
-    impl_context_vars.extend(impl_context_fvs);
-    for item in &mut decl.items {
-        match &mut item.node {
-            ast::ImplDeclItem::AssocTy(_) => {}
-            ast::ImplDeclItem::Fun(fun_decl) => {
-                add_missing_type_params_fun(&mut fun_decl.sig, &impl_context_vars);
-            }
-        }
-    }
 }
 
 fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
-    let trait_context_vars: Set<Id> = [decl.ty.id.node.clone()].into_iter().collect();
-    for item in &mut decl.items {
-        match &mut item.node {
-            ast::TraitDeclItem::AssocTy(_) => {}
-            ast::TraitDeclItem::Fun(fun_decl) => {
-                add_missing_type_params_fun(&mut fun_decl.sig, &trait_context_vars);
-            }
-        }
+    assert!(decl.kinds.is_empty());
+
+    let mut trait_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
+    let mut trait_context_vars: Set<Id> = Default::default();
+    for param in &decl.params {
+        trait_context_var_kinds.insert(param.node.clone(), None);
+        trait_context_vars.insert(param.node.clone());
     }
+
+    for fun in &mut decl.items {
+        add_missing_type_params_fun(&mut fun.node.sig, &mut trait_context_var_kinds);
+    }
+
+    decl.kinds = decl
+        .params
+        .iter()
+        .map(|id| {
+            trait_context_var_kinds
+                .get(&id.node)
+                .unwrap()
+                .clone()
+                .unwrap_or(Kind::Star)
+        })
+        .collect();
 }
 
-fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
+const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
+const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
+
+/// Collect type variables in `ty` in `tvs`.
+///
+/// If a type variable is an argument to the special marker traits `RecRow` or `VarRow`, or the
+/// variable is used in a row position, the kind of the type variable is added as a record or
+/// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
+/// it as record or variant row when we see one of the marker traits later, or default the kind as
+/// `*` if not.
+fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut Map<Id, Option<Kind>>) {
     match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => {
+        ast::Type::Named(ast::NamedType { name, args }) => {
+            if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {
+                let kind = if *name == REC_ROW_TRAIT_ID {
+                    Kind::Row(RecordOrVariant::Record)
+                } else {
+                    Kind::Row(RecordOrVariant::Variant)
+                };
+                assert_eq!(args.len(), 1);
+                match &args[0].node {
+                    ast::Type::Var(var) => {
+                        let old = tvs.insert(var.clone(), Some(kind.clone()));
+                        if let Some(Some(old)) = old {
+                            if old != kind {
+                                panic!(
+                                    "{}: Conflicting kind of type variable {}",
+                                    loc_display(loc),
+                                    var,
+                                );
+                            }
+                        }
+                    }
+                    _ => panic!(
+                        "{}: RecRow argument needs to be a type variable",
+                        loc_display(loc)
+                    ),
+                }
+                return;
+            }
+
             for arg in args {
-                collect_fvs(&arg.node.1.node, fvs);
+                collect_tvs(&arg.node, &arg.loc, tvs);
             }
         }
 
         ast::Type::Var(var) => {
-            fvs.insert(var.clone());
+            tvs.entry(var.clone()).or_insert(None);
         }
 
         ast::Type::Record { fields, extension } => {
             for field in fields {
-                collect_fvs(&field.node, fvs);
+                collect_tvs(&field.node, loc, tvs);
             }
             if let Some(ext) = extension {
-                fvs.insert(ext.clone());
+                let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Record)));
+                if let Some(Some(old)) = old {
+                    if old != Kind::Row(RecordOrVariant::Record) {
+                        panic!(
+                            "{}: Conflicting kind of type variable {}",
+                            loc_display(loc),
+                            ext,
+                        );
+                    }
+                }
             }
         }
 
         ast::Type::Variant { alts, extension } => {
             for alt in alts {
                 for field in &alt.fields {
-                    collect_fvs(&field.node, fvs);
+                    collect_tvs(&field.node, loc, tvs);
                 }
             }
             if let Some(ext) = extension {
-                fvs.insert(ext.clone());
+                let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Variant)));
+                if let Some(Some(old)) = old {
+                    if old != Kind::Row(RecordOrVariant::Variant) {
+                        panic!(
+                            "{}: Conflicting kind of type variable {}",
+                            loc_display(loc),
+                            ext,
+                        );
+                    }
+                }
             }
         }
 
@@ -150,13 +201,13 @@ fn collect_fvs(ty: &ast::Type, fvs: &mut Set<Id>) {
             exceptions,
         }) => {
             for arg in args {
-                collect_fvs(&arg.node, fvs);
+                collect_tvs(&arg.node, &arg.loc, tvs);
             }
             if let Some(ret) = ret {
-                collect_fvs(&ret.node, fvs);
+                collect_tvs(&ret.node, &ret.loc, tvs);
             }
             if let Some(exn) = exceptions {
-                collect_fvs(&exn.node, fvs);
+                collect_tvs(&exn.node, &exn.loc, tvs);
             }
         }
     }

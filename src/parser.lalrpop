@@ -1102,6 +1102,7 @@ TraitDecl: L<TraitDecl> = {
         L::new(module, l, r, TraitDecl {
             name,
             params,
+            kinds: vec![],
             items,
         }),
 
@@ -1109,6 +1110,7 @@ TraitDecl: L<TraitDecl> = {
         L::new(module, l, r, TraitDecl {
             name,
             params,
+            kinds: vec![],
             items: vec![],
         }),
 

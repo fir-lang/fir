@@ -9,12 +9,12 @@ import Vec
 # A marker trait used to mark a type parameter as a record row.
 #
 # This is temporary until we implement kind inference. (#46)
-trait RecRow
+trait RecRow[t]
 
 # A marker trait used to mark a type parameter as a variant row.
 #
 # This is temporary until we implement kind inference. (#46)
-trait VarRow
+trait VarRow[t]
 
 # The `+` operator.
 trait Add[t]:

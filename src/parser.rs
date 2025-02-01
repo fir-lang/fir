@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.0"
-// sha3: fef1f3a9b7340fcc40bc62abc91971e4ae747c92cab6ad7edd5abeaba46656b1
+// sha3: c0c78df9187cf6cf9d1e1b0639ea0aaf995546ab58fb0e4a5ec692ec66af1e59
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -42855,6 +42855,7 @@ fn __action152<'a>(
         TraitDecl {
             name,
             params,
+            kinds: vec![],
             items,
         },
     )
@@ -42883,6 +42884,7 @@ fn __action153<'a>(
         TraitDecl {
             name,
             params,
+            kinds: vec![],
             items: vec![],
         },
     )

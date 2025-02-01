@@ -639,6 +639,9 @@ pub struct TraitDecl {
     /// Type parameters of the trait.
     pub params: Vec<L<Id>>,
 
+    /// Kinds of type parameters in `params`. Filled in by kind inference.
+    pub kinds: Vec<Kind>,
+
     /// Methods of the trait.
     pub items: Vec<L<FunDecl>>,
 }
