@@ -16,7 +16,7 @@ pub struct Scheme {
     pub(super) quantified_vars: Map<Id, Kind>,
 
     /// Predicates.
-    pub(super) preds: TreeSet<Pred>,
+    pub(super) preds: Set<Pred>,
 
     /// The generalized type.
     // TODO: Should we have separate fields for arguments types and return type?
@@ -200,18 +200,22 @@ pub(super) enum TyConDetails {
 pub(super) struct TraitDetails {
     /// Methods of the trait, with optional default implementations.
     pub(super) methods: Map<Id, TraitMethod>,
-
+    /*
     /// Types implementing the trait.
     ///
     /// For now we don't allow extra context in implementations, e.g.
     /// `impl Debug[T] => Debug[Array[T]]` is not possible, and the implemenhting types can be a
     /// set of type constructors.
     pub(super) implementing_tys: Set<Id>,
+    */
 }
 
 #[derive(Debug, Clone)]
 pub(super) struct TraitMethod {
+    // NB. This scheme can refer to the type parameters of the trait.
     pub(super) scheme: Scheme,
+
+    /// Default implementation of the trait method.
     pub(super) fun_decl: ast::L<ast::FunDecl>,
 }
 

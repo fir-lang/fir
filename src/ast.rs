@@ -239,6 +239,8 @@ pub struct FunSig {
     pub self_: SelfParam,
 
     /// Parameters of the function.
+    ///
+    /// Note: this does not include `self`!
     pub params: Vec<(Id, L<Type>)>,
 
     /// Optional return type.
