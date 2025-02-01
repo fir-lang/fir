@@ -14,7 +14,9 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 
             ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node),
 
-            ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => {}
+            ast::TopDecl::Type(decl) => add_missing_type_params_type(&mut decl.node),
+
+            ast::TopDecl::Import(_) => {}
         }
     }
 }
@@ -104,6 +106,14 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
                 .clone()
                 .unwrap_or(Kind::Star)
         })
+        .collect();
+}
+
+fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
+    // Make all parameters `*` for now. If we need different kinds we can add a suffix/prefix to the
+    // name. At some point we should implement proper kind inference.
+    ty.type_param_kinds = std::iter::repeat_with(|| Kind::Star)
+        .take(ty.type_params.len())
         .collect();
 }
 

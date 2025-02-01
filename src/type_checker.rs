@@ -194,7 +194,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             ast::TopDecl::Type(ty_decl) => {
                 assert_eq!(
                     ty_decl.node.type_params.len(),
-                    ty_decl.node.type_param_kinds.len()
+                    ty_decl.node.type_param_kinds.len(),
+                    "{}: Type parameter list and kind list don't match",
+                    loc_display(&decl.loc),
                 );
                 let ty_name = ty_decl.node.name.clone();
                 if tys.has_con(&ty_name) {
