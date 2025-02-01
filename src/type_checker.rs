@@ -783,21 +783,15 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
-    let scheme = tys.top_schemes.get(&fun.node.name.node).unwrap().clone();
-
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let var_kinds = fun_sig_ty_var_kinds(&fun.node.sig);
-    let fn_bounds = convert_and_bind_context(
+    // The predicates that we assume to hold in the function body.
+    let assumptions = convert_and_bind_context(
         &mut tys.tys,
-        &fun.node.sig.type_params,
-        &var_kinds,
+        &fun.node.sig.context,
         TyVarConversion::ToOpaque,
-        &fun.loc,
     );
-
-    let old_method_schemes = bind_type_params(&fn_bounds, tys, &fun.loc);
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.insert(
@@ -813,15 +807,12 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     let mut preds: Set<Pred> = Default::default();
 
-    let context = scheme.quantified_vars.iter().cloned().collect();
-
     let exceptions = match &fun.node.sig.exceptions {
         Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
         None => panic!(),
     };
 
     let mut tc_state = TcFunState {
-        context: &context,
         return_ty: ret_ty.clone(),
         env: &mut env,
         var_gen: &mut var_gen,
@@ -838,9 +829,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-
-    unbind_type_params(old_method_schemes, &mut tys.method_schemes);
+    resolve_all_preds(&assumptions, tys, preds, &mut var_gen, 0);
 
     tys.tys.exit_scope();
 }
@@ -855,241 +844,134 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    // Bind trait type parameters.
-    let impl_var_kinds: Map<Id, Kind> = impl_
-        .node
-        .context
-        .iter()
-        .map(|param| (param.id.node.clone(), Kind::Star))
-        .collect();
-
-    let impl_bounds = convert_and_bind_context(
-        &mut tys.tys,
-        &impl_.node.context,
-        &impl_var_kinds,
-        TyVarConversion::ToOpaque,
-        &impl_.loc,
-    );
-
-    // Schemes overridden by trait bounds.
-    let old_schemes_1 = bind_type_params(&impl_bounds, tys, &impl_.loc);
+    let impl_bounds =
+        convert_and_bind_context(&mut tys.tys, &impl_.node.context, TyVarConversion::ToOpaque);
 
     let self_ty = convert_ast_ty(&tys.tys, &impl_.node.ty.node, &impl_.loc);
 
-    // Bind associated types.
-    bind_associated_types(impl_, &mut tys.tys);
+    let trait_ty_con_id = &impl_.node.trait_;
 
-    match &impl_.node.trait_ {
-        Some(trait_ty_con_id) => {
-            let trait_ty_con = tys.tys.get_con(&trait_ty_con_id.node).unwrap_or_else(|| {
-                panic!(
-                    "{}: Unknown trait {}",
-                    loc_display(&trait_ty_con_id.loc),
-                    trait_ty_con_id.node
-                )
-            });
+    let trait_ty_con = tys.tys.get_con(&trait_ty_con_id.node).unwrap_or_else(|| {
+        panic!(
+            "{}: Unknown trait {}",
+            loc_display(&trait_ty_con_id.loc),
+            trait_ty_con_id.node
+        )
+    });
 
-            let trait_details = trait_ty_con
-                .trait_details()
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: {} in `impl` block is not a trait",
-                        loc_display(&trait_ty_con_id.loc),
-                        trait_ty_con_id.node
-                    )
-                })
-                .clone();
+    let trait_details = trait_ty_con
+        .trait_details()
+        .unwrap_or_else(|| {
+            panic!(
+                "{}: {} in `impl` block is not a trait",
+                loc_display(&trait_ty_con_id.loc),
+                trait_ty_con_id.node
+            )
+        })
+        .clone();
 
-            // Check method bodies.
-            for fun in &mut impl_.node.items {
-                tys.tys.enter_scope();
+    // Check method bodies.
+    for fun in &mut impl_.node.items {
+        tys.tys.enter_scope();
 
-                // Bind function type parameters.
-                let var_kinds = fun_sig_ty_var_kinds(&fun.node.sig);
-                let fn_bounds = convert_and_bind_context(
-                    &mut tys.tys,
-                    &fun.node.sig.context,
-                    &var_kinds,
-                    TyVarConversion::ToOpaque,
-                    &impl_.loc,
+        // Bind function type parameters.
+        let assumptions = convert_and_bind_context(
+            &mut tys.tys,
+            &fun.node.sig.context,
+            TyVarConversion::ToOpaque,
+        );
+
+        // Check the body.
+        if let Some(body) = &mut fun.node.body {
+            let ret_ty = match &fun.node.sig.return_ty {
+                Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                None => Ty::unit(),
+            };
+
+            let mut preds: Set<Pred> = Default::default();
+            let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+            let mut var_gen = TyVarGen::default();
+
+            env.insert(SmolStr::new_static("self"), self_ty.clone());
+
+            for (param_name, param_ty) in &fun.sig.params {
+                env.insert(
+                    param_name.clone(),
+                    convert_ast_ty(&tys.tys, &param_ty.node, &item.loc),
                 );
-
-                // Schemes overridden by method bounds.
-                let old_schemes_2 = bind_type_params(&fn_bounds, tys, &fun.loc);
-
-                // Check the body.
-                if let Some(body) = &mut fun.node.body {
-                    let ret_ty = match &fun.node.sig.return_ty {
-                        Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let mut preds: Set<Pred> = Default::default();
-                    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-                    let mut var_gen = TyVarGen::default();
-
-                    env.insert(SmolStr::new_static("self"), self_ty.clone());
-
-                    for (param_name, param_ty) in &fun.sig.params {
-                        env.insert(
-                            param_name.clone(),
-                            convert_ast_ty(&tys.tys, &param_ty.node, &item.loc),
-                        );
-                    }
-
-                    let context = impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect();
-
-                    let exceptions = match &fun.sig.exceptions {
-                        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                        None => panic!(),
-                    };
-
-                    let mut tc_state = TcFunState {
-                        context: &context,
-                        return_ty: ret_ty.clone(),
-                        env: &mut env,
-                        var_gen: &mut var_gen,
-                        tys,
-                        preds: &mut preds,
-                        exceptions,
-                    };
-
-                    check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
-
-                    for stmt in body.iter_mut() {
-                        normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
-                    }
-
-                    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-                }
-
-                unbind_type_params(old_schemes_2, &mut tys.method_schemes);
-
-                tys.tys.exit_scope();
             }
 
-            // Check that all methods without default implementations are implemented.
-            let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
-            let mut implemented_method_ids: Set<&Id> = Default::default();
-            for fun in &impl_.node.items {
-                let fun_id = &fun.node.name.node;
-                match (
-                    trait_method_ids.contains(fun_id),
-                    implemented_method_ids.contains(fun_id),
-                ) {
-                    (true, true) => panic!(
-                        "{}: Trait method {} implemented multiple times",
-                        loc_display(&fun.loc),
-                        fun_id
-                    ),
-
-                    (true, false) => {
-                        implemented_method_ids.insert(fun_id);
-                    }
-
-                    (false, _) => {
-                        panic!(
-                            "{}: Trait {} does not have method {}",
-                            loc_display(&item.loc),
-                            trait_ty_con_id.node,
-                            fun_id
-                        )
-                    }
-                }
-            }
-            let missing_methods: Vec<&&Id> = trait_method_ids
-                .difference(&implemented_method_ids)
+            let context = impl_bounds
+                .iter()
+                .cloned()
+                .chain(fn_bounds.into_iter())
                 .collect();
-            if !missing_methods.is_empty() {
-                panic!(
-                    "{}: Trait methods missing: {:?}",
-                    loc_display(&impl_.loc),
-                    missing_methods
-                );
+
+            let exceptions = match &fun.sig.exceptions {
+                Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                None => panic!(),
+            };
+
+            let mut tc_state = TcFunState {
+                return_ty: ret_ty.clone(),
+                env: &mut env,
+                var_gen: &mut var_gen,
+                tys,
+                preds: &mut preds,
+                exceptions,
+            };
+
+            check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+
+            for stmt in body.iter_mut() {
+                normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
             }
+
+            resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
         }
 
-        None => {
-            for fun in &mut impl_.node.items {
-                assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
-                tys.tys.enter_scope();
+        tys.tys.exit_scope();
+    }
 
-                // Bind function type parameters.
-                let var_kinds = fun_sig_ty_var_kinds(&fun.node.sig);
-                let fn_bounds: Vec<(Id, QVar)> = convert_and_bind_context(
-                    &mut tys.tys,
-                    &fun.node.sig.context,
-                    &var_kinds,
-                    TyVarConversion::ToOpaque,
-                    &fun.loc,
-                );
+    // Check that all methods without default implementations are implemented.
+    let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
+    let mut implemented_method_ids: Set<&Id> = Default::default();
+    for fun in &impl_.node.items {
+        let fun_id = &fun.node.name.node;
+        match (
+            trait_method_ids.contains(fun_id),
+            implemented_method_ids.contains(fun_id),
+        ) {
+            (true, true) => panic!(
+                "{}: Trait method {} implemented multiple times",
+                loc_display(&fun.loc),
+                fun_id
+            ),
 
-                // Schemes overridden by method bounds.
-                let old_schemes_2 = bind_type_params(&fn_bounds, tys, &item.loc);
+            (true, false) => {
+                implemented_method_ids.insert(fun_id);
+            }
 
-                // Check the body.
-                if let Some(body) = &mut fun.node.body {
-                    let ret_ty = match &fun.node.sig.return_ty {
-                        Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let mut preds: Set<Pred> = Default::default();
-                    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-                    let mut var_gen = TyVarGen::default();
-
-                    env.insert(SmolStr::new_static("self"), self_ty.clone());
-
-                    for (param_name, param_ty) in &fun.node.sig.params {
-                        env.insert(
-                            param_name.clone(),
-                            convert_ast_ty(&tys.tys, &param_ty.node, &fun.loc),
-                        );
-                    }
-
-                    let context = impl_bounds
-                        .iter()
-                        .map(|(qvar, details)| (qvar.clone(), details.clone()))
-                        .chain(fn_bounds.into_iter())
-                        .collect();
-
-                    let exceptions = match &fun.node.sig.exceptions {
-                        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                        None => panic!(),
-                    };
-
-                    let mut tc_state = TcFunState {
-                        context: &context,
-                        return_ty: ret_ty.clone(),
-                        env: &mut env,
-                        var_gen: &mut var_gen,
-                        tys,
-                        preds: &mut preds,
-                        exceptions,
-                    };
-
-                    check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
-
-                    for stmt in body.iter_mut() {
-                        normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
-                    }
-
-                    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-                }
-
-                unbind_type_params(old_schemes_2, &mut tys.method_schemes);
-
-                tys.tys.exit_scope();
-                assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
+            (false, _) => {
+                panic!(
+                    "{}: Trait {} does not have method {}",
+                    loc_display(&fun.loc),
+                    trait_ty_con_id.node,
+                    fun_id
+                )
             }
         }
     }
-
-    unbind_type_params(old_schemes_1, &mut tys.method_schemes);
+    let missing_methods: Vec<&&Id> = trait_method_ids
+        .difference(&implemented_method_ids)
+        .collect();
+    if !missing_methods.is_empty() {
+        panic!(
+            "{}: Trait methods missing: {:?}",
+            loc_display(&impl_.loc),
+            missing_methods
+        );
+    }
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
@@ -1224,16 +1106,19 @@ fn resolve_preds(
 }
 
 fn resolve_all_preds(
-    context: &Map<Id, QVar>,
-    tys: &PgmTypes,
-    preds: Set<Pred>,
-    var_gen: &mut TyVarGen,
-    level: u32,
+    _assumptions: &Set<Pred>,
+    _tys: &PgmTypes,
+    _preds: Set<Pred>,
+    _var_gen: &mut TyVarGen,
+    _level: u32,
 ) {
+    /*
     let unresolved_preds = resolve_preds(context, tys, preds, var_gen, level);
     report_unresolved_preds(unresolved_preds, tys.tys.cons());
+    */
 }
 
+/*
 fn report_unresolved_preds(preds: Set<Pred>, cons: &ScopeMap<Id, TyCon>) {
     if preds.is_empty() {
         return;
@@ -1260,156 +1145,4 @@ fn report_unresolved_preds(preds: Set<Pred>, cons: &ScopeMap<Id, TyCon>) {
 
     panic!();
 }
-
-fn bind_type_params(
-    params: &[(Id, QVar)],
-    tys: &mut PgmTypes,
-    loc: &ast::Loc,
-) -> Map<SmolStr, Option<Map<SmolStr, Scheme>>> {
-    let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
-
-    for (var, qvar) in params {
-        old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
-
-        for (trait_, assoc_tys) in &qvar.bounds {
-            // It should be checked when converting the bounds that the ty cons are bound and
-            // traits.
-            let trait_ty_con = tys.tys.get_con(trait_).unwrap();
-            let trait_details = trait_ty_con.trait_details().unwrap();
-
-            for (method_id, method) in &trait_details.methods {
-                assert_eq!(trait_ty_con.ty_params.len(), 1);
-                let trait_ty_param = &trait_ty_con.ty_params[0];
-                let method_scheme =
-                    method
-                        .scheme
-                        .subst(&trait_ty_param.0, &Ty::Con(var.clone()), loc);
-
-                tys.method_schemes
-                    .entry(var.clone())
-                    .or_default()
-                    .insert(method_id.clone(), method_scheme);
-            }
-
-            for (assoc_ty_id, ty) in assoc_tys {
-                tys.tys
-                    .get_con_mut(var)
-                    .unwrap()
-                    .assoc_tys
-                    .insert(assoc_ty_id.clone(), ty.clone());
-            }
-        }
-    }
-
-    old_method_schemes
-}
-
-fn unbind_type_params(
-    old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>>,
-    assoc_schemes: &mut Map<Id, Map<Id, Scheme>>,
-) {
-    for (old_ty_con, old_assoc_schemes) in old_assoc_schemes {
-        match old_assoc_schemes {
-            Some(scheme) => {
-                assoc_schemes.insert(old_ty_con, scheme);
-            }
-            None => {
-                assoc_schemes.remove(&old_ty_con);
-            }
-        }
-    }
-}
-
-fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    for (_, param) in fun_sig.params.iter() {
-        ty_var_kinds(&param.node, &mut kinds);
-    }
-    if let Some(exn) = &fun_sig.exceptions {
-        ty_var_kinds(&exn.node, &mut kinds);
-    }
-    if let Some(ret) = &fun_sig.return_ty {
-        ty_var_kinds(&ret.node, &mut kinds);
-    }
-    kinds
-}
-
-fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
-    match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => {
-            for arg in args {
-                ty_var_kinds(&arg.node.1.node, kinds);
-            }
-        }
-
-        ast::Type::Var(var) => {
-            kinds.insert(var.clone(), Kind::Star);
-        }
-
-        ast::Type::Record { fields, extension } => {
-            for field in fields {
-                ty_var_kinds(&field.node, kinds);
-            }
-            if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
-            }
-        }
-
-        ast::Type::Variant { alts, extension } => {
-            for ast::VariantAlt { con: _, fields } in alts {
-                for field in fields {
-                    ty_var_kinds(&field.node, kinds);
-                }
-            }
-            if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Variant));
-            }
-        }
-
-        ast::Type::Fn(ast::FnType {
-            args,
-            ret,
-            exceptions,
-        }) => {
-            for arg in args {
-                ty_var_kinds(&arg.node, kinds);
-            }
-            if let Some(ret) = ret {
-                ty_var_kinds(&ret.node, kinds);
-            }
-            if let Some(exn) = exceptions {
-                ty_var_kinds(&exn.node, kinds);
-            }
-        }
-    }
-}
-
-fn constructor_fields_var_kinds(ty: &ast::ConstructorFields) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    constructor_fields_var_kinds_(ty, &mut kinds);
-    kinds
-}
-
-fn constructor_fields_var_kinds_(ty: &ast::ConstructorFields, kinds: &mut Map<Id, Kind>) {
-    match ty {
-        ast::ConstructorFields::Empty => {}
-        ast::ConstructorFields::Named(fields) => {
-            for (_, field) in fields {
-                ty_var_kinds(field, kinds);
-            }
-        }
-        ast::ConstructorFields::Unnamed(fields) => {
-            for field in fields {
-                ty_var_kinds(field, kinds);
-            }
-        }
-    }
-}
-
-fn constructor_decls_var_kinds(decls: &[ast::ConstructorDecl]) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    for decl in decls {
-        constructor_fields_var_kinds_(&decl.fields, &mut kinds);
-    }
-    kinds
-}
+*/
