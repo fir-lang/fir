@@ -1079,3 +1079,17 @@ impl fmt::Display for Kind {
         f.write_str(str)
     }
 }
+
+impl fmt::Display for Pred {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.trait_)?;
+        write!(f, "[")?;
+        for (i, ty) in self.params.iter().enumerate() {
+            if i > 0 {
+                write!(f, ", ")?;
+            }
+            write!(f, "{}", ty)?;
+        }
+        write!(f, "]")
+    }
+}
