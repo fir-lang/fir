@@ -939,51 +939,58 @@ fn check_field_select(
         _ => {}
     }
 
-    match select_method(tc_state, object_ty, field, loc, level) {
-        Some(scheme) => {
-            let (method_ty, method_ty_args) =
-                scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
-
-            // Type arguments of the receiver already substituted for type parameters in
-            // `select_method`. Drop 'self' argument.
-            match method_ty {
-                Ty::Fun {
-                    mut args,
-                    ret,
-                    exceptions,
-                } => {
-                    match &mut args {
-                        FunArgs::Positional(args) => {
-                            args.remove(0);
-                        }
-                        FunArgs::Named(_) => panic!(),
-                    }
-                    (
-                        Ty::Fun {
-                            args,
-                            ret,
-                            exceptions,
-                        },
-                        ast::Expr::MethodSelect(ast::MethodSelectExpr {
-                            object: Box::new(object.clone()),
-                            object_ty: Some(object_ty.clone()),
-                            method: field.clone(),
-                            ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
-                        }),
-                    )
-                }
-                _ => panic!(
-                    "{}: Type of method is not a function type: {:?}",
-                    loc_display(loc),
-                    method_ty
-                ),
-            }
-        }
-        None => panic!(
+    let scheme = select_method(tc_state, object_ty, field, loc, level).unwrap_or_else(|| {
+        panic!(
             "{}: Type {} does not have field or method {}",
             loc_display(loc),
             object_ty,
             field
+        )
+    });
+
+    let (method_ty, method_ty_args) =
+        scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+
+    // Type arguments of the receiver already substituted for type parameters in
+    // `select_method`. Drop 'self' argument.
+    match method_ty {
+        Ty::Fun {
+            mut args,
+            ret,
+            exceptions,
+        } => {
+            match &mut args {
+                FunArgs::Positional(args) => {
+                    let self_arg = args.remove(0);
+                    unify(
+                        &self_arg,
+                        object_ty,
+                        tc_state.tys.tys.cons(),
+                        &mut tc_state.var_gen,
+                        level,
+                        loc,
+                    );
+                }
+                FunArgs::Named(_) => panic!(),
+            }
+            (
+                Ty::Fun {
+                    args,
+                    ret,
+                    exceptions,
+                },
+                ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                    object: Box::new(object.clone()),
+                    object_ty: Some(object_ty.clone()),
+                    method: field.clone(),
+                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                }),
+            )
+        }
+        _ => panic!(
+            "{}: Type of method is not a function type: {:?}",
+            loc_display(loc),
+            method_ty
         ),
     }
 }

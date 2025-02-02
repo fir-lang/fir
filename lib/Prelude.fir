@@ -98,9 +98,10 @@ prim Array.set(self: Array[t], idx: U32, elem: t)
 
 impl[ToStr[t]] ToStr[Array[t]]:
     toStr(self: Array[t]): Str
-        let buf = StrBuf.withCapacity(self.len() * 5u32 + 2u32)
+        let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
         for i in range(0u32, self.len()):
+            let i: U32 = i
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())

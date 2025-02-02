@@ -31,7 +31,7 @@ Vec.push(self: Vec[t], elem: t)
     let cap = self._data.len()
 
     if self._len == cap:
-        let newData = Array.new(cap * 2u32)
+        let newData = Array.new(cap * 2)
         for i in range(0u32, cap):
             newData.set(i, self._data.get(i))
         self._data = newData
@@ -71,7 +71,7 @@ Vec.iter(self: Vec[t]): VecIter[t]
 
 Vec.sort[Ord[t]](self: Vec[t])
     if self.len() != 0:
-        _quicksort(self, 0, self.len() - 1u32)
+        _quicksort(self, 0, self.len() - 1)
 
 _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32)
     if low >= high:
@@ -80,15 +80,15 @@ _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32)
     let p = _partition(vec, low, high)
 
     if p != low:
-        _quicksort(vec, low, p - 1u32)
+        _quicksort(vec, low, p - 1)
 
-    _quicksort(vec, p + 1u32, high)
+    _quicksort(vec, p + 1, high)
 
 _partition[Ord[t]](vec: Vec[t], low: U32, high: U32): U32
     let pivot = vec.get(high)
     let i = low
 
-    for j in irange(low, high - 1u32):
+    for j in irange(low, high - 1):
         if vec.get(j) <= pivot:
             vec.swap(i, j)
             i += 1
@@ -98,9 +98,10 @@ _partition[Ord[t]](vec: Vec[t], low: U32, high: U32): U32
 
 impl[ToStr[t]] ToStr[Vec[t]]:
     toStr(self: Vec[t]): Str
-        let buf = StrBuf.withCapacity(self.len() * 5u32 + 2u32)
+        let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
         for i in range(0u32, self.len()):
+            let i: U32 = i
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())
