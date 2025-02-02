@@ -231,6 +231,7 @@ fn visit_expr(
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,
             object_ty: _,
+            method_ty_id: _,
             method: _,
             ty_args: _,
         }) => {

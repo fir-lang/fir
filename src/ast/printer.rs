@@ -505,11 +505,14 @@ impl Expr {
             Expr::MethodSelect(MethodSelectExpr {
                 object,
                 object_ty: _,
+                method_ty_id,
                 method,
                 ty_args,
             }) => {
                 object.node.print(buffer, 0);
-                buffer.push('.');
+                buffer.push_str(".{");
+                buffer.push_str(method_ty_id);
+                buffer.push_str(".}");
                 buffer.push_str(method);
                 print_ty_args(ty_args, buffer);
             }

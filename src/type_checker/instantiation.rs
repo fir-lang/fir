@@ -88,6 +88,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,
             object_ty,
+            method_ty_id: _,
             method: _,
             ty_args,
         }) => {

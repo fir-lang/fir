@@ -42,6 +42,8 @@ pub struct PgmTypes {
 
     /// Type schemes of methods.
     ///
+    /// Maps method names to (type or trait name, type scheme) pairs.
+    ///
     /// These are associated functions (so they're also in `associated_fn_schemes`) that take a
     /// `self` parameter.
     ///
@@ -49,7 +51,7 @@ pub struct PgmTypes {
     ///
     /// Because these schemes are only used in method call syntax, the keys are not type names but
     /// method names. The values are type schemes of methods with the name.
-    pub method_schemes: Map<Id, Vec<Scheme>>,
+    pub method_schemes: Map<Id, Vec<(Id, Scheme)>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -537,11 +539,11 @@ fn collect_schemes(
 ) -> (
     Map<Id, Scheme>,
     Map<Id, Map<Id, Scheme>>,
-    Map<Id, Vec<Scheme>>,
+    Map<Id, Vec<(Id, Scheme)>>,
 ) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
-    let mut method_schemes: Map<Id, Vec<Scheme>> = Default::default();
+    let mut method_schemes: Map<Id, Vec<(Id, Scheme)>> = Default::default();
 
     for decl in module {
         // New scope for type and function contexts.
@@ -654,7 +656,7 @@ fn collect_schemes(
                     method_schemes
                         .entry(fun.node.name.node.clone())
                         .or_default()
-                        .push(scheme);
+                        .push((trait_decl.node.name.node.clone(), scheme));
                 }
             }
 
@@ -736,7 +738,7 @@ fn collect_schemes(
                                 method_schemes
                                     .entry(name.node.clone())
                                     .or_default()
-                                    .push(scheme.clone());
+                                    .push((parent_ty.node.clone(), scheme.clone()));
                             }
                         }
 

@@ -502,6 +502,7 @@ pub(super) fn check_expr(
                                         loc: expr.loc.clone(),
                                     }),
                                     object_ty: Some(part_ty),
+                                    method_ty_id: SmolStr::new_static("ToStr"),
                                     method: SmolStr::new_static("toStr"),
                                     ty_args: vec![tc_state.exceptions.clone()],
                                 }),
@@ -939,14 +940,15 @@ fn check_field_select(
         _ => {}
     }
 
-    let scheme = select_method(tc_state, object_ty, field, loc, level).unwrap_or_else(|| {
-        panic!(
-            "{}: Type {} does not have field or method {}",
-            loc_display(loc),
-            object_ty,
-            field
-        )
-    });
+    let (method_ty_id, scheme) = select_method(tc_state, object_ty, field, loc, level)
+        .unwrap_or_else(|| {
+            panic!(
+                "{}: Type {} does not have field or method {}",
+                loc_display(loc),
+                object_ty,
+                field
+            )
+        });
 
     let (method_ty, method_ty_args) =
         scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
@@ -982,6 +984,7 @@ fn check_field_select(
                 ast::Expr::MethodSelect(ast::MethodSelectExpr {
                     object: Box::new(object.clone()),
                     object_ty: Some(object_ty.clone()),
+                    method_ty_id,
                     method: field.clone(),
                     ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
                 }),
@@ -1046,8 +1049,8 @@ fn select_method(
     method: &Id,
     loc: &ast::Loc,
     level: u32,
-) -> Option<Scheme> {
-    for candidate in tc_state.tys.method_schemes.get(method)? {
+) -> Option<(Id, Scheme)> {
+    for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
         let (ty, _) = candidate.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
         let candidate_self_ty = match &ty {
             Ty::Fun {
@@ -1071,7 +1074,7 @@ fn select_method(
             level,
             loc,
         ) {
-            return Some(candidate.clone());
+            return Some((ty_id.clone(), candidate.clone()));
         }
     }
 
