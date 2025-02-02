@@ -407,7 +407,10 @@ impl Stmt {
                 }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
-                assert!(ty.is_none()); // TODO
+                if let Some(ty) = ty {
+                    buffer.push_str(": ");
+                    ty.node.print(buffer);
+                }
                 buffer.push_str(" in ");
                 expr.node.print(buffer, 0);
                 buffer.push_str(":\n");
