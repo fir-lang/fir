@@ -294,7 +294,7 @@ fn check_stmt(
 
             let ty = ty
                 .as_ref()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc));
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &stmt.loc));
 
             // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
             // with fresh type `A`.

@@ -354,9 +354,7 @@ fn mono_stmt(
             ast::Stmt::For(ast::ForStmt {
                 label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
-                ty: ty
-                    .as_ref()
-                    .map(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)),
+                ty: mono_opt_l_ty(ty, ty_map, poly_pgm, mono_pgm),
                 expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
                 expr_ty: Some(mono_ast_ty_to_ty(&mono_expr_ty)),
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
