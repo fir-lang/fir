@@ -3,7 +3,7 @@ type Char:
     _codePoint: U32
 
 impl Eq[Char]:
-    __eq(self, other: Char): Bool
+    __eq(self: Char, other: Char): Bool
         self._codePoint == other._codePoint
 
 impl Ord[Char]:

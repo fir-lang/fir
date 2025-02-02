@@ -252,7 +252,7 @@ pub struct FunSig {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) enum SelfParam {
+pub enum SelfParam {
     No,
     Implicit,
     Explicit(L<Type>),

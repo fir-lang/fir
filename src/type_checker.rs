@@ -539,6 +539,115 @@ fn collect_schemes(
         tys.enter_scope();
 
         match &decl.node {
+            ast::TopDecl::Trait(trait_decl) => {
+                /*
+                trait ToStr[t]:
+                    toStr(self: t): Str
+                ==>
+                toStr[ToStr[t]](self: t): Str
+
+                trait Iterator[iter, item]:
+                    next(self: Iterator[iter, item]): Option[item]
+                ==>
+                next[Iterator[iter, item]](self: Iterator[iter, item]): Option[item]
+                */
+
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
+                );
+
+                let trait_quantified_vars: Vec<(Id, Kind)> = trait_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .map(|p| p.node.clone())
+                    .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                    .collect();
+
+                let trait_pred = ast::L {
+                    loc: trait_decl.loc.clone(),
+                    node: ast::Type::Named(ast::NamedType {
+                        name: trait_decl.node.name.node.clone(),
+                        args: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|param| param.map_as_ref(|param| ast::Type::Var(param.clone())))
+                            .collect(),
+                    }),
+                };
+
+                for fun in &trait_decl.node.items {
+                    // Add trait type parameters and predicate to the function context before
+                    // converting.
+                    let mut fun_type_params = trait_quantified_vars.clone();
+                    fun_type_params.extend(fun.node.sig.context.type_params.clone());
+
+                    let mut fun_preds = vec![trait_pred.clone()];
+                    fun_preds.extend(fun.node.sig.context.preds.clone());
+
+                    let context = ast::Context {
+                        type_params: fun_type_params,
+                        preds: fun_preds,
+                    };
+
+                    // TODO: Checking is the same as top-level functions, maybe move the code into a
+                    // function and reuse.
+                    let fun_preds: Set<Pred> =
+                        convert_and_bind_context(tys, &context, TyVarConversion::ToQVar, &fun.loc);
+
+                    let mut arg_tys: Vec<Ty> = fun
+                        .node
+                        .sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &fun.node.sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => {
+                            panic!(
+                                "{}: Trait method self parameters should have explicit self type",
+                                loc_display(&fun.loc)
+                            );
+                        }
+                        ast::SelfParam::Explicit(ty) => {
+                            arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                        }
+                    }
+
+                    let ret_ty: Ty = match &fun.node.sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
+
+                    let exceptions = match &fun.node.sig.exceptions {
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
+
+                    let scheme = Scheme {
+                        quantified_vars: context.type_params.into_iter().collect(),
+                        preds: fun_preds,
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
+
+                    method_schemes
+                        .entry(fun.node.name.node.clone())
+                        .or_default()
+                        .push(scheme);
+                }
+            }
+
             ast::TopDecl::Fun(ast::L {
                 node:
                     ast::FunDecl {
@@ -763,7 +872,7 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Impl(_) | ast::TopDecl::Trait(_) | ast::TopDecl::Import(_) => {
+            ast::TopDecl::Impl(_) | ast::TopDecl::Import(_) => {
                 tys.exit_scope();
                 continue;
             }
