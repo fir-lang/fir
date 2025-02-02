@@ -97,8 +97,8 @@ prim Array.get(self: Array[t], idx: U32): t
 prim Array.set(self: Array[t], idx: U32, elem: t)
 
 impl[ToStr[t]] ToStr[Array[t]]:
-    toStr(self): Str
-        let buf = StrBuf.withCapacity(self.len() * 5 + 2)
+    toStr(self: Array[t]): Str
+        let buf = StrBuf.withCapacity(self.len() * 5u32 + 2u32)
         buf.push('[')
         for i in range(0u32, self.len()):
             if i != 0:
@@ -115,7 +115,7 @@ type Option[t]:
     Some(t)
 
 impl[ToStr[t]] ToStr[Option[t]]:
-    toStr(self): Str
+    toStr(self: Option[t]): Str
         match self:
             Option.None: "Option.None"
             Option.Some(t): "Option.Some(`t.toStr()`)"
@@ -130,7 +130,7 @@ type Result[e, t]:
     Ok(t)
 
 impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
-    toStr(self): Str
+    toStr(self: Result[e, t]): Str
         match self:
             Result.Err(e): "Result.Err(`e.toStr()`)"
             Result.Ok(t): "Result.Ok(`t.toStr()`)"
@@ -146,7 +146,7 @@ type Ordering:
     Greater
 
 impl ToStr[Ordering]:
-    toStr(self): Str
+    toStr(self: Ordering): Str
         match self:
             Ordering.Less: "Ordering.Less"
             Ordering.Equal: "Ordering.Equal"
@@ -157,7 +157,7 @@ type Bool:
     True
 
 impl ToStr[Bool]:
-    toStr(self): Str
+    toStr(self: Bool): Str
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
