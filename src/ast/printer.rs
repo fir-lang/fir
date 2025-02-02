@@ -125,7 +125,7 @@ impl FunDecl {
         }
         self.sig.print(&self.name.node, buffer);
         if let Some(body) = &self.body {
-            buffer.push_str(" =\n");
+            buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
                 if i != 0 {
                     buffer.push('\n');
@@ -305,7 +305,6 @@ impl Type {
 
 impl FunSig {
     pub fn print(&self, name: &Id, buffer: &mut String) {
-        buffer.push_str("fn ");
         buffer.push_str(name);
         if !self.type_params.is_empty() {
             buffer.push('[');
