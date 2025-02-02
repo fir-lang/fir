@@ -123,7 +123,7 @@ impl FunDecl {
         if self.body.is_none() {
             buffer.push_str("prim ");
         }
-        self.sig.print(&self.name.node, buffer);
+        self.sig.print(&self.parent_ty, &self.name.node, buffer);
         if let Some(body) = &self.body {
             buffer.push_str(" =\n");
             for (i, stmt) in body.iter().enumerate() {
@@ -298,8 +298,11 @@ impl Type {
 }
 
 impl FunSig {
-    pub fn print(&self, name: &Id, buffer: &mut String) {
-        buffer.push_str("fn ");
+    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buffer: &mut String) {
+        if let Some(parent_ty) = parent_ty {
+            buffer.push_str(&parent_ty.node);
+            buffer.push('.');
+        }
         buffer.push_str(name);
         print_context(&self.context, buffer);
         buffer.push('(');
@@ -985,7 +988,7 @@ impl Display for Type {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&SmolStr::new(""), &mut s);
+        self.print(&None, &SmolStr::new(""), &mut s);
         f.write_str(&s)
     }
 }
