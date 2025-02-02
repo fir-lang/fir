@@ -68,8 +68,13 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
     let mut impl_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
+
     for pred in &decl.context.preds {
         collect_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
+    }
+
+    for ty in &decl.tys {
+        collect_tvs(&ty.node, &ty.loc, &mut impl_context_var_kinds);
     }
 
     // Default kinds before checking functions.
