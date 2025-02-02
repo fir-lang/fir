@@ -65,6 +65,9 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
+
+    ast::printer::print_module(module);
+
     for decl in module {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
@@ -470,6 +473,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         // let (self_ty_con, _) = impl_ty.con(&Default::default()).unwrap();
 
         for (method, method_decl) in trait_methods {
+            if method_decl.fun_decl.node.body.is_none() {
+                continue;
+            }
+
             if impl_decl
                 .items
                 .iter()
@@ -478,38 +485,44 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 continue;
             }
 
-            if method_decl.fun_decl.node.body.is_some() {
-                let mut fun_decl = method_decl.fun_decl.clone();
+            let mut fun_decl = method_decl.fun_decl.clone();
 
-                // Map type parameters of the trait to the impl types.
-                let substs: Map<Id, ast::Type> = trait_type_params
-                    .iter()
-                    .map(|(param, _param_kind)| param.clone())
-                    .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
-                    .collect();
+            // Map type parameters of the trait to the impl types.
+            let substs: Map<Id, ast::Type> = trait_type_params
+                .iter()
+                .map(|(param, _param_kind)| param.clone())
+                .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
+                .collect();
 
-                fun_decl.node.sig.params = fun_decl
-                    .node
-                    .sig
-                    .params
-                    .into_iter()
-                    .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
-                    .collect();
+            fun_decl.node.sig.self_ = match fun_decl.node.sig.self_ {
+                ast::SelfParam::No => ast::SelfParam::No,
+                ast::SelfParam::Implicit => ast::SelfParam::Implicit,
+                ast::SelfParam::Explicit(ty) => {
+                    ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
+                }
+            };
 
-                fun_decl.node.sig.exceptions = fun_decl
-                    .node
-                    .sig
-                    .exceptions
-                    .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
+            fun_decl.node.sig.params = fun_decl
+                .node
+                .sig
+                .params
+                .into_iter()
+                .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
+                .collect();
 
-                fun_decl.node.sig.return_ty = fun_decl
-                    .node
-                    .sig
-                    .return_ty
-                    .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
+            fun_decl.node.sig.exceptions = fun_decl
+                .node
+                .sig
+                .exceptions
+                .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
 
-                impl_decl.items.push(fun_decl);
-            }
+            fun_decl.node.sig.return_ty = fun_decl
+                .node
+                .sig
+                .return_ty
+                .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
+
+            impl_decl.items.push(fun_decl);
         }
 
         tys.exit_scope();
