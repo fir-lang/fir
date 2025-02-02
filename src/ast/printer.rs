@@ -125,7 +125,7 @@ impl FunDecl {
         }
         self.sig.print(&self.parent_ty, &self.name.node, buffer);
         if let Some(body) = &self.body {
-            buffer.push_str(" =\n");
+            buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
                 if i != 0 {
                     buffer.push('\n');
