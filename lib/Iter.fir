@@ -5,7 +5,7 @@ trait Iterator[iter, item]:
         Map(iter = self, f = f)
 
 trait Step[t]:
-    next(self: t): t
+    step(self: t): t
 
 range(start: t, end: t): RangeIterator[t]
     RangeIterator(current = start, end = end)
@@ -23,7 +23,7 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t]:
             Option.None
         else:
             let current = self.current
-            self.current = self.current.next()
+            self.current = self.current.step()
             Option.Some(current)
 
 type InclusiveRangeIterator[t]:
@@ -36,7 +36,7 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t]:
             Option.None
         else:
             let current = self.current
-            self.current = self.current.next()
+            self.current = self.current.step()
             Option.Some(current)
 
 type Map[iter, a, b]:

@@ -178,9 +178,10 @@ pub(super) fn check_expr(
 
                     other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun { .. } | Ty::Anonymous { .. }) => {
                         panic!(
-                            "{}: Object {} in field selection does not have fields: {:?}",
+                            "{}: Object {} when selecting field {} does not have fields: {:?}",
                             loc_display(&object.loc),
                             other,
+                            field,
                             object_ty
                         )
                     }
