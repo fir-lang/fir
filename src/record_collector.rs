@@ -266,7 +266,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
         }) => {
             visit_pat(&pat.node, records, variants);
             if let Some(ty) = ty {
-                visit_ty(ty, records, variants);
+                visit_ty(&ty.node, records, variants);
             }
             visit_expr(&expr.node, records, variants);
             for stmt in body {

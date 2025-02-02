@@ -385,7 +385,7 @@ pub enum AssignOp {
 pub struct ForStmt {
     pub label: Option<Id>,
     pub pat: L<Pat>,
-    pub ty: Option<Type>,
+    pub ty: Option<L<Type>>,
     pub expr: L<Expr>,
     pub expr_ty: Option<Ty>, // filled in by the type checker
     pub body: Vec<L<Stmt>>,
