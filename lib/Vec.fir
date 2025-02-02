@@ -100,8 +100,7 @@ impl[ToStr[t]] ToStr[Vec[t]]:
     toStr(self: Vec[t]): Str
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
-        for i in range(0u32, self.len()):
-            let i: U32 = i
+        for i: U32 in range(0u32, self.len()):
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())

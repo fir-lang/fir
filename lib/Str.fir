@@ -51,7 +51,7 @@ Str.startsWith(self, prefix: Str): Bool
 # code point.
 Str.charAt(self, byteIndex: U32): Char
     byteIndex += self._start
-    let byte: U8 = self._bytes.get(byteIndex)
+    let byte = self._bytes.get(byteIndex)
 
     if byte < 128:
         return Char(_codePoint = byte.asU32())
@@ -153,7 +153,7 @@ impl Iterator[CharIndices, (char: Char, idx: U32)]:
         Option.Some((char = char, idx = idx))
 
 _charAt(bytes: Array[U8], idx: U32): Char
-    let byte: U8 = bytes.get(idx)
+    let byte = bytes.get(idx)
 
     if byte < 128:
         return Char(_codePoint = byte.asU32())

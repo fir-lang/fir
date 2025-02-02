@@ -474,11 +474,11 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    <label:LoopLabel?> "for" <pat:LPat> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:LoopLabel?> "for" <pat:LPat> <ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::For(ForStmt {
             label,
             pat,
-            ty: None,
+            ty,
             expr,
             expr_ty: None,
             body,

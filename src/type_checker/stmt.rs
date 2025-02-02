@@ -296,7 +296,7 @@ fn check_stmt(
             // type (when available) or a fresh type variable.
             let item_ty_var = ty
                 .as_ref()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc))
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                 .unwrap_or_else(|| {
                     Ty::Var(
                         tc_state
