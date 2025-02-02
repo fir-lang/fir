@@ -916,6 +916,47 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         &fun.loc,
     );
 
+    // TODO: This code is the same as collect_scheme's, maybe get arg and return types from the
+    // scheme?
+    match &fun.node.sig.self_ {
+        ast::SelfParam::No => {}
+        ast::SelfParam::Implicit => {
+            // The parent type should have no type arguments.
+            match &fun.node.parent_ty {
+                Some(parent_ty) => {
+                    let parent_ty_con = tys.tys.get_con(&parent_ty.node).unwrap_or_else(|| {
+                        panic!(
+                            "{}: Unknown type {}",
+                            loc_display(&fun.loc),
+                            &parent_ty.node
+                        )
+                    });
+                    if !parent_ty_con.ty_params.is_empty() {
+                        panic!(
+                            "{}: Can't infer `self` type as the parent type {} has type parameters",
+                            loc_display(&fun.loc),
+                            &parent_ty.node
+                        );
+                    }
+                    env.insert(
+                        SmolStr::new_static("self"),
+                        Ty::Con(parent_ty_con.id.clone()),
+                    );
+                }
+                None => panic!(
+                    "{}: Function with `self` type needs to have to be an associated function",
+                    loc_display(&fun.loc)
+                ),
+            }
+        }
+        ast::SelfParam::Explicit(ty) => {
+            env.insert(
+                SmolStr::new_static("self"),
+                convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+            );
+        }
+    }
+
     for (param_name, param_ty) in &fun.node.sig.params {
         env.insert(
             param_name.clone(),

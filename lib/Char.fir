@@ -7,7 +7,7 @@ impl Eq[Char]:
         self._codePoint == other._codePoint
 
 impl Ord[Char]:
-    cmp(self, other: Char): Ordering
+    cmp(self: Char, other: Char): Ordering
         self._codePoint.cmp(other._codePoint)
 
 Char.fromU32(codePoint: U32): Option[Char]
@@ -47,8 +47,8 @@ Char.isAsciiAlphanumeric(self): Bool
     self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
 
 impl ToStr[Char]:
-    toStr(self): Str
-        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
+    toStr(self: Char): Str
+        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2u32)
         strBuf.push('\'')
         strBuf.push(self)
         strBuf.push('\'')
