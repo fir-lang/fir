@@ -175,7 +175,7 @@ prim U32.asI8(self: U32): I8
 prim U32.asU8(self: U32): U8
 prim U32.asI32(self: U32): I32
 
-prim I32.asI8(self: U32): I8
-prim I32.asU8(self: U32): U8
-prim I32.asU32(self: U32): U32
-prim I32.abs(self: U32): I32
+prim I32.asI8(self: I32): I8
+prim I32.asU8(self: I32): U8
+prim I32.asU32(self: I32): U32
+prim I32.abs(self: I32): I32

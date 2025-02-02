@@ -131,19 +131,8 @@ pub(super) fn check_expr(
             let ty = {
                 let object_ty = check_expr(tc_state, object, None, level, loop_stack);
 
-                let field = field.clone();
-                let expr_loc = expr.loc.clone();
-
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
-                    Ty::Con(con) => {
-                        check_field_select(tc_state, expr, con, &[], &field, &expr_loc, level)
-                    }
-
-                    Ty::App(con, args) => {
-                        check_field_select(tc_state, expr, con, args, &field, &expr_loc, level)
-                    }
-
                     Ty::Anonymous {
                         labels,
                         extension,
@@ -157,7 +146,7 @@ pub(super) fn check_expr(
                             labels,
                             extension.clone(),
                         );
-                        match labels.get(&field) {
+                        match labels.get(field) {
                             Some(field_ty) => field_ty.clone(),
                             None => panic!(
                                 "{}: Record with fields {:?} does not have field {}",
@@ -168,14 +157,11 @@ pub(super) fn check_expr(
                         }
                     }
 
-                    other @ (Ty::Var(_) | Ty::QVar(_) | Ty::Fun { .. } | Ty::Anonymous { .. }) => {
-                        panic!(
-                            "{}: Object {} when selecting field {} does not have fields: {:?}",
-                            loc_display(&object.loc),
-                            other,
-                            field,
-                            object_ty
-                        )
+                    other => {
+                        let (ty, new_expr) =
+                            check_field_select(tc_state, object, &field, other, &expr.loc, level);
+                        expr.node = new_expr;
+                        ty
                     }
                 }
             };
@@ -915,49 +901,48 @@ pub(super) fn check_expr(
 
 /// Check a `FieldSelect` expr.
 ///
-/// `object` must be an `Expr::FieldSelect`.
+/// Returns the type of the expression, with updated AST node for the expression.
 fn check_field_select(
     tc_state: &mut TcFunState,
-    object: &mut ast::L<ast::Expr>,
-    ty_con: &Id,
-    ty_args: &[Ty],
+    object: &ast::L<ast::Expr>,
     field: &Id,
+    object_ty: &Ty,
     loc: &ast::Loc,
     level: u32,
-) -> Ty {
-    let field_select = match &mut object.node {
-        ast::Expr::FieldSelect(field_select) => field_select,
-        _ => panic!("BUG: Expression in `check_field_select` is not a `FieldSelect`"),
-    };
-
+) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
-    if let Some(field_ty) = select_field(tc_state, ty_con, ty_args, &field_select.field, loc) {
-        return field_ty;
+    match object_ty {
+        Ty::Con(con) => {
+            if let Some(field_ty) = select_field(tc_state, con, &[], field, loc) {
+                return (
+                    field_ty,
+                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                        object: Box::new(object.clone()),
+                        field: field.clone(),
+                    }),
+                );
+            }
+        }
+
+        Ty::App(con, args) => {
+            if let Some(field_ty) = select_field(tc_state, con, args, field, loc) {
+                return (
+                    field_ty,
+                    ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                        object: Box::new(object.clone()),
+                        field: field.clone(),
+                    }),
+                );
+            }
+        }
+
+        _ => {}
     }
 
-    match select_method(tc_state, ty_con, ty_args, &field_select.field, loc, level) {
+    match select_method(tc_state, object_ty, field, loc, level) {
         Some(scheme) => {
             let (method_ty, method_ty_args) =
                 scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
-            // Instantiates an associated function.
-            object.node = ast::Expr::MethodSelect(ast::MethodSelectExpr {
-                // Replace detached field_select field with some random expr to avoid
-                // cloning.
-                object: Box::new(replace(
-                    &mut field_select.object,
-                    ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::Self_,
-                    },
-                )),
-                object_ty: Some(if ty_args.is_empty() {
-                    Ty::Con(ty_con.clone())
-                } else {
-                    Ty::App(ty_con.clone(), ty_args.to_vec())
-                }),
-                method: field_select.field.clone(),
-                ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
-            });
 
             // Type arguments of the receiver already substituted for type parameters in
             // `select_method`. Drop 'self' argument.
@@ -973,11 +958,19 @@ fn check_field_select(
                         }
                         FunArgs::Named(_) => panic!(),
                     }
-                    Ty::Fun {
-                        args,
-                        ret,
-                        exceptions,
-                    }
+                    (
+                        Ty::Fun {
+                            args,
+                            ret,
+                            exceptions,
+                        },
+                        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                            object: Box::new(object.clone()),
+                            object_ty: Some(object_ty.clone()),
+                            method: field.clone(),
+                            ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                        }),
+                    )
                 }
                 _ => panic!(
                     "{}: Type of method is not a function type: {:?}",
@@ -989,7 +982,7 @@ fn check_field_select(
         None => panic!(
             "{}: Type {} does not have field or method {}",
             loc_display(loc),
-            ty_con,
+            object_ty,
             field
         ),
     }
@@ -1031,14 +1024,7 @@ pub(super) fn select_field(
             _ => None,
         },
 
-        TyConDetails::Trait(_) => {
-            // Stand-alone `trait.method` can't work, we need to look at the arguments.
-            // Ignore this for now, we probably won't need it.
-            todo!(
-                "{}: FieldSelect expression selecting a trait method without receiver",
-                loc_display(loc)
-            );
-        }
+        TyConDetails::Trait(_) => None,
 
         TyConDetails::Synonym(_) => {
             panic!("{}: Type synonym in select_field", loc_display(loc));
@@ -1049,23 +1035,11 @@ pub(super) fn select_field(
 /// Try to select a method (direct or trait). Does not select associated functions.
 fn select_method(
     tc_state: &mut TcFunState,
-    ty_con: &Id,    // receiver ty con
-    ty_args: &[Ty], // receiver ty args
+    receiver: &Ty,
     method: &Id,
     loc: &ast::Loc,
     level: u32,
 ) -> Option<Scheme> {
-    {
-        let ty_con = tc_state.tys.tys.get_con(ty_con).unwrap();
-        assert_eq!(ty_con.ty_params.len(), ty_args.len());
-    }
-
-    let receiver = if ty_args.is_empty() {
-        Ty::Con(ty_con.clone())
-    } else {
-        Ty::App(ty_con.clone(), ty_args.to_vec())
-    };
-
     for candidate in tc_state.tys.method_schemes.get(method)? {
         let (ty, _) = candidate.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
         let candidate_self_ty = match &ty {

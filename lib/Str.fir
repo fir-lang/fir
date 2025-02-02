@@ -51,7 +51,7 @@ Str.startsWith(self, prefix: Str): Bool
 # code point.
 Str.charAt(self, byteIndex: U32): Char
     byteIndex += self._start
-    let byte = self._bytes.get(byteIndex)
+    let byte: U8 = self._bytes.get(byteIndex)
 
     if byte < 128:
         return Char(_codePoint = byte.asU32())
@@ -63,20 +63,20 @@ Str.charAt(self, byteIndex: U32): Char
     if byte & 0b1110_0000 == 0b1100_0000:
         # 2 bytes
         let b0 = (byte & 0b11111).asU32()
-        let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
+        let b1 = (self._bytes.get(byteIndex + 1u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 6) | b1)
     elif byte & 0b1111_0000 == 0b1110_0000:
         # 3 bytes
         let b0 = (byte & 0b1111).asU32()
-        let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
-        let b2 = (self._bytes.get(byteIndex + 2) & 0b111111).asU32()
+        let b1 = (self._bytes.get(byteIndex + 1u32) & 0b111111).asU32()
+        let b2 = (self._bytes.get(byteIndex + 2u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 12) | (b1 << 6) | b2)
     else:
         # 4 bytes
         let b0 = (byte & 0b111).asU32()
-        let b1 = (self._bytes.get(byteIndex + 1) & 0b111111).asU32()
-        let b2 = (self._bytes.get(byteIndex + 2) & 0b111111).asU32()
-        let b3 = (self._bytes.get(byteIndex + 3) & 0b111111).asU32()
+        let b1 = (self._bytes.get(byteIndex + 1u32) & 0b111111).asU32()
+        let b2 = (self._bytes.get(byteIndex + 2u32) & 0b111111).asU32()
+        let b3 = (self._bytes.get(byteIndex + 3u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
 Str.chars(self): CharIter
@@ -96,7 +96,7 @@ Str.lines(self): Lines
     Lines(_str = self, _idx = 0)
 
 impl Eq[Str]:
-    __eq(self, other: Str): Bool
+    __eq(self: Str, other: Str): Bool
         if self.len() != other.len():
             return Bool.False
 
@@ -107,7 +107,7 @@ impl Eq[Str]:
         Bool.True
 
 impl ToStr[Str]:
-    toStr(self): Str = self
+    toStr(self: Str): Str = self
 
 type CharIter:
     # UTF-8 encoding of the string.
@@ -128,7 +128,7 @@ CharIter.asStr(self): Str
     )
 
 impl Iterator[CharIter, Char]:
-    next(self): Option[Char]
+    next(self: CharIter): Option[Char]
         if self._idx == self._end:
             return Option.None
 
@@ -142,7 +142,7 @@ type CharIndices:
     _idx: U32
 
 impl Iterator[CharIndices, (char: Char, idx: U32)]:
-    next(self): Option[(char: Char, idx: U32)]
+    next(self: CharIndices): Option[(char: Char, idx: U32)]
         if self._idx == self._str.len():
             return Option.None
 
@@ -153,7 +153,7 @@ impl Iterator[CharIndices, (char: Char, idx: U32)]:
         Option.Some((char = char, idx = idx))
 
 _charAt(bytes: Array[U8], idx: U32): Char
-    let byte = bytes.get(idx)
+    let byte: U8 = bytes.get(idx)
 
     if byte < 128:
         return Char(_codePoint = byte.asU32())
@@ -165,20 +165,20 @@ _charAt(bytes: Array[U8], idx: U32): Char
     if byte & 0b1110_0000 == 0b1100_0000:
         # 2 bytes
         let b0 = (byte & 0b11111).asU32()
-        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
+        let b1 = (bytes.get(idx + 1u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 6) | b1)
     elif byte & 0b1111_0000 == 0b1110_0000:
         # 3 bytes
         let b0 = (byte & 0b1111).asU32()
-        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
-        let b2 = (bytes.get(idx + 2) & 0b111111).asU32()
+        let b1 = (bytes.get(idx + 1u32) & 0b111111).asU32()
+        let b2 = (bytes.get(idx + 2u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 12) | (b1 << 6) | b2)
     else:
         # 4 bytes
         let b0 = (byte & 0b111).asU32()
-        let b1 = (bytes.get(idx + 1) & 0b111111).asU32()
-        let b2 = (bytes.get(idx + 2) & 0b111111).asU32()
-        let b3 = (bytes.get(idx + 3) & 0b111111).asU32()
+        let b1 = (bytes.get(idx + 1u32) & 0b111111).asU32()
+        let b2 = (bytes.get(idx + 2u32) & 0b111111).asU32()
+        let b3 = (bytes.get(idx + 3u32) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
 type SplitWhitespace:
@@ -186,7 +186,7 @@ type SplitWhitespace:
     _idx: U32
 
 impl Iterator[SplitWhitespace, Str]:
-    next(self): Option[Str]
+    next(self: SplitWhitespace): Option[Str]
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
@@ -223,7 +223,7 @@ type Lines:
     _idx: U32
 
 impl Iterator[Lines, Str]:
-    next(self): Option[Str]
+    next(self: Lines): Option[Str]
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 
