@@ -1075,8 +1075,22 @@ fn select_method(
 
     for candidate in tc_state.tys.method_schemes.get(method)? {
         let (ty, _) = candidate.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        let candidate_self_ty = match &ty {
+            Ty::Fun {
+                args: FunArgs::Positional(args),
+                ret: _,
+                exceptions: _,
+            } => &args[0],
+
+            other => panic!(
+                "{}: Method call candidate for {} does not have function type: {}",
+                loc_display(loc),
+                method,
+                other
+            ),
+        };
         if try_unify_one_way(
-            &ty,
+            &candidate_self_ty,
             &receiver,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
