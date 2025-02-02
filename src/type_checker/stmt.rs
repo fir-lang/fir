@@ -187,10 +187,7 @@ fn check_stmt(
                                 )
                             }),
 
-                        Ty::App(con, args) => match args {
-                            TyArgs::Positional(args) => select_field(
-                                tc_state, con, args, field, &lhs.loc,
-                            )
+                        Ty::App(con, args) => select_field(tc_state, con, args, field, &lhs.loc)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
@@ -199,8 +196,6 @@ fn check_stmt(
                                     field
                                 )
                             }),
-                            TyArgs::Named(_) => panic!(),
-                        },
 
                         Ty::Anonymous {
                             labels,

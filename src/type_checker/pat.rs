@@ -318,11 +318,6 @@ pub(super) fn refine_pat_binders(
 
                 Ty::App(con_id, ty_args) => {
                     assert_eq!(&con_id, type_);
-                    let ty_args = match ty_args {
-                        TyArgs::Positional(args) => args,
-                        TyArgs::Named(_) => panic!(), // associated type syntax?
-                    };
-
                     con_scheme.instantiate_with_tys(&ty_args)
                 }
 

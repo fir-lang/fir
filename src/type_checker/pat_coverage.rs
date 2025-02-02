@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyArgs, TyMap};
+use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyMap};
 
 use super::RecordOrVariant;
 
@@ -165,10 +165,6 @@ impl PatCoverage {
             },
 
             Ty::App(ty_con, ty_args) => {
-                let ty_args = match ty_args {
-                    TyArgs::Positional(args) => args,
-                    TyArgs::Named(_) => panic!(),
-                };
                 match con_shape(&ty_con, &tc_state.tys.tys) {
                     ConShape::Product => {
                         let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();

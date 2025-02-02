@@ -19,7 +19,7 @@ use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use ty::*;
-pub use ty::{Kind, RecordOrVariant, Ty, TyArgs};
+pub use ty::{Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};
@@ -792,14 +792,12 @@ fn collect_schemes(
                 } else {
                     Ty::App(
                         ty_decl.node.name.clone(),
-                        TyArgs::Positional(
-                            ty_decl
-                                .node
-                                .type_params
-                                .iter()
-                                .map(|ty_var| Ty::QVar(ty_var.clone()))
-                                .collect(),
-                        ),
+                        ty_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|ty_var| Ty::QVar(ty_var.clone()))
+                            .collect(),
                     )
                 };
 

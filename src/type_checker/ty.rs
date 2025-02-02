@@ -36,12 +36,12 @@ pub enum Ty {
     /// A unification variable, created by a type scheme when instantiated.
     Var(TyVarRef),
 
-    /// A type application, e.g. `Vec[U32]`, `Result[E, T]`, `Iterator[Item = A]`.
+    /// A type application, e.g. `Vec[U32]`, `Result[E, T]`.
     ///
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Id, TyArgs),
+    App(Id, Vec<Ty>),
 
     /// Only in type schemes: a quantified type variable.
     ///
@@ -105,12 +105,6 @@ impl FunArgs {
             FunArgs::Named(args) => args.len(),
         }
     }
-}
-
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
-pub enum TyArgs {
-    Positional(Vec<Ty>),
-    Named(TreeMap<Id, Ty>),
 }
 
 /// A reference to a unification variable.
@@ -403,50 +397,10 @@ fn ty_eq_modulo_alpha(
             if con1 != con2 {
                 return false;
             }
-
-            match (args1, args2) {
-                (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
-                    args1.len() == args2.len()
-                        && args1.iter().zip(args2.iter()).all(|(ty1, ty2)| {
-                            ty_eq_modulo_alpha(
-                                cons,
-                                extra_qvars,
-                                ty1,
-                                ty2,
-                                ty1_qvars,
-                                ty2_qvars,
-                                loc,
-                            )
-                        })
-                }
-
-                (TyArgs::Named(args1), TyArgs::Named(args2)) => {
-                    let names1: Set<&Id> = args1.keys().collect();
-                    let names2: Set<&Id> = args2.keys().collect();
-
-                    if names1 != names2 {
-                        return false;
-                    }
-
-                    for name in names1 {
-                        if !ty_eq_modulo_alpha(
-                            cons,
-                            extra_qvars,
-                            args1.get(name).unwrap(),
-                            args2.get(name).unwrap(),
-                            ty1_qvars,
-                            ty2_qvars,
-                            loc,
-                        ) {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-
-                _ => false,
-            }
+            args1.len() == args2.len()
+                && args1.iter().zip(args2.iter()).all(|(ty1, ty2)| {
+                    ty_eq_modulo_alpha(cons, extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc)
+                })
         }
 
         (
@@ -661,16 +615,7 @@ impl Ty {
 
             Ty::App(con, args) => Ty::App(
                 con.clone(),
-                match args {
-                    TyArgs::Positional(tys) => {
-                        TyArgs::Positional(tys.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect())
-                    }
-                    TyArgs::Named(tys) => TyArgs::Named(
-                        tys.iter()
-                            .map(|(name, arg_ty)| (name.clone(), arg_ty.subst(var, ty)))
-                            .collect(),
-                    ),
-                },
+                args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
             ),
 
             Ty::Anonymous {
@@ -725,16 +670,7 @@ impl Ty {
 
             Ty::App(ty, tys) => Ty::App(
                 ty.clone(),
-                match tys {
-                    TyArgs::Positional(tys) => {
-                        TyArgs::Positional(tys.iter().map(|ty| ty.subst_qvars(vars)).collect())
-                    }
-                    TyArgs::Named(tys) => TyArgs::Named(
-                        tys.iter()
-                            .map(|(name, ty)| (name.clone(), ty.subst_qvars(vars)))
-                            .collect(),
-                    ),
-                },
+                tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
             ),
 
             Ty::Anonymous {
@@ -816,16 +752,7 @@ impl Ty {
 
             Ty::App(con, args) => Ty::App(
                 con.clone(),
-                match args {
-                    TyArgs::Positional(tys) => {
-                        TyArgs::Positional(tys.iter().map(|ty| ty.deep_normalize(cons)).collect())
-                    }
-                    TyArgs::Named(tys) => TyArgs::Named(
-                        tys.iter()
-                            .map(|(name, ty)| (name.clone(), ty.deep_normalize(cons)))
-                            .collect(),
-                    ),
-                },
+                args.iter().map(|ty| ty.deep_normalize(cons)).collect(),
             ),
 
             Ty::Anonymous {
@@ -875,9 +802,9 @@ impl Ty {
     }
 
     /// Get the type constructor of the type and the type arguments.
-    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, TyArgs)> {
+    pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
-            Ty::Con(con) => Some((con.clone(), TyArgs::empty())),
+            Ty::Con(con) => Some((con.clone(), vec![])),
 
             Ty::App(con, args) => Some((con.clone(), args.clone())),
 
@@ -1015,12 +942,6 @@ impl TyConDetails {
     }
 }
 
-impl TyArgs {
-    pub(super) fn empty() -> Self {
-        TyArgs::Positional(vec![])
-    }
-}
-
 impl ConShape {
     pub(super) fn from_ast(con: &ast::ConstructorDecl) -> ConShape {
         let ast::ConstructorDecl { name, fields } = con;
@@ -1054,23 +975,11 @@ impl fmt::Display for Ty {
 
             Ty::App(id, args) => {
                 write!(f, "{}[", id)?;
-                match args {
-                    TyArgs::Positional(tys) => {
-                        for (i, ty) in tys.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "{}", ty)?;
-                        }
+                for (i, ty) in args.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
                     }
-                    TyArgs::Named(tys) => {
-                        for (i, (name, ty)) in tys.iter().enumerate() {
-                            if i > 0 {
-                                write!(f, ", ")?;
-                            }
-                            write!(f, "{} = {}", name, ty)?;
-                        }
-                    }
+                    write!(f, "{}", ty)?;
                 }
                 write!(f, "]")
             }

@@ -140,17 +140,9 @@ pub(super) fn check_expr(
                         check_field_select(tc_state, expr, con, &[], &field, &expr_loc, level)
                     }
 
-                    Ty::App(con, args) => match args {
-                        TyArgs::Positional(args) => {
-                            check_field_select(tc_state, expr, con, args, &field, &expr_loc, level)
-                        }
-                        TyArgs::Named(_) => {
-                            // Associated type arguments are only allowed in traits, sothe `con` must
-                            // be a trait.
-                            assert!(tc_state.tys.tys.get_con(con).unwrap().details.is_trait());
-                            panic!("{}: Traits cannot have fields", loc_display(&object.loc))
-                        }
-                    },
+                    Ty::App(con, args) => {
+                        check_field_select(tc_state, expr, con, args, &field, &expr_loc, level)
+                    }
 
                     Ty::Anonymous {
                         labels,
@@ -961,7 +953,7 @@ fn check_field_select(
                 object_ty: Some(if ty_args.is_empty() {
                     Ty::Con(ty_con.clone())
                 } else {
-                    Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+                    Ty::App(ty_con.clone(), ty_args.to_vec())
                 }),
                 method: field_select.field.clone(),
                 ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
@@ -1071,7 +1063,7 @@ fn select_method(
     let receiver = if ty_args.is_empty() {
         Ty::Con(ty_con.clone())
     } else {
-        Ty::App(ty_con.clone(), TyArgs::Positional(ty_args.to_vec()))
+        Ty::App(ty_con.clone(), ty_args.to_vec())
     };
 
     for candidate in tc_state.tys.method_schemes.get(method)? {

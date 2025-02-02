@@ -38,7 +38,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 return Ty::Con(ty_con.id.clone());
             }
 
-            Ty::App(ty_con.id.clone(), TyArgs::Positional(converted_args))
+            Ty::App(ty_con.id.clone(), converted_args)
         }
 
         ast::Type::Var(var) => tys
@@ -198,7 +198,7 @@ pub(super) fn convert_and_bind_context(
     // Convert preds.
     for ty in &context_ast.preds {
         let pred = match convert_ast_ty(tys, &ty.node, &ty.loc) {
-            Ty::App(con, TyArgs::Positional(args)) => {
+            Ty::App(con, args) => {
                 // TODO: Check that `con` is a trait, arity and kinds match.
                 Pred {
                     trait_: con,

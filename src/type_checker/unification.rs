@@ -43,38 +43,11 @@ pub(super) fn unify(
                     con2,
                 )
             }
-
-            match (args1, args2) {
-                (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
-                    if args1.len() != args2.len() {
-                        panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
-                    }
-                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        unify(arg1, arg2, cons, var_gen, level, loc);
-                    }
-                }
-                (TyArgs::Named(args1), TyArgs::Named(args2)) => {
-                    let keys1: Set<&Id> = args1.keys().collect();
-                    let keys2: Set<&Id> = args2.keys().collect();
-                    if keys1 != keys2 {
-                        panic!("{}: BUG: Kind error: type constructor {} applied to different named arguments in unify", loc_display(loc), con1)
-                    }
-
-                    for key in keys1 {
-                        unify(
-                            args1.get(key).unwrap(),
-                            args2.get(key).unwrap(),
-                            cons,
-                            var_gen,
-                            level,
-                            loc,
-                        );
-                    }
-                }
-                _ => {
-                    // Bug in the type checker, types should've been checked.
-                    panic!("{}: BUG: Kind error: type constructor {} applied to different shape of arguments in unify", loc_display(loc), con1)
-                }
+            if args1.len() != args2.len() {
+                panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
+            }
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                unify(arg1, arg2, cons, var_gen, level, loc);
             }
         }
 
@@ -329,44 +302,15 @@ pub(super) fn try_unify_one_way(
             if con1 != con2 {
                 return false;
             }
-
-            match (args1, args2) {
-                (TyArgs::Positional(args1), TyArgs::Positional(args2)) => {
-                    if args1.len() != args2.len() {
-                        return false;
-                    }
-                    for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
-                            return false;
-                        }
-                    }
-                    true
-                }
-                (TyArgs::Named(args1), TyArgs::Named(args2)) => {
-                    let keys1: Set<&Id> = args1.keys().collect();
-                    let keys2: Set<&Id> = args2.keys().collect();
-                    if keys1 != keys2 {
-                        return false;
-                    }
-
-                    for key in keys1 {
-                        if !try_unify_one_way(
-                            args1.get(key).unwrap(),
-                            args2.get(key).unwrap(),
-                            cons,
-                            var_gen,
-                            level,
-                            loc,
-                        ) {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-
-                _ => false,
+            if args1.len() != args2.len() {
+                return false;
             }
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                if !try_unify_one_way(arg1, arg2, cons, var_gen, level, loc) {
+                    return false;
+                }
+            }
+            true
         }
 
         (
@@ -589,10 +533,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
             var.prune_level(max_level);
         }
 
-        Ty::App(_, tys) => match tys {
-            TyArgs::Positional(tys) => tys.iter().for_each(|ty| prune_level(ty, max_level)),
-            TyArgs::Named(tys) => tys.values().for_each(|ty| prune_level(ty, max_level)),
-        },
+        Ty::App(_, tys) => tys.iter().for_each(|ty| prune_level(ty, max_level)),
 
         Ty::Anonymous {
             labels, extension, ..
