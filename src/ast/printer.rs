@@ -120,9 +120,6 @@ impl TypeDeclRhs {
 
 impl FunDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
-        if self.body.is_none() {
-            buffer.push_str("prim ");
-        }
         self.sig.print(&self.parent_ty, &self.name.node, buffer);
         if let Some(body) = &self.body {
             buffer.push('\n');

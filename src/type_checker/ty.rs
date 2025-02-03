@@ -13,7 +13,10 @@ use smol_str::SmolStr;
 #[derive(Debug, Clone)]
 pub struct Scheme {
     /// Generalized variables with kinds.
-    pub(super) quantified_vars: Map<Id, Kind>,
+    ///
+    /// When the scheme is for a trait method, the first type parameters will be the type parameters
+    /// for the trait, in the right order.
+    pub(super) quantified_vars: Vec<(Id, Kind)>,
 
     /// Predicates.
     pub(super) preds: Set<Pred>,
@@ -318,7 +321,7 @@ impl Scheme {
             quantified_vars: self
                 .quantified_vars
                 .iter()
-                .filter(|(qvar, _)| *qvar != var)
+                .filter(|(qvar, _)| qvar != var)
                 .map(|(qvar, kind)| (qvar.clone(), kind.clone()))
                 .collect(),
             preds: self
@@ -968,7 +971,7 @@ use std::fmt;
 
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
+        match self.normalize(&Default::default()) {
             Ty::Con(id) => write!(f, "{}", id),
 
             Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
@@ -995,7 +998,7 @@ impl fmt::Display for Ty {
                     RecordOrVariant::Variant => ('[', ']'),
                 };
 
-                if *is_row {
+                if is_row {
                     write!(f, "row")?;
                 }
 

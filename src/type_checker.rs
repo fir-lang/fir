@@ -569,6 +569,9 @@ fn collect_schemes(
                     trait_decl.node.type_param_kinds.len()
                 );
 
+                // Note: this needs to be a `Vec` instead of a `Map` as we need to add trait context
+                // before the function context in the method type schemes, and type parameters in
+                // the trait context need to be in the same order as the trait declaration.
                 let trait_quantified_vars: Vec<(Id, Kind)> = trait_decl
                     .node
                     .type_params
@@ -593,6 +596,8 @@ fn collect_schemes(
                 for fun in &trait_decl.node.items {
                     // Add trait type parameters and predicate to the function context before
                     // converting.
+                    // Note: This needs to be a `Vec` instead of `Map`. See the comments around
+                    // `trait_quantified_vars`.
                     let mut fun_type_params = trait_quantified_vars.clone();
                     fun_type_params.extend(fun.node.sig.context.type_params.clone());
 
