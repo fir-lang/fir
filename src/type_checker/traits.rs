@@ -56,9 +56,12 @@ When type checking the `next` call, we find the `Iterator.next`:
     - The impl doesn't have predicates, so we're done.
 */
 
-use crate::ast::Id;
+use crate::ast::{self, Id};
 use crate::collections::*;
-use crate::type_checker::ty::{Kind, Ty};
+use crate::type_checker::convert::*;
+use crate::type_checker::ty::*;
+use crate::type_checker::ty_map::TyMap;
+use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
 pub type TraitEnv = Map<Id, Vec<TraitImpl>>;
@@ -85,4 +88,62 @@ pub struct TraitImpl {
     // in arguments and preds will be the same instantiated type variable, and as we match args
     // the preds will be updated.
     pub preds: Vec<(Id, Vec<Ty>)>,
+}
+
+pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
+    let mut env: TraitEnv = Default::default();
+
+    for item in pgm {
+        let impl_ = match &item.node {
+            ast::TopDecl::Impl(impl_) => impl_,
+            _ => continue,
+        };
+
+        let trait_id = impl_.node.trait_.node.clone();
+
+        /*
+        let ty_con = tys
+            .get_con(&trait_id)
+            .unwrap_or_else(|| panic!("{}: Undefined trait {}", loc_display(&impl_.loc), trait_id));
+
+        let trait_details = ty_con.trait_details().unwrap_or_else(|| {
+            panic!(
+                "{}: Type {} is not a trait",
+                loc_display(&impl_.loc),
+                trait_id
+            )
+        });
+        */
+
+        let preds: Set<Pred> = convert_and_bind_context(
+            tys,
+            &impl_.node.context,
+            TyVarConversion::ToQVar,
+            &impl_.loc,
+        );
+
+        let trait_impl = TraitImpl {
+            qvars: impl_.node.context.type_params.clone(),
+            trait_args: impl_
+                .node
+                .tys
+                .iter()
+                .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
+                .collect(),
+            preds: preds
+                .into_iter()
+                .map(
+                    |Pred {
+                         trait_,
+                         params,
+                         loc: _,
+                     }| (trait_, params),
+                )
+                .collect(),
+        };
+
+        env.entry(trait_id.clone()).or_default().push(trait_impl);
+    }
+
+    env
 }
