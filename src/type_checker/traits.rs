@@ -61,6 +61,7 @@ use crate::collections::*;
 use crate::type_checker::convert::*;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
+use crate::type_checker::unification::try_unify_one_way;
 use crate::utils::loc_display;
 
 /// Maps trait ids to implementations.
@@ -146,4 +147,51 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
     }
 
     env
+}
+
+impl TraitImpl {
+    /// Try to match the trait arguments. If successful, return new goals.
+    pub fn try_match(
+        &self,
+        args: &[Ty],
+        var_gen: &mut TyVarGen,
+        tys: &TyMap,
+        loc: &ast::Loc,
+    ) -> Option<Vec<(Id, Vec<Ty>)>> {
+        if args.len() != self.trait_args.len() {
+            panic!(
+                "{}: BUG: Number of arguments applied to the trait don't match the arity",
+                loc_display(loc)
+            );
+        }
+
+        // Maps `QVar`s to instantiations.
+        let var_map: Map<Id, Ty> = self
+            .qvars
+            .iter()
+            .map(|(qvar, kind)| {
+                let instantiated_var = var_gen.new_var(0, kind.clone(), loc.clone());
+                (qvar.clone(), Ty::Var(instantiated_var.clone()))
+            })
+            .collect();
+
+        for (impl_arg, ty_arg) in self.trait_args.iter().zip(args.iter()) {
+            let instantiated_impl_arg = impl_arg.subst_qvars(&var_map);
+            if !try_unify_one_way(&instantiated_impl_arg, ty_arg, tys.cons(), var_gen, 0, loc) {
+                return None;
+            }
+        }
+
+        Some(
+            self.preds
+                .iter()
+                .map(|(trait_, args)| {
+                    (
+                        trait_.clone(),
+                        args.iter().map(|arg| arg.subst_qvars(&var_map)).collect(),
+                    )
+                })
+                .collect(),
+        )
+    }
 }
