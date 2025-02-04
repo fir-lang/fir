@@ -9,6 +9,7 @@ mod pat;
 mod pat_coverage;
 pub(crate) mod row_utils;
 mod stmt;
+mod traits;
 mod ty;
 mod ty_map;
 mod unification;
