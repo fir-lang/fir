@@ -20,7 +20,7 @@ pub struct L<T> {
     pub node: T,
 }
 
-#[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub struct Loc {
     /// Module file path, relative to the working directory.
     pub module: Rc<str>,
@@ -30,6 +30,19 @@ pub struct Loc {
     pub line_end: u16,
     pub col_end: u16,
     pub byte_offset_end: u32,
+}
+
+impl std::fmt::Debug for Loc {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!(
+            "{}:{}:{}-{}:{}",
+            self.module,
+            self.line_start + 1,
+            self.col_start + 1,
+            self.line_end + 1,
+            self.col_end + 1,
+        ))
+    }
 }
 
 impl Loc {
