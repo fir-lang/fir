@@ -1166,7 +1166,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
 fn resolve_preds(
     trait_env: &TraitEnv,
-    _assumps: &Set<Pred>,
+    assumps: &Set<Pred>,
     tys: &PgmTypes,
     preds: Set<Pred>,
     var_gen: &mut TyVarGen,
@@ -1174,44 +1174,60 @@ fn resolve_preds(
 ) {
     let mut goals: Vec<Pred> = preds.into_iter().collect();
 
-    'goals: while let Some(Pred {
-        trait_,
-        params,
-        loc,
-    }) = goals.pop()
-    {
-        let trait_impls = match trait_env.get(&trait_) {
+    'goals: while let Some(mut pred) = goals.pop() {
+        pred.params
+            .iter_mut()
+            .for_each(|ty| *ty = ty.normalize(tys.tys.cons()));
+
+        for assump in assumps {
+            // We can't use set lookup as locs will be different.
+            if &assump.trait_ == &pred.trait_ && &assump.params == &pred.params {
+                continue 'goals;
+            }
+        }
+
+        let trait_impls = match trait_env.get(&pred.trait_) {
             Some(impls) => impls,
             None => panic!(
-                "{}: Unable to resolve pred {}",
-                loc_display(&loc.clone()),
+                "{}: Unable to resolve pred {}\nassumps = {}",
+                loc_display(&pred.loc.clone()),
                 Pred {
-                    trait_,
-                    params,
-                    loc
-                }
+                    trait_: pred.trait_,
+                    params: pred.params,
+                    loc: pred.loc
+                },
+                assumps
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
         };
 
         for impl_ in trait_impls {
-            if let Some(subgoals) = impl_.try_match(&params, var_gen, &tys.tys, &loc) {
+            if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc) {
                 goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
                     trait_,
                     params,
-                    loc: loc.clone(),
+                    loc: pred.loc.clone(),
                 }));
                 continue 'goals;
             }
         }
 
         panic!(
-            "{}: Unable to resolve {}",
-            loc_display(&loc.clone()),
+            "{}: Unable to resolve {}\nassumps = {}",
+            loc_display(&pred.loc.clone()),
             Pred {
-                trait_,
-                params,
-                loc
-            }
+                trait_: pred.trait_,
+                params: pred.params,
+                loc: pred.loc
+            },
+            assumps
+                .iter()
+                .map(ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
         );
     }
 }
