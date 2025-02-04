@@ -116,6 +116,8 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
         });
         */
 
+        tys.enter_scope();
+
         let preds: Set<Pred> = convert_and_bind_context(
             tys,
             &impl_.node.context,
@@ -142,6 +144,8 @@ pub fn collect_trait_env(pgm: &ast::Module, tys: &mut TyMap) -> TraitEnv {
                 )
                 .collect(),
         };
+
+        tys.exit_scope();
 
         env.entry(trait_id.clone()).or_default().push(trait_impl);
     }

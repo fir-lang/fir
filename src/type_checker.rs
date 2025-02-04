@@ -19,6 +19,7 @@ use convert::convert_fields;
 use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
+use traits::*;
 use ty::*;
 pub use ty::{Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
@@ -68,6 +69,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
+    let trait_env = collect_trait_env(module, &mut tys.tys);
     for decl in module {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
@@ -78,9 +80,9 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
             // Types and schemes added to `PgmTypes` by `collect_types`.
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
 
-            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys),
+            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys, &trait_env),
 
-            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys),
+            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys, &trait_env),
         }
     }
 
@@ -904,7 +906,7 @@ fn collect_schemes(
 }
 
 /// Type check a top-level function.
-fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
+fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
 
@@ -996,7 +998,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         }
     }
 
-    resolve_all_preds(&assumps, tys, preds, &mut var_gen, 0);
+    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
     tys.tys.exit_scope();
 }
@@ -1007,7 +1009,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 ///
 /// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
 /// checking the methods.
-fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
+fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
@@ -1112,7 +1114,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
                 normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
             }
 
-            resolve_all_preds(&assumps, tys, preds, &mut var_gen, 0);
+            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
         }
 
         tys.tys.exit_scope();
@@ -1162,172 +1164,54 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
     assert_eq!(tys.tys.len_scopes(), 1);
 }
 
-/// We currently don't allow a type constructor to implement a trait multiple times with different
-/// type arguments, e.g. `impl Debug[Vec[U32]]` and `impl Debug[Vec[Str]]` are not allowed at the
-/// same time.
-///
-/// With this restriction resolving predicates is just a matter of checking for
-/// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 fn resolve_preds(
+    trait_env: &TraitEnv,
     _assumps: &Set<Pred>,
-    _tys: &PgmTypes,
-    _preds: Set<Pred>,
-    _var_gen: &mut TyVarGen,
-    _level: u32,
-) -> Set<Pred> {
-    todo!()
-    /*
-    let mut remaining_preds: Set<Pred> = Default::default();
-
-    for Pred {
-        trait_,
-        params,
-        assoc_tys,
-        loc,
-    } in preds.into_iter()
-    {
-        let ty_var_ty = ty_var.normalize(tys.tys.cons());
-        match &ty_var_ty {
-            Ty::Con(con) | Ty::App(con, _) => {
-                let TraitDetails {
-                    implementing_tys, ..
-                } = tys
-                    .tys
-                    .cons()
-                    .get(&trait_)
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "{}: BUG: Trait {} is not in the environment",
-                            loc_display(&loc),
-                            trait_
-                        )
-                    })
-                    .trait_details()
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "{}: BUG: {} in predicates is not a trait",
-                            loc_display(&loc),
-                            trait_
-                        )
-                    });
-
-                if !implementing_tys.contains(con)
-                    && context.get(con).map(|ctx| ctx.bounds.contains_key(&trait_)) != Some(true)
-                {
-                    panic!(
-                        "{}: Type {} does not implement trait {}",
-                        loc_display(&loc),
-                        con,
-                        trait_
-                    );
-                }
-
-                // Substitute quantified variables in the type constructor with the type arguments.
-                let args = match &ty_var_ty {
-                    Ty::App(_, TyArgs::Positional(args)) => args,
-                    _ => &vec![],
-                };
-
-                let con_qvars: Vec<Id> = tys
-                    .tys
-                    .get_con(con)
-                    .unwrap()
-                    .ty_params
-                    .iter()
-                    .map(|(qvar, _)| qvar.clone())
-                    .collect();
-
-                let qvar_map: Map<Id, Ty> = con_qvars
-                    .into_iter()
-                    .zip(args.iter())
-                    .map(|(var, ty)| (var, ty.clone()))
-                    .collect();
-
-                for (assoc_ty_id, ty) in assoc_tys {
-                    let assoc_ty = tys
-                        .tys
-                        .get_con(con)
-                        .unwrap()
-                        .assoc_tys
-                        .get(&assoc_ty_id)
-                        .unwrap()
-                        .subst_qvars(&qvar_map)
-                        .normalize(tys.tys.cons());
-
-                    let expected_ty = ty.normalize(tys.tys.cons());
-
-                    // TODO: We could show where the associated type is coming from in the error
-                    // messages here, e.g. instead of "Unable to unify Str and I32", we could say
-                    // "Unable to unify MyType.AssocTy (Str) and I32".
-                    unification::unify(
-                        &assoc_ty,
-                        &expected_ty,
-                        tys.tys.cons(),
-                        var_gen,
-                        level,
-                        &loc,
-                    );
-                }
-            }
-
-            // TODO: Records can implement Debug, Eq, etc.
-            Ty::QVar(_)
-            | Ty::Var(_)
-            | Ty::Anonymous { .. }
-            | Ty::Fun { .. }
-            | Ty::AssocTySelect { .. } => {
-                remaining_preds.add(Pred {
-                    ty_var,
-                    trait_,
-                    assoc_tys,
-                    loc,
-                });
-            }
-        }
-    }
-
-    remaining_preds
-    */
-}
-
-fn resolve_all_preds(
-    _assumps: &Set<Pred>,
-    _tys: &PgmTypes,
-    _preds: Set<Pred>,
-    _var_gen: &mut TyVarGen,
+    tys: &PgmTypes,
+    preds: Set<Pred>,
+    var_gen: &mut TyVarGen,
     _level: u32,
 ) {
-    /*
-    let unresolved_preds = resolve_preds(context, tys, preds, var_gen, level);
-    report_unresolved_preds(unresolved_preds, tys.tys.cons());
-    */
-}
+    let mut goals: Vec<Pred> = preds.into_iter().collect();
 
-/*
-fn report_unresolved_preds(preds: Set<Pred>, cons: &ScopeMap<Id, TyCon>) {
-    if preds.is_empty() {
-        return;
-    }
-
-    for Pred {
+    'goals: while let Some(Pred {
         trait_,
         params,
-        assoc_tys: _,
         loc,
-    } in preds
+    }) = goals.pop()
     {
-        eprintln!(
-            "{}: Cannot resolve constraint {}[{}]",
-            loc_display(&loc),
-            trait_,
-            params
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<String>>()
-                .join(", "),
+        let trait_impls = match trait_env.get(&trait_) {
+            Some(impls) => impls,
+            None => panic!(
+                "{}: Unable to resolve pred {}",
+                loc_display(&loc.clone()),
+                Pred {
+                    trait_,
+                    params,
+                    loc
+                }
+            ),
+        };
+
+        for impl_ in trait_impls {
+            if let Some(subgoals) = impl_.try_match(&params, var_gen, &tys.tys, &loc) {
+                goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
+                    trait_,
+                    params,
+                    loc: loc.clone(),
+                }));
+                continue 'goals;
+            }
+        }
+
+        panic!(
+            "{}: Unable to resolve {}",
+            loc_display(&loc.clone()),
+            Pred {
+                trait_,
+                params,
+                loc
+            }
         );
     }
-
-    panic!();
 }
-*/
