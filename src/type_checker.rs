@@ -890,7 +890,137 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Impl(_) | ast::TopDecl::Import(_) => {
+            ast::TopDecl::Impl(impl_decl) => {
+                // Default methods are already copied to impls. Check that impl method signatures
+                // match the trait method signatures.
+                let impl_assumps = convert_and_bind_context(
+                    tys,
+                    &impl_decl.node.context,
+                    TyVarConversion::ToQVar,
+                    &impl_decl.loc,
+                );
+
+                for fun in &impl_decl.node.items {
+                    let sig = &fun.node.sig;
+
+                    let fun_assumps = convert_and_bind_context(
+                        tys,
+                        &sig.context,
+                        TyVarConversion::ToQVar,
+                        &fun.loc,
+                    );
+
+                    let mut arg_tys: Vec<Ty> = sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => panic!(
+                            "{}: Impl method with implicit self type",
+                            loc_display(&fun.loc)
+                        ),
+                        ast::SelfParam::Explicit(ty) => {
+                            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+                            arg_tys.insert(0, ty);
+                        }
+                    }
+
+                    let ret_ty: Ty = match &sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
+
+                    let exceptions = match &sig.exceptions {
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
+
+                    let impl_fun_scheme = Scheme {
+                        quantified_vars: impl_decl
+                            .node
+                            .context
+                            .type_params
+                            .iter()
+                            .cloned()
+                            .chain(fun.node.sig.context.type_params.iter().cloned())
+                            .collect(),
+                        preds: impl_assumps
+                            .iter()
+                            .cloned()
+                            .chain(fun_assumps.iter().cloned())
+                            .collect(),
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
+
+                    let trait_ty_con =
+                        tys.get_con(&impl_decl.node.trait_.node).unwrap_or_else(|| {
+                            panic!(
+                                "{}: Unknown trait {}",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node
+                            )
+                        });
+
+                    let mut trait_fun_scheme = trait_ty_con
+                        .trait_details()
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: {} is not a trait",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node
+                            )
+                        })
+                        .methods
+                        .get(&fun.node.name.node)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Trait {} does not have a method named {}",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node,
+                                &fun.node.name.node
+                            )
+                        })
+                        .scheme
+                        .clone();
+
+                    // Substitute trait arguments.
+                    for ((ty_param, _), ty_arg) in
+                        trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter()).rev()
+                    {
+                        let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
+                        trait_fun_scheme = trait_fun_scheme.subst(ty_param, &ty_arg);
+                    }
+
+                    if !trait_fun_scheme.eq_modulo_alpha(
+                        tys.cons(),
+                        &Default::default(),
+                        &impl_fun_scheme,
+                        &fun.loc,
+                    ) {
+                        panic!(
+                            "{}: Trait method implementation of {} does not match the trait method type
+                            Trait method type:          {}
+                            Implementation method type: {}",
+                            loc_display(&fun.loc),
+                            &fun.node.name.node,
+                            trait_fun_scheme,
+                            impl_fun_scheme
+                        );
+                    }
+                }
+            }
+
+            ast::TopDecl::Import(_) => {
                 tys.exit_scope();
                 continue;
             }

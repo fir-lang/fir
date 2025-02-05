@@ -312,7 +312,7 @@ impl Scheme {
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
-    pub(super) fn subst(&self, var: &Id, ty: &Ty, _loc: &ast::Loc) -> Scheme {
+    pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Scheme {
         // TODO: This is a bit hacky.. In top-level functions `var` should be in `quantified_vars`,
         // but in associated functions and trait methods it can also be a type parameter of the
         // trait/type. For now we use the same subst method for both.
