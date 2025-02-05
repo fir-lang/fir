@@ -1003,12 +1003,9 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     tys.tys.exit_scope();
 }
 
-/// Type check an `impl` block.
+/// Type check a trait implementation.
 ///
-/// The block may be for a trait implementation or for associated functions.
-///
-/// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
-/// checking the methods.
+/// `tys` is `mut` to be able to bind type parameters of the `impl` before checking the methods.
 fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
