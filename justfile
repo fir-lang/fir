@@ -21,6 +21,11 @@ test: build
     goldentests target/debug/fir tests '# '
     goldentests target/debug/fir examples '# '
 
+# Only run type checking tests.
+test_tc: build
+    cargo test
+    grep -rl -- "--typecheck" tests | xargs -d '\n' -I {} goldentests target/debug/fir {} '# '
+
 update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
     goldentests target/debug/fir examples '# ' --overwrite
