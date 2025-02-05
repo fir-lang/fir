@@ -193,7 +193,8 @@ impl Iterator[SplitWhitespace, Str]:
 
         # Skip initial whitespace, initialize `wordStart` and `wordEnd`.
         loop:
-            match charIdxIter.next():
+            let next: Option[(char: Char, idx: U32)] = charIdxIter.next()
+            match next:
                 Option.Some((char = char, idx = idx)):
                     let char: Char = char
                     if !char.isAsciiWhitespace():
@@ -206,7 +207,8 @@ impl Iterator[SplitWhitespace, Str]:
 
         # Scan word, update `wordEnd`.
         loop:
-            match charIdxIter.next():
+            let next: Option[(char: Char, idx: U32)] = charIdxIter.next()
+            match next:
                 Option.Some((char = char, idx = idx)):
                     let char: Char = char
                     wordEnd = self._idx + idx
@@ -229,7 +231,7 @@ impl Iterator[Lines, Str]:
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 
-        while let Option.Some((char = char, idx = idx)) = charIdxIter.next():
+        for (char = char, idx = idx): (char: Char, idx: U32) in charIdxIter:
             if char == '\n':
                 let substr = self._str.substr(lineStart, self._idx + idx)
                 self._idx += idx + 1 # continue with the next char
