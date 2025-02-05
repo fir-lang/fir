@@ -1189,18 +1189,13 @@ fn resolve_preds(
         let trait_impls = match trait_env.get(&pred.trait_) {
             Some(impls) => impls,
             None => panic!(
-                "{}: Unable to resolve pred {}\nassumps = {}",
+                "{}: Unable to resolve pred {}",
                 loc_display(&pred.loc.clone()),
                 Pred {
                     trait_: pred.trait_,
                     params: pred.params,
                     loc: pred.loc
                 },
-                assumps
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(", ")
             ),
         };
 
@@ -1216,18 +1211,13 @@ fn resolve_preds(
         }
 
         panic!(
-            "{}: Unable to resolve {}\nassumps = {}",
+            "{}: Unable to resolve {}",
             loc_display(&pred.loc.clone()),
             Pred {
                 trait_: pred.trait_,
                 params: pred.params,
                 loc: pred.loc
             },
-            assumps
-                .iter()
-                .map(ToString::to_string)
-                .collect::<Vec<_>>()
-                .join(", ")
         );
     }
 }

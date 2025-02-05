@@ -11,4 +11,5 @@ prim type I32
 prim printStr(s: Str): ()
 
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/TraitFail2.fir:12:7: Type U32 does not implement trait ToStr
+# expected exit status: 101
+# expected stderr: tests/TraitsFail2.fir:7:7: Unable to resolve pred ToStr[U32]

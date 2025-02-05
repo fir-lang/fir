@@ -26,6 +26,10 @@ test_tc: build
     cargo test
     grep -rl -- "--typecheck" tests | xargs -d '\n' -I {} goldentests target/debug/fir {} '# '
 
+update_tc_tests: build
+    cargo test
+    grep -rl -- "--typecheck" tests | xargs -d '\n' -I {} goldentests target/debug/fir {} '# ' --overwrite
+
 update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
     goldentests target/debug/fir examples '# ' --overwrite

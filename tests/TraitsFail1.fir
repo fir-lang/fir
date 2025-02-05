@@ -11,4 +11,4 @@ f(a: a)
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected exit status: 101
-# expected stderr: tests/TraitFail1.fir:10:14: Type a does not have field or method toStr
+# expected stderr: tests/TraitsFail1.fir:10:14: Unable to resolve pred ToStr[a]
