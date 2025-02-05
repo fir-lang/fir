@@ -124,7 +124,7 @@ impl TyVarRef {
 /// A unification variable.
 ///
 /// Note: `Hash` and `Eq` are implemented based on `id`.
-#[derive(Debug, Clone)]
+#[derive(Clone)] // Debug implemented manually below
 pub struct TyVar {
     /// Identity of the unification variable.
     ///
@@ -1095,5 +1095,17 @@ impl fmt::Display for Pred {
             write!(f, "{}", ty)?;
         }
         write!(f, "]")
+    }
+}
+
+impl fmt::Debug for TyVar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TyVar")
+            .field("id", &self.id)
+            .field("kind", &self.kind)
+            .field("level", &self.level.get()) // don't show `Cell` part
+            .field("link", &self.link.try_borrow().unwrap()) // don't show `RefCell` part
+            .field("loc", &self.loc)
+            .finish()
     }
 }
