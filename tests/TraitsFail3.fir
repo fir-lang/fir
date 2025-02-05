@@ -1,8 +1,10 @@
 type T:
     i: I32
 
-impl I32 for T:
-    test(self) = ()
+impl I32[T]:
+    test(self: T) = ()
 
-# args: --typecheck --no-backtrace
+prim type I32
+
+# args: --no-prelude --typecheck --no-backtrace
 # expected stderr: tests/TraitFail3.fir:4:1: I32 in impl declararation is not a trait

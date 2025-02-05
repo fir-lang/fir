@@ -4,9 +4,9 @@ prim type I32
 prim printStr(s: Str): ()
 
 trait ToStr[a]:
-    toStr(self): Str
+    toStr(self: a): Str
 
-f[a](a: a)
+f(a: a)
     printStr(a.toStr())
 
 # args: --typecheck --no-prelude --no-backtrace
