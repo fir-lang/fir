@@ -354,7 +354,9 @@ fn mono_stmt(
             ast::Stmt::For(ast::ForStmt {
                 label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
-                ty: mono_opt_l_ty(ty, ty_map, poly_pgm, mono_pgm),
+                ty: ty
+                    .as_ref()
+                    .map(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm)),
                 expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
                 expr_ty: Some(mono_ast_ty_to_ty(&mono_expr_ty)),
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
@@ -1377,11 +1379,6 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             // We never create a QVar from the AST types, and type arguments to poly functions
             // should be instantiated types. So we should never see a QVAr.
             panic!("QVar {} in monomorphiser", var)
-        }
-
-        Ty::AssocTySelect { ty, assoc_ty } => {
-            // Associated types should've been normalized away.
-            panic!("Associated type {}.{} in monomorphiser", ty, assoc_ty)
         }
     }
 }

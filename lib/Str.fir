@@ -95,8 +95,8 @@ Str.splitWhitespace(self): SplitWhitespace
 Str.lines(self): Lines
     Lines(_str = self, _idx = 0)
 
-impl Eq for Str:
-    __eq(self, other: Str): Bool
+impl Eq[Str]:
+    __eq(self: Str, other: Str): Bool
         if self.len() != other.len():
             return Bool.False
 
@@ -106,8 +106,8 @@ impl Eq for Str:
 
         Bool.True
 
-impl ToStr for Str:
-    toStr(self): Str = self
+impl ToStr[Str]:
+    toStr(self: Str): Str = self
 
 type CharIter:
     # UTF-8 encoding of the string.
@@ -127,10 +127,8 @@ CharIter.asStr(self): Str
         _len = self._end - self._idx
     )
 
-impl Iterator for CharIter:
-    type Item = Char
-
-    next(self): Option[Char]
+impl Iterator[CharIter, Char]:
+    next(self: CharIter): Option[Char]
         if self._idx == self._end:
             return Option.None
 
@@ -143,10 +141,8 @@ type CharIndices:
     _str: Str
     _idx: U32
 
-impl Iterator for CharIndices:
-    type Item = (char: Char, idx: U32)
-
-    next(self): Option[(char: Char, idx: U32)]
+impl Iterator[CharIndices, (char: Char, idx: U32)]:
+    next(self: CharIndices): Option[(char: Char, idx: U32)]
         if self._idx == self._str.len():
             return Option.None
 
@@ -189,10 +185,8 @@ type SplitWhitespace:
     _str: Str
     _idx: U32
 
-impl Iterator for SplitWhitespace:
-    type Item = Str
-
-    next(self): Option[Str]
+impl Iterator[SplitWhitespace, Str]:
+    next(self: SplitWhitespace): Option[Str]
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
@@ -201,6 +195,7 @@ impl Iterator for SplitWhitespace:
         loop:
             match charIdxIter.next():
                 Option.Some((char = char, idx = idx)):
+                    let char: Char = char
                     if !char.isAsciiWhitespace():
                         wordStart = self._idx + idx
                         wordEnd = wordStart
@@ -213,6 +208,7 @@ impl Iterator for SplitWhitespace:
         loop:
             match charIdxIter.next():
                 Option.Some((char = char, idx = idx)):
+                    let char: Char = char
                     wordEnd = self._idx + idx
                     if char.isAsciiWhitespace():
                         break
@@ -228,10 +224,8 @@ type Lines:
     _str: Str
     _idx: U32
 
-impl Iterator for Lines:
-    type Item = Str
-
-    next(self): Option[Str]
+impl Iterator[Lines, Str]:
+    next(self: Lines): Option[Str]
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 

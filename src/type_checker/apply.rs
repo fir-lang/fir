@@ -40,12 +40,7 @@ pub(crate) fn apply(
             (**ty_ret).clone()
         }
 
-        Ty::Con(_)
-        | Ty::Var(_)
-        | Ty::App(_, _)
-        | Ty::Anonymous { .. }
-        | Ty::QVar(_)
-        | Ty::AssocTySelect { .. } => {
+        Ty::Con(_) | Ty::Var(_) | Ty::App(_, _) | Ty::Anonymous { .. } | Ty::QVar(_) => {
             if args.is_empty() {
                 return ty.clone();
             }
