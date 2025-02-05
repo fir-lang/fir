@@ -1051,7 +1051,9 @@ fn select_method(
     level: u32,
 ) -> Option<(Id, Scheme)> {
     for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
-        let (ty, _) = candidate.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        // Don't add predicates to the current predicate set. We will instantiate the scheme again
+        // in the call site and use predicates generated from that.
+        let (ty, _) = candidate.instantiate(level, tc_state.var_gen, &mut Default::default(), loc);
         let candidate_self_ty = match &ty {
             Ty::Fun {
                 args: FunArgs::Positional(args),
