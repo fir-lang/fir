@@ -30,7 +30,7 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
 // calling this function.
 fn add_missing_type_params_fun(
     sig: &mut ast::FunSig,
-    tvs: &mut Map<Id, Option<Kind>>,
+    tvs: &mut OrderMap<Id, Option<Kind>>,
     _loc: &ast::Loc,
 ) {
     let bound_vars: Set<Id> = tvs.keys().cloned().collect();
@@ -54,11 +54,12 @@ fn add_missing_type_params_fun(
         collect_tvs(&ret.node, &ret.loc, tvs);
     }
 
-    let tvs_set: Set<Id> = tvs.keys().cloned().collect();
-
-    let diff = tvs_set.difference(&bound_vars);
-
-    for fv in diff {
+    // NB. Do not use `Set::difference` here as that will change order of the type variables. We
+    // want left-to-right order.
+    for fv in tvs.keys() {
+        if bound_vars.contains(fv) {
+            continue;
+        }
         let fv_kind = tvs.get(fv).unwrap().clone().unwrap_or(Kind::Star);
         sig.context.type_params.push(((*fv).clone(), fv_kind));
     }
@@ -67,7 +68,7 @@ fn add_missing_type_params_fun(
 fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
-    let mut impl_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
+    let mut impl_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
 
     for pred in &decl.context.preds {
         collect_tvs(&pred.node, &pred.loc, &mut impl_context_var_kinds);
@@ -82,7 +83,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
         .values_mut()
         .for_each(|kind| *kind = Some(kind.clone().unwrap_or(Kind::Star)));
 
-    let impl_context_vars: Set<Id> = impl_context_var_kinds.keys().cloned().collect();
+    let impl_context_vars: OrderSet<Id> = impl_context_var_kinds.keys().cloned().collect();
 
     for fun in &mut decl.items {
         add_missing_type_params_fun(&mut fun.node.sig, &mut impl_context_var_kinds, &fun.loc);
@@ -103,7 +104,7 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
 fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
     assert!(decl.type_param_kinds.is_empty());
 
-    let mut trait_context_var_kinds: Map<Id, Option<Kind>> = Default::default();
+    let mut trait_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
     let mut trait_context_vars: Set<Id> = Default::default();
 
     for param in &decl.type_params {
@@ -149,7 +150,7 @@ const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
 /// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
 /// it as record or variant row when we see one of the marker traits later, or default the kind as
 /// `*` if not.
-fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut Map<Id, Option<Kind>>) {
+fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
             if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {

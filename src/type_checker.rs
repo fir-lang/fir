@@ -971,7 +971,7 @@ fn collect_schemes(
                             )
                         });
 
-                    let mut trait_fun_scheme = trait_ty_con
+                    let trait_fun_scheme0 = &trait_ty_con
                         .trait_details()
                         .unwrap_or_else(|| {
                             panic!(
@@ -990,12 +990,16 @@ fn collect_schemes(
                                 &fun.node.name.node
                             )
                         })
-                        .scheme
-                        .clone();
+                        .scheme;
+
+                    let mut trait_fun_scheme = trait_fun_scheme0.clone();
 
                     // Substitute trait arguments.
-                    for ((ty_param, _), ty_arg) in
-                        trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter()).rev()
+                    for ((ty_param, _), ty_arg) in trait_ty_con
+                        .ty_params
+                        .iter()
+                        .zip(impl_decl.node.tys.iter())
+                        .rev()
                     {
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(ty_param, &ty_arg);
@@ -1009,10 +1013,12 @@ fn collect_schemes(
                     ) {
                         panic!(
                             "{}: Trait method implementation of {} does not match the trait method type
+                            Original trait method type: {}
                             Trait method type:          {}
                             Implementation method type: {}",
                             loc_display(&fun.loc),
                             &fun.node.name.node,
+                            trait_fun_scheme0,
                             trait_fun_scheme,
                             impl_fun_scheme
                         );
