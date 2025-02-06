@@ -150,7 +150,7 @@ const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
 /// variant row in `tvs`. Otherwise we don't specify the kind of the variable so that we can update
 /// it as record or variant row when we see one of the marker traits later, or default the kind as
 /// `*` if not.
-fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
+pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
             if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {
@@ -236,11 +236,11 @@ fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kin
             for arg in args {
                 collect_tvs(&arg.node, &arg.loc, tvs);
             }
-            if let Some(ret) = ret {
-                collect_tvs(&ret.node, &ret.loc, tvs);
-            }
             if let Some(exn) = exceptions {
                 collect_tvs(&exn.node, &exn.loc, tvs);
+            }
+            if let Some(ret) = ret {
+                collect_tvs(&ret.node, &ret.loc, tvs);
             }
         }
     }

@@ -994,16 +994,34 @@ fn collect_schemes(
 
                     let mut trait_fun_scheme = trait_fun_scheme0.clone();
 
-                    // Substitute trait arguments.
-                    for ((ty_param, _), ty_arg) in trait_ty_con
-                        .ty_params
+                    // Substitute trait arguments. Add free variables of the arguments to the
+                    // context.
+
+                    /*
+                    // TODO: FIXME: Variables already bound in the trait type scheme should be renamed.
+                    let bound_vars: Set<&Id> = trait_fun_scheme
+                        .quantified_vars
                         .iter()
-                        .zip(impl_decl.node.tys.iter())
-                        .rev()
+                        .map(|(id, _)| id)
+                        .collect();
+                    */
+
+                    let mut arg_fvs: OrderMap<Id, Option<Kind>> = Default::default();
+
+                    for ((ty_param, _), ty_arg) in
+                        trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
                     {
+                        kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(ty_param, &ty_arg);
                     }
+
+                    trait_fun_scheme.quantified_vars.splice(
+                        0..0,
+                        arg_fvs
+                            .into_iter()
+                            .map(|(id, kind)| (id, kind.unwrap_or(Kind::Star))),
+                    );
 
                     if !trait_fun_scheme.eq_modulo_alpha(
                         tys.cons(),
@@ -1013,12 +1031,10 @@ fn collect_schemes(
                     ) {
                         panic!(
                             "{}: Trait method implementation of {} does not match the trait method type
-                            Original trait method type: {}
-                            Trait method type:          {}
-                            Implementation method type: {}",
+                                Trait method type:          {}
+                                Implementation method type: {}",
                             loc_display(&fun.loc),
                             &fun.node.name.node,
-                            trait_fun_scheme0,
                             trait_fun_scheme,
                             impl_fun_scheme
                         );
