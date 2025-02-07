@@ -1,4 +1,4 @@
-/*!
+/*
 This module implements monomorphisation based on base types: signed and unsigned 8-bit and 32-bit
 numbers, and pointers.
 
@@ -14,17 +14,17 @@ In the future we may extend this to support unboxing boxed values to multiple sc
 The monomorphised functions and types will have suffixes instead of type parameters indicating
 monomorphised type parameters. For example:
 
-```ignore
-type Vec[T]:
-    data: Array[T]
+```
+type Vec[t]:
+    data: Array[t]
     len: U32
 
-fn print[T1: ToStr, T2: ToStr](a: T1, b: T2) = ...
+fn print[ToStr[t1], ToStr[t2]](a: t1, b: t2) = ...
 ```
 
 can be monomorphised to these variants:
 
-```ignore
+```
 type Vec@I8:
     data: Array@I8
     len: U32
@@ -36,6 +36,21 @@ type Vec@Ptr:
 fn print@I8@Ptr(a: I8, b: Ptr) = ...
 fn print@I64@I64(a: I64, b: I64) = ...
 ```
+
+## Trait example
+
+```
+let x: CharIter = "asdf".chars()
+    # MethodSelect { object_ty: Str, method_ty_id: Str, method: chars, ty_args: [?exn] }
+
+let y: Map[CharIter, Char, U32] = x.map(fn(x: Char) { x.asU32() })
+    # MethodSelect { object_ty: CharIter, method_ty_id: Iterator, method: map, ty_args: [CharIter, Char, U32, ?exn] }
+
+let z: Option[U32] = y.next()
+    # MethodSelect { object_ty: Map[CharIter, Char, U32], method_ty_id: Iterator, method: next, ty_args: [Map[CharIter, Char, U32], U32, ?exn] }
+```
+
+TODO: Do we use `object_ty`?
 */
 
 use crate::ast::{self, Id};

@@ -560,16 +560,32 @@ pub struct MethodSelectExpr {
     /// The reciever, `<expr>` in `<expr>.method`.
     pub object: Box<L<Expr>>,
 
-    /// Type of `object`, filled in by the type checker.
+    /// Type of `object` (receiver), filled in by the type checker.
+    ///
+    /// This type will always be a type constructor, potentially with arguments, as types without type
+    /// constructors (records etc.) don't have methods.
+    ///
+    /// The type constructor will be the type with the associated function with `method` as the name
+    /// and a `self` parameter that matches this type.
+    // TODO: We could have separate fields for the ty con and args.
+    // TODO: We could also add types to every expression if it's going to help with monomorphisation.
+    //       For efficiency though, we should only annotate inferred types and then type check from the
+    //       top-level expression every time we need to compute type of an expr.
     pub object_ty: Option<Ty>,
 
     /// The type or trait id that defines the method.
+    ///
+    /// E.g. `Vec`, `Iterator`.
+    ///
+    /// Note: when calling trait methods, this will be the trait type rather than the receiver type.
     pub method_ty_id: Id,
 
     /// The method id.
+    ///
+    /// E.g. `push`, `next`.
     pub method: Id,
 
-    /// Type arguments of the method, filled in by the type checker.
+    /// Type arguments of `method_ty_id`.
     ///
     /// If the method is for a trait, the first arguments here will be for the trait type
     /// parameters. E.g. in `Iterator.next`, the first two argumetns will be the `iter` and `item`
