@@ -40,6 +40,33 @@ fn print@I64@I64(a: I64, b: I64) = ...
 ## Trait example
 
 ```
+let x: Vec[U32] = Vec.withCapacity(10)
+
+let y: VecIter[U32] = x.iter()
+    # MethodSelect { object_ty: Vec[U32], method_ty_id: Vec, method: iter, ty_args: [U32, ?exn] }
+
+let z: Option[U32] = y.next()
+    # MethodSelect { object_ty: VecIter[U32], method_ty_id: Iterator, method: next, ty_args: [VecIter[U32], ?exn] }
+
+==>
+
+method env = {
+    Vec@U32: {
+        iter: ...
+    }
+    VecIter@U32: {
+        next: ...
+    }
+}
+
+let x: Vec@U32 = ...
+let y: VecIter@U32 = x.iter()
+let z: Option@U32 = y.next()
+```
+
+Another example:
+
+```
 let x: CharIter = "asdf".chars()
     # MethodSelect { object_ty: Str, method_ty_id: Str, method: chars, ty_args: [?exn] }
 
@@ -48,26 +75,181 @@ let y: Map[CharIter, Char, U32] = x.map(fn(x: Char) { x.asU32() })
 
 let z: Option[U32] = y.next()
     # MethodSelect { object_ty: Map[CharIter, Char, U32], method_ty_id: Iterator, method: next, ty_args: [Map[CharIter, Char, U32], U32, ?exn] }
+
+==>
+
+method env = {
+    Str: {
+        chars: ...
+    }
+    CharIter: {
+        map: ...
+    }
+    Map@CharIter@Char@U32: {
+        next: ...
+    }
+}
+
+let x: CharIter = "asdf".chars()
+let y: Map@CharIter@Char@U32 = x.map(fn(x: Char) { x.asU32() })
+let z: Option@U32 = y.next()
+```
+
+## Method example
+
+```
+let x: Str = "..."
+let y: Bool = x.startsWith("...")
+    # MethodSelect { object_ty: Str, method_ty_id: Str, method: startsWith, ty_args: [?exn] }
 ```
 
 TODO: Do we use `object_ty`?
 */
 
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::*;
 use crate::interpolation::StringPart;
-use crate::type_checker::{Kind, RecordOrVariant, Ty, TyArgs};
+use crate::type_checker::{Kind, RecordOrVariant, Ty};
 
 use smol_str::SmolStr;
 
-/// Type checked program, converted into a graph.
-#[derive(Debug, Default)]
-struct PgmGraph {
+#[derive(Debug)]
+struct PolyPgm {
+    traits: Map<Id, PolyTrait>,
     top: Map<Id, ast::FunDecl>,
     associated: Map<Id, Map<Id, ast::FunDecl>>,
-    ty: Map<Id, ast::TypeDecl>,
+    method: Map<Id, Map<Id, ast::FunDecl>>,
+    tys: Map<Id, ast::TypeDecl>,
 }
 
+#[derive(Debug, Default)]
+struct PolyTrait {
+    // QVars of trait.
+    ty_args: Vec<(Id, Kind)>,
+    impls: Vec<PolyTraitImpl>,
+}
+
+#[derive(Debug, Default)]
+struct PolyTraitImpl {
+    type_params: Vec<(Id, Kind)>,
+    tys: Vec<ast::Type>,
+    methods: Vec<ast::FunDecl>,
+    // We don't care about predicates, those are for type checking.
+    // If a trait use type checks, then we know there will be a match in trait env during monomorph.
+}
+
+#[derive(Debug)]
+struct MonoPgm {
+    funs: Map<Id, ast::FunDecl>,
+    associated: Map<Id, ast::FunDecl>,
+    method: Map<Id, Map<Id, ast::FunDecl>>,
+}
+
+fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
+    let mut traits: Map<Id, PolyTrait> = Default::default();
+    let mut top: Map<Id, ast::FunDecl> = Default::default();
+    let mut associated: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
+    let mut method: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
+    let mut tys: Map<Id, ast::TypeDecl> = Default::default();
+
+    for decl in pgm {
+        match decl {
+            ast::TopDecl::Type(ty_decl) => {
+                let old = tys.insert(ty_decl.node.name.clone(), ty_decl.node);
+                assert!(old.is_none());
+            }
+
+            ast::TopDecl::Fun(fun_decl) => match fun_decl.node.parent_ty.clone() {
+                Some(parent_ty) => match fun_decl.node.sig.self_ {
+                    ast::SelfParam::No => {
+                        associated
+                            .entry(parent_ty.node)
+                            .or_default()
+                            .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    }
+                    ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                        method
+                            .entry(parent_ty.node)
+                            .or_default()
+                            .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    }
+                },
+                None => {
+                    let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    assert!(old.is_none());
+                }
+            },
+
+            ast::TopDecl::Trait(trait_decl) => {
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
+                );
+                match traits.entry(trait_decl.node.name.node.clone()) {
+                    Entry::Occupied(mut entry) => {
+                        // We see an impl before the trait. Make sure the args were right.
+                        for impl_ in &entry.get().impls {
+                            assert_eq!(impl_.tys.len(), trait_decl.node.type_params.len());
+                        }
+                        entry.get_mut().ty_args = trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|t| t.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                            .collect();
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(PolyTrait {
+                            ty_args: trait_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|t| t.node.clone())
+                                .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                                .collect(),
+                            impls: Default::default(),
+                        });
+                    }
+                }
+            }
+
+            ast::TopDecl::Impl(impl_decl) => {
+                traits
+                    .entry(impl_decl.node.trait_.node.clone())
+                    .or_default()
+                    .impls
+                    .push(PolyTraitImpl {
+                        type_params: impl_decl.node.context.type_params.clone(),
+                        tys: impl_decl
+                            .node
+                            .tys
+                            .iter()
+                            .map(|ty| ty.node.clone())
+                            .collect(),
+                        methods: impl_decl
+                            .node
+                            .items
+                            .iter()
+                            .map(|item| item.node.clone())
+                            .collect(),
+                    });
+            }
+
+            ast::TopDecl::Import(_) => {}
+        }
+    }
+
+    PolyPgm {
+        traits,
+        top,
+        associated,
+        method,
+        tys,
+    }
+}
+
+/*
 // TODO: This drops traits, we should copy missing methods with default implementations before
 // converting to the graph.
 fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
@@ -97,20 +279,15 @@ fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
                     _ => panic!(), // should be checked by type checker
                 };
 
-                for item in impl_decl.node.items {
-                    match item.node {
-                        ast::ImplDeclItem::AssocTy(_) => continue,
-                        ast::ImplDeclItem::Fun(fun_decl) => {
-                            let old = associated
-                                .entry(ty_id.clone())
-                                .or_default()
-                                .insert(fun_decl.name.node.clone(), fun_decl);
-                            assert!(
-                                old.is_none(),
-                                "BUG: Associated function defined multiple times"
-                            );
-                        }
-                    }
+                for fun_decl in impl_decl.node.items {
+                    let old = associated
+                        .entry(ty_id.clone())
+                        .or_default()
+                        .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    assert!(
+                        old.is_none(),
+                        "BUG: Associated function defined multiple times"
+                    );
                 }
             }
 
@@ -1410,3 +1587,4 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
         ast::Type::Fn(_) => todo!(),
     }
 }
+*/

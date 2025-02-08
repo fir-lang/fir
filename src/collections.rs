@@ -1,5 +1,7 @@
 #![allow(unused)]
 
+pub use std::collections::hash_map::Entry;
+
 pub use crate::scope_map::{ScopeMap, ScopeSet};
 
 pub use ordermap::{OrderMap, OrderSet};
