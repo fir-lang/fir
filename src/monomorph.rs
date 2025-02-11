@@ -1,4 +1,4 @@
-/*!
+/*
 This module implements monomorphisation based on base types: signed and unsigned 8-bit and 32-bit
 numbers, and pointers.
 
@@ -14,17 +14,17 @@ In the future we may extend this to support unboxing boxed values to multiple sc
 The monomorphised functions and types will have suffixes instead of type parameters indicating
 monomorphised type parameters. For example:
 
-```ignore
-type Vec[T]:
-    data: Array[T]
+```
+type Vec[t]:
+    data: Array[t]
     len: U32
 
-fn print[T1: ToStr, T2: ToStr](a: T1, b: T2) = ...
+fn print[ToStr[t1], ToStr[t2]](a: t1, b: t2) = ...
 ```
 
 can be monomorphised to these variants:
 
-```ignore
+```
 type Vec@I8:
     data: Array@I8
     len: U32
@@ -36,133 +36,240 @@ type Vec@Ptr:
 fn print@I8@Ptr(a: I8, b: Ptr) = ...
 fn print@I64@I64(a: I64, b: I64) = ...
 ```
+
+## Trait example
+
+```
+let x: Vec[U32] = Vec.withCapacity(10)
+
+let y: VecIter[U32] = x.iter()
+    # MethodSelect { object_ty: Vec[U32], method_ty_id: Vec, method: iter, ty_args: [U32, ?exn] }
+
+let z: Option[U32] = y.next()
+    # MethodSelect { object_ty: VecIter[U32], method_ty_id: Iterator, method: next, ty_args: [VecIter[U32], ?exn] }
+
+==>
+
+method env = {
+    Vec@U32: {
+        iter: ...
+    }
+    VecIter@U32: {
+        next: ...
+    }
+}
+
+let x: Vec@U32 = ...
+let y: VecIter@U32 = x.iter()
+let z: Option@U32 = y.next()
+```
+
+Another example:
+
+```
+let x: CharIter = "asdf".chars()
+    # MethodSelect { object_ty: Str, method_ty_id: Str, method: chars, ty_args: [?exn] }
+
+let y: Map[CharIter, Char, U32] = x.map(fn(x: Char) { x.asU32() })
+    # MethodSelect { object_ty: CharIter, method_ty_id: Iterator, method: map, ty_args: [CharIter, Char, U32, ?exn] }
+
+let z: Option[U32] = y.next()
+    # MethodSelect { object_ty: Map[CharIter, Char, U32], method_ty_id: Iterator, method: next, ty_args: [Map[CharIter, Char, U32], U32, ?exn] }
+
+==>
+
+method env = {
+    Str: {
+        chars: ...
+    }
+    CharIter: {
+        map: ...
+    }
+    Map@CharIter@Char@U32: {
+        next: ...
+    }
+}
+
+let x: CharIter = "asdf".chars()
+let y: Map@CharIter@Char@U32 = x.map(fn(x: Char) { x.asU32() })
+let z: Option@U32 = y.next()
+```
+
+## Method example
+
+```
+let x: Str = "..."
+let y: Bool = x.startsWith("...")
+    # MethodSelect { object_ty: Str, method_ty_id: Str, method: startsWith, ty_args: [?exn] }
+```
+
+## Type syntax
+
+In this pass we work with the AST types, because AST types are simpler (they don't have unification
+variables).
+
+For the fields that the type checker fills in as `Ty`, we convert to AST `Type`.
+
+TODO: Do we use `object_ty`?
 */
 
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::*;
 use crate::interpolation::StringPart;
-use crate::type_checker::{Kind, RecordOrVariant, Ty, TyArgs};
+use crate::type_checker::{Kind, RecordOrVariant, Ty};
+use crate::utils::*;
 
 use smol_str::SmolStr;
 
-/// Type checked program, converted into a graph.
-#[derive(Debug, Default)]
-struct PgmGraph {
+#[derive(Debug)]
+struct PolyPgm {
+    traits: Map<Id, PolyTrait>,
     top: Map<Id, ast::FunDecl>,
     associated: Map<Id, Map<Id, ast::FunDecl>>,
+    method: Map<Id, Map<Id, ast::FunDecl>>,
     ty: Map<Id, ast::TypeDecl>,
 }
 
-// TODO: This drops traits, we should copy missing methods with default implementations before
-// converting to the graph.
-fn pgm_to_graph(pgm: Vec<ast::TopDecl>) -> PgmGraph {
+#[derive(Debug, Default)]
+struct PolyTrait {
+    // QVars of trait.
+    ty_args: Vec<(Id, Kind)>,
+    impls: Vec<PolyTraitImpl>,
+}
+
+// E.g. `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]`.
+#[derive(Debug, Default)]
+struct PolyTraitImpl {
+    // Type parameters of the `impl` block, with kinds.
+    //
+    // In the example above: `[iter: *, a: *, b: *]`.
+    type_params: Vec<(Id, Kind)>,
+
+    // Type arguments of the trait.
+    //
+    // In the example above: `[Map[iter, a, b], b]`.
+    tys: Vec<ast::Type>,
+
+    methods: Vec<ast::FunDecl>,
+    // We don't care about predicates, those are for type checking.
+    // If a trait use type checks, then we know there will be a match in trait env during monomorph.
+}
+
+#[derive(Debug, Default)]
+struct MonoPgm {
+    funs: Map<Id, ast::FunDecl>,
+    associated: Map<Id, Map<Id, ast::FunDecl>>,
+    method: Map<Id, Map<Id, ast::FunDecl>>,
+    ty: Map<Id, ast::TypeDecl>,
+}
+
+fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
+    let mut traits: Map<Id, PolyTrait> = Default::default();
     let mut top: Map<Id, ast::FunDecl> = Default::default();
     let mut associated: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
+    let mut method: Map<Id, Map<Id, ast::FunDecl>> = Default::default();
     let mut ty: Map<Id, ast::TypeDecl> = Default::default();
 
-    // NB. Assertions below are errors that the type checker should catch.
     for decl in pgm {
         match decl {
             ast::TopDecl::Type(ty_decl) => {
                 let old = ty.insert(ty_decl.node.name.clone(), ty_decl.node);
-                assert!(old.is_none(), "BUG: Type declared multiple times");
+                assert!(old.is_none());
             }
 
-            ast::TopDecl::Fun(fun_decl) => {
-                let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
-                assert!(
-                    old.is_none(),
-                    "BUG: Top-level function declared multiple times"
+            ast::TopDecl::Fun(fun_decl) => match fun_decl.node.parent_ty.clone() {
+                Some(parent_ty) => match fun_decl.node.sig.self_ {
+                    ast::SelfParam::No => {
+                        associated
+                            .entry(parent_ty.node)
+                            .or_default()
+                            .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    }
+                    ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                        method
+                            .entry(parent_ty.node)
+                            .or_default()
+                            .insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    }
+                },
+                None => {
+                    let old = top.insert(fun_decl.node.name.node.clone(), fun_decl.node);
+                    assert!(old.is_none());
+                }
+            },
+
+            ast::TopDecl::Trait(trait_decl) => {
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
                 );
-            }
-
-            ast::TopDecl::Impl(impl_decl) => {
-                let ty_id = match &impl_decl.node.ty.node {
-                    ast::Type::Named(ast::NamedType { name, args: _ }) => name.clone(),
-                    _ => panic!(), // should be checked by type checker
-                };
-
-                for item in impl_decl.node.items {
-                    match item.node {
-                        ast::ImplDeclItem::AssocTy(_) => continue,
-                        ast::ImplDeclItem::Fun(fun_decl) => {
-                            let old = associated
-                                .entry(ty_id.clone())
-                                .or_default()
-                                .insert(fun_decl.name.node.clone(), fun_decl);
-                            assert!(
-                                old.is_none(),
-                                "BUG: Associated function defined multiple times"
-                            );
+                match traits.entry(trait_decl.node.name.node.clone()) {
+                    Entry::Occupied(mut entry) => {
+                        // We see an impl before the trait. Make sure the args were right.
+                        for impl_ in &entry.get().impls {
+                            assert_eq!(impl_.tys.len(), trait_decl.node.type_params.len());
                         }
+                        entry.get_mut().ty_args = trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|t| t.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                            .collect();
+                    }
+                    Entry::Vacant(entry) => {
+                        entry.insert(PolyTrait {
+                            ty_args: trait_decl
+                                .node
+                                .type_params
+                                .iter()
+                                .map(|t| t.node.clone())
+                                .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                                .collect(),
+                            impls: Default::default(),
+                        });
                     }
                 }
             }
 
-            ast::TopDecl::Import(_) | ast::TopDecl::Trait(_) => continue,
+            ast::TopDecl::Impl(impl_decl) => {
+                traits
+                    .entry(impl_decl.node.trait_.node.clone())
+                    .or_default()
+                    .impls
+                    .push(PolyTraitImpl {
+                        type_params: impl_decl.node.context.type_params.clone(),
+                        tys: impl_decl
+                            .node
+                            .tys
+                            .iter()
+                            .map(|ty| ty.node.clone())
+                            .collect(),
+                        methods: impl_decl
+                            .node
+                            .items
+                            .iter()
+                            .map(|item| item.node.clone())
+                            .collect(),
+                    });
+            }
+
+            ast::TopDecl::Import(_) => {}
         }
     }
 
-    PgmGraph {
+    PolyPgm {
+        traits,
         top,
         associated,
+        method,
         ty,
     }
-}
-
-fn graph_to_pgm(graph: PgmGraph) -> Vec<ast::TopDecl> {
-    let mut pgm: Vec<ast::TopDecl> = Vec::with_capacity(graph.top.len() + graph.ty.len());
-
-    let PgmGraph {
-        top,
-        associated,
-        ty,
-    } = graph;
-
-    for (_, ty_decl) in ty {
-        pgm.push(ast::TopDecl::Type(ast::L {
-            loc: ast::Loc::dummy(),
-            node: ty_decl,
-        }));
-    }
-
-    for (_, top_decl) in top {
-        pgm.push(ast::TopDecl::Fun(ast::L {
-            loc: ast::Loc::dummy(),
-            node: top_decl,
-        }));
-    }
-
-    for (ty_id, funs) in associated {
-        pgm.push(ast::TopDecl::Impl(ast::L {
-            loc: ast::Loc::dummy(),
-            node: ast::ImplDecl {
-                context: vec![],
-                trait_: None,
-                ty: ast::L {
-                    loc: ast::Loc::dummy(),
-                    node: ast::Type::Named(ast::NamedType {
-                        name: ty_id,
-                        args: vec![],
-                    }),
-                },
-                items: funs
-                    .into_values()
-                    .map(|fun_decl| ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::ImplDeclItem::Fun(fun_decl),
-                    })
-                    .collect(),
-            },
-        }))
-    }
-
-    pgm
 }
 
 pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast::TopDecl>> {
-    let poly_pgm = pgm_to_graph(pgm.iter().map(|decl| decl.node.clone()).collect());
-    let mut mono_pgm = PgmGraph::default();
+    let poly_pgm = pgm_to_poly_pgm(pgm.iter().map(|decl| decl.node.clone()).collect());
+    let mut mono_pgm = MonoPgm::default();
 
     // Copy types used by the interpreter built-ins.
     for ty in [
@@ -189,6 +296,9 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast:
         .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
     mono_top_fn(main, &[], &poly_pgm, &mut mono_pgm);
 
+    todo!()
+
+    /*
     let mono_pgm = graph_to_pgm(mono_pgm);
 
     mono_pgm
@@ -198,6 +308,7 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast:
             node: decl,
         })
         .collect()
+        */
 }
 
 fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
@@ -207,16 +318,10 @@ fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
             .into_iter()
             .map(|arg| ast::L {
                 loc: ast::Loc::dummy(),
-                node: (
-                    None,
-                    ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Type::Named(ast::NamedType {
-                            name: SmolStr::new_static(arg),
-                            args: vec![],
-                        }),
-                    },
-                ),
+                node: (ast::Type::Named(ast::NamedType {
+                    name: SmolStr::new_static(arg),
+                    args: vec![],
+                })),
             })
             .collect(),
     })
@@ -225,24 +330,26 @@ fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
 fn mono_top_fn(
     fun_decl: &ast::FunDecl,
     ty_args: &[ast::Type],
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Id {
-    assert_eq!(fun_decl.sig.type_params.len(), ty_args.len());
+    assert_eq!(fun_decl.parent_ty, None);
+    assert_eq!(fun_decl.sig.context.type_params.len(), ty_args.len());
 
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     // Check if we've already monomorphised this function.
-    if mono_pgm.top.contains_key(&mono_fn_id) {
+    if mono_pgm.funs.contains_key(&mono_fn_id) {
         return mono_fn_id;
     }
 
     // Add current function to mono_pgm without a body to avoid looping.
     let ty_map: Map<Id, ast::Type> = fun_decl
         .sig
+        .context
         .type_params
         .iter()
-        .map(|ty_param| ty_param.id.node.clone())
+        .map(|(ty_param, _)| ty_param.clone())
         .zip(ty_args.iter().cloned())
         .collect();
 
@@ -261,13 +368,14 @@ fn mono_top_fn(
     let return_ty: Option<ast::L<ast::Type>> =
         mono_opt_l_ty(&fun_decl.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
 
-    mono_pgm.top.insert(
+    mono_pgm.funs.insert(
         mono_fn_id.clone(),
         ast::FunDecl {
+            parent_ty: None,
             name: fun_decl.name.set_node(mono_fn_id.clone()),
             sig: ast::FunSig {
-                type_params: vec![],
-                self_: fun_decl.sig.self_,
+                context: ast::Context::default(),
+                self_: fun_decl.sig.self_.clone(),
                 params,
                 return_ty,
                 exceptions: None,
@@ -284,7 +392,7 @@ fn mono_top_fn(
 
     let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
 
-    mono_pgm.top.get_mut(&mono_fn_id).unwrap().body = Some(mono_body);
+    mono_pgm.funs.get_mut(&mono_fn_id).unwrap().body = Some(mono_body);
 
     mono_fn_id
 }
@@ -292,8 +400,9 @@ fn mono_top_fn(
 fn mono_stmt(
     stmt: &ast::Stmt,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
+    loc: &ast::Loc,
 ) -> ast::Stmt {
     match stmt {
         ast::Stmt::Break { label, level } => ast::Stmt::Break {
@@ -329,23 +438,29 @@ fn mono_stmt(
             body,
         }) => {
             // Interpreter will call `next` on `expr`, monomorphise the `next` member.
-            let mono_expr_ty = mono_ty(
+            let mono_iter_ty = mono_ty(
                 &ty_to_ast(expr_ty.as_ref().unwrap(), ty_map),
                 ty_map,
                 poly_pgm,
                 mono_pgm,
             );
 
+            let mono_item_ty = match ty {
+                Some(ty) => mono_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
+                None => panic!("{}: For loop does have type annotation", loc_display(loc)),
+            };
+
             mono_method(
-                expr_ty.as_ref().unwrap(),
+                &SmolStr::new_static("Iterator"),
                 &SmolStr::new_static("next"),
-                // `next` doesn't throw, pass empty row.
-                &[Ty::Anonymous {
-                    labels: Default::default(),
-                    extension: None,
-                    kind: RecordOrVariant::Record,
-                    is_row: true,
-                }],
+                &[
+                    mono_iter_ty,
+                    mono_item_ty,
+                    ast::Type::Variant {
+                        alts: vec![],
+                        extension: None,
+                    },
+                ],
                 ty_map,
                 poly_pgm,
                 mono_pgm,
@@ -354,9 +469,9 @@ fn mono_stmt(
             ast::Stmt::For(ast::ForStmt {
                 label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
-                ty: mono_opt_l_ty(ty, ty_map, poly_pgm, mono_pgm),
+                ty: None,
                 expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
-                expr_ty: Some(mono_ast_ty_to_ty(&mono_expr_ty)),
+                expr_ty: None,
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
             })
         }
@@ -383,11 +498,12 @@ fn mono_stmt(
     }
 }
 
+// ty_map: maps type variables in scope to their mono types.
 fn mono_expr(
     expr: &ast::Expr,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
@@ -450,23 +566,30 @@ fn mono_expr(
         }
 
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
-            object,
-            object_ty,
-            method,
-            ty_args,
+            object,       // receiver
+            object_ty,    // receiver type
+            method_ty_id, // type that the method belongs to: `trait` or `type`
+            method,       // method or associated function name
+            ty_args,      // function type arguments
         }) => {
+            let mono_ty_args: Vec<ast::Type> =
+                ty_args.iter().map(|ty| ty_to_ast(ty, ty_map)).collect();
+
             let (mono_method_id, mono_object_ty) = mono_method(
-                object_ty.as_ref().unwrap(),
+                method_ty_id,
                 method,
-                ty_args,
+                &mono_ty_args,
                 ty_map,
                 poly_pgm,
                 mono_pgm,
             );
+
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
+
             ast::Expr::MethodSelect(ast::MethodSelectExpr {
                 object: mono_object,
                 object_ty: Some(mono_ast_ty_to_ty(&mono_object_ty)),
+                method_ty_id: method_ty_id.clone(),
                 method: mono_method_id,
                 ty_args: vec![],
             })
@@ -653,13 +776,13 @@ fn mono_expr(
         }),
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
-            assert!(sig.type_params.is_empty());
-            assert!(!sig.self_);
+            assert!(sig.context.type_params.is_empty());
+            assert!(matches!(sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
             ast::Expr::Fn(ast::FnExpr {
                 sig: ast::FunSig {
-                    type_params: vec![],
-                    self_: false,
+                    context: ast::Context::default(),
+                    self_: ast::SelfParam::No,
                     params: sig
                         .params
                         .iter()
@@ -675,14 +798,44 @@ fn mono_expr(
     }
 }
 
+// Monomorphise a trait or non-trait method.
+//
+// Example for traits: `x.next` where `x: Map[Chars, Char, U32]`.
+//
+// - method_ty_id: `Iterator`
+// - method_id: `next`
+// - ty_args: `[Map[Chars, Char, U32], U32]` (type arguments to `Iterator`)
+//
+// Example for non-traits: `x.push` where `x: Vec[U32]`.
+//
+// - method_ty_id: `Vec`
+// - method_id: `push`
+// - ty_args: `[U32]`
 fn mono_method(
-    poly_receiver_ty: &Ty,
-    method: &Id,
-    method_ty_args: &[Ty],
+    method_ty_id: &Id,     // type that the method belonds to: `trait` or `type`
+    method_id: &Id,        // method name
+    ty_args: &[ast::Type], // method mono type arguments, including the trait or type's
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> (Id, ast::Type) {
+    if let Some(PolyTrait { ty_args: _, impls }) = poly_pgm.traits.get(method_ty_id) {
+        // Find the matching impl.
+        for impl_ in impls {
+            if let Some(substs) = match_trait_impl(ty_args, impl_) {
+                todo!()
+            }
+        }
+    }
+
+    if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
+        let method = method_map.get(method_id).unwrap();
+        todo!()
+    }
+
+    todo!()
+
+    /*
     let poly_object_ty = ty_to_ast(poly_receiver_ty, ty_map);
 
     let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
@@ -751,26 +904,28 @@ fn mono_method(
         ast::Type::Record { .. } => panic!(),
         ast::Type::Variant { .. } => panic!(),
         ast::Type::Fn(_) => panic!(),
-    }
+    } */
 }
 
 fn mono_lstmts(
     lstmts: &[ast::L<ast::Stmt>],
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Vec<ast::L<ast::Stmt>> {
     lstmts
         .iter()
-        .map(|lstmt| lstmt.map_as_ref(|stmt| mono_stmt(stmt, ty_map, poly_pgm, mono_pgm)))
+        .map(|lstmt| {
+            lstmt.map_as_ref(|stmt| mono_stmt(stmt, ty_map, poly_pgm, mono_pgm, &lstmt.loc))
+        })
         .collect()
 }
 
 fn mono_bl_expr(
     expr: &ast::L<ast::Expr>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Box<ast::L<ast::Expr>> {
     Box::new(expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)))
 }
@@ -778,8 +933,8 @@ fn mono_bl_expr(
 fn mono_l_expr(
     expr: &ast::L<ast::Expr>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::L<ast::Expr> {
     expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm))
 }
@@ -787,8 +942,8 @@ fn mono_l_expr(
 fn mono_pat(
     pat: &ast::Pat,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::Pat {
     match pat {
         // TODO: Can `Var` be a constructor like `Vec`?
@@ -862,8 +1017,8 @@ fn mono_pat(
 fn mono_l_pat(
     pat: &ast::L<ast::Pat>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::L<ast::Pat> {
     pat.map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
@@ -871,8 +1026,8 @@ fn mono_l_pat(
 fn mono_bl_pat(
     pat: &ast::L<ast::Pat>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Box<ast::L<ast::Pat>> {
     Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
@@ -880,8 +1035,8 @@ fn mono_bl_pat(
 fn mono_named_l_pat(
     pat: &ast::Named<ast::L<ast::Pat>>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::Named<ast::L<ast::Pat>> {
     pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
 }
@@ -889,16 +1044,13 @@ fn mono_named_l_pat(
 /// Monomorphise an associated function or method.
 ///
 /// `ty_map` maps type parameters of the type to mono types.
-///
-/// `ty_args` should not include the type's arguments, it should only have the function's type
-/// arguments.
 fn mono_assoc_fn(
     mono_ty_id: &Id,
     fun_decl: &ast::FunDecl,
     ty_map: &Map<Id, ast::Type>,
     ty_args: &[ast::Type],
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Id {
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
@@ -912,23 +1064,14 @@ fn mono_assoc_fn(
     }
 
     let mut ty_map = ty_map.clone();
-    let fun_ty_params = &fun_decl.sig.type_params[fun_decl.sig.type_params.len() - ty_args.len()..];
+    let fun_ty_params =
+        &fun_decl.sig.context.type_params[fun_decl.sig.context.type_params.len() - ty_args.len()..];
     for (ty_param, mono_ty) in fun_ty_params
         .iter()
-        .map(|ty_param| ty_param.id.node.clone())
+        .map(|(ty_param, _)| ty_param.clone())
         .zip(ty_args.iter().cloned())
     {
         ty_map.insert(ty_param, mono_ty);
-    }
-
-    if fun_decl.sig.self_ {
-        ty_map.insert(
-            SmolStr::new("self"),
-            ast::Type::Named(ast::NamedType {
-                name: mono_ty_id.clone(),
-                args: vec![],
-            }),
-        );
     }
 
     let params: Vec<(Id, ast::L<ast::Type>)> = fun_decl
@@ -953,10 +1096,14 @@ fn mono_assoc_fn(
         .insert(
             mono_fn_id.clone(),
             ast::FunDecl {
+                parent_ty: Some(ast::L {
+                    node: mono_ty_id.clone(),
+                    loc: ast::Loc::dummy(),
+                }),
                 name: fun_decl.name.set_node(mono_fn_id.clone()),
                 sig: ast::FunSig {
-                    type_params: vec![],
-                    self_: fun_decl.sig.self_,
+                    context: ast::Context::default(),
+                    self_: fun_decl.sig.self_.clone(),
                     params,
                     return_ty,
                     exceptions: None,
@@ -987,8 +1134,8 @@ fn mono_assoc_fn(
 fn mono_ty_decl(
     ty_decl: &ast::TypeDecl,
     args: &[ast::Type],
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Id {
     assert_eq!(ty_decl.type_params.len(), args.len());
 
@@ -1005,6 +1152,7 @@ fn mono_ty_decl(
         ast::TypeDecl {
             name: mono_ty_id.clone(),
             type_params: vec![],
+            type_param_kinds: vec![],
             rhs: None,
         },
     );
@@ -1038,8 +1186,8 @@ fn mono_ty_decl(
 fn mono_constr(
     constr: &ast::ConstructorDecl,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::ConstructorDecl {
     ast::ConstructorDecl {
         name: constr.name.clone(),
@@ -1050,8 +1198,8 @@ fn mono_constr(
 fn mono_fields(
     fields: &ast::ConstructorFields,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::ConstructorFields {
     match fields {
         ast::ConstructorFields::Empty => ast::ConstructorFields::Empty,
@@ -1075,8 +1223,8 @@ fn mono_fields(
 fn mono_ty(
     ty: &ast::Type,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::Type {
     match ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
@@ -1087,34 +1235,15 @@ fn mono_ty(
                 return mono_ty.clone();
             }
 
-            let args: Vec<ast::L<(Option<Id>, ast::L<ast::Type>)>> = args
+            let mono_args: Vec<ast::Type> = args
                 .iter()
-                .map(|name_arg| {
-                    name_arg.map_as_ref(|(name, arg)| {
-                        (
-                            name.clone(),
-                            arg.map_as_ref(|arg| mono_ty(arg, ty_map, poly_pgm, mono_pgm)),
-                        )
-                    })
-                })
+                .map(|arg| mono_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
             let ty_decl = poly_pgm
                 .ty
                 .get(name)
                 .unwrap_or_else(|| panic!("Unbound type {}", name));
-
-            let mono_args: Vec<ast::Type> = args
-                .iter()
-                .filter_map(|ty| match ty.node.0 {
-                    Some(_) => {
-                        // Skip associated types: we ignore them during trait search, and methods have
-                        // access to their associated types.
-                        None
-                    }
-                    None => Some(ty.node.1.node.clone()),
-                })
-                .collect();
 
             let mono_ty_decl = mono_ty_decl(ty_decl, &mono_args, poly_pgm, mono_pgm);
 
@@ -1226,8 +1355,8 @@ fn mono_ty(
 fn mono_l_ty(
     ty: &ast::L<ast::Type>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> ast::L<ast::Type> {
     ty.map_as_ref(|ty| mono_ty(ty, ty_map, poly_pgm, mono_pgm))
 }
@@ -1235,8 +1364,8 @@ fn mono_l_ty(
 fn mono_opt_l_ty(
     ty: &Option<ast::L<ast::Type>>,
     ty_map: &Map<Id, ast::Type>,
-    poly_pgm: &PgmGraph,
-    mono_pgm: &mut PgmGraph,
+    poly_pgm: &PolyPgm,
+    mono_pgm: &mut MonoPgm,
 ) -> Option<ast::L<ast::Type>> {
     ty.as_ref()
         .map(|ty| mono_l_ty(ty, ty_map, poly_pgm, mono_pgm))
@@ -1267,9 +1396,9 @@ fn mono_id(name: &Id, tys: &[ast::Type]) -> Id {
     SmolStr::new(mono_name)
 }
 
-// `ty_map` maps type constructors and varibles to mono types.
-//
-// Single map for both constructor and variables as variables can shadow constructors.
+/// Convert a type-checking type to mono AST type.
+///
+/// `ty_map` maps type constructors and varibles to mono types.
 fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
     match ty {
         Ty::Con(con) => ty_map.get(con).cloned().unwrap_or_else(|| {
@@ -1297,34 +1426,13 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             assert!(!ty_map.contains_key(con));
             ast::Type::Named(ast::NamedType {
                 name: con.clone(),
-                args: match args {
-                    TyArgs::Positional(args) => args
-                        .iter()
-                        .map(|ty| ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: (
-                                None,
-                                ast::L {
-                                    loc: ast::Loc::dummy(),
-                                    node: ty_to_ast(ty, ty_map),
-                                },
-                            ),
-                        })
-                        .collect(),
-                    TyArgs::Named(args) => args
-                        .iter()
-                        .map(|(name, ty)| ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: (
-                                Some(name.clone()),
-                                ast::L {
-                                    loc: ast::Loc::dummy(),
-                                    node: ty_to_ast(ty, ty_map),
-                                },
-                            ),
-                        })
-                        .collect(),
-                },
+                args: args
+                    .iter()
+                    .map(|ty| ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ty_to_ast(ty, ty_map),
+                    })
+                    .collect(),
             })
         }
 
@@ -1378,11 +1486,6 @@ fn ty_to_ast(ty: &Ty, ty_map: &Map<Id, ast::Type>) -> ast::Type {
             // should be instantiated types. So we should never see a QVAr.
             panic!("QVar {} in monomorphiser", var)
         }
-
-        Ty::AssocTySelect { ty, assoc_ty } => {
-            // Associated types should've been normalized away.
-            panic!("Associated type {}.{} in monomorphiser", ty, assoc_ty)
-        }
     }
 }
 
@@ -1396,5 +1499,54 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
         ast::Type::Record { .. } => todo!(),
         ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Trait matching
+
+fn match_trait_impl(
+    ty_args: &[ast::Type],
+    trait_impl: &PolyTraitImpl,
+) -> Option<Map<Id, ast::Type>> {
+    debug_assert_eq!(ty_args.len(), trait_impl.tys.len());
+
+    let mut substs: Map<Id, ast::Type> = Default::default();
+    for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
+        if !match_(trait_ty, ty_arg, &mut substs) {
+            return None;
+        }
+    }
+
+    Some(substs)
+}
+
+fn match_(trait_ty: &ast::Type, arg_ty: &ast::Type, substs: &mut Map<Id, ast::Type>) -> bool {
+    match (trait_ty, arg_ty) {
+        (
+            ast::Type::Named(ast::NamedType {
+                name: name1,
+                args: args1,
+            }),
+            ast::Type::Named(ast::NamedType {
+                name: name2,
+                args: args2,
+            }),
+        ) => {
+            if name1 != name2 {
+                return false;
+            }
+            debug_assert_eq!(args1.len(), args2.len());
+
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                if !match_(&arg1.node, &arg2.node, substs) {
+                    return false;
+                }
+            }
+
+            true
+        }
+
+        _ => false,
     }
 }

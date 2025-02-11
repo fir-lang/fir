@@ -10,10 +10,10 @@ prim type I32
 prim type Str
 
 trait ToStr[t]:
-    toStr(self): Str
+    toStr(self: t): Str
 
-impl ToStr for I32:
-    prim toStr(self): Str
+impl ToStr[I32]:
+    prim toStr(self: I32): Str
 
 resultToString(result: Result[I32, I32]): Str
     match result:
