@@ -137,10 +137,19 @@ struct PolyTrait {
     impls: Vec<PolyTraitImpl>,
 }
 
+// E.g. `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]`.
 #[derive(Debug, Default)]
 struct PolyTraitImpl {
+    // Type parameters of the `impl` block, with kinds.
+    //
+    // In the example above: `[iter: *, a: *, b: *]`.
     type_params: Vec<(Id, Kind)>,
+
+    // Type arguments of the trait.
+    //
+    // In the example above: `[Map[iter, a, b], b]`.
     tys: Vec<ast::Type>,
+
     methods: Vec<ast::FunDecl>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
@@ -789,6 +798,19 @@ fn mono_expr(
     }
 }
 
+// Monomorphise a trait or non-trait method.
+//
+// Example for traits: `x.next` where `x: Map[Chars, Char, U32]`.
+//
+// - method_ty_id: `Iterator`
+// - method_id: `next`
+// - ty_args: `[Map[Chars, Char, U32], U32]` (type arguments to `Iterator`)
+//
+// Example for non-traits: `x.push` where `x: Vec[U32]`.
+//
+// - method_ty_id: `Vec`
+// - method_id: `push`
+// - ty_args: `[U32]`
 fn mono_method(
     method_ty_id: &Id,     // type that the method belonds to: `trait` or `type`
     method_id: &Id,        // method name
@@ -797,6 +819,20 @@ fn mono_method(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> (Id, ast::Type) {
+    if let Some(PolyTrait { ty_args: _, impls }) = poly_pgm.traits.get(method_ty_id) {
+        // Find the matching impl.
+        for impl_ in impls {
+            if let Some(substs) = match_trait_impl(ty_args, impl_) {
+                todo!()
+            }
+        }
+    }
+
+    if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
+        let method = method_map.get(method_id).unwrap();
+        todo!()
+    }
+
     todo!()
 
     /*
@@ -1463,5 +1499,54 @@ fn mono_ast_ty_to_ty(mono_ast_ty: &ast::Type) -> Ty {
         ast::Type::Record { .. } => todo!(),
         ast::Type::Variant { .. } => todo!(),
         ast::Type::Fn(_) => todo!(),
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Trait matching
+
+fn match_trait_impl(
+    ty_args: &[ast::Type],
+    trait_impl: &PolyTraitImpl,
+) -> Option<Map<Id, ast::Type>> {
+    debug_assert_eq!(ty_args.len(), trait_impl.tys.len());
+
+    let mut substs: Map<Id, ast::Type> = Default::default();
+    for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
+        if !match_(trait_ty, ty_arg, &mut substs) {
+            return None;
+        }
+    }
+
+    Some(substs)
+}
+
+fn match_(trait_ty: &ast::Type, arg_ty: &ast::Type, substs: &mut Map<Id, ast::Type>) -> bool {
+    match (trait_ty, arg_ty) {
+        (
+            ast::Type::Named(ast::NamedType {
+                name: name1,
+                args: args1,
+            }),
+            ast::Type::Named(ast::NamedType {
+                name: name2,
+                args: args2,
+            }),
+        ) => {
+            if name1 != name2 {
+                return false;
+            }
+            debug_assert_eq!(args1.len(), args2.len());
+
+            for (arg1, arg2) in args1.iter().zip(args2.iter()) {
+                if !match_(&arg1.node, &arg2.node, substs) {
+                    return false;
+                }
+            }
+
+            true
+        }
+
+        _ => false,
     }
 }
