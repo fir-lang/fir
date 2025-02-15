@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod ast;
-mod closure_collector;
+// mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
@@ -10,7 +10,7 @@ mod lexer;
 mod monomorph;
 mod parser;
 mod parser_utils;
-mod record_collector;
+// mod record_collector;
 mod scanner;
 mod scope_map;
 mod token;
@@ -141,13 +141,11 @@ mod native {
             return;
         }
 
-        /*
         module = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
             ast::printer::print_module(&module);
         }
-        */
 
         // let mut w = std::io::stdout();
         // program_args.insert(0, program);

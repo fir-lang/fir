@@ -143,6 +143,7 @@ struct PolyTraitImpl {
     // Type parameters of the `impl` block, with kinds.
     //
     // In the example above: `[iter: *, a: *, b: *]`.
+    #[allow(unused)]
     type_params: Vec<(Id, Kind)>,
 
     // Type arguments of the trait.
@@ -159,7 +160,6 @@ struct PolyTraitImpl {
 struct MonoPgm {
     funs: Map<Id, ast::FunDecl>,
     associated: Map<Id, Map<Id, ast::FunDecl>>,
-    method: Map<Id, Map<Id, ast::FunDecl>>,
     ty: Map<Id, ast::TypeDecl>,
 }
 
@@ -267,6 +267,52 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
     }
 }
 
+fn mono_pgm_to_pgm(mono_pgm: MonoPgm) -> Vec<ast::L<ast::TopDecl>> {
+    let mut pgm: Vec<ast::L<ast::TopDecl>> = Vec::with_capacity(
+        mono_pgm.funs.len()
+            + mono_pgm
+                .associated
+                .iter()
+                .map(|(_, methods)| methods.len())
+                .sum::<usize>()
+            + mono_pgm.ty.len(),
+    );
+
+    for (_, fun) in mono_pgm.funs {
+        pgm.push(ast::L {
+            loc: ast::Loc::dummy(),
+            node: ast::TopDecl::Fun(ast::L {
+                loc: ast::Loc::dummy(),
+                node: fun,
+            }),
+        });
+    }
+
+    for (_, funs) in mono_pgm.associated {
+        for (_, fun) in funs {
+            pgm.push(ast::L {
+                loc: ast::Loc::dummy(),
+                node: ast::TopDecl::Fun(ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: fun,
+                }),
+            });
+        }
+    }
+
+    for (_, ty) in mono_pgm.ty {
+        pgm.push(ast::L {
+            loc: ast::Loc::dummy(),
+            node: ast::TopDecl::Type(ast::L {
+                loc: ast::Loc::dummy(),
+                node: ty,
+            }),
+        });
+    }
+
+    pgm
+}
+
 pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast::TopDecl>> {
     let poly_pgm = pgm_to_poly_pgm(pgm.iter().map(|decl| decl.node.clone()).collect());
     let mut mono_pgm = MonoPgm::default();
@@ -296,19 +342,7 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> Vec<ast::L<ast:
         .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
     mono_top_fn(main, &[], &poly_pgm, &mut mono_pgm);
 
-    todo!()
-
-    /*
-    let mono_pgm = graph_to_pgm(mono_pgm);
-
-    mono_pgm
-        .into_iter()
-        .map(|decl| ast::L {
-            loc: ast::Loc::dummy(),
-            node: decl,
-        })
-        .collect()
-        */
+    mono_pgm_to_pgm(mono_pgm)
 }
 
 fn make_ast_ty(con: &'static str, args: Vec<&'static str>) -> ast::Type {
@@ -575,7 +609,7 @@ fn mono_expr(
             let mono_ty_args: Vec<ast::Type> =
                 ty_args.iter().map(|ty| ty_to_ast(ty, ty_map)).collect();
 
-            let (mono_method_id, mono_object_ty) = mono_method(
+            let mono_method_id = mono_method(
                 method_ty_id,
                 method,
                 &mono_ty_args,
@@ -585,6 +619,13 @@ fn mono_expr(
             );
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
+
+            let mono_object_ty = mono_ty(
+                &ty_to_ast(object_ty.as_ref().unwrap(), ty_map),
+                ty_map,
+                poly_pgm,
+                mono_pgm,
+            );
 
             ast::Expr::MethodSelect(ast::MethodSelectExpr {
                 object: mono_object,
@@ -818,93 +859,138 @@ fn mono_method(
     ty_map: &Map<Id, ast::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-) -> (Id, ast::Type) {
-    if let Some(PolyTrait { ty_args: _, impls }) = poly_pgm.traits.get(method_ty_id) {
+) -> Id {
+    let mono_method_id = mono_id(method_ty_id, ty_args);
+
+    if mono_pgm.funs.contains_key(&mono_method_id) {
+        return mono_method_id;
+    }
+
+    if let Some(PolyTrait {
+        ty_args: trait_ty_args,
+        impls,
+    }) = poly_pgm.traits.get(method_ty_id)
+    {
         // Find the matching impl.
         for impl_ in impls {
             if let Some(substs) = match_trait_impl(ty_args, impl_) {
-                todo!()
+                let method: &ast::FunDecl = impl_
+                    .methods
+                    .iter()
+                    .find(|fun_decl| &fun_decl.name.node == method_id)
+                    .unwrap();
+
+                let mut ty_map = ty_map.clone();
+                ty_map.extend(substs);
+
+                let params: Vec<(Id, ast::L<ast::Type>)> = method
+                    .sig
+                    .params
+                    .iter()
+                    .map(|(param_name, param_ty)| {
+                        (
+                            param_name.clone(),
+                            mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                        )
+                    })
+                    .collect();
+
+                let return_ty: Option<ast::L<ast::Type>> =
+                    mono_opt_l_ty(&method.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
+
+                // Isn't used by the interpreter, can be used when debugging.
+                let mono_trait_id = mono_id(method_ty_id, &ty_args[..trait_ty_args.len()]);
+
+                mono_pgm.funs.insert(
+                    mono_method_id.clone(),
+                    ast::FunDecl {
+                        parent_ty: Some(ast::L {
+                            node: mono_trait_id.clone(),
+                            loc: ast::Loc::dummy(),
+                        }),
+                        name: method.name.set_node(mono_method_id.clone()),
+                        sig: ast::FunSig {
+                            context: ast::Context::default(),
+                            self_: method.sig.self_.clone(),
+                            params,
+                            return_ty,
+                            exceptions: None,
+                        },
+                        body: None,
+                    },
+                );
+
+                // Monomorphise method body.
+                let body = match &method.body {
+                    Some(body) => body,
+                    None => return mono_method_id,
+                };
+
+                let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
+
+                mono_pgm.funs.get_mut(&mono_method_id).unwrap().body = Some(mono_body);
+
+                return mono_method_id;
             }
         }
     }
 
     if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
-        let method = method_map.get(method_id).unwrap();
-        todo!()
+        let method: &ast::FunDecl = method_map.get(method_id).unwrap();
+
+        let params: Vec<(Id, ast::L<ast::Type>)> = method
+            .sig
+            .params
+            .iter()
+            .map(|(param_name, param_ty)| {
+                (
+                    param_name.clone(),
+                    mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                )
+            })
+            .collect();
+
+        let return_ty: Option<ast::L<ast::Type>> =
+            mono_opt_l_ty(&method.sig.return_ty, &ty_map, poly_pgm, mono_pgm);
+
+        // Isn't used by the interpreter, can be used when debugging.
+        let method_ty_params = method.sig.context.type_params.len();
+        let method_parent_ty_id =
+            mono_id(method_ty_id, &ty_args[..ty_args.len() - method_ty_params]);
+
+        mono_pgm.funs.insert(
+            mono_method_id.clone(),
+            ast::FunDecl {
+                parent_ty: Some(ast::L {
+                    node: method_parent_ty_id.clone(),
+                    loc: ast::Loc::dummy(),
+                }),
+                name: method.name.set_node(mono_method_id.clone()),
+                sig: ast::FunSig {
+                    context: ast::Context::default(),
+                    self_: method.sig.self_.clone(),
+                    params,
+                    return_ty,
+                    exceptions: None,
+                },
+                body: None,
+            },
+        );
+
+        // Monomorphise method body.
+        let body = match &method.body {
+            Some(body) => body,
+            None => return mono_method_id,
+        };
+
+        let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
+
+        mono_pgm.funs.get_mut(&mono_method_id).unwrap().body = Some(mono_body);
+
+        return mono_method_id;
     }
 
-    todo!()
-
-    /*
-    let poly_object_ty = ty_to_ast(poly_receiver_ty, ty_map);
-
-    let mono_object_ty = mono_ty(&poly_object_ty, ty_map, poly_pgm, mono_pgm);
-
-    let mono_receiver_ty_id = match &mono_object_ty {
-        ast::Type::Named(ast::NamedType { name, args }) => {
-            assert!(args.is_empty());
-            name
-        }
-
-        ast::Type::Var(_) => panic!(),
-
-        ast::Type::Record { .. } | ast::Type::Variant { .. } | ast::Type::Fn(_) => {
-            // syntactically invalid, can't happen
-            panic!()
-        }
-    };
-
-    match &poly_object_ty {
-        ast::Type::Named(ast::NamedType { name, args }) => {
-            let ty_con = poly_pgm.ty.get(name).unwrap();
-            assert_eq!(ty_con.type_params.len(), args.len());
-
-            let fun = poly_pgm
-                .associated
-                .get(name)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "poly_pgm doesn't associated types for type {} (looking for method {})",
-                        name, method
-                    )
-                })
-                .get(method)
-                .unwrap();
-
-            let mut assoc_fn_ty_map = ty_map.clone();
-            for (ty_param, ty_arg) in ty_con.type_params.iter().zip(args.iter()) {
-                assoc_fn_ty_map.insert(ty_param.clone(), ty_arg.node.1.node.clone());
-            }
-
-            let mono_ty_args: Vec<ast::Type> = method_ty_args
-                .iter()
-                .map(|ty_arg| {
-                    mono_ty(
-                        &ty_to_ast(ty_arg, ty_map),
-                        &assoc_fn_ty_map,
-                        poly_pgm,
-                        mono_pgm,
-                    )
-                })
-                .collect();
-
-            (
-                mono_assoc_fn(
-                    mono_receiver_ty_id,
-                    fun,
-                    &assoc_fn_ty_map,
-                    &mono_ty_args,
-                    poly_pgm,
-                    mono_pgm,
-                ),
-                mono_object_ty,
-            )
-        }
-        ast::Type::Var(_) => panic!(),
-        ast::Type::Record { .. } => panic!(),
-        ast::Type::Variant { .. } => panic!(),
-        ast::Type::Fn(_) => panic!(),
-    } */
+    panic!()
 }
 
 fn mono_lstmts(
