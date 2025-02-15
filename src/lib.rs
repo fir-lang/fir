@@ -7,6 +7,7 @@ mod import_resolver;
 mod interpolation;
 // mod interpreter;
 mod lexer;
+mod mono_ast;
 mod monomorph;
 mod parser;
 mod parser_utils;
