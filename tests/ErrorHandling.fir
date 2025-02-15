@@ -91,13 +91,13 @@ parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): U32): Result[[I
 
 parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
     if s.len() == 0:
-        return throw(~EmptyInput)
+        throw(~EmptyInput)
 
     let result: U32 = 0
 
     for c in s.chars():
         if c < '0' || c > '9':
-            return throw(~InvalidDigit)
+            throw(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
