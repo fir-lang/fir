@@ -367,7 +367,11 @@ fn mono_top_fn(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Id {
-    assert_eq!(fun_decl.parent_ty, None);
+    println!(
+        "mono_top_fn {:?}.{}",
+        &fun_decl.parent_ty, &fun_decl.name.node
+    );
+
     assert_eq!(fun_decl.sig.context.type_params.len(), ty_args.len());
 
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
@@ -504,7 +508,8 @@ fn mono_stmt(
                 label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
                 ty: None,
-                expr: expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)),
+                expr: expr
+                    .map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc)),
                 expr_ty: None,
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
             })
@@ -538,7 +543,10 @@ fn mono_expr(
     ty_map: &Map<Id, ast::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    loc: &ast::Loc,
 ) -> ast::Expr {
+    println!("{}: {:?}", loc_display(loc), expr);
+    println!("  ty_map: {:?}", ty_map);
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
             let poly_decl = match poly_pgm.top.get(var) {
@@ -663,42 +671,17 @@ fn mono_expr(
             member,
             ty_args,
         }) => {
-            let ty_decl = poly_pgm.ty.get(ty).unwrap();
-            let ty_num_type_params = ty_decl.type_params.len();
-
             let mono_ty_args: Vec<ast::Type> = ty_args
                 .iter()
                 .map(|ty_arg| mono_ty(&ty_to_ast(ty_arg, ty_map), ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            let mono_ty_id = mono_ty_decl(
-                ty_decl,
-                &mono_ty_args[0..ty_num_type_params],
-                poly_pgm,
-                mono_pgm,
-            );
-
             let fun_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
 
-            let assoc_fn_ty_map: Map<Id, ast::Type> = ty_decl
-                .type_params
-                .iter()
-                .cloned()
-                .zip(mono_ty_args.iter().cloned())
-                .collect();
+            let mono_fun_id = mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-            let mono_fun_id = mono_assoc_fn(
-                &mono_ty_id,
-                fun_decl,
-                &assoc_fn_ty_map,
-                &mono_ty_args[ty_num_type_params..],
-                poly_pgm,
-                mono_pgm,
-            );
-
-            ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                ty: mono_ty_id,
-                member: mono_fun_id,
+            ast::Expr::Var(ast::VarExpr {
+                id: mono_fun_id,
                 ty_args: vec![],
             })
         }
@@ -860,6 +843,11 @@ fn mono_method(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Id {
+    println!(
+        "mono_method method_ty_id={}, method_id={}, ty_args={:?}",
+        method_ty_id, method_id, ty_args
+    );
+
     let mono_method_id = mono_id(method_ty_id, ty_args);
 
     if mono_pgm.funs.contains_key(&mono_method_id) {
@@ -873,7 +861,7 @@ fn mono_method(
     {
         // Find the matching impl.
         for impl_ in impls {
-            if let Some(substs) = match_trait_impl(ty_args, impl_) {
+            if let Some(substs) = match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_) {
                 let method: &ast::FunDecl = impl_
                     .methods
                     .iter()
@@ -933,6 +921,11 @@ fn mono_method(
                 return mono_method_id;
             }
         }
+
+        panic!(
+            "Unable to find matching impl for {} type args {:?}",
+            method_ty_id, ty_args
+        );
     }
 
     if let Some(method_map) = poly_pgm.method.get(method_ty_id) {
@@ -990,7 +983,7 @@ fn mono_method(
         return mono_method_id;
     }
 
-    panic!()
+    panic!("Type {} is not a trait or type", method_ty_id)
 }
 
 fn mono_lstmts(
@@ -1013,7 +1006,7 @@ fn mono_bl_expr(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Box<ast::L<ast::Expr>> {
-    Box::new(expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm)))
+    Box::new(expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc)))
 }
 
 fn mono_l_expr(
@@ -1022,7 +1015,7 @@ fn mono_l_expr(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> ast::L<ast::Expr> {
-    expr.map_as_ref(|expr| mono_expr(expr, ty_map, poly_pgm, mono_pgm))
+    expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc))
 }
 
 fn mono_pat(
@@ -1138,6 +1131,10 @@ fn mono_assoc_fn(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) -> Id {
+    println!("mono_assoc_fn {}.{}", mono_ty_id, &fun_decl.name.node);
+    println!("  ty_args: {:?}", ty_args);
+    println!("  ty_map: {:?}", ty_map);
+
     let mono_fn_id = mono_id(&fun_decl.name.node, ty_args);
 
     if mono_pgm
@@ -1595,16 +1592,20 @@ fn match_trait_impl(
     ty_args: &[ast::Type],
     trait_impl: &PolyTraitImpl,
 ) -> Option<Map<Id, ast::Type>> {
-    debug_assert_eq!(ty_args.len(), trait_impl.tys.len());
+    debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{:?}", ty_args);
+
+    println!("Trying to match impl:");
+    println!("  impl tys: {:?}", &trait_impl.tys);
+    println!("  ty args:  {:?}", ty_args);
 
     let mut substs: Map<Id, ast::Type> = Default::default();
     for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
         if !match_(trait_ty, ty_arg, &mut substs) {
-            return None;
+            return dbg!(None);
         }
     }
 
-    Some(substs)
+    dbg!(Some(substs))
 }
 
 fn match_(trait_ty: &ast::Type, arg_ty: &ast::Type, substs: &mut Map<Id, ast::Type>) -> bool {
