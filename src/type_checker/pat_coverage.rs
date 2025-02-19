@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyArgs, TyMap};
+use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyMap};
 
 use super::RecordOrVariant;
 
@@ -164,45 +164,39 @@ impl PatCoverage {
                 }
             },
 
-            Ty::App(ty_con, ty_args) => {
-                let ty_args = match ty_args {
-                    TyArgs::Positional(args) => args,
-                    TyArgs::Named(_) => panic!(),
-                };
-                match con_shape(&ty_con, &tc_state.tys.tys) {
-                    ConShape::Product => {
-                        let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
-                        self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
-                    }
-
-                    ConShape::Sum(cons) => {
-                        for con in cons {
-                            let con_scheme = tc_state
-                                .tys
-                                .associated_fn_schemes
-                                .get(&ty_con)
-                                .unwrap()
-                                .get(&con)
-                                .unwrap();
-
-                            let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
-
-                            if !self.is_con_pat_exhaustive(
-                                &con_fn_ty,
-                                &ty_con,
-                                Some(&con),
-                                tc_state,
-                                loc,
-                            ) {
-                                return false;
-                            }
-                        }
-
-                        true
-                    }
+            Ty::App(ty_con, ty_args) => match con_shape(&ty_con, &tc_state.tys.tys) {
+                ConShape::Product => {
+                    let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                    self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
-            }
+
+                ConShape::Sum(cons) => {
+                    for con in cons {
+                        let con_scheme = tc_state
+                            .tys
+                            .associated_fn_schemes
+                            .get(&ty_con)
+                            .unwrap()
+                            .get(&con)
+                            .unwrap();
+
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+
+                        if !self.is_con_pat_exhaustive(
+                            &con_fn_ty,
+                            &ty_con,
+                            Some(&con),
+                            tc_state,
+                            loc,
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    true
+                }
+            },
 
             Ty::Anonymous {
                 labels,
@@ -293,8 +287,6 @@ impl PatCoverage {
             Ty::Var(_) => false,
 
             Ty::QVar(_) | Ty::Fun { .. } => panic!(),
-
-            Ty::AssocTySelect { .. } => todo!(),
         }
     }
 

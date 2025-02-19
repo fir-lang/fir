@@ -1,4 +1,4 @@
-use crate::ast::*;
+use crate::{ast::*, type_checker::RecordOrVariant};
 
 pub fn print_module(module: &[L<TopDecl>]) {
     let mut buffer = String::new();
@@ -120,10 +120,7 @@ impl TypeDeclRhs {
 
 impl FunDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
-        if self.body.is_none() {
-            buffer.push_str("prim ");
-        }
-        self.sig.print(&self.name.node, buffer);
+        self.sig.print(&self.parent_ty, &self.name.node, buffer);
         if let Some(body) = &self.body {
             buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
@@ -155,16 +152,11 @@ impl TraitDecl {
         buffer.push_str("trait ");
         buffer.push_str(&self.name.node);
         buffer.push('[');
-        buffer.push_str(&self.ty.id.node);
-        let bounds = &self.ty.bounds;
-        if !bounds.is_empty() {
-            buffer.push_str(": ");
-            for (i, bound) in bounds.iter().enumerate() {
-                if i != 0 {
-                    buffer.push_str(" + ");
-                }
-                bound.node.print(buffer);
+        for (i, ty) in self.type_params.iter().enumerate() {
+            if i != 0 {
+                buffer.push_str(", ");
             }
+            buffer.push_str(&ty.node);
         }
         buffer.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
@@ -180,14 +172,17 @@ impl TraitDecl {
 impl ImplDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str("impl");
-        if !self.context.is_empty() {
-            buffer.push('[');
-            print_context(&self.context, buffer);
-            buffer.push(']');
-        }
+        print_context(&self.context, buffer);
         buffer.push(' ');
-        self.ty.node.print(buffer);
-        buffer.push_str(":\n");
+        buffer.push_str(&self.trait_.node);
+        buffer.push('[');
+        for (i, ty) in self.tys.iter().enumerate() {
+            if i != 0 {
+                buffer.push_str(", ")
+            }
+            ty.node.print(buffer);
+        }
+        buffer.push_str("]:\n");
         for (i, item) in self.items.iter().enumerate() {
             if i != 0 {
                 buffer.push('\n');
@@ -210,11 +205,7 @@ impl Type {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        if let Some(name) = &arg.node.0 {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.1.node.print(buffer);
+                        arg.node.print(buffer);
                     }
                     buffer.push(']');
                 }
@@ -304,18 +295,28 @@ impl Type {
 }
 
 impl FunSig {
-    pub fn print(&self, name: &Id, buffer: &mut String) {
-        buffer.push_str(name);
-        if !self.type_params.is_empty() {
-            buffer.push('[');
-            print_context(&self.type_params, buffer);
-            buffer.push(']');
+    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buffer: &mut String) {
+        if let Some(parent_ty) = parent_ty {
+            buffer.push_str(&parent_ty.node);
+            buffer.push('.');
         }
+        buffer.push_str(name);
+        print_context(&self.context, buffer);
         buffer.push('(');
-        if self.self_ {
-            buffer.push_str("self");
-            if !self.params.is_empty() {
-                buffer.push_str(", ");
+        match &self.self_ {
+            SelfParam::No => {}
+            SelfParam::Implicit => {
+                buffer.push_str("self");
+                if !self.params.is_empty() {
+                    buffer.push_str(", ");
+                }
+            }
+            SelfParam::Explicit(ty) => {
+                buffer.push_str("self: ");
+                ty.node.print(buffer);
+                if !self.params.is_empty() {
+                    buffer.push_str(", ");
+                }
             }
         }
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
@@ -501,11 +502,14 @@ impl Expr {
             Expr::MethodSelect(MethodSelectExpr {
                 object,
                 object_ty: _,
+                method_ty_id,
                 method,
                 ty_args,
             }) => {
                 object.node.print(buffer, 0);
-                buffer.push('.');
+                buffer.push_str(".{");
+                buffer.push_str(method_ty_id);
+                buffer.push_str(".}");
                 buffer.push_str(method);
                 print_ty_args(ty_args, buffer);
             }
@@ -863,50 +867,35 @@ impl Pat {
     }
 }
 
-impl TraitDeclItem {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        match self {
-            TraitDeclItem::AssocTy(ty) => {
-                buffer.push_str("type ");
-                buffer.push_str(ty);
-            }
-            TraitDeclItem::Fun(ty) => {
-                ty.print(buffer, indent);
-            }
-        }
+fn print_context(context: &Context, buffer: &mut String) {
+    if context.type_params.is_empty() && context.preds.is_empty() {
+        return;
     }
-}
 
-impl ImplDeclItem {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        match self {
-            ImplDeclItem::AssocTy(AssocTyDecl { name, ty }) => {
-                buffer.push_str("type ");
-                buffer.push_str(name);
-                buffer.push_str(" = ");
-                ty.node.print(buffer);
-            }
-            ImplDeclItem::Fun(fun_decl) => fun_decl.print(buffer, indent),
-        }
-    }
-}
+    buffer.push('[');
 
-fn print_context(context: &[TypeParam], buffer: &mut String) {
-    for (i, ty) in context.iter().enumerate() {
+    for (i, (ty_param, kind)) in context.type_params.iter().enumerate() {
         if i != 0 {
             buffer.push_str(", ");
         }
-        buffer.push_str(&ty.id.node);
-        if !ty.bounds.is_empty() {
-            buffer.push_str(": ");
-            for (j, bound) in ty.bounds.iter().enumerate() {
-                if j != 0 {
-                    buffer.push_str(" + ");
-                }
-                bound.node.print(buffer);
-            }
-        }
+        buffer.push_str(ty_param);
+        buffer.push_str(": ");
+        let kind_str = match kind {
+            Kind::Star => "*",
+            Kind::Row(RecordOrVariant::Record) => "row(rec)",
+            Kind::Row(RecordOrVariant::Variant) => "row(var)",
+        };
+        buffer.push_str(kind_str);
     }
+
+    for (i, ty) in context.preds.iter().enumerate() {
+        if !context.type_params.is_empty() || i != 0 {
+            buffer.push_str(", ");
+        }
+        ty.node.print(buffer);
+    }
+
+    buffer.push(']');
 }
 
 fn print_ty_args(args: &[Ty], buffer: &mut String) {
@@ -1002,7 +991,7 @@ impl Display for Type {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&SmolStr::new(""), &mut s);
+        self.print(&None, &SmolStr::new(""), &mut s);
         f.write_str(&s)
     }
 }
@@ -1027,22 +1016,6 @@ impl Display for Pat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
         self.print(&mut s);
-        f.write_str(&s)
-    }
-}
-
-impl Display for TraitDeclItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
-        f.write_str(&s)
-    }
-}
-
-impl Display for ImplDeclItem {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
         f.write_str(&s)
     }
 }
