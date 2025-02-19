@@ -1,4 +1,4 @@
-use crate::ast::{self, Id, Loc, L};
+use crate::ast::{self, Id, Loc, Named, L};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -29,7 +29,7 @@ pub enum ConstructorFields {
 
 #[derive(Debug, Clone)]
 pub enum Type {
-    Named(NamedType),
+    Named(Id),
     Record { fields: Vec<Named<Type>> },
     Variant { alts: Vec<VariantAlt> },
     Fn(FnType),
@@ -42,35 +42,10 @@ pub struct VariantAlt {
 }
 
 #[derive(Debug, Clone)]
-pub struct NamedType {
-    pub name: Id,
-    pub args: Vec<L<Type>>,
-}
-
-#[derive(Debug, Clone)]
 pub struct FnType {
     pub args: Vec<L<Type>>,
     pub ret: Option<L<Box<Type>>>,
     pub exceptions: Option<L<Box<Type>>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Named<T> {
-    pub name: Option<Id>,
-    pub node: T,
-}
-
-impl<T> Named<T> {
-    pub fn map_as_ref<T2, F>(&self, f: F) -> Named<T2>
-    where
-        F: FnOnce(&T) -> T2,
-    {
-        let Named { name, node } = &self;
-        Named {
-            name: name.clone(),
-            node: f(node),
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -217,11 +192,11 @@ pub struct WhileLetStmt {
 #[derive(Debug, Clone)]
 pub enum Expr {
     Var(VarExpr),
-    Constr(ConstrExpr),
-    ConstrSelect(ConstrSelectExpr),
-    FieldSelect(FieldSelectExpr),
-    MethodSelect(MethodSelectExpr),
-    AssocFnSelect(AssocFnSelectExpr),
+    Constr(ConstrExpr),               // a product constructor
+    ConstrSelect(ConstrSelectExpr),   // <id>.<id>, a sum constructor
+    FieldSelect(FieldSelectExpr),     // <expr>.<id> (TODO: This could be lowered as function calls)
+    MethodSelect(MethodSelectExpr),   // <id>.<id>, with an object captured as receiver
+    AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
     Call(CallExpr),
     Int(IntExpr),
     String(Vec<StringPart>),
@@ -275,7 +250,7 @@ pub struct FieldSelectExpr {
 pub struct MethodSelectExpr {
     pub object: Box<L<Expr>>,
     pub method_ty_id: Id,
-    pub method: Id,
+    pub method_id: Id,
 }
 
 #[derive(Debug, Clone)]

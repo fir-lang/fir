@@ -142,7 +142,7 @@ mod native {
             return;
         }
 
-        module = monomorph::monomorphise(&module, &opts.main);
+        // module = monomorph::monomorphise(&module, &opts.main);
 
         // if opts.print_mono_ast {
         //     ast::printer::print_module(&module);
