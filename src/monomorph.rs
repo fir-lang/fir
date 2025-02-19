@@ -121,6 +121,7 @@ use crate::utils::*;
 
 use smol_str::SmolStr;
 
+/// The program in front-end syntax, converted to a graph for efficient and easy lookups.
 #[derive(Debug)]
 struct PolyPgm {
     traits: Map<Id, PolyTrait>,
@@ -130,6 +131,7 @@ struct PolyPgm {
     ty: Map<Id, ast::TypeDecl>,
 }
 
+/// A trait, with implementations.
 #[derive(Debug, Default)]
 struct PolyTrait {
     // QVars of trait.
@@ -137,18 +139,19 @@ struct PolyTrait {
     impls: Vec<PolyTraitImpl>,
 }
 
-// E.g. `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]`.
+/// A trait implementation in the polymorpic program.
+/// E.g. `impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]`.
 #[derive(Debug, Default)]
 struct PolyTraitImpl {
-    // Type parameters of the `impl` block, with kinds.
-    //
-    // In the example above: `[iter: *, a: *, b: *]`.
+    /// Type parameters of the `impl` block, with kinds.
+    ///
+    /// In the example above: `[iter: *, a: *, b: *]`.
     #[allow(unused)]
     type_params: Vec<(Id, Kind)>,
 
-    // Type arguments of the trait.
-    //
-    // In the example above: `[Map[iter, a, b], b]`.
+    /// Type arguments of the trait.
+    ///
+    /// In the example above: `[Map[iter, a, b], b]`.
     tys: Vec<ast::Type>,
 
     methods: Vec<ast::FunDecl>,
