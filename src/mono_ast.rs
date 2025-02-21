@@ -1,3 +1,5 @@
+mod printer;
+
 use crate::ast::{self, AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
 use crate::collections::*;
 use crate::token::IntKind;
