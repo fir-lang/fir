@@ -1209,14 +1209,14 @@ fn mono_opt_l_ty(
 fn match_trait_impl(
     ty_args: &[mono::Type],
     trait_impl: &PolyTraitImpl,
-) -> Option<Map<Id, ast::Type>> {
+) -> Option<Map<Id, mono::Type>> {
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{:?}", ty_args);
 
     println!("Trying to match impl:");
     println!("  impl tys: {:?}", &trait_impl.tys);
     println!("  ty args:  {:?}", ty_args);
 
-    let mut substs: Map<Id, ast::Type> = Default::default();
+    let mut substs: Map<Id, mono::Type> = Default::default();
     for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
         if !match_(trait_ty, ty_arg, &mut substs) {
             return dbg!(None);
@@ -1226,14 +1226,14 @@ fn match_trait_impl(
     dbg!(Some(substs))
 }
 
-fn match_(trait_ty: &ast::Type, arg_ty: &ast::Type, substs: &mut Map<Id, ast::Type>) -> bool {
+fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::Type>) -> bool {
     match (trait_ty, arg_ty) {
         (
             ast::Type::Named(ast::NamedType {
                 name: name1,
                 args: args1,
             }),
-            ast::Type::Named(ast::NamedType {
+            mono::Type::Named(mono::NamedType {
                 name: name2,
                 args: args2,
             }),
