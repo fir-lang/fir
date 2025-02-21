@@ -14,7 +14,7 @@ use smol_str::SmolStr;
 pub type Id = SmolStr;
 
 /// Things with location information.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct L<T> {
     pub loc: Loc,
     pub node: T,
@@ -222,7 +222,7 @@ pub struct FnType {
     pub exceptions: Option<L<Box<Type>>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Named<T> {
     pub name: Option<Id>,
     pub node: T,

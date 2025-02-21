@@ -1,4 +1,4 @@
-use crate::ast::{self, Id, Loc, Named, L};
+use crate::ast::{self, AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -27,21 +27,27 @@ pub enum ConstructorFields {
     Unnamed(Vec<Type>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
-    Named(Id),
+    Named(NamedType),
     Record { fields: Vec<Named<Type>> },
     Variant { alts: Vec<VariantAlt> },
     Fn(FnType),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct NamedType {
+    pub name: Id,
+    pub args: Vec<L<Type>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VariantAlt {
     pub con: Id,
     pub fields: Vec<Named<Type>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnType {
     pub args: Vec<L<Type>>,
     pub ret: Option<L<Box<Type>>>,
@@ -158,14 +164,6 @@ pub struct AssignStmt {
     pub op: AssignOp,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AssignOp {
-    Eq,
-    PlusEq,
-    MinusEq,
-    StarEq,
-}
-
 #[derive(Debug, Clone)]
 pub struct ForStmt {
     pub label: Option<Id>,
@@ -276,40 +274,6 @@ pub struct BinOpExpr {
 pub struct UnOpExpr {
     pub op: UnOp,
     pub expr: Box<L<Expr>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct IntExpr {
-    pub text: String,
-    pub suffix: Option<IntKind>,
-    pub radix: u32,
-    pub parsed: u64,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinOp {
-    Add,
-    Subtract,
-    Equal,
-    NotEqual,
-    Multiply,
-    Divide,
-    Lt,
-    Gt,
-    LtEq,
-    GtEq,
-    And,
-    Or,
-    BitAnd,
-    BitOr,
-    LeftShift,
-    RightShift,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum UnOp {
-    Not,
-    Neg,
 }
 
 #[derive(Debug, Clone)]
