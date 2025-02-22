@@ -144,9 +144,9 @@ mod native {
 
         let mono_module = monomorph::monomorphise(&module, &opts.main);
 
-        // if opts.print_mono_ast {
-        //     ast::printer::print_module(&module);
-        // }
+        if opts.print_mono_ast {
+            mono_ast::printer::print_pgm(&mono_module);
+        }
 
         // let mut w = std::io::stdout();
         // program_args.insert(0, program);

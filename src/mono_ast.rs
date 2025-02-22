@@ -1,8 +1,20 @@
-mod printer;
+pub mod printer;
 
-use crate::ast::{self, AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
+use crate::ast::{AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
 use crate::collections::*;
 use crate::token::IntKind;
+
+#[derive(Debug, Default)]
+pub struct MonoPgm {
+    // Fun name -> decl
+    pub funs: Map<Id, FunDecl>,
+
+    // Type name -> method name -> decl
+    pub associated: Map<Id, Map<Id, FunDecl>>,
+
+    // Type name -> type args -> decl
+    pub ty: Map<Id, Map<Vec<Type>, TypeDecl>>,
+}
 
 #[derive(Debug, Clone)]
 pub struct TypeDecl {

@@ -117,6 +117,7 @@ use crate::ast::{self, Id};
 use crate::collections::*;
 use crate::interpolation::StringPart;
 use crate::mono_ast as mono;
+use crate::mono_ast::MonoPgm;
 use crate::type_checker::{Kind, Ty};
 use crate::utils::*;
 
@@ -160,18 +161,6 @@ struct PolyTraitImpl {
     methods: Vec<ast::FunDecl>,
     // We don't care about predicates, those are for type checking.
     // If a trait use type checks, then we know there will be a match in trait env during monomorph.
-}
-
-#[derive(Debug, Default)]
-pub struct MonoPgm {
-    // Fun name -> decl
-    pub funs: Map<Id, mono::FunDecl>,
-
-    // Type name -> method name -> decl
-    pub associated: Map<Id, Map<Id, mono::FunDecl>>,
-
-    // Type name -> type args -> decl
-    pub ty: Map<Id, Map<Vec<mono::Type>, mono::TypeDecl>>,
 }
 
 fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {

@@ -2,6 +2,68 @@ use crate::mono_ast::*;
 
 use smol_str::SmolStr;
 
+pub fn print_pgm(pgm: &MonoPgm) {
+    let mut s = String::new();
+    pgm.print(&mut s);
+    println!("{}", s);
+}
+
+impl MonoPgm {
+    pub fn print(&self, buffer: &mut String) {
+        for (ty_name, ty_arg_map) in &self.ty {
+            for (ty_args, ty_decl) in ty_arg_map.iter() {
+                if !ty_args.is_empty() {
+                    buffer.push_str("# ");
+                    buffer.push_str(ty_name);
+                    buffer.push('[');
+                    for (i, ty_arg) in ty_args.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
+                        }
+                        ty_arg.print(buffer);
+                    }
+                    buffer.push_str("]\n");
+                }
+
+                buffer.push_str("type ");
+                buffer.push_str(&ty_decl.name);
+
+                if let Some(rhs) = &ty_decl.rhs {
+                    rhs.print(buffer, 4);
+                }
+
+                buffer.push('\n');
+                buffer.push('\n');
+            }
+        }
+
+        if !self.ty.is_empty() {
+            buffer.push('\n');
+        }
+
+        for (i, fun) in self.funs.values().enumerate() {
+            if i != 0 {
+                buffer.push('\n');
+            }
+            fun.print(buffer, 0);
+            buffer.push('\n');
+        }
+
+        for (i, fun) in self
+            .associated
+            .values()
+            .flat_map(|method_map| method_map.values())
+            .enumerate()
+        {
+            if i != 0 {
+                buffer.push('\n');
+            }
+            fun.print(buffer, 0);
+            buffer.push('\n');
+        }
+    }
+}
+
 impl TypeDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str("type ");
