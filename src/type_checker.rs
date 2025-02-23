@@ -1144,13 +1144,15 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+    }
 
+    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+
+    if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
         }
     }
-
-    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
 
     tys.tys.exit_scope();
 }
@@ -1259,11 +1261,11 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
+            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+
             for stmt in body.iter_mut() {
                 normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
             }
-
-            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
         }
 
         tys.tys.exit_scope();
@@ -1322,11 +1324,46 @@ fn resolve_preds(
     _level: u32,
 ) {
     let mut goals: Vec<Pred> = preds.into_iter().collect();
+    let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
+    let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
 
     'goals: while let Some(mut pred) = goals.pop() {
+        // Normalize to improve error messages.
         pred.params
             .iter_mut()
             .for_each(|ty| *ty = ty.normalize(tys.tys.cons()));
+
+        if pred.trait_ == "RecRow" {
+            match &pred.params[0] {
+                Ty::Anonymous { kind, is_row, .. } => {
+                    if *is_row && *kind == RecordOrVariant::Record {
+                        continue;
+                    }
+                }
+                Ty::Var(var_ref) => {
+                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
+                    ambiguous_rec_rows.push(var_ref.clone());
+                    continue;
+                }
+                _ => {}
+            }
+        }
+
+        if pred.trait_ == "VarRow" {
+            match &pred.params[0] {
+                Ty::Anonymous { kind, is_row, .. } => {
+                    if *is_row && *kind == RecordOrVariant::Variant {
+                        continue;
+                    }
+                }
+                Ty::Var(var_ref) => {
+                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
+                    ambiguous_var_rows.push(var_ref.clone());
+                    continue;
+                }
+                _ => {}
+            }
+        }
 
         for assump in assumps {
             // We can't use set lookup as locs will be different.
@@ -1368,5 +1405,29 @@ fn resolve_preds(
                 loc: pred.loc
             },
         );
+    }
+
+    for rec_row in ambiguous_rec_rows {
+        if rec_row.link().is_none() {
+            rec_row.set_link(Ty::Anonymous {
+                labels: Default::default(),
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: true,
+            });
+        }
+    }
+
+    for var_row in ambiguous_var_rows {
+        if var_row.link().is_none() {
+            if var_row.link().is_none() {
+                var_row.set_link(Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: None,
+                    kind: RecordOrVariant::Variant,
+                    is_row: true,
+                });
+            }
+        }
     }
 }

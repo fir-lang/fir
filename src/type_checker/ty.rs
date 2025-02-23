@@ -870,7 +870,7 @@ impl TyVarRef {
         self.0.kind.clone()
     }
 
-    pub(super) fn link(&self) -> Option<Ty> {
+    pub fn link(&self) -> Option<Ty> {
         self.0.link.borrow().clone()
     }
 
