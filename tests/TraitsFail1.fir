@@ -4,12 +4,11 @@ prim type I32
 prim printStr(s: Str): ()
 
 trait ToStr[a]:
-    toStr(self): Str
+    toStr(self: a): Str
 
-f[a: ToStr](a: a)
+f(a: a)
     printStr(a.toStr())
 
-g() = f(123u32)
-
 # args: --typecheck --no-prelude --no-backtrace
-# expected stderr: tests/TraitFail2.fir:12:7: Type U32 does not implement trait ToStr
+# expected exit status: 101
+# expected stderr: tests/TraitsFail1.fir:10:14: Unable to resolve pred ToStr[a]

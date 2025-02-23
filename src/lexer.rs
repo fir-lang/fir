@@ -44,7 +44,6 @@ lexgen::lexer! {
         "match" = TokenKind::Match,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
-        "self" = TokenKind::Self_,
         "trait" = TokenKind::Trait,
         "type" = TokenKind::Type,
         "var" = TokenKind::Var,

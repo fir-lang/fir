@@ -6,7 +6,7 @@ parseU32(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
 
     let result: U32 = 0
 
-    for c in s.chars():
+    for c: Char in s.chars():
         if c < '0' || c > '9':
             return Result.Err(~InvalidDigit)
 
@@ -172,17 +172,17 @@ main
 # Result.Ok(123)
 # Result.Err(invalid digit)
 # Result.Err(empty input)
-# 
+#
 # ----- parseU32FromFile
 # io error
-# 
+#
 # ----- parseWith
 # Result.Ok([1,2,3])
 # Result.Err(invalid digit)
-# 
+#
 # ----- parseWithErrorHandler
 # Result.Ok(123)
-# 
+#
 # ----- parseU32UsingExnVersion
 # Result.Ok(123)
 # Result.Err(invalid digit)
