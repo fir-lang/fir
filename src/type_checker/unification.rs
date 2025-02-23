@@ -242,7 +242,7 @@ pub(super) fn unify(
                 }
             }
 
-            fn unit(kind: RecordOrVariant) -> Ty {
+            fn unit_row(kind: RecordOrVariant) -> Ty {
                 Ty::Anonymous {
                     labels: Default::default(),
                     extension: None,
@@ -254,10 +254,10 @@ pub(super) fn unify(
             match (extension1, extension2) {
                 (None, None) => {}
                 (Some(ext1), None) => {
-                    unify(&ext1, &unit(*kind1), cons, var_gen, level, loc);
+                    unify(&ext1, &unit_row(*kind1), cons, var_gen, level, loc);
                 }
                 (None, Some(ext2)) => {
-                    unify(&unit(*kind2), &ext2, cons, var_gen, level, loc);
+                    unify(&unit_row(*kind2), &ext2, cons, var_gen, level, loc);
                 }
                 (Some(ext1), Some(ext2)) => {
                     unify(&ext1, &ext2, cons, var_gen, level, loc);
@@ -446,7 +446,7 @@ pub(super) fn try_unify_one_way(
                 }
             }
 
-            fn unit(kind: RecordOrVariant) -> Ty {
+            fn unit_row(kind: RecordOrVariant) -> Ty {
                 Ty::Anonymous {
                     labels: Default::default(),
                     extension: None,
@@ -458,7 +458,7 @@ pub(super) fn try_unify_one_way(
             match (extension1, extension2) {
                 (None, None) => true,
                 (Some(ext1), None) => {
-                    try_unify_one_way(&ext1, &unit(*kind1), cons, var_gen, level, loc)
+                    try_unify_one_way(&ext1, &unit_row(*kind1), cons, var_gen, level, loc)
                 }
                 (None, Some(_)) => false,
                 (Some(ext1), Some(ext2)) => {

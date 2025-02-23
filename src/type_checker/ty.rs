@@ -744,7 +744,14 @@ impl Ty {
     /// Same as `normalize` but normalizes type arguments as well.
     pub(super) fn deep_normalize(&self, cons: &ScopeMap<Id, TyCon>) -> Ty {
         match self {
-            Ty::Var(var_ref) => var_ref.normalize(cons),
+            Ty::Var(var_ref) => {
+                let mut var_ref_link = var_ref.normalize(cons);
+                if var_ref_link != Ty::Var(var_ref.clone()) {
+                    var_ref_link = var_ref_link.deep_normalize(cons);
+                    var_ref.set_link(var_ref_link.clone());
+                }
+                var_ref_link
+            }
 
             Ty::Con(con) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {

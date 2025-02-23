@@ -1408,8 +1408,34 @@ fn mono_tc_ty(
             is_row,
         } => match kind {
             crate::type_checker::RecordOrVariant::Record => {
-                todo!()
+                let mut all_fields: Vec<ast::Named<mono::Type>> = vec![];
+
+                for (field, field_ty) in labels {
+                    let field_mono_ty = mono_tc_ty(&field_ty, ty_map, poly_pgm, mono_pgm);
+                    all_fields.push(ast::Named {
+                        name: Some(field),
+                        node: field_mono_ty,
+                    });
+                }
+
+                if let Some(ty) = extension {
+                    match &*ty {
+                        Ty::Con(con) => {
+                            let ext = ty_map.get(con).unwrap();
+                            match ext {
+                                mono::Type::Record { fields } => {
+                                    all_fields.extend(fields.iter().cloned());
+                                }
+                                _ => panic!(),
+                            }
+                        }
+                        _ => todo!(),
+                    }
+                }
+
+                mono::Type::Record { fields: all_fields }
             }
+
             crate::type_checker::RecordOrVariant::Variant => {
                 // assert!(!is_row);
 
