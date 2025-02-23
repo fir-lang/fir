@@ -133,11 +133,19 @@ fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
 }
 
 fn add_missing_type_params_type(ty: &mut ast::TypeDecl) {
-    // Make all parameters `*` for now. If we need different kinds we can add a suffix/prefix to the
-    // name. At some point we should implement proper kind inference.
-    ty.type_param_kinds = std::iter::repeat_with(|| Kind::Star)
-        .take(ty.type_params.len())
-        .collect();
+    let mut kinds: Vec<Kind> = Vec::with_capacity(ty.type_params.len());
+    for ty_param in &ty.type_params {
+        let kind = if ty_param.as_str().starts_with("recRow") {
+            Kind::Row(RecordOrVariant::Record)
+        } else if ty_param.as_str().starts_with("varRow") {
+            Kind::Row(RecordOrVariant::Variant)
+        } else {
+            Kind::Star
+        };
+        kinds.push(kind);
+    }
+
+    ty.type_param_kinds = kinds;
 }
 
 const REC_ROW_TRAIT_ID: Id = Id::new_static("RecRow");
