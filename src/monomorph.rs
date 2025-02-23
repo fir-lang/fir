@@ -541,7 +541,7 @@ fn mono_expr(
     mono_pgm: &mut MonoPgm,
     loc: &ast::Loc,
 ) -> mono::Expr {
-    println!("{}: {:?}", loc_display(loc), expr);
+    println!("mono_expr {}: {:?}", loc_display(loc), expr);
     println!("  ty_map: {:?}", ty_map);
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
@@ -838,12 +838,23 @@ fn mono_method(
     {
         // Find the matching impl.
         for impl_ in impls {
-            if let Some(substs) = match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_) {
+            if let Some(mut substs) = match_trait_impl(&ty_args[0..trait_ty_args.len()], impl_) {
                 let method: &ast::FunDecl = impl_
                     .methods
                     .iter()
                     .find(|fun_decl| &fun_decl.name.node == method_id)
                     .unwrap();
+
+                // Bind function type parameters.
+                for ((ty_param, _kind), ty_arg) in method
+                    .sig
+                    .context
+                    .type_params
+                    .iter()
+                    .zip(&ty_args[trait_ty_args.len()..])
+                {
+                    substs.insert(ty_param.clone(), ty_arg.clone());
+                }
 
                 let params: Vec<(Id, ast::L<mono::Type>)> = method
                     .sig
@@ -909,6 +920,8 @@ fn mono_method(
                     .get_mut(ty_args)
                     .unwrap()
                     .body = Some(mono_body);
+
+                return;
             }
         }
 
@@ -994,6 +1007,8 @@ fn mono_method(
             .get_mut(ty_args)
             .unwrap()
             .body = Some(mono_body);
+
+        return;
     }
 
     panic!("Type {} is not a trait or type", method_ty_id)
@@ -1388,58 +1403,47 @@ fn mono_tc_ty(
 
         Ty::Anonymous {
             labels,
-            mut extension,
+            extension,
             kind,
             is_row,
-        } => {
-            let mut all_labels = labels.clone();
-            while let Some(ext) = extension {
-                match &*ext {
-                    Ty::Con(_) | Ty::Var(_) | Ty::App(_, _) | Ty::QVar(_) | Ty::Fun { .. } => {
-                        panic!()
-                    }
+        } => match kind {
+            crate::type_checker::RecordOrVariant::Record => {
+                todo!()
+            }
+            crate::type_checker::RecordOrVariant::Variant => {
+                // assert!(!is_row);
 
-                    Ty::Anonymous {
-                        labels: labels2,
-                        extension: extension2,
-                        kind: kind2,
-                        is_row: is_row2,
-                    } => {
-                        assert!(*is_row2);
-                        assert_eq!(kind, *kind2);
-                        extension = extension2.clone();
-                        all_labels.extend(labels2.clone());
+                let mut all_alts: Vec<mono::VariantAlt> = vec![];
+
+                for (con, field) in labels {
+                    let field_record_ty = mono_tc_ty(&field, ty_map, poly_pgm, mono_pgm);
+                    all_alts.push(mono::VariantAlt {
+                        con,
+                        fields: vec![ast::Named {
+                            name: None,
+                            node: field_record_ty,
+                        }],
+                    })
+                }
+
+                if let Some(ty) = extension {
+                    match &*ty {
+                        Ty::Con(con) => {
+                            let ext = ty_map.get(con).unwrap();
+                            match ext {
+                                mono::Type::Variant { alts } => {
+                                    all_alts.extend(alts.iter().cloned());
+                                }
+                                _ => panic!(),
+                            }
+                        }
+                        _ => todo!(),
                     }
                 }
-            }
 
-            match kind {
-                crate::type_checker::RecordOrVariant::Record => mono::Type::Record {
-                    fields: all_labels
-                        .into_iter()
-                        .map(|(label, label_ty)| ast::Named {
-                            name: Some(label),
-                            node: mono_tc_ty(&label_ty, ty_map, poly_pgm, mono_pgm),
-                        })
-                        .collect(),
-                },
-                crate::type_checker::RecordOrVariant::Variant => {
-                    // Variant fields are type checked as unnamed records.
-                    mono::Type::Variant {
-                        alts: all_labels
-                            .into_iter()
-                            .map(|(label, label_ty)| mono::VariantAlt {
-                                con: label,
-                                fields: vec![ast::Named {
-                                    name: None,
-                                    node: mono_tc_ty(&label_ty, ty_map, poly_pgm, mono_pgm),
-                                }],
-                            })
-                            .collect(),
-                    }
-                }
+                mono::Type::Variant { alts: all_alts }
             }
-        }
+        },
     }
 }
 

@@ -44,5 +44,6 @@ StrBuf.pushStr(self, str: Str)
     for char in str.chars():
         self.push(char)
 
-StrBuf.toStr(self): Str
-    Str.fromUtf8Vec(self._bytes)
+impl ToStr[StrBuf]:
+    toStr(self: StrBuf): Str
+        Str.fromUtf8Vec(self._bytes)

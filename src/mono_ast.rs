@@ -61,7 +61,7 @@ pub struct NamedType {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct VariantAlt {
     pub con: Id,
-    pub fields: Vec<Named<Type>>,
+    pub fields: Vec<Named<Type>>, // TODO: This is always unnamed, and type is always a record. Maybe simplify the type.
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
