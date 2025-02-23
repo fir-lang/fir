@@ -10,28 +10,14 @@ pub fn print_pgm(pgm: &MonoPgm) {
 
 impl MonoPgm {
     pub fn print(&self, buffer: &mut String) {
-        for (ty_name, ty_arg_map) in &self.ty {
+        for (_, ty_arg_map) in &self.ty {
             for (ty_args, ty_decl) in ty_arg_map.iter() {
-                if !ty_args.is_empty() {
-                    buffer.push_str("# ");
-                    buffer.push_str(ty_name);
-                    buffer.push('[');
-                    for (i, ty_arg) in ty_args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        ty_arg.print(buffer);
-                    }
-                    buffer.push_str("]\n");
-                }
-
                 buffer.push_str("type ");
                 buffer.push_str(&ty_decl.name);
-
+                print_ty_args(ty_args, buffer);
                 if let Some(rhs) = &ty_decl.rhs {
                     rhs.print(buffer, 4);
                 }
-
                 buffer.push('\n');
                 buffer.push('\n');
             }
@@ -41,25 +27,22 @@ impl MonoPgm {
             buffer.push('\n');
         }
 
-        for (i, fun) in self.funs.values().enumerate() {
-            if i != 0 {
+        for fun_insts in self.funs.values() {
+            for (ty_args, fun) in fun_insts.iter() {
+                fun.print(buffer, ty_args, 0);
                 buffer.push('\n');
             }
-            fun.print(buffer, 0);
-            buffer.push('\n');
         }
 
-        for (i, fun) in self
+        for ty_arg_map in self
             .associated
             .values()
             .flat_map(|method_map| method_map.values())
-            .enumerate()
         {
-            if i != 0 {
+            for (ty_args, fun) in ty_arg_map.iter() {
+                fun.print(buffer, ty_args, 0);
                 buffer.push('\n');
             }
-            fun.print(buffer, 0);
-            buffer.push('\n');
         }
     }
 }
@@ -148,8 +131,9 @@ impl TypeDeclRhs {
 }
 
 impl FunDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
+    pub fn print(&self, buffer: &mut String, ty_args: &[Type], indent: u32) {
         self.sig.print(&self.parent_ty, &self.name.node, buffer);
+        print_ty_args(ty_args, buffer);
         if let Some(body) = &self.body {
             buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
@@ -418,8 +402,9 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id }) | Expr::Constr(ConstrExpr { id }) => {
+            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
+                print_ty_args(ty_args, buffer);
             }
 
             Expr::Variant(VariantExpr { id, args }) => {
@@ -451,19 +436,30 @@ impl Expr {
                 object,
                 method_ty_id,
                 method_id,
+                ty_args,
             }) => {
                 object.node.print(buffer, 0);
                 buffer.push_str(".{");
                 buffer.push_str(method_ty_id);
                 buffer.push_str(".}");
                 buffer.push_str(method_id);
+                print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr { ty, constr: member })
-            | Expr::AssocFnSelect(AssocFnSelectExpr { ty, member }) => {
+            Expr::ConstrSelect(ConstrSelectExpr {
+                ty,
+                constr: member,
+                ty_args,
+            })
+            | Expr::AssocFnSelect(AssocFnSelectExpr {
+                ty,
+                member,
+                ty_args,
+            }) => {
                 buffer.push_str(ty);
                 buffer.push('.');
                 buffer.push_str(member);
+                print_ty_args(ty_args, buffer);
             }
 
             Expr::Call(CallExpr { fun, args }) => {
@@ -798,6 +794,21 @@ fn expr_parens(expr: &Expr) -> bool {
     )
 }
 
+fn print_ty_args(args: &[Type], buffer: &mut String) {
+    if args.is_empty() {
+        return;
+    }
+
+    buffer.push('[');
+    for (i, ty) in args.iter().enumerate() {
+        if i != 0 {
+            buffer.push_str(", ");
+        }
+        buffer.push_str(&ty.to_string());
+    }
+    buffer.push(']');
+}
+
 const INDENTS: &str = "                                                  ";
 
 use std::fmt::Display;
@@ -821,7 +832,7 @@ impl Display for TypeDeclRhs {
 impl Display for FunDecl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&mut s, 0);
+        self.print(&mut s, &[], 0);
         f.write_str(&s)
     }
 }

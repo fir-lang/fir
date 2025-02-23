@@ -6,11 +6,14 @@ use crate::token::IntKind;
 
 #[derive(Debug, Default)]
 pub struct MonoPgm {
-    // Fun name -> decl
-    pub funs: Map<Id, FunDecl>,
+    // Fun name -> type args -> decl
+    pub funs: Map<Id, Map<Vec<Type>, FunDecl>>,
 
-    // Type name -> method name -> decl
-    pub associated: Map<Id, Map<Id, FunDecl>>,
+    // Type name -> method name -> type args -> decl
+    // For now, this also includes trait and normal methods. This means we don't allow having an
+    // associated function and a method with the same name on the same type with same type
+    // arguments.
+    pub associated: Map<Id, Map<Id, Map<Vec<Type>, FunDecl>>>,
 
     // Type name -> type args -> decl
     pub ty: Map<Id, Map<Vec<Type>, TypeDecl>>,
@@ -227,11 +230,13 @@ pub enum Expr {
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ConstrExpr {
     pub id: Id,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -263,18 +268,21 @@ pub struct MethodSelectExpr {
     pub object: Box<L<Expr>>,
     pub method_ty_id: Id,
     pub method_id: Id,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ConstrSelectExpr {
     pub ty: Id,
     pub constr: Id,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct AssocFnSelectExpr {
     pub ty: Id,
     pub member: Id,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
