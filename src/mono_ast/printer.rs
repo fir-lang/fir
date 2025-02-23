@@ -23,13 +23,10 @@ impl MonoPgm {
             }
         }
 
-        if !self.ty.is_empty() {
-            buffer.push('\n');
-        }
-
         for fun_insts in self.funs.values() {
             for (ty_args, fun) in fun_insts.iter() {
                 fun.print(buffer, ty_args, 0);
+                buffer.push('\n');
                 buffer.push('\n');
             }
         }
@@ -41,6 +38,7 @@ impl MonoPgm {
         {
             for (ty_args, fun) in ty_arg_map.iter() {
                 fun.print(buffer, ty_args, 0);
+                buffer.push('\n');
                 buffer.push('\n');
             }
         }
@@ -132,8 +130,8 @@ impl TypeDeclRhs {
 
 impl FunDecl {
     pub fn print(&self, buffer: &mut String, ty_args: &[Type], indent: u32) {
-        self.sig.print(&self.parent_ty, &self.name.node, buffer);
-        print_ty_args(ty_args, buffer);
+        self.sig
+            .print(&self.parent_ty, &self.name.node, ty_args, buffer);
         if let Some(body) = &self.body {
             buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
@@ -235,12 +233,19 @@ impl Type {
 }
 
 impl FunSig {
-    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buffer: &mut String) {
+    pub fn print(
+        &self,
+        parent_ty: &Option<L<Id>>,
+        name: &Id,
+        ty_args: &[Type],
+        buffer: &mut String,
+    ) {
         if let Some(parent_ty) = parent_ty {
             buffer.push_str(&parent_ty.node);
             buffer.push('.');
         }
         buffer.push_str(name);
+        print_ty_args(ty_args, buffer);
         buffer.push('(');
         match &self.self_ {
             SelfParam::No => {}
@@ -848,7 +853,7 @@ impl Display for Type {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&None, &SmolStr::new(""), &mut s);
+        self.print(&None, &SmolStr::new(""), &[], &mut s);
         f.write_str(&s)
     }
 }
