@@ -5,8 +5,9 @@ mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
-mod interpreter;
+// mod interpreter;
 mod lexer;
+mod mono_ast;
 mod monomorph;
 mod parser;
 mod parser_utils;
@@ -93,7 +94,7 @@ mod native {
     use smol_str::SmolStr;
     use std::path::Path;
 
-    pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
+    pub fn main(opts: CompilerOpts, program: String, mut _program_args: Vec<String>) {
         let fir_root = match std::env::var("FIR_ROOT") {
             Ok(s) => s,
             Err(_) => {
@@ -141,15 +142,15 @@ mod native {
             return;
         }
 
-        module = monomorph::monomorphise(&module, &opts.main);
+        let mono_module = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
-            ast::printer::print_module(&module);
+            mono_ast::printer::print_pgm(&mono_module);
         }
 
-        let mut w = std::io::stdout();
-        program_args.insert(0, program);
-        interpreter::run(&mut w, module, &opts.main, &program_args);
+        // let mut w = std::io::stdout();
+        // program_args.insert(0, program);
+        // interpreter::run(&mut w, module, &opts.main, &program_args);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {

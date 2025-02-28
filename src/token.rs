@@ -43,7 +43,6 @@ pub enum TokenKind {
     Match,
     Prim,
     Return,
-    Self_,
     Trait,
     Type,
     Var,

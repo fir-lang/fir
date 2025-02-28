@@ -1,13 +1,13 @@
-test[r](r: (x: I32, y: I32, ..r))
+test[RecRow[r]](r: (x: I32, y: I32, ..r))
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-id[r](r: (x: I32, ..r)): (x: I32, ..r)
+id[RecRow[r]](r: (x: I32, ..r)): (x: I32, ..r)
     printStr(r.x.toStr())
     r
 
-type Test[r]:
-    x: (x: I32, ..r)
+type Test[recRow]:
+    x: (x: I32, ..recRow)
 
 main()
     test(id((x = 1, y = 2)))

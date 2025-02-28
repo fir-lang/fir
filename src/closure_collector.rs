@@ -1,5 +1,6 @@
-use crate::ast::{self, Id};
 use crate::collections::{Map, ScopeSet, Set};
+use crate::mono_ast as ast;
+use crate::mono_ast::Id;
 
 #[derive(Debug)]
 pub struct Closure {
@@ -7,56 +8,21 @@ pub struct Closure {
     pub fvs: Map<Id, u32>,
 }
 
-pub fn collect_closures(pgm: &mut ast::Module) -> Vec<Closure> {
+pub fn collect_closures(pgm: &mut ast::MonoPgm) -> Vec<Closure> {
     let mut closures: Vec<Closure> = vec![];
     let top_vars: Set<Id> = collect_top_vars(pgm);
 
-    for decl in pgm.iter_mut() {
-        match &mut decl.node {
-            ast::TopDecl::Fun(fun_decl) => {
-                visit_fun_decl(&mut fun_decl.node, &mut closures, &top_vars)
-            }
+    for ty_map in pgm.funs.values_mut() {
+        for fun in ty_map.values_mut() {
+            visit_fun_decl(fun, &mut closures, &top_vars);
+        }
+    }
 
-            ast::TopDecl::Trait(ast::L {
-                loc: _,
-                node:
-                    ast::TraitDecl {
-                        name: _,
-                        ty: _,
-                        items,
-                    },
-            }) => {
-                for item in items {
-                    match &mut item.node {
-                        ast::TraitDeclItem::AssocTy(_) => {}
-                        ast::TraitDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
-                        }
-                    }
-                }
+    for method_map in pgm.associated.values_mut() {
+        for ty_map in method_map.values_mut() {
+            for fun in ty_map.values_mut() {
+                visit_fun_decl(fun, &mut closures, &top_vars);
             }
-
-            ast::TopDecl::Impl(ast::L {
-                loc: _,
-                node:
-                    ast::ImplDecl {
-                        context: _,
-                        trait_: _,
-                        ty: _,
-                        items,
-                    },
-            }) => {
-                for item in items.iter_mut() {
-                    match &mut item.node {
-                        ast::ImplDeclItem::AssocTy(_) => {}
-                        ast::ImplDeclItem::Fun(fun_decl) => {
-                            visit_fun_decl(fun_decl, &mut closures, &top_vars)
-                        }
-                    }
-                }
-            }
-
-            ast::TopDecl::Type(_) | ast::TopDecl::Import(_) => {}
         }
     }
 
@@ -108,9 +74,7 @@ fn visit_stmt(
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ty: _,
             expr,
-            expr_ty: _,
             body,
         }) => {
             visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
@@ -239,8 +203,8 @@ fn visit_expr(
 
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,
-            object_ty: _,
-            method: _,
+            method_ty_id: _,
+            method_id: _,
             ty_args: _,
         }) => {
             visit_expr(&mut object.node, closures, top_vars, local_vars, free_vars);
@@ -256,8 +220,8 @@ fn visit_expr(
         ast::Expr::String(parts) => {
             for part in parts.iter_mut() {
                 match part {
-                    crate::interpolation::StringPart::Str(_) => {}
-                    crate::interpolation::StringPart::Expr(expr) => {
+                    ast::StringPart::Str(_) => {}
+                    ast::StringPart::Expr(expr) => {
                         visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
                     }
                 }
@@ -336,18 +300,12 @@ fn visit_expr(
     }
 }
 
-fn collect_top_vars(pgm: &ast::Module) -> Set<Id> {
+fn collect_top_vars(pgm: &ast::MonoPgm) -> Set<Id> {
     let mut vars: Set<Id> = Default::default();
 
-    for decl in pgm {
-        match &decl.node {
-            ast::TopDecl::Fun(fun_decl) => {
-                vars.insert(fun_decl.node.name.node.clone());
-            }
-
-            ast::TopDecl::Trait(_) | ast::TopDecl::Impl(_) | ast::TopDecl::Type(_) => {}
-
-            ast::TopDecl::Import(_) => panic!(),
+    for ty_map in pgm.funs.values() {
+        for fun in ty_map.values() {
+            vars.insert(fun.name.node.clone());
         }
     }
 
@@ -360,11 +318,7 @@ fn bind_pat_binders(pat: &ast::Pat, local_vars: &mut ScopeSet<Id>) {
 
         ast::Pat::Variant(ast::VariantPattern { constr: _, fields })
         | ast::Pat::Record(fields)
-        | ast::Pat::Constr(ast::ConstrPattern {
-            constr: _,
-            fields,
-            ty_args: _,
-        }) => {
+        | ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
             for field in fields {
                 bind_pat_binders(&field.node.node, local_vars);
             }

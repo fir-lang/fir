@@ -1,25 +1,46 @@
-use crate::{ast::*, type_checker::RecordOrVariant};
+use crate::mono_ast::*;
 
-pub fn print_module(module: &[L<TopDecl>]) {
-    let mut buffer = String::new();
-    for (i, top_decl) in module.iter().enumerate() {
-        if i != 0 {
-            println!();
-        }
-        top_decl.node.print(&mut buffer, 0);
-        println!("{}", buffer);
-        buffer.clear();
-    }
+use smol_str::SmolStr;
+
+pub fn print_pgm(pgm: &MonoPgm) {
+    let mut s = String::new();
+    pgm.print(&mut s);
+    println!("{}", s);
 }
 
-impl TopDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        match self {
-            TopDecl::Type(decl) => decl.node.print(buffer, indent),
-            TopDecl::Fun(decl) => decl.node.print(buffer, indent),
-            TopDecl::Import(decl) => decl.node.print(buffer),
-            TopDecl::Trait(decl) => decl.node.print(buffer, indent),
-            TopDecl::Impl(decl) => decl.node.print(buffer, indent),
+impl MonoPgm {
+    pub fn print(&self, buffer: &mut String) {
+        for (_, ty_arg_map) in &self.ty {
+            for (ty_args, ty_decl) in ty_arg_map.iter() {
+                buffer.push_str("type ");
+                buffer.push_str(&ty_decl.name);
+                print_ty_args(ty_args, buffer);
+                if let Some(rhs) = &ty_decl.rhs {
+                    rhs.print(buffer, 4);
+                }
+                buffer.push('\n');
+                buffer.push('\n');
+            }
+        }
+
+        for fun_insts in self.funs.values() {
+            for (ty_args, fun) in fun_insts.iter() {
+                fun.print(buffer, ty_args, 0);
+                buffer.push('\n');
+                buffer.push('\n');
+            }
+        }
+
+        for ty_arg_map in self
+            .associated
+            .values()
+            .flat_map(|method_map| method_map.values())
+        {
+            for (ty_args, fun) in ty_arg_map.iter() {
+                fun.print(buffer, ty_args, 0);
+                buffer.push('\n');
+                buffer.push('\n');
+            }
         }
     }
 }
@@ -28,17 +49,6 @@ impl TypeDecl {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         buffer.push_str("type ");
         buffer.push_str(&self.name);
-
-        if !self.type_params.is_empty() {
-            buffer.push('[');
-            for (i, type_param) in self.type_params.iter().enumerate() {
-                if i != 0 {
-                    buffer.push_str(", ");
-                }
-                buffer.push_str(type_param);
-            }
-            buffer.push(']');
-        }
 
         if let Some(rhs) = &self.rhs {
             rhs.print(buffer, indent + 4);
@@ -119,8 +129,9 @@ impl TypeDeclRhs {
 }
 
 impl FunDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        self.sig.print(&self.parent_ty, &self.name.node, buffer);
+    pub fn print(&self, buffer: &mut String, ty_args: &[Type], indent: u32) {
+        self.sig
+            .print(&self.parent_ty, &self.name.node, ty_args, buffer);
         if let Some(body) = &self.body {
             buffer.push('\n');
             for (i, stmt) in body.iter().enumerate() {
@@ -130,66 +141,6 @@ impl FunDecl {
                 buffer.push_str(&INDENTS[0..indent as usize + 4]);
                 stmt.node.print(buffer, indent + 4);
             }
-        }
-    }
-}
-
-impl ImportDecl {
-    pub fn print(&self, buffer: &mut String) {
-        buffer.push_str("import ");
-        for (i, part) in self.path.iter().enumerate() {
-            if i != 0 {
-                buffer.push('.');
-            }
-            buffer.push_str(part);
-        }
-    }
-}
-
-impl TraitDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        buffer.push_str(&INDENTS[0..indent as usize]);
-        buffer.push_str("trait ");
-        buffer.push_str(&self.name.node);
-        buffer.push('[');
-        for (i, ty) in self.type_params.iter().enumerate() {
-            if i != 0 {
-                buffer.push_str(", ");
-            }
-            buffer.push_str(&ty.node);
-        }
-        buffer.push_str("]:\n");
-        for (i, item) in self.items.iter().enumerate() {
-            if i != 0 {
-                buffer.push('\n');
-            }
-            buffer.push_str(&INDENTS[0..indent as usize + 4]);
-            item.node.print(buffer, indent + 4);
-        }
-    }
-}
-
-impl ImplDecl {
-    pub fn print(&self, buffer: &mut String, indent: u32) {
-        buffer.push_str("impl");
-        print_context(&self.context, buffer);
-        buffer.push(' ');
-        buffer.push_str(&self.trait_.node);
-        buffer.push('[');
-        for (i, ty) in self.tys.iter().enumerate() {
-            if i != 0 {
-                buffer.push_str(", ")
-            }
-            ty.node.print(buffer);
-        }
-        buffer.push_str("]:\n");
-        for (i, item) in self.items.iter().enumerate() {
-            if i != 0 {
-                buffer.push('\n');
-                buffer.push('\n');
-            }
-            buffer.push_str(&INDENTS[0..indent as usize + 4]);
-            item.node.print(buffer, indent + 4);
         }
     }
 }
@@ -211,9 +162,7 @@ impl Type {
                 }
             }
 
-            Type::Var(var) => buffer.push_str(var),
-
-            Type::Record { fields, extension } => {
+            Type::Record { fields } => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
@@ -225,14 +174,10 @@ impl Type {
                     }
                     field.node.print(buffer);
                 }
-                if let Some(extension) = extension {
-                    buffer.push('|');
-                    buffer.push_str(extension);
-                }
                 buffer.push(')');
             }
 
-            Type::Variant { alts, extension } => {
+            Type::Variant { alts } => {
                 buffer.push('[');
                 for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
                     if i != 0 {
@@ -253,13 +198,6 @@ impl Type {
                         }
                         buffer.push(')');
                     }
-                }
-                if let Some(ext) = extension {
-                    if !alts.is_empty() {
-                        buffer.push_str(", ");
-                    }
-                    buffer.push_str("..");
-                    buffer.push_str(ext);
                 }
                 buffer.push(']');
             }
@@ -295,13 +233,19 @@ impl Type {
 }
 
 impl FunSig {
-    pub fn print(&self, parent_ty: &Option<L<Id>>, name: &Id, buffer: &mut String) {
+    pub fn print(
+        &self,
+        parent_ty: &Option<L<Id>>,
+        name: &Id,
+        ty_args: &[Type],
+        buffer: &mut String,
+    ) {
         if let Some(parent_ty) = parent_ty {
             buffer.push_str(&parent_ty.node);
             buffer.push('.');
         }
         buffer.push_str(name);
-        print_context(&self.context, buffer);
+        print_ty_args(ty_args, buffer);
         buffer.push('(');
         match &self.self_ {
             SelfParam::No => {}
@@ -392,9 +336,7 @@ impl Stmt {
             Stmt::For(ForStmt {
                 label,
                 pat,
-                ty,
                 expr,
-                expr_ty: _,
                 body,
             }) => {
                 if let Some(label) = label {
@@ -404,10 +346,6 @@ impl Stmt {
                 }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
-                if let Some(ty) = ty {
-                    buffer.push_str(": ");
-                    ty.node.print(buffer);
-                }
                 buffer.push_str(" in ");
                 expr.node.print(buffer, 0);
                 buffer.push_str(":\n");
@@ -501,16 +439,15 @@ impl Expr {
 
             Expr::MethodSelect(MethodSelectExpr {
                 object,
-                object_ty: _,
                 method_ty_id,
-                method,
+                method_id,
                 ty_args,
             }) => {
                 object.node.print(buffer, 0);
                 buffer.push_str(".{");
                 buffer.push_str(method_ty_id);
                 buffer.push_str(".}");
-                buffer.push_str(method);
+                buffer.push_str(method_id);
                 print_ty_args(ty_args, buffer);
             }
 
@@ -765,23 +702,11 @@ impl Pat {
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },
                 fields,
-                ty_args,
             }) => {
                 buffer.push_str(type_);
                 if let Some(constr) = constr {
                     buffer.push('.');
                     buffer.push_str(constr);
-                }
-
-                if !ty_args.is_empty() {
-                    buffer.push('[');
-                    for (i, ty_arg) in ty_args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        buffer.push_str(&ty_arg.to_string());
-                    }
-                    buffer.push(']');
                 }
 
                 if !fields.is_empty() {
@@ -867,38 +792,14 @@ impl Pat {
     }
 }
 
-fn print_context(context: &Context, buffer: &mut String) {
-    if context.type_params.is_empty() && context.preds.is_empty() {
-        return;
-    }
-
-    buffer.push('[');
-
-    for (i, (ty_param, kind)) in context.type_params.iter().enumerate() {
-        if i != 0 {
-            buffer.push_str(", ");
-        }
-        buffer.push_str(ty_param);
-        buffer.push_str(": ");
-        let kind_str = match kind {
-            Kind::Star => "*",
-            Kind::Row(RecordOrVariant::Record) => "row(rec)",
-            Kind::Row(RecordOrVariant::Variant) => "row(var)",
-        };
-        buffer.push_str(kind_str);
-    }
-
-    for (i, ty) in context.preds.iter().enumerate() {
-        if !context.type_params.is_empty() || i != 0 {
-            buffer.push_str(", ");
-        }
-        ty.node.print(buffer);
-    }
-
-    buffer.push(']');
+fn expr_parens(expr: &Expr) -> bool {
+    !matches!(
+        expr,
+        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+    )
 }
 
-fn print_ty_args(args: &[Ty], buffer: &mut String) {
+fn print_ty_args(args: &[Type], buffer: &mut String) {
     if args.is_empty() {
         return;
     }
@@ -913,24 +814,9 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
     buffer.push(']');
 }
 
-fn expr_parens(expr: &Expr) -> bool {
-    !matches!(
-        expr,
-        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
-    )
-}
-
 const INDENTS: &str = "                                                  ";
 
 use std::fmt::Display;
-
-impl Display for TopDecl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
-        f.write_str(&s)
-    }
-}
 
 impl Display for TypeDecl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -951,31 +837,7 @@ impl Display for TypeDeclRhs {
 impl Display for FunDecl {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&mut s, 0);
-        f.write_str(&s)
-    }
-}
-
-impl Display for ImportDecl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s);
-        f.write_str(&s)
-    }
-}
-
-impl Display for TraitDecl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
-        f.write_str(&s)
-    }
-}
-
-impl Display for ImplDecl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut s = String::new();
-        self.print(&mut s, 0);
+        self.print(&mut s, &[], 0);
         f.write_str(&s)
     }
 }
@@ -991,7 +853,7 @@ impl Display for Type {
 impl Display for FunSig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut s = String::new();
-        self.print(&None, &SmolStr::new(""), &mut s);
+        self.print(&None, &SmolStr::new(""), &[], &mut s);
         f.write_str(&s)
     }
 }
