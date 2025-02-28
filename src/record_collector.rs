@@ -1,5 +1,5 @@
-use crate::ast;
 use crate::collections::Set;
+use crate::mono_ast as ast;
 
 use smol_str::SmolStr;
 
@@ -55,25 +55,36 @@ impl VariantShape {
     }
 }
 
-pub fn collect_records(pgm: &ast::Module) -> (Set<RecordShape>, Set<VariantShape>) {
+pub fn collect_records(pgm: &ast::MonoPgm) -> (Set<RecordShape>, Set<VariantShape>) {
     let mut records: Set<RecordShape> = Default::default();
     let mut variants: Set<VariantShape> = Default::default();
 
-    for decl in pgm {
-        match &decl.node {
-            ast::TopDecl::Type(ty_decl) => {
-                visit_ty_decl(&ty_decl.node, &mut records, &mut variants)
+    for ty_map in pgm.funs.values() {
+        for (tys, fun) in ty_map {
+            for ty in tys {
+                visit_ty(ty, &mut records, &mut variants);
             }
-            ast::TopDecl::Fun(fun_decl) => {
-                visit_fun_decl(&fun_decl.node, &mut records, &mut variants)
+            visit_fun_decl(fun, &mut records, &mut variants);
+        }
+    }
+
+    for method_map in pgm.associated.values() {
+        for ty_map in method_map.values() {
+            for (tys, fun) in ty_map {
+                for ty in tys {
+                    visit_ty(ty, &mut records, &mut variants);
+                }
+                visit_fun_decl(fun, &mut records, &mut variants);
             }
-            ast::TopDecl::Trait(trait_decl) => {
-                visit_trait_decl(&trait_decl.node, &mut records, &mut variants)
+        }
+    }
+
+    for ty in pgm.ty.values() {
+        for (tys, ty) in ty {
+            for ty in tys {
+                visit_ty(ty, &mut records, &mut variants);
             }
-            ast::TopDecl::Impl(impl_decl) => {
-                visit_impl_decl(&impl_decl.node, &mut records, &mut variants)
-            }
-            ast::TopDecl::Import(_) => panic!("Import declaration in record collector"),
+            visit_ty_decl(ty, &mut records, &mut variants);
         }
     }
 
@@ -111,32 +122,6 @@ fn visit_fun_decl(
         for stmt in body {
             visit_stmt(&stmt.node, records, variants);
         }
-    }
-}
-
-fn visit_trait_decl(
-    trait_decl: &ast::TraitDecl,
-    records: &mut Set<RecordShape>,
-    variants: &mut Set<VariantShape>,
-) {
-    for item in &trait_decl.items {
-        visit_fun_decl(&item.node, records, variants);
-    }
-}
-
-fn visit_impl_decl(
-    impl_decl: &ast::ImplDecl,
-    records: &mut Set<RecordShape>,
-    variants: &mut Set<VariantShape>,
-) {
-    for ty in &impl_decl.context.preds {
-        visit_ty(&ty.node, records, variants);
-    }
-    for ty in &impl_decl.tys {
-        visit_ty(&ty.node, records, variants);
-    }
-    for item in &impl_decl.items {
-        visit_fun_decl(&item.node, records, variants);
     }
 }
 
@@ -178,15 +163,11 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
             .iter()
             .for_each(|arg| visit_ty(&arg.node, records, variants)),
 
-        ast::Type::Var(_) => {}
-
-        ast::Type::Record { fields, extension } => {
-            assert_eq!(extension, &None);
+        ast::Type::Record { fields } => {
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Type::Variant { alts, extension } => {
-            assert_eq!(extension, &None);
+        ast::Type::Variant { alts } => {
             for ast::VariantAlt { con, fields } in alts {
                 variants.insert(VariantShape::from_con_and_fields(con, fields));
             }
@@ -232,15 +213,10 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ty,
             expr,
-            expr_ty: _,
             body,
         }) => {
             visit_pat(&pat.node, records, variants);
-            if let Some(ty) = ty {
-                visit_ty(&ty.node, records, variants);
-            }
             visit_expr(&expr.node, records, variants);
             for stmt in body {
                 visit_stmt(&stmt.node, records, variants);
@@ -281,11 +257,7 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>, variants: &mut Set<
         | ast::Pat::StrPfx(_, _)
         | ast::Pat::Char(_) => {}
 
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr: _,
-            fields,
-            ty_args: _,
-        }) => {
+        ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
             }
@@ -320,10 +292,8 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
         ast::Expr::String(parts) => {
             for part in parts {
                 match part {
-                    crate::interpolation::StringPart::Str(_) => {}
-                    crate::interpolation::StringPart::Expr(expr) => {
-                        visit_expr(&expr.node, records, variants)
-                    }
+                    ast::StringPart::Str(_) => {}
+                    ast::StringPart::Expr(expr) => visit_expr(&expr.node, records, variants),
                 }
             }
         }
@@ -333,7 +303,10 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
         }
 
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
-            object, method: _, ..
+            object,
+            method_ty_id: _,
+            method_id: _,
+            ty_args: _,
         }) => {
             visit_expr(&object.node, records, variants);
         }
