@@ -1,7 +1,7 @@
 pub mod printer;
 
-pub use crate::ast::Named;
-use crate::ast::{AssignOp, BinOp, Id, IntExpr, UnOp, L};
+use crate::ast::{AssignOp, BinOp, IntExpr, UnOp, L};
+pub use crate::ast::{Id, Named};
 use crate::collections::*;
 use crate::token::IntKind;
 
