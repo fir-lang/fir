@@ -1,7 +1,6 @@
 pub mod printer;
 
-use crate::ast::{AssignOp, BinOp, IntExpr, UnOp, L};
-pub use crate::ast::{Id, Named};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -121,7 +120,6 @@ pub enum Stmt {
 #[derive(Debug, Clone)]
 pub struct LetStmt {
     pub lhs: L<Pat>,
-    pub ty: Option<L<Type>>,
     pub rhs: L<Expr>,
 }
 

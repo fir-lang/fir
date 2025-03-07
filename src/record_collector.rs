@@ -195,11 +195,8 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
     match stmt {
         ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
-        ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
+        ast::Stmt::Let(ast::LetStmt { lhs, rhs }) => {
             visit_pat(&lhs.node, records, variants);
-            if let Some(ty) = ty {
-                visit_ty(&ty.node, records, variants);
-            }
             visit_expr(&rhs.node, records, variants);
         }
 

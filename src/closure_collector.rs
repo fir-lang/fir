@@ -54,7 +54,7 @@ fn visit_stmt(
     free_vars: &mut Map<Id, u32>,
 ) {
     match decl {
-        ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
+        ast::Stmt::Let(ast::LetStmt { lhs, rhs }) => {
             bind_pat_binders(&lhs.node, local_vars);
             visit_expr(&mut rhs.node, closures, local_vars, free_vars);
         }

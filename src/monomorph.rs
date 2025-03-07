@@ -458,9 +458,8 @@ fn mono_stmt(
             level: *level,
         },
 
-        ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => mono::Stmt::Let(mono::LetStmt {
+        ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => mono::Stmt::Let(mono::LetStmt {
             lhs: mono_l_pat(lhs, ty_map, poly_pgm, mono_pgm),
-            ty: mono_opt_l_ty(ty, ty_map, poly_pgm, mono_pgm),
             rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm),
         }),
 

@@ -306,13 +306,9 @@ impl Stmt {
                 }
             }
 
-            Stmt::Let(LetStmt { lhs, ty, rhs }) => {
+            Stmt::Let(LetStmt { lhs, rhs }) => {
                 buffer.push_str("let ");
                 lhs.node.print(buffer);
-                if let Some(ty) = ty {
-                    buffer.push_str(": ");
-                    ty.node.print(buffer);
-                }
                 buffer.push_str(" = ");
                 rhs.node.print(buffer, 0);
             }
