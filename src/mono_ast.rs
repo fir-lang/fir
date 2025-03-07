@@ -207,7 +207,8 @@ pub struct WhileLetStmt {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
-    Var(VarExpr),
+    LocalVar(Id),                     // a local variable
+    TopVar(VarExpr),                  // a top-level function reference
     Constr(ConstrExpr),               // a product constructor
     ConstrSelect(ConstrSelectExpr),   // <id>.<id>, a sum constructor
     FieldSelect(FieldSelectExpr),     // <expr>.<id> (TODO: This could be lowered as function calls)

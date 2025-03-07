@@ -283,7 +283,8 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>, variants: &mut Set<
 
 fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match expr {
-        ast::Expr::Var(_)
+        ast::Expr::LocalVar(_)
+        | ast::Expr::TopVar(_)
         | ast::Expr::Constr(_)
         | ast::Expr::Int(_)
         | ast::Expr::Self_

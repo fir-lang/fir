@@ -407,7 +407,11 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::LocalVar(id) => {
+                buffer.push_str(id);
+            }
+
+            Expr::TopVar(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }
@@ -470,7 +474,8 @@ impl Expr {
             Expr::Call(CallExpr { fun, args }) => {
                 let parens = !matches!(
                     &fun.node,
-                    Expr::Var(_)
+                    Expr::LocalVar(_)
+                        | Expr::TopVar(_)
                         | Expr::Constr(_)
                         | Expr::FieldSelect(_)
                         | Expr::ConstrSelect(_)
@@ -795,7 +800,11 @@ impl Pat {
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+        Expr::LocalVar(_)
+            | Expr::TopVar(_)
+            | Expr::Constr(_)
+            | Expr::FieldSelect(_)
+            | Expr::ConstrSelect(_)
     )
 }
 

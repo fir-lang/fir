@@ -550,10 +550,7 @@ fn mono_expr(
                 None => {
                     // Local variable, cannot be polymorphic.
                     assert!(ty_args.is_empty());
-                    return mono::Expr::Var(mono::VarExpr {
-                        id: var.clone(),
-                        ty_args: vec![],
-                    });
+                    return mono::Expr::LocalVar(var.clone());
                 }
             };
 
@@ -564,7 +561,7 @@ fn mono_expr(
 
             mono_top_fn(poly_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-            mono::Expr::Var(mono::VarExpr {
+            mono::Expr::TopVar(mono::VarExpr {
                 id: var.clone(),
                 ty_args: mono_ty_args,
             })

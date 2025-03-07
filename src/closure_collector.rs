@@ -10,18 +10,17 @@ pub struct Closure {
 
 pub fn collect_closures(pgm: &mut ast::MonoPgm) -> Vec<Closure> {
     let mut closures: Vec<Closure> = vec![];
-    let top_vars: Set<Id> = collect_top_vars(pgm);
 
     for ty_map in pgm.funs.values_mut() {
         for fun in ty_map.values_mut() {
-            visit_fun_decl(fun, &mut closures, &top_vars);
+            visit_fun_decl(fun, &mut closures);
         }
     }
 
     for method_map in pgm.associated.values_mut() {
         for ty_map in method_map.values_mut() {
             for fun in ty_map.values_mut() {
-                visit_fun_decl(fun, &mut closures, &top_vars);
+                visit_fun_decl(fun, &mut closures);
             }
         }
     }
@@ -29,7 +28,7 @@ pub fn collect_closures(pgm: &mut ast::MonoPgm) -> Vec<Closure> {
     closures
 }
 
-fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>, top_vars: &Set<Id>) {
+fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>) {
     let mut local_vars: ScopeSet<Id> = Default::default();
 
     for (param, _) in &decl.sig.params {
@@ -41,7 +40,6 @@ fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>, top_vars
             visit_stmt(
                 &mut stmt.node,
                 closures,
-                top_vars,
                 &mut local_vars,
                 &mut Default::default(),
             );
@@ -52,23 +50,22 @@ fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>, top_vars
 fn visit_stmt(
     decl: &mut ast::Stmt,
     closures: &mut Vec<Closure>,
-    top_vars: &Set<Id>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, u32>,
 ) {
     match decl {
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
             bind_pat_binders(&lhs.node, local_vars);
-            visit_expr(&mut rhs.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut rhs.node, closures, local_vars, free_vars);
         }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
-            visit_expr(&mut lhs.node, closures, top_vars, local_vars, free_vars);
-            visit_expr(&mut rhs.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut lhs.node, closures, local_vars, free_vars);
+            visit_expr(&mut rhs.node, closures, local_vars, free_vars);
         }
 
         ast::Stmt::Expr(expr) => {
-            visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut expr.node, closures, local_vars, free_vars);
         }
 
         ast::Stmt::For(ast::ForStmt {
@@ -77,11 +74,11 @@ fn visit_stmt(
             expr,
             body,
         }) => {
-            visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut expr.node, closures, local_vars, free_vars);
             local_vars.enter();
             bind_pat_binders(&pat.node, local_vars);
             for stmt in body {
-                visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
             }
             local_vars.exit();
         }
@@ -91,10 +88,10 @@ fn visit_stmt(
             cond,
             body,
         }) => {
-            visit_expr(&mut cond.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut cond.node, closures, local_vars, free_vars);
             local_vars.enter();
             for stmt in body.iter_mut() {
-                visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
             }
             local_vars.exit();
         }
@@ -106,12 +103,12 @@ fn visit_stmt(
             body,
         }) => {
             local_vars.enter();
-            visit_expr(&mut cond.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut cond.node, closures, local_vars, free_vars);
             local_vars.exit();
 
             local_vars.enter();
             for stmt in body.iter_mut() {
-                visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
             }
             local_vars.exit();
         }
@@ -123,7 +120,6 @@ fn visit_stmt(
 fn visit_expr(
     expr: &mut ast::Expr,
     closures: &mut Vec<Closure>,
-    top_vars: &Set<Id>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, u32>,
 ) {
@@ -143,7 +139,6 @@ fn visit_expr(
                 visit_stmt(
                     &mut stmt.node,
                     closures,
-                    top_vars,
                     &mut fn_local_vars,
                     &mut fn_free_vars,
                 );
@@ -170,15 +165,16 @@ fn visit_expr(
             }
         }
 
-        ast::Expr::Var(ast::VarExpr { id, ty_args: _ }) => {
-            if !top_vars.contains(id) && !local_vars.is_bound(id) {
+        ast::Expr::LocalVar(id) => {
+            if !local_vars.is_bound(id) {
                 let idx = free_vars.len() as u32;
                 free_vars.insert(id.clone(), idx);
             }
         }
 
         //------------------------------------------------------------------------------------------
-        ast::Expr::Constr(_)
+        ast::Expr::TopVar(_)
+        | ast::Expr::Constr(_)
         | ast::Expr::Char(_)
         | ast::Expr::Self_
         | ast::Expr::Int(_)
@@ -187,18 +183,12 @@ fn visit_expr(
 
         ast::Expr::Variant(ast::VariantExpr { id: _, args }) => {
             for arg in args {
-                visit_expr(
-                    &mut arg.node.node,
-                    closures,
-                    top_vars,
-                    local_vars,
-                    free_vars,
-                );
+                visit_expr(&mut arg.node.node, closures, local_vars, free_vars);
             }
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
-            visit_expr(&mut object.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut object.node, closures, local_vars, free_vars);
         }
 
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
@@ -207,13 +197,13 @@ fn visit_expr(
             method_id: _,
             ty_args: _,
         }) => {
-            visit_expr(&mut object.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut object.node, closures, local_vars, free_vars);
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            visit_expr(&mut fun.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut fun.node, closures, local_vars, free_vars);
             for ast::CallArg { name: _, expr } in args.iter_mut() {
-                visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
+                visit_expr(&mut expr.node, closures, local_vars, free_vars);
             }
         }
 
@@ -222,43 +212,31 @@ fn visit_expr(
                 match part {
                     ast::StringPart::Str(_) => {}
                     ast::StringPart::Expr(expr) => {
-                        visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars);
+                        visit_expr(&mut expr.node, closures, local_vars, free_vars);
                     }
                 }
             }
         }
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
-            visit_expr(&mut left.node, closures, top_vars, local_vars, free_vars);
-            visit_expr(&mut right.node, closures, top_vars, local_vars, free_vars);
+            visit_expr(&mut left.node, closures, local_vars, free_vars);
+            visit_expr(&mut right.node, closures, local_vars, free_vars);
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
-            visit_expr(&mut expr.node, closures, top_vars, local_vars, free_vars)
+            visit_expr(&mut expr.node, closures, local_vars, free_vars)
         }
 
         ast::Expr::Record(fields) => {
             for field in fields {
-                visit_expr(
-                    &mut field.node.node,
-                    closures,
-                    top_vars,
-                    local_vars,
-                    free_vars,
-                );
+                visit_expr(&mut field.node.node, closures, local_vars, free_vars);
             }
         }
 
-        ast::Expr::Return(l) => visit_expr(&mut l.node, closures, top_vars, local_vars, free_vars),
+        ast::Expr::Return(l) => visit_expr(&mut l.node, closures, local_vars, free_vars),
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            visit_expr(
-                &mut scrutinee.node,
-                closures,
-                top_vars,
-                local_vars,
-                free_vars,
-            );
+            visit_expr(&mut scrutinee.node, closures, local_vars, free_vars);
             for ast::Alt {
                 pattern,
                 guard,
@@ -268,10 +246,10 @@ fn visit_expr(
                 local_vars.enter();
                 bind_pat_binders(&pattern.node, local_vars);
                 if let Some(guard) = guard {
-                    visit_expr(&mut guard.node, closures, top_vars, local_vars, free_vars);
+                    visit_expr(&mut guard.node, closures, local_vars, free_vars);
                 }
                 for stmt in rhs {
-                    visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                    visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
                 }
                 local_vars.exit();
             }
@@ -282,34 +260,22 @@ fn visit_expr(
             else_branch,
         }) => {
             for (lhs, rhs) in branches.iter_mut() {
-                visit_expr(&mut lhs.node, closures, top_vars, local_vars, free_vars);
+                visit_expr(&mut lhs.node, closures, local_vars, free_vars);
                 local_vars.enter();
                 for stmt in rhs {
-                    visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                    visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
                 }
                 local_vars.exit();
             }
             if let Some(stmts) = else_branch {
                 local_vars.enter();
                 for stmt in stmts {
-                    visit_stmt(&mut stmt.node, closures, top_vars, local_vars, free_vars);
+                    visit_stmt(&mut stmt.node, closures, local_vars, free_vars);
                 }
                 local_vars.exit();
             }
         }
     }
-}
-
-fn collect_top_vars(pgm: &ast::MonoPgm) -> Set<Id> {
-    let mut vars: Set<Id> = Default::default();
-
-    for ty_map in pgm.funs.values() {
-        for fun in ty_map.values() {
-            vars.insert(fun.name.node.clone());
-        }
-    }
-
-    vars
 }
 
 fn bind_pat_binders(pat: &ast::Pat, local_vars: &mut ScopeSet<Id>) {
