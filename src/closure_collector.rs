@@ -1,10 +1,12 @@
-use crate::collections::{Map, ScopeSet, Set};
+use crate::collections::{Map, ScopeSet};
 use crate::mono_ast as ast;
 use crate::mono_ast::Id;
 
 #[derive(Debug)]
 pub struct Closure {
     pub ast: ast::FnExpr,
+
+    /// Maps free variables to their index in the closure's payload.
     pub fvs: Map<Id, u32>,
 }
 

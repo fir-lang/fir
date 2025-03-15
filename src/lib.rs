@@ -9,6 +9,7 @@ mod interpolation;
 mod lexer;
 mod mono_ast;
 mod monomorph;
+mod numbering;
 mod parser;
 mod parser_utils;
 mod record_collector;
