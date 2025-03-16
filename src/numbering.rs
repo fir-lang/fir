@@ -197,7 +197,13 @@ pub struct MethodSelectExpr {
 #[derive(Debug, Clone)]
 pub struct CallExpr {
     pub fun: Box<L<Expr>>,
-    pub args: Vec<L<Expr>>,
+    pub args: Vec<CallArg>,
+}
+
+#[derive(Debug, Clone)]
+pub struct CallArg {
+    pub name: Option<Id>,
+    pub expr: L<Expr>,
 }
 
 #[derive(Debug, Clone)]
@@ -628,7 +634,16 @@ fn lower_expr(expr: &mono::Expr, indices: &Indices) -> Expr {
                 .unwrap(),
         ),
 
-        mono::Expr::Call(call_expr) => todo!(),
+        mono::Expr::Call(mono::CallExpr { fun, args }) => Expr::Call(CallExpr {
+            fun: lower_bl_expr(fun, indices),
+            args: args
+                .iter()
+                .map(|mono::CallArg { name, expr }| CallArg {
+                    name: name.clone(),
+                    expr: lower_l_expr(expr, indices),
+                })
+                .collect(),
+        }),
 
         mono::Expr::Int(int) => Expr::Int(int.clone()),
 
@@ -668,12 +683,44 @@ fn lower_expr(expr: &mono::Expr, indices: &Indices) -> Expr {
 
         mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(expr, indices)),
 
-        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => todo!(),
+        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => Expr::Match(MatchExpr {
+            scrutinee: lower_bl_expr(scrutinee, indices),
+            alts: alts
+                .iter()
+                .map(
+                    |mono::Alt {
+                         pattern,
+                         guard,
+                         rhs,
+                     }| Alt {
+                        pattern: lower_l_pat(pattern, indices),
+                        guard: guard.as_ref().map(|guard| lower_l_expr(guard, indices)),
+                        rhs: rhs.iter().map(|stmt| lower_l_stmt(stmt, indices)).collect(),
+                    },
+                )
+                .collect(),
+        }),
 
         mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
-        }) => todo!(),
+        }) => Expr::If(IfExpr {
+            branches: branches
+                .iter()
+                .map(|(cond, rhs)| {
+                    (
+                        lower_l_expr(cond, indices),
+                        rhs.iter().map(|stmt| lower_l_stmt(stmt, indices)).collect(),
+                    )
+                })
+                .collect(),
+            else_branch: else_branch.as_ref().map(|stmts| {
+                stmts
+                    .iter()
+                    .map(|stmt| lower_l_stmt(stmt, indices))
+                    .collect()
+            }),
+        }),
 
         mono::Expr::Fn(mono::FnExpr { .. }) => todo!(),
     }
@@ -688,7 +735,17 @@ fn lower_bl_expr(expr: &Box<L<mono::Expr>>, indices: &Indices) -> Box<L<Expr>> {
 }
 
 fn lower_pat(pat: &mono::Pat, indices: &Indices) -> Pat {
-    todo!()
+    match pat {
+        mono::Pat::Var(_) => todo!(),
+        mono::Pat::Constr(_) => todo!(),
+        mono::Pat::Variant(_) => todo!(),
+        mono::Pat::Record(_) => todo!(),
+        mono::Pat::Ignore => todo!(),
+        mono::Pat::Str(_) => todo!(),
+        mono::Pat::Char(_) => todo!(),
+        mono::Pat::StrPfx(_, _) => todo!(),
+        mono::Pat::Or(_, _) => todo!(),
+    }
 }
 
 fn lower_l_pat(pat: &L<mono::Pat>, indices: &Indices) -> L<Pat> {
