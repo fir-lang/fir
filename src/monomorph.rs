@@ -486,7 +486,10 @@ fn mono_stmt(
 
             let mono_item_ty = match ty {
                 Some(ty) => mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
-                None => panic!("{}: For loop does not have type annotation", loc_display(loc)),
+                None => panic!(
+                    "{}: For loop does not have type annotation",
+                    loc_display(loc)
+                ),
             };
 
             mono_method(
