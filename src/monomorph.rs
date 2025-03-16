@@ -118,7 +118,7 @@ use crate::collections::*;
 use crate::interpolation::StringPart;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
-use crate::type_checker::{Kind, Ty};
+use crate::type_checker::{Kind, RecordOrVariant, Ty};
 use crate::utils::*;
 
 use smol_str::SmolStr;
@@ -486,7 +486,7 @@ fn mono_stmt(
 
             let mono_item_ty = match ty {
                 Some(ty) => mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
-                None => panic!("{}: For loop does have type annotation", loc_display(loc)),
+                None => panic!("{}: For loop does not have type annotation", loc_display(loc)),
             };
 
             mono_method(
@@ -1348,7 +1348,13 @@ fn mono_tc_ty(
     mono_pgm: &mut MonoPgm,
 ) -> mono::Type {
     match ty.clone() {
-        Ty::Var(var) => panic!("Type variable: {:?}", var),
+        Ty::Var(var) => match var.kind() {
+            Kind::Star => {
+                panic!("Type variable: {:?}", var);
+            }
+            Kind::Row(RecordOrVariant::Record) => mono::Type::Record { fields: vec![] },
+            Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant { alts: vec![] },
+        },
 
         Ty::Con(con) => {
             if let Some(ty) = ty_map.get(&con) {
