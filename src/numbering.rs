@@ -4,6 +4,8 @@
 use crate::collections::Map;
 use crate::mono_ast::{self as mono, AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
 
+use smol_str::SmolStr;
+
 #[derive(Debug)]
 pub struct LoweredPgm {
     funs: Vec<Fun>,
@@ -26,6 +28,35 @@ pub struct FieldIdx(u32);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ClosureIdx(u32);
 
+// For now we will monomorphise fully but allocate anything other than integeres, bools, and chars
+// as boxes. We also don't need to distinguish pointers from other word-sized things as we don't
+// have a garbage collection yet.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Repr {
+    U8,
+    U32,
+    U64,
+}
+
+impl Repr {
+    fn from_mono_ty(mono_ty: &mono::Type) -> Repr {
+        match mono_ty {
+            mono::Type::Named(mono::NamedType { name, args: _ }) => {
+                match name.as_str() {
+                    "I8" | "U8" => Repr::U8,
+                    "I32" | "U32" => Repr::U32,
+                    "I64" | "U64" => Repr::U64,
+                    "Char" => Repr::U32,
+                    "Bool" => Repr::U8,
+                    _ => Repr::U64, // box
+                }
+            }
+
+            mono::Type::Record { .. } | mono::Type::Variant { .. } | mono::Type::Fn(_) => Repr::U64,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Fun {
     Bultin,
@@ -34,8 +65,35 @@ pub enum Fun {
 
 #[derive(Debug)]
 pub enum Con {
-    Builtin,
-    Source,
+    Builtin(BuiltinConDecl),
+    Source(SourceConDecl),
+}
+
+#[derive(Debug)]
+pub enum BuiltinConDecl {
+    ArrayU8,
+    ArrayU32,
+    ArrayU64,
+}
+
+#[derive(Debug)]
+pub struct SourceConDecl {
+    pub name: Id,                 // for debugging
+    pub idx: ConIdx,              // for debugging
+    pub ty_args: Vec<mono::Type>, // for debugging
+    pub fields: ConFields,
+}
+
+#[derive(Debug)]
+pub enum ConFields {
+    Named(Vec<(Id, ConFieldType)>),
+    Unnamed(Vec<ConFieldType>),
+}
+
+#[derive(Debug)]
+pub struct ConFieldType {
+    pub mono_ty: mono::Type, // for debugging
+    pub repr: Repr,
 }
 
 #[derive(Debug, Clone)]
@@ -271,15 +329,40 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
             match &con_decl.rhs {
                 Some(rhs) => match rhs {
                     mono::TypeDeclRhs::Sum(cons) => {
-                        todo!()
+                        for mono::ConstructorDecl { name, fields } in cons {
+                            let idx = ConIdx(lowered_pgm.cons.len() as u32);
+                            let name = SmolStr::new(&format!("{}.{}", con_id, name));
+                            lowered_pgm.cons.push(lower_source_con(
+                                idx,
+                                &name,
+                                con_ty_args,
+                                fields,
+                            ));
+                        }
                     }
+
                     mono::TypeDeclRhs::Product(fields) => {
-                        todo!()
+                        let idx = ConIdx(lowered_pgm.cons.len() as u32);
+                        lowered_pgm
+                            .cons
+                            .push(lower_source_con(idx, con_id, con_ty_args, fields));
                     }
                 },
-                None => {
-                    todo!()
-                }
+
+                None => match con_id.as_str() {
+                    "Array" => {
+                        assert_eq!(con_ty_args.len(), 1);
+                        let elem_repr = Repr::from_mono_ty(&con_ty_args[0]);
+                        let array_con = match elem_repr {
+                            Repr::U8 => BuiltinConDecl::ArrayU8,
+                            Repr::U32 => BuiltinConDecl::ArrayU32,
+                            Repr::U64 => BuiltinConDecl::ArrayU64,
+                        };
+                        lowered_pgm.cons.push(Con::Builtin(array_con));
+                    }
+
+                    other => panic!("Unknown built-in type: {}", other),
+                },
             }
         }
     }
@@ -299,4 +382,45 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
     }
 
     lowered_pgm
+}
+
+fn lower_source_con(
+    idx: ConIdx,
+    con_id: &SmolStr,
+    con_ty_args: &[mono::Type],
+    fields: &mono::ConstructorFields,
+) -> Con {
+    Con::Source(SourceConDecl {
+        name: con_id.clone(),
+        idx,
+        ty_args: con_ty_args.to_vec(),
+        fields: match fields {
+            mono::ConstructorFields::Empty => ConFields::Unnamed(vec![]),
+
+            mono::ConstructorFields::Named(fields) => ConFields::Named(
+                fields
+                    .iter()
+                    .map(|(name, field_ty)| {
+                        (
+                            name.clone(),
+                            ConFieldType {
+                                mono_ty: field_ty.clone(),
+                                repr: Repr::from_mono_ty(field_ty),
+                            },
+                        )
+                    })
+                    .collect(),
+            ),
+
+            mono::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
+                fields
+                    .iter()
+                    .map(|field_ty| ConFieldType {
+                        mono_ty: field_ty.clone(),
+                        repr: Repr::from_mono_ty(field_ty),
+                    })
+                    .collect(),
+            ),
+        },
+    })
 }
