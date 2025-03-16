@@ -94,6 +94,10 @@ pub enum BuiltinConDecl {
     ArrayU8,
     ArrayU32,
     ArrayU64,
+    I8,
+    U8,
+    I32,
+    U32,
 }
 
 #[derive(Debug)]
@@ -373,6 +377,25 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
                             Repr::U64 => BuiltinConDecl::ArrayU64,
                         };
                         lowered_pgm.cons.push(Con::Builtin(array_con));
+                    }
+
+                    "I8" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I8)),
+                    "U8" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U8)),
+                    "I32" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I32)),
+                    "U32" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U32)),
+
+                    "Void" => {
+                        // Lower as unit as we can't express empty types in the lowered
+                        // representation.
+                        // TODO: Could we just skip this?
+                        // NOTE: This needs to be in sync with the numbering loop above.
+                        let idx = ConIdx(lowered_pgm.cons.len() as u32);
+                        lowered_pgm.cons.push(Con::Source(SourceConDecl {
+                            name: SmolStr::new_static("Void"),
+                            idx,
+                            ty_args: vec![],
+                            fields: ConFields::Unnamed(vec![]),
+                        }))
                     }
 
                     other => panic!("Unknown built-in type: {}", other),
