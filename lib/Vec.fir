@@ -13,7 +13,7 @@ Vec.reserve(self: Vec[t], cap: U32)
 
     if newCap != self._data.len():
         let newData = Array.new(newCap)
-        for i in range(0u32, self._data.len()):
+        for i: U32 in range(0u32, self._data.len()):
             newData.set(i, self._data.get(i))
         self._data = newData
 

@@ -41,7 +41,7 @@ StrBuf.push(self, char: Char)
 StrBuf.pushStr(self, str: Str)
     # TODO: Maybe consider memcpy-ing the bytes.
     self._bytes.reserve(str.len())
-    for char in str.chars():
+    for char: Char in str.chars():
         self.push(char)
 
 impl ToStr[StrBuf]:

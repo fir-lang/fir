@@ -12,7 +12,7 @@ type Str:
 # Copies the bytes, does not validate UTF-8.
 Str.fromUtf8Vec(bytes: Vec[U8]): Str
     let copied = Array.new(bytes.len())
-    for i in range(0u32, bytes.len()):
+    for i: U32 in range(0u32, bytes.len()):
         copied.set(i, bytes.get(i))
     Str(_bytes = copied, _start = 0, _len = copied.len())
 
