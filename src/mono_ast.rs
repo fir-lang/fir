@@ -87,7 +87,6 @@ pub enum SelfParam {
 }
 
 #[derive(Debug, Clone)]
-
 pub struct FunDecl {
     pub parent_ty: Option<L<Id>>,
     pub name: L<Id>,

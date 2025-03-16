@@ -58,9 +58,29 @@ impl Repr {
 }
 
 #[derive(Debug)]
+pub struct Ty {
+    pub mono_ty: mono::Type, // for debugging
+    pub repr: Repr,
+}
+
+#[derive(Debug)]
 pub enum Fun {
-    Bultin,
-    Source,
+    Bultin(BuiltinFunDecl),
+    Source(SourceFunDecl),
+}
+
+#[derive(Debug)]
+pub enum BuiltinFunDecl {}
+
+#[derive(Debug)]
+pub struct SourceFunDecl {
+    pub name: Id,                 // for debugging
+    pub idx: FunIdx,              // for debugging
+    pub ty_args: Vec<mono::Type>, // for debugging
+    pub params: Vec<Ty>,
+    pub return_ty: Ty,
+    pub exceptions: Ty,
+    pub body: Vec<L<Stmt>>,
 }
 
 #[derive(Debug)]
@@ -86,14 +106,8 @@ pub struct SourceConDecl {
 
 #[derive(Debug)]
 pub enum ConFields {
-    Named(Vec<(Id, ConFieldType)>),
-    Unnamed(Vec<ConFieldType>),
-}
-
-#[derive(Debug)]
-pub struct ConFieldType {
-    pub mono_ty: mono::Type, // for debugging
-    pub repr: Repr,
+    Named(Vec<(Id, Ty)>),
+    Unnamed(Vec<Ty>),
 }
 
 #[derive(Debug, Clone)]
@@ -369,14 +383,14 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
 
     // Lower top-level functions.
     for (fun_id, fun_ty_map) in &mono_pgm.funs {
-        for (fun_ty_args, _fun_decl) in fun_ty_map {
+        for (fun_ty_args, fun_decl) in fun_ty_map {
             todo!()
         }
     }
 
     // Number associated functions.
     for (fun_id, fun_ty_map) in &mono_pgm.funs {
-        for (fun_ty_args, _fun_decl) in fun_ty_map {
+        for (fun_ty_args, fun_decl) in fun_ty_map {
             todo!()
         }
     }
@@ -403,7 +417,7 @@ fn lower_source_con(
                     .map(|(name, field_ty)| {
                         (
                             name.clone(),
-                            ConFieldType {
+                            Ty {
                                 mono_ty: field_ty.clone(),
                                 repr: Repr::from_mono_ty(field_ty),
                             },
@@ -415,7 +429,7 @@ fn lower_source_con(
             mono::ConstructorFields::Unnamed(fields) => ConFields::Unnamed(
                 fields
                     .iter()
-                    .map(|field_ty| ConFieldType {
+                    .map(|field_ty| Ty {
                         mono_ty: field_ty.clone(),
                         repr: Repr::from_mono_ty(field_ty),
                     })
