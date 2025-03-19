@@ -60,6 +60,15 @@ pub struct Ty {
     pub repr: Repr,
 }
 
+impl Ty {
+    fn from_mono_ty(ty: &mono::Type) -> Ty {
+        Ty {
+            mono_ty: ty.clone(),
+            repr: Repr::from_mono_ty(ty),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Fun {
     Bultin(BuiltinFunDecl),
@@ -71,13 +80,21 @@ pub enum BuiltinFunDecl {}
 
 #[derive(Debug)]
 pub struct SourceFunDecl {
-    pub name: Id,                 // for debugging
+    pub parent_ty: Option<L<Id>>, // for debugging
+    pub name: L<Id>,              // for debugging
     pub idx: FunIdx,              // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
+    pub locals: Vec<LocalInfo>,   // for debugging, indexed by `LocalIdx`
     pub params: Vec<Ty>,
     pub return_ty: Ty,
     pub exceptions: Ty,
     pub body: Vec<L<Stmt>>,
+}
+
+#[derive(Debug)]
+pub struct LocalInfo {
+    pub name: Id,
+    pub ty: mono::Type,
 }
 
 #[derive(Debug)]
@@ -290,6 +307,7 @@ struct Indices {
     sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>>,
     fun_nums: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
     assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
+    local_nums: Map<Id, LocalIdx>,
 }
 
 pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
@@ -561,7 +579,7 @@ fn lower_l_stmt(stmt: &L<mono::Stmt>, indices: &Indices) -> L<Stmt> {
 
 fn lower_expr(expr: &mono::Expr, indices: &Indices) -> Expr {
     match expr {
-        mono::Expr::LocalVar(var) => todo!(),
+        mono::Expr::LocalVar(var) => Expr::LocalVar(*indices.local_nums.get(var).unwrap()),
 
         mono::Expr::TopVar(mono::VarExpr { id, ty_args }) => {
             Expr::TopVar(*indices.fun_nums.get(id).unwrap().get(ty_args).unwrap())
@@ -750,4 +768,62 @@ fn lower_pat(pat: &mono::Pat, indices: &Indices) -> Pat {
 
 fn lower_l_pat(pat: &L<mono::Pat>, indices: &Indices) -> L<Pat> {
     pat.map_as_ref(|pat| lower_pat(pat, indices))
+}
+
+fn lower_source_fun(
+    fun: &mono::FunDecl,
+    idx: FunIdx,
+    ty_args: Vec<mono::Type>,
+    indices: &mut Indices,
+) -> SourceFunDecl {
+    let mut locals: Vec<LocalInfo> = vec![];
+    let mut local_nums: Map<Id, LocalIdx> = Default::default();
+
+    if !matches!(fun.sig.self_, mono::SelfParam::No) {
+        locals.push(LocalInfo {
+            name: SmolStr::new_static("self"),
+            ty: mono::Type::Record { fields: vec![] }, // TODO
+        });
+        local_nums.insert(SmolStr::new_static("self"), LocalIdx(0));
+    }
+
+    for (param, ty) in &fun.sig.params {
+        locals.push(LocalInfo {
+            name: param.clone(),
+            ty: ty.node.clone(),
+        });
+        local_nums.insert(param.clone(), LocalIdx(local_nums.len() as u32));
+    }
+
+    let body: Vec<L<Stmt>> = fun
+        .body
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|stmt| lower_l_stmt(stmt, indices))
+        .collect();
+
+    let params: Vec<Ty> = locals.iter().map(|l| Ty::from_mono_ty(&l.ty)).collect();
+
+    // TODO: Types should be explicit in monomorphic AST.
+    SourceFunDecl {
+        parent_ty: fun.parent_ty.clone(),
+        name: fun.name.clone(),
+        idx,
+        ty_args,
+        locals,
+        body,
+        params,
+
+        return_ty: fun
+            .sig
+            .return_ty
+            .as_ref()
+            .map(|l| Ty::from_mono_ty(&l.node))
+            .unwrap(),
+
+        // Type checker adds fresh type variables for missing exception types in function
+        // declarations, so this `unwrap` cannot fail.
+        exceptions: Ty::from_mono_ty(&fun.sig.exceptions.as_ref().unwrap().node),
+    }
 }
