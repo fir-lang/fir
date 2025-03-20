@@ -7,9 +7,9 @@ mod import_resolver;
 mod interpolation;
 // mod interpreter;
 mod lexer;
+mod lowering;
 mod mono_ast;
 mod monomorph;
-mod numbering;
 mod parser;
 mod parser_utils;
 mod record_collector;
@@ -149,7 +149,7 @@ mod native {
             mono_ast::printer::print_pgm(&mono_pgm);
         }
 
-        let _lowered_pgm = numbering::lower(&mono_pgm);
+        let _lowered_pgm = lowering::lower(&mono_pgm);
 
         // let mut w = std::io::stdout();
         // program_args.insert(0, program);

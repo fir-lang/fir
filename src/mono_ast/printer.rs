@@ -690,7 +690,39 @@ impl Expr {
                 }
             }
 
-            Expr::Fn(_) => todo!(),
+            Expr::Fn(FnExpr { sig, body, idx: _ }) => {
+                buffer.push_str("fn");
+                buffer.push('(');
+                for (i, (param_name, param_ty)) in sig.params.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push_str(param_name);
+                    buffer.push_str(": ");
+                    param_ty.node.print(buffer);
+                }
+                buffer.push(')');
+                if sig.exceptions.is_some() || sig.return_ty.is_some() {
+                    buffer.push_str(": ");
+                }
+                if let Some(exn) = &sig.exceptions {
+                    exn.node.print(buffer);
+                }
+                if let Some(ret_ty) = &sig.return_ty {
+                    if sig.exceptions.is_some() {
+                        buffer.push(' ');
+                    }
+                    ret_ty.node.print(buffer);
+                }
+                buffer.push('\n');
+                for (i, stmt) in body.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push('\n');
+                    }
+                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buffer, indent + 4);
+                }
+            }
         }
     }
 }

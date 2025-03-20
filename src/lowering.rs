@@ -269,7 +269,7 @@ pub struct IfExpr {
 
 #[derive(Debug, Clone)]
 pub enum Pat {
-    Var(Id),
+    Var(LocalIdx),
     Constr(ConstrPattern),
     Variant(VariantPattern),
     Record(Vec<Named<L<Pat>>>),
@@ -449,17 +449,37 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
         }
     }
 
+    let mut indices = Indices {
+        product_con_nums,
+        sum_con_nums,
+        fun_nums,
+        assoc_fun_nums,
+        local_nums: Default::default(), // updated in each function
+    };
+
     // Lower top-level functions.
-    for (fun_id, fun_ty_map) in &mono_pgm.funs {
+    for (_fun_id, fun_ty_map) in &mono_pgm.funs {
         for (fun_ty_args, fun_decl) in fun_ty_map {
-            todo!()
+            let idx = FunIdx(lowered_pgm.funs.len() as u32);
+            if fun_decl.body.is_some() {
+                let source_fun = lower_source_fun(fun_decl, idx, fun_ty_args, &mut indices);
+                lowered_pgm.funs.push(Fun::Source(source_fun));
+            } else {
+                // TODO: built-ins
+            }
         }
     }
 
     // Number associated functions.
-    for (fun_id, fun_ty_map) in &mono_pgm.funs {
+    for (_fun_id, fun_ty_map) in &mono_pgm.funs {
         for (fun_ty_args, fun_decl) in fun_ty_map {
-            todo!()
+            let idx = FunIdx(lowered_pgm.funs.len() as u32);
+            if fun_decl.body.is_some() {
+                let source_fun = lower_source_fun(fun_decl, idx, fun_ty_args, &mut indices);
+                lowered_pgm.funs.push(Fun::Source(source_fun));
+            } else {
+                // TODO: built-ins
+            }
         }
     }
 
@@ -507,7 +527,7 @@ fn lower_source_con(
     })
 }
 
-fn lower_stmt(stmt: &mono::Stmt, indices: &Indices) -> Stmt {
+fn lower_stmt(stmt: &mono::Stmt, indices: &mut Indices) -> Stmt {
     match stmt {
         mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => Stmt::Let(LetStmt {
             lhs: lower_l_pat(lhs, indices),
@@ -573,11 +593,11 @@ fn lower_stmt(stmt: &mono::Stmt, indices: &Indices) -> Stmt {
     }
 }
 
-fn lower_l_stmt(stmt: &L<mono::Stmt>, indices: &Indices) -> L<Stmt> {
+fn lower_l_stmt(stmt: &L<mono::Stmt>, indices: &mut Indices) -> L<Stmt> {
     stmt.map_as_ref(|stmt| lower_stmt(stmt, indices))
 }
 
-fn lower_expr(expr: &mono::Expr, indices: &Indices) -> Expr {
+fn lower_expr(expr: &mono::Expr, indices: &mut Indices) -> Expr {
     match expr {
         mono::Expr::LocalVar(var) => Expr::LocalVar(*indices.local_nums.get(var).unwrap()),
 
@@ -744,36 +764,73 @@ fn lower_expr(expr: &mono::Expr, indices: &Indices) -> Expr {
     }
 }
 
-fn lower_l_expr(expr: &L<mono::Expr>, indices: &Indices) -> L<Expr> {
+fn lower_l_expr(expr: &L<mono::Expr>, indices: &mut Indices) -> L<Expr> {
     expr.map_as_ref(|expr| lower_expr(expr, indices))
 }
 
-fn lower_bl_expr(expr: &Box<L<mono::Expr>>, indices: &Indices) -> Box<L<Expr>> {
+fn lower_bl_expr(expr: &Box<L<mono::Expr>>, indices: &mut Indices) -> Box<L<Expr>> {
     Box::new(expr.map_as_ref(|expr| lower_expr(expr, indices)))
 }
 
-fn lower_pat(pat: &mono::Pat, indices: &Indices) -> Pat {
+fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
     match pat {
-        mono::Pat::Var(_) => todo!(),
-        mono::Pat::Constr(_) => todo!(),
+        mono::Pat::Var(var) => {
+            let var_idx = LocalIdx(indices.local_nums.len() as u32);
+            indices.local_nums.insert(var.clone(), var_idx);
+            Pat::Var(var_idx)
+        }
+
+        mono::Pat::Constr(mono::ConstrPattern {
+            constr: mono::Constructor { type_, constr },
+            fields,
+        }) => {
+            /*
+            TODO: We need to know the type arguments.
+
+            let con_idx: ConIdx = match constr {
+                Some(constr) => indices
+                    .sum_con_nums
+                    .get(type_)
+                    .unwrap()
+                    .get(constr)
+                    .unwrap(),
+                None => indices.product_con_nums.get(type_).unwrap(),
+            };
+            Pat::Constr(ConstrPattern {
+                constr: con_idx,
+                fields: fields
+                    .iter()
+                    .map(|named_f| named_f.map_as_ref(|f| lower_l_pat(f, indices)))
+                    .collect(),
+            })
+            */
+            todo!()
+        }
+
         mono::Pat::Variant(_) => todo!(),
+
         mono::Pat::Record(_) => todo!(),
-        mono::Pat::Ignore => todo!(),
-        mono::Pat::Str(_) => todo!(),
-        mono::Pat::Char(_) => todo!(),
+
+        mono::Pat::Ignore => Pat::Ignore,
+
+        mono::Pat::Str(str) => Pat::Str(str.clone()),
+
+        mono::Pat::Char(char) => Pat::Char(*char),
+
         mono::Pat::StrPfx(_, _) => todo!(),
+
         mono::Pat::Or(_, _) => todo!(),
     }
 }
 
-fn lower_l_pat(pat: &L<mono::Pat>, indices: &Indices) -> L<Pat> {
+fn lower_l_pat(pat: &L<mono::Pat>, indices: &mut Indices) -> L<Pat> {
     pat.map_as_ref(|pat| lower_pat(pat, indices))
 }
 
 fn lower_source_fun(
     fun: &mono::FunDecl,
     idx: FunIdx,
-    ty_args: Vec<mono::Type>,
+    ty_args: &Vec<mono::Type>,
     indices: &mut Indices,
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
@@ -805,16 +862,16 @@ fn lower_source_fun(
 
     let params: Vec<Ty> = locals.iter().map(|l| Ty::from_mono_ty(&l.ty)).collect();
 
-    // TODO: Types should be explicit in monomorphic AST.
     SourceFunDecl {
         parent_ty: fun.parent_ty.clone(),
         name: fun.name.clone(),
         idx,
-        ty_args,
+        ty_args: ty_args.clone(),
         locals,
         body,
         params,
 
+        // Implicit return types should've been made implicit in a previous pass.
         return_ty: fun
             .sig
             .return_ty
@@ -822,8 +879,17 @@ fn lower_source_fun(
             .map(|l| Ty::from_mono_ty(&l.node))
             .unwrap(),
 
-        // Type checker adds fresh type variables for missing exception types in function
-        // declarations, so this `unwrap` cannot fail.
-        exceptions: Ty::from_mono_ty(&fun.sig.exceptions.as_ref().unwrap().node),
+        // Constructors don't have exception types as they cannot throw, and their type parameters
+        // need to be the same as the constructed type's type parameters. We can assume their
+        // exception type to be empty type (variant with no constructor).
+        exceptions: fun
+            .sig
+            .exceptions
+            .as_ref()
+            .map(|ty| Ty::from_mono_ty(&ty.node))
+            .unwrap_or(Ty {
+                mono_ty: mono::Type::Variant { alts: vec![] },
+                repr: Repr::U64, // TODO: should this be void?
+            }),
     }
 }
