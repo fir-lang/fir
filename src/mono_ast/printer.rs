@@ -735,6 +735,7 @@ impl Pat {
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },
                 fields,
+                ty_args,
             }) => {
                 buffer.push_str(type_);
                 if let Some(constr) = constr {

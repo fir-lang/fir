@@ -286,7 +286,11 @@ fn bind_pat_binders(pat: &ast::Pat, local_vars: &mut ScopeSet<Id>) {
 
         ast::Pat::Variant(ast::VariantPattern { constr: _, fields })
         | ast::Pat::Record(fields)
-        | ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
+        | ast::Pat::Constr(ast::ConstrPattern {
+            constr: _,
+            fields,
+            ty_args: _,
+        }) => {
             for field in fields {
                 bind_pat_binders(&field.node.node, local_vars);
             }

@@ -543,8 +543,6 @@ fn mono_expr(
     mono_pgm: &mut MonoPgm,
     loc: &ast::Loc,
 ) -> mono::Expr {
-    println!("mono_expr {}: {:?}", loc_display(loc), expr);
-    println!("  ty_map: {:?}", ty_map);
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
             let poly_decl = match poly_pgm.top.get(var) {
@@ -1098,6 +1096,7 @@ fn mono_pat(
                     constr: constr.clone(),
                 },
                 fields: mono_fields,
+                ty_args: mono_ty_args,
             })
         }
 

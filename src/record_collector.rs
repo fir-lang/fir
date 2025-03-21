@@ -254,7 +254,11 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>, variants: &mut Set<
         | ast::Pat::StrPfx(_, _)
         | ast::Pat::Char(_) => {}
 
-        ast::Pat::Constr(ast::ConstrPattern { constr: _, fields }) => {
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr: _,
+            fields,
+            ty_args: _,
+        }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
             }

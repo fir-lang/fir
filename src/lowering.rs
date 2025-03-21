@@ -276,7 +276,7 @@ pub enum Pat {
     Ignore,
     Str(String),
     Char(char),
-    StrPfx(String, Id),
+    StrPfx(String, LocalIdx),
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
@@ -783,18 +783,23 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
         mono::Pat::Constr(mono::ConstrPattern {
             constr: mono::Constructor { type_, constr },
             fields,
+            ty_args,
         }) => {
-            /*
-            TODO: We need to know the type arguments.
-
             let con_idx: ConIdx = match constr {
-                Some(constr) => indices
+                Some(constr) => *indices
                     .sum_con_nums
                     .get(type_)
                     .unwrap()
                     .get(constr)
+                    .unwrap()
+                    .get(ty_args)
                     .unwrap(),
-                None => indices.product_con_nums.get(type_).unwrap(),
+                None => *indices
+                    .product_con_nums
+                    .get(type_)
+                    .unwrap()
+                    .get(ty_args)
+                    .unwrap(),
             };
             Pat::Constr(ConstrPattern {
                 constr: con_idx,
@@ -803,8 +808,6 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
                     .map(|named_f| named_f.map_as_ref(|f| lower_l_pat(f, indices)))
                     .collect(),
             })
-            */
-            todo!()
         }
 
         mono::Pat::Variant(_) => todo!(),
@@ -817,9 +820,16 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
 
         mono::Pat::Char(char) => Pat::Char(*char),
 
-        mono::Pat::StrPfx(_, _) => todo!(),
+        mono::Pat::StrPfx(str, var) => {
+            let var_idx = LocalIdx(indices.local_nums.len() as u32);
+            indices.local_nums.insert(var.clone(), var_idx);
+            Pat::StrPfx(str.clone(), var_idx)
+        }
 
-        mono::Pat::Or(_, _) => todo!(),
+        mono::Pat::Or(p1, p2) => Pat::Or(
+            Box::new(lower_l_pat(p1, indices)),
+            Box::new(lower_l_pat(p2, indices)),
+        ),
     }
 }
 

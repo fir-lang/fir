@@ -152,6 +152,7 @@ pub enum Pat {
 pub struct ConstrPattern {
     pub constr: Constructor,
     pub fields: Vec<Named<L<Pat>>>,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
