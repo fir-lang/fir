@@ -541,7 +541,7 @@ fn mono_expr(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    loc: &ast::Loc,
+    _loc: &ast::Loc,
 ) -> mono::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
@@ -1055,7 +1055,7 @@ fn mono_pat(
 
         ast::Pat::Ignore => mono::Pat::Ignore,
 
-        ast::Pat::Str(_) => todo!(),
+        ast::Pat::Str(str) => mono::Pat::Str(str.clone()),
 
         ast::Pat::Char(c) => mono::Pat::Char(*c),
 
