@@ -1,5 +1,5 @@
 use crate::collections::Set;
-use crate::mono_ast as ast;
+use crate::mono_ast as mono;
 
 use smol_str::SmolStr;
 
@@ -22,7 +22,7 @@ pub struct VariantShape {
 }
 
 impl RecordShape {
-    pub fn from_named_things<T>(things: &[ast::Named<T>]) -> RecordShape {
+    pub fn from_named_things<T>(things: &[mono::Named<T>]) -> RecordShape {
         // All or none of the fields should be named.
         if things.is_empty() {
             return RecordShape::UnnamedFields { arity: 0 };
@@ -46,7 +46,7 @@ impl RecordShape {
 }
 
 impl VariantShape {
-    pub fn from_con_and_fields<T>(con: &SmolStr, fields: &[ast::Named<T>]) -> VariantShape {
+    pub fn from_con_and_fields<T>(con: &SmolStr, fields: &[mono::Named<T>]) -> VariantShape {
         let record_shape = RecordShape::from_named_things(fields);
         VariantShape {
             con_name: con.clone(),
@@ -55,7 +55,7 @@ impl VariantShape {
     }
 }
 
-pub fn collect_records(pgm: &ast::MonoPgm) -> (Set<RecordShape>, Set<VariantShape>) {
+pub fn collect_records(pgm: &mono::MonoPgm) -> (Set<RecordShape>, Set<VariantShape>) {
     let mut records: Set<RecordShape> = Default::default();
     let mut variants: Set<VariantShape> = Default::default();
 
@@ -92,27 +92,27 @@ pub fn collect_records(pgm: &ast::MonoPgm) -> (Set<RecordShape>, Set<VariantShap
 }
 
 fn visit_ty_decl(
-    ty_decl: &ast::TypeDecl,
+    ty_decl: &mono::TypeDecl,
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
     match &ty_decl.rhs {
         None => {}
 
-        Some(ast::TypeDeclRhs::Sum(constrs)) => {
+        Some(mono::TypeDeclRhs::Sum(constrs)) => {
             for constr in constrs {
                 visit_fields(&constr.fields, records, variants);
             }
         }
 
-        Some(ast::TypeDeclRhs::Product(fields)) => {
+        Some(mono::TypeDeclRhs::Product(fields)) => {
             visit_fields(fields, records, variants);
         }
     }
 }
 
 fn visit_fun_decl(
-    fun_decl: &ast::FunDecl,
+    fun_decl: &mono::FunDecl,
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
@@ -126,7 +126,7 @@ fn visit_fun_decl(
 }
 
 fn visit_fun_sig(
-    sig: &ast::FunSig,
+    sig: &mono::FunSig,
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
@@ -140,40 +140,40 @@ fn visit_fun_sig(
 }
 
 fn visit_fields(
-    fields: &ast::ConstructorFields,
+    fields: &mono::ConstructorFields,
     records: &mut Set<RecordShape>,
     variants: &mut Set<VariantShape>,
 ) {
     match fields {
-        ast::ConstructorFields::Empty => {}
+        mono::ConstructorFields::Empty => {}
 
-        ast::ConstructorFields::Named(named_fields) => named_fields
+        mono::ConstructorFields::Named(named_fields) => named_fields
             .iter()
             .for_each(|(_name, ty)| visit_ty(ty, records, variants)),
 
-        ast::ConstructorFields::Unnamed(fields) => {
+        mono::ConstructorFields::Unnamed(fields) => {
             fields.iter().for_each(|ty| visit_ty(ty, records, variants))
         }
     }
 }
 
-fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
+fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => args
+        mono::Type::Named(mono::NamedType { name: _, args }) => args
             .iter()
             .for_each(|arg| visit_ty(&arg.node, records, variants)),
 
-        ast::Type::Record { fields } => {
+        mono::Type::Record { fields } => {
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Type::Variant { alts } => {
-            for ast::VariantAlt { con, fields } in alts {
+        mono::Type::Variant { alts } => {
+            for mono::VariantAlt { con, fields } in alts {
                 variants.insert(VariantShape::from_con_and_fields(con, fields));
             }
         }
 
-        ast::Type::Fn(ast::FnType {
+        mono::Type::Fn(mono::FnType {
             args,
             ret,
             exceptions,
@@ -191,23 +191,23 @@ fn visit_ty(ty: &ast::Type, records: &mut Set<RecordShape>, variants: &mut Set<V
     }
 }
 
-fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
+fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match stmt {
-        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
+        mono::Stmt::Break { .. } | mono::Stmt::Continue { .. } => {}
 
-        ast::Stmt::Let(ast::LetStmt { lhs, rhs }) => {
+        mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
             visit_pat(&lhs.node, records, variants);
             visit_expr(&rhs.node, records, variants);
         }
 
-        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
+        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op: _ }) => {
             visit_expr(&lhs.node, records, variants);
             visit_expr(&rhs.node, records, variants);
         }
 
-        ast::Stmt::Expr(expr) => visit_expr(&expr.node, records, variants),
+        mono::Stmt::Expr(expr) => visit_expr(&expr.node, records, variants),
 
-        ast::Stmt::For(ast::ForStmt {
+        mono::Stmt::For(mono::ForStmt {
             label: _,
             pat,
             expr,
@@ -220,7 +220,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Stmt::While(ast::WhileStmt {
+        mono::Stmt::While(mono::WhileStmt {
             label: _,
             cond,
             body,
@@ -231,7 +231,7 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt {
+        mono::Stmt::WhileLet(mono::WhileLetStmt {
             label: _,
             pat,
             cond,
@@ -246,15 +246,15 @@ fn visit_stmt(stmt: &ast::Stmt, records: &mut Set<RecordShape>, variants: &mut S
     }
 }
 
-fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
+fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match pat {
-        ast::Pat::Var(_)
-        | ast::Pat::Ignore
-        | ast::Pat::Str(_)
-        | ast::Pat::StrPfx(_, _)
-        | ast::Pat::Char(_) => {}
+        mono::Pat::Var(_)
+        | mono::Pat::Ignore
+        | mono::Pat::Str(_)
+        | mono::Pat::StrPfx(_, _)
+        | mono::Pat::Char(_) => {}
 
-        ast::Pat::Constr(ast::ConstrPattern {
+        mono::Pat::Constr(mono::ConstrPattern {
             constr: _,
             fields,
             ty_args: _,
@@ -264,47 +264,47 @@ fn visit_pat(pat: &ast::Pat, records: &mut Set<RecordShape>, variants: &mut Set<
             }
         }
 
-        ast::Pat::Record(fields) => {
+        mono::Pat::Record(fields) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
             }
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+        mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
             variants.insert(VariantShape::from_con_and_fields(constr, fields));
         }
 
-        ast::Pat::Or(pat1, pat2) => {
+        mono::Pat::Or(pat1, pat2) => {
             visit_pat(&pat1.node, records, variants);
             visit_pat(&pat2.node, records, variants);
         }
     }
 }
 
-fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
+fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match expr {
-        ast::Expr::LocalVar(_)
-        | ast::Expr::TopVar(_)
-        | ast::Expr::Constr(_)
-        | ast::Expr::Int(_)
-        | ast::Expr::Self_
-        | ast::Expr::Char(_) => {}
+        mono::Expr::LocalVar(_)
+        | mono::Expr::TopVar(_)
+        | mono::Expr::Constr(_)
+        | mono::Expr::Int(_)
+        | mono::Expr::Self_
+        | mono::Expr::Char(_) => {}
 
-        ast::Expr::String(parts) => {
+        mono::Expr::String(parts) => {
             for part in parts {
                 match part {
-                    ast::StringPart::Str(_) => {}
-                    ast::StringPart::Expr(expr) => visit_expr(&expr.node, records, variants),
+                    mono::StringPart::Str(_) => {}
+                    mono::StringPart::Expr(expr) => visit_expr(&expr.node, records, variants),
                 }
             }
         }
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
+        mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field: _ }) => {
             visit_expr(&object.node, records, variants);
         }
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+        mono::Expr::MethodSelect(mono::MethodSelectExpr {
             object,
             method_ty_id: _,
             method_id: _,
@@ -313,38 +313,38 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
             visit_expr(&object.node, records, variants);
         }
 
-        ast::Expr::ConstrSelect(_) | ast::Expr::AssocFnSelect(_) => {}
+        mono::Expr::ConstrSelect(_) | mono::Expr::AssocFnSelect(_) => {}
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        mono::Expr::Call(mono::CallExpr { fun, args }) => {
             visit_expr(&fun.node, records, variants);
             for arg in args {
                 visit_expr(&arg.expr.node, records, variants);
             }
         }
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
+        mono::Expr::BinOp(mono::BinOpExpr { left, right, op: _ }) => {
             visit_expr(&left.node, records, variants);
             visit_expr(&right.node, records, variants);
         }
 
-        ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
+        mono::Expr::UnOp(mono::UnOpExpr { op: _, expr }) => {
             visit_expr(&expr.node, records, variants);
         }
 
-        ast::Expr::Record(fields) => {
+        mono::Expr::Record(fields) => {
             for field in fields {
                 visit_expr(&field.node.node, records, variants);
             }
             records.insert(RecordShape::from_named_things(fields));
         }
 
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
+        mono::Expr::Variant(mono::VariantExpr { id, args }) => {
             variants.insert(VariantShape::from_con_and_fields(id, args));
         }
 
-        ast::Expr::Return(expr) => visit_expr(&expr.node, records, variants),
+        mono::Expr::Return(expr) => visit_expr(&expr.node, records, variants),
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
             visit_expr(&scrutinee.node, records, variants);
             for alt in alts {
                 visit_pat(&alt.pattern.node, records, variants);
@@ -357,7 +357,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Expr::If(ast::IfExpr {
+        mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
         }) => {
@@ -374,7 +374,7 @@ fn visit_expr(expr: &ast::Expr, records: &mut Set<RecordShape>, variants: &mut S
             }
         }
 
-        ast::Expr::Fn(ast::FnExpr { sig, body, idx: _ }) => {
+        mono::Expr::Fn(mono::FnExpr { sig, body, idx: _ }) => {
             visit_fun_sig(sig, records, variants);
             for stmt in body {
                 visit_stmt(&stmt.node, records, variants);

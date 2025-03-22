@@ -587,7 +587,6 @@ fn mono_expr(
         }
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            // TODO: When the field is a method we should monomorphise here it to add it to the mono pgm.
             mono::Expr::FieldSelect(mono::FieldSelectExpr {
                 object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm),
                 field: field.clone(),
@@ -1050,7 +1049,6 @@ fn mono_pat(
     mono_pgm: &mut MonoPgm,
 ) -> mono::Pat {
     match pat {
-        // TODO: Can `Var` be a constructor like `Vec`?
         ast::Pat::Var(var) => mono::Pat::Var(var.clone()),
 
         ast::Pat::Ignore => mono::Pat::Ignore,
@@ -1157,9 +1155,6 @@ fn mono_assoc_fn(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) {
-    println!("mono_assoc_fn {}.{}", mono_ty_id, &fun_decl.name.node);
-    println!("  ty_args: {:?}", ty_args);
-
     let fn_id = fun_decl.name.node.clone();
 
     if mono_pgm
@@ -1202,7 +1197,7 @@ fn mono_assoc_fn(
     mono_pgm
         .associated
         .entry(mono_ty_id.clone())
-        .or_default() // TODO: replace this with panic if the entry is not there
+        .or_default()
         .entry(fun_decl.name.node.clone())
         .or_default()
         .insert(

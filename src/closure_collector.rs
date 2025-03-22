@@ -1,16 +1,16 @@
 use crate::collections::{Map, ScopeSet};
-use crate::mono_ast as ast;
+use crate::mono_ast as mono;
 use crate::mono_ast::Id;
 
 #[derive(Debug)]
 pub struct Closure {
-    pub ast: ast::FnExpr,
+    pub mono: mono::FnExpr,
 
     /// Maps free variables to their index in the closure's payload.
     pub fvs: Map<Id, u32>,
 }
 
-pub fn collect_closures(pgm: &mut ast::MonoPgm) -> Vec<Closure> {
+pub fn collect_closures(pgm: &mut mono::MonoPgm) -> Vec<Closure> {
     let mut closures: Vec<Closure> = vec![];
 
     for ty_map in pgm.funs.values_mut() {
@@ -30,7 +30,7 @@ pub fn collect_closures(pgm: &mut ast::MonoPgm) -> Vec<Closure> {
     closures
 }
 
-fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>) {
+fn visit_fun_decl(decl: &mut mono::FunDecl, closures: &mut Vec<Closure>) {
     let mut local_vars: ScopeSet<Id> = Default::default();
 
     for (param, _) in &decl.sig.params {
@@ -50,27 +50,27 @@ fn visit_fun_decl(decl: &mut ast::FunDecl, closures: &mut Vec<Closure>) {
 }
 
 fn visit_stmt(
-    decl: &mut ast::Stmt,
+    decl: &mut mono::Stmt,
     closures: &mut Vec<Closure>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, u32>,
 ) {
     match decl {
-        ast::Stmt::Let(ast::LetStmt { lhs, rhs }) => {
+        mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
             bind_pat_binders(&lhs.node, local_vars);
             visit_expr(&mut rhs.node, closures, local_vars, free_vars);
         }
 
-        ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op: _ }) => {
+        mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op: _ }) => {
             visit_expr(&mut lhs.node, closures, local_vars, free_vars);
             visit_expr(&mut rhs.node, closures, local_vars, free_vars);
         }
 
-        ast::Stmt::Expr(expr) => {
+        mono::Stmt::Expr(expr) => {
             visit_expr(&mut expr.node, closures, local_vars, free_vars);
         }
 
-        ast::Stmt::For(ast::ForStmt {
+        mono::Stmt::For(mono::ForStmt {
             label: _,
             pat,
             expr,
@@ -85,7 +85,7 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::While(ast::WhileStmt {
+        mono::Stmt::While(mono::WhileStmt {
             label: _,
             cond,
             body,
@@ -98,7 +98,7 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::WhileLet(ast::WhileLetStmt {
+        mono::Stmt::WhileLet(mono::WhileLetStmt {
             label: _,
             pat: _,
             cond,
@@ -115,19 +115,19 @@ fn visit_stmt(
             local_vars.exit();
         }
 
-        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
+        mono::Stmt::Break { .. } | mono::Stmt::Continue { .. } => {}
     }
 }
 
 fn visit_expr(
-    expr: &mut ast::Expr,
+    expr: &mut mono::Expr,
     closures: &mut Vec<Closure>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, u32>,
 ) {
     match expr {
         //------------------------------------------------------------------------------------------
-        ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
+        mono::Expr::Fn(mono::FnExpr { sig, body, idx }) => {
             assert_eq!(*idx, 0);
 
             let mut fn_local_vars: ScopeSet<Id> = Default::default();
@@ -149,7 +149,7 @@ fn visit_expr(
             let closure_idx = closures.len() as u32;
             *idx = closure_idx;
             closures.push(Closure {
-                ast: ast::FnExpr {
+                mono: mono::FnExpr {
                     sig: sig.clone(),
                     body: body.clone(),
                     idx: closure_idx,
@@ -167,7 +167,7 @@ fn visit_expr(
             }
         }
 
-        ast::Expr::LocalVar(id) => {
+        mono::Expr::LocalVar(id) => {
             if !local_vars.is_bound(id) {
                 let idx = free_vars.len() as u32;
                 free_vars.insert(id.clone(), idx);
@@ -175,25 +175,25 @@ fn visit_expr(
         }
 
         //------------------------------------------------------------------------------------------
-        ast::Expr::TopVar(_)
-        | ast::Expr::Constr(_)
-        | ast::Expr::Char(_)
-        | ast::Expr::Self_
-        | ast::Expr::Int(_)
-        | ast::Expr::AssocFnSelect(_)
-        | ast::Expr::ConstrSelect(_) => {}
+        mono::Expr::TopVar(_)
+        | mono::Expr::Constr(_)
+        | mono::Expr::Char(_)
+        | mono::Expr::Self_
+        | mono::Expr::Int(_)
+        | mono::Expr::AssocFnSelect(_)
+        | mono::Expr::ConstrSelect(_) => {}
 
-        ast::Expr::Variant(ast::VariantExpr { id: _, args }) => {
+        mono::Expr::Variant(mono::VariantExpr { id: _, args }) => {
             for arg in args {
                 visit_expr(&mut arg.node.node, closures, local_vars, free_vars);
             }
         }
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
+        mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field: _ }) => {
             visit_expr(&mut object.node, closures, local_vars, free_vars);
         }
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
+        mono::Expr::MethodSelect(mono::MethodSelectExpr {
             object,
             method_ty_id: _,
             method_id: _,
@@ -202,44 +202,44 @@ fn visit_expr(
             visit_expr(&mut object.node, closures, local_vars, free_vars);
         }
 
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        mono::Expr::Call(mono::CallExpr { fun, args }) => {
             visit_expr(&mut fun.node, closures, local_vars, free_vars);
-            for ast::CallArg { name: _, expr } in args.iter_mut() {
+            for mono::CallArg { name: _, expr } in args.iter_mut() {
                 visit_expr(&mut expr.node, closures, local_vars, free_vars);
             }
         }
 
-        ast::Expr::String(parts) => {
+        mono::Expr::String(parts) => {
             for part in parts.iter_mut() {
                 match part {
-                    ast::StringPart::Str(_) => {}
-                    ast::StringPart::Expr(expr) => {
+                    mono::StringPart::Str(_) => {}
+                    mono::StringPart::Expr(expr) => {
                         visit_expr(&mut expr.node, closures, local_vars, free_vars);
                     }
                 }
             }
         }
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op: _ }) => {
+        mono::Expr::BinOp(mono::BinOpExpr { left, right, op: _ }) => {
             visit_expr(&mut left.node, closures, local_vars, free_vars);
             visit_expr(&mut right.node, closures, local_vars, free_vars);
         }
 
-        ast::Expr::UnOp(ast::UnOpExpr { op: _, expr }) => {
+        mono::Expr::UnOp(mono::UnOpExpr { op: _, expr }) => {
             visit_expr(&mut expr.node, closures, local_vars, free_vars)
         }
 
-        ast::Expr::Record(fields) => {
+        mono::Expr::Record(fields) => {
             for field in fields {
                 visit_expr(&mut field.node.node, closures, local_vars, free_vars);
             }
         }
 
-        ast::Expr::Return(l) => visit_expr(&mut l.node, closures, local_vars, free_vars),
+        mono::Expr::Return(l) => visit_expr(&mut l.node, closures, local_vars, free_vars),
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+        mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => {
             visit_expr(&mut scrutinee.node, closures, local_vars, free_vars);
-            for ast::Alt {
+            for mono::Alt {
                 pattern,
                 guard,
                 rhs,
@@ -257,7 +257,7 @@ fn visit_expr(
             }
         }
 
-        ast::Expr::If(ast::IfExpr {
+        mono::Expr::If(mono::IfExpr {
             branches,
             else_branch,
         }) => {
@@ -280,13 +280,13 @@ fn visit_expr(
     }
 }
 
-fn bind_pat_binders(pat: &ast::Pat, local_vars: &mut ScopeSet<Id>) {
+fn bind_pat_binders(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>) {
     match pat {
-        ast::Pat::Var(var) | ast::Pat::StrPfx(_, var) => local_vars.insert(var.clone()),
+        mono::Pat::Var(var) | mono::Pat::StrPfx(_, var) => local_vars.insert(var.clone()),
 
-        ast::Pat::Variant(ast::VariantPattern { constr: _, fields })
-        | ast::Pat::Record(fields)
-        | ast::Pat::Constr(ast::ConstrPattern {
+        mono::Pat::Variant(mono::VariantPattern { constr: _, fields })
+        | mono::Pat::Record(fields)
+        | mono::Pat::Constr(mono::ConstrPattern {
             constr: _,
             fields,
             ty_args: _,
@@ -296,9 +296,9 @@ fn bind_pat_binders(pat: &ast::Pat, local_vars: &mut ScopeSet<Id>) {
             }
         }
 
-        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
+        mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
-        ast::Pat::Or(pat1, _) => {
+        mono::Pat::Or(pat1, _) => {
             // Patterns bind same vars.
             bind_pat_binders(&pat1.node, local_vars);
         }
