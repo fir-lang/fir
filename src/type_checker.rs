@@ -21,7 +21,7 @@ use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
 use traits::*;
 use ty::*;
-pub use ty::{Kind, RecordOrVariant, Ty};
+pub use ty::{FunArgs, Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};

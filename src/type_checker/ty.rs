@@ -94,7 +94,6 @@ pub enum RecordOrVariant {
 /// - `Ty::Row`: an extension.
 type Extension = Option<Box<Ty>>;
 
-// Q: Same type as `TyArgs`, should we use the same type?
 #[derive(Debug, Clone, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum FunArgs {
     Positional(Vec<Ty>),

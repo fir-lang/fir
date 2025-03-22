@@ -208,11 +208,25 @@ impl Type {
                 exceptions,
             }) => {
                 buffer.push_str("Fn(");
-                for (i, arg) in args.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push_str(", ");
+                match args {
+                    FunArgs::Positional(args) => {
+                        for (i, arg) in args.iter().enumerate() {
+                            if i > 0 {
+                                buffer.push_str(", ");
+                            }
+                            arg.print(buffer);
+                        }
                     }
-                    arg.node.print(buffer);
+                    FunArgs::Named(args) => {
+                        for (i, (name, ty)) in args.iter().enumerate() {
+                            if i > 0 {
+                                buffer.push_str(", ");
+                            }
+                            buffer.push_str(name);
+                            buffer.push_str(": ");
+                            ty.print(buffer);
+                        }
+                    }
                 }
                 buffer.push(')');
                 if exceptions.is_some() || ret.is_some() {

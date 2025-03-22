@@ -66,9 +66,15 @@ pub struct VariantAlt {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnType {
-    pub args: Vec<L<Type>>,
+    pub args: FunArgs,
     pub ret: Option<L<Box<Type>>>,
     pub exceptions: Option<L<Box<Type>>>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum FunArgs {
+    Positional(Vec<Type>),
+    Named(TreeMap<Id, Type>),
 }
 
 #[derive(Debug, Clone)]

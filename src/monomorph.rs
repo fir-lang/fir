@@ -118,7 +118,7 @@ use crate::collections::*;
 use crate::interpolation::StringPart;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
-use crate::type_checker::{Kind, RecordOrVariant, Ty};
+use crate::type_checker::{FunArgs, Kind, RecordOrVariant, Ty};
 use crate::utils::*;
 
 use smol_str::SmolStr;
@@ -322,11 +322,6 @@ fn mono_top_fn(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) {
-    println!(
-        "mono_top_fn {:?}.{}",
-        &fun_decl.parent_ty, &fun_decl.name.node
-    );
-
     assert_eq!(fun_decl.sig.context.type_params.len(), ty_args.len());
 
     let ty_map: Map<Id, mono::Type> = fun_decl
@@ -822,11 +817,6 @@ fn mono_method(
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
 ) {
-    println!(
-        "mono_method method_ty_id={}, method_id={}, ty_args={:?}",
-        method_ty_id, method_id, ty_args
-    );
-
     if let Some(PolyTrait {
         ty_args: trait_ty_args,
         impls,
@@ -1280,18 +1270,14 @@ fn match_trait_impl(
 ) -> Option<Map<Id, mono::Type>> {
     debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{:?}", ty_args);
 
-    println!("Trying to match impl:");
-    println!("  impl tys: {:?}", &trait_impl.tys);
-    println!("  ty args:  {:?}", ty_args);
-
     let mut substs: Map<Id, mono::Type> = Default::default();
     for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
         if !match_(trait_ty, ty_arg, &mut substs) {
-            return dbg!(None);
+            return None;
         }
     }
 
-    dbg!(Some(substs))
+    Some(substs)
 }
 
 fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::Type>) -> bool {
@@ -1393,12 +1379,36 @@ fn mono_tc_ty(
         Ty::QVar(var) => ty_map.get(&var).unwrap().clone(),
 
         Ty::Fun {
-            args: _,
-            ret: _,
-            exceptions: _,
-        } => {
-            todo!()
-        }
+            args,
+            ret,
+            exceptions,
+        } => mono::Type::Fn(mono::FnType {
+            args: match args {
+                FunArgs::Positional(args) => mono::FunArgs::Positional(
+                    args.iter()
+                        .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
+                        .collect(),
+                ),
+                FunArgs::Named(args) => mono::FunArgs::Named(
+                    args.iter()
+                        .map(|(arg_name, arg)| {
+                            (
+                                arg_name.clone(),
+                                mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm),
+                            )
+                        })
+                        .collect(),
+                ),
+            },
+            ret: Some(ast::L {
+                loc: ast::Loc::dummy(),
+                node: Box::new(mono_tc_ty(&*ret, ty_map, poly_pgm, mono_pgm)),
+            }),
+            exceptions: exceptions.map(|ty| ast::L {
+                loc: ast::Loc::dummy(),
+                node: Box::new(mono_tc_ty(&*ty, ty_map, poly_pgm, mono_pgm)),
+            }),
+        }),
 
         Ty::Anonymous {
             labels,
@@ -1571,10 +1581,11 @@ fn mono_ast_ty(
             ret,
             exceptions: _,
         }) => mono::Type::Fn(mono::FnType {
-            args: args
-                .iter()
-                .map(|arg| arg.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)))
-                .collect(),
+            args: mono::FunArgs::Positional(
+                args.iter()
+                    .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
+                    .collect(),
+            ),
             ret: ret.as_ref().map(|ret| {
                 ret.map_as_ref(|ret| Box::new(mono_ast_ty(ret, ty_map, poly_pgm, mono_pgm)))
             }),

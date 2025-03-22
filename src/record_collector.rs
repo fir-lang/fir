@@ -178,8 +178,13 @@ fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>, variants: &mut Set<
             ret,
             exceptions,
         }) => {
-            for arg in args {
-                visit_ty(&arg.node, records, variants);
+            match args {
+                mono::FunArgs::Positional(args) => {
+                    args.iter().for_each(|ty| visit_ty(ty, records, variants));
+                }
+                mono::FunArgs::Named(args) => {
+                    args.values().for_each(|ty| visit_ty(ty, records, variants));
+                }
             }
             if let Some(ret) = ret {
                 visit_ty(&ret.node, records, variants);
