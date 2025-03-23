@@ -1376,6 +1376,9 @@ fn mono_tc_ty(
             })
         }
 
+        // TODO: This should be a panic. After type checking, type parameters of the function will
+        // be rigid type variables, which are represented as `Ty::Con`, and those will be mapped to
+        // mono types in the `Ty::Con` case above.
         Ty::QVar(var) => ty_map.get(&var).unwrap().clone(),
 
         Ty::Fun {
