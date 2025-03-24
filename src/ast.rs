@@ -686,6 +686,14 @@ pub struct FnExpr {
     pub idx: u32,
 }
 
+#[derive(Debug, Clone)]
+pub struct RecordExpr {
+    pub fields: Vec<Named<L<Expr>>>,
+
+    // Type of the record.
+    pub ty: Option<Ty>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
     /// Import path, e.g. `Fir.Prelude`.

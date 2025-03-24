@@ -238,7 +238,7 @@ pub struct UnOpExpr {
 
 #[derive(Debug, Clone)]
 pub struct VariantExpr {
-    pub con_idx: ConIdx,
+    pub id: Id,
     pub args: Vec<Named<L<Expr>>>,
 }
 
@@ -288,7 +288,7 @@ pub struct ConstrPattern {
 
 #[derive(Debug, Clone)]
 pub struct VariantPattern {
-    pub constr: ConIdx,
+    pub constr: Id,
     pub fields: Vec<Named<L<Pat>>>,
 }
 
@@ -715,9 +715,17 @@ fn lower_expr(expr: &mono::Expr, indices: &mut Indices) -> Expr {
 
         mono::Expr::UnOp(_) => panic!("Non-desugared UnOp"),
 
-        mono::Expr::Record(fields) => todo!(),
+        mono::Expr::Record(fields) => Expr::Record(
+            fields
+                .iter()
+                .map(|field| lower_nl_expr(field, indices))
+                .collect(),
+        ),
 
-        mono::Expr::Variant(mono::VariantExpr { id, args }) => todo!(),
+        mono::Expr::Variant(mono::VariantExpr { id, args }) => Expr::Variant(VariantExpr {
+            id: id.clone(),
+            args: args.iter().map(|arg| lower_nl_expr(arg, indices)).collect(),
+        }),
 
         mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(expr, indices)),
 
@@ -762,6 +770,10 @@ fn lower_expr(expr: &mono::Expr, indices: &mut Indices) -> Expr {
 
         mono::Expr::Fn(mono::FnExpr { .. }) => todo!(),
     }
+}
+
+fn lower_nl_expr(expr: &Named<L<mono::Expr>>, indices: &mut Indices) -> Named<L<Expr>> {
+    expr.map_as_ref(|expr| lower_l_expr(expr, indices))
 }
 
 fn lower_l_expr(expr: &L<mono::Expr>, indices: &mut Indices) -> L<Expr> {
@@ -810,9 +822,22 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
             })
         }
 
-        mono::Pat::Variant(_) => todo!(),
+        mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
+            Pat::Variant(VariantPattern {
+                constr: constr.clone(),
+                fields: fields
+                    .iter()
+                    .map(|field| lower_nl_pat(field, indices))
+                    .collect(),
+            })
+        }
 
-        mono::Pat::Record(_) => todo!(),
+        mono::Pat::Record(fields) => Pat::Record(
+            fields
+                .iter()
+                .map(|field| lower_nl_pat(field, indices))
+                .collect(),
+        ),
 
         mono::Pat::Ignore => Pat::Ignore,
 
@@ -831,6 +856,10 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
             Box::new(lower_l_pat(p2, indices)),
         ),
     }
+}
+
+fn lower_nl_pat(pat: &Named<L<mono::Pat>>, indices: &mut Indices) -> Named<L<Pat>> {
+    pat.map_as_ref(|pat| lower_l_pat(pat, indices))
 }
 
 fn lower_l_pat(pat: &L<mono::Pat>, indices: &mut Indices) -> L<Pat> {
