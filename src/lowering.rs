@@ -3,6 +3,7 @@
 
 use crate::collections::Map;
 use crate::mono_ast::{self as mono, AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
+use crate::record_collector::{collect_records, RecordShape, VariantShape};
 
 use smol_str::SmolStr;
 
@@ -24,6 +25,12 @@ pub struct LocalIdx(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ClosureIdx(u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct RecordIdx(u32);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct VariantIdx(u32);
 
 // For now we will monomorphise fully but allocate anything other than integeres, bools, and chars
 // as boxes. We also don't need to distinguish pointers from other word-sized things as we don't
@@ -191,7 +198,7 @@ pub enum Expr {
     Self_, // TODO: Should this be a `LocalVar`?
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
-    Record(Vec<Named<L<Expr>>>),
+    Record(RecordExpr),
     Variant(VariantExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
@@ -237,9 +244,16 @@ pub struct UnOpExpr {
 }
 
 #[derive(Debug, Clone)]
+pub struct RecordExpr {
+    pub fields: Vec<Named<L<Expr>>>,
+    pub idx: RecordIdx,
+}
+
+#[derive(Debug, Clone)]
 pub struct VariantExpr {
     pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
+    pub fields: Vec<Named<L<Expr>>>,
+    pub idx: VariantIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -271,8 +285,8 @@ pub struct IfExpr {
 pub enum Pat {
     Var(LocalIdx),
     Constr(ConstrPattern),
+    Record(RecordPattern),
     Variant(VariantPattern),
-    Record(Vec<Named<L<Pat>>>),
     Ignore,
     Str(String),
     Char(char),
@@ -287,9 +301,16 @@ pub struct ConstrPattern {
 }
 
 #[derive(Debug, Clone)]
+pub struct RecordPattern {
+    pub fields: Vec<Named<L<Pat>>>,
+    pub idx: RecordIdx,
+}
+
+#[derive(Debug, Clone)]
 pub struct VariantPattern {
     pub constr: Id,
     pub fields: Vec<Named<L<Pat>>>,
+    pub idx: VariantIdx,
 }
 
 #[derive(Debug)]
@@ -308,9 +329,27 @@ struct Indices {
     fun_nums: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
     assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
     local_nums: Map<Id, LocalIdx>,
+    record_indices: Map<RecordShape, RecordIdx>,
+    variant_indices: Map<VariantShape, VariantIdx>,
 }
 
 pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
+    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
+
+    let record_indices: Map<RecordShape, RecordIdx> = record_shapes
+        .into_iter()
+        .zip(std::iter::successors(Some(RecordIdx(0)), |i| {
+            Some(RecordIdx(i.0 + 1))
+        }))
+        .collect();
+
+    let variant_indices: Map<VariantShape, VariantIdx> = variant_shapes
+        .into_iter()
+        .zip(std::iter::successors(Some(VariantIdx(0)), |i| {
+            Some(VariantIdx(i.0 + 1))
+        }))
+        .collect();
+
     // Number all declarations first, then lower the program.
     let mut product_con_nums: Map<Id, Map<Vec<mono::Type>, ConIdx>> = Default::default();
     let mut sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>> = Default::default();
@@ -455,6 +494,8 @@ pub fn lower(mono_pgm: &mono::MonoPgm) -> LoweredPgm {
         fun_nums,
         assoc_fun_nums,
         local_nums: Default::default(), // updated in each function
+        record_indices,
+        variant_indices,
     };
 
     // Lower top-level functions.
@@ -715,17 +756,31 @@ fn lower_expr(expr: &mono::Expr, indices: &mut Indices) -> Expr {
 
         mono::Expr::UnOp(_) => panic!("Non-desugared UnOp"),
 
-        mono::Expr::Record(fields) => Expr::Record(
-            fields
-                .iter()
-                .map(|field| lower_nl_expr(field, indices))
-                .collect(),
-        ),
+        mono::Expr::Record(fields) => {
+            let idx = *indices
+                .record_indices
+                .get(&RecordShape::from_named_things(fields))
+                .unwrap();
+            Expr::Record(RecordExpr {
+                fields: fields
+                    .iter()
+                    .map(|field| lower_nl_expr(field, indices))
+                    .collect(),
+                idx,
+            })
+        }
 
-        mono::Expr::Variant(mono::VariantExpr { id, args }) => Expr::Variant(VariantExpr {
-            id: id.clone(),
-            args: args.iter().map(|arg| lower_nl_expr(arg, indices)).collect(),
-        }),
+        mono::Expr::Variant(mono::VariantExpr { id, args }) => {
+            let idx = *indices
+                .variant_indices
+                .get(&VariantShape::from_con_and_fields(id, args))
+                .unwrap();
+            Expr::Variant(VariantExpr {
+                id: id.clone(),
+                fields: args.iter().map(|arg| lower_nl_expr(arg, indices)).collect(),
+                idx,
+            })
+        }
 
         mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(expr, indices)),
 
@@ -822,22 +877,34 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices) -> Pat {
             })
         }
 
+        mono::Pat::Record(fields) => {
+            let idx = *indices
+                .record_indices
+                .get(&RecordShape::from_named_things(fields))
+                .unwrap();
+            Pat::Record(RecordPattern {
+                fields: fields
+                    .iter()
+                    .map(|field| lower_nl_pat(field, indices))
+                    .collect(),
+                idx,
+            })
+        }
+
         mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
+            let idx = *indices
+                .variant_indices
+                .get(&VariantShape::from_con_and_fields(constr, fields))
+                .unwrap();
             Pat::Variant(VariantPattern {
                 constr: constr.clone(),
                 fields: fields
                     .iter()
                     .map(|field| lower_nl_pat(field, indices))
                     .collect(),
+                idx,
             })
         }
-
-        mono::Pat::Record(fields) => Pat::Record(
-            fields
-                .iter()
-                .map(|field| lower_nl_pat(field, indices))
-                .collect(),
-        ),
 
         mono::Pat::Ignore => Pat::Ignore,
 
