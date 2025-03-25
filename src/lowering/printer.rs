@@ -187,21 +187,90 @@ impl Ty {
 impl Stmt {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Stmt::Let(_) => todo!(),
+            Stmt::Let(LetStmt { lhs, rhs }) => {
+                buffer.push_str("let");
+                lhs.node.print(buffer);
+                buffer.push_str(" = ");
+                rhs.node.print(buffer);
+            }
 
-            Stmt::Assign(_) => todo!(),
+            Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
+                lhs.node.print(buffer);
+                buffer.push(' ');
+                buffer.push_str(match op {
+                    AssignOp::Eq => "=",
+                    AssignOp::PlusEq => "+=",
+                    AssignOp::MinusEq => "-=",
+                    AssignOp::StarEq => "*=",
+                });
+                buffer.push(' ');
+                rhs.node.print(buffer);
+            }
 
             Stmt::Expr(expr) => expr.node.print(buffer),
 
-            Stmt::For(_) => todo!(),
+            Stmt::For(ForStmt {
+                label,
+                pat,
+                expr,
+                body,
+            }) => {
+                if let Some(label) = label {
+                    write!(buffer, "{}: ", label).unwrap();
+                }
+                buffer.push_str("for ");
+                pat.node.print(buffer);
+                buffer.push_str(" in ");
+                expr.node.print(buffer);
+                buffer.push_str(":\n");
+                for stmt in body {
+                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
+                    stmt.node.print(buffer, indent + 2);
+                }
+            }
 
-            Stmt::While(_) => todo!(),
+            Stmt::While(WhileStmt { label, cond, body }) => {
+                if let Some(label) = label {
+                    write!(buffer, "{}: ", label).unwrap();
+                }
+                buffer.push_str("while ");
+                cond.node.print(buffer);
+                buffer.push_str(":\n");
+                for stmt in body {
+                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
+                    stmt.node.print(buffer, indent + 2);
+                }
+            }
 
-            Stmt::WhileLet(_) => todo!(),
+            Stmt::WhileLet(WhileLetStmt {
+                label,
+                pat,
+                cond,
+                body,
+            }) => {
+                if let Some(label) = label {
+                    write!(buffer, "{}: ", label).unwrap();
+                }
+                buffer.push_str("while let ");
+                pat.node.print(buffer);
+                buffer.push_str(" = ");
+                cond.node.print(buffer);
+                buffer.push_str(":\n");
+                for stmt in body {
+                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
+                    stmt.node.print(buffer, indent + 2);
+                }
+            }
 
-            Stmt::Break { label: _, level: _ } => todo!(),
+            Stmt::Break { label, level: _ } => match label {
+                Some(label) => write!(buffer, "break {}", label).unwrap(),
+                None => buffer.push_str("break"),
+            },
 
-            Stmt::Continue { label: _, level: _ } => todo!(),
+            Stmt::Continue { label, level: _ } => match label {
+                Some(label) => write!(buffer, "continue {}", label).unwrap(),
+                None => buffer.push_str("continue"),
+            },
         }
     }
 }
@@ -209,43 +278,219 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Expr::LocalVar(_) => todo!(),
+            Expr::LocalVar(idx) => write!(buffer, "local{}", idx.0).unwrap(),
 
-            Expr::TopVar(_) => todo!(),
+            Expr::TopVar(idx) => write!(buffer, "fun{}", idx.0).unwrap(),
 
-            Expr::Constr(_) => todo!(),
+            Expr::Constr(idx) => write!(buffer, "con{}", idx.0).unwrap(),
 
-            Expr::FieldSelect(_) => todo!(),
+            Expr::FieldSelect(FieldSelectExpr { object, field }) => {
+                object.node.print(buffer);
+                buffer.push('.');
+                buffer.push_str(field);
+            }
 
-            Expr::MethodSelect(_) => todo!(),
+            Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
+                object.node.print(buffer);
+                write!(buffer, ".fun{}", fun_idx.0).unwrap();
+            }
 
-            Expr::AssocFnSelect(_) => todo!(),
+            Expr::AssocFnSelect(idx) => write!(buffer, "assocfun{}", idx.0).unwrap(),
 
-            Expr::Call(_) => todo!(),
+            Expr::Call(CallExpr { fun, args }) => {
+                fun.node.print(buffer);
+                buffer.push('(');
+                for (i, CallArg { name, expr }) in args.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(name) = name {
+                        buffer.push_str(name);
+                        buffer.push_str(" = ");
+                    }
+                    expr.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
-            Expr::Int(_) => todo!(),
+            Expr::Int(int) => mono::Expr::Int(int.clone()).print(buffer, 0),
 
-            Expr::String(_) => todo!(),
+            Expr::String(parts) => {
+                buffer.push('"');
+                for part in parts {
+                    match part {
+                        StringPart::Str(str) => buffer.push_str(str), // TODO: escaping
+                        StringPart::Expr(expr) => {
+                            buffer.push('`');
+                            expr.node.print(buffer);
+                            buffer.push('`');
+                        }
+                    }
+                }
+                buffer.push('"');
+            }
 
-            Expr::Char(_) => todo!(),
+            Expr::Char(char) => {
+                buffer.push('\'');
+                buffer.push(*char); // TODO: escaping
+                buffer.push('\'');
+            }
 
             Expr::Self_ => todo!(),
 
-            Expr::BoolAnd(_, _) => todo!(),
+            Expr::BoolAnd(e1, e2) => {
+                e1.node.print(buffer);
+                buffer.push_str(" && ");
+                e2.node.print(buffer);
+            }
 
-            Expr::BoolOr(_, _) => todo!(),
+            Expr::BoolOr(e1, e2) => {
+                e1.node.print(buffer);
+                buffer.push_str(" || ");
+                e2.node.print(buffer);
+            }
 
-            Expr::Record(_) => todo!(),
+            Expr::Record(RecordExpr { fields, idx }) => {
+                write!(buffer, "record{}(", idx.0).unwrap();
+                for (i, field) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(name) = &field.name {
+                        buffer.push_str(name);
+                        buffer.push_str(" = ");
+                    }
+                    field.node.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
-            Expr::Variant(_) => todo!(),
+            Expr::Variant(VariantExpr { id, fields, idx }) => {
+                write!(buffer, "~{}{}", id, idx.0).unwrap();
+                if !fields.is_empty() {
+                    buffer.push('(');
+                    for (i, arg) in fields.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push_str(", ");
+                        }
+                        if let Some(name) = &arg.name {
+                            buffer.push_str(name);
+                            buffer.push_str(" = ");
+                        }
+                        arg.node.node.print(buffer);
+                    }
+                    buffer.push(')');
+                }
+            }
 
-            Expr::Return(_) => todo!(),
+            Expr::Return(expr) => {
+                buffer.push_str("return ");
+                expr.node.print(buffer);
+            }
 
-            Expr::Match(_) => todo!(),
+            Expr::Match(MatchExpr { scrutinee, alts }) => {
+                buffer.push_str("match ");
+                scrutinee.node.print(buffer);
+                buffer.push_str(":\n");
+                for (
+                    i,
+                    Alt {
+                        pattern,
+                        guard,
+                        rhs,
+                    },
+                ) in alts.iter().enumerate()
+                {
+                    if i != 0 {
+                        buffer.push('\n');
+                    }
+                    buffer.push_str(&INDENTS[0..4]);
+                    assert!(guard.is_none()); // TODO
+                    pattern.node.print(buffer);
+                    buffer.push_str(":\n");
+                    for (j, stmt) in rhs.iter().enumerate() {
+                        if j != 0 {
+                            buffer.push('\n');
+                        }
+                        buffer.push_str(&INDENTS[0..8]);
+                        stmt.node.print(buffer, 8);
+                    }
+                }
+            }
 
-            Expr::If(_) => todo!(),
+            Expr::If(IfExpr {
+                branches,
+                else_branch,
+            }) => {
+                buffer.push_str("if ");
+                branches[0].0.node.print(buffer);
+                buffer.push_str(":\n");
+                for (i, stmt) in branches[0].1.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push('\n');
+                    }
+                    buffer.push_str(&INDENTS[0..4]);
+                    stmt.node.print(buffer, 4);
+                }
+                for branch in &branches[1..] {
+                    buffer.push('\n');
+                    buffer.push_str("elif ");
+                    branch.0.node.print(buffer);
+                    buffer.push_str(":\n");
+                    for (i, stmt) in branch.1.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push('\n');
+                        }
+                        buffer.push_str(&INDENTS[0..4]);
+                        stmt.node.print(buffer, 4);
+                    }
+                }
+                if let Some(else_branch) = else_branch {
+                    buffer.push('\n');
+                    buffer.push_str("else:\n");
+                    for (i, stmt) in else_branch.iter().enumerate() {
+                        if i != 0 {
+                            buffer.push('\n');
+                        }
+                        buffer.push_str(&INDENTS[0..4]);
+                        stmt.node.print(buffer, 4);
+                    }
+                }
+            }
 
-            Expr::ClosureAlloc(_) => todo!(),
+            Expr::ClosureAlloc(idx) => write!(buffer, "closure{}", idx.0).unwrap(),
+        }
+    }
+}
+
+impl Pat {
+    pub fn print(&self, buffer: &mut String) {
+        match self {
+            Pat::Var(idx) => todo!(),
+
+            Pat::Constr(ConstrPattern { constr, fields }) => todo!(),
+
+            Pat::Record(RecordPattern { fields, idx }) => todo!(),
+
+            Pat::Variant(VariantPattern {
+                constr,
+                fields,
+                idx,
+            }) => todo!(),
+
+            Pat::Ignore => todo!(),
+
+            Pat::Str(str) => todo!(),
+
+            Pat::Char(char) => todo!(),
+
+            Pat::StrPfx(str, idx) => todo!(),
+
+            Pat::Or(p1, p2) => {
+                p1.node.print(buffer);
+                buffer.push_str(" | ");
+                p2.node.print(buffer);
+            }
         }
     }
 }
@@ -264,3 +509,5 @@ fn print_ty_args(ty_args: &[mono::Type], buffer: &mut String) {
     }
     buffer.push(']');
 }
+
+const INDENTS: &str = "                                                  ";
