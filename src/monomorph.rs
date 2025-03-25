@@ -791,7 +791,6 @@ fn mono_expr(
                     exceptions: mono_opt_l_ty(&sig.exceptions, ty_map, poly_pgm, mono_pgm),
                 },
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
-                idx: 0,
             })
         }
     }

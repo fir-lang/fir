@@ -379,7 +379,7 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
             }
         }
 
-        mono::Expr::Fn(mono::FnExpr { sig, body, idx: _ }) => {
+        mono::Expr::Fn(mono::FnExpr { sig, body }) => {
             visit_fun_sig(sig, records, variants);
             for stmt in body {
                 visit_stmt(&stmt.node, records, variants);

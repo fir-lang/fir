@@ -704,7 +704,7 @@ impl Expr {
                 }
             }
 
-            Expr::Fn(FnExpr { sig, body, idx: _ }) => {
+            Expr::Fn(FnExpr { sig, body }) => {
                 buffer.push_str("fn");
                 buffer.push('(');
                 for (i, (param_name, param_ty)) in sig.params.iter().enumerate() {

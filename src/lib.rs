@@ -1,7 +1,7 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod ast;
-mod closure_collector;
+// mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
@@ -143,13 +143,15 @@ mod native {
             return;
         }
 
-        let mono_pgm = monomorph::monomorphise(&module, &opts.main);
+        let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
             mono_ast::printer::print_pgm(&mono_pgm);
         }
 
-        let _lowered_pgm = lowering::lower(&mono_pgm);
+        let lowered_pgm = lowering::lower(&mut mono_pgm);
+        println!("==================================================");
+        lowering::printer::print_pgm(&lowered_pgm);
 
         // let mut w = std::io::stdout();
         // program_args.insert(0, program);

@@ -308,7 +308,6 @@ pub struct UnOpExpr {
 pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
-    pub idx: u32,
 }
 
 #[derive(Debug, Clone)]
