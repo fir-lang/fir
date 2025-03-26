@@ -757,6 +757,8 @@ impl Pat {
                     buffer.push_str(constr);
                 }
 
+                print_ty_args(ty_args, buffer);
+
                 if !fields.is_empty() {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {

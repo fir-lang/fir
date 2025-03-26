@@ -6,6 +6,7 @@ pub mod printer;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
+use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -80,12 +81,28 @@ impl Ty {
 
 #[derive(Debug)]
 pub enum Fun {
-    Bultin(BuiltinFunDecl),
+    Builtin(BuiltinFunDecl),
     Source(SourceFunDecl),
 }
 
 #[derive(Debug)]
-pub enum BuiltinFunDecl {}
+pub enum BuiltinFunDecl {
+    Panic,
+    PrintStr,
+    ShrI8,
+    ShrU8,
+    ShrI32,
+    ShrU32,
+    BitAndI8,
+    BitAndU8,
+    BitAndI32,
+    BitAndU32,
+    ToStrI8,
+    ToStrU8,
+    ToStrI32,
+    ToStrU32,
+    U32AsU8,
+}
 
 #[derive(Debug)]
 pub struct SourceFunDecl {
@@ -355,9 +372,6 @@ struct Indices {
     local_nums: Map<Id, LocalIdx>,
     record_indices: Map<RecordShape, RecordIdx>,
     variant_indices: Map<VariantShape, VariantIdx>,
-
-    /// Closure indices are added to the AST nodes as each closure is unique.
-    next_closure_index: ClosureIdx,
 }
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
@@ -490,12 +504,28 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         lowered_pgm.cons.push(Con::Builtin(array_con));
                     }
 
-                    "I8" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I8)),
-                    "U8" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U8)),
-                    "I32" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I32)),
-                    "U32" => lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U32)),
+                    "I8" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I8));
+                    }
+
+                    "U8" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U8));
+                    }
+
+                    "I32" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I32));
+                    }
+
+                    "U32" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U32));
+                    }
 
                     "Void" => {
+                        assert_eq!(con_ty_args.len(), 0);
                         // Lower as unit as we can't express empty types in the lowered
                         // representation.
                         // TODO: Could we just skip this?
@@ -523,11 +553,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         local_nums: Default::default(), // updated in each function
         record_indices,
         variant_indices,
-        next_closure_index: ClosureIdx(0),
     };
 
     // Lower top-level functions.
-    for (_fun_id, fun_ty_map) in &mono_pgm.funs {
+    for (fun_id, fun_ty_map) in &mono_pgm.funs {
         for (fun_ty_args, fun_decl) in fun_ty_map {
             let idx = FunIdx(lowered_pgm.funs.len() as u32);
             if fun_decl.body.is_some() {
@@ -540,26 +569,162 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 );
                 lowered_pgm.funs.push(Fun::Source(source_fun));
             } else {
-                // TODO: built-ins
+                match fun_id.as_str() {
+                    "printStr" => {
+                        assert_eq!(fun_ty_args.len(), 1); // exception
+                        lowered_pgm
+                            .funs
+                            .push(Fun::Builtin(BuiltinFunDecl::PrintStr));
+                    }
+
+                    "panic" => {
+                        assert_eq!(fun_ty_args.len(), 2); // ToStr, exception
+                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic));
+                    }
+
+                    other => {
+                        panic!(
+                            "Unknown built-in function: {} (ty args = {:?})",
+                            other, fun_ty_args
+                        );
+                    }
+                }
             }
         }
     }
 
     // Number associated functions.
-    for (_fun_id, fun_ty_map) in &mono_pgm.funs {
-        for (fun_ty_args, fun_decl) in fun_ty_map {
-            let idx = FunIdx(lowered_pgm.funs.len() as u32);
-            if fun_decl.body.is_some() {
-                let source_fun = lower_source_fun(
-                    fun_decl,
-                    idx,
-                    fun_ty_args,
-                    &mut indices,
-                    &mut lowered_pgm.closures,
-                );
-                lowered_pgm.funs.push(Fun::Source(source_fun));
-            } else {
-                // TODO: built-ins
+    for (ty, assoc_fun_map) in &mono_pgm.associated {
+        for (fun, fun_ty_map) in assoc_fun_map {
+            for (fun_ty_args, fun_decl) in fun_ty_map {
+                let idx = FunIdx(lowered_pgm.funs.len() as u32);
+                if fun_decl.body.is_some() {
+                    let source_fun = lower_source_fun(
+                        fun_decl,
+                        idx,
+                        fun_ty_args,
+                        &mut indices,
+                        &mut lowered_pgm.closures,
+                    );
+                    lowered_pgm.funs.push(Fun::Source(source_fun));
+                } else {
+                    match (ty.as_str(), fun.as_str()) {
+                        ("Shr", "__shr") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ShrI8));
+                                        }
+                                        "U8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ShrU8));
+                                        }
+                                        "I32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ShrI32));
+                                        }
+                                        "U32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ShrU32));
+                                        }
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
+                        ("BitAnd", "__bitand") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndI8));
+                                        }
+                                        "U8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndU8));
+                                        }
+                                        "I32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndI32));
+                                        }
+                                        "U32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::BitAndU32));
+                                        }
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
+                        ("ToStr", "toStr") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args }) => {
+                                    match name.as_str() {
+                                        "I8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI8));
+                                        }
+                                        "U8" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU8));
+                                        }
+                                        "I32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrI32));
+                                        }
+                                        "U32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::ToStrU32));
+                                        }
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
+                        ("U32", "asU8") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U32AsU8));
+                        }
+
+                        (_, _) => todo!("Built-in function {}.{}", ty, fun),
+                    }
+                }
             }
         }
     }
@@ -719,6 +884,7 @@ fn lower_l_stmt(
 ///   the current function and not bound in the current function.
 fn lower_expr(
     expr: &mono::Expr,
+    loc: &mono::Loc,
     closures: &mut Vec<Closure>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, LocalIdx>,
@@ -731,7 +897,14 @@ fn lower_expr(
                 free_vars.insert(var.clone(), idx);
                 Expr::LocalVar(idx)
             } else {
-                Expr::LocalVar(*indices.local_nums.get(var).unwrap())
+                Expr::LocalVar(*indices.local_nums.get(var).unwrap_or_else(|| {
+                    panic!(
+                        "{}: BUG: Variable {} is not in local nums ({:?})",
+                        loc_display(loc),
+                        var,
+                        indices.local_nums,
+                    )
+                }))
             }
         }
 
@@ -1028,23 +1201,26 @@ fn lower_nl_expr(
 }
 
 fn lower_l_expr(
-    expr: &L<mono::Expr>,
+    l_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
 ) -> L<Expr> {
-    expr.map_as_ref(|expr| lower_expr(expr, closures, local_vars, free_vars, indices))
+    l_expr
+        .map_as_ref(|expr| lower_expr(expr, &l_expr.loc, closures, local_vars, free_vars, indices))
 }
 
 fn lower_bl_expr(
-    expr: &Box<L<mono::Expr>>,
+    bl_expr: &Box<L<mono::Expr>>,
     closures: &mut Vec<Closure>,
     local_vars: &mut ScopeSet<Id>,
     free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
 ) -> Box<L<Expr>> {
-    Box::new(expr.map_as_ref(|expr| lower_expr(expr, closures, local_vars, free_vars, indices)))
+    Box::new(bl_expr.map_as_ref(|expr| {
+        lower_expr(expr, &bl_expr.loc, closures, local_vars, free_vars, indices)
+    }))
 }
 
 fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indices) -> Pat {
@@ -1170,6 +1346,8 @@ fn lower_source_fun(
         });
         local_nums.insert(param.clone(), LocalIdx(local_nums.len() as u32));
     }
+
+    indices.local_nums = local_nums;
 
     let mut local_vars: ScopeSet<Id> = Default::default();
     for (param, _) in &fun.sig.params {

@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -98,15 +98,6 @@ pub struct FunDecl {
     pub name: L<Id>,
     pub sig: FunSig,
     pub body: Option<Vec<L<Stmt>>>,
-}
-
-impl FunDecl {
-    pub fn num_params(&self) -> u32 {
-        (match self.sig.self_ {
-            SelfParam::No => 0,
-            SelfParam::Implicit | SelfParam::Explicit(_) => 1,
-        }) + (self.sig.params.len() as u32)
-    }
 }
 
 #[derive(Debug, Clone)]

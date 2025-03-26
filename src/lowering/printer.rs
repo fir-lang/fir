@@ -59,7 +59,7 @@ impl LoweredPgm {
         for (fun_idx, fun) in self.funs.iter().enumerate() {
             write!(buffer, "Fun {}: ", fun_idx).unwrap();
             match fun {
-                Fun::Bultin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
+                Fun::Builtin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
 
                 Fun::Source(SourceFunDecl {
                     parent_ty,
