@@ -109,14 +109,11 @@ impl LoweredPgm {
                     buffer.push('\n');
 
                     for stmt in body {
+                        buffer.push_str(&INDENTS[0..2]);
                         stmt.node.print(buffer, 2);
                     }
                 }
             }
-            buffer.push('\n');
-        }
-
-        if !self.funs.is_empty() {
             buffer.push('\n');
         }
 
@@ -171,8 +168,11 @@ impl LoweredPgm {
             buffer.push('\n');
 
             for stmt in body {
+                buffer.push_str(&INDENTS[0..2]);
                 stmt.node.print(buffer, 2);
             }
+
+            buffer.push('\n');
         }
     }
 }
@@ -188,7 +188,7 @@ impl Stmt {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
             Stmt::Let(LetStmt { lhs, rhs }) => {
-                buffer.push_str("let");
+                buffer.push_str("let ");
                 lhs.node.print(buffer);
                 buffer.push_str(" = ");
                 rhs.node.print(buffer);
@@ -272,6 +272,8 @@ impl Stmt {
                 None => buffer.push_str("continue"),
             },
         }
+
+        buffer.push('\n');
     }
 }
 
@@ -351,7 +353,7 @@ impl Expr {
             }
 
             Expr::Record(RecordExpr { fields, idx }) => {
-                write!(buffer, "record{}(", idx.0).unwrap();
+                write!(buffer, "rec{}(", idx.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
@@ -408,10 +410,7 @@ impl Expr {
                     assert!(guard.is_none()); // TODO
                     pattern.node.print(buffer);
                     buffer.push_str(":\n");
-                    for (j, stmt) in rhs.iter().enumerate() {
-                        if j != 0 {
-                            buffer.push('\n');
-                        }
+                    for stmt in rhs {
                         buffer.push_str(&INDENTS[0..8]);
                         stmt.node.print(buffer, 8);
                     }
@@ -425,10 +424,7 @@ impl Expr {
                 buffer.push_str("if ");
                 branches[0].0.node.print(buffer);
                 buffer.push_str(":\n");
-                for (i, stmt) in branches[0].1.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
+                for stmt in &branches[0].1 {
                     buffer.push_str(&INDENTS[0..4]);
                     stmt.node.print(buffer, 4);
                 }
@@ -437,10 +433,7 @@ impl Expr {
                     buffer.push_str("elif ");
                     branch.0.node.print(buffer);
                     buffer.push_str(":\n");
-                    for (i, stmt) in branch.1.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push('\n');
-                        }
+                    for stmt in &branch.1 {
                         buffer.push_str(&INDENTS[0..4]);
                         stmt.node.print(buffer, 4);
                     }
@@ -448,10 +441,7 @@ impl Expr {
                 if let Some(else_branch) = else_branch {
                     buffer.push('\n');
                     buffer.push_str("else:\n");
-                    for (i, stmt) in else_branch.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push('\n');
-                        }
+                    for stmt in else_branch {
                         buffer.push_str(&INDENTS[0..4]);
                         stmt.node.print(buffer, 4);
                     }
@@ -466,25 +456,77 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Pat::Var(idx) => todo!(),
+            Pat::Var(idx) => write!(buffer, "local{}", idx.0).unwrap(),
 
-            Pat::Constr(ConstrPattern { constr, fields }) => todo!(),
+            Pat::Constr(ConstrPattern { constr, fields }) => {
+                write!(buffer, "con{}(", constr.0).unwrap();
+                for (i, field) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(name) = &field.name {
+                        write!(buffer, "{}: ", name).unwrap();
+                    }
+                    field.node.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
-            Pat::Record(RecordPattern { fields, idx }) => todo!(),
+            Pat::Record(RecordPattern { fields, idx }) => {
+                write!(buffer, "rec{}(", idx.0).unwrap();
+                for (i, field) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(name) = &field.name {
+                        write!(buffer, "{}: ", name).unwrap();
+                    }
+                    field.node.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
             Pat::Variant(VariantPattern {
                 constr,
                 fields,
                 idx,
-            }) => todo!(),
+            }) => {
+                write!(buffer, "~{}{}(", constr, idx.0).unwrap();
+                for (i, field) in fields.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(name) = &field.name {
+                        write!(buffer, "{}: ", name).unwrap();
+                    }
+                    field.node.node.print(buffer);
+                }
+                buffer.push(')');
+            }
 
-            Pat::Ignore => todo!(),
+            Pat::Ignore => {
+                buffer.push('_');
+            }
 
-            Pat::Str(str) => todo!(),
+            Pat::Str(str) => {
+                buffer.push('"');
+                buffer.push_str(str); // TOOD: escaping
+                buffer.push('"');
+            }
 
-            Pat::Char(char) => todo!(),
+            Pat::Char(char) => {
+                buffer.push('\'');
+                buffer.push(*char); // TODO: escaping
+                buffer.push('\'');
+            }
 
-            Pat::StrPfx(str, idx) => todo!(),
+            Pat::StrPfx(str, idx) => {
+                buffer.push('"');
+                buffer.push_str(str); // TODO: escaping
+                buffer.push('"');
+                buffer.push(' ');
+                write!(buffer, "local{}", idx.0).unwrap();
+            }
 
             Pat::Or(p1, p2) => {
                 p1.node.print(buffer);
