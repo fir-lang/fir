@@ -1,4 +1,4 @@
-// auto-generated: "lalrpop 0.22.0"
+// auto-generated: "lalrpop 0.22.1"
 // sha3: 5227b9ed6e5d05e91eece6c9c590ee988c6b6e74d8cd9e052d35031f1c0915d5
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -17,7 +17,7 @@ use self::__lalrpop_util::state_machine as __state_machine;
 extern crate alloc;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::never_loop, clippy::match_single_binding, clippy::needless_raw_string_hashes)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
 mod __parse__LExpr {
 
     use crate::ast::*;
@@ -1880,6 +1880,7 @@ mod __parse__LExpr {
             _ => 0,
         }
     }
+    #[allow(clippy::needless_raw_string_hashes)]
     const __TERMINAL: &[&str] = &[
         r###"UpperId"###,
         r###"TildeUpperId"###,
@@ -13241,7 +13242,7 @@ mod __parse__LExpr {
 pub use self::__parse__LExpr::LExprParser;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::never_loop, clippy::match_single_binding, clippy::needless_raw_string_hashes)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
 mod __parse__LStmt {
 
     use crate::ast::*;
@@ -15104,6 +15105,7 @@ mod __parse__LStmt {
             _ => 0,
         }
     }
+    #[allow(clippy::needless_raw_string_hashes)]
     const __TERMINAL: &[&str] = &[
         r###"UpperId"###,
         r###"TildeUpperId"###,
@@ -26465,7 +26467,7 @@ mod __parse__LStmt {
 pub use self::__parse__LStmt::LStmtParser;
 
 #[rustfmt::skip]
-#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::never_loop, clippy::match_single_binding, clippy::needless_raw_string_hashes)]
+#[allow(explicit_outlives_requirements, non_snake_case, non_camel_case_types, unused_mut, unused_variables, unused_imports, unused_parens, clippy::needless_lifetimes, clippy::type_complexity, clippy::needless_return, clippy::too_many_arguments, clippy::match_single_binding)]
 mod __parse__TopDecls {
 
     use crate::ast::*;
@@ -29079,6 +29081,7 @@ mod __parse__TopDecls {
             _ => 0,
         }
     }
+    #[allow(clippy::needless_raw_string_hashes)]
     const __TERMINAL: &[&str] = &[
         r###"UpperId"###,
         r###"TildeUpperId"###,
