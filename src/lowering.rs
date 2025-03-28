@@ -434,13 +434,13 @@ pub struct ClosureFv {
 
 #[derive(Debug)]
 struct Indices {
-    product_con_nums: Map<Id, Map<Vec<mono::Type>, ConIdx>>,
-    sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>>,
-    fun_nums: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
-    assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
-    local_nums: Map<Id, LocalIdx>,
-    record_indices: Map<RecordShape, RecordIdx>,
-    variant_indices: Map<VariantShape, VariantIdx>,
+    product_cons: Map<Id, Map<Vec<mono::Type>, ConIdx>>,
+    sum_cons: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>>,
+    funs: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
+    assoc_funs: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
+    locals: Map<Id, LocalIdx>,
+    records: Map<RecordShape, RecordIdx>,
+    variants: Map<VariantShape, VariantIdx>,
 }
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
@@ -629,13 +629,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     let mut indices = Indices {
-        product_con_nums,
-        sum_con_nums,
-        fun_nums,
-        assoc_fun_nums,
-        local_nums: Default::default(), // updated in each function
-        record_indices,
-        variant_indices,
+        product_cons: product_con_nums,
+        sum_cons: sum_con_nums,
+        funs: fun_nums,
+        assoc_funs: assoc_fun_nums,
+        locals: Default::default(), // updated in each function
+        records: record_indices,
+        variants: variant_indices,
     };
 
     // Lower top-level functions.
@@ -1333,29 +1333,24 @@ fn lower_expr(
                 free_vars.insert(var.clone(), idx);
                 Expr::LocalVar(idx)
             } else {
-                Expr::LocalVar(*indices.local_nums.get(var).unwrap_or_else(|| {
+                Expr::LocalVar(*indices.locals.get(var).unwrap_or_else(|| {
                     panic!(
                         "{}: BUG: Variable {} is not in local nums ({:?})",
                         loc_display(loc),
                         var,
-                        indices.local_nums,
+                        indices.locals,
                     )
                 }))
             }
         }
 
         mono::Expr::TopVar(mono::VarExpr { id, ty_args }) => {
-            Expr::TopVar(*indices.fun_nums.get(id).unwrap().get(ty_args).unwrap())
+            Expr::TopVar(*indices.funs.get(id).unwrap().get(ty_args).unwrap())
         }
 
-        mono::Expr::Constr(mono::ConstrExpr { id, ty_args }) => Expr::Constr(
-            *indices
-                .product_con_nums
-                .get(id)
-                .unwrap()
-                .get(ty_args)
-                .unwrap(),
-        ),
+        mono::Expr::Constr(mono::ConstrExpr { id, ty_args }) => {
+            Expr::Constr(*indices.product_cons.get(id).unwrap().get(ty_args).unwrap())
+        }
 
         mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
             ty,
@@ -1363,7 +1358,7 @@ fn lower_expr(
             ty_args,
         }) => Expr::Constr(
             *indices
-                .sum_con_nums
+                .sum_cons
                 .get(ty)
                 .unwrap()
                 .get(constr)
@@ -1386,7 +1381,7 @@ fn lower_expr(
             ty_args,
         }) => {
             let fun_idx = *indices
-                .assoc_fun_nums
+                .assoc_funs
                 .get(method_ty_id)
                 .unwrap()
                 .get(method_id)
@@ -1406,7 +1401,7 @@ fn lower_expr(
             ty_args,
         }) => Expr::AssocFnSelect(
             *indices
-                .assoc_fun_nums
+                .assoc_funs
                 .get(ty)
                 .unwrap()
                 .get(member)
@@ -1473,7 +1468,7 @@ fn lower_expr(
 
         mono::Expr::Record(fields) => {
             let idx = *indices
-                .record_indices
+                .records
                 .get(&RecordShape::from_named_things(fields))
                 .unwrap();
             Expr::Record(RecordExpr {
@@ -1487,7 +1482,7 @@ fn lower_expr(
 
         mono::Expr::Variant(mono::VariantExpr { id, args }) => {
             let idx = *indices
-                .variant_indices
+                .variants
                 .get(&VariantShape::from_con_and_fields(id, args))
                 .unwrap();
             Expr::Variant(VariantExpr {
@@ -1603,7 +1598,7 @@ fn lower_expr(
                     .iter()
                     .map(|(id, use_idx)| ClosureFv {
                         id: id.clone(),
-                        alloc_idx: *indices.local_nums.get(id).unwrap(),
+                        alloc_idx: *indices.locals.get(id).unwrap(),
                         use_idx: *use_idx,
                     })
                     .collect(),
@@ -1667,8 +1662,8 @@ fn lower_bl_expr(
 fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indices) -> Pat {
     match pat {
         mono::Pat::Var(var) => {
-            let var_idx = LocalIdx(indices.local_nums.len() as u32);
-            indices.local_nums.insert(var.clone(), var_idx);
+            let var_idx = LocalIdx(indices.locals.len() as u32);
+            indices.locals.insert(var.clone(), var_idx);
             Pat::Var(var_idx)
         }
 
@@ -1679,7 +1674,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
         }) => {
             let con_idx: ConIdx = match constr {
                 Some(constr) => *indices
-                    .sum_con_nums
+                    .sum_cons
                     .get(type_)
                     .unwrap()
                     .get(constr)
@@ -1687,7 +1682,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
                     .get(ty_args)
                     .unwrap(),
                 None => *indices
-                    .product_con_nums
+                    .product_cons
                     .get(type_)
                     .unwrap()
                     .get(ty_args)
@@ -1704,7 +1699,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
 
         mono::Pat::Record(fields) => {
             let idx = *indices
-                .record_indices
+                .records
                 .get(&RecordShape::from_named_things(fields))
                 .unwrap();
             Pat::Record(RecordPattern {
@@ -1718,7 +1713,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
 
         mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
             let idx = *indices
-                .variant_indices
+                .variants
                 .get(&VariantShape::from_con_and_fields(constr, fields))
                 .unwrap();
             Pat::Variant(VariantPattern {
@@ -1738,8 +1733,8 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
         mono::Pat::Char(char) => Pat::Char(*char),
 
         mono::Pat::StrPfx(str, var) => {
-            let var_idx = LocalIdx(indices.local_nums.len() as u32);
-            indices.local_nums.insert(var.clone(), var_idx);
+            let var_idx = LocalIdx(indices.locals.len() as u32);
+            indices.locals.insert(var.clone(), var_idx);
             Pat::StrPfx(str.clone(), var_idx)
         }
 
@@ -1788,7 +1783,7 @@ fn lower_source_fun(
         local_nums.insert(param.clone(), LocalIdx(local_nums.len() as u32));
     }
 
-    indices.local_nums = local_nums;
+    indices.locals = local_nums;
 
     let mut local_vars: ScopeSet<Id> = Default::default();
     for (param, _) in &fun.sig.params {
