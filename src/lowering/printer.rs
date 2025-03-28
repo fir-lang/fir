@@ -132,11 +132,13 @@ impl LoweredPgm {
             write!(buffer, "closure{}:\n", closure_idx).unwrap();
 
             buffer.push_str("  locals: ");
-            for (i, local) in locals.iter().enumerate() {
+            for (i, LocalInfo { name, ty }) in locals.iter().enumerate() {
                 if i != 0 {
                     buffer.push_str(", ");
                 }
-                buffer.push_str(local.as_str());
+                buffer.push_str(name.as_str());
+                buffer.push_str(": ");
+                ty.print(buffer);
             }
             buffer.push('\n');
 
@@ -336,10 +338,6 @@ impl Expr {
                 buffer.push('\'');
                 buffer.push(*char); // TODO: escaping
                 buffer.push('\'');
-            }
-
-            Expr::Self_ => {
-                buffer.push_str("self");
             }
 
             Expr::BoolNot(e) => {

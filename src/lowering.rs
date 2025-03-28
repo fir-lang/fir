@@ -282,7 +282,6 @@ pub enum Expr {
     Int(IntExpr),
     String(Vec<StringPart>),
     Char(char),
-    Self_, // TODO: Should this be a `LocalVar`?
     BoolNot(Box<L<Expr>>),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
@@ -404,12 +403,7 @@ pub struct VariantPattern {
 #[derive(Debug)]
 pub struct Closure {
     pub idx: ClosureIdx, // for debugging
-
-    /// Locals of the closure: both captured variables and arguments.
-    ///
-    /// Captured variables come first, then arguments.
-    pub locals: Vec<Id>, // for debugging, indexed by `LocalIdx`
-
+    pub locals: Vec<LocalInfo>,
     pub fvs: Vec<ClosureFv>,
     pub params: Vec<Ty>,
     pub body: Vec<L<Stmt>>,
@@ -438,9 +432,69 @@ struct Indices {
     sum_cons: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>>,
     funs: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
     assoc_funs: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
-    locals: Map<Id, LocalIdx>,
     records: Map<RecordShape, RecordIdx>,
     variants: Map<VariantShape, VariantIdx>,
+}
+
+#[derive(Debug, Default)]
+pub struct FunScope {
+    /// All locals in the function, including captured ones.
+    ///
+    /// Captured locals will be indexed by their local indices.
+    locals: Vec<LocalInfo>,
+
+    /// Indices of captured (free) variables in the function, mapped to their local indices in
+    /// `locals`.
+    ///
+    /// When seeing a free variable, check this map first to see if we've assigned an index to the
+    /// free variable before.
+    captured_vars: Map<Id, ClosureFv>,
+
+    /// Variables bound in the current function.
+    ///
+    /// This does not include captured (free) variables.
+    ///
+    /// Any variable that's not here should be captured (free).
+    bounds: ScopeMap<Id, LocalIdx>,
+
+    /// When the current function is a closure in another function, this holds the parent function's
+    /// scope.
+    ///
+    /// This is used to look up captured variable info.
+    parent_fun_scope: Option<Box<FunScope>>,
+}
+
+impl FunScope {
+    fn use_var(&mut self, var: &Id) -> LocalIdx {
+        // Check if bound.
+        match self.bounds.get(var) {
+            Some(idx) => *idx,
+            None => {
+                // Should be bound in parent function. Reuse the index if we already assigned it
+                // one.
+                match self.captured_vars.get(var) {
+                    Some(fv) => fv.use_idx,
+                    None => {
+                        // Use the variable in the parent function so that the parent function will
+                        // capture it if it needs to.
+                        let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var);
+
+                        // Assign new index.
+                        let use_idx = LocalIdx(self.locals.len() as u32);
+                        self.captured_vars.insert(
+                            var.clone(),
+                            ClosureFv {
+                                id: var.clone(),
+                                alloc_idx,
+                                use_idx,
+                            },
+                        );
+                        use_idx
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
@@ -633,7 +687,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         sum_cons: sum_con_nums,
         funs: fun_nums,
         assoc_funs: assoc_fun_nums,
-        locals: Default::default(), // updated in each function
         records: record_indices,
         variants: variant_indices,
     };
@@ -1212,25 +1265,22 @@ fn lower_source_con(
 fn lower_stmt(
     stmt: &mono::Stmt,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> Stmt {
     match stmt {
         mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => Stmt::Let(LetStmt {
-            lhs: lower_l_pat(lhs, local_vars, indices),
-            rhs: lower_l_expr(rhs, closures, local_vars, free_vars, indices),
+            lhs: lower_l_pat(lhs, indices, scope),
+            rhs: lower_l_expr(rhs, closures, indices, scope),
         }),
 
         mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op }) => Stmt::Assign(AssignStmt {
-            lhs: lower_l_expr(lhs, closures, local_vars, free_vars, indices),
-            rhs: lower_l_expr(rhs, closures, local_vars, free_vars, indices),
+            lhs: lower_l_expr(lhs, closures, indices, scope),
+            rhs: lower_l_expr(rhs, closures, indices, scope),
             op: *op,
         }),
 
-        mono::Stmt::Expr(expr) => {
-            Stmt::Expr(lower_l_expr(expr, closures, local_vars, free_vars, indices))
-        }
+        mono::Stmt::Expr(expr) => Stmt::Expr(lower_l_expr(expr, closures, indices, scope)),
 
         mono::Stmt::For(mono::ForStmt {
             label,
@@ -1238,16 +1288,14 @@ fn lower_stmt(
             expr,
             body,
         }) => {
-            let expr = lower_l_expr(expr, closures, local_vars, free_vars, indices);
-
-            local_vars.enter();
-            let pat = lower_l_pat(pat, local_vars, indices);
+            let expr = lower_l_expr(expr, closures, indices, scope);
+            scope.bounds.enter();
+            let pat = lower_l_pat(pat, indices, scope);
             let body = body
                 .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, local_vars, free_vars, indices))
+                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                 .collect();
-            local_vars.exit();
-
+            scope.bounds.exit();
             Stmt::For(ForStmt {
                 label: label.clone(),
                 pat,
@@ -1258,10 +1306,10 @@ fn lower_stmt(
 
         mono::Stmt::While(mono::WhileStmt { label, cond, body }) => Stmt::While(WhileStmt {
             label: label.clone(),
-            cond: lower_l_expr(cond, closures, local_vars, free_vars, indices),
+            cond: lower_l_expr(cond, closures, indices, scope),
             body: body
                 .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, local_vars, free_vars, indices))
+                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                 .collect(),
         }),
 
@@ -1271,16 +1319,14 @@ fn lower_stmt(
             cond,
             body,
         }) => {
-            let cond = lower_l_expr(cond, closures, local_vars, free_vars, indices);
-
-            local_vars.enter();
-            let pat = lower_l_pat(pat, local_vars, indices);
+            let cond = lower_l_expr(cond, closures, indices, scope);
+            scope.bounds.enter();
+            let pat = lower_l_pat(pat, indices, scope);
             let body = body
                 .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, local_vars, free_vars, indices))
+                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                 .collect();
-            local_vars.exit();
-
+            scope.bounds.exit();
             Stmt::WhileLet(WhileLetStmt {
                 label: label.clone(),
                 pat,
@@ -1304,11 +1350,10 @@ fn lower_stmt(
 fn lower_l_stmt(
     stmt: &L<mono::Stmt>,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> L<Stmt> {
-    stmt.map_as_ref(|stmt| lower_stmt(stmt, closures, local_vars, free_vars, indices))
+    stmt.map_as_ref(|stmt| lower_stmt(stmt, closures, indices, scope))
 }
 
 /// - `closures`: The closures collected so far.
@@ -1322,27 +1367,11 @@ fn lower_expr(
     expr: &mono::Expr,
     loc: &mono::Loc,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> Expr {
     match expr {
-        mono::Expr::LocalVar(var) => {
-            if !local_vars.is_bound(var) {
-                let idx = LocalIdx(free_vars.len() as u32);
-                free_vars.insert(var.clone(), idx);
-                Expr::LocalVar(idx)
-            } else {
-                Expr::LocalVar(*indices.locals.get(var).unwrap_or_else(|| {
-                    panic!(
-                        "{}: BUG: Variable {} is not in local nums ({:?})",
-                        loc_display(loc),
-                        var,
-                        indices.locals,
-                    )
-                }))
-            }
-        }
+        mono::Expr::LocalVar(var) => Expr::LocalVar(scope.use_var(var)),
 
         mono::Expr::TopVar(mono::VarExpr { id, ty_args }) => {
             Expr::TopVar(*indices.funs.get(id).unwrap().get(ty_args).unwrap())
@@ -1369,7 +1398,7 @@ fn lower_expr(
 
         mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field }) => {
             Expr::FieldSelect(FieldSelectExpr {
-                object: lower_bl_expr(object, closures, local_vars, free_vars, indices),
+                object: lower_bl_expr(object, closures, indices, scope),
                 field: field.clone(),
             })
         }
@@ -1390,7 +1419,7 @@ fn lower_expr(
                 .unwrap();
 
             Expr::MethodSelect(MethodSelectExpr {
-                object: lower_bl_expr(object, closures, local_vars, free_vars, indices),
+                object: lower_bl_expr(object, closures, indices, scope),
                 fun_idx,
             })
         }
@@ -1411,12 +1440,12 @@ fn lower_expr(
         ),
 
         mono::Expr::Call(mono::CallExpr { fun, args }) => Expr::Call(CallExpr {
-            fun: lower_bl_expr(fun, closures, local_vars, free_vars, indices),
+            fun: lower_bl_expr(fun, closures, indices, scope),
             args: args
                 .iter()
                 .map(|mono::CallArg { name, expr }| CallArg {
                     name: name.clone(),
-                    expr: lower_l_expr(expr, closures, local_vars, free_vars, indices),
+                    expr: lower_l_expr(expr, closures, indices, scope),
                 })
                 .collect(),
         }),
@@ -1428,24 +1457,24 @@ fn lower_expr(
                 .iter()
                 .map(|part| match part {
                     mono::StringPart::Str(str) => StringPart::Str(str.clone()),
-                    mono::StringPart::Expr(expr) => StringPart::Expr(lower_l_expr(
-                        expr, closures, local_vars, free_vars, indices,
-                    )),
+                    mono::StringPart::Expr(expr) => {
+                        StringPart::Expr(lower_l_expr(expr, closures, indices, scope))
+                    }
                 })
                 .collect(),
         ),
 
         mono::Expr::Char(char) => Expr::Char(*char),
 
-        mono::Expr::Self_ => Expr::Self_,
+        mono::Expr::Self_ => Expr::LocalVar(LocalIdx(0)),
 
         mono::Expr::BinOp(mono::BinOpExpr {
             left,
             right,
             op: mono::BinOp::And,
         }) => Expr::BoolAnd(
-            lower_bl_expr(left, closures, local_vars, free_vars, indices),
-            lower_bl_expr(right, closures, local_vars, free_vars, indices),
+            lower_bl_expr(left, closures, indices, scope),
+            lower_bl_expr(right, closures, indices, scope),
         ),
 
         mono::Expr::BinOp(mono::BinOpExpr {
@@ -1453,17 +1482,15 @@ fn lower_expr(
             right,
             op: mono::BinOp::Or,
         }) => Expr::BoolOr(
-            lower_bl_expr(left, closures, local_vars, free_vars, indices),
-            lower_bl_expr(right, closures, local_vars, free_vars, indices),
+            lower_bl_expr(left, closures, indices, scope),
+            lower_bl_expr(right, closures, indices, scope),
         ),
 
         mono::Expr::BinOp(_) => panic!("Non-desugared BinOp"),
 
         mono::Expr::UnOp(mono::UnOpExpr { op, expr }) => match op {
             UnOp::Neg => panic!("Neg unop wasn't desugred"),
-            UnOp::Not => Expr::BoolNot(lower_bl_expr(
-                expr, closures, local_vars, free_vars, indices,
-            )),
+            UnOp::Not => Expr::BoolNot(lower_bl_expr(expr, closures, indices, scope)),
         },
 
         mono::Expr::Record(fields) => {
@@ -1474,7 +1501,7 @@ fn lower_expr(
             Expr::Record(RecordExpr {
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_expr(field, closures, local_vars, free_vars, indices))
+                    .map(|field| lower_nl_expr(field, closures, indices, scope))
                     .collect(),
                 idx,
             })
@@ -1489,18 +1516,16 @@ fn lower_expr(
                 id: id.clone(),
                 fields: args
                     .iter()
-                    .map(|arg| lower_nl_expr(arg, closures, local_vars, free_vars, indices))
+                    .map(|arg| lower_nl_expr(arg, closures, indices, scope))
                     .collect(),
                 idx,
             })
         }
 
-        mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(
-            expr, closures, local_vars, free_vars, indices,
-        )),
+        mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(expr, closures, indices, scope)),
 
         mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => Expr::Match(MatchExpr {
-            scrutinee: lower_bl_expr(scrutinee, closures, local_vars, free_vars, indices),
+            scrutinee: lower_bl_expr(scrutinee, closures, indices, scope),
             alts: alts
                 .iter()
                 .map(
@@ -1509,18 +1534,16 @@ fn lower_expr(
                          guard,
                          rhs,
                      }| {
-                        local_vars.enter();
-                        let pattern = lower_l_pat(pattern, local_vars, indices);
-                        let guard = guard.as_ref().map(|guard| {
-                            lower_l_expr(guard, closures, local_vars, free_vars, indices)
-                        });
+                        scope.bounds.enter();
+                        let pattern = lower_l_pat(pattern, indices, scope);
+                        let guard = guard
+                            .as_ref()
+                            .map(|guard| lower_l_expr(guard, closures, indices, scope));
                         let rhs = rhs
                             .iter()
-                            .map(|stmt| {
-                                lower_l_stmt(stmt, closures, local_vars, free_vars, indices)
-                            })
+                            .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                             .collect();
-                        local_vars.exit();
+                        scope.bounds.exit();
                         Alt {
                             pattern,
                             guard,
@@ -1539,11 +1562,9 @@ fn lower_expr(
                 .iter()
                 .map(|(cond, rhs)| {
                     (
-                        lower_l_expr(cond, closures, local_vars, free_vars, indices),
+                        lower_l_expr(cond, closures, indices, scope),
                         rhs.iter()
-                            .map(|stmt| {
-                                lower_l_stmt(stmt, closures, local_vars, free_vars, indices)
-                            })
+                            .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                             .collect(),
                     )
                 })
@@ -1551,57 +1572,55 @@ fn lower_expr(
             else_branch: else_branch.as_ref().map(|stmts| {
                 stmts
                     .iter()
-                    .map(|stmt| lower_l_stmt(stmt, closures, local_vars, free_vars, indices))
+                    .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                     .collect()
             }),
         }),
 
         mono::Expr::Fn(mono::FnExpr { sig, body }) => {
+            let parent_fun_scope: FunScope = std::mem::replace(scope, Default::default());
+
+            let mut locals: Vec<LocalInfo> = vec![];
+            let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
+
+            for (param_name, param_ty) in &sig.params {
+                let idx = LocalIdx(locals.len() as u32);
+                locals.push(LocalInfo {
+                    name: param_name.clone(),
+                    ty: param_ty.node.clone(),
+                });
+                bounds.insert(param_name.clone(), idx);
+            }
+
+            let mut closure_scope = FunScope {
+                locals,
+                captured_vars: Default::default(),
+                bounds,
+                parent_fun_scope: Some(Box::new(parent_fun_scope)),
+            };
+
             let mut fn_local_vars: ScopeSet<Id> = Default::default();
             for (param, _) in &sig.params {
                 fn_local_vars.insert(param.clone());
             }
 
-            let mut fn_free_vars: Map<Id, LocalIdx> = Default::default();
-
             let body: Vec<L<Stmt>> = body
                 .iter()
-                .map(|stmt| {
-                    lower_l_stmt(
-                        stmt,
-                        closures,
-                        &mut fn_local_vars,
-                        &mut fn_free_vars,
-                        indices,
-                    )
-                })
+                .map(|stmt| lower_l_stmt(stmt, closures, indices, &mut closure_scope))
                 .collect();
 
             let closure_idx = ClosureIdx(closures.len() as u32);
 
-            let mut fn_free_vars_sorted: Vec<(Id, LocalIdx)> = fn_free_vars
-                .iter()
-                .map(|(id, idx)| (id.clone(), *idx))
-                .collect();
-            fn_free_vars_sorted.sort_by_key(|(_, idx)| *idx);
+            // Restore parent scope.
+            *scope = *closure_scope.parent_fun_scope.unwrap();
 
-            let mut locals: Vec<Id> = fn_free_vars_sorted
-                .iter()
-                .map(|(id, _)| id.clone())
-                .collect();
-            locals.extend(sig.params.iter().map(|(id, _)| id.clone()));
+            let mut fvs: Vec<ClosureFv> = closure_scope.captured_vars.into_values().collect();
+            fvs.sort_by_key(|fv| fv.use_idx);
 
             closures.push(Closure {
                 idx: closure_idx,
-                locals,
-                fvs: fn_free_vars_sorted
-                    .iter()
-                    .map(|(id, use_idx)| ClosureFv {
-                        id: id.clone(),
-                        alloc_idx: *indices.locals.get(id).unwrap(),
-                        use_idx: *use_idx,
-                    })
-                    .collect(),
+                locals: closure_scope.locals,
+                fvs,
                 params: sig
                     .params
                     .iter()
@@ -1609,17 +1628,6 @@ fn lower_expr(
                     .collect(),
                 body,
             });
-
-            // Add free vars of the nested closure that are not defined in the enclosing function as
-            // free in the enclosing closure.
-            // NB. Use index of the free variable will be different in the nested and enclosing
-            // closures!
-            for (fv, _) in fn_free_vars {
-                if !local_vars.is_bound(&fv) {
-                    let local_idx = LocalIdx(free_vars.len() as u32);
-                    free_vars.insert(fv, local_idx);
-                }
-            }
 
             Expr::ClosureAlloc(closure_idx)
         }
@@ -1629,41 +1637,42 @@ fn lower_expr(
 fn lower_nl_expr(
     expr: &Named<L<mono::Expr>>,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> Named<L<Expr>> {
-    expr.map_as_ref(|expr| lower_l_expr(expr, closures, local_vars, free_vars, indices))
+    expr.map_as_ref(|expr| lower_l_expr(expr, closures, indices, scope))
 }
 
 fn lower_l_expr(
     l_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> L<Expr> {
-    l_expr
-        .map_as_ref(|expr| lower_expr(expr, &l_expr.loc, closures, local_vars, free_vars, indices))
+    l_expr.map_as_ref(|expr| lower_expr(expr, &l_expr.loc, closures, indices, scope))
 }
 
 fn lower_bl_expr(
     bl_expr: &Box<L<mono::Expr>>,
     closures: &mut Vec<Closure>,
-    local_vars: &mut ScopeSet<Id>,
-    free_vars: &mut Map<Id, LocalIdx>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> Box<L<Expr>> {
-    Box::new(bl_expr.map_as_ref(|expr| {
-        lower_expr(expr, &bl_expr.loc, closures, local_vars, free_vars, indices)
-    }))
+    Box::new(bl_expr.map_as_ref(|expr| lower_expr(expr, &bl_expr.loc, closures, indices, scope)))
 }
 
-fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indices) -> Pat {
+fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pat {
     match pat {
         mono::Pat::Var(var) => {
-            let var_idx = LocalIdx(indices.locals.len() as u32);
-            indices.locals.insert(var.clone(), var_idx);
+            let var_idx = LocalIdx(scope.locals.len() as u32);
+            scope.locals.push(LocalInfo {
+                name: var.clone(),
+                ty: mono::Type::Named(mono::NamedType {
+                    name: "?".into(), // TODO
+                    args: vec![],
+                }),
+            });
+            scope.bounds.insert(var.clone(), var_idx);
             Pat::Var(var_idx)
         }
 
@@ -1692,7 +1701,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
                 constr: con_idx,
                 fields: fields
                     .iter()
-                    .map(|named_f| named_f.map_as_ref(|f| lower_l_pat(f, local_vars, indices)))
+                    .map(|named_f| named_f.map_as_ref(|f| lower_l_pat(f, indices, scope)))
                     .collect(),
             })
         }
@@ -1705,7 +1714,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
             Pat::Record(RecordPattern {
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_pat(field, local_vars, indices))
+                    .map(|field| lower_nl_pat(field, indices, scope))
                     .collect(),
                 idx,
             })
@@ -1720,7 +1729,7 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
                 constr: constr.clone(),
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_pat(field, local_vars, indices))
+                    .map(|field| lower_nl_pat(field, indices, scope))
                     .collect(),
                 idx,
             })
@@ -1733,28 +1742,35 @@ fn lower_pat(pat: &mono::Pat, local_vars: &mut ScopeSet<Id>, indices: &mut Indic
         mono::Pat::Char(char) => Pat::Char(*char),
 
         mono::Pat::StrPfx(str, var) => {
-            let var_idx = LocalIdx(indices.locals.len() as u32);
-            indices.locals.insert(var.clone(), var_idx);
+            let var_idx = LocalIdx(scope.locals.len() as u32);
+            scope.locals.push(LocalInfo {
+                name: var.clone(),
+                ty: mono::Type::Named(mono::NamedType {
+                    name: "Str".into(),
+                    args: vec![],
+                }),
+            });
+            scope.bounds.insert(var.clone(), var_idx);
             Pat::StrPfx(str.clone(), var_idx)
         }
 
         mono::Pat::Or(p1, p2) => Pat::Or(
-            Box::new(lower_l_pat(p1, local_vars, indices)),
-            Box::new(lower_l_pat(p2, local_vars, indices)),
+            Box::new(lower_l_pat(p1, indices, scope)),
+            Box::new(lower_l_pat(p2, indices, scope)),
         ),
     }
 }
 
 fn lower_nl_pat(
     pat: &Named<L<mono::Pat>>,
-    local_vars: &mut ScopeSet<Id>,
     indices: &mut Indices,
+    scope: &mut FunScope,
 ) -> Named<L<Pat>> {
-    pat.map_as_ref(|pat| lower_l_pat(pat, local_vars, indices))
+    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope))
 }
 
-fn lower_l_pat(pat: &L<mono::Pat>, local_vars: &mut ScopeSet<Id>, indices: &mut Indices) -> L<Pat> {
-    pat.map_as_ref(|pat| lower_pat(pat, local_vars, indices))
+fn lower_l_pat(pat: &L<mono::Pat>, indices: &mut Indices, scope: &mut FunScope) -> L<Pat> {
+    pat.map_as_ref(|pat| lower_pat(pat, indices, scope))
 }
 
 fn lower_source_fun(
@@ -1765,55 +1781,52 @@ fn lower_source_fun(
     closures: &mut Vec<Closure>,
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
-    let mut local_nums: Map<Id, LocalIdx> = Default::default();
+    let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
 
     if !matches!(fun.sig.self_, mono::SelfParam::No) {
         locals.push(LocalInfo {
             name: SmolStr::new_static("self"),
             ty: mono::Type::Record { fields: vec![] }, // TODO
         });
-        local_nums.insert(SmolStr::new_static("self"), LocalIdx(0));
+        bounds.insert(SmolStr::new_static("self"), LocalIdx(0));
     }
 
     for (param, ty) in &fun.sig.params {
+        bounds.insert(param.clone(), LocalIdx(locals.len() as u32));
         locals.push(LocalInfo {
             name: param.clone(),
             ty: ty.node.clone(),
         });
-        local_nums.insert(param.clone(), LocalIdx(local_nums.len() as u32));
     }
 
-    indices.locals = local_nums;
-
-    let mut local_vars: ScopeSet<Id> = Default::default();
-    for (param, _) in &fun.sig.params {
-        local_vars.insert(param.clone());
-    }
+    let mut scope = FunScope {
+        locals,
+        captured_vars: Default::default(),
+        bounds,
+        parent_fun_scope: None,
+    };
 
     let body: Vec<L<Stmt>> = fun
         .body
         .as_ref()
         .unwrap()
         .iter()
-        .map(|stmt| {
-            lower_l_stmt(
-                stmt,
-                closures,
-                &mut local_vars,
-                &mut Default::default(), // free vars
-                indices,
-            )
-        })
+        .map(|stmt| lower_l_stmt(stmt, closures, indices, &mut scope))
         .collect();
 
-    let params: Vec<Ty> = locals.iter().map(|l| Ty::from_mono_ty(&l.ty)).collect();
+    let params: Vec<Ty> = fun
+        .sig
+        .params
+        .iter()
+        .map(|(_, param_ty)| Ty::from_mono_ty(&param_ty.node))
+        .collect();
 
     SourceFunDecl {
         parent_ty: fun.parent_ty.clone(),
         name: fun.name.clone(),
         idx,
         ty_args: ty_args.clone(),
-        locals,
+        locals: scope.locals,
         body,
         params,
 
