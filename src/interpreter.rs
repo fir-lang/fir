@@ -9,7 +9,7 @@ use heap::Heap;
 use crate::ast::{self, Id, Loc, L};
 use crate::collections::Map;
 use crate::lowering::*;
-use crate::record_collector::{RecordShape, VariantShape};
+use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
 use std::io::Write;
@@ -158,136 +158,6 @@ pub fn run<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
 
     call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
-
-/*
-#[derive(Debug)]
-struct Con {
-    info: ConInfo,
-
-    fields: Fields,
-
-    /// For constructors with no fields, this holds the canonical allocation.
-    alloc: Option<u64>,
-}
-
-#[derive(Debug)]
-enum ConInfo {
-    Named {
-        ty_name: Id,
-        con_name: Option<Id>,
-    },
-    Record {
-        #[allow(unused)]
-        shape: RecordShape,
-    },
-    Variant {
-        #[allow(unused)]
-        shape: VariantShape,
-    },
-}
-
-#[derive(Debug, Clone)]
-struct TyCon {
-    /// Constructors of the type. E.g. `Some` and `None` in `Option`.
-    ///
-    /// Sorted based on tags.
-    value_constrs: Vec<ValCon>,
-
-    /// Type tag of the first value constructor of this type.
-    ///
-    /// For product types, this is the only tag values of this type use.
-    ///
-    /// For sum types, this is the first tag the values use.
-    type_tag: u64,
-}
-
-impl TyCon {
-    /// First and last tag (inclusive) that values of this type use.
-    ///
-    /// For product types, the tags will be the same, as there's only one tag.
-    fn tag_range(&self) -> (u64, u64) {
-        (
-            self.type_tag,
-            self.type_tag + (self.value_constrs.len() as u64) - 1,
-        )
-    }
-
-    fn get_constr_with_tag(&self, name: &str) -> (u64, &Fields) {
-        let (idx, constr) = self
-            .value_constrs
-            .iter()
-            .enumerate()
-            .find(|(_, constr)| constr.name.as_ref().map(|s| s.as_str()) == Some(name))
-            .unwrap();
-
-        (self.type_tag + idx as u64, &constr.fields)
-    }
-}
-
-/// A value constructor, e.g. `Some`, `None`.
-#[derive(Debug, Clone)]
-struct ValCon {
-    /// Name of the constructor, e.g. `True` and `False` in `Bool`.
-    ///
-    /// In product types, there will be only one `ValCon` and the `name` will be `None`.
-    name: Option<Id>,
-
-    /// Fields of the constructor, with names.
-    ///
-    /// Either all of the fields or none of them should be named.
-    fields: Fields,
-}
-
-#[derive(Debug, Clone)]
-enum Fields {
-    Unnamed(u32),
-
-    // NB. The vec shouldn't be empty. For nullary constructors use `Unnamed(0)`.
-    Named(Vec<Id>),
-}
-
-impl Fields {
-    fn is_empty(&self) -> bool {
-        matches!(self, Fields::Unnamed(0))
-    }
-
-    fn find_named_field_idx(&self, name: &str) -> u64 {
-        match self {
-            Fields::Unnamed(_) => panic!(),
-            Fields::Named(fields) => fields
-                .iter()
-                .enumerate()
-                .find(|(_, f)| f.as_str() == name)
-                .map(|(idx, _)| idx as u64)
-                .unwrap(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-struct Fun {
-    /// Index of the function in `top_level_funs_by_idx` (if top-level function), or
-    /// `associated_funs_by_idx` (if associated function).
-    idx: u64,
-
-    kind: FunKind,
-}
-
-#[derive(Debug, Clone)]
-enum FunKind {
-    Builtin(BuiltinFun),
-    Source(ast::FunDecl),
-}
-
-impl FunKind {
-    fn as_source(&self) -> &ast::FunDecl {
-        match self {
-            FunKind::Builtin(_) => panic!(),
-            FunKind::Source(fun) => fun,
-        }
-    }
-}
-*/
 
 /// Control flow within a function.
 #[derive(Debug, Clone, Copy)]
@@ -710,9 +580,9 @@ fn exec<W: Write>(
 
             Stmt::For(ForStmt {
                 label: _,
-                pat,
-                expr,
-                body,
+                pat: _,
+                expr: _,
+                body: _,
             }) => {
                 todo!()
                 /*
@@ -1043,38 +913,37 @@ fn eval<W: Write>(
             ControlFlow::Val(record)
         }
 
-        _ => todo!(),
-        /*
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let variant_shape = VariantShape::from_con_and_fields(id, args);
-            let type_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
-            let variant = heap.allocate(args.len() + 1);
-            heap[variant] = type_tag;
+        Expr::Variant(VariantExpr { id: _, fields, idx }) => {
+            let shape = pgm.heap_objs[idx.as_usize()].as_variant();
 
-            if !args.is_empty() && args[0].name.is_some() {
-                let mut names: Vec<Id> = args
-                    .iter()
-                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
-                    .collect();
-                names.sort();
+            let variant = heap.allocate(fields.len() + 1);
+            heap[variant] = idx.as_u64();
 
-                for (name_idx, name_) in names.iter().enumerate() {
-                    let expr = args
+            if !fields.is_empty() && fields[0].name.is_some() {
+                let name_indices: Map<Id, usize> = match &shape.payload {
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                    RecordShape::NamedFields { fields } => fields
                         .iter()
-                        .find_map(|ast::Named { name, node }| {
-                            if name.as_ref().unwrap() == name_ {
-                                Some(node)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap();
+                        .enumerate()
+                        .map(|(i, name)| (name.clone(), i))
+                        .collect(),
+                };
 
-                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                    heap[variant + (name_idx as u64) + 1] = value;
+                for field in fields {
+                    let field_value = val!(eval(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        &field.node.node,
+                        &field.node.loc
+                    ));
+                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
+                    heap[variant + 1 + (field_idx as u64)] = field_value;
                 }
             } else {
-                for (idx, ast::Named { name: _, node }) in args.iter().enumerate() {
+                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
+                    debug_assert!(name.is_none());
                     let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
                     heap[variant + (idx as u64) + 1] = value;
                 }
@@ -1082,7 +951,6 @@ fn eval<W: Write>(
 
             ControlFlow::Val(variant)
         }
-        */
     }
 }
 
