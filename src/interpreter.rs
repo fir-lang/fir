@@ -1253,57 +1253,55 @@ fn try_bind_pat(
                 || try_bind_pat(pgm, heap, pat2, locals, value)
         }
 
-        _ => todo!(),
-        /*
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+        Pat::Constr(ConstrPattern {
+            constr: con_idx,
             fields: field_pats,
-            ty_args: _,
         }) => {
             let value_tag = heap[value];
-
-            let ty_con = pgm.ty_cons.get(type_).unwrap_or_else(|| {
-                panic!("{}: BUG: Unknown type {}", loc_display(&pattern.loc), type_)
-            });
-
-            let (ty_con_first_tag, ty_con_last_tag) = ty_con.tag_range();
-
-            if value_tag < ty_con_first_tag || value_tag > ty_con_last_tag {
-                eprintln!("TYPE ERROR: Value type doesn't match type constructor type tag in pattern match");
-                eprintln!(
-                    "  value tag = {}, ty con first tag = {}, ty con last tag = {}",
-                    value_tag, ty_con_first_tag, ty_con_last_tag
-                );
-                return None;
+            if value_tag != con_idx.as_u64() {
+                return false;
             }
 
-            let constr_idx = match constr {
-                Some(constr_name) => {
-                    ty_con
-                        .value_constrs
-                        .iter()
-                        .enumerate()
-                        .find(|(_idx, constr)| constr_name == constr.name.as_ref().unwrap())
-                        .unwrap()
-                        .0
-                }
-                None => {
-                    if ty_con_first_tag != ty_con_last_tag {
-                        eprintln!("TYPE ERROR");
-                        return None;
+            let con = pgm.cons[con_idx.as_usize()].as_source_con();
+            match &con.fields {
+                ConFields::Named(con_fields) => {
+                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_some()));
+                    debug_assert_eq!(con_fields.len(), field_pats.len());
+                    for (i, (con_field_name, _)) in con_fields.iter().enumerate() {
+                        let field_value = heap[value + (i as u64)];
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == con_field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
                     }
-                    0
                 }
-            };
 
-            if value_tag != ty_con.type_tag + (constr_idx as u64) {
-                return None;
+                ConFields::Unnamed(con_fields) => {
+                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_none()));
+                    debug_assert_eq!(con_fields.len(), field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        let field_value = heap[value + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
             }
 
-            let fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_pats(pgm, heap, fields, field_pats, value)
+            todo!()
         }
 
+        _ => todo!(),
+        /*
         ast::Pat::Record(fields) => {
             let value_tag = heap[value];
             let value_fields = pgm.get_tag_fields(value_tag);
