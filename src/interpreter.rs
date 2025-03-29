@@ -990,6 +990,39 @@ fn eval<W: Write>(
             ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
         }
 
+        Expr::Match(MatchExpr { scrutinee, alts }) => {
+            let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
+            for Alt {
+                pattern,
+                guard,
+                rhs,
+            } in alts
+            {
+                assert!(guard.is_none()); // TODO
+                if try_bind_pat(pgm, heap, pattern, locals, scrut) {
+                    return exec(w, pgm, heap, locals, rhs);
+                }
+            }
+            panic!("{}: Non-exhaustive pattern match", loc_display(loc));
+        }
+
+        Expr::If(IfExpr {
+            branches,
+            else_branch,
+        }) => {
+            for (cond, stmts) in branches {
+                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
+                debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
+                if cond == pgm.true_alloc {
+                    return exec(w, pgm, heap, locals, stmts);
+                }
+            }
+            if let Some(else_branch) = else_branch {
+                return exec(w, pgm, heap, locals, else_branch);
+            }
+            ControlFlow::Val(0) // TODO: return unit
+        }
+
         _ => todo!(),
         /*
         ast::Expr::Record(exprs) => {
@@ -1069,41 +1102,6 @@ fn eval<W: Write>(
             }
 
             ControlFlow::Val(variant)
-        }
-
-
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
-            for ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                assert!(guard.is_none()); // TODO
-                if let Some(binds) = try_bind_pat(pgm, heap, pattern, scrut) {
-                    locals.extend(binds.into_iter());
-                    return exec(w, pgm, heap, locals, rhs);
-                }
-            }
-            panic!("{}: Non-exhaustive pattern match", loc_display(loc));
-        }
-
-        ast::Expr::If(ast::IfExpr {
-            branches,
-            else_branch,
-        }) => {
-            for (cond, stmts) in branches {
-                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
-                debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
-                if cond == pgm.true_alloc {
-                    return exec(w, pgm, heap, locals, stmts);
-                }
-            }
-            if let Some(else_branch) = else_branch {
-                return exec(w, pgm, heap, locals, else_branch);
-            }
-            ControlFlow::Val(0) // TODO: return unit
         }
 
         ast::Expr::Fn(ast::FnExpr {
