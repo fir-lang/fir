@@ -2,11 +2,8 @@
 
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
-// mod builtins;
 mod heap;
-// mod init;
 
-// use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
@@ -15,11 +12,9 @@ use crate::lowering::*;
 use crate::record_collector::{RecordShape, VariantShape};
 use crate::utils::loc_display;
 
-use std::cmp::Ordering;
 use std::io::Write;
 
 use bytemuck::cast_slice_mut;
-use smol_str::SmolStr;
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
@@ -169,29 +164,6 @@ pub fn run<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
 
     call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
-
-macro_rules! generate_tags {
-    ($($name:ident),* $(,)?) => {
-        generate_tags!(@generate 0, $($name),*);
-    };
-
-    (@generate $index:expr, $name:ident $(, $rest:ident)*) => {
-        const $name: u64 = $index;
-        generate_tags!(@generate $index + 1, $($rest),*);
-    };
-
-    (@generate $index:expr,) => {};
-}
-
-// NB. If you update this make sure you update built-in `TyCon`s in `collect_types`.
-#[rustfmt::skip]
-generate_tags!(
-    CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
-    FUN_TYPE_TAG,       // Function closure, e.g. `id`, `Vec.withCapacity`.
-    METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
-    CLOSURE_TYPE_TAG,
-    FIRST_TYPE_TAG,     // First available type tag for user types.
-);
 
 /*
 #[derive(Debug)]
@@ -1026,7 +998,7 @@ fn eval<W: Write>(
         Expr::ClosureAlloc(closure_idx) => {
             let closure = &pgm.closures[closure_idx.as_usize()];
             let alloc = heap.allocate(2 + closure.fvs.len());
-            heap[alloc] = CLOSURE_TYPE_TAG;
+            heap[alloc] = CLOSURE_CON_IDX.as_u64();
             heap[alloc + 1] = closure_idx.as_u64();
 
             for (fv_idx, fv) in closure.fvs.iter().enumerate() {

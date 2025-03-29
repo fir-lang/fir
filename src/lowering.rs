@@ -36,6 +36,12 @@ pub struct LoweredPgm {
     pub array_u64_con_idx: ConIdx,
 }
 
+pub const CONSTR_CON_IDX: ConIdx = ConIdx(0);
+pub const FUN_CON_IDX: ConIdx = ConIdx(1);
+pub const METHOD_CON_IDX: ConIdx = ConIdx(2);
+pub const CLOSURE_CON_IDX: ConIdx = ConIdx(3);
+const FIRST_FREE_CON_IDX: ConIdx = ConIdx(4);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
 
@@ -263,6 +269,26 @@ impl Con {
 
 #[derive(Debug)]
 pub enum BuiltinConDecl {
+    /// Constructor closure, e.g. `Option.Some`, `Char`.
+    ///
+    /// Payload holds the constructor index (`ConIdx`).
+    Constr,
+
+    /// Function closure, e.g. `id`, `Vec.withCapacity`.
+    ///
+    /// Payload holds the function index (`FunIdx`).
+    Fun,
+
+    /// Method closure, e.g. `x.toString`.
+    ///
+    /// Payload holds the receiver and function index (`FunIdx`), in that order.
+    Method,
+
+    /// A function expression.
+    ///
+    /// Payload holds the closure index (`ClosureIdx`), then free variables.
+    Closure,
+
     ArrayU8,
     ArrayU32,
     ArrayU64,
@@ -607,7 +633,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     let mut assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>> = Default::default();
 
     // Number type declarations.
-    let mut next_con_idx = ConIdx(0);
+    let mut next_con_idx = FIRST_FREE_CON_IDX;
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
             match &con_decl.rhs {
@@ -773,7 +799,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Lower the program. Note that the iteration order here should be the same as above to add
     // right definitions to the right indices in the vectors.
 
-    // Lower types.
+    // Lower types. Add special built-ins first.
+    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Constr));
+    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Fun));
+    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Method));
+    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Closure));
+
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
             match &con_decl.rhs {
