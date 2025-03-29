@@ -1779,6 +1779,31 @@ fn lower_source_fun(
     let mut locals: Vec<LocalInfo> = vec![];
     let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
 
+    match &fun.sig.self_ {
+        mono::SelfParam::No => {}
+
+        mono::SelfParam::Implicit => {
+            // Same as the type checker: function should be an associated function, and the parent
+            // type should not have type parameters.
+            // TODO: Type checker should annotate all self types instead.
+            let self_ty_con = fun.parent_ty.as_ref().unwrap().node.clone();
+            locals.push(LocalInfo {
+                name: SmolStr::new_static("self"),
+                ty: mono::Type::Named(mono::NamedType {
+                    name: self_ty_con,
+                    args: vec![],
+                }),
+            });
+        }
+        mono::SelfParam::Explicit(self_ty) => {
+            locals.push(LocalInfo {
+                name: SmolStr::new_static("self"),
+                ty: self_ty.node.clone(),
+            });
+            bounds.insert(SmolStr::new_static("self"), LocalIdx(0));
+        }
+    }
+
     if !matches!(fun.sig.self_, mono::SelfParam::No) {
         locals.push(LocalInfo {
             name: SmolStr::new_static("self"),
