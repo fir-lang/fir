@@ -11,7 +11,6 @@ use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
 use crate::collections::Map;
-use crate::interpolation::StringPart;
 use crate::lowering::*;
 use crate::record_collector::{RecordShape, VariantShape};
 use crate::utils::loc_display;
@@ -929,61 +928,70 @@ fn eval<W: Write>(
             call_closure(w, pgm, heap, locals, fun, args, loc)
         }
 
-        _ => todo!(),
-        /*
+        Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
 
-        ast::Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
+        Expr::Char(char) => {
+            let alloc = heap.allocate(2);
+            heap[alloc] = pgm.char_con_idx.as_u64();
+            heap[alloc + 1] = u32_as_val(*char as u32);
+            ControlFlow::Val(alloc)
+        }
 
-        ast::Expr::String(parts) => {
+        Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];
             for part in parts {
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
                         let str = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                        debug_assert_eq!(heap[str], pgm.str_ty_tag);
+                        debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
                         let part_bytes = heap.str_bytes(str);
                         bytes.extend(part_bytes);
                     }
                 }
             }
-            ControlFlow::Val(heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, &bytes))
+            ControlFlow::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                &bytes,
+            ))
         }
 
-        ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
+        Expr::BoolNot(e) => {
+            let e = val!(eval(w, pgm, heap, locals, &e.node, &e.loc));
+            let val = if e == pgm.true_alloc {
+                pgm.false_alloc
+            } else {
+                debug_assert_eq!(e, pgm.false_alloc);
+                pgm.true_alloc
+            };
+            ControlFlow::Val(val)
+        }
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
+        Expr::BoolAnd(left, right) => {
             let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
-            match op {
-                ast::BinOp::And => {
-                    if left == pgm.false_alloc {
-                        return ControlFlow::Val(pgm.false_alloc);
-                    }
-                }
-                ast::BinOp::Or => {
-                    if left == pgm.true_alloc {
-                        return ControlFlow::Val(pgm.true_alloc);
-                    }
-                }
-                _ => panic!(),
-            }
-            eval(w, pgm, heap, locals, &right.node, &right.loc)
-        }
-
-        ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
-            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-
-            match op {
-                ast::UnOp::Not => {
-                    debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
-                    ControlFlow::Val(pgm.bool_alloc(val == pgm.false_alloc))
-                }
-                ast::UnOp::Neg => {
-                    panic!() // should be desugared
-                }
+            if left == pgm.false_alloc {
+                ControlFlow::Val(pgm.false_alloc)
+            } else {
+                eval(w, pgm, heap, locals, &right.node, &right.loc)
             }
         }
 
+        Expr::BoolOr(left, right) => {
+            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            if left == pgm.true_alloc {
+                ControlFlow::Val(pgm.true_alloc)
+            } else {
+                eval(w, pgm, heap, locals, &right.node, &right.loc)
+            }
+        }
+
+        Expr::Return(expr) => {
+            ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
+        }
+
+        _ => todo!(),
+        /*
         ast::Expr::Record(exprs) => {
             let shape = RecordShape::from_named_things(exprs);
             let type_tag = *pgm.record_ty_tags.get(&shape).unwrap();
@@ -1063,9 +1071,6 @@ fn eval<W: Write>(
             ControlFlow::Val(variant)
         }
 
-        ast::Expr::Return(expr) => {
-            ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
-        }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
@@ -1099,13 +1104,6 @@ fn eval<W: Write>(
                 return exec(w, pgm, heap, locals, else_branch);
             }
             ControlFlow::Val(0) // TODO: return unit
-        }
-
-        ast::Expr::Char(char) => {
-            let alloc = heap.allocate(2);
-            heap[alloc] = pgm.char_ty_tag;
-            heap[alloc + 1] = u32_as_val(*char as u32);
-            ControlFlow::Val(alloc)
         }
 
         ast::Expr::Fn(ast::FnExpr {
