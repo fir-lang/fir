@@ -11,19 +11,19 @@ pub fn print_pgm(pgm: &LoweredPgm) {
 
 impl LoweredPgm {
     pub fn print(&self, buffer: &mut String) {
-        for (con_idx, con) in self.cons.iter().enumerate() {
-            write!(buffer, "con{}: ", con_idx).unwrap();
-            match con {
-                Con::Builtin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
+        for (heap_obj_idx, heap_obj) in self.heap_objs.iter().enumerate() {
+            write!(buffer, "heap_obj{}: ", heap_obj_idx).unwrap();
+            match heap_obj {
+                HeapObj::Builtin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
 
-                Con::Source(SourceConDecl {
+                HeapObj::Source(SourceConDecl {
                     name,
                     idx,
                     ty_args,
                     fields,
                     alloc: _,
                 }) => {
-                    assert_eq!(idx.0 as usize, con_idx);
+                    assert_eq!(idx.0 as usize, heap_obj_idx);
                     buffer.push_str(name.as_str());
                     print_ty_args(ty_args, buffer);
                     buffer.push('(');
@@ -49,13 +49,15 @@ impl LoweredPgm {
                     }
                     buffer.push(')');
                 }
+
+                HeapObj::Record(record) => write!(buffer, "{:?}", record).unwrap(),
+
+                HeapObj::Variant(variant) => write!(buffer, "{:?}", variant).unwrap(),
             }
             buffer.push('\n');
         }
 
-        if !self.cons.is_empty() {
-            buffer.push('\n');
-        }
+        buffer.push('\n');
 
         for (fun_idx, fun) in self.funs.iter().enumerate() {
             write!(buffer, "fun{}: ", fun_idx).unwrap();

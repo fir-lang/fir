@@ -11,36 +11,34 @@ use smol_str::SmolStr;
 
 #[derive(Debug)]
 pub struct LoweredPgm {
-    pub cons: Vec<Con>,
+    pub heap_objs: Vec<HeapObj>,
     pub funs: Vec<Fun>,
     pub closures: Vec<Closure>,
-    pub records: Vec<RecordShape>,
-    pub variants: Vec<VariantShape>,
 
     // Ids of some special cons that the interpreter needs to know.
     //
     // Note that for product types, type and con tags are the same.
-    pub true_con_idx: ConIdx,
-    pub false_con_idx: ConIdx,
-    pub char_con_idx: ConIdx,
-    pub str_con_idx: ConIdx,
-    pub i8_con_idx: ConIdx,
-    pub u8_con_idx: ConIdx,
-    pub i32_con_idx: ConIdx,
-    pub u32_con_idx: ConIdx,
-    pub array_i8_con_idx: ConIdx,
-    pub array_u8_con_idx: ConIdx,
-    pub array_i32_con_idx: ConIdx,
-    pub array_u32_con_idx: ConIdx,
-    pub array_i64_con_idx: ConIdx,
-    pub array_u64_con_idx: ConIdx,
+    pub true_con_idx: HeapObjIdx,
+    pub false_con_idx: HeapObjIdx,
+    pub char_con_idx: HeapObjIdx,
+    pub str_con_idx: HeapObjIdx,
+    pub i8_con_idx: HeapObjIdx,
+    pub u8_con_idx: HeapObjIdx,
+    pub i32_con_idx: HeapObjIdx,
+    pub u32_con_idx: HeapObjIdx,
+    pub array_i8_con_idx: HeapObjIdx,
+    pub array_u8_con_idx: HeapObjIdx,
+    pub array_i32_con_idx: HeapObjIdx,
+    pub array_u32_con_idx: HeapObjIdx,
+    pub array_i64_con_idx: HeapObjIdx,
+    pub array_u64_con_idx: HeapObjIdx,
 }
 
-pub const CONSTR_CON_IDX: ConIdx = ConIdx(0);
-pub const FUN_CON_IDX: ConIdx = ConIdx(1);
-pub const METHOD_CON_IDX: ConIdx = ConIdx(2);
-pub const CLOSURE_CON_IDX: ConIdx = ConIdx(3);
-const FIRST_FREE_CON_IDX: ConIdx = ConIdx(4);
+pub const CONSTR_CON_IDX: HeapObjIdx = HeapObjIdx(0);
+pub const FUN_CON_IDX: HeapObjIdx = HeapObjIdx(1);
+pub const METHOD_CON_IDX: HeapObjIdx = HeapObjIdx(2);
+pub const CLOSURE_CON_IDX: HeapObjIdx = HeapObjIdx(3);
+const FIRST_FREE_CON_IDX: HeapObjIdx = HeapObjIdx(4);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
@@ -56,9 +54,9 @@ impl FunIdx {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ConIdx(pub u32);
+pub struct HeapObjIdx(pub u32);
 
-impl ConIdx {
+impl HeapObjIdx {
     pub fn as_u64(&self) -> u64 {
         u64::from(self.0)
     }
@@ -89,12 +87,6 @@ impl ClosureIdx {
         self.0 as usize
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct RecordIdx(u32);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct VariantIdx(u32);
 
 // For now we will monomorphise fully but allocate anything other than integeres, bools, and chars
 // as boxes. We also don't need to distinguish pointers from other word-sized things as we don't
@@ -252,17 +244,20 @@ pub struct LocalInfo {
     pub ty: mono::Type,
 }
 
+/// Describes heap allocated objects.
 #[derive(Debug)]
-pub enum Con {
+pub enum HeapObj {
     Builtin(BuiltinConDecl),
     Source(SourceConDecl),
+    Record(RecordShape),
+    Variant(VariantShape),
 }
 
-impl Con {
+impl HeapObj {
     pub fn as_source_con(&self) -> &SourceConDecl {
         match self {
-            Con::Builtin(_) => panic!(),
-            Con::Source(source_con) => source_con,
+            HeapObj::Source(con) => con,
+            _ => panic!(),
         }
     }
 }
@@ -301,7 +296,7 @@ pub enum BuiltinConDecl {
 #[derive(Debug)]
 pub struct SourceConDecl {
     pub name: Id,
-    pub idx: ConIdx,              // for debugging
+    pub idx: HeapObjIdx,          // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub fields: ConFields,
 
@@ -388,7 +383,7 @@ pub struct WhileLetStmt {
 pub enum Expr {
     LocalVar(LocalIdx),             // a local variable
     TopVar(FunIdx),                 // a top-level function reference
-    Constr(ConIdx),                 // a product constructor
+    Constr(HeapObjIdx),             // a product constructor
     FieldSelect(FieldSelectExpr),   // <expr>.<id> (TODO: This could be lowered as function calls)
     MethodSelect(MethodSelectExpr), // <id>.<id>, with an object captured as receiver
     AssocFnSelect(FunIdx),          // <id>.<id>
@@ -447,14 +442,14 @@ pub struct UnOpExpr {
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
     pub fields: Vec<Named<L<Expr>>>,
-    pub idx: RecordIdx,
+    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
 pub struct VariantExpr {
     pub id: Id,
     pub fields: Vec<Named<L<Expr>>>,
-    pub idx: VariantIdx,
+    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -497,21 +492,21 @@ pub enum Pat {
 
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
-    pub constr: ConIdx,
+    pub constr: HeapObjIdx,
     pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
 pub struct RecordPattern {
     pub fields: Vec<Named<L<Pat>>>,
-    pub idx: RecordIdx,
+    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
 pub struct VariantPattern {
     pub constr: Id,
     pub fields: Vec<Named<L<Pat>>>,
-    pub idx: VariantIdx,
+    pub idx: HeapObjIdx,
 }
 
 #[derive(Debug)]
@@ -540,12 +535,12 @@ pub struct ClosureFv {
 
 #[derive(Debug)]
 struct Indices {
-    product_cons: Map<Id, Map<Vec<mono::Type>, ConIdx>>,
-    sum_cons: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>>,
+    product_cons: Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>,
+    sum_cons: Map<Id, Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>>,
     funs: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
     assoc_funs: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
-    records: Map<RecordShape, RecordIdx>,
-    variants: Map<VariantShape, VariantIdx>,
+    records: Map<RecordShape, HeapObjIdx>,
+    variants: Map<VariantShape, HeapObjIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -610,25 +605,9 @@ impl FunScope {
 }
 
 pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
-    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
-
-    let record_indices: Map<RecordShape, RecordIdx> = record_shapes
-        .into_iter()
-        .zip(std::iter::successors(Some(RecordIdx(0)), |i| {
-            Some(RecordIdx(i.0 + 1))
-        }))
-        .collect();
-
-    let variant_indices: Map<VariantShape, VariantIdx> = variant_shapes
-        .into_iter()
-        .zip(std::iter::successors(Some(VariantIdx(0)), |i| {
-            Some(VariantIdx(i.0 + 1))
-        }))
-        .collect();
-
     // Number all declarations first, then lower the program.
-    let mut product_con_nums: Map<Id, Map<Vec<mono::Type>, ConIdx>> = Default::default();
-    let mut sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, ConIdx>>> = Default::default();
+    let mut product_con_nums: Map<Id, Map<Vec<mono::Type>, HeapObjIdx>> = Default::default();
+    let mut sum_con_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, HeapObjIdx>>> = Default::default();
     let mut fun_nums: Map<Id, Map<Vec<mono::Type>, FunIdx>> = Default::default();
     let mut assoc_fun_nums: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>> = Default::default();
 
@@ -647,7 +626,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .entry(con_ty_args.clone())
                             .or_insert_with(|| {
                                 let idx = next_con_idx;
-                                next_con_idx = ConIdx(next_con_idx.0 + 1);
+                                next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
                                 idx
                             });
                     }
@@ -663,12 +642,33 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         .entry(con_ty_args.clone())
                         .or_insert_with(|| {
                             let idx = next_con_idx;
-                            next_con_idx = ConIdx(next_con_idx.0 + 1);
+                            next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
                             idx
                         });
                 }
             }
         }
+    }
+
+    // Assign indices to record and variant shapes.
+    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
+
+    let mut record_indices: Map<RecordShape, HeapObjIdx> = Default::default();
+    for record_shape in record_shapes {
+        record_indices.insert(record_shape, {
+            let idx = next_con_idx;
+            next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
+            idx
+        });
+    }
+
+    let mut variant_indices: Map<VariantShape, HeapObjIdx> = Default::default();
+    for variant_shape in variant_shapes {
+        variant_indices.insert(variant_shape, {
+            let idx = next_con_idx;
+            next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
+            idx
+        });
     }
 
     // Number top-level functions.
@@ -706,26 +706,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
-    let mut records: Vec<(RecordShape, RecordIdx)> = record_indices
-        .iter()
-        .map(|(shape, idx)| (shape.clone(), *idx))
-        .collect();
-
-    records.sort_by_key(|(_, idx)| idx.0);
-
-    let mut variants: Vec<(VariantShape, VariantIdx)> = variant_indices
-        .iter()
-        .map(|(shape, idx)| (shape.clone(), *idx))
-        .collect();
-
-    variants.sort_by_key(|(_, idx)| idx.0);
-
     let mut lowered_pgm = LoweredPgm {
+        heap_objs: vec![],
         funs: vec![],
-        cons: vec![],
         closures: vec![],
-        records: records.into_iter().map(|(shape, _)| shape).collect(),
-        variants: variants.into_iter().map(|(shape, _)| shape).collect(),
         true_con_idx: *sum_con_nums
             .get("Bool")
             .unwrap()
@@ -800,10 +784,18 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // right definitions to the right indices in the vectors.
 
     // Lower types. Add special built-ins first.
-    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Constr));
-    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Fun));
-    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Method));
-    lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::Closure));
+    lowered_pgm
+        .heap_objs
+        .push(HeapObj::Builtin(BuiltinConDecl::Constr));
+    lowered_pgm
+        .heap_objs
+        .push(HeapObj::Builtin(BuiltinConDecl::Fun));
+    lowered_pgm
+        .heap_objs
+        .push(HeapObj::Builtin(BuiltinConDecl::Method));
+    lowered_pgm
+        .heap_objs
+        .push(HeapObj::Builtin(BuiltinConDecl::Closure));
 
     for (con_id, con_ty_map) in &mono_pgm.ty {
         for (con_ty_args, con_decl) in con_ty_map {
@@ -811,9 +803,9 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 Some(rhs) => match rhs {
                     mono::TypeDeclRhs::Sum(cons) => {
                         for mono::ConstructorDecl { name, fields } in cons {
-                            let idx = ConIdx(lowered_pgm.cons.len() as u32);
+                            let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
                             let name = SmolStr::new(&format!("{}.{}", con_id, name));
-                            lowered_pgm.cons.push(lower_source_con(
+                            lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 &name,
                                 con_ty_args,
@@ -823,10 +815,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     mono::TypeDeclRhs::Product(fields) => {
-                        let idx = ConIdx(lowered_pgm.cons.len() as u32);
-                        lowered_pgm
-                            .cons
-                            .push(lower_source_con(idx, con_id, con_ty_args, fields));
+                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                        lowered_pgm.heap_objs.push(lower_source_con(
+                            idx,
+                            con_id,
+                            con_ty_args,
+                            fields,
+                        ));
                     }
                 },
 
@@ -839,27 +834,35 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             Repr::U32 => BuiltinConDecl::ArrayU32,
                             Repr::U64 => BuiltinConDecl::ArrayU64,
                         };
-                        lowered_pgm.cons.push(Con::Builtin(array_con));
+                        lowered_pgm.heap_objs.push(HeapObj::Builtin(array_con));
                     }
 
                     "I8" => {
                         assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I8));
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::I8));
                     }
 
                     "U8" => {
                         assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U8));
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::U8));
                     }
 
                     "I32" => {
                         assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::I32));
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::I32));
                     }
 
                     "U32" => {
                         assert_eq!(con_ty_args.len(), 0);
-                        lowered_pgm.cons.push(Con::Builtin(BuiltinConDecl::U32));
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::U32));
                     }
 
                     "Void" => {
@@ -868,8 +871,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         // representation.
                         // TODO: Could we just skip this?
                         // NOTE: This needs to be in sync with the numbering loop above.
-                        let idx = ConIdx(lowered_pgm.cons.len() as u32);
-                        lowered_pgm.cons.push(Con::Source(SourceConDecl {
+                        let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
+                        lowered_pgm.heap_objs.push(HeapObj::Source(SourceConDecl {
                             name: SmolStr::new_static("Void"),
                             idx,
                             ty_args: vec![],
@@ -1424,12 +1427,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 }
 
 fn lower_source_con(
-    idx: ConIdx,
+    idx: HeapObjIdx,
     con_id: &SmolStr,
     con_ty_args: &[mono::Type],
     fields: &mono::ConstructorFields,
-) -> Con {
-    Con::Source(SourceConDecl {
+) -> HeapObj {
+    HeapObj::Source(SourceConDecl {
         name: con_id.clone(),
         idx,
         ty_args: con_ty_args.to_vec(),
@@ -1881,7 +1884,7 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pa
             fields,
             ty_args,
         }) => {
-            let con_idx: ConIdx = match constr {
+            let con_idx: HeapObjIdx = match constr {
                 Some(constr) => *indices
                     .sum_cons
                     .get(type_)

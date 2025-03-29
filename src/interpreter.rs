@@ -9,7 +9,6 @@ use heap::Heap;
 use crate::ast::{self, Id, Loc, L};
 use crate::collections::Map;
 use crate::lowering::*;
-use crate::record_collector::{RecordShape, VariantShape};
 use crate::utils::loc_display;
 
 use std::io::Write;
@@ -18,37 +17,33 @@ use bytemuck::cast_slice_mut;
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
-    cons: Vec<Con>,
+    heap_objs: Vec<HeapObj>,
     funs: Vec<Fun>,
     closures: Vec<Closure>,
-    records: Vec<RecordShape>,
-    variants: Vec<VariantShape>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
     false_alloc: u64,
-    char_con_idx: ConIdx,
-    str_con_idx: ConIdx,
-    i8_con_idx: ConIdx,
-    u8_con_idx: ConIdx,
-    i32_con_idx: ConIdx,
-    u32_con_idx: ConIdx,
-    array_i8_con_idx: ConIdx,
-    array_u8_con_idx: ConIdx,
-    array_i32_con_idx: ConIdx,
-    array_u32_con_idx: ConIdx,
-    array_i64_con_idx: ConIdx,
-    array_u64_con_idx: ConIdx,
+    char_con_idx: HeapObjIdx,
+    str_con_idx: HeapObjIdx,
+    i8_con_idx: HeapObjIdx,
+    u8_con_idx: HeapObjIdx,
+    i32_con_idx: HeapObjIdx,
+    u32_con_idx: HeapObjIdx,
+    array_i8_con_idx: HeapObjIdx,
+    array_u8_con_idx: HeapObjIdx,
+    array_i32_con_idx: HeapObjIdx,
+    array_u32_con_idx: HeapObjIdx,
+    array_i64_con_idx: HeapObjIdx,
+    array_u64_con_idx: HeapObjIdx,
 }
 
 impl Pgm {
     fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
         let LoweredPgm {
-            mut cons,
+            mut heap_objs,
             funs,
             closures,
-            records,
-            variants,
             true_con_idx,
             false_con_idx,
             char_con_idx,
@@ -66,10 +61,10 @@ impl Pgm {
         } = lowered_pgm;
 
         // Allocate singletons for constructors without fields.
-        for con in cons.iter_mut() {
-            let source_con = match con {
-                Con::Builtin(_) => continue,
-                Con::Source(source_con) => source_con,
+        for heap_obj in heap_objs.iter_mut() {
+            let source_con = match heap_obj {
+                HeapObj::Builtin(_) | HeapObj::Record(_) | HeapObj::Variant(_) => continue,
+                HeapObj::Source(source_con) => source_con,
             };
 
             if !source_con.fields.is_empty() {
@@ -79,15 +74,13 @@ impl Pgm {
             source_con.alloc = heap.allocate_tag(source_con.idx.as_u64());
         }
 
-        let true_alloc = cons[true_con_idx.as_usize()].as_source_con().alloc;
-        let false_alloc = cons[false_con_idx.as_usize()].as_source_con().alloc;
+        let true_alloc = heap_objs[true_con_idx.as_usize()].as_source_con().alloc;
+        let false_alloc = heap_objs[false_con_idx.as_usize()].as_source_con().alloc;
 
         Pgm {
-            cons,
+            heap_objs,
             funs,
             closures,
-            records,
-            variants,
             true_alloc,
             false_alloc,
             char_con_idx,
@@ -474,13 +467,13 @@ fn call_closure<W: Write>(
     args: &[CallArg],
     loc: &Loc,
 ) -> ControlFlow {
-    match heap[fun] {
-        CONSTR_TYPE_TAG => {
-            let con_idx = ConIdx(heap[fun + 1] as u32);
+    match HeapObjIdx(heap[fun] as u32) {
+        CONSTR_CON_IDX => {
+            let con_idx = HeapObjIdx(heap[fun + 1] as u32);
             allocate_object_from_idx(w, pgm, heap, locals, con_idx, args)
         }
 
-        FUN_TYPE_TAG => {
+        FUN_CON_IDX => {
             let top_fun_idx = heap[fun + 1];
             let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
@@ -498,7 +491,7 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
         }
 
-        METHOD_TYPE_TAG => {
+        METHOD_CON_IDX => {
             let receiver = heap[fun + 1];
             let fun_idx = heap[fun + 2];
             let fun = &pgm.funs[fun_idx as usize];
@@ -517,7 +510,7 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
         }
 
-        CLOSURE_TYPE_TAG => {
+        CLOSURE_CON_IDX => {
             let closure_idx = heap[fun + 1];
             let closure = &pgm.closures[closure_idx as usize];
 
@@ -561,10 +554,10 @@ fn allocate_object_from_idx<W: Write>(
     pgm: &Pgm,
     heap: &mut Heap,
     locals: &mut [u64],
-    con_idx: ConIdx,
+    con_idx: HeapObjIdx,
     args: &[CallArg],
 ) -> ControlFlow {
-    let con = pgm.cons[con_idx.as_usize()].as_source_con();
+    let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
     let fields = &con.fields;
     let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
 
@@ -828,7 +821,7 @@ fn eval<W: Write>(
         Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
         Expr::Constr(con_idx) => {
-            let con = pgm.cons[con_idx.as_usize()].as_source_con();
+            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
 
             if con.fields.is_empty() {
                 return ControlFlow::Val(con.alloc);
@@ -840,7 +833,7 @@ fn eval<W: Write>(
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
-            let con = &pgm.cons[object_tag as usize];
+            let con = &pgm.heap_objs[object_tag as usize];
             let fields = &con.as_source_con().fields;
             let field_idx = fields.find_named_field_idx(field);
             ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
@@ -1110,7 +1103,7 @@ fn assign<W: Write>(
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_idx = heap[object];
-            let object_con = pgm.cons[object_idx as usize].as_source_con();
+            let object_con = pgm.heap_objs[object_idx as usize].as_source_con();
             let object_fields = &object_con.fields;
             let field_idx = object_fields.find_named_field_idx(field);
             heap[object + 1 + (field_idx as u64)] = val;
@@ -1236,7 +1229,7 @@ fn try_bind_pat(
                 return false;
             }
 
-            let con = pgm.cons[con_idx.as_usize()].as_source_con();
+            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
             match &con.fields {
                 ConFields::Named(con_fields) => {
                     debug_assert!(field_pats.iter().all(|pat| pat.name.is_some()));
