@@ -1210,17 +1210,51 @@ fn try_bind_pat(
     locals: &mut [u64],
     value: u64,
 ) -> bool {
-    todo!()
-    /*
     match &pattern.node {
-        ast::Pat::Var(var) => {
-            let mut map: Map<Id, u64> = Default::default();
-            map.insert(var.clone(), value);
-            Some(map)
+        Pat::Var(var) => {
+            locals[var.as_usize()] = value;
+            true
         }
 
-        ast::Pat::Ignore => Some(Default::default()),
+        Pat::Ignore => true,
 
+        Pat::Str(str) => {
+            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
+            let value_bytes = heap.str_bytes(value);
+            if value_bytes == str.as_bytes() {
+                true
+            } else {
+                false
+            }
+        }
+
+        Pat::StrPfx(pfx, var) => {
+            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
+            let value_bytes = heap.str_bytes(value);
+            if value_bytes.starts_with(pfx.as_bytes()) {
+                let pfx_len = pfx.len() as u32;
+                let len = heap.str_bytes(value).len() as u32;
+                let rest =
+                    heap.allocate_str_view(pgm.str_con_idx.as_u64(), value, pfx_len, len - pfx_len);
+                locals[var.as_usize()] = rest;
+                true
+            } else {
+                false
+            }
+        }
+
+        Pat::Char(char) => {
+            debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
+            heap[value + 1] == u64::from(*char as u32)
+        }
+
+        Pat::Or(pat1, pat2) => {
+            try_bind_pat(pgm, heap, pat1, locals, value)
+                || try_bind_pat(pgm, heap, pat2, locals, value)
+        }
+
+        _ => todo!(),
+        /*
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
             fields: field_pats,
@@ -1287,52 +1321,8 @@ fn try_bind_pat(
             let variant_fields = pgm.get_tag_fields(variant_tag);
             try_bind_field_pats(pgm, heap, variant_fields, fields, value)
         }
-
-        ast::Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag);
-            let value_bytes = heap.str_bytes(value);
-            if value_bytes == str.as_bytes() {
-                Some(Default::default())
-            } else {
-                None
-            }
-        }
-
-        ast::Pat::StrPfx(pfx, var) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag);
-            let value_bytes = heap.str_bytes(value);
-            if value_bytes.starts_with(pfx.as_bytes()) {
-                let pfx_len = pfx.len() as u32;
-                let len = heap.str_bytes(value).len() as u32;
-                let rest = heap.allocate_str_view(pgm.str_ty_tag, value, pfx_len, len - pfx_len);
-                let mut map: Map<Id, u64> = Default::default();
-                map.insert(var.clone(), rest);
-                Some(map)
-            } else {
-                None
-            }
-        }
-
-        ast::Pat::Or(pat1, pat2) => {
-            if let Some(binds) = try_bind_pat(pgm, heap, pat1, value) {
-                return Some(binds);
-            }
-            if let Some(binds) = try_bind_pat(pgm, heap, pat2, value) {
-                return Some(binds);
-            }
-            None
-        }
-
-        ast::Pat::Char(char) => {
-            debug_assert_eq!(heap[value], pgm.char_ty_tag);
-            if heap[value + 1] == u64::from(*char as u32) {
-                Some(Default::default())
-            } else {
-                None
-            }
-        }
+        */
     }
-    */
 }
 
 /*
