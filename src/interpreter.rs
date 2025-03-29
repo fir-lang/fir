@@ -1023,6 +1023,19 @@ fn eval<W: Write>(
             ControlFlow::Val(0) // TODO: return unit
         }
 
+        Expr::ClosureAlloc(closure_idx) => {
+            let closure = &pgm.closures[closure_idx.as_usize()];
+            let alloc = heap.allocate(2 + closure.fvs.len());
+            heap[alloc] = CLOSURE_TYPE_TAG;
+            heap[alloc + 1] = closure_idx.as_u64();
+
+            for (fv_idx, fv) in closure.fvs.iter().enumerate() {
+                heap[alloc + 2 + (fv_idx as u64)] = locals[fv.alloc_idx.as_usize()];
+            }
+
+            ControlFlow::Val(alloc)
+        }
+
         _ => todo!(),
         /*
         ast::Expr::Record(exprs) => {
@@ -1102,30 +1115,6 @@ fn eval<W: Write>(
             }
 
             ControlFlow::Val(variant)
-        }
-
-        ast::Expr::Fn(ast::FnExpr {
-            sig: _,
-            body: _,
-            idx,
-        }) => {
-            let closure = &pgm.closures[*idx as usize];
-
-            let fv_values: Vec<(u64, u32)> = closure
-                .fvs
-                .iter()
-                .map(|(var, idx)| (*locals.get(var).unwrap(), *idx))
-                .collect();
-
-            let alloc = heap.allocate(2 + fv_values.len());
-            heap[alloc] = CLOSURE_TYPE_TAG;
-            heap[alloc + 1] = u32_as_val(*idx);
-
-            for (val, idx) in fv_values {
-                heap[alloc + 2 + u64::from(idx)] = val;
-            }
-
-            ControlFlow::Val(alloc)
         }
         */
     }

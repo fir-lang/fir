@@ -74,6 +74,16 @@ impl LocalIdx {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ClosureIdx(u32);
 
+impl ClosureIdx {
+    pub fn as_u64(&self) -> u64 {
+        u64::from(self.0)
+    }
+
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RecordIdx(u32);
 
