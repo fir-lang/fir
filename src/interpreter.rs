@@ -981,57 +981,6 @@ fn assign<W: Write>(
     ControlFlow::Val(val)
 }
 
-/*
-fn try_bind_field_pats(
-    pgm: &Pgm,
-    heap: &mut Heap,
-    constr_fields: &Fields,
-    field_pats: &[ast::Named<L<ast::Pat>>],
-    value: u64,
-) -> Option<Map<Id, u64>> {
-    let mut ret: Map<Id, u64> = Default::default();
-
-    match constr_fields {
-        Fields::Unnamed(arity) => {
-            assert_eq!(
-                *arity,
-                field_pats.len() as u32,
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
-                let field_value = heap[value + (field_pat_idx as u64) + 1];
-                assert!(field_pat.name.is_none());
-                let map = try_bind_pat(pgm, heap, &field_pat.node, field_value)?;
-                ret.extend(map.into_iter());
-            }
-        }
-
-        Fields::Named(field_tys) => {
-            assert_eq!(
-                field_tys.len(),
-                field_pats.len(),
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_idx, field_name) in field_tys.iter().enumerate() {
-                let field_pat = field_pats
-                    .iter()
-                    .find(|field| field.name.as_ref().unwrap() == field_name)
-                    .unwrap();
-                let map = try_bind_pat(
-                    pgm,
-                    heap,
-                    &field_pat.node,
-                    heap[value + 1 + field_idx as u64],
-                )?;
-                ret.extend(map.into_iter());
-            }
-        }
-    }
-
-    Some(ret)
-}
-*/
-
 /// Tries to match a pattern. On successful match, returns a map with variables bound in the
 /// pattern. On failure returns `None`.
 ///
@@ -1131,16 +1080,55 @@ fn try_bind_pat(
                 }
             }
 
-            todo!()
+            true
+        }
+
+        Pat::Record(RecordPattern {
+            fields: field_pats,
+            idx,
+        }) => {
+            let value_tag = heap[value];
+            debug_assert_eq!(value_tag, idx.as_u64());
+
+            let record_shape = pgm.heap_objs[idx.as_usize()].as_record();
+
+            match record_shape {
+                RecordShape::NamedFields { fields } => {
+                    for (i, field_name) in fields.iter().enumerate() {
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+
+                RecordShape::UnnamedFields { arity } => {
+                    debug_assert_eq!(*arity as usize, field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        debug_assert!(field_pat.name.is_none());
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            true
         }
 
         _ => todo!(),
         /*
-        ast::Pat::Record(fields) => {
-            let value_tag = heap[value];
-            let value_fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_pats(pgm, heap, value_fields, fields, value)
-        }
 
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
             let value_tag = heap[value];
