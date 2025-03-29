@@ -235,50 +235,6 @@ macro_rules! val {
     };
 }
 
-/*
-impl Pgm {
-    fn get_tag_fields(&self, tag: u64) -> &Fields {
-        &self.cons_by_tag[tag as usize].fields
-    }
-
-    fn bool_alloc(&self, b: bool) -> u64 {
-        if b {
-            self.true_alloc
-        } else {
-            self.false_alloc
-        }
-    }
-
-    fn tag_name_display(&self, tag: u64) -> impl std::fmt::Display + '_ {
-        struct TagNameDisplay<'a> {
-            ty_name: &'a Id,
-            con_name: Option<&'a Id>,
-        }
-
-        impl std::fmt::Display for TagNameDisplay<'_> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{}", self.ty_name)?;
-                if let Some(con_name) = self.con_name {
-                    write!(f, ".{}", con_name)?;
-                }
-                Ok(())
-            }
-        }
-
-        let con = &self.cons_by_tag[tag as usize];
-
-        match &con.info {
-            ConInfo::Named { ty_name, con_name } => TagNameDisplay {
-                ty_name,
-                con_name: con_name.as_ref(),
-            },
-            ConInfo::Record { shape: _ } => todo!(),
-            ConInfo::Variant { shape: _ } => todo!(),
-        }
-    }
-}
-*/
-
 fn call_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -1127,21 +1083,54 @@ fn try_bind_pat(
             true
         }
 
-        _ => todo!(),
-        /*
-
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
+        Pat::Variant(VariantPattern {
+            constr: _,
+            fields: field_pats,
+            idx,
+        }) => {
             let value_tag = heap[value];
-            let variant_shape = VariantShape::from_con_and_fields(constr, fields);
-            let variant_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
 
-            if value_tag != variant_tag {
-                return None;
+            if value_tag != idx.as_u64() {
+                return false;
             }
-            let variant_fields = pgm.get_tag_fields(variant_tag);
-            try_bind_field_pats(pgm, heap, variant_fields, fields, value)
+
+            let variant_shape = pgm.heap_objs[idx.as_usize()].as_variant();
+            let record_shape = &variant_shape.payload;
+
+            match record_shape {
+                RecordShape::NamedFields { fields } => {
+                    for (i, field_name) in fields.iter().enumerate() {
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+
+                RecordShape::UnnamedFields { arity } => {
+                    debug_assert_eq!(*arity as usize, field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        debug_assert!(field_pat.name.is_none());
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            true
         }
-        */
     }
 }
 
