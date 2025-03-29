@@ -828,11 +828,13 @@ fn eval<W: Write>(
         Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
         Expr::Constr(con_idx) => {
-            // Singleton constructor. Constructor selections should be closurized in an earlier
-            // pass.
             let con = pgm.cons[con_idx.as_usize()].as_source_con();
-            debug_assert!(con.fields.is_empty());
-            ControlFlow::Val(con.alloc)
+
+            if con.fields.is_empty() {
+                return ControlFlow::Val(con.alloc);
+            }
+
+            return ControlFlow::Val(heap.allocate_constr(con_idx.as_u64()));
         }
 
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
