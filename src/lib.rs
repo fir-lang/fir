@@ -29,6 +29,7 @@ pub struct CompilerOpts {
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
+    pub print_lowered_ast: bool,
     pub main: String,
 }
 
@@ -94,7 +95,7 @@ mod native {
     use smol_str::SmolStr;
     use std::path::Path;
 
-    pub fn main(opts: CompilerOpts, program: String, mut _program_args: Vec<String>) {
+    pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         let fir_root = match std::env::var("FIR_ROOT") {
             Ok(s) => s,
             Err(_) => {
@@ -149,12 +150,14 @@ mod native {
         }
 
         let lowered_pgm = lowering::lower(&mut mono_pgm);
-        println!("==================================================");
-        lowering::printer::print_pgm(&lowered_pgm);
 
-        // let mut w = std::io::stdout();
-        // program_args.insert(0, program);
-        // interpreter::run(&mut w, module, &opts.main, &program_args);
+        if opts.print_lowered_ast {
+            lowering::printer::print_pgm(&lowered_pgm);
+        }
+
+        let mut w = std::io::stdout();
+        program_args.insert(0, program);
+        interpreter::run(&mut w, lowered_pgm, &opts.main, &program_args);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {

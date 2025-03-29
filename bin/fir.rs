@@ -38,6 +38,12 @@ fn main() {
                 .help("Print AST after monomorphisation."),
         )
         .arg(
+            clap::Arg::new(PRINT_LOWERED_AST)
+                .long(PRINT_LOWERED_AST)
+                .num_args(0)
+                .help("Print AST after lowering."),
+        )
+        .arg(
             clap::Arg::new(MAIN)
                 .long(MAIN)
                 .num_args(1)
@@ -66,6 +72,7 @@ fn main() {
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
+        print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
     };
 
@@ -85,6 +92,7 @@ const NO_BACKTRACE: &str = "no-backtrace";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
+const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
