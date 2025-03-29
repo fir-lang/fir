@@ -9,6 +9,7 @@ use heap::Heap;
 use crate::ast::{self, Id, Loc, L};
 use crate::collections::Map;
 use crate::lowering::*;
+use crate::record_collector::{RecordShape, VariantShape};
 use crate::utils::loc_display;
 
 use std::io::Write;
@@ -1003,41 +1004,37 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
 
-        _ => todo!(),
-        /*
-        ast::Expr::Record(exprs) => {
-            let shape = RecordShape::from_named_things(exprs);
-            let type_tag = *pgm.record_ty_tags.get(&shape).unwrap();
+        Expr::Record(RecordExpr { fields, idx }) => {
+            let shape = pgm.heap_objs[idx.as_usize()].as_record();
 
-            let record = heap.allocate(exprs.len() + 1);
-            heap[record] = type_tag;
+            let record = heap.allocate(fields.len() + 1);
+            heap[record] = idx.as_u64();
 
-            if !exprs.is_empty() && exprs[0].name.is_some() {
-                heap[record] = type_tag;
-
-                let mut names: Vec<Id> = exprs
-                    .iter()
-                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
-                    .collect();
-                names.sort();
-
-                for (name_idx, name_) in names.iter().enumerate() {
-                    let expr = exprs
+            if !fields.is_empty() && fields[0].name.is_some() {
+                let name_indices: Map<Id, usize> = match shape {
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                    RecordShape::NamedFields { fields } => fields
                         .iter()
-                        .find_map(|ast::Named { name, node }| {
-                            if name.as_ref().unwrap() == name_ {
-                                Some(node)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap();
+                        .enumerate()
+                        .map(|(i, name)| (name.clone(), i))
+                        .collect(),
+                };
 
-                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                    heap[record + (name_idx as u64) + 1] = value;
+                for field in fields {
+                    let field_value = val!(eval(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        &field.node.node,
+                        &field.node.loc
+                    ));
+                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
+                    heap[record + 1 + (field_idx as u64)] = field_value;
                 }
             } else {
-                for (idx, ast::Named { name: _, node }) in exprs.iter().enumerate() {
+                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
+                    debug_assert!(name.is_none());
                     let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
                     heap[record + (idx as u64) + 1] = value;
                 }
@@ -1046,6 +1043,8 @@ fn eval<W: Write>(
             ControlFlow::Val(record)
         }
 
+        _ => todo!(),
+        /*
         ast::Expr::Variant(ast::VariantExpr { id, args }) => {
             let variant_shape = VariantShape::from_con_and_fields(id, args);
             let type_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();

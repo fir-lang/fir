@@ -260,6 +260,20 @@ impl HeapObj {
             _ => panic!(),
         }
     }
+
+    pub fn as_record(&self) -> &RecordShape {
+        match self {
+            HeapObj::Record(record) => record,
+            _ => panic!(),
+        }
+    }
+
+    pub fn as_variant(&self) -> &VariantShape {
+        match self {
+            HeapObj::Variant(variant) => variant,
+            _ => panic!(),
+        }
+    }
 }
 
 #[derive(Debug)]
