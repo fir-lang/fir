@@ -1408,7 +1408,7 @@ fn mono_ast_ty(
 ) -> mono::Type {
     match ty {
         ast::Type::Named(ast::NamedType { name: con, args }) => {
-            let ty_decl = poly_pgm.ty.get(con).unwrap();
+            let ty_decl = poly_pgm.ty.get(con).unwrap_or_else(|| panic!("{}", con));
             let mono_args: Vec<ast::L<mono::Type>> = args
                 .iter()
                 .map(|arg| arg.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)))

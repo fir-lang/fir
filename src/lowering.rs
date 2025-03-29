@@ -40,10 +40,26 @@ pub struct LoweredPgm {
 pub struct FunIdx(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ConIdx(pub u32);
+pub struct ConIdx(u32);
+
+impl ConIdx {
+    pub fn as_u64(&self) -> u64 {
+        u64::from(self.0)
+    }
+
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LocalIdx(u32);
+
+impl LocalIdx {
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ClosureIdx(u32);
@@ -216,6 +232,15 @@ pub enum Con {
     Source(SourceConDecl),
 }
 
+impl Con {
+    pub fn as_source_con(&self) -> &SourceConDecl {
+        match self {
+            Con::Builtin(_) => panic!(),
+            Con::Source(source_con) => source_con,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum BuiltinConDecl {
     ArrayU8,
@@ -233,6 +258,10 @@ pub struct SourceConDecl {
     pub idx: ConIdx,              // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub fields: ConFields,
+
+    /// For interpeter: if the constructor doesn't have any fields, this holds the address to the
+    /// singleton allocation.
+    pub alloc: u64,
 }
 
 #[derive(Debug)]
@@ -246,6 +275,17 @@ impl ConFields {
         match self {
             ConFields::Named(fields) => fields.is_empty(),
             ConFields::Unnamed(fields) => fields.is_empty(),
+        }
+    }
+
+    pub fn find_named_field_idx(&self, id: &Id) -> usize {
+        match self {
+            ConFields::Unnamed(_) => panic!(),
+            ConFields::Named(fields) => fields
+                .iter()
+                .enumerate()
+                .find_map(|(i, field)| if &field.0 == id { Some(i) } else { None })
+                .unwrap(),
         }
     }
 }
@@ -785,6 +825,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             idx,
                             ty_args: vec![],
                             fields: ConFields::Unnamed(vec![]),
+                            alloc: u64::MAX, // a value that causes errors if accidentally used
                         }))
                     }
 
@@ -1371,6 +1412,7 @@ fn lower_source_con(
                     .collect(),
             ),
         },
+        alloc: u64::MAX, // a value that causes errors if accidentally used
     })
 }
 

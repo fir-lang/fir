@@ -21,6 +21,7 @@ impl LoweredPgm {
                     idx,
                     ty_args,
                     fields,
+                    alloc: _,
                 }) => {
                     assert_eq!(idx.0 as usize, con_idx);
                     buffer.push_str(name.as_str());

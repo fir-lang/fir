@@ -1,11 +1,10 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod ast;
-// mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
-// mod interpreter;
+mod interpreter;
 mod lexer;
 mod lowering;
 mod mono_ast;

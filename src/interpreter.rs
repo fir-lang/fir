@@ -1,22 +1,19 @@
-//! An AST interpreter, feature complete enough to interpret the bootstrapping compiler.
-//!
-//! Since we don't have a proper type checker (it will be implemented in the bootstrapped compiler)
-//! we don't assume type safety here and always check types.
-
 #![allow(clippy::needless_range_loop, clippy::too_many_arguments)]
 
-mod builtins;
-mod heap;
-mod init;
+const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
-use builtins::{call_builtin_fun, BuiltinFun};
+// mod builtins;
+mod heap;
+// mod init;
+
+// use builtins::{call_builtin_fun, BuiltinFun};
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
-use crate::closure_collector::{collect_closures, Closure};
 use crate::collections::Map;
 use crate::interpolation::StringPart;
-use crate::record_collector::{collect_records, RecordShape, VariantShape};
+use crate::lowering::*;
+use crate::record_collector::{RecordShape, VariantShape};
 use crate::utils::loc_display;
 
 use std::cmp::Ordering;
@@ -25,17 +22,109 @@ use std::io::Write;
 use bytemuck::cast_slice_mut;
 use smol_str::SmolStr;
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args: &[String]) {
-    let closures = collect_closures(&mut pgm);
+// Just lowered program with some extra cached stuff for easy access.
+struct Pgm {
+    cons: Vec<Con>,
+    funs: Vec<Fun>,
+    closures: Vec<Closure>,
+    records: Vec<RecordShape>,
+    variants: Vec<VariantShape>,
 
+    // Some allocations and type tags for the built-ins.
+    true_alloc: u64,
+    false_alloc: u64,
+    char_con_idx: ConIdx,
+    str_con_idx: ConIdx,
+    i8_con_idx: ConIdx,
+    u8_con_idx: ConIdx,
+    i32_con_idx: ConIdx,
+    u32_con_idx: ConIdx,
+    array_i8_con_idx: ConIdx,
+    array_u8_con_idx: ConIdx,
+    array_i32_con_idx: ConIdx,
+    array_u32_con_idx: ConIdx,
+    array_i64_con_idx: ConIdx,
+    array_u64_con_idx: ConIdx,
+}
+
+impl Pgm {
+    fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
+        let LoweredPgm {
+            mut cons,
+            funs,
+            closures,
+            records,
+            variants,
+            true_con_idx,
+            false_con_idx,
+            char_con_idx,
+            str_con_idx,
+            i8_con_idx,
+            u8_con_idx,
+            i32_con_idx,
+            u32_con_idx,
+            array_i8_con_idx,
+            array_u8_con_idx,
+            array_i32_con_idx,
+            array_u32_con_idx,
+            array_i64_con_idx,
+            array_u64_con_idx,
+        } = lowered_pgm;
+
+        // Allocate singletons for constructors without fields.
+        for con in cons.iter_mut() {
+            let source_con = match con {
+                Con::Builtin(_) => continue,
+                Con::Source(source_con) => source_con,
+            };
+
+            if !source_con.fields.is_empty() {
+                continue;
+            }
+
+            source_con.alloc = heap.allocate_tag(source_con.idx.as_u64());
+        }
+
+        let true_alloc = cons[true_con_idx.as_usize()].as_source_con().alloc;
+        let false_alloc = cons[false_con_idx.as_usize()].as_source_con().alloc;
+
+        Pgm {
+            cons,
+            funs,
+            closures,
+            records,
+            variants,
+            true_alloc,
+            false_alloc,
+            char_con_idx,
+            str_con_idx,
+            i8_con_idx,
+            u8_con_idx,
+            i32_con_idx,
+            u32_con_idx,
+            array_i8_con_idx,
+            array_u8_con_idx,
+            array_i32_con_idx,
+            array_u32_con_idx,
+            array_i64_con_idx,
+            array_u64_con_idx,
+        }
+    }
+}
+
+pub fn run<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
     let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap, closures);
+    let pgm = Pgm::init(pgm, &mut heap);
 
-    // Find the main function.
-    let main_fun = pgm
-        .top_level_funs
-        .get(main)
+    let main_fun: &SourceFunDecl = pgm
+        .funs
+        .iter()
+        .find_map(|fun| match fun {
+            Fun::Source(fun @ SourceFunDecl { name, .. }) if name.node.as_str() == main => {
+                Some(fun)
+            }
+            _ => None,
+        })
         .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
 
     // `main` doesn't have a call site, called by the interpreter.
@@ -49,13 +138,10 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args:
         byte_offset_end: 0,
     };
 
-    // Check if main takes an input argument.
-    let main_num_args = match &main_fun.kind {
-        FunKind::Builtin(_) => panic!(),
-        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
-    };
+    let mut heap = Heap::new();
 
-    let arg_vec: Vec<u64> = match main_num_args {
+    // Check if main takes an input argument.
+    let arg_vec: Vec<u64> = match main_fun.params.len() {
         0 => {
             if args.len() > 1 {
                 println!("WARNING: `main` does not take command line arguments, but command line arguments are passed to the interpreter");
@@ -64,11 +150,14 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args:
         }
         1 => {
             let arg_vec = heap.allocate(2 + args.len());
-            heap[arg_vec] = pgm.array_ptr_ty_tag;
+            heap[arg_vec] = pgm.array_u64_con_idx.as_u64();
             heap[arg_vec + 1] = args.len() as u64;
             for (i, arg) in args.iter().enumerate() {
-                let arg_val =
-                    heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, arg.as_bytes());
+                let arg_val = heap.allocate_str(
+                    pgm.str_con_idx.as_u64(),
+                    pgm.array_u8_con_idx.as_u64(),
+                    arg.as_bytes(),
+                );
                 heap[arg_vec + 2 + (i as u64)] = arg_val;
             }
             vec![arg_vec]
@@ -79,53 +168,8 @@ pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args:
         ),
     };
 
-    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: &str) {
-    let closures = collect_closures(&mut pgm);
-
-    let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap, closures);
-
-    // Find the main function.
-    let main_fun = pgm
-        .top_level_funs
-        .get(main)
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
-
-    // `main` doesn't have a call site, called by the interpreter.
-    let call_loc = Loc {
-        module: "".into(),
-        line_start: 0,
-        col_start: 0,
-        byte_offset_start: 0,
-        line_end: 0,
-        col_end: 0,
-        byte_offset_end: 0,
-    };
-
-    // Check if main takes an input argument.
-    let main_num_args = match &main_fun.kind {
-        FunKind::Builtin(_) => panic!(),
-        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
-    };
-
-    let arg_vec: Vec<u64> = match main_num_args {
-        0 => {
-            vec![]
-        }
-        1 => {
-            vec![heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, input.as_bytes())]
-        }
-        other => panic!(
-            "`main` needs to take 0 or 1 argument, but it takes {} arguments",
-            other
-        ),
-    };
-
-    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+    todo!()
+    // call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
 
 macro_rules! generate_tags {
@@ -152,55 +196,7 @@ generate_tags!(
     FIRST_TYPE_TAG,     // First available type tag for user types.
 );
 
-#[derive(Debug, Default)]
-struct Pgm {
-    /// Type constructors by type name.
-    ///
-    /// These don't include records.
-    ///
-    /// This can be used when allocating.
-    ty_cons: Map<Id, TyCon>,
-
-    /// Maps object tags to constructor info.
-    cons_by_tag: Vec<Con>,
-
-    /// Type tags of records.
-    ///
-    /// This can be used to get the tag of a record, from a record pattern, value, or type.
-    record_ty_tags: Map<RecordShape, u64>,
-
-    variant_ty_tags: Map<VariantShape, u64>,
-
-    /// Associated functions, indexed by type tag, then function name.
-    associated_funs: Vec<Map<Id, Fun>>,
-
-    /// Associated functions, indexed by type tag, then function index.
-    associated_funs_by_idx: Vec<Vec<Fun>>,
-
-    /// Top-level functions, indexed by function name.
-    top_level_funs: Map<Id, Fun>,
-
-    /// Same as `top_level_funs`, but indexed by the function index.
-    top_level_funs_by_idx: Vec<Fun>,
-
-    closures: Vec<Closure>,
-
-    // Some allocations and type tags for the built-ins.
-    true_alloc: u64,
-    false_alloc: u64,
-    char_ty_tag: u64,
-    str_ty_tag: u64,
-    i8_ty_tag: u64,
-    u8_ty_tag: u64,
-    i32_ty_tag: u64,
-    u32_ty_tag: u64,
-    array_i8_ty_tag: u64,
-    array_u8_ty_tag: u64,
-    array_i32_ty_tag: u64,
-    array_u32_ty_tag: u64,
-    array_ptr_ty_tag: u64,
-}
-
+/*
 #[derive(Debug)]
 struct Con {
     info: ConInfo,
@@ -328,8 +324,7 @@ impl FunKind {
         }
     }
 }
-
-const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
+*/
 
 /// Control flow within a function.
 #[derive(Debug, Clone, Copy)]
@@ -407,182 +402,8 @@ macro_rules! val {
     };
 }
 
+/*
 impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, closures: Vec<Closure>) -> Pgm {
-        // Initialize `ty_cons`.
-        let (ty_cons, mut next_type_tag): (Map<Id, TyCon>, u64) = init::collect_types(&pgm);
-
-        fn convert_record(shape: &RecordShape) -> Fields {
-            match shape {
-                RecordShape::UnnamedFields { arity } => Fields::Unnamed(*arity),
-                RecordShape::NamedFields { fields } => Fields::Named(fields.clone()),
-            }
-        }
-
-        fn convert_variant(shape: &VariantShape) -> Fields {
-            convert_record(&shape.payload)
-        }
-
-        let mut cons_by_tag: Vec<Con> = vec![];
-
-        let mut ty_cons_sorted: Vec<(Id, TyCon)> = ty_cons
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        ty_cons_sorted.sort_by_key(|(_, ty_con)| ty_con.type_tag);
-
-        for (ty_name, ty_con) in ty_cons_sorted {
-            if ty_con.value_constrs.is_empty() {
-                // A built-in type with no constructors.
-                cons_by_tag.push(Con {
-                    info: ConInfo::Named {
-                        ty_name,
-                        con_name: None,
-                    },
-                    fields: Fields::Unnamed(0),
-                    alloc: None,
-                });
-            } else {
-                for constr in ty_con.value_constrs {
-                    let alloc: Option<u64> = if constr.fields.is_empty() {
-                        Some(heap.allocate_tag(cons_by_tag.len() as u64))
-                    } else {
-                        None
-                    };
-                    cons_by_tag.push(Con {
-                        info: ConInfo::Named {
-                            ty_name: ty_name.clone(),
-                            con_name: constr.name.clone(),
-                        },
-                        fields: constr.fields.clone(),
-                        alloc,
-                    });
-                }
-            }
-        }
-
-        // Initialize `record_ty_tags`.
-        let (record_shapes, variant_shapes) = collect_records(&pgm);
-        let mut record_ty_tags: Map<RecordShape, u64> =
-            Map::with_capacity_and_hasher(record_shapes.len(), Default::default());
-
-        for record_shape in record_shapes {
-            let fields = convert_record(&record_shape);
-            cons_by_tag.push(Con {
-                info: ConInfo::Record {
-                    shape: record_shape.clone(),
-                },
-                fields,
-                alloc: None,
-            });
-            record_ty_tags.insert(record_shape, next_type_tag);
-            next_type_tag += 1;
-        }
-
-        let mut variant_ty_tags: Map<VariantShape, u64> =
-            Map::with_capacity_and_hasher(variant_shapes.len(), Default::default());
-
-        for variant_shape in variant_shapes {
-            let fields = convert_variant(&variant_shape);
-            cons_by_tag.push(Con {
-                info: ConInfo::Variant {
-                    shape: variant_shape.clone(),
-                },
-                fields,
-                alloc: None,
-            });
-            variant_ty_tags.insert(variant_shape, next_type_tag);
-            next_type_tag += 1;
-        }
-
-        // Initialize `associated_funs` and `top_level_funs`.
-        let (top_level_funs, associated_funs) = init::collect_funs(pgm);
-
-        let mut associated_funs_vec: Vec<Map<Id, Fun>> =
-            vec![Default::default(); next_type_tag as usize];
-
-        let mut associated_funs_by_idx: Vec<Vec<Fun>> =
-            vec![Default::default(); next_type_tag as usize];
-
-        for (ty_name, funs) in associated_funs {
-            let ty_con = ty_cons
-                .get(&ty_name)
-                .unwrap_or_else(|| panic!("Type not defined: {}", ty_name));
-            let first_tag = ty_cons.get(&ty_name).unwrap().type_tag as usize;
-            let n_constrs = ty_con.value_constrs.len();
-
-            let mut funs_as_vec: Vec<Fun> = funs.values().cloned().collect();
-            funs_as_vec.sort_by_key(|fun| fun.idx);
-
-            if n_constrs == 0 {
-                // A built-in type with no constructor.
-                associated_funs_vec[first_tag] = funs;
-                associated_funs_by_idx[first_tag] = funs_as_vec;
-            } else {
-                for tag in first_tag..first_tag + n_constrs {
-                    associated_funs_vec[tag].clone_from(&funs);
-                    associated_funs_by_idx[tag] = funs_as_vec.clone();
-                }
-            }
-        }
-
-        // Initialize `top_level_funs_by_idx`.
-        let mut top_level_funs_vec: Vec<(Id, Fun)> = top_level_funs
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        top_level_funs_vec.sort_by_key(|(_, fun)| fun.idx);
-
-        let top_level_funs_by_idx = top_level_funs_vec.into_iter().map(|(_, f)| f).collect();
-
-        let bool_ty_con: &TyCon = ty_cons.get("Bool").as_ref().unwrap();
-        assert_eq!(bool_ty_con.value_constrs[0].name, Some(Id::new("False")));
-        assert_eq!(bool_ty_con.value_constrs[1].name, Some(Id::new("True")));
-
-        let false_alloc = cons_by_tag[bool_ty_con.type_tag as usize].alloc.unwrap();
-        let true_alloc = cons_by_tag[bool_ty_con.type_tag as usize + 1]
-            .alloc
-            .unwrap();
-
-        let char_ty_tag = ty_cons.get("Char").as_ref().unwrap().type_tag;
-        let str_ty_tag = ty_cons.get("Str").as_ref().unwrap().type_tag;
-        let i32_ty_tag = ty_cons.get("I32").as_ref().unwrap().type_tag;
-        let u32_ty_tag = ty_cons.get("U32").as_ref().unwrap().type_tag;
-        let i8_ty_tag = ty_cons.get("I8").as_ref().unwrap().type_tag;
-        let u8_ty_tag = ty_cons.get("U8").as_ref().unwrap().type_tag;
-        let array_i8_ty_tag = ty_cons.get("Array@I8").as_ref().unwrap().type_tag;
-        let array_u8_ty_tag = ty_cons.get("Array@U8").as_ref().unwrap().type_tag;
-        let array_i32_ty_tag = ty_cons.get("Array@I32").as_ref().unwrap().type_tag;
-        let array_u32_ty_tag = ty_cons.get("Array@U32").as_ref().unwrap().type_tag;
-        let array_ptr_ty_tag = ty_cons.get("Array@Ptr").as_ref().unwrap().type_tag;
-
-        Pgm {
-            ty_cons,
-            cons_by_tag,
-            record_ty_tags,
-            variant_ty_tags,
-            associated_funs: associated_funs_vec,
-            associated_funs_by_idx,
-            top_level_funs,
-            top_level_funs_by_idx,
-            false_alloc,
-            true_alloc,
-            char_ty_tag,
-            str_ty_tag,
-            i8_ty_tag,
-            u8_ty_tag,
-            i32_ty_tag,
-            u32_ty_tag,
-            array_i8_ty_tag,
-            array_u8_ty_tag,
-            array_i32_ty_tag,
-            array_u32_ty_tag,
-            array_ptr_ty_tag,
-            closures,
-        }
-    }
-
     fn get_tag_fields(&self, tag: u64) -> &Fields {
         &self.cons_by_tag[tag as usize].fields
     }
@@ -623,6 +444,7 @@ impl Pgm {
         }
     }
 }
+*/
 
 fn call_fun<W: Write>(
     w: &mut W,
@@ -632,52 +454,49 @@ fn call_fun<W: Write>(
     args: Vec<u64>,
     loc: &Loc,
 ) -> FunRet {
-    match &fun.kind {
-        FunKind::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
-        FunKind::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
+    match fun {
+        Fun::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
+        Fun::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
     }
+}
+
+fn call_builtin_fun<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    fun: &BuiltinFunDecl,
+    args: Vec<u64>,
+    loc: &Loc,
+) -> FunRet {
+    todo!()
 }
 
 fn call_ast_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    fun: &ast::FunDecl,
+    fun: &SourceFunDecl,
     args: Vec<u64>,
     loc: &Loc,
 ) -> FunRet {
     assert_eq!(
-        fun.num_params(),
-        args.len() as u32,
+        fun.params.len(),
+        args.len(),
         "{}, fun: {}",
         loc_display(loc),
         fun.name.node
     );
 
-    let mut locals: Map<Id, u64> = Default::default();
+    let mut locals: Vec<u64> = vec![0; fun.locals.len()];
 
-    let mut arg_idx: usize = 0;
-    match fun.sig.self_ {
-        ast::SelfParam::No => {}
-        ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
-            locals.insert(Id::new("self"), args[0]);
-            arg_idx += 1;
-        }
-    }
-
-    for (param_name, _param_type) in &fun.sig.params {
-        let old = locals.insert(param_name.clone(), args[arg_idx]);
-        assert!(old.is_none());
-        arg_idx += 1;
-    }
-
-    match exec(w, pgm, heap, &mut locals, fun.body.as_ref().unwrap()) {
+    match exec(w, pgm, heap, &mut locals, &fun.body) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
         ControlFlow::Unwind(val) => FunRet::Unwind(val),
     }
 }
 
+/*
 fn call_closure<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -889,36 +708,36 @@ fn allocate_object_from_tag<W: Write>(
 
     ControlFlow::Val(object)
 }
+*/
 
 fn exec<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    stmts: &[L<ast::Stmt>],
+    locals: &mut [u64],
+    stmts: &[L<Stmt>],
 ) -> ControlFlow {
     let mut return_value: u64 = 0;
 
     for stmt in stmts {
         return_value = match &stmt.node {
-            ast::Stmt::Break { label: _, level } => {
+            Stmt::Break { label: _, level } => {
                 return ControlFlow::Break(*level);
             }
 
-            ast::Stmt::Continue { label: _, level } => {
+            Stmt::Continue { label: _, level } => {
                 return ControlFlow::Continue(*level);
             }
 
-            ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
+            Stmt::Let(LetStmt { lhs, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
-                match try_bind_pat(pgm, heap, lhs, val) {
-                    Some(binds) => locals.extend(binds.into_iter()),
-                    None => panic!("{}: Pattern binding failed", loc_display(&stmt.loc)),
+                if !try_bind_pat(pgm, heap, lhs, locals, val) {
+                    panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
                 }
                 val
             }
 
-            ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+            Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
                 // Complex assignment operators should've been desugared during type checking.
                 debug_assert_eq!(
                     *op,
@@ -931,9 +750,9 @@ fn exec<W: Write>(
                 val!(assign(w, pgm, heap, locals, lhs, rhs))
             }
 
-            ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
+            Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
 
-            ast::Stmt::While(ast::WhileStmt {
+            Stmt::While(WhileStmt {
                 label: _,
                 cond,
                 body,
@@ -964,16 +783,15 @@ fn exec<W: Write>(
                 }
             },
 
-            ast::Stmt::WhileLet(ast::WhileLetStmt {
+            Stmt::WhileLet(WhileLetStmt {
                 label: _,
                 pat,
                 cond,
                 body,
             }) => loop {
                 let val = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
-                match try_bind_pat(pgm, heap, pat, val) {
-                    Some(binds) => locals.extend(binds.into_iter()),
-                    None => break 0, // FIXME: Return unit
+                if !try_bind_pat(pgm, heap, pat, locals, val) {
+                    break 0; // FIXME: Return unit
                 }
                 match exec(w, pgm, heap, locals, body) {
                     ControlFlow::Val(_val) => {}
@@ -996,14 +814,14 @@ fn exec<W: Write>(
                 }
             },
 
-            ast::Stmt::For(ast::ForStmt {
+            Stmt::For(ForStmt {
                 label: _,
                 pat,
-                ty: _,
                 expr,
-                expr_ty: _,
                 body,
             }) => {
+                todo!()
+                /*
                 let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
 
                 let next_method = pgm.associated_funs[heap[iter] as usize]
@@ -1088,6 +906,7 @@ fn exec<W: Write>(
                 }
 
                 0
+                */
             }
         };
     }
@@ -1096,13 +915,15 @@ fn exec<W: Write>(
 }
 
 fn eval<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    expr: &ast::Expr,
-    loc: &Loc,
+    _w: &mut W,
+    _pgm: &Pgm,
+    _heap: &mut Heap,
+    _locals: &mut [u64],
+    _expr: &Expr,
+    _loc: &Loc,
 ) -> ControlFlow {
+    todo!()
+    /*
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
             debug_assert!(ty_args.is_empty());
@@ -1504,8 +1325,10 @@ fn eval<W: Write>(
             ControlFlow::Val(alloc)
         }
     }
+    */
 }
 
+/*
 fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 {
     let ty_con = pgm.ty_cons.get(ty_id).unwrap();
     let (constr_idx, constr) = ty_con
@@ -1519,36 +1342,36 @@ fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 
     debug_assert!(!constr.fields.is_empty() || con.alloc.is_some());
     con.alloc.unwrap_or_else(|| heap.allocate_constr(tag))
 }
+*/
 
 fn assign<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    lhs: &ast::L<ast::Expr>,
+    locals: &mut [u64],
+    lhs: &L<Expr>,
     val: u64,
 ) -> ControlFlow {
     match &lhs.node {
-        ast::Expr::Var(ast::VarExpr {
-            id: var,
-            ty_args: _,
-        }) => {
-            let old = locals.insert(var.clone(), val);
-            assert!(old.is_some());
+        Expr::LocalVar(local_idx) => {
+            locals[local_idx.as_usize()] = val;
         }
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+
+        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-            let object_tag = heap[object];
-            let object_con = &pgm.cons_by_tag[object_tag as usize];
+            let object_idx = heap[object];
+            let object_con = pgm.cons[object_idx as usize].as_source_con();
             let object_fields = &object_con.fields;
             let field_idx = object_fields.find_named_field_idx(field);
-            heap[object + 1 + field_idx] = val;
+            heap[object + 1 + (field_idx as u64)] = val;
         }
+
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
     ControlFlow::Val(val)
 }
 
+/*
 fn try_bind_field_pats(
     pgm: &Pgm,
     heap: &mut Heap,
@@ -1597,6 +1420,7 @@ fn try_bind_field_pats(
 
     Some(ret)
 }
+*/
 
 /// Tries to match a pattern. On successful match, returns a map with variables bound in the
 /// pattern. On failure returns `None`.
@@ -1606,9 +1430,12 @@ fn try_bind_field_pats(
 fn try_bind_pat(
     pgm: &Pgm,
     heap: &mut Heap,
-    pattern: &L<ast::Pat>,
+    pattern: &L<Pat>,
+    locals: &mut [u64],
     value: u64,
-) -> Option<Map<Id, u64>> {
+) -> bool {
+    todo!()
+    /*
     match &pattern.node {
         ast::Pat::Var(var) => {
             let mut map: Map<Id, u64> = Default::default();
@@ -1729,8 +1556,10 @@ fn try_bind_pat(
             }
         }
     }
+    */
 }
 
+/*
 fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
     use std::fmt::Write;
 
@@ -1782,3 +1611,4 @@ fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
 
     s
 }
+*/
