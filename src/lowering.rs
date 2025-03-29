@@ -11,9 +11,11 @@ use smol_str::SmolStr;
 
 #[derive(Debug)]
 pub struct LoweredPgm {
-    cons: Vec<Con>,
-    funs: Vec<Fun>,
-    closures: Vec<Closure>,
+    pub cons: Vec<Con>,
+    pub funs: Vec<Fun>,
+    pub closures: Vec<Closure>,
+    pub records: Vec<RecordShape>,
+    pub variants: Vec<VariantShape>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -174,7 +176,7 @@ pub enum BuiltinFunDecl {
 #[derive(Debug)]
 pub struct SourceFunDecl {
     pub parent_ty: Option<L<Id>>, // for debugging
-    pub name: L<Id>,              // for debugging
+    pub name: L<Id>,              // for debugging and to find the main function in the interpreter
     pub idx: FunIdx,              // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub locals: Vec<LocalInfo>,   // for debugging, indexed by `LocalIdx`
@@ -593,10 +595,26 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
+    let mut records: Vec<(RecordShape, RecordIdx)> = record_indices
+        .iter()
+        .map(|(shape, idx)| (shape.clone(), *idx))
+        .collect();
+
+    records.sort_by_key(|(_, idx)| idx.0);
+
+    let mut variants: Vec<(VariantShape, VariantIdx)> = variant_indices
+        .iter()
+        .map(|(shape, idx)| (shape.clone(), *idx))
+        .collect();
+
+    variants.sort_by_key(|(_, idx)| idx.0);
+
     let mut lowered_pgm = LoweredPgm {
         funs: vec![],
         cons: vec![],
         closures: vec![],
+        records: records.into_iter().map(|(shape, _)| shape).collect(),
+        variants: variants.into_iter().map(|(shape, _)| shape).collect(),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
