@@ -39,6 +39,12 @@ pub struct LoweredPgm {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
 
+impl FunIdx {
+    pub fn as_u64(&self) -> u64 {
+        u64::from(self.0)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ConIdx(u32);
 

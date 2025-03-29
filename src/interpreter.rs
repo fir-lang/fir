@@ -168,8 +168,7 @@ pub fn run<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
         ),
     };
 
-    todo!()
-    // call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+    call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
 
 macro_rules! generate_tags {
@@ -915,104 +914,44 @@ fn exec<W: Write>(
 }
 
 fn eval<W: Write>(
-    _w: &mut W,
-    _pgm: &Pgm,
-    _heap: &mut Heap,
-    _locals: &mut [u64],
-    _expr: &Expr,
-    _loc: &Loc,
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    locals: &mut [u64],
+    expr: &Expr,
+    loc: &Loc,
 ) -> ControlFlow {
-    todo!()
-    /*
     match expr {
-        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
-            debug_assert!(ty_args.is_empty());
-            match locals.get(var) {
-                Some(value) => ControlFlow::Val(*value),
-                None => match pgm.top_level_funs.get(var) {
-                    Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                    None => panic!("{}: Unbound variable: {}", loc_display(loc), var),
-                },
-            }
+        Expr::LocalVar(local_idx) => ControlFlow::Val(locals[local_idx.as_usize()]),
+
+        Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_top_fun(fun_idx.as_u64())),
+
+        Expr::Constr(con_idx) => {
+            // Singleton constructor. Constructor selections should be closurized in an earlier
+            // pass.
+            let con = pgm.cons[con_idx.as_usize()].as_source_con();
+            debug_assert!(con.fields.is_empty());
+            ControlFlow::Val(con.alloc)
         }
 
-        ast::Expr::Constr(ast::ConstrExpr {
-            id: ty_name,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            let ty_con = pgm.ty_cons.get(ty_name).unwrap();
-            let ty_tag = ty_con.type_tag;
-            let (first_tag, last_tag) = ty_con.tag_range();
-            assert_eq!(first_tag, last_tag);
-            ControlFlow::Val(heap.allocate_constr(ty_tag))
-        }
-
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
-
-            let fields = pgm.get_tag_fields(object_tag);
-            match fields {
-                Fields::Unnamed(_) => {}
-                Fields::Named(fields) => {
-                    let field_idx =
-                        fields
-                            .iter()
-                            .enumerate()
-                            .find_map(|(field_idx, field_name)| {
-                                if field_name == field {
-                                    Some(field_idx)
-                                } else {
-                                    None
-                                }
-                            });
-                    if let Some(field_idx) = field_idx {
-                        return ControlFlow::Val(heap[object + 1 + (field_idx as u64)]);
-                    }
-                }
-            }
-
-            panic!("{}: Unable to select field {}", loc_display(loc), field);
+            let con = &pgm.cons[object_tag as usize];
+            let fields = &con.as_source_con().fields;
+            let field_idx = fields.find_named_field_idx(field);
+            ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
         }
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
-            object,
-            object_ty: _,
-            method,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
+        Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-            let object_tag = heap[object];
-            match pgm.associated_funs[object_tag as usize].get(method) {
-                Some(method) => ControlFlow::Val(heap.allocate_method(object, method.idx)),
-                None => panic!("{}: Unable to select method {}", loc_display(loc), method),
-            }
+            ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-            ty,
-            constr,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            ControlFlow::Val(constr_select(pgm, heap, ty, constr))
-        }
+        Expr::AssocFnSelect(idx) => ControlFlow::Val(heap.allocate_top_fun(idx.as_u64())),
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-            ty,
-            member,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            let ty_con = pgm.ty_cons.get(ty).unwrap();
-            let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                .get(member)
-                .unwrap();
-            ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx))
-        }
-
+        _ => todo!(),
+        /*
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
             // See if `fun` is a method, associated function, or constructor to avoid closure
             // allocations.
@@ -1324,25 +1263,9 @@ fn eval<W: Write>(
 
             ControlFlow::Val(alloc)
         }
+        */
     }
-    */
 }
-
-/*
-fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 {
-    let ty_con = pgm.ty_cons.get(ty_id).unwrap();
-    let (constr_idx, constr) = ty_con
-        .value_constrs
-        .iter()
-        .enumerate()
-        .find(|(_constr_idx, constr)| constr.name.as_ref().unwrap() == constr_id)
-        .unwrap();
-    let tag = ty_con.type_tag + (constr_idx as u64);
-    let con = &pgm.cons_by_tag[tag as usize];
-    debug_assert!(!constr.fields.is_empty() || con.alloc.is_some());
-    con.alloc.unwrap_or_else(|| heap.allocate_constr(tag))
-}
-*/
 
 fn assign<W: Write>(
     w: &mut W,
