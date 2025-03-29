@@ -250,12 +250,12 @@ fn call_fun<W: Write>(
 }
 
 fn call_builtin_fun<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    fun: &BuiltinFunDecl,
-    args: Vec<u64>,
-    loc: &Loc,
+    _w: &mut W,
+    _pgm: &Pgm,
+    _heap: &mut Heap,
+    _fun: &BuiltinFunDecl,
+    _args: Vec<u64>,
+    _loc: &Loc,
 ) -> FunRet {
     todo!()
 }
