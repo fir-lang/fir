@@ -16,13 +16,31 @@ pub struct LoweredPgm {
     pub closures: Vec<Closure>,
     pub records: Vec<RecordShape>,
     pub variants: Vec<VariantShape>,
+
+    // Ids of some special cons that the interpreter needs to know.
+    //
+    // Note that for product types, type and con tags are the same.
+    pub true_con_idx: ConIdx,
+    pub false_con_idx: ConIdx,
+    pub char_con_idx: ConIdx,
+    pub str_con_idx: ConIdx,
+    pub i8_con_idx: ConIdx,
+    pub u8_con_idx: ConIdx,
+    pub i32_con_idx: ConIdx,
+    pub u32_con_idx: ConIdx,
+    pub array_i8_con_idx: ConIdx,
+    pub array_u8_con_idx: ConIdx,
+    pub array_i32_con_idx: ConIdx,
+    pub array_u32_con_idx: ConIdx,
+    pub array_i64_con_idx: ConIdx,
+    pub array_u64_con_idx: ConIdx,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunIdx(u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ConIdx(u32);
+pub struct ConIdx(pub u32);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct LocalIdx(u32);
@@ -211,7 +229,7 @@ pub enum BuiltinConDecl {
 
 #[derive(Debug)]
 pub struct SourceConDecl {
-    pub name: Id,                 // for debugging
+    pub name: Id,
     pub idx: ConIdx,              // for debugging
     pub ty_args: Vec<mono::Type>, // for debugging
     pub fields: ConFields,
@@ -221,6 +239,15 @@ pub struct SourceConDecl {
 pub enum ConFields {
     Named(Vec<(Id, Ty)>),
     Unnamed(Vec<Ty>),
+}
+
+impl ConFields {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            ConFields::Named(fields) => fields.is_empty(),
+            ConFields::Unnamed(fields) => fields.is_empty(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -615,6 +642,74 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         closures: vec![],
         records: records.into_iter().map(|(shape, _)| shape).collect(),
         variants: variants.into_iter().map(|(shape, _)| shape).collect(),
+        true_con_idx: *sum_con_nums
+            .get("Bool")
+            .unwrap()
+            .get("True")
+            .unwrap()
+            .get(&vec![])
+            .unwrap(),
+        false_con_idx: *sum_con_nums
+            .get("Bool")
+            .unwrap()
+            .get("False")
+            .unwrap()
+            .get(&vec![])
+            .unwrap(),
+        char_con_idx: *product_con_nums.get("Char").unwrap().get(&vec![]).unwrap(),
+        str_con_idx: *product_con_nums.get("Str").unwrap().get(&vec![]).unwrap(),
+        i8_con_idx: *product_con_nums.get("I8").unwrap().get(&vec![]).unwrap(),
+        u8_con_idx: *product_con_nums.get("U8").unwrap().get(&vec![]).unwrap(),
+        i32_con_idx: *product_con_nums.get("I32").unwrap().get(&vec![]).unwrap(),
+        u32_con_idx: *product_con_nums.get("U32").unwrap().get(&vec![]).unwrap(),
+        array_i8_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("I8"),
+                args: vec![],
+            })])
+            .unwrap(),
+        array_u8_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("U8"),
+                args: vec![],
+            })])
+            .unwrap(),
+        array_i32_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("I32"),
+                args: vec![],
+            })])
+            .unwrap(),
+        array_u32_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("U32"),
+                args: vec![],
+            })])
+            .unwrap(),
+        array_i64_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("I64"),
+                args: vec![],
+            })])
+            .unwrap(),
+        array_u64_con_idx: *product_con_nums
+            .get("Array")
+            .unwrap()
+            .get(&vec![mono::Type::Named(mono::NamedType {
+                name: SmolStr::new("U64"),
+                args: vec![],
+            })])
+            .unwrap(),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
