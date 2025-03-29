@@ -188,8 +188,7 @@ macro_rules! generate_tags {
 #[rustfmt::skip]
 generate_tags!(
     CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
-    TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
-    ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
+    FUN_TYPE_TAG,       // Function closure, e.g. `id`, `Vec.withCapacity`.
     METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
     CLOSURE_TYPE_TAG,
     FIRST_TYPE_TAG,     // First available type tag for user types.
@@ -495,46 +494,27 @@ fn call_ast_fun<W: Write>(
     }
 }
 
-/*
 fn call_closure<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
+    locals: &mut [u64],
     fun: u64,
-    args: &[ast::CallArg],
+    args: &[CallArg],
     loc: &Loc,
 ) -> ControlFlow {
     match heap[fun] {
         CONSTR_TYPE_TAG => {
-            let constr_tag = heap[fun + 1];
-            allocate_object_from_tag(w, pgm, heap, locals, constr_tag, args)
+            let con_idx = ConIdx(heap[fun + 1] as u32);
+            allocate_object_from_idx(w, pgm, heap, locals, con_idx, args)
         }
 
-        TOP_FUN_TYPE_TAG => {
+        FUN_TYPE_TAG => {
             let top_fun_idx = heap[fun + 1];
-            let top_fun = &pgm.top_level_funs_by_idx[top_fun_idx as usize];
+            let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
             for arg in args {
                 assert!(arg.name.is_none());
-                arg_values.push(val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc
-                )));
-            }
-            call_fun(w, pgm, heap, top_fun, arg_values, loc).into_control_flow()
-        }
-
-        ASSOC_FUN_TYPE_TAG => {
-            let ty_tag = heap[fun + 1];
-            let fun_tag = heap[fun + 2];
-            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
-            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-            for arg in args {
                 arg_values.push(val!(eval(
                     w,
                     pgm,
@@ -550,8 +530,7 @@ fn call_closure<W: Write>(
         METHOD_TYPE_TAG => {
             let receiver = heap[fun + 1];
             let fun_idx = heap[fun + 2];
-            let ty_tag = heap[receiver];
-            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_idx as usize];
+            let fun = &pgm.funs[fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
             arg_values.push(receiver);
             for arg in args {
@@ -571,16 +550,18 @@ fn call_closure<W: Write>(
             let closure_idx = heap[fun + 1];
             let closure = &pgm.closures[closure_idx as usize];
 
-            let mut closure_locals =
-                Map::with_capacity_and_hasher(closure.fvs.len(), Default::default());
+            let mut closure_locals: Vec<u64> = vec![0; closure.locals.len()];
 
-            for (fv, fv_idx) in &closure.fvs {
-                let fv_val = heap[fun + 2 + u64::from(*fv_idx)];
-                closure_locals.insert(fv.clone(), fv_val);
+            // Load closure's free variables into locals.
+            for (i, fv) in closure.fvs.iter().enumerate() {
+                let fv_value = heap[fun + 1 + (i as u64)];
+                closure_locals[fv.use_idx.as_usize()] = fv_value;
             }
 
-            for ((arg_name, _), arg_val) in closure.ast.sig.params.iter().zip(args.iter()) {
-                debug_assert!(arg_val.name.is_none()); // not supported yet
+            // Copy closure arguments into locals.
+            assert_eq!(args.len(), closure.params.len());
+
+            for (i, arg_val) in args.iter().enumerate() {
                 let arg_val = val!(eval(
                     w,
                     pgm,
@@ -589,11 +570,10 @@ fn call_closure<W: Write>(
                     &arg_val.expr.node,
                     &arg_val.expr.loc
                 ));
-                let old = closure_locals.insert(arg_name.clone(), arg_val);
-                debug_assert!(old.is_none());
+                locals[i] = arg_val;
             }
 
-            match exec(w, pgm, heap, &mut closure_locals, &closure.ast.body) {
+            match exec(w, pgm, heap, &mut closure_locals, &closure.body) {
                 ControlFlow::Val(val) | ControlFlow::Ret(val) => ControlFlow::Val(val),
                 ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
                 ControlFlow::Unwind(val) => ControlFlow::Unwind(val),
@@ -604,72 +584,23 @@ fn call_closure<W: Write>(
     }
 }
 
-/// Allocate an object from type name and optional constructor name.
-fn allocate_object_from_names<W: Write>(
+/// Allocate an object from a con idx and fields.
+fn allocate_object_from_idx<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    ty: &Id,
-    constr_name: Option<Id>,
-    args: &[ast::CallArg],
-    loc: &Loc,
+    locals: &mut [u64],
+    con_idx: ConIdx,
+    args: &[CallArg],
 ) -> ControlFlow {
-    let ty_con = pgm
-        .ty_cons
-        .get(ty)
-        .unwrap_or_else(|| panic!("{}: Undefined type {}", loc_display(loc), ty));
-
-    let constr_idx = match constr_name {
-        Some(constr_name) => {
-            let (constr_idx_, _) = ty_con
-                .value_constrs
-                .iter()
-                .enumerate()
-                .find(|(_, constr)| constr.name.as_ref() == Some(&constr_name))
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Type {} does not have a constructor named {}",
-                        loc_display(loc),
-                        ty,
-                        constr_name
-                    )
-                });
-
-            constr_idx_
-        }
-        None => {
-            assert_eq!(ty_con.value_constrs.len(), 1);
-            0
-        }
-    };
-
-    allocate_object_from_tag(
-        w,
-        pgm,
-        heap,
-        locals,
-        ty_con.type_tag + constr_idx as u64,
-        args,
-    )
-}
-
-/// Allocate an object from a constructor tag and fields.
-fn allocate_object_from_tag<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    constr_tag: u64,
-    args: &[ast::CallArg],
-) -> ControlFlow {
-    let fields = pgm.get_tag_fields(constr_tag);
-    let mut arg_values = Vec::with_capacity(args.len());
+    let con = pgm.cons[con_idx.as_usize()].as_source_con();
+    let fields = &con.fields;
+    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
 
     match fields {
-        Fields::Unnamed(num_fields) => {
+        ConFields::Unnamed(num_fields) => {
             // Evaluate in program order and store in the same order.
-            assert_eq!(*num_fields as usize, args.len());
+            assert_eq!(num_fields.len(), args.len());
             for arg in args {
                 assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
@@ -683,7 +614,7 @@ fn allocate_object_from_tag<W: Write>(
             }
         }
 
-        Fields::Named(field_names) => {
+        ConFields::Named(field_names) => {
             // Evalaute in program order, store based on the order of the names
             // in the type.
             let mut named_values: Map<Id, u64> = Default::default();
@@ -693,21 +624,20 @@ fn allocate_object_from_tag<W: Write>(
                 let old = named_values.insert(name.clone(), value);
                 assert!(old.is_none());
             }
-            for name in field_names {
+            for (name, _) in field_names {
                 arg_values.push(*named_values.get(name).unwrap());
             }
         }
     }
 
     let object = heap.allocate(1 + args.len());
-    heap[object] = constr_tag;
+    heap[object] = con_idx.as_u64();
     for (arg_idx, arg_value) in arg_values.into_iter().enumerate() {
         heap[object + 1 + (arg_idx as u64)] = arg_value;
     }
 
     ControlFlow::Val(object)
 }
-*/
 
 fn exec<W: Write>(
     w: &mut W,
@@ -924,7 +854,7 @@ fn eval<W: Write>(
     match expr {
         Expr::LocalVar(local_idx) => ControlFlow::Val(locals[local_idx.as_usize()]),
 
-        Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_top_fun(fun_idx.as_u64())),
+        Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
 
         Expr::Constr(con_idx) => {
             // Singleton constructor. Constructor selections should be closurized in an earlier
@@ -948,47 +878,18 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
         }
 
-        Expr::AssocFnSelect(idx) => ControlFlow::Val(heap.allocate_top_fun(idx.as_u64())),
+        Expr::AssocFnSelect(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
 
-        _ => todo!(),
-        /*
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        Expr::Call(CallExpr { fun, args }) => {
             // See if `fun` is a method, associated function, or constructor to avoid closure
             // allocations.
             let fun: u64 = match &fun.node {
-                ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args }) => {
-                    debug_assert!(ty_args.is_empty());
-                    return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
+                Expr::Constr(con_idx) => {
+                    return allocate_object_from_idx(w, pgm, heap, locals, *con_idx, args);
                 }
 
-                ast::Expr::MethodSelect(ast::MethodSelectExpr {
-                    object,
-                    object_ty,
-                    method,
-                    ty_args: _,
-                }) => {
+                Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
                     let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-                    let object_tag = match object_ty.as_ref().unwrap() {
-                        crate::type_checker::Ty::Con(con) => match con.as_str() {
-                            "I8" => pgm.i8_ty_tag,
-                            "U8" => pgm.u8_ty_tag,
-                            "I32" => pgm.i32_ty_tag,
-                            "U32" => pgm.u32_ty_tag,
-                            _ => heap[object],
-                        },
-                        _ => heap[object],
-                    };
-                    let fun = pgm.associated_funs[object_tag as usize]
-                        .get(method)
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: Object with type {} (tag {}) doesn't have method {:?}",
-                                loc_display(loc),
-                                pgm.tag_name_display(object_tag),
-                                object_tag,
-                                method
-                            )
-                        });
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
                     arg_vals.push(object);
                     for arg in args {
@@ -1001,48 +902,11 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
+                    let fun = &pgm.funs[fun_idx.as_usize()];
                     return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
-                ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-                    ty,
-                    constr,
-                    ty_args,
-                }) => {
-                    debug_assert!(ty_args.is_empty());
-                    return allocate_object_from_names(
-                        w,
-                        pgm,
-                        heap,
-                        locals,
-                        ty,
-                        Some(constr.clone()),
-                        args,
-                        loc,
-                    );
-                }
-
-                ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                    ty,
-                    member,
-                    ty_args,
-                }) => {
-                    debug_assert!(ty_args.is_empty());
-                    let ty_con = pgm
-                        .ty_cons
-                        .get(ty)
-                        .unwrap_or_else(|| panic!("{}: Undefined type: {}", loc_display(loc), ty));
-                    let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                        .get(member)
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: Type {} does not have associated function {}",
-                                loc_display(loc),
-                                ty,
-                                member
-                            )
-                        });
-
+                Expr::AssocFnSelect(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(
@@ -1054,6 +918,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
+                    let fun = &pgm.funs[fun_idx.as_usize()];
                     return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
@@ -1063,6 +928,9 @@ fn eval<W: Write>(
             // Slow path calls a closure.
             call_closure(w, pgm, heap, locals, fun, args, loc)
         }
+
+        _ => todo!(),
+        /*
 
         ast::Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
 

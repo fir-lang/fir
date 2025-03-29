@@ -106,18 +106,10 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_top_fun(&mut self, fun_idx: u64) -> u64 {
+    pub fn allocate_fun(&mut self, fun_idx: u64) -> u64 {
         let alloc = self.allocate(2);
-        self[alloc] = TOP_FUN_TYPE_TAG;
+        self[alloc] = FUN_TYPE_TAG;
         self[alloc + 1] = fun_idx;
-        alloc
-    }
-
-    pub fn allocate_assoc_fun(&mut self, type_tag: u64, fun_idx: u64) -> u64 {
-        let alloc = self.allocate(3);
-        self[alloc] = ASSOC_FUN_TYPE_TAG;
-        self[alloc + 1] = type_tag;
-        self[alloc + 2] = fun_idx;
         alloc
     }
 

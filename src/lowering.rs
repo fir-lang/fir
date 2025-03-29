@@ -43,10 +43,14 @@ impl FunIdx {
     pub fn as_u64(&self) -> u64 {
         u64::from(self.0)
     }
+
+    pub fn as_usize(&self) -> usize {
+        self.0 as usize
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ConIdx(u32);
+pub struct ConIdx(pub u32);
 
 impl ConIdx {
     pub fn as_u64(&self) -> u64 {
@@ -493,8 +497,6 @@ pub struct ClosureFv {
     pub alloc_idx: LocalIdx,
 
     /// Index of the local in closure's locals.
-    ///
-    /// This is also the index in the closure's heap object payload.
     pub use_idx: LocalIdx,
 }
 
