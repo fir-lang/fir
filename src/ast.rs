@@ -344,7 +344,7 @@ pub struct Alt {
 #[derive(Debug, Clone)]
 pub enum Pat {
     /// Matches anything, binds it to variable.
-    Var(Id),
+    Var(VarPat),
 
     /// Matches a constructor.
     Constr(ConstrPattern),
@@ -368,6 +368,14 @@ pub enum Pat {
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
+}
+
+#[derive(Debug, Clone)]
+pub struct VarPat {
+    pub var: Id,
+
+    /// Inferred type of the binder. Filled in by the type checker.
+    pub ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -684,14 +692,6 @@ pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
     pub idx: u32,
-}
-
-#[derive(Debug, Clone)]
-pub struct RecordExpr {
-    pub fields: Vec<Named<L<Expr>>>,
-
-    // Type of the record.
-    pub ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

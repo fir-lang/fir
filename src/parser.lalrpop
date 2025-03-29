@@ -1010,7 +1010,7 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <id:LowerId> => Pat::Var(id.smol_str()),
+    <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None }),
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 

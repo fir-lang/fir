@@ -6,7 +6,6 @@ pub mod printer;
 use crate::collections::*;
 use crate::mono_ast::{self as mono, AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
-use crate::utils::loc_display;
 
 use smol_str::SmolStr;
 
@@ -1365,7 +1364,7 @@ fn lower_l_stmt(
 ///   the current function and not bound in the current function.
 fn lower_expr(
     expr: &mono::Expr,
-    loc: &mono::Loc,
+    _loc: &mono::Loc,
     closures: &mut Vec<Closure>,
     indices: &mut Indices,
     scope: &mut FunScope,
@@ -1663,14 +1662,11 @@ fn lower_bl_expr(
 
 fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pat {
     match pat {
-        mono::Pat::Var(var) => {
+        mono::Pat::Var(mono::VarPat { var, ty }) => {
             let var_idx = LocalIdx(scope.locals.len() as u32);
             scope.locals.push(LocalInfo {
                 name: var.clone(),
-                ty: mono::Type::Named(mono::NamedType {
-                    name: "?".into(), // TODO
-                    args: vec![],
-                }),
+                ty: ty.clone(),
             });
             scope.bounds.insert(var.clone(), var_idx);
             Pat::Var(var_idx)

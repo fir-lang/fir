@@ -1,5 +1,7 @@
 use crate::{ast::*, type_checker::RecordOrVariant};
 
+use std::fmt::Write;
+
 pub fn print_module(module: &[L<TopDecl>]) {
     let mut buffer = String::new();
     for (i, top_decl) in module.iter().enumerate() {
@@ -792,7 +794,13 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Pat::Var(var) => buffer.push_str(var),
+            Pat::Var(VarPat { var, ty }) => {
+                buffer.push_str(var);
+                if let Some(ty) = ty {
+                    buffer.push_str(": ");
+                    write!(buffer, "{}", ty).unwrap();
+                }
+            }
 
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },

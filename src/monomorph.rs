@@ -1038,7 +1038,13 @@ fn mono_pat(
     mono_pgm: &mut MonoPgm,
 ) -> mono::Pat {
     match pat {
-        ast::Pat::Var(var) => mono::Pat::Var(var.clone()),
+        ast::Pat::Var(ast::VarPat { var, ty }) => {
+            let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            mono::Pat::Var(mono::VarPat {
+                var: var.clone(),
+                ty: mono_ty,
+            })
+        }
 
         ast::Pat::Ignore => mono::Pat::Ignore,
 

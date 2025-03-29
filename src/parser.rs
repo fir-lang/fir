@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: 5227b9ed6e5d05e91eece6c9c590ee988c6b6e74d8cd9e052d35031f1c0915d5
+// sha3: 951c952bc1f4443e6dbac7b802a94977f7a7f245baa4778424c0e19bfe89b2fe
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -43016,7 +43016,10 @@ fn __action132<'a>(
     clippy::just_underscores_and_digits
 )]
 fn __action133<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Pat {
-    Pat::Var(id.smol_str())
+    Pat::Var(VarPat {
+        var: id.smol_str(),
+        ty: None,
+    })
 }
 
 #[allow(unused_variables)]

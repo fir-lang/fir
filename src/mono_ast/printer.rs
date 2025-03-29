@@ -744,7 +744,11 @@ impl Expr {
 impl Pat {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Pat::Var(var) => buffer.push_str(var),
+            Pat::Var(VarPat { var, ty }) => {
+                buffer.push_str(var);
+                buffer.push_str(": ");
+                ty.print(buffer);
+            }
 
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },

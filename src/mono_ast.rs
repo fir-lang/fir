@@ -134,7 +134,7 @@ pub struct Alt {
 
 #[derive(Debug, Clone)]
 pub enum Pat {
-    Var(Id),
+    Var(VarPat),
     Constr(ConstrPattern),
     Variant(VariantPattern),
     Record(Vec<Named<L<Pat>>>),
@@ -143,6 +143,12 @@ pub enum Pat {
     Char(char),
     StrPfx(String, Id),
     Or(Box<L<Pat>>, Box<L<Pat>>),
+}
+
+#[derive(Debug, Clone)]
+pub struct VarPat {
+    pub var: Id,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]

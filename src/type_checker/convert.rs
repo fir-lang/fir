@@ -206,7 +206,11 @@ pub(super) fn convert_and_bind_context(
                     loc: ty.loc.clone(),
                 }
             }
-            _ => panic!("{}: Strange predicate syntax", loc_display(&ty.loc)),
+            _ => panic!(
+                "{}: Strange predicate syntax: {:?}",
+                loc_display(&ty.loc),
+                ty
+            ),
         };
         preds_converted.insert(pred);
     }

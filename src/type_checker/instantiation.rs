@@ -176,11 +176,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
 fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
     match pat {
-        ast::Pat::Var(_)
-        | ast::Pat::Ignore
-        | ast::Pat::Str(_)
-        | ast::Pat::Char(_)
-        | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Var(ast::VarPat { var: _, ty }) => {
+            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+        }
+
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: _,
