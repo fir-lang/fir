@@ -21,6 +21,9 @@ pub struct LoweredPgm {
     pub true_con_idx: HeapObjIdx,
     pub false_con_idx: HeapObjIdx,
     pub char_con_idx: HeapObjIdx,
+    pub ordering_less_con_idx: HeapObjIdx,
+    pub ordering_equal_con_idx: HeapObjIdx,
+    pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
     pub i8_con_idx: HeapObjIdx,
     pub u8_con_idx: HeapObjIdx,
@@ -740,6 +743,27 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .get("Bool")
             .unwrap()
             .get("False")
+            .unwrap()
+            .get(&vec![])
+            .unwrap(),
+        ordering_less_con_idx: *sum_con_nums
+            .get("Ordering")
+            .unwrap()
+            .get("Less")
+            .unwrap()
+            .get(&vec![])
+            .unwrap(),
+        ordering_equal_con_idx: *sum_con_nums
+            .get("Ordering")
+            .unwrap()
+            .get("Equal")
+            .unwrap()
+            .get(&vec![])
+            .unwrap(),
+        ordering_greater_con_idx: *sum_con_nums
+            .get("Ordering")
+            .unwrap()
+            .get("Greater")
             .unwrap()
             .get(&vec![])
             .unwrap(),

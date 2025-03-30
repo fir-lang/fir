@@ -12,6 +12,7 @@ use crate::lowering::*;
 use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
+use std::cmp::Ordering;
 use std::io::Write;
 
 use bytemuck::cast_slice_mut;
@@ -25,6 +26,9 @@ struct Pgm {
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
     false_alloc: u64,
+    ordering_less_alloc: u64,
+    ordering_equal_alloc: u64,
+    ordering_greater_alloc: u64,
     char_con_idx: HeapObjIdx,
     str_con_idx: HeapObjIdx,
     i8_con_idx: HeapObjIdx,
@@ -48,6 +52,9 @@ impl Pgm {
             true_con_idx,
             false_con_idx,
             char_con_idx,
+            ordering_less_con_idx,
+            ordering_equal_con_idx,
+            ordering_greater_con_idx,
             str_con_idx,
             i8_con_idx,
             u8_con_idx,
@@ -77,6 +84,15 @@ impl Pgm {
 
         let true_alloc = heap_objs[true_con_idx.as_usize()].as_source_con().alloc;
         let false_alloc = heap_objs[false_con_idx.as_usize()].as_source_con().alloc;
+        let ordering_less_alloc = heap_objs[ordering_less_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
+        let ordering_equal_alloc = heap_objs[ordering_equal_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
+        let ordering_greater_alloc = heap_objs[ordering_greater_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
 
         Pgm {
             heap_objs,
@@ -84,6 +100,9 @@ impl Pgm {
             closures,
             true_alloc,
             false_alloc,
+            ordering_less_alloc,
+            ordering_equal_alloc,
+            ordering_greater_alloc,
             char_con_idx,
             str_con_idx,
             i8_con_idx,
@@ -247,17 +266,6 @@ fn call_fun<W: Write>(
         Fun::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
         Fun::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
     }
-}
-
-fn call_builtin_fun<W: Write>(
-    _w: &mut W,
-    _pgm: &Pgm,
-    _heap: &mut Heap,
-    _fun: &BuiltinFunDecl,
-    _args: Vec<u64>,
-    _loc: &Loc,
-) -> FunRet {
-    todo!()
 }
 
 fn call_ast_fun<W: Write>(
@@ -1102,56 +1110,304 @@ fn try_bind_pat(
     }
 }
 
-/*
-fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
-    use std::fmt::Write;
-
-    let mut s = String::new();
-
-    let tag = heap[obj];
-    let con = &pgm.cons_by_tag[tag as usize];
-
-    write!(&mut s, "{}: ", loc_display(loc)).unwrap();
-
-    match &con.info {
-        ConInfo::Named {
-            ty_name,
-            con_name: Some(con_name),
-        } => write!(&mut s, "{}.{}", ty_name, con_name).unwrap(),
-
-        ConInfo::Named {
-            ty_name,
-            con_name: None,
-        } => write!(&mut s, "{}", ty_name).unwrap(),
-
-        ConInfo::Record { .. } => {}
-
-        ConInfo::Variant { .. } => {}
-    }
-
-    write!(&mut s, "(").unwrap();
-
-    match &con.fields {
-        Fields::Unnamed(arity) => {
-            for i in 0..*arity {
-                write!(&mut s, "{}", heap[obj + 1 + u64::from(i)]).unwrap();
-                if i != arity - 1 {
-                    write!(&mut s, ", ").unwrap();
-                }
-            }
+fn call_builtin_fun<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    fun: &BuiltinFunDecl,
+    args: Vec<u64>,
+    loc: &Loc,
+) -> FunRet {
+    match fun {
+        BuiltinFunDecl::Panic => {
+            debug_assert_eq!(args.len(), 1);
+            let msg = args[0];
+            let bytes = heap.str_bytes(msg);
+            let msg = String::from_utf8_lossy(bytes).into_owned();
+            panic!("{}: PANIC: {}", loc_display(loc), msg);
         }
-        Fields::Named(fields) => {
-            for (i, field_name) in fields.iter().enumerate() {
-                write!(&mut s, "{} = {}", field_name, heap[obj + 1 + (i as u64)]).unwrap();
-                if i != fields.len() - 1 {
-                    write!(&mut s, ", ").unwrap();
-                }
-            }
+
+        BuiltinFunDecl::PrintStr => {
+            debug_assert_eq!(args.len(), 1);
+            let str = args[0];
+            debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
+            let bytes = heap.str_bytes(str);
+            writeln!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
+            FunRet::Val(0)
         }
+
+        BuiltinFunDecl::ShrI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) >> val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::ShrU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) >> val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::ShrI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) >> val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::ShrU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) >> val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::BitAndI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) & val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::BitAndU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) & val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::BitAndI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) & val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::BitAndU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) & val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::BitOrI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) | val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::BitOrU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) | val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::BitOrI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) | val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::BitOrU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) | val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::ToStrI8 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_i8(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrU8 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_u8(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrI32 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_i32(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrU32 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_u32(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::U8AsU32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u32_as_val(val_as_u8(args[0]) as u32))
+        }
+
+        BuiltinFunDecl::U32AsU8 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u8_as_val(val_as_u32(args[0]) as u8))
+        }
+
+        BuiltinFunDecl::I8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) << val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) << val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) << val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) << val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_i8(i1).cmp(&val_as_i8(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::U8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_u8(i1).cmp(&val_as_u8(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::I32Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_i32(i1).cmp(&val_as_i32(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::U32Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_u32(i1).cmp(&val_as_u32(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::I8Add => todo!(),
+
+        BuiltinFunDecl::U8Add => todo!(),
+
+        BuiltinFunDecl::I32Add => todo!(),
+
+        BuiltinFunDecl::U32Add => todo!(),
+
+        BuiltinFunDecl::I8Sub => todo!(),
+
+        BuiltinFunDecl::U8Sub => todo!(),
+
+        BuiltinFunDecl::I32Sub => todo!(),
+
+        BuiltinFunDecl::U32Sub => todo!(),
+
+        BuiltinFunDecl::I8Mul => todo!(),
+
+        BuiltinFunDecl::U8Mul => todo!(),
+
+        BuiltinFunDecl::I32Mul => todo!(),
+
+        BuiltinFunDecl::U32Mul => todo!(),
+
+        BuiltinFunDecl::I8Div => todo!(),
+
+        BuiltinFunDecl::U8Div => todo!(),
+
+        BuiltinFunDecl::I32Div => todo!(),
+
+        BuiltinFunDecl::U32Div => todo!(),
+
+        BuiltinFunDecl::I8Eq => todo!(),
+
+        BuiltinFunDecl::U8Eq => todo!(),
+
+        BuiltinFunDecl::I32Eq => todo!(),
+
+        BuiltinFunDecl::U32Eq => todo!(),
+
+        BuiltinFunDecl::Throw { r, a } => todo!(),
+
+        BuiltinFunDecl::Try { exn, a, r } => todo!(),
+
+        BuiltinFunDecl::ArrayNew { t } => todo!(),
+
+        BuiltinFunDecl::ArrayLen => todo!(),
+
+        BuiltinFunDecl::ArrayGet { t } => todo!(),
+
+        BuiltinFunDecl::ArraySet { t } => todo!(),
     }
-
-    write!(&mut s, ")").unwrap();
-
-    s
 }
-*/
