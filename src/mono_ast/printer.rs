@@ -344,16 +344,12 @@ impl Stmt {
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
             Stmt::For(ForStmt {
-                label,
                 pat,
                 expr,
                 body,
+                iter_ty: _,
+                item_ty: _,
             }) => {
-                if let Some(label) = label {
-                    buffer.push('\'');
-                    buffer.push_str(label);
-                    buffer.push_str(": ");
-                }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
                 buffer.push_str(" in ");

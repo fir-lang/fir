@@ -535,71 +535,43 @@ fn exec<W: Write>(
             },
 
             Stmt::For(ForStmt {
-                label: _,
-                pat: _,
-                expr: _,
-                body: _,
+                pat,
+                expr,
+                body,
+                next_method,
+                option_some_con,
             }) => {
-                todo!()
-                /*
                 let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
 
-                let next_method = pgm.associated_funs[heap[iter] as usize]
-                    .get("next@Ptr")
-                    .unwrap();
-
-                // Get the monomorphised `next` from the return type of the method.
-                let iter_named_ty: &ast::NamedType = next_method
-                    .kind
-                    .as_source()
-                    .sig
-                    .return_ty
-                    .as_ref()
-                    .unwrap()
-                    .node
-                    .as_named_type();
-
-                debug_assert!(iter_named_ty.args.is_empty());
-
-                let option_ty_con = pgm.ty_cons.get(&iter_named_ty.name).unwrap();
-
-                let some_tag: u64 = option_ty_con
-                    .value_constrs
-                    .iter()
-                    .enumerate()
-                    .find_map(|(idx, constr)| {
-                        if constr.name == Some(SmolStr::new_static("Some")) {
-                            Some(idx as u64 + option_ty_con.type_tag)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap();
-
                 loop {
-                    let next_item_option =
-                        match call_fun(w, pgm, heap, next_method, vec![iter], &expr.loc) {
-                            FunRet::Val(val) => val,
-                            FunRet::Unwind(val) => return ControlFlow::Unwind(val),
-                        };
-                    if heap[next_item_option] != some_tag {
+                    let next_item_option = match call_fun(
+                        w,
+                        pgm,
+                        heap,
+                        &pgm.funs[next_method.as_usize()],
+                        vec![iter],
+                        &expr.loc,
+                    ) {
+                        FunRet::Val(val) => val,
+                        FunRet::Unwind(val) => return ControlFlow::Unwind(val),
+                    };
+
+                    if heap[next_item_option] != option_some_con.as_u64() {
                         break;
                     }
 
                     let value = heap[next_item_option + 1];
-                    let binds = try_bind_pat(pgm, heap, pat, value).unwrap_or_else(|| {
+
+                    if !try_bind_pat(pgm, heap, pat, locals, value) {
                         panic!(
                             "{}: For loop pattern failed to match item",
                             loc_display(&pat.loc)
                         )
-                    });
-                    locals.extend(binds.clone());
+                    }
+
                     match exec(w, pgm, heap, locals, body) {
                         ControlFlow::Val(_) => {}
                         ControlFlow::Ret(val) => {
-                            for var in binds.keys() {
-                                locals.remove(var);
-                            }
                             return ControlFlow::Ret(val);
                         }
                         ControlFlow::Break(n) => {
@@ -617,16 +589,12 @@ fn exec<W: Write>(
                             }
                         }
                         ControlFlow::Unwind(val) => {
-                            for var in binds.keys() {
-                                locals.remove(var);
-                            }
                             return ControlFlow::Unwind(val);
                         }
                     }
                 }
 
                 0
-                */
             }
         };
     }

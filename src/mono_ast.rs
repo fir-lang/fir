@@ -185,10 +185,11 @@ pub struct AssignStmt {
 
 #[derive(Debug, Clone)]
 pub struct ForStmt {
-    pub label: Option<Id>,
     pub pat: L<Pat>,
     pub expr: L<Expr>,
     pub body: Vec<L<Stmt>>,
+    pub iter_ty: Type,
+    pub item_ty: Type,
 }
 
 #[derive(Debug, Clone)]

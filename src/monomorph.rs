@@ -469,7 +469,7 @@ fn mono_stmt(
         ast::Stmt::Expr(expr) => mono::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
 
         ast::Stmt::For(ast::ForStmt {
-            label,
+            label: _,
             pat,
             ty,
             expr,
@@ -491,8 +491,8 @@ fn mono_stmt(
                 &SmolStr::new_static("Iterator"),
                 &SmolStr::new_static("next"),
                 &[
-                    mono_iter_ty,
-                    mono_item_ty,
+                    mono_iter_ty.clone(),
+                    mono_item_ty.clone(),
                     mono::Type::Variant { alts: vec![] },
                 ],
                 poly_pgm,
@@ -500,11 +500,12 @@ fn mono_stmt(
             );
 
             mono::Stmt::For(mono::ForStmt {
-                label: label.clone(),
                 pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
                 expr: expr
                     .map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc)),
                 body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+                iter_ty: mono_iter_ty,
+                item_ty: mono_item_ty,
             })
         }
 

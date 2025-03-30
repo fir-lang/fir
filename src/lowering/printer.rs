@@ -215,14 +215,12 @@ impl Stmt {
             Stmt::Expr(expr) => expr.node.print(buffer, indent),
 
             Stmt::For(ForStmt {
-                label,
                 pat,
                 expr,
                 body,
+                next_method: _,
+                option_some_con: _,
             }) => {
-                if let Some(label) = label {
-                    write!(buffer, "{}: ", label).unwrap();
-                }
                 buffer.push_str("for ");
                 pat.node.print(buffer);
                 buffer.push_str(" in ");

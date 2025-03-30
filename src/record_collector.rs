@@ -213,16 +213,19 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>, variants: &mut 
         mono::Stmt::Expr(expr) => visit_expr(&expr.node, records, variants),
 
         mono::Stmt::For(mono::ForStmt {
-            label: _,
             pat,
             expr,
             body,
+            iter_ty,
+            item_ty,
         }) => {
             visit_pat(&pat.node, records, variants);
             visit_expr(&expr.node, records, variants);
             for stmt in body {
                 visit_stmt(&stmt.node, records, variants);
             }
+            visit_ty(iter_ty, records, variants);
+            visit_ty(item_ty, records, variants);
         }
 
         mono::Stmt::While(mono::WhileStmt {

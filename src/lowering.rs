@@ -372,10 +372,15 @@ pub struct AssignStmt {
 
 #[derive(Debug, Clone)]
 pub struct ForStmt {
-    pub label: Option<Id>,
     pub pat: L<Pat>,
     pub expr: L<Expr>,
     pub body: Vec<L<Stmt>>,
+
+    /// The `next` method to call on the iterator.
+    pub next_method: FunIdx,
+
+    /// Heap object for the `Option.Some` constructor that iterator returns.
+    pub option_some_con: HeapObjIdx,
 }
 
 #[derive(Debug, Clone)]
@@ -1503,11 +1508,30 @@ fn lower_stmt(
         mono::Stmt::Expr(expr) => Stmt::Expr(lower_l_expr(expr, closures, indices, scope)),
 
         mono::Stmt::For(mono::ForStmt {
-            label,
             pat,
             expr,
             body,
+            iter_ty,
+            item_ty,
         }) => {
+            let next_method = *indices
+                .assoc_funs
+                .get("Iterator")
+                .unwrap()
+                .get("next")
+                .unwrap()
+                .get(&vec![iter_ty.clone(), item_ty.clone()])
+                .unwrap();
+
+            let option_some_con = *indices
+                .sum_cons
+                .get("Option")
+                .unwrap()
+                .get("Some")
+                .unwrap()
+                .get(&vec![item_ty.clone()])
+                .unwrap();
+
             let expr = lower_l_expr(expr, closures, indices, scope);
             scope.bounds.enter();
             let pat = lower_l_pat(pat, indices, scope);
@@ -1516,11 +1540,13 @@ fn lower_stmt(
                 .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                 .collect();
             scope.bounds.exit();
+
             Stmt::For(ForStmt {
-                label: label.clone(),
                 pat,
                 expr,
                 body,
+                next_method,
+                option_some_con,
             })
         }
 

@@ -424,10 +424,17 @@ pub enum AssignOp {
 #[derive(Debug, Clone)]
 pub struct ForStmt {
     pub label: Option<Id>,
+
     pub pat: L<Pat>,
+
+    /// Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
     pub ty: Option<L<Type>>,
+
     pub expr: L<Expr>,
-    pub expr_ty: Option<Ty>, // filled in by the type checker
+
+    /// Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
+    pub expr_ty: Option<Ty>,
+
     pub body: Vec<L<Stmt>>,
 }
 
