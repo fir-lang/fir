@@ -1358,56 +1358,203 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(ordering)
         }
 
-        BuiltinFunDecl::I8Add => todo!(),
+        BuiltinFunDecl::I8Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) + val_as_i8(i2)))
+        }
 
-        BuiltinFunDecl::U8Add => todo!(),
+        BuiltinFunDecl::U8Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) + val_as_u8(i2)))
+        }
 
-        BuiltinFunDecl::I32Add => todo!(),
+        BuiltinFunDecl::I32Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) + val_as_i32(i2)))
+        }
 
-        BuiltinFunDecl::U32Add => todo!(),
+        BuiltinFunDecl::U32Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) + val_as_u32(i2)))
+        }
 
-        BuiltinFunDecl::I8Sub => todo!(),
+        BuiltinFunDecl::I8Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) - val_as_i8(i2)))
+        }
 
-        BuiltinFunDecl::U8Sub => todo!(),
+        BuiltinFunDecl::U8Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) - val_as_u8(i2)))
+        }
 
-        BuiltinFunDecl::I32Sub => todo!(),
+        BuiltinFunDecl::I32Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) - val_as_i32(i2)))
+        }
 
-        BuiltinFunDecl::U32Sub => todo!(),
+        BuiltinFunDecl::U32Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) - val_as_u32(i2)))
+        }
 
-        BuiltinFunDecl::I8Mul => todo!(),
+        BuiltinFunDecl::I8Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) * val_as_i8(i2)))
+        }
 
-        BuiltinFunDecl::U8Mul => todo!(),
+        BuiltinFunDecl::U8Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) * val_as_u8(i2)))
+        }
 
-        BuiltinFunDecl::I32Mul => todo!(),
+        BuiltinFunDecl::I32Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) * val_as_i32(i2)))
+        }
 
-        BuiltinFunDecl::U32Mul => todo!(),
+        BuiltinFunDecl::U32Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) * val_as_u32(i2)))
+        }
 
-        BuiltinFunDecl::I8Div => todo!(),
+        BuiltinFunDecl::I8Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) / val_as_i8(i2)))
+        }
 
-        BuiltinFunDecl::U8Div => todo!(),
+        BuiltinFunDecl::U8Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) / val_as_u8(i2)))
+        }
 
-        BuiltinFunDecl::I32Div => todo!(),
+        BuiltinFunDecl::I32Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) / val_as_i32(i2)))
+        }
 
-        BuiltinFunDecl::U32Div => todo!(),
+        BuiltinFunDecl::U32Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) / val_as_u32(i2)))
+        }
 
-        BuiltinFunDecl::I8Eq => todo!(),
+        BuiltinFunDecl::I8Eq
+        | BuiltinFunDecl::U8Eq
+        | BuiltinFunDecl::I32Eq
+        | BuiltinFunDecl::U32Eq => {
+            debug_assert_eq!(args.len(), 2);
+            let u1 = args[0];
+            let u2 = args[1];
+            FunRet::Val(if u1 == u2 {
+                pgm.true_alloc
+            } else {
+                pgm.false_alloc
+            })
+        }
 
-        BuiltinFunDecl::U8Eq => todo!(),
+        BuiltinFunDecl::Throw { r: _, a: _ } => {
+            debug_assert_eq!(args.len(), 1);
+            let exn = args[0];
+            return FunRet::Unwind(exn);
+        }
 
-        BuiltinFunDecl::I32Eq => todo!(),
+        BuiltinFunDecl::Try { exn: _, a: _, r: _ } => todo!(),
 
-        BuiltinFunDecl::U32Eq => todo!(),
-
-        BuiltinFunDecl::Throw { r, a } => todo!(),
-
-        BuiltinFunDecl::Try { exn, a, r } => todo!(),
-
-        BuiltinFunDecl::ArrayNew { t } => todo!(),
+        BuiltinFunDecl::ArrayNew { t: _ } => todo!(),
 
         BuiltinFunDecl::ArrayLen => todo!(),
 
-        BuiltinFunDecl::ArrayGet { t } => todo!(),
+        BuiltinFunDecl::ArrayGet { t: _ } => todo!(),
 
-        BuiltinFunDecl::ArraySet { t } => todo!(),
+        BuiltinFunDecl::ArraySet { t: _ } => todo!(),
     }
+}
+
+fn try_<W: Write>(
+    _w: &mut W,
+    _pgm: &Pgm,
+    _heap: &mut Heap,
+    _locals: &mut [u64],
+    _args: Vec<u64>,
+    _loc: &Loc,
+    _val_ty: &str,
+) -> FunRet {
+    todo!()
+    /*
+    debug_assert_eq!(args.len(), 1);
+    let closure = args[0];
+    match call_closure(w, pgm, heap, locals, closure, &[], loc) {
+        ControlFlow::Val(val) => {
+            let ty_con = pgm
+                .ty_cons
+                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
+                .unwrap();
+
+            let constr_idx = ty_con
+                .value_constrs
+                .iter()
+                .enumerate()
+                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Ok")))
+                .unwrap();
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
+
+        ControlFlow::Unwind(val) => {
+            let ty_con = pgm
+                .ty_cons
+                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
+                .unwrap();
+
+            let constr_idx = ty_con
+                .value_constrs
+                .iter()
+                .enumerate()
+                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Err")))
+                .unwrap();
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
+
+        ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
+    }
+     */
 }
