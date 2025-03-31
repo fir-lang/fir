@@ -15,7 +15,7 @@ use crate::utils::loc_display;
 use std::cmp::Ordering;
 use std::io::Write;
 
-use bytemuck::cast_slice_mut;
+use bytemuck::{cast_slice, cast_slice_mut};
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
@@ -1492,13 +1492,85 @@ fn call_builtin_fun<W: Write>(
 
         BuiltinFunDecl::Try { exn: _, a: _, r: _ } => todo!(),
 
-        BuiltinFunDecl::ArrayNew { t: _ } => todo!(),
+        BuiltinFunDecl::ArrayNew { t } => {
+            debug_assert_eq!(args.len(), 1);
+            let cap = val_as_u32(args[0]);
+            let repr = Repr::from_mono_ty(t);
+            let cap_words = (cap as usize) * repr.elem_size_in_bytes().div_ceil(8);
+            let array = heap.allocate(cap_words + 2);
+            heap[array] = (match repr {
+                Repr::U8 => pgm.array_u8_con_idx,
+                Repr::U32 => pgm.array_u32_con_idx,
+                Repr::U64 => pgm.array_u64_con_idx,
+            })
+            .as_u64();
+            heap[array + 1] = u32_as_val(cap);
+            (&mut heap.values[(array + 2) as usize..(array as usize) + 2 + cap_words]).fill(0);
+            FunRet::Val(array)
+        }
 
-        BuiltinFunDecl::ArrayLen => todo!(),
+        BuiltinFunDecl::ArrayLen => {
+            debug_assert_eq!(args.len(), 1);
+            let array = args[0];
+            FunRet::Val(heap[array])
+        }
 
-        BuiltinFunDecl::ArrayGet { t: _ } => todo!(),
+        BuiltinFunDecl::ArrayGet { t } => {
+            debug_assert_eq!(args.len(), 2);
+            let array = args[0];
+            let idx = val_as_u32(args[1]);
+            let array_len = val_as_u32(heap[array + 1]);
+            if idx >= array_len {
+                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+            }
+            FunRet::Val(match Repr::from_mono_ty(t) {
+                Repr::U8 => {
+                    let payload: &[u8] = cast_slice(&heap.values[array as usize + 2..]);
+                    u8_as_val(payload[idx as usize])
+                }
+                Repr::U32 => {
+                    let payload: &[u32] = cast_slice(&heap.values[array as usize + 2..]);
+                    u32_as_val(payload[idx as usize])
+                }
+                Repr::U64 => {
+                    let payload: &[u64] = cast_slice(&heap.values[array as usize + 2..]);
+                    payload[idx as usize]
+                }
+            })
+        }
 
-        BuiltinFunDecl::ArraySet { t: _ } => todo!(),
+        BuiltinFunDecl::ArraySet { t } => {
+            debug_assert_eq!(args.len(), 3);
+            let array = args[0];
+            let idx = args[1];
+            let elem = args[2];
+
+            let array_len = heap[array + 1];
+            if idx >= array_len {
+                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+            }
+
+            match Repr::from_mono_ty(t) {
+                Repr::U8 => {
+                    let payload: &mut [u8] = cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = val_as_u8(elem);
+                }
+
+                Repr::U32 => {
+                    let payload: &mut [u32] =
+                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = val_as_u32(elem);
+                }
+
+                Repr::U64 => {
+                    let payload: &mut [u64] =
+                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = elem;
+                }
+            }
+
+            FunRet::Val(0)
+        }
     }
 }
 

@@ -102,7 +102,7 @@ pub enum Repr {
 }
 
 impl Repr {
-    fn from_mono_ty(mono_ty: &mono::Type) -> Repr {
+    pub fn from_mono_ty(mono_ty: &mono::Type) -> Repr {
         match mono_ty {
             mono::Type::Named(mono::NamedType { name, args: _ }) => {
                 match name.as_str() {
@@ -116,6 +116,14 @@ impl Repr {
             }
 
             mono::Type::Record { .. } | mono::Type::Variant { .. } | mono::Type::Fn(_) => Repr::U64,
+        }
+    }
+
+    pub fn elem_size_in_bytes(&self) -> usize {
+        match self {
+            Repr::U8 => 1,
+            Repr::U32 => 4,
+            Repr::U64 => 8,
         }
     }
 }
