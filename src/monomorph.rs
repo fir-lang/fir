@@ -1322,11 +1322,11 @@ fn mono_tc_ty(
             },
             ret: Some(ast::L {
                 loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&*ret, ty_map, poly_pgm, mono_pgm)),
+                node: Box::new(mono_tc_ty(&ret, ty_map, poly_pgm, mono_pgm)),
             }),
             exceptions: exceptions.map(|ty| ast::L {
                 loc: ast::Loc::dummy(),
-                node: Box::new(mono_tc_ty(&*ty, ty_map, poly_pgm, mono_pgm)),
+                node: Box::new(mono_tc_ty(&ty, ty_map, poly_pgm, mono_pgm)),
             }),
         }),
 
@@ -1536,7 +1536,7 @@ fn mono_ty_decl(
 
     // Add current type to mono_pgm without a RHS to avoid looping.
     mono_pgm.ty.entry(ty_decl.name.clone()).or_default().insert(
-        args.iter().cloned().collect(),
+        args.to_vec(),
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs: None,
@@ -1565,7 +1565,7 @@ fn mono_ty_decl(
     });
 
     mono_pgm.ty.get_mut(&ty_decl.name).unwrap().insert(
-        args.iter().cloned().collect::<Vec<_>>(),
+        args.to_vec(),
         mono::TypeDecl {
             name: mono_ty_id.clone(),
             rhs,

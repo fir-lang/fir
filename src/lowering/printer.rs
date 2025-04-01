@@ -132,7 +132,7 @@ impl LoweredPgm {
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
-            write!(buffer, "closure{}:\n", closure_idx).unwrap();
+            writeln!(buffer, "closure{}:", closure_idx).unwrap();
 
             buffer.push_str("  locals: ");
             for (i, LocalInfo { name, ty }) in locals.iter().enumerate() {

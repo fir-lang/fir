@@ -683,7 +683,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Number top-level functions.
     let mut next_fun_idx = FunIdx(0);
     for (fun_id, fun_ty_map) in &mono_pgm.funs {
-        for (fun_ty_args, _fun_decl) in fun_ty_map {
+        for fun_ty_args in fun_ty_map.keys() {
             fun_nums
                 .entry(fun_id.clone())
                 .or_default()
@@ -699,7 +699,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     // Number associated functions.
     for (fun_ty_id, assoc_fn_map) in &mono_pgm.associated {
         for (fun_id, fun_ty_map) in assoc_fn_map {
-            for (fun_ty_args, _fun_decl) in fun_ty_map {
+            for fun_ty_args in fun_ty_map.keys() {
                 assoc_fun_nums
                     .entry(fun_ty_id.clone())
                     .or_default()
@@ -783,11 +783,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         result_err_cons: sum_con_nums
             .get_mut(&SmolStr::new_static("Result"))
             .and_then(|r| r.remove(&SmolStr::new_static("Err")))
-            .unwrap_or(Default::default()),
+            .unwrap_or_default(),
         result_ok_cons: sum_con_nums
             .get_mut(&SmolStr::new_static("Result"))
             .and_then(|r| r.remove(&SmolStr::new_static("Ok")))
-            .unwrap_or(Default::default()),
+            .unwrap_or_default(),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
@@ -814,7 +814,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     mono::TypeDeclRhs::Sum(cons) => {
                         for mono::ConstructorDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            let name = SmolStr::new(&format!("{}.{}", con_id, name));
+                            let name = SmolStr::new(format!("{}.{}", con_id, name));
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 &name,
@@ -1830,7 +1830,7 @@ fn lower_expr(
         }),
 
         mono::Expr::Fn(mono::FnExpr { sig, body }) => {
-            let parent_fun_scope: FunScope = std::mem::replace(scope, Default::default());
+            let parent_fun_scope: FunScope = std::mem::take(scope);
 
             let mut locals: Vec<LocalInfo> = vec![];
             let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();

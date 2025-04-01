@@ -159,7 +159,7 @@ pub(super) fn check_expr(
 
                     other => {
                         let (ty, new_expr) =
-                            check_field_select(tc_state, object, &field, other, &expr.loc, level);
+                            check_field_select(tc_state, object, field, other, &expr.loc, level);
                         expr.node = new_expr;
                         ty
                     }
@@ -968,7 +968,7 @@ fn check_field_select(
                         &self_arg,
                         object_ty,
                         tc_state.tys.tys.cons(),
-                        &mut tc_state.var_gen,
+                        tc_state.var_gen,
                         level,
                         loc,
                     );
@@ -1069,8 +1069,8 @@ fn select_method(
             ),
         };
         if try_unify_one_way(
-            &candidate_self_ty,
-            &receiver,
+            candidate_self_ty,
+            receiver,
             tc_state.tys.tys.cons(),
             tc_state.var_gen,
             level,

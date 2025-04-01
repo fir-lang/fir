@@ -620,7 +620,7 @@ fn eval<W: Write>(
                 return ControlFlow::Val(con.alloc);
             }
 
-            return ControlFlow::Val(heap.allocate_constr(con_idx.as_u64()));
+            ControlFlow::Val(heap.allocate_constr(con_idx.as_u64()))
         }
 
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
@@ -926,11 +926,7 @@ fn try_bind_pat(
         Pat::Str(str) => {
             debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
             let value_bytes = heap.str_bytes(value);
-            if value_bytes == str.as_bytes() {
-                true
-            } else {
-                false
-            }
+            value_bytes == str.as_bytes()
         }
 
         Pat::StrPfx(pfx, var) => {
@@ -1477,7 +1473,7 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::Throw => {
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
-            return FunRet::Unwind(exn);
+            FunRet::Unwind(exn)
         }
 
         BuiltinFunDecl::Try { exn, a } => {
@@ -1523,7 +1519,7 @@ fn call_builtin_fun<W: Write>(
             })
             .as_u64();
             heap[array + 1] = u32_as_val(cap);
-            (&mut heap.values[(array + 2) as usize..(array as usize) + 2 + cap_words]).fill(0);
+            heap.values[(array + 2) as usize..(array as usize) + 2 + cap_words].fill(0);
             FunRet::Val(array)
         }
 

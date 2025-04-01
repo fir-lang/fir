@@ -732,7 +732,7 @@ fn collect_schemes(
                 };
 
                 let scheme = Scheme {
-                    quantified_vars: sig.context.type_params.iter().cloned().collect(),
+                    quantified_vars: sig.context.type_params.to_vec(),
                     preds: fun_preds,
                     ty: fun_ty,
                     loc: loc.clone(),
@@ -1367,7 +1367,7 @@ fn resolve_preds(
 
         for assump in assumps {
             // We can't use set lookup as locs will be different.
-            if &assump.trait_ == &pred.trait_ && &assump.params == &pred.params {
+            if assump.trait_ == pred.trait_ && assump.params == pred.params {
                 continue 'goals;
             }
         }
@@ -1420,14 +1420,12 @@ fn resolve_preds(
 
     for var_row in ambiguous_var_rows {
         if var_row.link().is_none() {
-            if var_row.link().is_none() {
-                var_row.set_link(Ty::Anonymous {
-                    labels: Default::default(),
-                    extension: None,
-                    kind: RecordOrVariant::Variant,
-                    is_row: true,
-                });
-            }
+            var_row.set_link(Ty::Anonymous {
+                labels: Default::default(),
+                extension: None,
+                kind: RecordOrVariant::Variant,
+                is_row: true,
+            });
         }
     }
 }

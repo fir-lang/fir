@@ -10,7 +10,7 @@ pub fn print_pgm(pgm: &MonoPgm) {
 
 impl MonoPgm {
     pub fn print(&self, buffer: &mut String) {
-        for (_, ty_arg_map) in &self.ty {
+        for ty_arg_map in self.ty.values() {
             for (ty_args, ty_decl) in ty_arg_map.iter() {
                 buffer.push_str("type ");
                 buffer.push_str(&ty_decl.name);
