@@ -4,7 +4,7 @@
 pub mod printer;
 
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, BinOp, Id, IntExpr, Named, UnOp, L};
+use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Named, UnOp, L};
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
 
 use smol_str::SmolStr;
@@ -196,24 +196,19 @@ pub enum BuiltinFunDecl {
     U32Eq,
 
     /// `prim throw(exn: [..r]): {..r} a`
-    Throw {
-        /// The error rows in the exception argument: `exn: [..r]`.
-        r: mono::Type,
-
-        /// The return type.
-        a: mono::Type,
-    },
+    ///
+    /// This function never throws or returns, so we don't need the exception and return types.
+    Throw,
 
     /// `prim try(cb: Fn(): {..exn} a): {..r} Result[[..exn], a]`
+    ///
+    /// We don't store the `r` type parameter as this function never throws.
     Try {
         /// Type of exceptions to catch.
         exn: mono::Type,
 
         /// The return type of the callback.
         a: mono::Type,
-
-        /// The expected exception type in the call site.
-        r: mono::Type,
     },
 
     ArrayNew {
@@ -449,19 +444,6 @@ pub struct CallExpr {
 pub struct CallArg {
     pub name: Option<Id>,
     pub expr: L<Expr>,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinOpExpr {
-    pub left: Box<L<Expr>>,
-    pub right: Box<L<Expr>>,
-    pub op: BinOp, // only boolean and and or, so this is monomorphic
-}
-
-#[derive(Debug, Clone)]
-pub struct UnOpExpr {
-    pub op: UnOp, // only boolean not, so this is monomorphic
-    pub expr: Box<L<Expr>>,
 }
 
 #[derive(Debug, Clone)]
@@ -956,20 +938,15 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         assert_eq!(fun_ty_args.len(), 3); // exn, a, r
                         let exn = fun_ty_args[0].clone();
                         let a = fun_ty_args[1].clone();
-                        let r = fun_ty_args[2].clone();
                         lowered_pgm
                             .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a, r }));
+                            .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a }));
                     }
 
                     "throw" => {
                         // prim throw(exn: [..r]): {..r} a
                         assert_eq!(fun_ty_args.len(), 2); // r, a
-                        let r = fun_ty_args[0].clone();
-                        let a = fun_ty_args[1].clone();
-                        lowered_pgm
-                            .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::Throw { r, a }));
+                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Throw));
                     }
 
                     other => {

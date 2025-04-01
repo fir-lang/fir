@@ -1474,13 +1474,13 @@ fn call_builtin_fun<W: Write>(
             })
         }
 
-        BuiltinFunDecl::Throw { r: _, a: _ } => {
+        BuiltinFunDecl::Throw => {
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
             return FunRet::Unwind(exn);
         }
 
-        BuiltinFunDecl::Try { exn: _, a, r: _ } => {
+        BuiltinFunDecl::Try { exn, a } => {
             debug_assert_eq!(args.len(), 1);
             let cb = args[0];
 
@@ -1489,12 +1489,16 @@ fn call_builtin_fun<W: Write>(
             let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc) {
                 ControlFlow::Val(val) => (
                     val,
-                    pgm.result_ok_cons.get(std::slice::from_ref(a)).unwrap(),
+                    pgm.result_ok_cons
+                        .get(&vec![exn.clone(), a.clone()])
+                        .unwrap(),
                 ),
 
                 ControlFlow::Unwind(val) => (
                     val,
-                    pgm.result_err_cons.get(std::slice::from_ref(a)).unwrap(),
+                    pgm.result_err_cons
+                        .get(&vec![exn.clone(), a.clone()])
+                        .unwrap(),
                 ),
 
                 ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
