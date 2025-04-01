@@ -1520,7 +1520,13 @@ fn lower_stmt(
                 .unwrap()
                 .get("next")
                 .unwrap()
-                .get(&vec![iter_ty.clone(), item_ty.clone()])
+                .get(&vec![
+                    iter_ty.clone(),
+                    item_ty.clone(),
+                    // exception type passed as empty variant by monomorphiser
+                    // TODO: Maybe store exception type in the statement.
+                    mono::Type::Variant { alts: vec![] },
+                ])
                 .unwrap();
 
             let option_some_con = *indices
