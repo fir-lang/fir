@@ -2025,6 +2025,7 @@ fn lower_source_fun(
 ) -> SourceFunDecl {
     let mut locals: Vec<LocalInfo> = vec![];
     let mut bounds: ScopeMap<Id, LocalIdx> = Default::default();
+    let mut params: Vec<Ty> = vec![];
 
     match &fun.sig.self_ {
         mono::SelfParam::No => {}
@@ -2034,15 +2035,18 @@ fn lower_source_fun(
             // type should not have type parameters.
             // TODO: Type checker should annotate all self types instead.
             let self_ty_con = fun.parent_ty.as_ref().unwrap().node.clone();
+            let self_mono_ty = mono::Type::Named(mono::NamedType {
+                name: self_ty_con,
+                args: vec![],
+            });
+            params.push(Ty::from_mono_ty(&self_mono_ty));
             locals.push(LocalInfo {
                 name: SmolStr::new_static("self"),
-                ty: mono::Type::Named(mono::NamedType {
-                    name: self_ty_con,
-                    args: vec![],
-                }),
+                ty: self_mono_ty,
             });
         }
         mono::SelfParam::Explicit(self_ty) => {
+            params.push(Ty::from_mono_ty(&self_ty.node));
             locals.push(LocalInfo {
                 name: SmolStr::new_static("self"),
                 ty: self_ty.node.clone(),
@@ -2074,12 +2078,12 @@ fn lower_source_fun(
         .map(|stmt| lower_l_stmt(stmt, closures, indices, &mut scope))
         .collect();
 
-    let params: Vec<Ty> = fun
-        .sig
-        .params
-        .iter()
-        .map(|(_, param_ty)| Ty::from_mono_ty(&param_ty.node))
-        .collect();
+    params.extend(
+        fun.sig
+            .params
+            .iter()
+            .map(|(_, param_ty)| Ty::from_mono_ty(&param_ty.node)),
+    );
 
     SourceFunDecl {
         parent_ty: fun.parent_ty.clone(),
