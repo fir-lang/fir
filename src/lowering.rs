@@ -659,27 +659,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
-    // Assign indices to record and variant shapes.
-    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
-
-    let mut record_indices: Map<RecordShape, HeapObjIdx> = Default::default();
-    for record_shape in record_shapes {
-        record_indices.insert(record_shape, {
-            let idx = next_con_idx;
-            next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
-            idx
-        });
-    }
-
-    let mut variant_indices: Map<VariantShape, HeapObjIdx> = Default::default();
-    for variant_shape in variant_shapes {
-        variant_indices.insert(variant_shape, {
-            let idx = next_con_idx;
-            next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
-            idx
-        });
-    }
-
     // Number top-level functions.
     let mut next_fun_idx = FunIdx(0);
     for (fun_id, fun_ty_map) in &mono_pgm.funs {
@@ -909,6 +888,25 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 },
             }
         }
+    }
+
+    // Assign indices to record and variant shapes.
+    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
+
+    let mut record_indices: Map<RecordShape, HeapObjIdx> = Default::default();
+    for record_shape in record_shapes {
+        let idx = next_con_idx;
+        next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
+        record_indices.insert(record_shape.clone(), idx);
+        lowered_pgm.heap_objs.push(HeapObj::Record(record_shape));
+    }
+
+    let mut variant_indices: Map<VariantShape, HeapObjIdx> = Default::default();
+    for variant_shape in variant_shapes {
+        let idx = next_con_idx;
+        next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
+        variant_indices.insert(variant_shape.clone(), idx);
+        lowered_pgm.heap_objs.push(HeapObj::Variant(variant_shape));
     }
 
     let mut indices = Indices {
