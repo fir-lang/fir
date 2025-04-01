@@ -2051,14 +2051,6 @@ fn lower_source_fun(
         }
     }
 
-    if !matches!(fun.sig.self_, mono::SelfParam::No) {
-        locals.push(LocalInfo {
-            name: SmolStr::new_static("self"),
-            ty: mono::Type::Record { fields: vec![] }, // TODO
-        });
-        bounds.insert(SmolStr::new_static("self"), LocalIdx(0));
-    }
-
     for (param, ty) in &fun.sig.params {
         bounds.insert(param.clone(), LocalIdx(locals.len() as u32));
         locals.push(LocalInfo {
