@@ -285,7 +285,8 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
         make_ast_ty("Array", vec!["U8"]),
         make_ast_ty("Array", vec!["I32"]),
         make_ast_ty("Array", vec!["U32"]),
-        make_ast_ty("Array", vec!["Str"]), // Array@Ptr
+        make_ast_ty("Array", vec!["I64"]),
+        make_ast_ty("Array", vec!["U64"]),
     ] {
         mono_ast_ty(&ty, &Default::default(), &poly_pgm, &mut mono_pgm);
     }

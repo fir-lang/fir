@@ -1,3 +1,7 @@
+prim type I64
+
+prim type U64
+
 prim type I32
 
 impl Add[I32]:

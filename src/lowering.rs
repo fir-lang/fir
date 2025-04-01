@@ -306,6 +306,8 @@ pub enum BuiltinConDecl {
     U8,
     I32,
     U32,
+    I64,
+    U64,
 }
 
 #[derive(Debug)]
@@ -779,15 +781,13 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             })])
             .unwrap(),
         result_err_cons: sum_con_nums
-            .remove(&SmolStr::new_static("Result"))
-            .unwrap()
-            .remove(&SmolStr::new_static("Err"))
-            .unwrap(),
+            .get_mut(&SmolStr::new_static("Result"))
+            .and_then(|r| r.remove(&SmolStr::new_static("Err")))
+            .unwrap_or(Default::default()),
         result_ok_cons: sum_con_nums
-            .remove(&SmolStr::new_static("Result"))
-            .unwrap()
-            .remove(&SmolStr::new_static("Ok"))
-            .unwrap(),
+            .get_mut(&SmolStr::new_static("Result"))
+            .and_then(|r| r.remove(&SmolStr::new_static("Ok")))
+            .unwrap_or(Default::default()),
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
@@ -873,6 +873,20 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         lowered_pgm
                             .heap_objs
                             .push(HeapObj::Builtin(BuiltinConDecl::U32));
+                    }
+
+                    "I64" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::I64));
+                    }
+
+                    "U64" => {
+                        assert_eq!(con_ty_args.len(), 0);
+                        lowered_pgm
+                            .heap_objs
+                            .push(HeapObj::Builtin(BuiltinConDecl::U64));
                     }
 
                     "Void" => {
