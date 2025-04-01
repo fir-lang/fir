@@ -25,15 +25,8 @@ pub struct LoweredPgm {
     pub ordering_equal_con_idx: HeapObjIdx,
     pub ordering_greater_con_idx: HeapObjIdx,
     pub str_con_idx: HeapObjIdx,
-    pub i8_con_idx: HeapObjIdx,
-    pub u8_con_idx: HeapObjIdx,
-    pub i32_con_idx: HeapObjIdx,
-    pub u32_con_idx: HeapObjIdx,
-    pub array_i8_con_idx: HeapObjIdx,
     pub array_u8_con_idx: HeapObjIdx,
-    pub array_i32_con_idx: HeapObjIdx,
     pub array_u32_con_idx: HeapObjIdx,
-    pub array_i64_con_idx: HeapObjIdx,
     pub array_u64_con_idx: HeapObjIdx,
     pub result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
     pub result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
@@ -779,18 +772,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .unwrap(),
         char_con_idx: *product_con_nums.get("Char").unwrap().get(&vec![]).unwrap(),
         str_con_idx: *product_con_nums.get("Str").unwrap().get(&vec![]).unwrap(),
-        i8_con_idx: *product_con_nums.get("I8").unwrap().get(&vec![]).unwrap(),
-        u8_con_idx: *product_con_nums.get("U8").unwrap().get(&vec![]).unwrap(),
-        i32_con_idx: *product_con_nums.get("I32").unwrap().get(&vec![]).unwrap(),
-        u32_con_idx: *product_con_nums.get("U32").unwrap().get(&vec![]).unwrap(),
-        array_i8_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("I8"),
-                args: vec![],
-            })])
-            .unwrap(),
         array_u8_con_idx: *product_con_nums
             .get("Array")
             .unwrap()
@@ -799,27 +780,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 args: vec![],
             })])
             .unwrap(),
-        array_i32_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("I32"),
-                args: vec![],
-            })])
-            .unwrap(),
         array_u32_con_idx: *product_con_nums
             .get("Array")
             .unwrap()
             .get(&vec![mono::Type::Named(mono::NamedType {
                 name: SmolStr::new("U32"),
-                args: vec![],
-            })])
-            .unwrap(),
-        array_i64_con_idx: *product_con_nums
-            .get("Array")
-            .unwrap()
-            .get(&vec![mono::Type::Named(mono::NamedType {
-                name: SmolStr::new("I64"),
                 args: vec![],
             })])
             .unwrap(),

@@ -32,15 +32,8 @@ struct Pgm {
     ordering_greater_alloc: u64,
     char_con_idx: HeapObjIdx,
     str_con_idx: HeapObjIdx,
-    i8_con_idx: HeapObjIdx,
-    u8_con_idx: HeapObjIdx,
-    i32_con_idx: HeapObjIdx,
-    u32_con_idx: HeapObjIdx,
-    array_i8_con_idx: HeapObjIdx,
     array_u8_con_idx: HeapObjIdx,
-    array_i32_con_idx: HeapObjIdx,
     array_u32_con_idx: HeapObjIdx,
-    array_i64_con_idx: HeapObjIdx,
     array_u64_con_idx: HeapObjIdx,
 
     /// To allocate return value of `try`: `Result.Ok` tags, indexed by type arguments.
@@ -63,15 +56,8 @@ impl Pgm {
             ordering_equal_con_idx,
             ordering_greater_con_idx,
             str_con_idx,
-            i8_con_idx,
-            u8_con_idx,
-            i32_con_idx,
-            u32_con_idx,
-            array_i8_con_idx,
             array_u8_con_idx,
-            array_i32_con_idx,
             array_u32_con_idx,
-            array_i64_con_idx,
             array_u64_con_idx,
             result_err_cons,
             result_ok_cons,
@@ -114,15 +100,8 @@ impl Pgm {
             ordering_greater_alloc,
             char_con_idx,
             str_con_idx,
-            i8_con_idx,
-            u8_con_idx,
-            i32_con_idx,
-            u32_con_idx,
-            array_i8_con_idx,
             array_u8_con_idx,
-            array_i32_con_idx,
             array_u32_con_idx,
-            array_i64_con_idx,
             array_u64_con_idx,
             result_err_cons,
             result_ok_cons,
@@ -1607,61 +1586,4 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(0)
         }
     }
-}
-
-fn try_<W: Write>(
-    _w: &mut W,
-    _pgm: &Pgm,
-    _heap: &mut Heap,
-    _locals: &mut [u64],
-    _args: Vec<u64>,
-    _loc: &Loc,
-    _val_ty: &str,
-) -> FunRet {
-    todo!()
-    /*
-    debug_assert_eq!(args.len(), 1);
-    let closure = args[0];
-    match call_closure(w, pgm, heap, locals, closure, &[], loc) {
-        ControlFlow::Val(val) => {
-            let ty_con = pgm
-                .ty_cons
-                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
-                .unwrap();
-
-            let constr_idx = ty_con
-                .value_constrs
-                .iter()
-                .enumerate()
-                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Ok")))
-                .unwrap();
-
-            let object = heap.allocate(1 + args.len());
-            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
-            heap[object + 1] = val;
-            FunRet::Val(object)
-        }
-
-        ControlFlow::Unwind(val) => {
-            let ty_con = pgm
-                .ty_cons
-                .get(("Result@Ptr@".to_owned() + val_ty).as_str())
-                .unwrap();
-
-            let constr_idx = ty_con
-                .value_constrs
-                .iter()
-                .enumerate()
-                .find(|(_, constr)| constr.name.as_ref() == Some(&SmolStr::new_static("Err")))
-                .unwrap();
-
-            let object = heap.allocate(1 + args.len());
-            heap[object] = ty_con.type_tag + constr_idx.0 as u64;
-            heap[object + 1] = val;
-            FunRet::Val(object)
-        }
-
-        ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
-    }
-     */
 }
