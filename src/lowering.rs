@@ -1905,7 +1905,7 @@ fn lower_l_expr(
 }
 
 fn lower_bl_expr(
-    bl_expr: &Box<L<mono::Expr>>,
+    bl_expr: &L<mono::Expr>,
     closures: &mut Vec<Closure>,
     indices: &mut Indices,
     scope: &mut FunScope,
@@ -2025,7 +2025,7 @@ fn lower_l_pat(pat: &L<mono::Pat>, indices: &mut Indices, scope: &mut FunScope) 
 fn lower_source_fun(
     fun: &mono::FunDecl,
     idx: FunIdx,
-    ty_args: &Vec<mono::Type>,
+    ty_args: &[mono::Type],
     indices: &mut Indices,
     closures: &mut Vec<Closure>,
 ) -> SourceFunDecl {
@@ -2095,7 +2095,7 @@ fn lower_source_fun(
         parent_ty: fun.parent_ty.clone(),
         name: fun.name.clone(),
         idx,
-        ty_args: ty_args.clone(),
+        ty_args: ty_args.to_vec(),
         locals: scope.locals,
         body,
         params,
