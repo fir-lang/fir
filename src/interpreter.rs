@@ -9,6 +9,7 @@ use heap::Heap;
 use crate::ast::{self, Id, Loc, L};
 use crate::collections::Map;
 use crate::lowering::*;
+use crate::mono_ast as mono;
 use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
@@ -41,6 +42,12 @@ struct Pgm {
     array_u32_con_idx: HeapObjIdx,
     array_i64_con_idx: HeapObjIdx,
     array_u64_con_idx: HeapObjIdx,
+
+    /// To allocate return value of `try`: `Result.Ok` tags, indexed by type arguments.
+    result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
+
+    /// To allocate return value of `try`: `Result.Err` tags, indexed by type arguments.
+    result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
 }
 
 impl Pgm {
@@ -66,6 +73,8 @@ impl Pgm {
             array_u32_con_idx,
             array_i64_con_idx,
             array_u64_con_idx,
+            result_err_cons,
+            result_ok_cons,
         } = lowered_pgm;
 
         // Allocate singletons for constructors without fields.
@@ -115,6 +124,8 @@ impl Pgm {
             array_u32_con_idx,
             array_i64_con_idx,
             array_u64_con_idx,
+            result_err_cons,
+            result_ok_cons,
         }
     }
 }
@@ -1490,7 +1501,31 @@ fn call_builtin_fun<W: Write>(
             return FunRet::Unwind(exn);
         }
 
-        BuiltinFunDecl::Try { exn: _, a: _, r: _ } => todo!(),
+        BuiltinFunDecl::Try { exn: _, a, r: _ } => {
+            debug_assert_eq!(args.len(), 1);
+            let cb = args[0];
+
+            // NB. No need to pass locals here as locals are used to evaluate closure arguments, and
+            // we don't pass any arguments.
+            let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc) {
+                ControlFlow::Val(val) => (
+                    val,
+                    pgm.result_ok_cons.get(std::slice::from_ref(a)).unwrap(),
+                ),
+
+                ControlFlow::Unwind(val) => (
+                    val,
+                    pgm.result_err_cons.get(std::slice::from_ref(a)).unwrap(),
+                ),
+
+                ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
+            };
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = con_idx.as_u64();
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
 
         BuiltinFunDecl::ArrayNew { t } => {
             debug_assert_eq!(args.len(), 1);

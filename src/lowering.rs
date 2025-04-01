@@ -35,6 +35,8 @@ pub struct LoweredPgm {
     pub array_u32_con_idx: HeapObjIdx,
     pub array_i64_con_idx: HeapObjIdx,
     pub array_u64_con_idx: HeapObjIdx,
+    pub result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
+    pub result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
 }
 
 pub const CONSTR_CON_IDX: HeapObjIdx = HeapObjIdx(0);
@@ -828,6 +830,16 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 name: SmolStr::new("U64"),
                 args: vec![],
             })])
+            .unwrap(),
+        result_err_cons: sum_con_nums
+            .remove(&SmolStr::new_static("Result"))
+            .unwrap()
+            .remove(&SmolStr::new_static("Err"))
+            .unwrap(),
+        result_ok_cons: sum_con_nums
+            .remove(&SmolStr::new_static("Result"))
+            .unwrap()
+            .remove(&SmolStr::new_static("Ok"))
             .unwrap(),
     };
 
