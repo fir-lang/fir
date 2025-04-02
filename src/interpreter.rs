@@ -1546,7 +1546,7 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::ArrayLen => {
             debug_assert_eq!(args.len(), 1);
             let array = args[0];
-            FunRet::Val(heap[array])
+            FunRet::Val(heap[array + 1])
         }
 
         BuiltinFunDecl::ArrayGet { t } => {
