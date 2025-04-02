@@ -15,7 +15,12 @@ impl std::ops::Index<u64> for Heap {
     type Output = u64;
 
     fn index(&self, index: u64) -> &Self::Output {
-        debug_assert!((index as usize) < self.hp);
+        debug_assert!(
+            (index as usize) < self.hp,
+            "index={}, hp={}",
+            index,
+            self.hp
+        );
         &self.values[index as usize]
     }
 }
