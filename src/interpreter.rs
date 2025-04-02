@@ -342,7 +342,7 @@ fn call_closure<W: Write>(
 
             // Load closure's free variables into locals.
             for (i, fv) in closure.fvs.iter().enumerate() {
-                let fv_value = heap[fun + 1 + (i as u64)];
+                let fv_value = heap[fun + 2 + (i as u64)];
                 closure_locals[fv.use_idx.as_usize()] = fv_value;
             }
 
@@ -358,7 +358,7 @@ fn call_closure<W: Write>(
                     &arg_val.expr.node,
                     &arg_val.expr.loc
                 ));
-                locals[i] = arg_val;
+                closure_locals[i] = arg_val;
             }
 
             match exec(w, pgm, heap, &mut closure_locals, &closure.body) {

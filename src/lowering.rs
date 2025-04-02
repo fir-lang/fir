@@ -596,9 +596,17 @@ impl FunScope {
                         // Use the variable in the parent function so that the parent function will
                         // capture it if it needs to.
                         let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var);
+                        let var_ty: mono::Type = self.parent_fun_scope.as_ref().unwrap().locals
+                            [alloc_idx.as_usize()]
+                        .ty
+                        .clone();
 
                         // Assign new index.
                         let use_idx = LocalIdx(self.locals.len() as u32);
+                        self.locals.push(LocalInfo {
+                            name: var.clone(),
+                            ty: var_ty,
+                        });
                         self.captured_vars.insert(
                             var.clone(),
                             ClosureFv {
@@ -1620,13 +1628,6 @@ fn lower_l_stmt(
     stmt.map_as_ref(|stmt| lower_stmt(stmt, closures, indices, scope))
 }
 
-/// - `closures`: The closures collected so far.
-///
-/// - `local_vars`: Local variables of the current function: arguments, binders in patterns and
-///   `let` statements.
-///
-/// - `free_vars`: Free variables of the current function: any variables that are not arguments of
-///   the current function and not bound in the current function.
 fn lower_expr(
     expr: &mono::Expr,
     _loc: &mono::Loc,
