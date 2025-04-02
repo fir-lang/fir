@@ -989,7 +989,7 @@ fn try_bind_pat(
                     debug_assert!(field_pats.iter().all(|pat| pat.name.is_some()));
                     debug_assert_eq!(con_fields.len(), field_pats.len());
                     for (i, (con_field_name, _)) in con_fields.iter().enumerate() {
-                        let field_value = heap[value + (i as u64)];
+                        let field_value = heap[value + 1 + (i as u64)];
                         let field_pat = field_pats
                             .iter()
                             .find_map(|pat| {
@@ -1010,7 +1010,7 @@ fn try_bind_pat(
                     debug_assert!(field_pats.iter().all(|pat| pat.name.is_none()));
                     debug_assert_eq!(con_fields.len(), field_pats.len());
                     for (i, field_pat) in field_pats.iter().enumerate() {
-                        let field_value = heap[value + (i as u64)];
+                        let field_value = heap[value + 1 + (i as u64)];
                         if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
                             return false;
                         }
