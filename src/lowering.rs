@@ -761,11 +761,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .unwrap(),
         result_err_cons: sum_con_nums
             .get_mut(&SmolStr::new_static("Result"))
-            .and_then(|r| r.remove(&SmolStr::new_static("Err")))
+            .and_then(|r| r.get(&SmolStr::new_static("Err")).cloned())
             .unwrap_or_default(),
         result_ok_cons: sum_con_nums
             .get_mut(&SmolStr::new_static("Result"))
-            .and_then(|r| r.remove(&SmolStr::new_static("Ok")))
+            .and_then(|r| r.get(&SmolStr::new_static("Ok")).cloned())
             .unwrap_or_default(),
     };
 
