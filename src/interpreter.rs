@@ -274,7 +274,8 @@ fn call_ast_fun<W: Write>(
         fun.name.node
     );
 
-    let mut locals: Vec<u64> = vec![0; fun.locals.len()];
+    let mut locals = args;
+    locals.resize(fun.locals.len(), 0);
 
     match exec(w, pgm, heap, &mut locals, &fun.body) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
