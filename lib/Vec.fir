@@ -88,7 +88,7 @@ _partition[Ord[t]](vec: Vec[t], low: U32, high: U32): U32
     let pivot = vec.get(high)
     let i = low
 
-    for j in irange(low, high - 1):
+    for j: U32 in irange(low, high - 1):
         if vec.get(j) <= pivot:
             vec.swap(i, j)
             i += 1
