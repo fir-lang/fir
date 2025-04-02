@@ -135,8 +135,6 @@ pub fn run<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
         byte_offset_end: 0,
     };
 
-    let mut heap = Heap::new();
-
     // Check if main takes an input argument.
     let arg_vec: Vec<u64> = match main_fun.params.len() {
         0 => {
