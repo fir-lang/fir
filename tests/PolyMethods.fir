@@ -1,11 +1,11 @@
 trait T[a]:
-    f[b: ToStr](self, b: b)
+    f[ToStr[b]](self: a, b: b)
 
 type X:
     value: I32
 
-impl T for X:
-    f[q: ToStr](self, q: q)
+impl T[X]:
+    f[ToStr[q]](self: X, q: q)
         printStr("X.f called with q = `q`")
 
 main()

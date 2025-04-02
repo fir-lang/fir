@@ -1,12 +1,12 @@
 fac1(n: I32): I32
     let ret = 1
-    for i in irange(2, n):
+    for i: I32 in irange(2, n):
         ret *= i
     ret
 
 fac2(n: I32): I32
     let ret = 1
-    for i in range(2, n + 1):
+    for i: I32 in range(2, n + 1):
         ret *= i
     ret
 
