@@ -627,9 +627,30 @@ fn eval<W: Write>(
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
-            let con = &pgm.heap_objs[object_tag as usize];
-            let fields = &con.as_source_con().fields;
-            let field_idx = fields.find_named_field_idx(field);
+            let heap_obj = &pgm.heap_objs[object_tag as usize];
+            let field_idx = match heap_obj {
+                HeapObj::Source(source_con_decl) => {
+                    let fields = &source_con_decl.fields;
+                    fields.find_named_field_idx(field)
+                }
+
+                HeapObj::Record(record_shape) => match record_shape {
+                    RecordShape::NamedFields { fields } => fields
+                        .iter()
+                        .enumerate()
+                        .find_map(|(i, field_)| if field == field_ { Some(i) } else { None })
+                        .unwrap(),
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                },
+
+                HeapObj::Builtin(builtin) => panic!(
+                    "Trying to select field of {:?}, object addr = {}",
+                    builtin, object
+                ),
+
+                HeapObj::Variant(_) => panic!(),
+            };
+
             ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
         }
 
