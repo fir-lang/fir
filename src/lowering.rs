@@ -164,8 +164,10 @@ pub enum BuiltinFunDecl {
     ToStrU8,
     ToStrI32,
     ToStrU32,
+    U8AsI8,
     U8AsU32,
     U32AsU8,
+    U32AsI32,
     I8Shl,
     U8Shl,
     I32Shl,
@@ -1137,9 +1139,21 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U32AsU8));
                         }
 
+                        ("U32", "asI32") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::U32AsI32));
+                        }
+
                         ("U8", "asU32") => {
                             assert_eq!(fun_ty_args.len(), 1); // exception
                             lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U8AsU32));
+                        }
+
+                        ("U8", "asI8") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U8AsI8));
                         }
 
                         ("Shl", "__shl") => {

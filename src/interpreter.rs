@@ -1266,6 +1266,11 @@ fn call_builtin_fun<W: Write>(
             ))
         }
 
+        BuiltinFunDecl::U8AsI8 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i8_as_val(val_as_u8(args[0]) as i8))
+        }
+
         BuiltinFunDecl::U8AsU32 => {
             debug_assert_eq!(args.len(), 1);
             FunRet::Val(u32_as_val(val_as_u8(args[0]) as u32))
@@ -1274,6 +1279,11 @@ fn call_builtin_fun<W: Write>(
         BuiltinFunDecl::U32AsU8 => {
             debug_assert_eq!(args.len(), 1);
             FunRet::Val(u8_as_val(val_as_u32(args[0]) as u8))
+        }
+
+        BuiltinFunDecl::U32AsI32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i32_as_val(val_as_u32(args[0]) as i32))
         }
 
         BuiltinFunDecl::I8Shl => {
