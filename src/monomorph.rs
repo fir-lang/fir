@@ -917,11 +917,10 @@ fn mono_method(
         }
 
         panic!(
-            "{}: Unable to find matching impl for {} type args {:?}\nimpls={:#?}",
+            "{}: Unable to find matching impl for {} type args {:?}",
             loc_display(loc),
             method_ty_id,
             ty_args,
-            impls
         );
     }
 
