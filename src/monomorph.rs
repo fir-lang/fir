@@ -498,6 +498,7 @@ fn mono_stmt(
                 ],
                 poly_pgm,
                 mono_pgm,
+                loc,
             );
 
             mono::Stmt::For(mono::ForStmt {
@@ -538,7 +539,7 @@ fn mono_expr(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
-    _loc: &ast::Loc,
+    loc: &ast::Loc,
 ) -> mono::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
@@ -602,7 +603,7 @@ fn mono_expr(
                 .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            mono_method(method_ty_id, method, &mono_ty_args, poly_pgm, mono_pgm);
+            mono_method(method_ty_id, method, &mono_ty_args, poly_pgm, mono_pgm, loc);
 
             let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
 
@@ -804,19 +805,22 @@ fn mono_expr(
 //
 // - method_ty_id: `Iterator`
 // - method_id: `next`
-// - ty_args: `[Map[Chars, Char, U32], U32]` (type arguments to `Iterator`)
+// - ty_args: `[Map[Chars, Char, U32], U32, r]`
+//     (type arguments to `Iterator.next`)
+//     (`r` is the exception row)
 //
 // Example for non-traits: `x.push` where `x: Vec[U32]`.
 //
 // - method_ty_id: `Vec`
 // - method_id: `push`
-// - ty_args: `[U32]`
+// - ty_args: `[U32, r]`
 fn mono_method(
     method_ty_id: &Id,      // type that the method belonds to: `trait` or `type`
     method_id: &Id,         // method name
     ty_args: &[mono::Type], // method type arguments, including the trait or type's
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    loc: &ast::Loc,
 ) {
     if let Some(PolyTrait {
         ty_args: trait_ty_args,
@@ -913,8 +917,11 @@ fn mono_method(
         }
 
         panic!(
-            "Unable to find matching impl for {} type args {:?}",
-            method_ty_id, ty_args
+            "{}: Unable to find matching impl for {} type args {:?}\nimpls={:#?}",
+            loc_display(loc),
+            method_ty_id,
+            ty_args,
+            impls
         );
     }
 
