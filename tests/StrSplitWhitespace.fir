@@ -1,6 +1,6 @@
-collect[i: Iterator[Item = a], a](iter: i): Vec[a]
+collect[Iterator[i, a]](iter: i): Vec[a]
     let vec = Vec.withCapacity(10)
-    for a in iter:
+    for a: a in iter:
         vec.push(a)
     vec
 
