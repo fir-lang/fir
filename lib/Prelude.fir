@@ -101,7 +101,6 @@ impl[ToStr[t]] ToStr[Array[t]]:
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
         for i: U32 in range(0u32, self.len()):
-            let i: U32 = i
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())
