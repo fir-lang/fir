@@ -1230,6 +1230,55 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
             true
         }
 
+        (
+            ast::Type::Record {
+                fields: fields1,
+                extension,
+            },
+            mono::Type::Record { fields: fields2 },
+        ) => {
+            let fields1_map: Map<&Id, &ast::Type> = fields1
+                .iter()
+                .map(|field| (field.name.as_ref().unwrap(), &field.node))
+                .collect();
+
+            let mut fields2_map: Map<&Id, &mono::Type> = fields2
+                .iter()
+                .map(|field| (field.name.as_ref().unwrap(), &field.node))
+                .collect();
+
+            for (field_name, field1_ty) in &fields1_map {
+                let field2_ty = match fields2_map.remove(field_name) {
+                    Some(field2_ty) => field2_ty,
+                    None => return false,
+                };
+                if !match_(field1_ty, field2_ty, substs) {
+                    return false;
+                }
+            }
+
+            if !fields2_map.is_empty() && extension.is_none() {
+                return false;
+            }
+
+            if !fields2_map.is_empty() {
+                substs.insert(
+                    extension.as_ref().unwrap().clone(),
+                    mono::Type::Record {
+                        fields: fields2_map
+                            .iter()
+                            .map(|(field2_name, field2_ty)| ast::Named {
+                                name: Some((*field2_name).clone()),
+                                node: (*field2_ty).clone(),
+                            })
+                            .collect(),
+                    },
+                );
+            }
+
+            true
+        }
+
         (ast::Type::Var(var), ty) => {
             // This overrides previous mappings generated for the same impl match. E.g.
             // Iterator.next takes [iter, item]
