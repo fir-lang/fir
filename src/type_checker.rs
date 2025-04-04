@@ -159,6 +159,9 @@ struct TcFunState<'a> {
     /// Term environment.
     env: &'a mut ScopeMap<Id, Ty>,
 
+    /// Whole program trait environment. Used to resolve closure predicate.s
+    trait_env: &'a TraitEnv,
+
     /// Type environment.
     tys: &'a mut PgmTypes,
 
@@ -1135,6 +1138,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
 
     let mut tc_state = TcFunState {
         return_ty: ret_ty.clone(),
+        trait_env,
         env: &mut env,
         var_gen: &mut var_gen,
         tys,
@@ -1252,6 +1256,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
 
             let mut tc_state = TcFunState {
                 return_ty: ret_ty.clone(),
+                trait_env,
                 env: &mut env,
                 var_gen: &mut var_gen,
                 tys,

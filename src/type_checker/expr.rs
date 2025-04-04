@@ -874,8 +874,15 @@ pub(super) fn check_expr(
 
             check_stmts(tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
 
-            let new_preds = replace(tc_state.preds, old_preds);
-            assert!(new_preds.is_empty());
+            let new_preds: Set<Pred> = replace(tc_state.preds, old_preds);
+            crate::type_checker::resolve_preds(
+                tc_state.trait_env,
+                &Default::default(), // assumptions
+                tc_state.tys,
+                new_preds,
+                tc_state.var_gen,
+                0,
+            );
 
             let exceptions = replace(&mut tc_state.exceptions, old_exceptions);
             let ret_ty = replace(&mut tc_state.return_ty, old_ret_ty);
