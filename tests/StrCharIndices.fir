@@ -1,14 +1,14 @@
 main
     let s = " αあ💩"
     printStr("|`s`")
-    for charIdx in s.charIndices():
+    for charIdx: (char: Char, idx: U32) in s.charIndices():
         let char = charIdx.char
         let idx = charIdx.idx
         printStr("`idx.toStr()`: `char.toStr()`")
 
     let substr = s.substr(1, s.len())
     printStr("|`substr`")
-    for charIdx in substr.charIndices():
+    for charIdx: (char: Char, idx: U32) in substr.charIndices():
         let char = charIdx.char
         let idx = charIdx.idx
         printStr("`idx.toStr()`: `char.toStr()`")

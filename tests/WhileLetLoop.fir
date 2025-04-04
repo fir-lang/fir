@@ -5,7 +5,8 @@ main
     v.push(789u32)
 
     let iter = v.iter()
-    while let Option.Some(next) = iter.next():
+    let next: Fn(): Option[U32] = iter.next
+    while let Option.Some(next) = next():
         printStr(next.toStr())
 
 # expected stdout:
