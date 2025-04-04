@@ -1477,6 +1477,7 @@ fn mono_tc_ty(
                     }
                 }
 
+                all_alts.sort_by_key(|alt| alt.con.clone());
                 mono::Type::Variant { alts: all_alts }
             }
         },
@@ -1574,6 +1575,7 @@ fn mono_ast_ty(
                 }
             }
 
+            alts.sort_by_key(|alt| alt.con.clone());
             mono::Type::Variant { alts }
         }
 

@@ -47,8 +47,12 @@ pub enum ConstructorFields {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
     Named(NamedType),
+
     Record { fields: Vec<Named<Type>> },
+
+    // NB. Alts should be sorted by label.
     Variant { alts: Vec<VariantAlt> },
+
     Fn(FnType),
 }
 
