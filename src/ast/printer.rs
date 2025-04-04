@@ -748,7 +748,18 @@ impl Expr {
                 }
             }
 
-            Expr::Fn(_) => todo!(),
+            Expr::Fn(FnExpr { sig, body, idx: _ }) => {
+                buffer.push_str("(fn ");
+                sig.print(&SmolStr::new_static(""), buffer);
+                buffer.push_str(" {\n");
+                for stmt in body {
+                    buffer.push_str(&INDENTS[0..indent as usize]);
+                    stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
+                }
+                buffer.push_str(&INDENTS[0..indent as usize]);
+                buffer.push_str("})");
+            }
         }
     }
 }
