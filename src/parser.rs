@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: 951c952bc1f4443e6dbac7b802a94977f7a7f245baa4778424c0e19bfe89b2fe
+// sha3: 112c67395185456bfcb9541e1cb146cb688e8e7757b4c840523f6be0dc1757ba
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -41600,7 +41600,7 @@ fn __action63<'a>(
     (_, label, _): (Loc, Option<SmolStr>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, pat, _): (Loc, L<Pat>, Loc),
-    (_, ty, _): (Loc, Option<L<Type>>, Loc),
+    (_, ast_ty, _): (Loc, Option<L<Type>>, Loc),
     (_, _, _): (Loc, Token, Loc),
     (_, expr, _): (Loc, L<Expr>, Loc),
     (_, _, _): (Loc, Token, Loc),
@@ -41612,7 +41612,8 @@ fn __action63<'a>(
     Stmt::For(ForStmt {
         label,
         pat,
-        ty,
+        ast_ty,
+        tc_ty: None,
         expr,
         expr_ty: None,
         body,

@@ -280,7 +280,8 @@ fn check_stmt(
         ast::Stmt::For(ast::ForStmt {
             label,
             pat,
-            ty,
+            ast_ty: ty,
+            tc_ty,
             expr,
             expr_ty,
             body,
@@ -304,6 +305,8 @@ fn check_stmt(
                             .new_var(level, Kind::Star, expr.loc.clone()),
                     )
                 });
+
+            *tc_ty = Some(item_ty_var.clone());
 
             // Add predicate `Iterator[iter, item]`.
             tc_state.preds.insert(Pred {

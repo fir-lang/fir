@@ -394,7 +394,8 @@ impl Stmt {
             Stmt::For(ForStmt {
                 label,
                 pat,
-                ty,
+                ast_ty: ty,
+                tc_ty: _,
                 expr,
                 expr_ty: _,
                 body,

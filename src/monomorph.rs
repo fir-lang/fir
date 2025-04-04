@@ -472,7 +472,8 @@ fn mono_stmt(
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ty,
+            ast_ty: _,
+            tc_ty: ty,
             expr,
             expr_ty,
             body,
@@ -481,7 +482,7 @@ fn mono_stmt(
             let mono_iter_ty = mono_tc_ty(expr_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
 
             let mono_item_ty = match ty {
-                Some(ty) => mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
+                Some(tc_ty) => mono_tc_ty(tc_ty, ty_map, poly_pgm, mono_pgm),
                 None => panic!(
                     "{}: For loop does not have type annotation",
                     loc_display(loc)
@@ -1340,7 +1341,7 @@ fn mono_tc_ty(
             labels,
             extension,
             kind,
-            is_row,
+            is_row: _,
         } => match kind {
             crate::type_checker::RecordOrVariant::Record => {
                 let mut all_fields: Vec<ast::Named<mono::Type>> = vec![];
@@ -1372,8 +1373,6 @@ fn mono_tc_ty(
             }
 
             crate::type_checker::RecordOrVariant::Variant => {
-                // assert!(!is_row);
-
                 let mut all_alts: Vec<mono::VariantAlt> = vec![];
 
                 for (con, field) in labels {
@@ -1398,7 +1397,7 @@ fn mono_tc_ty(
                                 _ => panic!(),
                             }
                         }
-                        _ => todo!(),
+                        other => todo!("Row extension {:?}", other),
                     }
                 }
 

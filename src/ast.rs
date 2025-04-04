@@ -428,7 +428,10 @@ pub struct ForStmt {
     pub pat: L<Pat>,
 
     /// Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
-    pub ty: Option<L<Type>>,
+    pub ast_ty: Option<L<Type>>,
+
+    /// `ast_ty`, converted to type checking types by the type checker.
+    pub tc_ty: Option<Ty>,
 
     pub expr: L<Expr>,
 

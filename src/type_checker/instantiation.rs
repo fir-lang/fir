@@ -22,11 +22,15 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ty: _,
+            ast_ty: _,
+            tc_ty,
             expr,
             expr_ty,
             body,
         }) => {
+            if let Some(tc_ty) = tc_ty {
+                *tc_ty = tc_ty.deep_normalize(cons);
+            }
             normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut expr.node, cons);
             for stmt in body {
