@@ -1514,10 +1514,11 @@ fn lower_stmt(
     scope: &mut FunScope,
 ) -> Stmt {
     match stmt {
-        mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => Stmt::Let(LetStmt {
-            lhs: lower_l_pat(lhs, indices, scope),
-            rhs: lower_l_expr(rhs, closures, indices, scope),
-        }),
+        mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
+            let rhs = lower_l_expr(rhs, closures, indices, scope);
+            let lhs = lower_l_pat(lhs, indices, scope);
+            Stmt::Let(LetStmt { lhs, rhs })
+        }
 
         mono::Stmt::Assign(mono::AssignStmt { lhs, rhs, op }) => Stmt::Assign(AssignStmt {
             lhs: lower_l_expr(lhs, closures, indices, scope),
