@@ -11,7 +11,7 @@ pub(crate) fn collect_rows(
 ) -> (TreeMap<Id, Ty>, Option<Ty>) {
     let mut all_labels: TreeMap<Id, Ty> = labels
         .iter()
-        .map(|(id, ty)| (id.clone(), ty.clone()))
+        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons)))
         .collect();
 
     while let Some(ext) = extension {

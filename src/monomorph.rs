@@ -1365,7 +1365,12 @@ fn mono_tc_ty(
                                 _ => panic!(),
                             }
                         }
-                        _ => todo!(),
+
+                        Ty::Var(var) => {
+                            assert!(var.link().is_none());
+                        }
+
+                        other => todo!("Weird row extension {:?}", other),
                     }
                 }
 
@@ -1397,7 +1402,12 @@ fn mono_tc_ty(
                                 _ => panic!(),
                             }
                         }
-                        other => todo!("Row extension {:?}", other),
+
+                        Ty::Var(var) => {
+                            assert!(var.link().is_none());
+                        }
+
+                        other => todo!("Weird row extension {:?}", other),
                     }
                 }
 
