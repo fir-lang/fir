@@ -649,7 +649,24 @@ fn mono_expr(
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            let fun_decl = poly_pgm.associated.get(ty).unwrap().get(member).unwrap();
+            let fun_decl = poly_pgm
+                .associated
+                .get(ty)
+                .and_then(|ty_map| ty_map.get(member))
+                .or_else(|| {
+                    poly_pgm
+                        .method
+                        .get(ty)
+                        .and_then(|ty_map| ty_map.get(member))
+                })
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{}: Associated function or method {}.{} isn't in poly pgm",
+                        loc_display(loc),
+                        ty,
+                        member
+                    )
+                });
 
             mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
