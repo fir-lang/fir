@@ -255,7 +255,14 @@ pub(super) fn check_expr(
                 member: member.clone(),
                 ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
             });
-            method_ty
+            unify_expected_ty(
+                method_ty,
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &expr.loc,
+            )
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
