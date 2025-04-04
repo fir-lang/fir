@@ -30,6 +30,7 @@ pub struct LoweredPgm {
     pub array_u64_con_idx: HeapObjIdx,
     pub result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
     pub result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
+    pub unit_con_idx: HeapObjIdx,
 }
 
 pub const CONSTR_CON_IDX: HeapObjIdx = HeapObjIdx(0);
@@ -777,6 +778,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
             .get_mut(&SmolStr::new_static("Result"))
             .and_then(|r| r.get(&SmolStr::new_static("Ok")).cloned())
             .unwrap_or_default(),
+        unit_con_idx: HeapObjIdx(u32::MAX), // updated below
     };
 
     // Lower the program. Note that the iteration order here should be the same as above to add
@@ -901,7 +903,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
     }
 
     // Assign indices to record and variant shapes.
-    let (record_shapes, variant_shapes) = collect_records(mono_pgm);
+    let (mut record_shapes, variant_shapes) = collect_records(mono_pgm);
+
+    // Always define unit.
+    // TODO: Unit should be defined already as it's the return type of `main`?
+    record_shapes.insert(RecordShape::UnnamedFields { arity: 0 });
 
     let mut record_indices: Map<RecordShape, HeapObjIdx> = Default::default();
     for record_shape in record_shapes {
@@ -918,6 +924,10 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         variant_indices.insert(variant_shape.clone(), idx);
         lowered_pgm.heap_objs.push(HeapObj::Variant(variant_shape));
     }
+
+    lowered_pgm.unit_con_idx = *record_indices
+        .get(&RecordShape::UnnamedFields { arity: 0 })
+        .unwrap_or_else(|| panic!("Unit record not defined {:#?}", record_indices));
 
     let mut indices = Indices {
         product_cons: product_con_nums,

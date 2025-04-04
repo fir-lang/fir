@@ -30,6 +30,7 @@ struct Pgm {
     ordering_less_alloc: u64,
     ordering_equal_alloc: u64,
     ordering_greater_alloc: u64,
+    unit_alloc: u64,
     char_con_idx: HeapObjIdx,
     str_con_idx: HeapObjIdx,
     array_u8_con_idx: HeapObjIdx,
@@ -61,6 +62,7 @@ impl Pgm {
             array_u64_con_idx,
             result_err_cons,
             result_ok_cons,
+            unit_con_idx,
         } = lowered_pgm;
 
         // Allocate singletons for constructors without fields.
@@ -88,6 +90,7 @@ impl Pgm {
         let ordering_greater_alloc = heap_objs[ordering_greater_con_idx.as_usize()]
             .as_source_con()
             .alloc;
+        let unit_alloc = heap.allocate_tag(unit_con_idx.as_u64());
 
         Pgm {
             heap_objs,
@@ -98,6 +101,7 @@ impl Pgm {
             ordering_less_alloc,
             ordering_equal_alloc,
             ordering_greater_alloc,
+            unit_alloc,
             char_con_idx,
             str_con_idx,
             array_u8_con_idx,
@@ -800,7 +804,7 @@ fn eval<W: Write>(
             if let Some(else_branch) = else_branch {
                 return exec(w, pgm, heap, locals, else_branch);
             }
-            ControlFlow::Val(0) // TODO: return unit
+            ControlFlow::Val(pgm.unit_alloc)
         }
 
         Expr::ClosureAlloc(closure_idx) => {
@@ -1139,7 +1143,7 @@ fn call_builtin_fun<W: Write>(
             debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
             let bytes = heap.str_bytes(str);
             writeln!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
-            FunRet::Val(0)
+            FunRet::Val(pgm.unit_alloc)
         }
 
         BuiltinFunDecl::ShrI8 => {
@@ -1613,7 +1617,7 @@ fn call_builtin_fun<W: Write>(
                 }
             }
 
-            FunRet::Val(0)
+            FunRet::Val(pgm.unit_alloc)
         }
     }
 }
