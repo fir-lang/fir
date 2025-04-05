@@ -22,11 +22,15 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         ast::Stmt::For(ast::ForStmt {
             label: _,
             pat,
-            ty: _,
+            ast_ty: _,
+            tc_ty,
             expr,
             expr_ty,
             body,
         }) => {
+            if let Some(tc_ty) = tc_ty {
+                *tc_ty = tc_ty.deep_normalize(cons);
+            }
             normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut expr.node, cons);
             for stmt in body {
@@ -88,6 +92,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,
             object_ty,
+            method_ty_id: _,
             method: _,
             ty_args,
         }) => {
@@ -175,11 +180,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
 fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
     match pat {
-        ast::Pat::Var(_)
-        | ast::Pat::Ignore
-        | ast::Pat::Str(_)
-        | ast::Pat::Char(_)
-        | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Var(ast::VarPat { var: _, ty }) => {
+            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+        }
+
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: _,

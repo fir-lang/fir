@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::{Map, Set};
+use crate::collections::*;
 use crate::type_checker::apply::apply;
 use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::row_utils::collect_rows;
@@ -9,14 +9,15 @@ use crate::type_checker::{loc_display, TcFunState};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 ///
-/// `pat` is `mut` to be able to update type arguments in constructor patterns with fresh type
-/// variables of the constructor's instantiated type's arguments.
+/// `pat` is `mut` to be able to add types of variables and type arguments of constructors.
 pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, level: u32) -> Ty {
     match &mut pat.node {
-        ast::Pat::Var(var) => {
-            let ty = Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
-            tc_state.env.insert(var.clone(), ty.clone());
-            ty
+        ast::Pat::Var(ast::VarPat { var, ty }) => {
+            assert!(ty.is_none());
+            let fresh_ty = Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone()));
+            *ty = Some(fresh_ty.clone());
+            tc_state.env.insert(var.clone(), fresh_ty.clone());
+            fresh_ty
         }
 
         ast::Pat::Ignore => Ty::Var(tc_state.var_gen.new_var(level, Kind::Star, pat.loc.clone())),
@@ -132,8 +133,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 pat.loc.clone(),
             ));
 
-            let mut arg_tys: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(fields.len(), Default::default());
+            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, node } in fields.iter_mut() {
                 let name = match name {
@@ -197,12 +197,12 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
 pub(super) fn refine_pat_binders(
     tc_state: &mut TcFunState,
-    ty: &Ty,                // type of the value being matched
-    pat: &ast::L<ast::Pat>, // the pattern being refined
-    coverage: &PatCoverage, // coverage information of `pat`
+    ty: &Ty,                    // type of the value being matched
+    pat: &mut ast::L<ast::Pat>, // the pattern being refined
+    coverage: &PatCoverage,     // coverage information of `pat`
 ) {
-    match &pat.node {
-        ast::Pat::Var(var) => {
+    match &mut pat.node {
+        ast::Pat::Var(ast::VarPat { var, ty: var_ty }) => {
             let (labels, extension) = match ty.normalize(tc_state.tys.tys.cons()) {
                 Ty::Anonymous {
                     labels,
@@ -224,8 +224,7 @@ pub(super) fn refine_pat_binders(
 
             let num_labels = labels.len();
 
-            let mut unhandled_labels: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(num_labels, Default::default());
+            let mut unhandled_labels: TreeMap<Id, Ty> = TreeMap::new();
 
             'variant_label_loop: for (label, label_ty) in labels {
                 let label_field_coverage = match coverage.get_variant_fields(&label) {
@@ -284,6 +283,7 @@ pub(super) fn refine_pat_binders(
                     is_row: false,
                 };
 
+                *var_ty = Some(new_variant.clone());
                 tc_state.env.insert(var.clone(), new_variant);
             }
         }
@@ -320,22 +320,13 @@ pub(super) fn refine_pat_binders(
 
                 Ty::App(con_id, ty_args) => {
                     assert_eq!(&con_id, type_);
-                    let ty_args = match ty_args {
-                        TyArgs::Positional(args) => args,
-                        TyArgs::Named(_) => panic!(), // associated type syntax?
-                    };
-
                     con_scheme.instantiate_with_tys(&ty_args)
                 }
 
-                Ty::Var(_)
-                | Ty::QVar(_)
-                | Ty::Fun { .. }
-                | Ty::AssocTySelect { .. }
-                | Ty::Anonymous { .. } => return,
+                Ty::Var(_) | Ty::QVar(_) | Ty::Fun { .. } | Ty::Anonymous { .. } => return,
             };
 
-            for (field_idx, field_pat) in field_pats.iter().enumerate() {
+            for (field_idx, field_pat) in field_pats.iter_mut().enumerate() {
                 let field_pat_coverage = match &field_pat.name {
                     Some(field_name) => con_field_coverage.get_named_field(field_name),
                     None => con_field_coverage.get_positional_field(field_idx),
@@ -372,7 +363,7 @@ pub(super) fn refine_pat_binders(
                     _ => return,
                 };
 
-                refine_pat_binders(tc_state, &field_ty, &field_pat.node, field_pat_coverage);
+                refine_pat_binders(tc_state, &field_ty, &mut field_pat.node, field_pat_coverage);
             } // field loop
         } // constr pattern
 
@@ -430,7 +421,7 @@ pub(super) fn refine_pat_binders(
                 let field_pat_coverage =
                     variant_field_coverage.get_named_field(&field_name).unwrap();
                 let field_ty = variant_field_tys.get(&field_name).unwrap();
-                refine_pat_binders(tc_state, field_ty, &field_pat.node, field_pat_coverage);
+                refine_pat_binders(tc_state, field_ty, &mut field_pat.node, field_pat_coverage);
             } // field loop
         } // variant
 
@@ -462,13 +453,13 @@ pub(super) fn refine_pat_binders(
                     None => return,
                 };
                 let field_ty = record_labels.get(&field_name).unwrap();
-                refine_pat_binders(tc_state, field_ty, &field_pat.node, field_pat_coverage);
+                refine_pat_binders(tc_state, field_ty, &mut field_pat.node, field_pat_coverage);
             } // field loop
         } // record
 
         ast::Pat::Or(p1, p2) => {
-            refine_pat_binders(tc_state, ty, p1, coverage);
-            refine_pat_binders(tc_state, ty, p2, coverage);
+            refine_pat_binders(tc_state, ty, &mut *p1, coverage);
+            refine_pat_binders(tc_state, ty, &mut *p2, coverage);
         }
 
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}

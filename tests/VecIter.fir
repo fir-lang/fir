@@ -3,7 +3,7 @@ main()
     vec.push(1)
     vec.push(2)
     vec.push(3)
-    for i in vec.iter():
+    for i: U32 in vec.iter():
         printStr(i.toStr())
         printStr(vec.pop().toStr())
 

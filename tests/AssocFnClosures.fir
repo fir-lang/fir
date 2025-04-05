@@ -17,9 +17,9 @@ main()
     let a = T(i = 123).print
     let b = MyBool.True.print
     let c = MyBool.False.print
-    let d = Vec.withCapacity
-    let e = Vec.len
-    let f = Option.Some
+    let d: Fn(U32): Vec[U32] = Vec.withCapacity
+    let e: Fn(Vec[U32]): U32 = Vec.len
+    let f: Fn(Str): Option[Str] = Option.Some
     a()
     b()
     c()

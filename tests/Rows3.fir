@@ -1,13 +1,13 @@
-f1[r](): Result[[E1, ..r], ()]
+f1[VarRow[r]](): Result[[E1, ..r], ()]
     Result.Err(~E1)
 
-f2[r](): Result[[E1, E2, ..r], ()]
+f2[VarRow[r]](): Result[[E1, E2, ..r], ()]
     if Bool.True:
         Result.Err(~E1)
     else:
         Result.Err(~E2)
 
-f3[r](): Result[[E1, E2, ..r], ()]
+f3[VarRow[r]](): Result[[E1, E2, ..r], ()]
     let err = if Bool.True:
         ~E1
     else:
@@ -37,7 +37,7 @@ f5Complex(): Result[[E2, E3], ()]
         Result.Err(other):
             Result.Err(other)
 
-f6[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[..errs], ()]
+f6[VarRow[errs]](f: Fn(): Result[[E1, ..errs], ()]): Result[[..errs], ()]
     match f():
         Result.Err(~E1) | Result.Ok(()):
             Result.Ok(())
@@ -64,7 +64,7 @@ f6[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[..errs], ()]
 #         Result.Ok(()):
 #             Result.Err(~E1)
 
-f7_2[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[E1, ..errs], ()]
+f7_2[VarRow[errs]](f: Fn(): Result[[E1, ..errs], ()]): Result[[E1, ..errs], ()]
     match f():
         Result.Err(err):
             Result.Err(err)
@@ -75,14 +75,14 @@ f7_2[errs](f: Fn(): Result[[E1, ..errs], ()]): Result[[E1, ..errs], ()]
 f7_arg_1(): Result[[E1, E2], ()]
     Result.Err(~E1)
 
-f7_arg_2[errs](): Result[[E2, ..errs], ()]
+f7_arg_2[VarRow[errs]](): Result[[E2, ..errs], ()]
     Result.Err(~E2)
 
 f8(f: Fn(): [E1, E2]) = ()
 
-f9[r](): [E1, ..r] = ~E1
+f9[VarRow[r]](): [E1, ..r] = ~E1
 
-f10[r](f: Fn([E1, E2, ..r]): ()) = ()
+f10[VarRow[r]](f: Fn([E1, E2, ..r]): ()) = ()
 
 f11(x: [E1, E2, E3]) = ()
 

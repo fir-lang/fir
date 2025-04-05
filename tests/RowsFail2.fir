@@ -1,4 +1,4 @@
-test[r](r: (x: I32, y: I32, ..r)): (x: I32, y: I32)
+test(r: (x: I32, y: I32, ..r)): (x: I32, y: I32)
     printStr(r.x.toStr())
     printStr(r.y.toStr())
     r

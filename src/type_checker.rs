@@ -9,6 +9,7 @@ mod pat;
 mod pat_coverage;
 pub(crate) mod row_utils;
 mod stmt;
+mod traits;
 mod ty;
 mod ty_map;
 mod unification;
@@ -18,28 +19,41 @@ use convert::convert_fields;
 use convert::*;
 use instantiation::normalize_instantiation_types;
 use stmt::check_stmts;
+use traits::*;
 use ty::*;
-pub use ty::{Kind, RecordOrVariant, Ty, TyArgs};
+pub use ty::{FunArgs, Kind, RecordOrVariant, Ty};
 use ty_map::TyMap;
 
 use crate::ast::{self, Id};
-use crate::collections::{Map, ScopeMap, Set};
+use crate::collections::*;
 
 use smol_str::SmolStr;
 
 /// Type constructors and types in the program.
 #[derive(Debug)]
 pub struct PgmTypes {
-    /// Type schemes of top-level values.
+    /// Type schemes of top-level functions.
+    ///
+    /// These functions don't take a `self` parameter and can't be called as methods.
     pub top_schemes: Map<Id, Scheme>,
 
-    /// Type schemes of associated functions and constructors.
+    /// Type schemes of associated functions.
+    ///
+    /// These include methods (associated functions with a `self` parameter).
     pub associated_fn_schemes: Map<Id, Map<Id, Scheme>>,
 
     /// Type schemes of methods.
     ///
-    /// Methods take a receiver.
-    pub method_schemes: Map<Id, Map<Id, Scheme>>,
+    /// Maps method names to (type or trait name, type scheme) pairs.
+    ///
+    /// These are associated functions (so they're also in `associated_fn_schemes`) that take a
+    /// `self` parameter.
+    ///
+    /// The first parameters of the function types here are the `self` types.
+    ///
+    /// Because these schemes are only used in method call syntax, the keys are not type names but
+    /// method names. The values are type schemes of methods with the name.
+    pub method_schemes: Map<Id, Vec<(Id, Scheme)>>,
 
     /// Type constructor details.
     pub tys: TyMap,
@@ -55,6 +69,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
+    let trait_env = collect_trait_env(module, &mut tys.tys);
     for decl in module {
         match &mut decl.node {
             ast::TopDecl::Import(_) => panic!(
@@ -65,9 +80,9 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
             // Types and schemes added to `PgmTypes` by `collect_types`.
             ast::TopDecl::Type(_) | ast::TopDecl::Trait(_) => {}
 
-            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys),
+            ast::TopDecl::Impl(impl_) => check_impl(impl_, &mut tys, &trait_env),
 
-            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys),
+            ast::TopDecl::Fun(fun) => check_top_fun(fun, &mut tys, &trait_env),
         }
     }
 
@@ -89,33 +104,28 @@ fn add_exception_types(module: &mut ast::Module) {
                             loc: ast::Loc::dummy(),
                         });
                     } else {
-                        fun.sig.exceptions = Some(exn_type());
+                        fun.sig.exceptions = Some(exn_type(
+                            fun.name.loc.module.clone(),
+                            fun.name.loc.line_start,
+                        ));
                     }
                 }
             }
 
             ast::TopDecl::Trait(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match &mut item.node {
-                        ast::TraitDeclItem::AssocTy(_) => {}
-                        ast::TraitDeclItem::Fun(fun) => {
-                            if fun.sig.exceptions.is_none() {
-                                fun.sig.exceptions = Some(exn_type());
-                            }
-                        }
+                for fun in &mut node.items {
+                    if fun.node.sig.exceptions.is_none() {
+                        fun.node.sig.exceptions =
+                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
                     }
                 }
             }
 
             ast::TopDecl::Impl(ast::L { node, .. }) => {
-                for item in &mut node.items {
-                    match &mut item.node {
-                        ast::ImplDeclItem::AssocTy(_) => {}
-                        ast::ImplDeclItem::Fun(fun) => {
-                            if fun.sig.exceptions.is_none() {
-                                fun.sig.exceptions = Some(exn_type());
-                            }
-                        }
+                for fun in &mut node.items {
+                    if fun.node.sig.exceptions.is_none() {
+                        fun.node.sig.exceptions =
+                            Some(exn_type(fun.loc.module.clone(), fun.loc.line_start));
                     }
                 }
             }
@@ -126,13 +136,21 @@ fn add_exception_types(module: &mut ast::Module) {
 }
 
 // The default exception type: `[..?exn]`.
-fn exn_type() -> ast::L<ast::Type> {
+fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
     ast::L {
         node: ast::Type::Variant {
             alts: Default::default(),
             extension: Some(EXN_QVAR_ID),
         },
-        loc: ast::Loc::dummy(),
+        loc: ast::Loc {
+            module,
+            line_start: line,
+            col_start: 0,
+            byte_offset_start: 0,
+            line_end: line,
+            col_end: 0,
+            byte_offset_end: 0,
+        },
     }
 }
 
@@ -141,19 +159,11 @@ struct TcFunState<'a> {
     /// Term environment.
     env: &'a mut ScopeMap<Id, Ty>,
 
+    /// Whole program trait environment. Used to resolve closure predicate.s
+    trait_env: &'a TraitEnv,
+
     /// Type environment.
     tys: &'a mut PgmTypes,
-
-    /// The full context of the function, including `impl` context. E.g. in
-    /// ```ignore
-    /// impl[t: P1] A[t]:
-    ///     fn f[a: P2](self, a: a)
-    /// ```
-    /// this will be `{t => {P1}, a => {P2}}`.
-    ///
-    /// This is used to eagerly resolve predicates during type checking, to be able to resolve
-    /// associated types.
-    context: &'a Map<Id, QVar>,
 
     /// Unification variable generator.
     var_gen: &'a mut TyVarGen,
@@ -176,7 +186,7 @@ struct TcFunState<'a> {
     ///
     /// After checking the body, these predicates should all be resolved by the function context and
     /// trait environment (in `PgmTypes`).
-    preds: &'a mut PredSet,
+    preds: &'a mut Set<Pred>,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -199,12 +209,17 @@ fn collect_types(module: &mut ast::Module) -> PgmTypes {
 fn collect_cons(module: &mut ast::Module) -> TyMap {
     let mut tys: TyMap = Default::default();
 
-    // Collect all type constructors first, then add bounds, fields, and methods.
+    // Collect all type constructors first, then add fields and methods.
     for decl in module.iter() {
         match &decl.node {
             ast::TopDecl::Type(ty_decl) => {
+                assert_eq!(
+                    ty_decl.node.type_params.len(),
+                    ty_decl.node.type_param_kinds.len(),
+                    "{}: Type parameter list and kind list don't match",
+                    loc_display(&decl.loc),
+                );
                 let ty_name = ty_decl.node.name.clone();
-                let ty_params = ty_decl.node.type_params.clone();
                 if tys.has_con(&ty_name) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -216,19 +231,24 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params
-                            .into_iter()
-                            .map(|ty| (ty, Default::default()))
+                        ty_params: ty_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .cloned()
+                            .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Type(TypeDetails { cons: vec![] }),
                     },
                 );
             }
 
             ast::TopDecl::Trait(trait_decl) => {
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
+                );
                 let ty_name = trait_decl.node.name.node.clone();
-                let ty_params = vec![trait_decl.node.ty.id.clone()];
                 if tys.has_con(&ty_name) {
                     panic!(
                         "{}: Type {} is defined multiple times",
@@ -237,33 +257,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                     );
                 }
 
-                let mut assoc_tys: Set<Id> = Default::default();
-                for item in &trait_decl.node.items {
-                    if let ast::TraitDeclItem::AssocTy(assoc_ty_id) = &item.node {
-                        let new = assoc_tys.insert(assoc_ty_id.clone());
-                        if !new {
-                            panic!(
-                                "{}: Associated type {} is defined multiple times",
-                                loc_display(&item.loc),
-                                assoc_ty_id
-                            );
-                        }
-                    }
-                }
-
                 tys.insert_con(
                     ty_name.clone(),
                     TyCon {
                         id: ty_name.clone(),
-                        ty_params: ty_params
-                            .into_iter()
-                            .map(|ty| (ty.node, Default::default()))
+                        ty_params: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|node| node.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        assoc_tys: Default::default(),
                         details: TyConDetails::Trait(TraitDetails {
                             methods: Default::default(),
-                            assoc_tys,
-                            implementing_tys: Default::default(),
                         }),
                     },
                 );
@@ -273,7 +279,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add bounds, fields, methods.
+    // Add fields and methods.
     // This is where we start converting AST types to type checking types, so the ty con map should
     // be populated at this point.
     for decl in module.iter() {
@@ -307,139 +313,106 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 assert_eq!(tys.len_scopes(), 1);
                 tys.enter_scope();
 
-                let trait_context_ast: ast::Context = vec![trait_decl.node.ty.clone()];
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
+                );
 
-                let trait_var_kinds: Map<Id, Kind> =
-                    [(trait_decl.node.ty.id.node.clone(), Kind::Star)]
-                        .into_iter()
-                        .collect();
+                let trait_context_ast: ast::Context = ast::Context {
+                    type_params: trait_decl
+                        .node
+                        .type_params
+                        .iter()
+                        .map(|id| id.node.clone())
+                        .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                        .collect(),
+                    preds: vec![],
+                };
 
-                let trait_context: Vec<(Id, QVar)> = convert_and_bind_context(
+                let _trait_context: Set<Pred> = convert_and_bind_context(
                     &mut tys,
                     &trait_context_ast,
-                    &trait_var_kinds,
                     TyVarConversion::ToQVar,
                     &trait_decl.loc,
                 );
 
-                // Convert bounds before binding associated types and self.
-                let bounds: Map<Id, Map<Id, Ty>> = trait_decl
-                    .node
-                    .ty
-                    .bounds
-                    .iter()
-                    .map(|bound| convert_bound(&tys, bound))
-                    .collect();
+                let mut methods: Map<Id, TraitMethod> =
+                    Map::with_capacity_and_hasher(trait_decl.node.items.len(), Default::default());
 
-                // E.g. `t` in `trait Debug[t]: ...`.
-                let self_ty_id: Id = trait_decl.node.ty.id.node.clone();
+                for fun in &trait_decl.node.items {
+                    // New scope for function context.
+                    tys.enter_scope();
 
-                // The `QVar` for `t` in the example. `t` will be mapped to this when converting
-                // types.
-                let self_ty = Ty::QVar(self_ty_id.clone());
-
-                // Bind assocaited types.
-                let assoc_tys: Set<Id> = trait_decl
-                    .node
-                    .items
-                    .iter()
-                    .filter_map(|item| match &item.node {
-                        ast::TraitDeclItem::AssocTy(ty) => Some(ty.clone()),
-                        ast::TraitDeclItem::Fun(_) => None,
-                    })
-                    .collect();
-
-                for assoc_ty in &assoc_tys {
-                    tys.insert_con(assoc_ty.clone(), TyCon::opaque(assoc_ty.clone()));
-                    tys.insert_var(
-                        assoc_ty.clone(),
-                        Ty::AssocTySelect {
-                            ty: Box::new(self_ty.clone()),
-                            assoc_ty: assoc_ty.clone(),
-                        },
+                    let fun_preds: Set<Pred> = convert_and_bind_context(
+                        &mut tys,
+                        &fun.node.sig.context,
+                        TyVarConversion::ToQVar,
+                        &fun.loc,
                     );
+
+                    let mut arg_tys: Vec<Ty> = fun
+                        .node
+                        .sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &fun.node.sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => {
+                            panic!(
+                                "{}: Trait methods can't have implicit self type",
+                                loc_display(&fun.loc)
+                            );
+                        }
+                        ast::SelfParam::Explicit(ty) => {
+                            arg_tys.insert(0, convert_ast_ty(&tys, &ty.node, &ty.loc));
+                        }
+                    }
+
+                    let ret_ty: Ty = match &fun.node.sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(&tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
+
+                    let exceptions = match &fun.node.sig.exceptions {
+                        Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
+
+                    tys.exit_scope();
+
+                    let scheme = Scheme {
+                        quantified_vars: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|id| id.node.clone())
+                            .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                            .chain(fun.node.sig.context.type_params.iter().cloned())
+                            .collect(),
+                        preds: fun_preds,
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
+
+                    methods.insert(fun.node.name.node.clone(), {
+                        TraitMethod {
+                            scheme,
+                            fun_decl: fun.clone(),
+                        }
+                    });
                 }
 
-                let methods: Map<Id, TraitMethod> = trait_decl
-                    .node
-                    .items
-                    .iter()
-                    .filter_map(|item| match &item.node {
-                        ast::TraitDeclItem::AssocTy(_) => None,
-                        ast::TraitDeclItem::Fun(fun) => {
-                            // New scope for function context.
-                            tys.enter_scope();
-
-                            let mut fun_var_kinds: Map<Id, Kind> = trait_var_kinds.clone();
-                            fun_var_kinds.extend(fun_sig_ty_var_kinds(&fun.sig));
-
-                            let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
-                                &mut tys,
-                                &fun.sig.type_params,
-                                &fun_var_kinds,
-                                TyVarConversion::ToQVar,
-                                &item.loc,
-                            );
-
-                            let mut arg_tys: Vec<Ty> = fun
-                                .sig
-                                .params
-                                .iter()
-                                .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
-                                .collect();
-
-                            if fun.sig.self_ {
-                                arg_tys.insert(0, self_ty.clone());
-                            }
-
-                            let ret_ty: Ty = match &fun.sig.return_ty {
-                                Some(ret_ty) => convert_ast_ty(&tys, &ret_ty.node, &ret_ty.loc),
-                                None => Ty::unit(),
-                            };
-
-                            let exceptions = match &fun.sig.exceptions {
-                                Some(ty) => convert_ast_ty(&tys, &ty.node, &ty.loc),
-                                None => panic!(),
-                            };
-
-                            let fun_ty = Ty::Fun {
-                                args: FunArgs::Positional(arg_tys),
-                                ret: Box::new(ret_ty),
-                                exceptions: Some(Box::new(exceptions)),
-                            };
-
-                            tys.exit_scope();
-
-                            let scheme = Scheme {
-                                quantified_vars: trait_context
-                                    .iter()
-                                    .map(|(qvar, details)| (qvar.clone(), details.clone()))
-                                    .chain(fun_context.into_iter())
-                                    .collect(),
-                                ty: fun_ty,
-                                loc: item.loc.clone(),
-                            };
-
-                            Some((fun.name.node.clone(), {
-                                let fun_decl = fun.clone();
-                                TraitMethod {
-                                    scheme,
-                                    fun_decl: item.set_node(fun_decl),
-                                }
-                            }))
-                        }
-                    })
-                    .collect();
-
                 let ty_con = tys.get_con_mut(&trait_decl.node.name.node).unwrap();
-                assert_eq!(ty_con.ty_params.len(), 1);
-
-                ty_con.ty_params[0].1 = bounds;
-                ty_con.details = TyConDetails::Trait(TraitDetails {
-                    methods,
-                    assoc_tys,
-                    implementing_tys: Default::default(),
-                });
+                ty_con.details = TyConDetails::Trait(TraitDetails { methods });
 
                 tys.exit_scope();
                 assert_eq!(tys.len_scopes(), 1);
@@ -449,240 +422,116 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
-    // Add default methods to impls, and populate the trait->implementing types map, check
-    // associated types, add associated types to `TyCon`s.
+    // Add default methods to impls.
     //
-    // We don't need to type check default methods copied to impls, but for now we do. So replace
-    // the trait type parameter with the self type in the copied declarations.
+    // We don't need to type check default methods copied to impls, but for now we do.
     for decl in module.iter_mut() {
         let impl_decl = match &mut decl.node {
             ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
             _ => continue,
         };
 
-        let trait_con_id = match &impl_decl.trait_ {
-            Some(trait_id) => &trait_id.node,
-            None => continue,
-        };
+        let trait_con_id = &impl_decl.trait_.node.clone();
 
         // New scope for the context.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
 
+        /*
         let impl_var_kinds: Map<Id, Kind> = impl_decl
             .context
+            .type_params
             .iter()
-            .map(|param| (param.id.node.clone(), Kind::Star))
+            .map(|(param, kind)| (param.clone(), kind.clone()))
             .collect();
+        */
 
         let _impl_context = convert_and_bind_context(
             &mut tys,
             &impl_decl.context,
-            &impl_var_kinds,
             TyVarConversion::ToQVar,
             &decl.loc,
         );
-
-        let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
 
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap_or_else(|| {
             panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id)
         });
 
-        let (trait_methods, trait_assoc_tys, trait_implementing_tys) =
-            match &mut trait_ty_con.details {
-                TyConDetails::Trait(TraitDetails {
-                    ref methods,
-                    ref assoc_tys,
-                    ref mut implementing_tys,
-                }) => (methods, assoc_tys, implementing_tys),
+        let trait_type_params = &trait_ty_con.ty_params;
 
-                TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
-                    panic!(
-                        "{}: {} in impl declararation is not a trait",
-                        loc_display(&decl.loc),
-                        trait_con_id
-                    );
-                }
-            };
+        let trait_methods = match &mut trait_ty_con.details {
+            TyConDetails::Trait(TraitDetails { ref methods }) => methods,
 
-        // Check that associated types are defined only once.
-        let mut defined_assoc_tys: Map<Id, ast::Type> = Default::default();
-        for item in &impl_decl.items {
-            if let ast::ImplDeclItem::AssocTy(impl_assoc_ty) = &item.node {
-                let old = defined_assoc_tys
-                    .insert(impl_assoc_ty.name.clone(), impl_assoc_ty.ty.node.clone());
-                if old.is_some() {
-                    panic!(
-                        "{}: Associated type {} is defined multiple times",
-                        loc_display(&item.loc),
-                        impl_assoc_ty.name
-                    );
-                }
-            }
-        }
-
-        // Check that all associated types of the trait are implemented, and no extra associated
-        // types are defined.
-        let defined_assoc_tys_: Set<Id> = defined_assoc_tys.keys().cloned().collect();
-        if &defined_assoc_tys_ != trait_assoc_tys {
-            let extras: Set<&Id> = defined_assoc_tys_.difference(trait_assoc_tys).collect();
-            if !extras.is_empty() {
+            TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!(
-                    "{}: Extra associated types defined: {:?}",
+                    "{}: {} in impl declararation is not a trait",
                     loc_display(&decl.loc),
-                    extras
+                    trait_con_id
                 );
             }
-
-            let missing: Set<&Id> = trait_assoc_tys.difference(&defined_assoc_tys_).collect();
-            if !missing.is_empty() {
-                panic!(
-                    "{}: Missing associated types: {:?}",
-                    loc_display(&decl.loc),
-                    missing
-                );
-            }
-        }
-
-        // Type parameter of the trait, e.g. `t` in `trait Debug[t]: ...`.
-        let trait_ty_param: Id = trait_ty_con.ty_params[0].0.clone();
+        };
 
         // Type constructor of the type implementing the trait.
         // TODO: We are passing empty con map here to avoid borrow checking issues. This will fail
         // when the trait arugment is a type synonym, which we should reject anyway, but with a
         // proper error message.
-        let (self_ty_con, _) = impl_ty.con(&Default::default()).unwrap();
-
-        if !trait_implementing_tys.insert(self_ty_con.clone()) {
-            panic!(
-                "{}: Trait {} is implemented for type {} multiple times",
-                loc_display(&decl.loc),
-                trait_con_id,
-                self_ty_con
-            );
-        }
+        // let (self_ty_con, _) = impl_ty.con(&Default::default()).unwrap();
 
         for (method, method_decl) in trait_methods {
-            if impl_decl.items.iter().any(|item| match &item.node {
-                ast::ImplDeclItem::AssocTy(_) => false,
-                ast::ImplDeclItem::Fun(fun) => &fun.name.node == method,
-            }) {
+            if method_decl.fun_decl.node.body.is_none() {
                 continue;
             }
 
-            if method_decl.fun_decl.node.body.is_some() {
-                let mut fun_decl = method_decl.fun_decl.clone();
-
-                let mut substs: Map<Id, ast::Type> = Default::default();
-                substs.insert(trait_ty_param.clone(), impl_decl.ty.node.clone());
-                substs.extend(defined_assoc_tys.clone());
-
-                // TODO: For now we only replace trait type param with self in the signature, but
-                // we should do it in the entire declaration.
-
-                fun_decl.node.sig.params = fun_decl
-                    .node
-                    .sig
-                    .params
-                    .into_iter()
-                    .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
-                    .collect();
-
-                fun_decl.node.sig.exceptions = fun_decl
-                    .node
-                    .sig
-                    .exceptions
-                    .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
-
-                fun_decl.node.sig.return_ty = fun_decl
-                    .node
-                    .sig
-                    .return_ty
-                    .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
-
-                impl_decl.items.push(fun_decl.map(ast::ImplDeclItem::Fun));
+            if impl_decl
+                .items
+                .iter()
+                .any(|item| &item.node.name.node == method)
+            {
+                continue;
             }
+
+            let mut fun_decl = method_decl.fun_decl.clone();
+
+            // Map type parameters of the trait to the impl types.
+            let substs: Map<Id, ast::Type> = trait_type_params
+                .iter()
+                .map(|(param, _param_kind)| param.clone())
+                .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
+                .collect();
+
+            fun_decl.node.sig.self_ = match fun_decl.node.sig.self_ {
+                ast::SelfParam::No => ast::SelfParam::No,
+                ast::SelfParam::Implicit => ast::SelfParam::Implicit,
+                ast::SelfParam::Explicit(ty) => {
+                    ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
+                }
+            };
+
+            fun_decl.node.sig.params = fun_decl
+                .node
+                .sig
+                .params
+                .into_iter()
+                .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
+                .collect();
+
+            fun_decl.node.sig.exceptions = fun_decl
+                .node
+                .sig
+                .exceptions
+                .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
+
+            fun_decl.node.sig.return_ty = fun_decl
+                .node
+                .sig
+                .return_ty
+                .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
+
+            impl_decl.items.push(fun_decl);
         }
 
         tys.exit_scope();
         assert_eq!(tys.len_scopes(), 1);
-    }
-
-    // Check bounds of trait type parameters.
-    // This needs to be done after populating the trait->implementing types map, as we use the map
-    // to check if a type satisfies the bounds.
-    for decl in module {
-        let impl_decl = match &mut decl.node {
-            ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
-            _ => continue,
-        };
-
-        let trait_con_id = match &impl_decl.trait_ {
-            Some(trait_id) => &trait_id.node,
-            None => continue,
-        };
-
-        tys.enter_scope();
-
-        let impl_var_kinds: Map<Id, Kind> = impl_decl
-            .context
-            .iter()
-            .map(|param| (param.id.node.clone(), Kind::Star))
-            .collect();
-
-        let _impl_context = convert_and_bind_context(
-            &mut tys,
-            &impl_decl.context,
-            &impl_var_kinds,
-            TyVarConversion::ToQVar,
-            &decl.loc,
-        );
-
-        let trait_ty_con = tys.get_con(trait_con_id).unwrap();
-
-        let trait_ty_params = &trait_ty_con.ty_params;
-        assert_eq!(trait_ty_params.len(), 1);
-
-        let impl_ty = convert_ast_ty(&tys, &impl_decl.ty.node, &impl_decl.ty.loc);
-        let (impl_ty_con_id, _) = impl_ty.con(tys.cons()).unwrap();
-
-        // TODO: What do we need to check on associated types here?
-        for (bound, _assoc_tys) in &trait_ty_params[0].1 {
-            let bound_trait_details = tys.get_con(bound).unwrap().trait_details().unwrap();
-            if !bound_trait_details
-                .implementing_tys
-                .contains(&impl_ty_con_id)
-            {
-                panic!(
-                    "{}: Type {} does not implement {}",
-                    loc_display(&decl.loc),
-                    impl_ty_con_id,
-                    bound
-                );
-            }
-        }
-
-        for item in &impl_decl.items {
-            if let ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) = &item.node {
-                let ty = convert_ast_ty(&tys, &ty.node, &ty.loc);
-                let old = tys
-                    .get_con_mut(&impl_ty_con_id)
-                    .unwrap()
-                    .assoc_tys
-                    .insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Associated type {} is defined multiple times for type {}",
-                        loc_display(&item.loc),
-                        name,
-                        impl_ty_con_id
-                    );
-                }
-            }
-        }
-
-        tys.exit_scope();
     }
 
     assert_eq!(tys.len_scopes(), 1);
@@ -696,11 +545,11 @@ fn collect_schemes(
 ) -> (
     Map<Id, Scheme>,
     Map<Id, Map<Id, Scheme>>,
-    Map<Id, Map<Id, Scheme>>,
+    Map<Id, Vec<(Id, Scheme)>>,
 ) {
     let mut top_schemes: Map<Id, Scheme> = Default::default();
     let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
-    let mut method_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
+    let mut method_schemes: Map<Id, Vec<(Id, Scheme)>> = Default::default();
 
     for decl in module {
         // New scope for type and function contexts.
@@ -708,25 +557,166 @@ fn collect_schemes(
         tys.enter_scope();
 
         match &decl.node {
-            ast::TopDecl::Fun(ast::L {
-                node: ast::FunDecl { name, sig, body: _ },
-                loc,
-            }) => {
-                let fun_var_kinds = fun_sig_ty_var_kinds(sig);
+            ast::TopDecl::Trait(trait_decl) => {
+                /*
+                trait ToStr[t]:
+                    toStr(self: t): Str
+                ==>
+                toStr[ToStr[t]](self: t): Str
 
-                let fun_context: Vec<(Id, QVar)> = convert_and_bind_context(
-                    tys,
-                    &sig.type_params,
-                    &fun_var_kinds,
-                    TyVarConversion::ToQVar,
-                    loc,
+                trait Iterator[iter, item]:
+                    next(self: Iterator[iter, item]): Option[item]
+                ==>
+                next[Iterator[iter, item]](self: Iterator[iter, item]): Option[item]
+                */
+
+                assert_eq!(
+                    trait_decl.node.type_params.len(),
+                    trait_decl.node.type_param_kinds.len()
                 );
 
-                let arg_tys: Vec<Ty> = sig
+                // Note: this needs to be a `Vec` instead of a `Map` as we need to add trait context
+                // before the function context in the method type schemes, and type parameters in
+                // the trait context need to be in the same order as the trait declaration.
+                let trait_quantified_vars: Vec<(Id, Kind)> = trait_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .map(|p| p.node.clone())
+                    .zip(trait_decl.node.type_param_kinds.iter().cloned())
+                    .collect();
+
+                let trait_pred = ast::L {
+                    loc: trait_decl.loc.clone(),
+                    node: ast::Type::Named(ast::NamedType {
+                        name: trait_decl.node.name.node.clone(),
+                        args: trait_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|param| param.map_as_ref(|param| ast::Type::Var(param.clone())))
+                            .collect(),
+                    }),
+                };
+
+                for fun in &trait_decl.node.items {
+                    // Add trait type parameters and predicate to the function context before
+                    // converting.
+                    // Note: This needs to be a `Vec` instead of `Map`. See the comments around
+                    // `trait_quantified_vars`.
+                    let mut fun_type_params = trait_quantified_vars.clone();
+                    fun_type_params.extend(fun.node.sig.context.type_params.clone());
+
+                    let mut fun_preds = vec![trait_pred.clone()];
+                    fun_preds.extend(fun.node.sig.context.preds.clone());
+
+                    let context = ast::Context {
+                        type_params: fun_type_params,
+                        preds: fun_preds,
+                    };
+
+                    // TODO: Checking is the same as top-level functions, maybe move the code into a
+                    // function and reuse.
+                    let fun_preds: Set<Pred> =
+                        convert_and_bind_context(tys, &context, TyVarConversion::ToQVar, &fun.loc);
+
+                    let mut arg_tys: Vec<Ty> = fun
+                        .node
+                        .sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &fun.node.sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => {
+                            panic!(
+                                "{}: Trait method self parameters should have explicit self type",
+                                loc_display(&fun.loc)
+                            );
+                        }
+                        ast::SelfParam::Explicit(ty) => {
+                            arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                        }
+                    }
+
+                    let ret_ty: Ty = match &fun.node.sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
+
+                    let exceptions = match &fun.node.sig.exceptions {
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
+
+                    let scheme = Scheme {
+                        quantified_vars: context.type_params.into_iter().collect(),
+                        preds: fun_preds,
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
+
+                    method_schemes
+                        .entry(fun.node.name.node.clone())
+                        .or_default()
+                        .push((trait_decl.node.name.node.clone(), scheme));
+                }
+            }
+
+            ast::TopDecl::Fun(ast::L {
+                node:
+                    ast::FunDecl {
+                        parent_ty,
+                        name,
+                        sig,
+                        body: _,
+                    },
+                loc,
+            }) => {
+                let fun_preds: Set<Pred> =
+                    convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar, loc);
+
+                let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
                     .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect();
+
+                match &sig.self_ {
+                    ast::SelfParam::No => {}
+                    ast::SelfParam::Implicit => {
+                        // The parent type should have no type arguments.
+                        match parent_ty {
+                            Some(parent_ty) => {
+                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap_or_else(||
+                                    panic!("{}: Unknown type {}", loc_display(&decl.loc), &parent_ty.node));
+                                if !parent_ty_con.ty_params.is_empty() {
+                                    panic!(
+                                        "{}: Can't infer `self` type as the parent type {} has type parameters",
+                                        loc_display(&decl.loc),
+                                        &parent_ty.node
+                                    );
+                                }
+                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone()));
+                            }
+                            None => panic!(
+                                "{}: Function with `self` type needs to have to be an associated function",
+                                loc_display(&decl.loc)
+                            ),
+                        }
+                    }
+                    ast::SelfParam::Explicit(ty) => {
+                        arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
+                    }
+                }
 
                 let ret_ty: Ty = match &sig.return_ty {
                     Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
@@ -745,193 +735,44 @@ fn collect_schemes(
                 };
 
                 let scheme = Scheme {
-                    quantified_vars: fun_context,
+                    quantified_vars: sig.context.type_params.to_vec(),
+                    preds: fun_preds,
                     ty: fun_ty,
                     loc: loc.clone(),
                 };
 
-                let old = top_schemes.insert(name.node.clone(), scheme);
-                if old.is_some() {
-                    panic!(
-                        "{}: Function {} is defined multiple times",
-                        loc_display(loc),
-                        name.node
-                    );
-                }
-            }
-
-            ast::TopDecl::Impl(impl_decl) => {
-                let impl_var_kinds: Map<Id, Kind> = impl_decl
-                    .node
-                    .context
-                    .iter()
-                    .map(|param| (param.id.node.clone(), Kind::Star))
-                    .collect();
-
-                let impl_context: Vec<(Id, QVar)> = convert_and_bind_context(
-                    tys,
-                    &impl_decl.node.context,
-                    &impl_var_kinds,
-                    TyVarConversion::ToQVar,
-                    &impl_decl.loc,
-                );
-
-                let self_ty: Ty =
-                    convert_ast_ty(tys, &impl_decl.node.ty.node, &impl_decl.node.ty.loc);
-
-                let (self_ty_con_id, _) = self_ty.con(tys.cons()).unwrap();
-
-                // If not in a trait impl block, make sure `self` is not a trait.
-                if impl_decl.node.trait_.is_none()
-                    && tys.cons().get(&self_ty_con_id).map(|con| con.is_trait()) == Some(true)
-                {
-                    panic!(
-                        "{}: Type constructor {} in trait `impl` block is not a trait",
-                        loc_display(&impl_decl.loc),
-                        self_ty_con_id
-                    );
-                }
-
-                bind_associated_types(impl_decl, tys);
-
-                for item in &impl_decl.node.items {
-                    let fun = match &item.node {
-                        ast::ImplDeclItem::AssocTy(_) => continue,
-                        ast::ImplDeclItem::Fun(fun) => fun,
-                    };
-
-                    assert_eq!(tys.len_scopes(), 2); // top-level, impl
-                    tys.enter_scope();
-
-                    let sig = &fun.sig;
-
-                    let mut fun_var_kinds = impl_var_kinds.clone();
-                    fun_var_kinds.extend(fun_sig_ty_var_kinds(sig));
-
-                    let fun_context = convert_and_bind_context(
-                        tys,
-                        &sig.type_params,
-                        &fun_var_kinds,
-                        TyVarConversion::ToQVar,
-                        &item.loc,
-                    );
-
-                    let mut arg_tys: Vec<Ty> = sig
-                        .params
-                        .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
-                        .collect();
-
-                    if sig.self_ {
-                        arg_tys.insert(0, self_ty.clone());
-                    }
-
-                    let ret_ty: Ty = match &sig.return_ty {
-                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let exceptions = match &fun.sig.exceptions {
-                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
-                        None => panic!(),
-                    };
-
-                    let fun_ty = Ty::Fun {
-                        args: FunArgs::Positional(arg_tys),
-                        ret: Box::new(ret_ty),
-                        exceptions: Some(Box::new(exceptions)),
-                    };
-
-                    let scheme = Scheme {
-                        quantified_vars: impl_context
-                            .iter()
-                            .cloned()
-                            .chain(fun_context.into_iter())
-                            .collect(),
-                        ty: fun_ty,
-                        loc: item.loc.clone(),
-                    };
-
-                    if sig.self_ {
-                        let old = method_schemes
-                            .entry(self_ty_con_id.clone())
-                            .or_default()
-                            .insert(fun.name.node.clone(), scheme.clone());
-
-                        if old.is_some() {
-                            panic!(
-                                "{}: Method {} for type {} is defined multiple times",
-                                loc_display(&item.loc),
-                                fun.name.node,
-                                self_ty_con_id
-                            );
+                match parent_ty {
+                    Some(parent_ty) => {
+                        match sig.self_ {
+                            ast::SelfParam::No => {}
+                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                                method_schemes
+                                    .entry(name.node.clone())
+                                    .or_default()
+                                    .push((parent_ty.node.clone(), scheme.clone()));
+                            }
                         }
-                    } else {
+
                         let old = associated_fn_schemes
-                            .entry(self_ty_con_id.clone())
+                            .entry(parent_ty.node.clone())
                             .or_default()
-                            .insert(fun.name.node.clone(), scheme.clone());
-
+                            .insert(name.node.clone(), scheme);
                         if old.is_some() {
                             panic!(
-                                "{}: Associated function {} for type {} is defined multiple times",
-                                loc_display(&item.loc),
-                                fun.name.node,
-                                self_ty_con_id
+                                "{}: {}.{} is defined multiple times",
+                                loc_display(loc),
+                                parent_ty.node,
+                                name.node
                             );
                         }
                     }
-
-                    tys.exit_scope();
-                    assert_eq!(tys.len_scopes(), 2); // top-level, impl
-
-                    // If this is a trait method, check that the type matches the method type in
-                    // the trait.
-                    if let Some(trait_id) = &impl_decl.node.trait_ {
-                        let trait_ty_con = tys.cons().get(&trait_id.node).unwrap();
-                        let trait_details = trait_ty_con.trait_details().unwrap();
-
-                        let fun_name: &Id = &fun.name.node;
-
-                        let trait_fun_scheme = &trait_details
-                            .methods
-                            .get(fun_name)
-                            .unwrap_or_else(|| {
-                                panic!(
-                                    "{}: Trait {} does not have a method named {}",
-                                    loc_display(&item.loc),
-                                    trait_ty_con.id,
-                                    fun_name
-                                )
-                            })
-                            .scheme;
-
-                        let trait_ty_param = &trait_ty_con.ty_params[0].0;
-
-                        // Type of the method in the trait declaration, with the self type substituted for the
-                        // type implementing the trait.
-                        let mut trait_fun_scheme =
-                            trait_fun_scheme.subst(trait_ty_param, &self_ty, &item.loc);
-
-                        // Also add quantified variables of `impl`.
-                        trait_fun_scheme
-                            .quantified_vars
-                            .splice(0..0, impl_context.iter().cloned());
-
-                        if !trait_fun_scheme.eq_modulo_alpha(
-                            tys.cons(),
-                            &Default::default(),
-                            &scheme,
-                            &item.loc,
-                        ) {
+                    None => {
+                        let old = top_schemes.insert(name.node.clone(), scheme);
+                        if old.is_some() {
                             panic!(
-                                "{}: Trait method implementation of {} does not match the trait method type
-                                Trait method type:          {}
-                                Implementation method type: {}",
-                                loc_display(&item.loc),
-                                fun_name,
-                                trait_fun_scheme,
-                                scheme
+                                "{}: {} is defined multiple times",
+                                loc_display(loc),
+                                name.node
                             );
                         }
                     }
@@ -961,14 +802,12 @@ fn collect_schemes(
                 } else {
                     Ty::App(
                         ty_decl.node.name.clone(),
-                        TyArgs::Positional(
-                            ty_decl
-                                .node
-                                .type_params
-                                .iter()
-                                .map(|ty_var| Ty::QVar(ty_var.clone()))
-                                .collect(),
-                        ),
+                        ty_decl
+                            .node
+                            .type_params
+                            .iter()
+                            .map(|ty_var| Ty::QVar(ty_var.clone()))
+                            .collect(),
                     )
                 };
 
@@ -990,25 +829,15 @@ fn collect_schemes(
                                     exceptions: None,
                                 },
                             };
-                            let var_kinds = constructor_decls_var_kinds(cons);
                             let scheme = Scheme {
                                 quantified_vars: ty_decl
                                     .node
                                     .type_params
                                     .iter()
-                                    .map(|ty_param| {
-                                        (
-                                            ty_param.clone(),
-                                            QVar {
-                                                kind: var_kinds
-                                                    .get(ty_param)
-                                                    .cloned()
-                                                    .unwrap_or(Kind::Star),
-                                                bounds: Default::default(),
-                                            },
-                                        )
-                                    })
+                                    .cloned()
+                                    .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                     .collect(),
+                                preds: Default::default(),
                                 ty,
                                 loc: ty_decl.loc.clone(), // TODO: use con loc
                             };
@@ -1040,25 +869,15 @@ fn collect_schemes(
                                 exceptions: None,
                             },
                         };
-                        let var_kinds = constructor_fields_var_kinds(fields);
                         let scheme = Scheme {
                             quantified_vars: ty_decl
                                 .node
                                 .type_params
                                 .iter()
-                                .map(|ty_param| {
-                                    (
-                                        ty_param.clone(),
-                                        QVar {
-                                            kind: var_kinds
-                                                .get(ty_param)
-                                                .cloned()
-                                                .unwrap_or(Kind::Star),
-                                            bounds: Default::default(),
-                                        },
-                                    )
-                                })
+                                .cloned()
+                                .zip(ty_decl.node.type_param_kinds.iter().cloned())
                                 .collect(),
+                            preds: Default::default(),
                             ty,
                             loc: ty_decl.loc.clone(), // TODO: use con loc
                         };
@@ -1074,7 +893,159 @@ fn collect_schemes(
                 }
             }
 
-            ast::TopDecl::Trait(_) | ast::TopDecl::Import(_) => {
+            ast::TopDecl::Impl(impl_decl) => {
+                // Default methods are already copied to impls. Check that impl method signatures
+                // match the trait method signatures.
+                let impl_assumps = convert_and_bind_context(
+                    tys,
+                    &impl_decl.node.context,
+                    TyVarConversion::ToQVar,
+                    &impl_decl.loc,
+                );
+
+                for fun in &impl_decl.node.items {
+                    let sig = &fun.node.sig;
+
+                    let fun_assumps = convert_and_bind_context(
+                        tys,
+                        &sig.context,
+                        TyVarConversion::ToQVar,
+                        &fun.loc,
+                    );
+
+                    let mut arg_tys: Vec<Ty> = sig
+                        .params
+                        .iter()
+                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .collect();
+
+                    match &sig.self_ {
+                        ast::SelfParam::No => {}
+                        ast::SelfParam::Implicit => panic!(
+                            "{}: Impl method with implicit self type",
+                            loc_display(&fun.loc)
+                        ),
+                        ast::SelfParam::Explicit(ty) => {
+                            let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
+                            arg_tys.insert(0, ty);
+                        }
+                    }
+
+                    let ret_ty: Ty = match &sig.return_ty {
+                        Some(ret_ty) => convert_ast_ty(tys, &ret_ty.node, &ret_ty.loc),
+                        None => Ty::unit(),
+                    };
+
+                    let exceptions = match &sig.exceptions {
+                        Some(ty) => convert_ast_ty(tys, &ty.node, &ty.loc),
+                        None => panic!(),
+                    };
+
+                    let fun_ty = Ty::Fun {
+                        args: FunArgs::Positional(arg_tys),
+                        ret: Box::new(ret_ty),
+                        exceptions: Some(Box::new(exceptions)),
+                    };
+
+                    let impl_fun_scheme = Scheme {
+                        quantified_vars: impl_decl
+                            .node
+                            .context
+                            .type_params
+                            .iter()
+                            .cloned()
+                            .chain(fun.node.sig.context.type_params.iter().cloned())
+                            .collect(),
+                        preds: impl_assumps
+                            .iter()
+                            .cloned()
+                            .chain(fun_assumps.iter().cloned())
+                            .collect(),
+                        ty: fun_ty,
+                        loc: fun.loc.clone(),
+                    };
+
+                    let trait_ty_con =
+                        tys.get_con(&impl_decl.node.trait_.node).unwrap_or_else(|| {
+                            panic!(
+                                "{}: Unknown trait {}",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node
+                            )
+                        });
+
+                    let trait_fun_scheme0 = &trait_ty_con
+                        .trait_details()
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: {} is not a trait",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node
+                            )
+                        })
+                        .methods
+                        .get(&fun.node.name.node)
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: Trait {} does not have a method named {}",
+                                loc_display(&impl_decl.loc),
+                                &impl_decl.node.trait_.node,
+                                &fun.node.name.node
+                            )
+                        })
+                        .scheme;
+
+                    let mut trait_fun_scheme = trait_fun_scheme0.clone();
+
+                    // Substitute trait arguments. Add free variables of the arguments to the
+                    // context.
+
+                    /*
+                    // TODO: FIXME: Variables already bound in the trait type scheme should be renamed.
+                    let bound_vars: Set<&Id> = trait_fun_scheme
+                        .quantified_vars
+                        .iter()
+                        .map(|(id, _)| id)
+                        .collect();
+                    */
+
+                    let mut arg_fvs: OrderMap<Id, Option<Kind>> = Default::default();
+
+                    for ((ty_param, _), ty_arg) in
+                        trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
+                    {
+                        kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
+                        let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
+                        trait_fun_scheme = trait_fun_scheme.subst(ty_param, &ty_arg);
+                    }
+
+                    trait_fun_scheme.quantified_vars.splice(
+                        0..0,
+                        arg_fvs
+                            .into_iter()
+                            .map(|(id, kind)| (id, kind.unwrap_or(Kind::Star))),
+                    );
+
+                    if !trait_fun_scheme.eq_modulo_alpha(
+                        tys.cons(),
+                        &Default::default(),
+                        &impl_fun_scheme,
+                        &fun.loc,
+                    ) {
+                        panic!(
+                            "{}: Trait method implementation of {} does not match the trait method type
+                                Trait method type:          {}
+                                Implementation method type: {}",
+                            loc_display(&fun.loc),
+                            &fun.node.name.node,
+                            trait_fun_scheme,
+                            impl_fun_scheme
+                        );
+                    }
+                }
+            }
+
+            ast::TopDecl::Import(_) => {
                 tys.exit_scope();
                 continue;
             }
@@ -1090,25 +1061,61 @@ fn collect_schemes(
 }
 
 /// Type check a top-level function.
-fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
+fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     let mut var_gen = TyVarGen::default();
     let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-
-    let scheme = tys.top_schemes.get(&fun.node.name.node).unwrap().clone();
 
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    let var_kinds = fun_sig_ty_var_kinds(&fun.node.sig);
-    let fn_bounds = convert_and_bind_context(
+    // The predicates that we assume to hold in the function body.
+    let assumps = convert_and_bind_context(
         &mut tys.tys,
-        &fun.node.sig.type_params,
-        &var_kinds,
+        &fun.node.sig.context,
         TyVarConversion::ToOpaque,
         &fun.loc,
     );
 
-    let old_method_schemes = bind_type_params(&fn_bounds, tys, &fun.loc);
+    // TODO: This code is the same as collect_scheme's, maybe get arg and return types from the
+    // scheme?
+    match &fun.node.sig.self_ {
+        ast::SelfParam::No => {}
+        ast::SelfParam::Implicit => {
+            // The parent type should have no type arguments.
+            match &fun.node.parent_ty {
+                Some(parent_ty) => {
+                    let parent_ty_con = tys.tys.get_con(&parent_ty.node).unwrap_or_else(|| {
+                        panic!(
+                            "{}: Unknown type {}",
+                            loc_display(&fun.loc),
+                            &parent_ty.node
+                        )
+                    });
+                    if !parent_ty_con.ty_params.is_empty() {
+                        panic!(
+                            "{}: Can't infer `self` type as the parent type {} has type parameters",
+                            loc_display(&fun.loc),
+                            &parent_ty.node
+                        );
+                    }
+                    env.insert(
+                        SmolStr::new_static("self"),
+                        Ty::Con(parent_ty_con.id.clone()),
+                    );
+                }
+                None => panic!(
+                    "{}: Function with `self` type needs to have to be an associated function",
+                    loc_display(&fun.loc)
+                ),
+            }
+        }
+        ast::SelfParam::Explicit(ty) => {
+            env.insert(
+                SmolStr::new_static("self"),
+                convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+            );
+        }
+    }
 
     for (param_name, param_ty) in &fun.node.sig.params {
         env.insert(
@@ -1122,9 +1129,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
         None => Ty::unit(),
     };
 
-    let mut preds: PredSet = Default::default();
-
-    let context = scheme.quantified_vars.iter().cloned().collect();
+    let mut preds: Set<Pred> = Default::default();
 
     let exceptions = match &fun.node.sig.exceptions {
         Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
@@ -1132,8 +1137,8 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
     };
 
     let mut tc_state = TcFunState {
-        context: &context,
         return_ty: ret_ty.clone(),
+        trait_env,
         env: &mut env,
         var_gen: &mut var_gen,
         tys,
@@ -1143,617 +1148,289 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes) {
 
     if let Some(body) = &mut fun.node.body.as_mut() {
         check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+    }
 
+    resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+
+    if let Some(body) = &mut fun.node.body.as_mut() {
         for stmt in body.iter_mut() {
             normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
         }
     }
 
-    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-
-    unbind_type_params(old_method_schemes, &mut tys.method_schemes);
-
     tys.tys.exit_scope();
 }
 
-/// Type check an `impl` block.
+/// Type check a trait implementation.
 ///
-/// The block may be for a trait implementation or for associated functions.
-///
-/// `tys` is `mut` to be able to add type parameters of the `impl` and associated types before
-/// checking the methods.
-fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes) {
+/// `tys` is `mut` to be able to bind type parameters of the `impl` before checking the methods.
+fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: &TraitEnv) {
     assert_eq!(tys.tys.len_scopes(), 1);
     tys.tys.enter_scope();
 
-    // Bind trait type parameters.
-    let impl_var_kinds: Map<Id, Kind> = impl_
-        .node
-        .context
-        .iter()
-        .map(|param| (param.id.node.clone(), Kind::Star))
-        .collect();
-
-    let impl_bounds = convert_and_bind_context(
+    let impl_assumps = convert_and_bind_context(
         &mut tys.tys,
         &impl_.node.context,
-        &impl_var_kinds,
         TyVarConversion::ToOpaque,
         &impl_.loc,
     );
 
-    // Schemes overridden by trait bounds.
-    let old_schemes_1 = bind_type_params(&impl_bounds, tys, &impl_.loc);
+    let trait_ty_con_id = &impl_.node.trait_;
 
-    let self_ty = convert_ast_ty(&tys.tys, &impl_.node.ty.node, &impl_.loc);
+    let trait_ty_con = tys.tys.get_con(&trait_ty_con_id.node).unwrap_or_else(|| {
+        panic!(
+            "{}: Unknown trait {}",
+            loc_display(&trait_ty_con_id.loc),
+            trait_ty_con_id.node
+        )
+    });
 
-    // Bind associated types.
-    bind_associated_types(impl_, &mut tys.tys);
+    let trait_details = trait_ty_con
+        .trait_details()
+        .unwrap_or_else(|| {
+            panic!(
+                "{}: {} in `impl` block is not a trait",
+                loc_display(&trait_ty_con_id.loc),
+                trait_ty_con_id.node
+            )
+        })
+        .clone();
 
-    match &impl_.node.trait_ {
-        Some(trait_ty_con_id) => {
-            let trait_ty_con = tys.tys.get_con(&trait_ty_con_id.node).unwrap_or_else(|| {
-                panic!(
-                    "{}: Unknown trait {}",
-                    loc_display(&trait_ty_con_id.loc),
-                    trait_ty_con_id.node
-                )
-            });
+    // Check method bodies.
+    for fun in &mut impl_.node.items {
+        tys.tys.enter_scope();
 
-            let trait_details = trait_ty_con
-                .trait_details()
-                .unwrap_or_else(|| {
+        // Bind function type parameters.
+        let fun_assumps = convert_and_bind_context(
+            &mut tys.tys,
+            &fun.node.sig.context,
+            TyVarConversion::ToOpaque,
+            &fun.loc,
+        );
+
+        // Check the body.
+        if let Some(body) = &mut fun.node.body {
+            let ret_ty = match &fun.node.sig.return_ty {
+                Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                None => Ty::unit(),
+            };
+
+            let mut preds: Set<Pred> = Default::default();
+            let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
+            let mut var_gen = TyVarGen::default();
+
+            match &fun.node.sig.self_ {
+                ast::SelfParam::No => {}
+                ast::SelfParam::Implicit => {
+                    // TODO: We can use the `self` type from the trait declaration here.
                     panic!(
-                        "{}: {} in `impl` block is not a trait",
-                        loc_display(&trait_ty_con_id.loc),
-                        trait_ty_con_id.node
-                    )
-                })
-                .clone();
+                        "{}: `self` parameters without type signatures are not supported yet",
+                        loc_display(&fun.loc)
+                    );
+                }
+                ast::SelfParam::Explicit(ty) => {
+                    env.insert(
+                        SmolStr::new("self"),
+                        convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
+                    );
+                }
+            }
 
-            // Check method bodies.
-            for item in &mut impl_.node.items {
-                let fun = match &mut item.node {
-                    ast::ImplDeclItem::AssocTy(_) => continue,
-                    ast::ImplDeclItem::Fun(fun) => fun,
-                };
-
-                tys.tys.enter_scope();
-
-                // Bind function type parameters.
-                let var_kinds = fun_sig_ty_var_kinds(&fun.sig);
-                let fn_bounds = convert_and_bind_context(
-                    &mut tys.tys,
-                    &fun.sig.type_params,
-                    &var_kinds,
-                    TyVarConversion::ToOpaque,
-                    &impl_.loc,
+            for (param_name, param_ty) in &fun.node.sig.params {
+                env.insert(
+                    param_name.clone(),
+                    convert_ast_ty(&tys.tys, &param_ty.node, &param_ty.loc),
                 );
-
-                // Schemes overridden by method bounds.
-                let old_schemes_2 = bind_type_params(&fn_bounds, tys, &item.loc);
-
-                // Check the body.
-                if let Some(body) = &mut fun.body {
-                    let ret_ty = match &fun.sig.return_ty {
-                        Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let mut preds: PredSet = Default::default();
-                    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-                    let mut var_gen = TyVarGen::default();
-
-                    env.insert(SmolStr::new_static("self"), self_ty.clone());
-
-                    for (param_name, param_ty) in &fun.sig.params {
-                        env.insert(
-                            param_name.clone(),
-                            convert_ast_ty(&tys.tys, &param_ty.node, &item.loc),
-                        );
-                    }
-
-                    let context = impl_bounds
-                        .iter()
-                        .cloned()
-                        .chain(fn_bounds.into_iter())
-                        .collect();
-
-                    let exceptions = match &fun.sig.exceptions {
-                        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                        None => panic!(),
-                    };
-
-                    let mut tc_state = TcFunState {
-                        context: &context,
-                        return_ty: ret_ty.clone(),
-                        env: &mut env,
-                        var_gen: &mut var_gen,
-                        tys,
-                        preds: &mut preds,
-                        exceptions,
-                    };
-
-                    check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
-
-                    for stmt in body.iter_mut() {
-                        normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
-                    }
-
-                    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-                }
-
-                unbind_type_params(old_schemes_2, &mut tys.method_schemes);
-
-                tys.tys.exit_scope();
             }
 
-            // Check that all methods without default implementations are implemented.
-            let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
-            let mut implemented_method_ids: Set<&Id> = Default::default();
-            for item in &impl_.node.items {
-                let fun_decl = match &item.node {
-                    ast::ImplDeclItem::AssocTy(_) => continue,
-                    ast::ImplDeclItem::Fun(fun_decl) => fun_decl,
-                };
-                let fun_id = &fun_decl.name.node;
-                match (
-                    trait_method_ids.contains(fun_id),
-                    implemented_method_ids.contains(fun_id),
-                ) {
-                    (true, true) => panic!(
-                        "{}: Trait method {} implemented multiple times",
-                        loc_display(&item.loc),
-                        fun_id
-                    ),
-
-                    (true, false) => {
-                        implemented_method_ids.insert(fun_id);
-                    }
-
-                    (false, _) => {
-                        panic!(
-                            "{}: Trait {} does not have method {}",
-                            loc_display(&item.loc),
-                            trait_ty_con_id.node,
-                            fun_id
-                        )
-                    }
-                }
-            }
-            let missing_methods: Vec<&&Id> = trait_method_ids
-                .difference(&implemented_method_ids)
+            let assumps = impl_assumps
+                .iter()
+                .cloned()
+                .chain(fun_assumps.into_iter())
                 .collect();
-            if !missing_methods.is_empty() {
-                panic!(
-                    "{}: Trait methods missing: {:?}",
-                    loc_display(&impl_.loc),
-                    missing_methods
-                );
+
+            let exceptions = match &fun.node.sig.exceptions {
+                Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
+                None => panic!(),
+            };
+
+            let mut tc_state = TcFunState {
+                return_ty: ret_ty.clone(),
+                trait_env,
+                env: &mut env,
+                var_gen: &mut var_gen,
+                tys,
+                preds: &mut preds,
+                exceptions,
+            };
+
+            check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
+
+            resolve_preds(trait_env, &assumps, tys, preds, &mut var_gen, 0);
+
+            for stmt in body.iter_mut() {
+                normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
             }
         }
 
-        None => {
-            for item in &mut impl_.node.items {
-                let fun = match &mut item.node {
-                    ast::ImplDeclItem::AssocTy(_) => continue,
-                    ast::ImplDeclItem::Fun(fun) => fun,
-                };
+        tys.tys.exit_scope();
+    }
 
-                assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
-                tys.tys.enter_scope();
+    // Check that all methods without default implementations are implemented.
+    let trait_method_ids: Set<&Id> = trait_details.methods.keys().collect();
+    let mut implemented_method_ids: Set<&Id> = Default::default();
+    for fun in &impl_.node.items {
+        let fun_id = &fun.node.name.node;
+        match (
+            trait_method_ids.contains(fun_id),
+            implemented_method_ids.contains(fun_id),
+        ) {
+            (true, true) => panic!(
+                "{}: Trait method {} implemented multiple times",
+                loc_display(&fun.loc),
+                fun_id
+            ),
 
-                // Bind function type parameters.
-                let var_kinds = fun_sig_ty_var_kinds(&fun.sig);
-                let fn_bounds: Vec<(Id, QVar)> = convert_and_bind_context(
-                    &mut tys.tys,
-                    &fun.sig.type_params,
-                    &var_kinds,
-                    TyVarConversion::ToOpaque,
-                    &item.loc,
-                );
+            (true, false) => {
+                implemented_method_ids.insert(fun_id);
+            }
 
-                // Schemes overridden by method bounds.
-                let old_schemes_2 = bind_type_params(&fn_bounds, tys, &item.loc);
-
-                // Check the body.
-                if let Some(body) = &mut fun.body {
-                    let ret_ty = match &fun.sig.return_ty {
-                        Some(ty) => convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
-                        None => Ty::unit(),
-                    };
-
-                    let mut preds: PredSet = Default::default();
-                    let mut env: ScopeMap<Id, Ty> = ScopeMap::default();
-                    let mut var_gen = TyVarGen::default();
-
-                    env.insert(SmolStr::new_static("self"), self_ty.clone());
-
-                    for (param_name, param_ty) in &fun.sig.params {
-                        env.insert(
-                            param_name.clone(),
-                            convert_ast_ty(&tys.tys, &param_ty.node, &item.loc),
-                        );
-                    }
-
-                    let context = impl_bounds
-                        .iter()
-                        .map(|(qvar, details)| (qvar.clone(), details.clone()))
-                        .chain(fn_bounds.into_iter())
-                        .collect();
-
-                    let exceptions = match &fun.sig.exceptions {
-                        Some(exc) => convert_ast_ty(&tys.tys, &exc.node, &exc.loc),
-                        None => panic!(),
-                    };
-
-                    let mut tc_state = TcFunState {
-                        context: &context,
-                        return_ty: ret_ty.clone(),
-                        env: &mut env,
-                        var_gen: &mut var_gen,
-                        tys,
-                        preds: &mut preds,
-                        exceptions,
-                    };
-
-                    check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
-
-                    for stmt in body.iter_mut() {
-                        normalize_instantiation_types(&mut stmt.node, tys.tys.cons());
-                    }
-
-                    resolve_all_preds(&context, tys, preds, &mut var_gen, 0);
-                }
-
-                unbind_type_params(old_schemes_2, &mut tys.method_schemes);
-
-                tys.tys.exit_scope();
-                assert_eq!(tys.tys.len_scopes(), 2); // top-level, impl
+            (false, _) => {
+                panic!(
+                    "{}: Trait {} does not have method {}",
+                    loc_display(&fun.loc),
+                    trait_ty_con_id.node,
+                    fun_id
+                )
             }
         }
     }
-
-    unbind_type_params(old_schemes_1, &mut tys.method_schemes);
+    let missing_methods: Vec<&&Id> = trait_method_ids
+        .difference(&implemented_method_ids)
+        .collect();
+    if !missing_methods.is_empty() {
+        panic!(
+            "{}: Trait methods missing: {:?}",
+            loc_display(&impl_.loc),
+            missing_methods
+        );
+    }
 
     tys.tys.exit_scope();
     assert_eq!(tys.tys.len_scopes(), 1);
 }
 
-/// We currently don't allow a type constructor to implement a trait multiple times with different
-/// type arguments, e.g. `impl Debug[Vec[U32]]` and `impl Debug[Vec[Str]]` are not allowed at the
-/// same time.
-///
-/// With this restriction resolving predicates is just a matter of checking for
-/// `impl Trait[Con[T1, T2, ...]]` in the program, where `T1, T2, ...` are distrinct type variables.
 fn resolve_preds(
-    context: &Map<Id, QVar>,
+    trait_env: &TraitEnv,
+    assumps: &Set<Pred>,
     tys: &PgmTypes,
-    preds: PredSet,
+    preds: Set<Pred>,
     var_gen: &mut TyVarGen,
-    level: u32,
-) -> PredSet {
-    let mut remaining_preds: PredSet = Default::default();
+    _level: u32,
+) {
+    let mut goals: Vec<Pred> = preds.into_iter().collect();
+    let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
+    let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
 
-    for Pred {
-        ty_var,
-        trait_,
-        assoc_tys,
-        loc,
-    } in preds.into_preds()
-    {
-        let ty_var_ty = ty_var.normalize(tys.tys.cons());
-        match &ty_var_ty {
-            Ty::Con(con) | Ty::App(con, _) => {
-                let TraitDetails {
-                    implementing_tys, ..
-                } = tys
-                    .tys
-                    .cons()
-                    .get(&trait_)
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "{}: BUG: Trait {} is not in the environment",
-                            loc_display(&loc),
-                            trait_
-                        )
-                    })
-                    .trait_details()
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "{}: BUG: {} in predicates is not a trait",
-                            loc_display(&loc),
-                            trait_
-                        )
-                    });
+    'goals: while let Some(mut pred) = goals.pop() {
+        // Normalize to improve error messages.
+        pred.params
+            .iter_mut()
+            .for_each(|ty| *ty = ty.normalize(tys.tys.cons()));
 
-                if !implementing_tys.contains(con)
-                    && context.get(con).map(|ctx| ctx.bounds.contains_key(&trait_)) != Some(true)
-                {
-                    panic!(
-                        "{}: Type {} does not implement trait {}",
-                        loc_display(&loc),
-                        con,
-                        trait_
-                    );
+        if pred.trait_ == "RecRow" {
+            match &pred.params[0] {
+                Ty::Anonymous { kind, is_row, .. } => {
+                    if *is_row && *kind == RecordOrVariant::Record {
+                        continue;
+                    }
                 }
-
-                // Substitute quantified variables in the type constructor with the type arguments.
-                let args = match &ty_var_ty {
-                    Ty::App(_, TyArgs::Positional(args)) => args,
-                    _ => &vec![],
-                };
-
-                let con_qvars: Vec<Id> = tys
-                    .tys
-                    .get_con(con)
-                    .unwrap()
-                    .ty_params
-                    .iter()
-                    .map(|(qvar, _)| qvar.clone())
-                    .collect();
-
-                let qvar_map: Map<Id, Ty> = con_qvars
-                    .into_iter()
-                    .zip(args.iter())
-                    .map(|(var, ty)| (var, ty.clone()))
-                    .collect();
-
-                for (assoc_ty_id, ty) in assoc_tys {
-                    let assoc_ty = tys
-                        .tys
-                        .get_con(con)
-                        .unwrap()
-                        .assoc_tys
-                        .get(&assoc_ty_id)
-                        .unwrap()
-                        .subst_qvars(&qvar_map)
-                        .normalize(tys.tys.cons());
-
-                    let expected_ty = ty.normalize(tys.tys.cons());
-
-                    // TODO: We could show where the associated type is coming from in the error
-                    // messages here, e.g. instead of "Unable to unify Str and I32", we could say
-                    // "Unable to unify MyType.AssocTy (Str) and I32".
-                    unification::unify(
-                        &assoc_ty,
-                        &expected_ty,
-                        tys.tys.cons(),
-                        var_gen,
-                        level,
-                        &loc,
-                    );
+                Ty::Var(var_ref) => {
+                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
+                    ambiguous_rec_rows.push(var_ref.clone());
+                    continue;
                 }
-            }
-
-            // TODO: Records can implement Debug, Eq, etc.
-            Ty::QVar(_)
-            | Ty::Var(_)
-            | Ty::Anonymous { .. }
-            | Ty::Fun { .. }
-            | Ty::AssocTySelect { .. } => {
-                remaining_preds.add(Pred {
-                    ty_var,
-                    trait_,
-                    assoc_tys,
-                    loc,
-                });
+                _ => {}
             }
         }
-    }
 
-    remaining_preds
-}
+        if pred.trait_ == "VarRow" {
+            match &pred.params[0] {
+                Ty::Anonymous { kind, is_row, .. } => {
+                    if *is_row && *kind == RecordOrVariant::Variant {
+                        continue;
+                    }
+                }
+                Ty::Var(var_ref) => {
+                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
+                    ambiguous_var_rows.push(var_ref.clone());
+                    continue;
+                }
+                _ => {}
+            }
+        }
 
-fn resolve_all_preds(
-    context: &Map<Id, QVar>,
-    tys: &PgmTypes,
-    preds: PredSet,
-    var_gen: &mut TyVarGen,
-    level: u32,
-) {
-    let unresolved_preds = resolve_preds(context, tys, preds, var_gen, level);
-    report_unresolved_preds(unresolved_preds, tys.tys.cons());
-}
+        for assump in assumps {
+            // We can't use set lookup as locs will be different.
+            if assump.trait_ == pred.trait_ && assump.params == pred.params {
+                continue 'goals;
+            }
+        }
 
-fn report_unresolved_preds(preds: PredSet, cons: &ScopeMap<Id, TyCon>) {
-    let preds = preds.into_preds();
-
-    if preds.is_empty() {
-        return;
-    }
-
-    for Pred {
-        ty_var,
-        trait_,
-        assoc_tys: _,
-        loc,
-    } in preds
-    {
-        eprintln!(
-            "{}: Type {} does not implement trait {}",
-            loc_display(&loc),
-            ty_var.normalize(cons),
-            trait_
-        );
-    }
-
-    panic!();
-}
-
-fn bind_associated_types(impl_decl: &ast::L<ast::ImplDecl>, tys: &mut TyMap) {
-    // TODO: To allow RHSs refer to associated types, bind associated types to
-    // placeholder first, then as type synonyms to their RHSs.
-    for item in &impl_decl.node.items {
-        let (assoc_ty_id, ty) = match &item.node {
-            ast::ImplDeclItem::AssocTy(ast::AssocTyDecl { name, ty }) => (name, ty),
-            ast::ImplDeclItem::Fun(_) => continue,
+        let trait_impls = match trait_env.get(&pred.trait_) {
+            Some(impls) => impls,
+            None => panic!(
+                "{}: Unable to resolve pred {}",
+                loc_display(&pred.loc.clone()),
+                Pred {
+                    trait_: pred.trait_,
+                    params: pred.params,
+                    loc: pred.loc
+                },
+            ),
         };
 
-        let ty_converted = convert_ast_ty(tys, &ty.node, &ty.loc);
+        for impl_ in trait_impls {
+            if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc) {
+                goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
+                    trait_,
+                    params,
+                    loc: pred.loc.clone(),
+                }));
+                continue 'goals;
+            }
+        }
 
-        // TODO: Check that the type has kind `*`.
-        tys.insert_con(
-            assoc_ty_id.clone(),
-            TyCon {
-                id: assoc_ty_id.clone(),
-                ty_params: vec![],
-                assoc_tys: Default::default(),
-                details: TyConDetails::Synonym(ty_converted),
+        panic!(
+            "{}: Unable to resolve {}",
+            loc_display(&pred.loc.clone()),
+            Pred {
+                trait_: pred.trait_,
+                params: pred.params,
+                loc: pred.loc
             },
         );
     }
-}
 
-fn bind_type_params(
-    params: &[(Id, QVar)],
-    tys: &mut PgmTypes,
-    loc: &ast::Loc,
-) -> Map<SmolStr, Option<Map<SmolStr, Scheme>>> {
-    let mut old_method_schemes: Map<Id, Option<Map<Id, Scheme>>> = Default::default();
-
-    for (var, qvar) in params {
-        old_method_schemes.insert(var.clone(), tys.method_schemes.remove(var));
-
-        for (trait_, assoc_tys) in &qvar.bounds {
-            // It should be checked when converting the bounds that the ty cons are bound and
-            // traits.
-            let trait_ty_con = tys.tys.get_con(trait_).unwrap();
-            let trait_details = trait_ty_con.trait_details().unwrap();
-
-            for (method_id, method) in &trait_details.methods {
-                assert_eq!(trait_ty_con.ty_params.len(), 1);
-                let trait_ty_param = &trait_ty_con.ty_params[0];
-                let method_scheme =
-                    method
-                        .scheme
-                        .subst(&trait_ty_param.0, &Ty::Con(var.clone()), loc);
-
-                tys.method_schemes
-                    .entry(var.clone())
-                    .or_default()
-                    .insert(method_id.clone(), method_scheme);
-            }
-
-            for (assoc_ty_id, ty) in assoc_tys {
-                tys.tys
-                    .get_con_mut(var)
-                    .unwrap()
-                    .assoc_tys
-                    .insert(assoc_ty_id.clone(), ty.clone());
-            }
+    for rec_row in ambiguous_rec_rows {
+        if rec_row.link().is_none() {
+            rec_row.set_link(Ty::Anonymous {
+                labels: Default::default(),
+                extension: None,
+                kind: RecordOrVariant::Record,
+                is_row: true,
+            });
         }
     }
 
-    old_method_schemes
-}
-
-fn unbind_type_params(
-    old_assoc_schemes: Map<Id, Option<Map<Id, Scheme>>>,
-    assoc_schemes: &mut Map<Id, Map<Id, Scheme>>,
-) {
-    for (old_ty_con, old_assoc_schemes) in old_assoc_schemes {
-        match old_assoc_schemes {
-            Some(scheme) => {
-                assoc_schemes.insert(old_ty_con, scheme);
-            }
-            None => {
-                assoc_schemes.remove(&old_ty_con);
-            }
+    for var_row in ambiguous_var_rows {
+        if var_row.link().is_none() {
+            var_row.set_link(Ty::Anonymous {
+                labels: Default::default(),
+                extension: None,
+                kind: RecordOrVariant::Variant,
+                is_row: true,
+            });
         }
     }
-}
-
-fn fun_sig_ty_var_kinds(fun_sig: &ast::FunSig) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    for (_, param) in fun_sig.params.iter() {
-        ty_var_kinds(&param.node, &mut kinds);
-    }
-    if let Some(exn) = &fun_sig.exceptions {
-        ty_var_kinds(&exn.node, &mut kinds);
-    }
-    if let Some(ret) = &fun_sig.return_ty {
-        ty_var_kinds(&ret.node, &mut kinds);
-    }
-    kinds
-}
-
-fn ty_var_kinds(ty: &ast::Type, kinds: &mut Map<Id, Kind>) {
-    match ty {
-        ast::Type::Named(ast::NamedType { name: _, args }) => {
-            for arg in args {
-                ty_var_kinds(&arg.node.1.node, kinds);
-            }
-        }
-
-        ast::Type::Var(var) => {
-            kinds.insert(var.clone(), Kind::Star);
-        }
-
-        ast::Type::Record { fields, extension } => {
-            for field in fields {
-                ty_var_kinds(&field.node, kinds);
-            }
-            if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Record));
-            }
-        }
-
-        ast::Type::Variant { alts, extension } => {
-            for ast::VariantAlt { con: _, fields } in alts {
-                for field in fields {
-                    ty_var_kinds(&field.node, kinds);
-                }
-            }
-            if let Some(ext) = extension {
-                kinds.insert(ext.clone(), Kind::Row(RecordOrVariant::Variant));
-            }
-        }
-
-        ast::Type::Fn(ast::FnType {
-            args,
-            ret,
-            exceptions,
-        }) => {
-            for arg in args {
-                ty_var_kinds(&arg.node, kinds);
-            }
-            if let Some(ret) = ret {
-                ty_var_kinds(&ret.node, kinds);
-            }
-            if let Some(exn) = exceptions {
-                ty_var_kinds(&exn.node, kinds);
-            }
-        }
-    }
-}
-
-fn constructor_fields_var_kinds(ty: &ast::ConstructorFields) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    constructor_fields_var_kinds_(ty, &mut kinds);
-    kinds
-}
-
-fn constructor_fields_var_kinds_(ty: &ast::ConstructorFields, kinds: &mut Map<Id, Kind>) {
-    match ty {
-        ast::ConstructorFields::Empty => {}
-        ast::ConstructorFields::Named(fields) => {
-            for (_, field) in fields {
-                ty_var_kinds(field, kinds);
-            }
-        }
-        ast::ConstructorFields::Unnamed(fields) => {
-            for field in fields {
-                ty_var_kinds(field, kinds);
-            }
-        }
-    }
-}
-
-fn constructor_decls_var_kinds(decls: &[ast::ConstructorDecl]) -> Map<Id, Kind> {
-    let mut kinds: Map<Id, Kind> = Default::default();
-    for decl in decls {
-        constructor_fields_var_kinds_(&decl.fields, &mut kinds);
-    }
-    kinds
 }

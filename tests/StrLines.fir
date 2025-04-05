@@ -1,6 +1,6 @@
-collect[i: Iterator[Item = a], a](iter: i): Vec[a]
+collect(iter: Lines): Vec[Str]
     let vec = Vec.withCapacity(10)
-    for a in iter:
+    for a: Str in iter:
         vec.push(a)
     vec
 

@@ -1,4 +1,5 @@
 use crate::interpreter::*;
+use crate::lowering::{CONSTR_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX};
 
 use bytemuck::cast_slice;
 
@@ -14,7 +15,12 @@ impl std::ops::Index<u64> for Heap {
     type Output = u64;
 
     fn index(&self, index: u64) -> &Self::Output {
-        debug_assert!((index as usize) < self.hp);
+        debug_assert!(
+            (index as usize) < self.hp,
+            "index={}, hp={}",
+            index,
+            self.hp
+        );
         &self.values[index as usize]
     }
 }
@@ -101,29 +107,21 @@ impl Heap {
 
     pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {
         let alloc = self.allocate(2);
-        self[alloc] = CONSTR_TYPE_TAG;
+        self[alloc] = CONSTR_CON_IDX.as_u64();
         self[alloc + 1] = type_tag;
         alloc
     }
 
-    pub fn allocate_top_fun(&mut self, fun_idx: u64) -> u64 {
+    pub fn allocate_fun(&mut self, fun_idx: u64) -> u64 {
         let alloc = self.allocate(2);
-        self[alloc] = TOP_FUN_TYPE_TAG;
+        self[alloc] = FUN_CON_IDX.as_u64();
         self[alloc + 1] = fun_idx;
-        alloc
-    }
-
-    pub fn allocate_assoc_fun(&mut self, type_tag: u64, fun_idx: u64) -> u64 {
-        let alloc = self.allocate(3);
-        self[alloc] = ASSOC_FUN_TYPE_TAG;
-        self[alloc + 1] = type_tag;
-        self[alloc + 2] = fun_idx;
         alloc
     }
 
     pub fn allocate_method(&mut self, receiver: u64, fun_idx: u64) -> u64 {
         let alloc = self.allocate(3);
-        self[alloc] = METHOD_TYPE_TAG;
+        self[alloc] = METHOD_CON_IDX.as_u64();
         self[alloc + 1] = receiver;
         self[alloc + 2] = fun_idx;
         alloc

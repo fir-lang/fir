@@ -1,22 +1,8 @@
 use crate::ast::{self, Id};
-use crate::collections::Map;
+use crate::collections::*;
 use crate::type_checker::loc_display;
 use crate::type_checker::ty::*;
 use crate::type_checker::ty_map::TyMap;
-
-/*
-Variations of function types:
-
-Variation | Has type context | Has self type
-----------+------------------+---------------
-Top-level | No               | No
-Assoc     | Yes              | Yes (concrete)
-Trait     | Yes              | Yes (quantified)
-Impl      | Yes              | Yes (concrete)
-
-We don't do function type conversion here, functions should be converted manually using functions
-here as helpers.
-*/
 
 /// Convert an AST type to type checking type.
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
@@ -43,50 +29,16 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 )
             }
 
-            let mut converted_args: Vec<Ty> = Vec::with_capacity(args.len());
-            let mut converted_named_args: Map<Id, Ty> = Default::default();
+            let converted_args: Vec<Ty> = args
+                .iter()
+                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+                .collect();
 
-            for ast::L {
-                loc: _,
-                node: (name, ty),
-            } in args
-            {
-                let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
-                match name {
-                    Some(name) => {
-                        let old = converted_named_args.insert(name.clone(), ty);
-                        if old.is_some() {
-                            panic!(
-                                "{}: Associated type argument {} defined multiple times",
-                                loc_display(loc),
-                                name
-                            );
-                        }
-                    }
-                    None => {
-                        converted_args.push(ty);
-                    }
-                }
-            }
-
-            if !converted_args.is_empty() && !converted_named_args.is_empty() {
-                panic!(
-                    "{}: Type cannot have both associated and positional arguments",
-                    loc_display(loc),
-                );
-            }
-
-            if converted_args.is_empty() && converted_named_args.is_empty() {
+            if converted_args.is_empty() {
                 return Ty::Con(ty_con.id.clone());
             }
 
-            let args = if converted_named_args.is_empty() {
-                TyArgs::Positional(converted_args)
-            } else {
-                TyArgs::Named(converted_named_args)
-            };
-
-            Ty::App(ty_con.id.clone(), args)
+            Ty::App(ty_con.id.clone(), converted_args)
         }
 
         ast::Type::Var(var) => tys
@@ -95,8 +47,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             .clone(),
 
         ast::Type::Record { fields, extension } => {
-            let mut ty_fields: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(fields.len(), Default::default());
+            let mut ty_fields: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, node } in fields {
                 let name = name.as_ref().unwrap_or_else(|| {
@@ -128,12 +79,10 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
         }
 
         ast::Type::Variant { alts, extension } => {
-            let mut ty_alts: Map<Id, Ty> =
-                Map::with_capacity_and_hasher(alts.len(), Default::default());
+            let mut ty_alts: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::VariantAlt { con, fields } in alts {
-                let mut record_labels: Map<Id, Ty> =
-                    Map::with_capacity_and_hasher(fields.len(), Default::default());
+                let mut record_labels: TreeMap<Id, Ty> = TreeMap::new();
 
                 for ast::Named { name, node } in fields {
                     let name = name.as_ref().unwrap_or_else(|| {
@@ -227,15 +176,14 @@ pub(super) enum TyVarConversion {
 pub(super) fn convert_and_bind_context(
     tys: &mut TyMap,
     context_ast: &ast::Context,
-    var_kinds: &Map<Id, Kind>,
     conversion: TyVarConversion,
-    loc: &ast::Loc,
-) -> Vec<(Id, QVar)> {
-    let mut context_converted: Vec<(Id, QVar)> = Vec::with_capacity(context_ast.len());
+    _loc: &ast::Loc,
+) -> Set<Pred> {
+    let mut preds_converted: Set<Pred> =
+        Set::with_capacity_and_hasher(context_ast.preds.len(), Default::default());
 
     // Bind type parameters.
-    for ast::TypeParam { id, bounds: _ } in context_ast {
-        let id = &id.node;
+    for (id, _kind) in &context_ast.type_params {
         match conversion {
             TyVarConversion::ToOpaque => {
                 tys.insert_con(id.clone(), TyCon::opaque(id.clone()));
@@ -247,94 +195,25 @@ pub(super) fn convert_and_bind_context(
         }
     }
 
-    // Convert bounds.
-    for ast::TypeParam { id: ty_var, bounds } in context_ast {
-        let mut trait_map: Map<Id, Map<Id, Ty>> = Default::default();
-
-        for bound in bounds {
-            // Syntactically a bound should be in form: `Id ([(Id = Ty),*])?`.
-            // Parser is more permissive, we check the syntax here.
-            let (trait_id, assoc_tys) = convert_bound(tys, bound);
-            let old = trait_map.insert(trait_id.clone(), assoc_tys);
-            if old.is_some() {
-                panic!(
-                    "{}: Bound {} is defined multiple times",
-                    loc_display(&bound.loc),
-                    trait_id
-                );
+    // Convert preds.
+    for ty in &context_ast.preds {
+        let pred = match convert_ast_ty(tys, &ty.node, &ty.loc) {
+            Ty::App(con, args) => {
+                // TODO: Check that `con` is a trait, arity and kinds match.
+                Pred {
+                    trait_: con,
+                    params: args,
+                    loc: ty.loc.clone(),
+                }
             }
-        }
-
-        if context_converted
-            .iter()
-            .any(|(qvar, _)| *qvar == ty_var.node)
-        {
-            panic!(
-                "{}: Type variable {} is listed multiple times",
-                loc_display(loc),
-                ty_var.node,
-            );
-        }
-
-        // TODO: Variables that don't appear in the arguments or return type won't have their kinds
-        // inferred. Assume those to have kind `*`.
-        // TODO FIXME HACK: Until we implement kind inference, handle `?exn` variables here.
-        let kind = if ty_var.node == crate::type_checker::EXN_QVAR_ID {
-            Kind::Row(RecordOrVariant::Variant)
-        } else {
-            var_kinds.get(&ty_var.node).cloned().unwrap_or(Kind::Star)
+            _ => panic!(
+                "{}: Strange predicate syntax: {:?}",
+                loc_display(&ty.loc),
+                ty
+            ),
         };
-
-        context_converted.push((
-            ty_var.node.clone(),
-            QVar {
-                kind,
-                bounds: trait_map,
-            },
-        ));
+        preds_converted.insert(pred);
     }
 
-    context_converted
-}
-
-/// Convert a bound in `<Id>[(<AssocTy> = <Ty>)*] form to (bound, associated types) pair.
-pub(super) fn convert_bound(tys: &TyMap, bound: &ast::L<ast::Type>) -> (Id, Map<Id, Ty>) {
-    let (trait_id, assoc_tys): (Id, Map<Id, Ty>) = match &bound.node {
-        ast::Type::Named(ast::NamedType { name, args })
-            if args.iter().all(|arg| arg.node.0.is_some()) =>
-        {
-            (
-                name.clone(),
-                args.iter()
-                    .map(|arg| {
-                        (
-                            arg.node.0.as_ref().unwrap().clone(),
-                            convert_ast_ty(tys, &arg.node.1.node, &arg.node.1.loc),
-                        )
-                    })
-                    .collect(),
-            )
-        }
-
-        _ => panic!("{}: Invalid predicate syntax", loc_display(&bound.loc)),
-    };
-
-    let trait_con = match tys.get_con(&trait_id) {
-        Some(con) => con,
-        None => panic!(
-            "{}: Unknown type {} in bound",
-            loc_display(&bound.loc),
-            trait_id
-        ),
-    };
-
-    if !trait_con.is_trait() {
-        panic!(
-            "{}: Type {} is not a trait",
-            loc_display(&bound.loc),
-            trait_id
-        );
-    }
-
-    (trait_id, assoc_tys)
+    preds_converted
 }

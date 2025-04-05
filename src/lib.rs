@@ -1,12 +1,13 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod ast;
-mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
+mod lowering;
+mod mono_ast;
 mod monomorph;
 mod parser;
 mod parser_utils;
@@ -28,6 +29,7 @@ pub struct CompilerOpts {
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
+    pub print_lowered_ast: bool,
     pub main: String,
 }
 
@@ -141,15 +143,21 @@ mod native {
             return;
         }
 
-        module = monomorph::monomorphise(&module, &opts.main);
+        let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
         if opts.print_mono_ast {
-            ast::printer::print_module(&module);
+            mono_ast::printer::print_pgm(&mono_pgm);
+        }
+
+        let lowered_pgm = lowering::lower(&mut mono_pgm);
+
+        if opts.print_lowered_ast {
+            lowering::printer::print_pgm(&lowered_pgm);
         }
 
         let mut w = std::io::stdout();
         program_args.insert(0, program);
-        interpreter::run(&mut w, module, &opts.main, &program_args);
+        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, &program_args);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
@@ -247,10 +255,11 @@ mod wasm {
 
         type_checker::check_module(&mut module);
 
-        module = monomorph::monomorphise(&module, "main".into());
+        let mut mono_pgm = monomorph::monomorphise(&module, "main");
+        let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
-        interpreter::run(&mut w, module, "main", input.trim());
+        interpreter::run_with_input(&mut w, lowered_pgm, "main", input.trim());
     }
 
     #[wasm_bindgen(js_name = "version")]

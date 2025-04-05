@@ -1,335 +1,238 @@
-//! An AST interpreter, feature complete enough to interpret the bootstrapping compiler.
-//!
-//! Since we don't have a proper type checker (it will be implemented in the bootstrapped compiler)
-//! we don't assume type safety here and always check types.
-
 #![allow(clippy::needless_range_loop, clippy::too_many_arguments)]
 
-mod builtins;
-mod heap;
-mod init;
+const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
-use builtins::{call_builtin_fun, BuiltinFun};
+mod heap;
+
 use heap::Heap;
 
 use crate::ast::{self, Id, Loc, L};
-use crate::closure_collector::{collect_closures, Closure};
 use crate::collections::Map;
-use crate::interpolation::StringPart;
-use crate::record_collector::{collect_records, RecordShape, VariantShape};
+use crate::lowering::*;
+use crate::mono_ast as mono;
+use crate::record_collector::RecordShape;
 use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
 
-use bytemuck::cast_slice_mut;
-use smol_str::SmolStr;
+use bytemuck::{cast_slice, cast_slice_mut};
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, args: &[String]) {
-    let closures = collect_closures(&mut pgm);
-
-    let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap, closures);
-
-    // Find the main function.
-    let main_fun = pgm
-        .top_level_funs
-        .get(main)
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
-
-    // `main` doesn't have a call site, called by the interpreter.
-    let call_loc = Loc {
-        module: "".into(),
-        line_start: 0,
-        col_start: 0,
-        byte_offset_start: 0,
-        line_end: 0,
-        col_end: 0,
-        byte_offset_end: 0,
-    };
-
-    // Check if main takes an input argument.
-    let main_num_args = match &main_fun.kind {
-        FunKind::Builtin(_) => panic!(),
-        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
-    };
-
-    let arg_vec: Vec<u64> = match main_num_args {
-        0 => {
-            if args.len() > 1 {
-                println!("WARNING: `main` does not take command line arguments, but command line arguments are passed to the interpreter");
-            }
-            vec![]
-        }
-        1 => {
-            let arg_vec = heap.allocate(2 + args.len());
-            heap[arg_vec] = pgm.array_ptr_ty_tag;
-            heap[arg_vec + 1] = args.len() as u64;
-            for (i, arg) in args.iter().enumerate() {
-                let arg_val =
-                    heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, arg.as_bytes());
-                heap[arg_vec + 2 + (i as u64)] = arg_val;
-            }
-            vec![arg_vec]
-        }
-        other => panic!(
-            "`main` needs to take 0 or 1 argument, but it takes {} arguments",
-            other
-        ),
-    };
-
-    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
-}
-
-#[cfg(target_arch = "wasm32")]
-pub fn run<W: Write>(w: &mut W, mut pgm: Vec<L<ast::TopDecl>>, main: &str, input: &str) {
-    let closures = collect_closures(&mut pgm);
-
-    let mut heap = Heap::new();
-    let pgm = Pgm::new(pgm, &mut heap, closures);
-
-    // Find the main function.
-    let main_fun = pgm
-        .top_level_funs
-        .get(main)
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
-
-    // `main` doesn't have a call site, called by the interpreter.
-    let call_loc = Loc {
-        module: "".into(),
-        line_start: 0,
-        col_start: 0,
-        byte_offset_start: 0,
-        line_end: 0,
-        col_end: 0,
-        byte_offset_end: 0,
-    };
-
-    // Check if main takes an input argument.
-    let main_num_args = match &main_fun.kind {
-        FunKind::Builtin(_) => panic!(),
-        FunKind::Source(fun_decl) => fun_decl.sig.params.len(),
-    };
-
-    let arg_vec: Vec<u64> = match main_num_args {
-        0 => {
-            vec![]
-        }
-        1 => {
-            vec![heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, input.as_bytes())]
-        }
-        other => panic!(
-            "`main` needs to take 0 or 1 argument, but it takes {} arguments",
-            other
-        ),
-    };
-
-    call_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
-}
-
-macro_rules! generate_tags {
-    ($($name:ident),* $(,)?) => {
-        generate_tags!(@generate 0, $($name),*);
-    };
-
-    (@generate $index:expr, $name:ident $(, $rest:ident)*) => {
-        const $name: u64 = $index;
-        generate_tags!(@generate $index + 1, $($rest),*);
-    };
-
-    (@generate $index:expr,) => {};
-}
-
-// NB. If you update this make sure you update built-in `TyCon`s in `collect_types`.
-#[rustfmt::skip]
-generate_tags!(
-    CONSTR_TYPE_TAG,    // Constructor closure, e.g. `Option.Some`.
-    TOP_FUN_TYPE_TAG,   // Top-level function closure, e.g. `id`.
-    ASSOC_FUN_TYPE_TAG, // Associated function closure, e.g. `Value.toString`.
-    METHOD_TYPE_TAG,    // Method closure, e.g. `x.toString`.
-    CLOSURE_TYPE_TAG,
-    FIRST_TYPE_TAG,     // First available type tag for user types.
-);
-
-#[derive(Debug, Default)]
+// Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
-    /// Type constructors by type name.
-    ///
-    /// These don't include records.
-    ///
-    /// This can be used when allocating.
-    ty_cons: Map<Id, TyCon>,
-
-    /// Maps object tags to constructor info.
-    cons_by_tag: Vec<Con>,
-
-    /// Type tags of records.
-    ///
-    /// This can be used to get the tag of a record, from a record pattern, value, or type.
-    record_ty_tags: Map<RecordShape, u64>,
-
-    variant_ty_tags: Map<VariantShape, u64>,
-
-    /// Associated functions, indexed by type tag, then function name.
-    associated_funs: Vec<Map<Id, Fun>>,
-
-    /// Associated functions, indexed by type tag, then function index.
-    associated_funs_by_idx: Vec<Vec<Fun>>,
-
-    /// Top-level functions, indexed by function name.
-    top_level_funs: Map<Id, Fun>,
-
-    /// Same as `top_level_funs`, but indexed by the function index.
-    top_level_funs_by_idx: Vec<Fun>,
-
+    heap_objs: Vec<HeapObj>,
+    funs: Vec<Fun>,
     closures: Vec<Closure>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
     false_alloc: u64,
-    char_ty_tag: u64,
-    str_ty_tag: u64,
-    i8_ty_tag: u64,
-    u8_ty_tag: u64,
-    i32_ty_tag: u64,
-    u32_ty_tag: u64,
-    array_i8_ty_tag: u64,
-    array_u8_ty_tag: u64,
-    array_i32_ty_tag: u64,
-    array_u32_ty_tag: u64,
-    array_ptr_ty_tag: u64,
+    ordering_less_alloc: u64,
+    ordering_equal_alloc: u64,
+    ordering_greater_alloc: u64,
+    unit_alloc: u64,
+    char_con_idx: HeapObjIdx,
+    str_con_idx: HeapObjIdx,
+    array_u8_con_idx: HeapObjIdx,
+    array_u32_con_idx: HeapObjIdx,
+    array_u64_con_idx: HeapObjIdx,
+
+    /// To allocate return value of `try`: `Result.Ok` tags, indexed by type arguments.
+    result_ok_cons: Map<Vec<mono::Type>, HeapObjIdx>,
+
+    /// To allocate return value of `try`: `Result.Err` tags, indexed by type arguments.
+    result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
 }
 
-#[derive(Debug)]
-struct Con {
-    info: ConInfo,
+impl Pgm {
+    fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
+        let LoweredPgm {
+            mut heap_objs,
+            funs,
+            closures,
+            true_con_idx,
+            false_con_idx,
+            char_con_idx,
+            ordering_less_con_idx,
+            ordering_equal_con_idx,
+            ordering_greater_con_idx,
+            str_con_idx,
+            array_u8_con_idx,
+            array_u32_con_idx,
+            array_u64_con_idx,
+            result_err_cons,
+            result_ok_cons,
+            unit_con_idx,
+        } = lowered_pgm;
 
-    fields: Fields,
+        // Allocate singletons for constructors without fields.
+        for heap_obj in heap_objs.iter_mut() {
+            let source_con = match heap_obj {
+                HeapObj::Builtin(_) | HeapObj::Record(_) | HeapObj::Variant(_) => continue,
+                HeapObj::Source(source_con) => source_con,
+            };
 
-    /// For constructors with no fields, this holds the canonical allocation.
-    alloc: Option<u64>,
-}
+            if !source_con.fields.is_empty() {
+                continue;
+            }
 
-#[derive(Debug)]
-enum ConInfo {
-    Named {
-        ty_name: Id,
-        con_name: Option<Id>,
-    },
-    Record {
-        #[allow(unused)]
-        shape: RecordShape,
-    },
-    Variant {
-        #[allow(unused)]
-        shape: VariantShape,
-    },
-}
+            source_con.alloc = heap.allocate_tag(source_con.idx.as_u64());
+        }
 
-#[derive(Debug, Clone)]
-struct TyCon {
-    /// Constructors of the type. E.g. `Some` and `None` in `Option`.
-    ///
-    /// Sorted based on tags.
-    value_constrs: Vec<ValCon>,
+        let true_alloc = heap_objs[true_con_idx.as_usize()].as_source_con().alloc;
+        let false_alloc = heap_objs[false_con_idx.as_usize()].as_source_con().alloc;
+        let ordering_less_alloc = heap_objs[ordering_less_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
+        let ordering_equal_alloc = heap_objs[ordering_equal_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
+        let ordering_greater_alloc = heap_objs[ordering_greater_con_idx.as_usize()]
+            .as_source_con()
+            .alloc;
+        let unit_alloc = heap.allocate_tag(unit_con_idx.as_u64());
 
-    /// Type tag of the first value constructor of this type.
-    ///
-    /// For product types, this is the only tag values of this type use.
-    ///
-    /// For sum types, this is the first tag the values use.
-    type_tag: u64,
-}
-
-impl TyCon {
-    /// First and last tag (inclusive) that values of this type use.
-    ///
-    /// For product types, the tags will be the same, as there's only one tag.
-    fn tag_range(&self) -> (u64, u64) {
-        (
-            self.type_tag,
-            self.type_tag + (self.value_constrs.len() as u64) - 1,
-        )
-    }
-
-    fn get_constr_with_tag(&self, name: &str) -> (u64, &Fields) {
-        let (idx, constr) = self
-            .value_constrs
-            .iter()
-            .enumerate()
-            .find(|(_, constr)| constr.name.as_ref().map(|s| s.as_str()) == Some(name))
-            .unwrap();
-
-        (self.type_tag + idx as u64, &constr.fields)
-    }
-}
-
-/// A value constructor, e.g. `Some`, `None`.
-#[derive(Debug, Clone)]
-struct ValCon {
-    /// Name of the constructor, e.g. `True` and `False` in `Bool`.
-    ///
-    /// In product types, there will be only one `ValCon` and the `name` will be `None`.
-    name: Option<Id>,
-
-    /// Fields of the constructor, with names.
-    ///
-    /// Either all of the fields or none of them should be named.
-    fields: Fields,
-}
-
-#[derive(Debug, Clone)]
-enum Fields {
-    Unnamed(u32),
-
-    // NB. The vec shouldn't be empty. For nullary constructors use `Unnamed(0)`.
-    Named(Vec<Id>),
-}
-
-impl Fields {
-    fn is_empty(&self) -> bool {
-        matches!(self, Fields::Unnamed(0))
-    }
-
-    fn find_named_field_idx(&self, name: &str) -> u64 {
-        match self {
-            Fields::Unnamed(_) => panic!(),
-            Fields::Named(fields) => fields
-                .iter()
-                .enumerate()
-                .find(|(_, f)| f.as_str() == name)
-                .map(|(idx, _)| idx as u64)
-                .unwrap(),
+        Pgm {
+            heap_objs,
+            funs,
+            closures,
+            true_alloc,
+            false_alloc,
+            ordering_less_alloc,
+            ordering_equal_alloc,
+            ordering_greater_alloc,
+            unit_alloc,
+            char_con_idx,
+            str_con_idx,
+            array_u8_con_idx,
+            array_u32_con_idx,
+            array_u64_con_idx,
+            result_err_cons,
+            result_ok_cons,
         }
     }
 }
 
-#[derive(Debug, Clone)]
-struct Fun {
-    /// Index of the function in `top_level_funs_by_idx` (if top-level function), or
-    /// `associated_funs_by_idx` (if associated function).
-    idx: u64,
+/// Run the program, passing the arguments `args` as the `Array[Str]` argument to `main`.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
+    let mut heap = Heap::new();
+    let pgm = Pgm::init(pgm, &mut heap);
 
-    kind: FunKind,
-}
+    let main_fun: &SourceFunDecl = pgm
+        .funs
+        .iter()
+        .find_map(|fun| match fun {
+            Fun::Source(fun @ SourceFunDecl { name, .. }) if name.node.as_str() == main => {
+                Some(fun)
+            }
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
 
-#[derive(Debug, Clone)]
-enum FunKind {
-    Builtin(BuiltinFun),
-    Source(ast::FunDecl),
-}
+    // `main` doesn't have a call site, called by the interpreter.
+    let call_loc = Loc {
+        module: "".into(),
+        line_start: 0,
+        col_start: 0,
+        byte_offset_start: 0,
+        line_end: 0,
+        col_end: 0,
+        byte_offset_end: 0,
+    };
 
-impl FunKind {
-    fn as_source(&self) -> &ast::FunDecl {
-        match self {
-            FunKind::Builtin(_) => panic!(),
-            FunKind::Source(fun) => fun,
+    // Check if main takes an input argument.
+    let arg_vec: Vec<u64> = match main_fun.params.len() {
+        0 => {
+            if args.len() > 1 {
+                println!(
+                    "WARNING: Main function `{}` does not take command line arguments, but command line arguments are passed to the interpreter",
+                    main
+                );
+            }
+            vec![]
         }
-    }
+
+        1 => {
+            let arg_vec = heap.allocate(2 + args.len());
+            heap[arg_vec] = pgm.array_u64_con_idx.as_u64();
+            heap[arg_vec + 1] = args.len() as u64;
+            for (i, arg) in args.iter().enumerate() {
+                let arg_val = heap.allocate_str(
+                    pgm.str_con_idx.as_u64(),
+                    pgm.array_u8_con_idx.as_u64(),
+                    arg.as_bytes(),
+                );
+                heap[arg_vec + 2 + (i as u64)] = arg_val;
+            }
+            vec![arg_vec]
+        }
+
+        other => panic!(
+            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
+            main, other
+        ),
+    };
+
+    call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
 }
 
-const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
+/// Run the program, passing the input `input` as the `Str` argument to `main`.
+#[cfg(target_arch = "wasm32")]
+pub fn run_with_input<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, input: &str) {
+    let mut heap = Heap::new();
+    let pgm = Pgm::init(pgm, &mut heap);
+
+    let main_fun: &SourceFunDecl = pgm
+        .funs
+        .iter()
+        .find_map(|fun| match fun {
+            Fun::Source(fun @ SourceFunDecl { name, .. }) if name.node.as_str() == main => {
+                Some(fun)
+            }
+            _ => None,
+        })
+        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
+
+    // `main` doesn't have a call site, called by the interpreter.
+    let call_loc = Loc {
+        module: "".into(),
+        line_start: 0,
+        col_start: 0,
+        byte_offset_start: 0,
+        line_end: 0,
+        col_end: 0,
+        byte_offset_end: 0,
+    };
+
+    // Check if main takes an input argument.
+    let arg_vec: Vec<u64> = match main_fun.params.len() {
+        0 => {
+            if !input.is_empty() {
+                println!(
+                    "WARNING: Main function `{}` does not take an input argument, but an input is passed to the interpreter",
+                    main
+                );
+            }
+            vec![]
+        }
+
+        1 => {
+            vec![heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                input.as_bytes(),
+            )]
+        }
+
+        other => panic!(
+            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
+            main, other
+        ),
+    };
+
+    call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+}
 
 /// Control flow within a function.
 #[derive(Debug, Clone, Copy)]
@@ -407,223 +310,6 @@ macro_rules! val {
     };
 }
 
-impl Pgm {
-    fn new(pgm: Vec<L<ast::TopDecl>>, heap: &mut Heap, closures: Vec<Closure>) -> Pgm {
-        // Initialize `ty_cons`.
-        let (ty_cons, mut next_type_tag): (Map<Id, TyCon>, u64) = init::collect_types(&pgm);
-
-        fn convert_record(shape: &RecordShape) -> Fields {
-            match shape {
-                RecordShape::UnnamedFields { arity } => Fields::Unnamed(*arity),
-                RecordShape::NamedFields { fields } => Fields::Named(fields.clone()),
-            }
-        }
-
-        fn convert_variant(shape: &VariantShape) -> Fields {
-            convert_record(&shape.payload)
-        }
-
-        let mut cons_by_tag: Vec<Con> = vec![];
-
-        let mut ty_cons_sorted: Vec<(Id, TyCon)> = ty_cons
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-        ty_cons_sorted.sort_by_key(|(_, ty_con)| ty_con.type_tag);
-
-        for (ty_name, ty_con) in ty_cons_sorted {
-            if ty_con.value_constrs.is_empty() {
-                // A built-in type with no constructors.
-                cons_by_tag.push(Con {
-                    info: ConInfo::Named {
-                        ty_name,
-                        con_name: None,
-                    },
-                    fields: Fields::Unnamed(0),
-                    alloc: None,
-                });
-            } else {
-                for constr in ty_con.value_constrs {
-                    let alloc: Option<u64> = if constr.fields.is_empty() {
-                        Some(heap.allocate_tag(cons_by_tag.len() as u64))
-                    } else {
-                        None
-                    };
-                    cons_by_tag.push(Con {
-                        info: ConInfo::Named {
-                            ty_name: ty_name.clone(),
-                            con_name: constr.name.clone(),
-                        },
-                        fields: constr.fields.clone(),
-                        alloc,
-                    });
-                }
-            }
-        }
-
-        // Initialize `record_ty_tags`.
-        let (record_shapes, variant_shapes) = collect_records(&pgm);
-        let mut record_ty_tags: Map<RecordShape, u64> =
-            Map::with_capacity_and_hasher(record_shapes.len(), Default::default());
-
-        for record_shape in record_shapes {
-            let fields = convert_record(&record_shape);
-            cons_by_tag.push(Con {
-                info: ConInfo::Record {
-                    shape: record_shape.clone(),
-                },
-                fields,
-                alloc: None,
-            });
-            record_ty_tags.insert(record_shape, next_type_tag);
-            next_type_tag += 1;
-        }
-
-        let mut variant_ty_tags: Map<VariantShape, u64> =
-            Map::with_capacity_and_hasher(variant_shapes.len(), Default::default());
-
-        for variant_shape in variant_shapes {
-            let fields = convert_variant(&variant_shape);
-            cons_by_tag.push(Con {
-                info: ConInfo::Variant {
-                    shape: variant_shape.clone(),
-                },
-                fields,
-                alloc: None,
-            });
-            variant_ty_tags.insert(variant_shape, next_type_tag);
-            next_type_tag += 1;
-        }
-
-        // Initialize `associated_funs` and `top_level_funs`.
-        let (top_level_funs, associated_funs) = init::collect_funs(pgm);
-
-        let mut associated_funs_vec: Vec<Map<Id, Fun>> =
-            vec![Default::default(); next_type_tag as usize];
-
-        let mut associated_funs_by_idx: Vec<Vec<Fun>> =
-            vec![Default::default(); next_type_tag as usize];
-
-        for (ty_name, funs) in associated_funs {
-            let ty_con = ty_cons
-                .get(&ty_name)
-                .unwrap_or_else(|| panic!("Type not defined: {}", ty_name));
-            let first_tag = ty_cons.get(&ty_name).unwrap().type_tag as usize;
-            let n_constrs = ty_con.value_constrs.len();
-
-            let mut funs_as_vec: Vec<Fun> = funs.values().cloned().collect();
-            funs_as_vec.sort_by_key(|fun| fun.idx);
-
-            if n_constrs == 0 {
-                // A built-in type with no constructor.
-                associated_funs_vec[first_tag] = funs;
-                associated_funs_by_idx[first_tag] = funs_as_vec;
-            } else {
-                for tag in first_tag..first_tag + n_constrs {
-                    associated_funs_vec[tag].clone_from(&funs);
-                    associated_funs_by_idx[tag] = funs_as_vec.clone();
-                }
-            }
-        }
-
-        // Initialize `top_level_funs_by_idx`.
-        let mut top_level_funs_vec: Vec<(Id, Fun)> = top_level_funs
-            .iter()
-            .map(|(k, v)| (k.clone(), v.clone()))
-            .collect();
-
-        top_level_funs_vec.sort_by_key(|(_, fun)| fun.idx);
-
-        let top_level_funs_by_idx = top_level_funs_vec.into_iter().map(|(_, f)| f).collect();
-
-        let bool_ty_con: &TyCon = ty_cons.get("Bool").as_ref().unwrap();
-        assert_eq!(bool_ty_con.value_constrs[0].name, Some(Id::new("False")));
-        assert_eq!(bool_ty_con.value_constrs[1].name, Some(Id::new("True")));
-
-        let false_alloc = cons_by_tag[bool_ty_con.type_tag as usize].alloc.unwrap();
-        let true_alloc = cons_by_tag[bool_ty_con.type_tag as usize + 1]
-            .alloc
-            .unwrap();
-
-        let char_ty_tag = ty_cons.get("Char").as_ref().unwrap().type_tag;
-        let str_ty_tag = ty_cons.get("Str").as_ref().unwrap().type_tag;
-        let i32_ty_tag = ty_cons.get("I32").as_ref().unwrap().type_tag;
-        let u32_ty_tag = ty_cons.get("U32").as_ref().unwrap().type_tag;
-        let i8_ty_tag = ty_cons.get("I8").as_ref().unwrap().type_tag;
-        let u8_ty_tag = ty_cons.get("U8").as_ref().unwrap().type_tag;
-        let array_i8_ty_tag = ty_cons.get("Array@I8").as_ref().unwrap().type_tag;
-        let array_u8_ty_tag = ty_cons.get("Array@U8").as_ref().unwrap().type_tag;
-        let array_i32_ty_tag = ty_cons.get("Array@I32").as_ref().unwrap().type_tag;
-        let array_u32_ty_tag = ty_cons.get("Array@U32").as_ref().unwrap().type_tag;
-        let array_ptr_ty_tag = ty_cons.get("Array@Ptr").as_ref().unwrap().type_tag;
-
-        Pgm {
-            ty_cons,
-            cons_by_tag,
-            record_ty_tags,
-            variant_ty_tags,
-            associated_funs: associated_funs_vec,
-            associated_funs_by_idx,
-            top_level_funs,
-            top_level_funs_by_idx,
-            false_alloc,
-            true_alloc,
-            char_ty_tag,
-            str_ty_tag,
-            i8_ty_tag,
-            u8_ty_tag,
-            i32_ty_tag,
-            u32_ty_tag,
-            array_i8_ty_tag,
-            array_u8_ty_tag,
-            array_i32_ty_tag,
-            array_u32_ty_tag,
-            array_ptr_ty_tag,
-            closures,
-        }
-    }
-
-    fn get_tag_fields(&self, tag: u64) -> &Fields {
-        &self.cons_by_tag[tag as usize].fields
-    }
-
-    fn bool_alloc(&self, b: bool) -> u64 {
-        if b {
-            self.true_alloc
-        } else {
-            self.false_alloc
-        }
-    }
-
-    fn tag_name_display(&self, tag: u64) -> impl std::fmt::Display + '_ {
-        struct TagNameDisplay<'a> {
-            ty_name: &'a Id,
-            con_name: Option<&'a Id>,
-        }
-
-        impl std::fmt::Display for TagNameDisplay<'_> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{}", self.ty_name)?;
-                if let Some(con_name) = self.con_name {
-                    write!(f, ".{}", con_name)?;
-                }
-                Ok(())
-            }
-        }
-
-        let con = &self.cons_by_tag[tag as usize];
-
-        match &con.info {
-            ConInfo::Named { ty_name, con_name } => TagNameDisplay {
-                ty_name,
-                con_name: con_name.as_ref(),
-            },
-            ConInfo::Record { shape: _ } => todo!(),
-            ConInfo::Variant { shape: _ } => todo!(),
-        }
-    }
-}
-
 fn call_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
@@ -632,9 +318,9 @@ fn call_fun<W: Write>(
     args: Vec<u64>,
     loc: &Loc,
 ) -> FunRet {
-    match &fun.kind {
-        FunKind::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
-        FunKind::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
+    match fun {
+        Fun::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
+        Fun::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
     }
 }
 
@@ -642,33 +328,22 @@ fn call_ast_fun<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    fun: &ast::FunDecl,
+    fun: &SourceFunDecl,
     args: Vec<u64>,
     loc: &Loc,
 ) -> FunRet {
     assert_eq!(
-        fun.num_params(),
-        args.len() as u32,
+        fun.params.len(),
+        args.len(),
         "{}, fun: {}",
         loc_display(loc),
         fun.name.node
     );
 
-    let mut locals: Map<Id, u64> = Default::default();
+    let mut locals = args;
+    locals.resize(fun.locals.len(), 0);
 
-    let mut arg_idx: usize = 0;
-    if fun.sig.self_ {
-        locals.insert(Id::new("self"), args[0]);
-        arg_idx += 1;
-    }
-
-    for (param_name, _param_type) in &fun.sig.params {
-        let old = locals.insert(param_name.clone(), args[arg_idx]);
-        assert!(old.is_none());
-        arg_idx += 1;
-    }
-
-    match exec(w, pgm, heap, &mut locals, fun.body.as_ref().unwrap()) {
+    match exec(w, pgm, heap, &mut locals, &fun.body) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
         ControlFlow::Unwind(val) => FunRet::Unwind(val),
@@ -679,20 +354,20 @@ fn call_closure<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
+    locals: &mut [u64],
     fun: u64,
-    args: &[ast::CallArg],
+    args: &[CallArg],
     loc: &Loc,
 ) -> ControlFlow {
-    match heap[fun] {
-        CONSTR_TYPE_TAG => {
-            let constr_tag = heap[fun + 1];
-            allocate_object_from_tag(w, pgm, heap, locals, constr_tag, args)
+    match HeapObjIdx(heap[fun] as u32) {
+        CONSTR_CON_IDX => {
+            let con_idx = HeapObjIdx(heap[fun + 1] as u32);
+            allocate_object_from_idx(w, pgm, heap, locals, con_idx, args)
         }
 
-        TOP_FUN_TYPE_TAG => {
+        FUN_CON_IDX => {
             let top_fun_idx = heap[fun + 1];
-            let top_fun = &pgm.top_level_funs_by_idx[top_fun_idx as usize];
+            let fun = &pgm.funs[top_fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
             for arg in args {
                 assert!(arg.name.is_none());
@@ -705,32 +380,13 @@ fn call_closure<W: Write>(
                     &arg.expr.loc
                 )));
             }
-            call_fun(w, pgm, heap, top_fun, arg_values, loc).into_control_flow()
-        }
-
-        ASSOC_FUN_TYPE_TAG => {
-            let ty_tag = heap[fun + 1];
-            let fun_tag = heap[fun + 2];
-            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_tag as usize];
-            let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
-            for arg in args {
-                arg_values.push(val!(eval(
-                    w,
-                    pgm,
-                    heap,
-                    locals,
-                    &arg.expr.node,
-                    &arg.expr.loc
-                )));
-            }
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
         }
 
-        METHOD_TYPE_TAG => {
+        METHOD_CON_IDX => {
             let receiver = heap[fun + 1];
             let fun_idx = heap[fun + 2];
-            let ty_tag = heap[receiver];
-            let fun = &pgm.associated_funs_by_idx[ty_tag as usize][fun_idx as usize];
+            let fun = &pgm.funs[fun_idx as usize];
             let mut arg_values: Vec<u64> = Vec::with_capacity(args.len() + 1);
             arg_values.push(receiver);
             for arg in args {
@@ -746,20 +402,22 @@ fn call_closure<W: Write>(
             call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
         }
 
-        CLOSURE_TYPE_TAG => {
+        CLOSURE_CON_IDX => {
             let closure_idx = heap[fun + 1];
             let closure = &pgm.closures[closure_idx as usize];
 
-            let mut closure_locals =
-                Map::with_capacity_and_hasher(closure.fvs.len(), Default::default());
+            let mut closure_locals: Vec<u64> = vec![0; closure.locals.len()];
 
-            for (fv, fv_idx) in &closure.fvs {
-                let fv_val = heap[fun + 2 + u64::from(*fv_idx)];
-                closure_locals.insert(fv.clone(), fv_val);
+            // Load closure's free variables into locals.
+            for (i, fv) in closure.fvs.iter().enumerate() {
+                let fv_value = heap[fun + 2 + (i as u64)];
+                closure_locals[fv.use_idx.as_usize()] = fv_value;
             }
 
-            for ((arg_name, _), arg_val) in closure.ast.sig.params.iter().zip(args.iter()) {
-                debug_assert!(arg_val.name.is_none()); // not supported yet
+            // Copy closure arguments into locals.
+            assert_eq!(args.len(), closure.params.len());
+
+            for (i, arg_val) in args.iter().enumerate() {
                 let arg_val = val!(eval(
                     w,
                     pgm,
@@ -768,11 +426,10 @@ fn call_closure<W: Write>(
                     &arg_val.expr.node,
                     &arg_val.expr.loc
                 ));
-                let old = closure_locals.insert(arg_name.clone(), arg_val);
-                debug_assert!(old.is_none());
+                closure_locals[i] = arg_val;
             }
 
-            match exec(w, pgm, heap, &mut closure_locals, &closure.ast.body) {
+            match exec(w, pgm, heap, &mut closure_locals, &closure.body) {
                 ControlFlow::Val(val) | ControlFlow::Ret(val) => ControlFlow::Val(val),
                 ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
                 ControlFlow::Unwind(val) => ControlFlow::Unwind(val),
@@ -783,72 +440,23 @@ fn call_closure<W: Write>(
     }
 }
 
-/// Allocate an object from type name and optional constructor name.
-fn allocate_object_from_names<W: Write>(
+/// Allocate an object from a con idx and fields.
+fn allocate_object_from_idx<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    ty: &Id,
-    constr_name: Option<Id>,
-    args: &[ast::CallArg],
-    loc: &Loc,
+    locals: &mut [u64],
+    con_idx: HeapObjIdx,
+    args: &[CallArg],
 ) -> ControlFlow {
-    let ty_con = pgm
-        .ty_cons
-        .get(ty)
-        .unwrap_or_else(|| panic!("{}: Undefined type {}", loc_display(loc), ty));
-
-    let constr_idx = match constr_name {
-        Some(constr_name) => {
-            let (constr_idx_, _) = ty_con
-                .value_constrs
-                .iter()
-                .enumerate()
-                .find(|(_, constr)| constr.name.as_ref() == Some(&constr_name))
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Type {} does not have a constructor named {}",
-                        loc_display(loc),
-                        ty,
-                        constr_name
-                    )
-                });
-
-            constr_idx_
-        }
-        None => {
-            assert_eq!(ty_con.value_constrs.len(), 1);
-            0
-        }
-    };
-
-    allocate_object_from_tag(
-        w,
-        pgm,
-        heap,
-        locals,
-        ty_con.type_tag + constr_idx as u64,
-        args,
-    )
-}
-
-/// Allocate an object from a constructor tag and fields.
-fn allocate_object_from_tag<W: Write>(
-    w: &mut W,
-    pgm: &Pgm,
-    heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    constr_tag: u64,
-    args: &[ast::CallArg],
-) -> ControlFlow {
-    let fields = pgm.get_tag_fields(constr_tag);
-    let mut arg_values = Vec::with_capacity(args.len());
+    let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
+    let fields = &con.fields;
+    let mut arg_values: Vec<u64> = Vec::with_capacity(args.len());
 
     match fields {
-        Fields::Unnamed(num_fields) => {
+        ConFields::Unnamed(num_fields) => {
             // Evaluate in program order and store in the same order.
-            assert_eq!(*num_fields as usize, args.len());
+            assert_eq!(num_fields.len(), args.len());
             for arg in args {
                 assert!(arg.name.is_none());
                 arg_values.push(val!(eval(
@@ -862,7 +470,7 @@ fn allocate_object_from_tag<W: Write>(
             }
         }
 
-        Fields::Named(field_names) => {
+        ConFields::Named(field_names) => {
             // Evalaute in program order, store based on the order of the names
             // in the type.
             let mut named_values: Map<Id, u64> = Default::default();
@@ -872,14 +480,14 @@ fn allocate_object_from_tag<W: Write>(
                 let old = named_values.insert(name.clone(), value);
                 assert!(old.is_none());
             }
-            for name in field_names {
+            for (name, _) in field_names {
                 arg_values.push(*named_values.get(name).unwrap());
             }
         }
     }
 
     let object = heap.allocate(1 + args.len());
-    heap[object] = constr_tag;
+    heap[object] = con_idx.as_u64();
     for (arg_idx, arg_value) in arg_values.into_iter().enumerate() {
         heap[object + 1 + (arg_idx as u64)] = arg_value;
     }
@@ -891,31 +499,30 @@ fn exec<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    stmts: &[L<ast::Stmt>],
+    locals: &mut [u64],
+    stmts: &[L<Stmt>],
 ) -> ControlFlow {
     let mut return_value: u64 = 0;
 
     for stmt in stmts {
         return_value = match &stmt.node {
-            ast::Stmt::Break { label: _, level } => {
+            Stmt::Break { label: _, level } => {
                 return ControlFlow::Break(*level);
             }
 
-            ast::Stmt::Continue { label: _, level } => {
+            Stmt::Continue { label: _, level } => {
                 return ControlFlow::Continue(*level);
             }
 
-            ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
+            Stmt::Let(LetStmt { lhs, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
-                match try_bind_pat(pgm, heap, lhs, val) {
-                    Some(binds) => locals.extend(binds.into_iter()),
-                    None => panic!("{}: Pattern binding failed", loc_display(&stmt.loc)),
+                if !try_bind_pat(pgm, heap, lhs, locals, val) {
+                    panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
                 }
                 val
             }
 
-            ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
+            Stmt::Assign(AssignStmt { lhs, rhs, op }) => {
                 // Complex assignment operators should've been desugared during type checking.
                 debug_assert_eq!(
                     *op,
@@ -928,9 +535,9 @@ fn exec<W: Write>(
                 val!(assign(w, pgm, heap, locals, lhs, rhs))
             }
 
-            ast::Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
+            Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
 
-            ast::Stmt::While(ast::WhileStmt {
+            Stmt::While(WhileStmt {
                 label: _,
                 cond,
                 body,
@@ -961,16 +568,15 @@ fn exec<W: Write>(
                 }
             },
 
-            ast::Stmt::WhileLet(ast::WhileLetStmt {
+            Stmt::WhileLet(WhileLetStmt {
                 label: _,
                 pat,
                 cond,
                 body,
             }) => loop {
                 let val = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
-                match try_bind_pat(pgm, heap, pat, val) {
-                    Some(binds) => locals.extend(binds.into_iter()),
-                    None => break 0, // FIXME: Return unit
+                if !try_bind_pat(pgm, heap, pat, locals, val) {
+                    break 0; // FIXME: Return unit
                 }
                 match exec(w, pgm, heap, locals, body) {
                     ControlFlow::Val(_val) => {}
@@ -993,72 +599,44 @@ fn exec<W: Write>(
                 }
             },
 
-            ast::Stmt::For(ast::ForStmt {
-                label: _,
+            Stmt::For(ForStmt {
                 pat,
-                ty: _,
                 expr,
-                expr_ty: _,
                 body,
+                next_method,
+                option_some_con,
             }) => {
                 let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
 
-                let next_method = pgm.associated_funs[heap[iter] as usize]
-                    .get("next@Ptr")
-                    .unwrap();
-
-                // Get the monomorphised `next` from the return type of the method.
-                let iter_named_ty: &ast::NamedType = next_method
-                    .kind
-                    .as_source()
-                    .sig
-                    .return_ty
-                    .as_ref()
-                    .unwrap()
-                    .node
-                    .as_named_type();
-
-                debug_assert!(iter_named_ty.args.is_empty());
-
-                let option_ty_con = pgm.ty_cons.get(&iter_named_ty.name).unwrap();
-
-                let some_tag: u64 = option_ty_con
-                    .value_constrs
-                    .iter()
-                    .enumerate()
-                    .find_map(|(idx, constr)| {
-                        if constr.name == Some(SmolStr::new_static("Some")) {
-                            Some(idx as u64 + option_ty_con.type_tag)
-                        } else {
-                            None
-                        }
-                    })
-                    .unwrap();
-
                 loop {
-                    let next_item_option =
-                        match call_fun(w, pgm, heap, next_method, vec![iter], &expr.loc) {
-                            FunRet::Val(val) => val,
-                            FunRet::Unwind(val) => return ControlFlow::Unwind(val),
-                        };
-                    if heap[next_item_option] != some_tag {
+                    let next_item_option = match call_fun(
+                        w,
+                        pgm,
+                        heap,
+                        &pgm.funs[next_method.as_usize()],
+                        vec![iter],
+                        &expr.loc,
+                    ) {
+                        FunRet::Val(val) => val,
+                        FunRet::Unwind(val) => return ControlFlow::Unwind(val),
+                    };
+
+                    if heap[next_item_option] != option_some_con.as_u64() {
                         break;
                     }
 
                     let value = heap[next_item_option + 1];
-                    let binds = try_bind_pat(pgm, heap, pat, value).unwrap_or_else(|| {
+
+                    if !try_bind_pat(pgm, heap, pat, locals, value) {
                         panic!(
                             "{}: For loop pattern failed to match item",
                             loc_display(&pat.loc)
                         )
-                    });
-                    locals.extend(binds.clone());
+                    }
+
                     match exec(w, pgm, heap, locals, body) {
                         ControlFlow::Val(_) => {}
                         ControlFlow::Ret(val) => {
-                            for var in binds.keys() {
-                                locals.remove(var);
-                            }
                             return ControlFlow::Ret(val);
                         }
                         ControlFlow::Break(n) => {
@@ -1076,9 +654,6 @@ fn exec<W: Write>(
                             }
                         }
                         ControlFlow::Unwind(val) => {
-                            for var in binds.keys() {
-                                locals.remove(var);
-                            }
                             return ControlFlow::Unwind(val);
                         }
                     }
@@ -1096,136 +671,72 @@ fn eval<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    expr: &ast::Expr,
+    locals: &mut [u64],
+    expr: &Expr,
     loc: &Loc,
 ) -> ControlFlow {
     match expr {
-        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
-            debug_assert!(ty_args.is_empty());
-            match locals.get(var) {
-                Some(value) => ControlFlow::Val(*value),
-                None => match pgm.top_level_funs.get(var) {
-                    Some(top_fun) => ControlFlow::Val(heap.allocate_top_fun(top_fun.idx)),
-                    None => panic!("{}: Unbound variable: {}", loc_display(loc), var),
-                },
+        Expr::LocalVar(local_idx) => ControlFlow::Val(locals[local_idx.as_usize()]),
+
+        Expr::TopVar(fun_idx) => ControlFlow::Val(heap.allocate_fun(fun_idx.as_u64())),
+
+        Expr::Constr(con_idx) => {
+            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
+
+            if con.fields.is_empty() {
+                return ControlFlow::Val(con.alloc);
             }
+
+            ControlFlow::Val(heap.allocate_constr(con_idx.as_u64()))
         }
 
-        ast::Expr::Constr(ast::ConstrExpr {
-            id: ty_name,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            let ty_con = pgm.ty_cons.get(ty_name).unwrap();
-            let ty_tag = ty_con.type_tag;
-            let (first_tag, last_tag) = ty_con.tag_range();
-            assert_eq!(first_tag, last_tag);
-            ControlFlow::Val(heap.allocate_constr(ty_tag))
-        }
-
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
             let object_tag = heap[object];
-
-            let fields = pgm.get_tag_fields(object_tag);
-            match fields {
-                Fields::Unnamed(_) => {}
-                Fields::Named(fields) => {
-                    let field_idx =
-                        fields
-                            .iter()
-                            .enumerate()
-                            .find_map(|(field_idx, field_name)| {
-                                if field_name == field {
-                                    Some(field_idx)
-                                } else {
-                                    None
-                                }
-                            });
-                    if let Some(field_idx) = field_idx {
-                        return ControlFlow::Val(heap[object + 1 + (field_idx as u64)]);
-                    }
+            let heap_obj = &pgm.heap_objs[object_tag as usize];
+            let field_idx = match heap_obj {
+                HeapObj::Source(source_con_decl) => {
+                    let fields = &source_con_decl.fields;
+                    fields.find_named_field_idx(field)
                 }
-            }
 
-            panic!("{}: Unable to select field {}", loc_display(loc), field);
+                HeapObj::Record(record_shape) => match record_shape {
+                    RecordShape::NamedFields { fields } => fields
+                        .iter()
+                        .enumerate()
+                        .find_map(|(i, field_)| if field == field_ { Some(i) } else { None })
+                        .unwrap(),
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                },
+
+                HeapObj::Builtin(builtin) => panic!(
+                    "Trying to select field of {:?}, object addr = {}",
+                    builtin, object
+                ),
+
+                HeapObj::Variant(_) => panic!(),
+            };
+
+            ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
         }
 
-        ast::Expr::MethodSelect(ast::MethodSelectExpr {
-            object,
-            object_ty: _,
-            method,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
+        Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-            let object_tag = heap[object];
-            match pgm.associated_funs[object_tag as usize].get(method) {
-                Some(method) => ControlFlow::Val(heap.allocate_method(object, method.idx)),
-                None => panic!("{}: Unable to select method {}", loc_display(loc), method),
-            }
+            ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-            ty,
-            constr,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            ControlFlow::Val(constr_select(pgm, heap, ty, constr))
-        }
+        Expr::AssocFnSelect(idx) => ControlFlow::Val(heap.allocate_fun(idx.as_u64())),
 
-        ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-            ty,
-            member,
-            ty_args,
-        }) => {
-            debug_assert!(ty_args.is_empty());
-            let ty_con = pgm.ty_cons.get(ty).unwrap();
-            let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                .get(member)
-                .unwrap();
-            ControlFlow::Val(heap.allocate_assoc_fun(ty_con.type_tag, fun.idx))
-        }
-
-        ast::Expr::Call(ast::CallExpr { fun, args }) => {
+        Expr::Call(CallExpr { fun, args }) => {
             // See if `fun` is a method, associated function, or constructor to avoid closure
             // allocations.
             let fun: u64 = match &fun.node {
-                ast::Expr::Constr(ast::ConstrExpr { id: ty, ty_args }) => {
-                    debug_assert!(ty_args.is_empty());
-                    return allocate_object_from_names(w, pgm, heap, locals, ty, None, args, loc);
+                Expr::Constr(con_idx) => {
+                    return allocate_object_from_idx(w, pgm, heap, locals, *con_idx, args);
                 }
 
-                ast::Expr::MethodSelect(ast::MethodSelectExpr {
-                    object,
-                    object_ty,
-                    method,
-                    ty_args: _,
-                }) => {
+                Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
                     let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-                    let object_tag = match object_ty.as_ref().unwrap() {
-                        crate::type_checker::Ty::Con(con) => match con.as_str() {
-                            "I8" => pgm.i8_ty_tag,
-                            "U8" => pgm.u8_ty_tag,
-                            "I32" => pgm.i32_ty_tag,
-                            "U32" => pgm.u32_ty_tag,
-                            _ => heap[object],
-                        },
-                        _ => heap[object],
-                    };
-                    let fun = pgm.associated_funs[object_tag as usize]
-                        .get(method)
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: Object with type {} (tag {}) doesn't have method {:?}",
-                                loc_display(loc),
-                                pgm.tag_name_display(object_tag),
-                                object_tag,
-                                method
-                            )
-                        });
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
                     arg_vals.push(object);
                     for arg in args {
@@ -1238,48 +749,11 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
+                    let fun = &pgm.funs[fun_idx.as_usize()];
                     return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
-                ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
-                    ty,
-                    constr,
-                    ty_args,
-                }) => {
-                    debug_assert!(ty_args.is_empty());
-                    return allocate_object_from_names(
-                        w,
-                        pgm,
-                        heap,
-                        locals,
-                        ty,
-                        Some(constr.clone()),
-                        args,
-                        loc,
-                    );
-                }
-
-                ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                    ty,
-                    member,
-                    ty_args,
-                }) => {
-                    debug_assert!(ty_args.is_empty());
-                    let ty_con = pgm
-                        .ty_cons
-                        .get(ty)
-                        .unwrap_or_else(|| panic!("{}: Undefined type: {}", loc_display(loc), ty));
-                    let fun = pgm.associated_funs[ty_con.type_tag as usize]
-                        .get(member)
-                        .unwrap_or_else(|| {
-                            panic!(
-                                "{}: Type {} does not have associated function {}",
-                                loc_display(loc),
-                                ty,
-                                member
-                            )
-                        });
-
+                Expr::AssocFnSelect(fun_idx) => {
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len());
                     for arg in args {
                         arg_vals.push(val!(eval(
@@ -1291,6 +765,7 @@ fn eval<W: Write>(
                             &arg.expr.loc
                         )));
                     }
+                    let fun = &pgm.funs[fun_idx.as_usize()];
                     return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
                 }
 
@@ -1301,159 +776,85 @@ fn eval<W: Write>(
             call_closure(w, pgm, heap, locals, fun, args, loc)
         }
 
-        ast::Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
+        Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
 
-        ast::Expr::String(parts) => {
+        Expr::Char(char) => {
+            let alloc = heap.allocate(2);
+            heap[alloc] = pgm.char_con_idx.as_u64();
+            heap[alloc + 1] = u32_as_val(*char as u32);
+            ControlFlow::Val(alloc)
+        }
+
+        Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];
             for part in parts {
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
                         let str = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                        debug_assert_eq!(heap[str], pgm.str_ty_tag);
+                        debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
                         let part_bytes = heap.str_bytes(str);
                         bytes.extend(part_bytes);
                     }
                 }
             }
-            ControlFlow::Val(heap.allocate_str(pgm.str_ty_tag, pgm.array_u8_ty_tag, &bytes))
+            ControlFlow::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                &bytes,
+            ))
         }
 
-        ast::Expr::Self_ => ControlFlow::Val(*locals.get("self").unwrap()),
+        Expr::BoolNot(e) => {
+            let e = val!(eval(w, pgm, heap, locals, &e.node, &e.loc));
+            let val = if e == pgm.true_alloc {
+                pgm.false_alloc
+            } else {
+                debug_assert_eq!(e, pgm.false_alloc);
+                pgm.true_alloc
+            };
+            ControlFlow::Val(val)
+        }
 
-        ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
+        Expr::BoolAnd(left, right) => {
             let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
-            match op {
-                ast::BinOp::And => {
-                    if left == pgm.false_alloc {
-                        return ControlFlow::Val(pgm.false_alloc);
-                    }
-                }
-                ast::BinOp::Or => {
-                    if left == pgm.true_alloc {
-                        return ControlFlow::Val(pgm.true_alloc);
-                    }
-                }
-                _ => panic!(),
-            }
-            eval(w, pgm, heap, locals, &right.node, &right.loc)
-        }
-
-        ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => {
-            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-
-            match op {
-                ast::UnOp::Not => {
-                    debug_assert!(val == pgm.true_alloc || val == pgm.false_alloc);
-                    ControlFlow::Val(pgm.bool_alloc(val == pgm.false_alloc))
-                }
-                ast::UnOp::Neg => {
-                    panic!() // should be desugared
-                }
-            }
-        }
-
-        ast::Expr::Record(exprs) => {
-            let shape = RecordShape::from_named_things(exprs);
-            let type_tag = *pgm.record_ty_tags.get(&shape).unwrap();
-
-            let record = heap.allocate(exprs.len() + 1);
-            heap[record] = type_tag;
-
-            if !exprs.is_empty() && exprs[0].name.is_some() {
-                heap[record] = type_tag;
-
-                let mut names: Vec<Id> = exprs
-                    .iter()
-                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
-                    .collect();
-                names.sort();
-
-                for (name_idx, name_) in names.iter().enumerate() {
-                    let expr = exprs
-                        .iter()
-                        .find_map(|ast::Named { name, node }| {
-                            if name.as_ref().unwrap() == name_ {
-                                Some(node)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap();
-
-                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                    heap[record + (name_idx as u64) + 1] = value;
-                }
+            if left == pgm.false_alloc {
+                ControlFlow::Val(pgm.false_alloc)
             } else {
-                for (idx, ast::Named { name: _, node }) in exprs.iter().enumerate() {
-                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
-                    heap[record + (idx as u64) + 1] = value;
-                }
+                eval(w, pgm, heap, locals, &right.node, &right.loc)
             }
-
-            ControlFlow::Val(record)
         }
 
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let variant_shape = VariantShape::from_con_and_fields(id, args);
-            let type_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
-            let variant = heap.allocate(args.len() + 1);
-            heap[variant] = type_tag;
-
-            if !args.is_empty() && args[0].name.is_some() {
-                let mut names: Vec<Id> = args
-                    .iter()
-                    .map(|ast::Named { name, node: _ }| name.as_ref().unwrap().clone())
-                    .collect();
-                names.sort();
-
-                for (name_idx, name_) in names.iter().enumerate() {
-                    let expr = args
-                        .iter()
-                        .find_map(|ast::Named { name, node }| {
-                            if name.as_ref().unwrap() == name_ {
-                                Some(node)
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap();
-
-                    let value = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
-                    heap[variant + (name_idx as u64) + 1] = value;
-                }
+        Expr::BoolOr(left, right) => {
+            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            if left == pgm.true_alloc {
+                ControlFlow::Val(pgm.true_alloc)
             } else {
-                for (idx, ast::Named { name: _, node }) in args.iter().enumerate() {
-                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
-                    heap[variant + (idx as u64) + 1] = value;
-                }
+                eval(w, pgm, heap, locals, &right.node, &right.loc)
             }
-
-            ControlFlow::Val(variant)
         }
 
-        ast::Expr::Return(expr) => {
+        Expr::Return(expr) => {
             ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
+        Expr::Match(MatchExpr { scrutinee, alts }) => {
             let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
-            for ast::Alt {
+            for Alt {
                 pattern,
                 guard,
                 rhs,
             } in alts
             {
                 assert!(guard.is_none()); // TODO
-                if let Some(binds) = try_bind_pat(pgm, heap, pattern, scrut) {
-                    locals.extend(binds.into_iter());
+                if try_bind_pat(pgm, heap, pattern, locals, scrut) {
                     return exec(w, pgm, heap, locals, rhs);
                 }
             }
             panic!("{}: Non-exhaustive pattern match", loc_display(loc));
         }
 
-        ast::Expr::If(ast::IfExpr {
+        Expr::If(IfExpr {
             branches,
             else_branch,
         }) => {
@@ -1467,132 +868,127 @@ fn eval<W: Write>(
             if let Some(else_branch) = else_branch {
                 return exec(w, pgm, heap, locals, else_branch);
             }
-            ControlFlow::Val(0) // TODO: return unit
+            ControlFlow::Val(pgm.unit_alloc)
         }
 
-        ast::Expr::Char(char) => {
-            let alloc = heap.allocate(2);
-            heap[alloc] = pgm.char_ty_tag;
-            heap[alloc + 1] = u32_as_val(*char as u32);
-            ControlFlow::Val(alloc)
-        }
+        Expr::ClosureAlloc(closure_idx) => {
+            let closure = &pgm.closures[closure_idx.as_usize()];
+            let alloc = heap.allocate(2 + closure.fvs.len());
+            heap[alloc] = CLOSURE_CON_IDX.as_u64();
+            heap[alloc + 1] = closure_idx.as_u64();
 
-        ast::Expr::Fn(ast::FnExpr {
-            sig: _,
-            body: _,
-            idx,
-        }) => {
-            let closure = &pgm.closures[*idx as usize];
-
-            let fv_values: Vec<(u64, u32)> = closure
-                .fvs
-                .iter()
-                .map(|(var, idx)| (*locals.get(var).unwrap(), *idx))
-                .collect();
-
-            let alloc = heap.allocate(2 + fv_values.len());
-            heap[alloc] = CLOSURE_TYPE_TAG;
-            heap[alloc + 1] = u32_as_val(*idx);
-
-            for (val, idx) in fv_values {
-                heap[alloc + 2 + u64::from(idx)] = val;
+            for (fv_idx, fv) in closure.fvs.iter().enumerate() {
+                heap[alloc + 2 + (fv_idx as u64)] = locals[fv.alloc_idx.as_usize()];
             }
 
             ControlFlow::Val(alloc)
         }
-    }
-}
 
-fn constr_select(pgm: &Pgm, heap: &mut Heap, ty_id: &Id, constr_id: &Id) -> u64 {
-    let ty_con = pgm.ty_cons.get(ty_id).unwrap();
-    let (constr_idx, constr) = ty_con
-        .value_constrs
-        .iter()
-        .enumerate()
-        .find(|(_constr_idx, constr)| constr.name.as_ref().unwrap() == constr_id)
-        .unwrap();
-    let tag = ty_con.type_tag + (constr_idx as u64);
-    let con = &pgm.cons_by_tag[tag as usize];
-    debug_assert!(!constr.fields.is_empty() || con.alloc.is_some());
-    con.alloc.unwrap_or_else(|| heap.allocate_constr(tag))
+        Expr::Record(RecordExpr { fields, idx }) => {
+            let shape = pgm.heap_objs[idx.as_usize()].as_record();
+
+            let record = heap.allocate(fields.len() + 1);
+            heap[record] = idx.as_u64();
+
+            if !fields.is_empty() && fields[0].name.is_some() {
+                let name_indices: Map<Id, usize> = match shape {
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                    RecordShape::NamedFields { fields } => fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, name)| (name.clone(), i))
+                        .collect(),
+                };
+
+                for field in fields {
+                    let field_value = val!(eval(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        &field.node.node,
+                        &field.node.loc
+                    ));
+                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
+                    heap[record + 1 + (field_idx as u64)] = field_value;
+                }
+            } else {
+                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
+                    debug_assert!(name.is_none());
+                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
+                    heap[record + (idx as u64) + 1] = value;
+                }
+            }
+
+            ControlFlow::Val(record)
+        }
+
+        Expr::Variant(VariantExpr { id: _, fields, idx }) => {
+            let shape = pgm.heap_objs[idx.as_usize()].as_variant();
+
+            let variant = heap.allocate(fields.len() + 1);
+            heap[variant] = idx.as_u64();
+
+            if !fields.is_empty() && fields[0].name.is_some() {
+                let name_indices: Map<Id, usize> = match &shape.payload {
+                    RecordShape::UnnamedFields { .. } => panic!(),
+                    RecordShape::NamedFields { fields } => fields
+                        .iter()
+                        .enumerate()
+                        .map(|(i, name)| (name.clone(), i))
+                        .collect(),
+                };
+
+                for field in fields {
+                    let field_value = val!(eval(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        &field.node.node,
+                        &field.node.loc
+                    ));
+                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
+                    heap[variant + 1 + (field_idx as u64)] = field_value;
+                }
+            } else {
+                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
+                    debug_assert!(name.is_none());
+                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
+                    heap[variant + (idx as u64) + 1] = value;
+                }
+            }
+
+            ControlFlow::Val(variant)
+        }
+    }
 }
 
 fn assign<W: Write>(
     w: &mut W,
     pgm: &Pgm,
     heap: &mut Heap,
-    locals: &mut Map<Id, u64>,
-    lhs: &ast::L<ast::Expr>,
+    locals: &mut [u64],
+    lhs: &L<Expr>,
     val: u64,
 ) -> ControlFlow {
     match &lhs.node {
-        ast::Expr::Var(ast::VarExpr {
-            id: var,
-            ty_args: _,
-        }) => {
-            let old = locals.insert(var.clone(), val);
-            assert!(old.is_some());
+        Expr::LocalVar(local_idx) => {
+            locals[local_idx.as_usize()] = val;
         }
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+
+        Expr::FieldSelect(FieldSelectExpr { object, field }) => {
             let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
-            let object_tag = heap[object];
-            let object_con = &pgm.cons_by_tag[object_tag as usize];
+            let object_idx = heap[object];
+            let object_con = pgm.heap_objs[object_idx as usize].as_source_con();
             let object_fields = &object_con.fields;
             let field_idx = object_fields.find_named_field_idx(field);
-            heap[object + 1 + field_idx] = val;
+            heap[object + 1 + (field_idx as u64)] = val;
         }
+
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
     ControlFlow::Val(val)
-}
-
-fn try_bind_field_pats(
-    pgm: &Pgm,
-    heap: &mut Heap,
-    constr_fields: &Fields,
-    field_pats: &[ast::Named<L<ast::Pat>>],
-    value: u64,
-) -> Option<Map<Id, u64>> {
-    let mut ret: Map<Id, u64> = Default::default();
-
-    match constr_fields {
-        Fields::Unnamed(arity) => {
-            assert_eq!(
-                *arity,
-                field_pats.len() as u32,
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_pat_idx, field_pat) in field_pats.iter().enumerate() {
-                let field_value = heap[value + (field_pat_idx as u64) + 1];
-                assert!(field_pat.name.is_none());
-                let map = try_bind_pat(pgm, heap, &field_pat.node, field_value)?;
-                ret.extend(map.into_iter());
-            }
-        }
-
-        Fields::Named(field_tys) => {
-            assert_eq!(
-                field_tys.len(),
-                field_pats.len(),
-                "Pattern number of fields doesn't match value number of fields"
-            );
-            for (field_idx, field_name) in field_tys.iter().enumerate() {
-                let field_pat = field_pats
-                    .iter()
-                    .find(|field| field.name.as_ref().unwrap() == field_name)
-                    .unwrap();
-                let map = try_bind_pat(
-                    pgm,
-                    heap,
-                    &field_pat.node,
-                    heap[value + 1 + field_idx as u64],
-                )?;
-                ret.extend(map.into_iter());
-            }
-        }
-    }
-
-    Some(ret)
 }
 
 /// Tries to match a pattern. On successful match, returns a map with variables bound in the
@@ -1603,179 +999,689 @@ fn try_bind_field_pats(
 fn try_bind_pat(
     pgm: &Pgm,
     heap: &mut Heap,
-    pattern: &L<ast::Pat>,
+    pattern: &L<Pat>,
+    locals: &mut [u64],
     value: u64,
-) -> Option<Map<Id, u64>> {
+) -> bool {
     match &pattern.node {
-        ast::Pat::Var(var) => {
-            let mut map: Map<Id, u64> = Default::default();
-            map.insert(var.clone(), value);
-            Some(map)
+        Pat::Var(var) => {
+            locals[var.as_usize()] = value;
+            true
         }
 
-        ast::Pat::Ignore => Some(Default::default()),
+        Pat::Ignore => true,
 
-        ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
-            fields: field_pats,
-            ty_args: _,
-        }) => {
-            let value_tag = heap[value];
-
-            let ty_con = pgm.ty_cons.get(type_).unwrap_or_else(|| {
-                panic!("{}: BUG: Unknown type {}", loc_display(&pattern.loc), type_)
-            });
-
-            let (ty_con_first_tag, ty_con_last_tag) = ty_con.tag_range();
-
-            if value_tag < ty_con_first_tag || value_tag > ty_con_last_tag {
-                eprintln!("TYPE ERROR: Value type doesn't match type constructor type tag in pattern match");
-                eprintln!(
-                    "  value tag = {}, ty con first tag = {}, ty con last tag = {}",
-                    value_tag, ty_con_first_tag, ty_con_last_tag
-                );
-                return None;
-            }
-
-            let constr_idx = match constr {
-                Some(constr_name) => {
-                    ty_con
-                        .value_constrs
-                        .iter()
-                        .enumerate()
-                        .find(|(_idx, constr)| constr_name == constr.name.as_ref().unwrap())
-                        .unwrap()
-                        .0
-                }
-                None => {
-                    if ty_con_first_tag != ty_con_last_tag {
-                        eprintln!("TYPE ERROR");
-                        return None;
-                    }
-                    0
-                }
-            };
-
-            if value_tag != ty_con.type_tag + (constr_idx as u64) {
-                return None;
-            }
-
-            let fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_pats(pgm, heap, fields, field_pats, value)
-        }
-
-        ast::Pat::Record(fields) => {
-            let value_tag = heap[value];
-            let value_fields = pgm.get_tag_fields(value_tag);
-            try_bind_field_pats(pgm, heap, value_fields, fields, value)
-        }
-
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            let value_tag = heap[value];
-            let variant_shape = VariantShape::from_con_and_fields(constr, fields);
-            let variant_tag = *pgm.variant_ty_tags.get(&variant_shape).unwrap();
-
-            if value_tag != variant_tag {
-                return None;
-            }
-            let variant_fields = pgm.get_tag_fields(variant_tag);
-            try_bind_field_pats(pgm, heap, variant_fields, fields, value)
-        }
-
-        ast::Pat::Str(str) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag);
+        Pat::Str(str) => {
+            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
             let value_bytes = heap.str_bytes(value);
-            if value_bytes == str.as_bytes() {
-                Some(Default::default())
-            } else {
-                None
-            }
+            value_bytes == str.as_bytes()
         }
 
-        ast::Pat::StrPfx(pfx, var) => {
-            debug_assert!(heap[value] == pgm.str_ty_tag);
+        Pat::StrPfx(pfx, var) => {
+            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
             let value_bytes = heap.str_bytes(value);
             if value_bytes.starts_with(pfx.as_bytes()) {
                 let pfx_len = pfx.len() as u32;
                 let len = heap.str_bytes(value).len() as u32;
-                let rest = heap.allocate_str_view(pgm.str_ty_tag, value, pfx_len, len - pfx_len);
-                let mut map: Map<Id, u64> = Default::default();
-                map.insert(var.clone(), rest);
-                Some(map)
+                let rest =
+                    heap.allocate_str_view(pgm.str_con_idx.as_u64(), value, pfx_len, len - pfx_len);
+                locals[var.as_usize()] = rest;
+                true
             } else {
-                None
+                false
             }
         }
 
-        ast::Pat::Or(pat1, pat2) => {
-            if let Some(binds) = try_bind_pat(pgm, heap, pat1, value) {
-                return Some(binds);
-            }
-            if let Some(binds) = try_bind_pat(pgm, heap, pat2, value) {
-                return Some(binds);
-            }
-            None
+        Pat::Char(char) => {
+            debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
+            heap[value + 1] == u64::from(*char as u32)
         }
 
-        ast::Pat::Char(char) => {
-            debug_assert_eq!(heap[value], pgm.char_ty_tag);
-            if heap[value + 1] == u64::from(*char as u32) {
-                Some(Default::default())
-            } else {
-                None
+        Pat::Or(pat1, pat2) => {
+            try_bind_pat(pgm, heap, pat1, locals, value)
+                || try_bind_pat(pgm, heap, pat2, locals, value)
+        }
+
+        Pat::Constr(ConstrPattern {
+            constr: con_idx,
+            fields: field_pats,
+        }) => {
+            let value_tag = heap[value];
+            if value_tag != con_idx.as_u64() {
+                return false;
             }
+
+            let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
+            match &con.fields {
+                ConFields::Named(con_fields) => {
+                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_some()));
+                    debug_assert_eq!(con_fields.len(), field_pats.len());
+                    for (i, (con_field_name, _)) in con_fields.iter().enumerate() {
+                        let field_value = heap[value + 1 + (i as u64)];
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == con_field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+
+                ConFields::Unnamed(con_fields) => {
+                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_none()));
+                    debug_assert_eq!(con_fields.len(), field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            true
+        }
+
+        Pat::Record(RecordPattern {
+            fields: field_pats,
+            idx,
+        }) => {
+            let value_tag = heap[value];
+            debug_assert_eq!(value_tag, idx.as_u64());
+
+            let record_shape = pgm.heap_objs[idx.as_usize()].as_record();
+
+            match record_shape {
+                RecordShape::NamedFields { fields } => {
+                    for (i, field_name) in fields.iter().enumerate() {
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+
+                RecordShape::UnnamedFields { arity } => {
+                    debug_assert_eq!(*arity as usize, field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        debug_assert!(field_pat.name.is_none());
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            true
+        }
+
+        Pat::Variant(VariantPattern {
+            constr: _,
+            fields: field_pats,
+            idx,
+        }) => {
+            let value_tag = heap[value];
+
+            if value_tag != idx.as_u64() {
+                return false;
+            }
+
+            let variant_shape = pgm.heap_objs[idx.as_usize()].as_variant();
+            let record_shape = &variant_shape.payload;
+
+            match record_shape {
+                RecordShape::NamedFields { fields } => {
+                    for (i, field_name) in fields.iter().enumerate() {
+                        let field_pat = field_pats
+                            .iter()
+                            .find_map(|pat| {
+                                if pat.name.as_ref().unwrap() == field_name {
+                                    Some(&pat.node)
+                                } else {
+                                    None
+                                }
+                            })
+                            .unwrap();
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+
+                RecordShape::UnnamedFields { arity } => {
+                    debug_assert_eq!(*arity as usize, field_pats.len());
+                    for (i, field_pat) in field_pats.iter().enumerate() {
+                        debug_assert!(field_pat.name.is_none());
+                        let field_value = heap[value + 1 + (i as u64)];
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            true
         }
     }
 }
 
-fn obj_to_string(pgm: &Pgm, heap: &Heap, obj: u64, loc: &Loc) -> String {
-    use std::fmt::Write;
+fn call_builtin_fun<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    fun: &BuiltinFunDecl,
+    args: Vec<u64>,
+    loc: &Loc,
+) -> FunRet {
+    match fun {
+        BuiltinFunDecl::Panic => {
+            debug_assert_eq!(args.len(), 1);
+            let msg = args[0];
+            let bytes = heap.str_bytes(msg);
+            let msg = String::from_utf8_lossy(bytes).into_owned();
+            panic!("{}: PANIC: {}", loc_display(loc), msg);
+        }
 
-    let mut s = String::new();
+        BuiltinFunDecl::PrintStr => {
+            debug_assert_eq!(args.len(), 1);
+            let str = args[0];
+            debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
+            let bytes = heap.str_bytes(str);
+            writeln!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
+            FunRet::Val(pgm.unit_alloc)
+        }
 
-    let tag = heap[obj];
-    let con = &pgm.cons_by_tag[tag as usize];
+        BuiltinFunDecl::ShrI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) >> val_as_i8(i2)))
+        }
 
-    write!(&mut s, "{}: ", loc_display(loc)).unwrap();
+        BuiltinFunDecl::ShrU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) >> val_as_u8(i2)))
+        }
 
-    match &con.info {
-        ConInfo::Named {
-            ty_name,
-            con_name: Some(con_name),
-        } => write!(&mut s, "{}.{}", ty_name, con_name).unwrap(),
+        BuiltinFunDecl::ShrI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) >> val_as_i32(i2)))
+        }
 
-        ConInfo::Named {
-            ty_name,
-            con_name: None,
-        } => write!(&mut s, "{}", ty_name).unwrap(),
+        BuiltinFunDecl::ShrU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) >> val_as_u32(i2)))
+        }
 
-        ConInfo::Record { .. } => {}
+        BuiltinFunDecl::BitAndI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) & val_as_i8(i2)))
+        }
 
-        ConInfo::Variant { .. } => {}
-    }
+        BuiltinFunDecl::BitAndU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) & val_as_u8(i2)))
+        }
 
-    write!(&mut s, "(").unwrap();
+        BuiltinFunDecl::BitAndI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) & val_as_i32(i2)))
+        }
 
-    match &con.fields {
-        Fields::Unnamed(arity) => {
-            for i in 0..*arity {
-                write!(&mut s, "{}", heap[obj + 1 + u64::from(i)]).unwrap();
-                if i != arity - 1 {
-                    write!(&mut s, ", ").unwrap();
+        BuiltinFunDecl::BitAndU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) & val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::BitOrI8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) | val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::BitOrU8 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) | val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::BitOrI32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) | val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::BitOrU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) | val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::ToStrI8 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_i8(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrU8 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_u8(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrI32 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_i32(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::ToStrU32 => {
+            debug_assert_eq!(args.len(), 1);
+            let i = args[0];
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                format!("{}", val_as_u32(i)).as_bytes(),
+            ))
+        }
+
+        BuiltinFunDecl::U8AsI8 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i8_as_val(val_as_u8(args[0]) as i8))
+        }
+
+        BuiltinFunDecl::U8AsU32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u32_as_val(val_as_u8(args[0]) as u32))
+        }
+
+        BuiltinFunDecl::U32AsU8 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(u8_as_val(val_as_u32(args[0]) as u8))
+        }
+
+        BuiltinFunDecl::U32AsI32 => {
+            debug_assert_eq!(args.len(), 1);
+            FunRet::Val(i32_as_val(val_as_u32(args[0]) as i32))
+        }
+
+        BuiltinFunDecl::I8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) << val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) << val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) << val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Shl => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) << val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_i8(i1).cmp(&val_as_i8(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::U8Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_u8(i1).cmp(&val_as_u8(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::I32Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_i32(i1).cmp(&val_as_i32(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::U32Cmp => {
+            debug_assert_eq!(args.len(), 2);
+
+            let i1 = args[0];
+            let i2 = args[1];
+
+            let ordering = match val_as_u32(i1).cmp(&val_as_u32(i2)) {
+                Ordering::Less => pgm.ordering_less_alloc,
+                Ordering::Equal => pgm.ordering_equal_alloc,
+                Ordering::Greater => pgm.ordering_greater_alloc,
+            };
+
+            FunRet::Val(ordering)
+        }
+
+        BuiltinFunDecl::I8Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) + val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) + val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) + val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Add => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) + val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) - val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) - val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) - val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Sub => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) - val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) * val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) * val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) * val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Mul => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) * val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i8_as_val(val_as_i8(i1) / val_as_i8(i2)))
+        }
+
+        BuiltinFunDecl::U8Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u8_as_val(val_as_u8(i1) / val_as_u8(i2)))
+        }
+
+        BuiltinFunDecl::I32Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(i32_as_val(val_as_i32(i1) / val_as_i32(i2)))
+        }
+
+        BuiltinFunDecl::U32Div => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) / val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::I8Eq
+        | BuiltinFunDecl::U8Eq
+        | BuiltinFunDecl::I32Eq
+        | BuiltinFunDecl::U32Eq => {
+            debug_assert_eq!(args.len(), 2);
+            let u1 = args[0];
+            let u2 = args[1];
+            FunRet::Val(if u1 == u2 {
+                pgm.true_alloc
+            } else {
+                pgm.false_alloc
+            })
+        }
+
+        BuiltinFunDecl::Throw => {
+            debug_assert_eq!(args.len(), 1);
+            let exn = args[0];
+            FunRet::Unwind(exn)
+        }
+
+        BuiltinFunDecl::Try { exn, a } => {
+            debug_assert_eq!(args.len(), 1);
+            let cb = args[0];
+
+            // NB. No need to pass locals here as locals are used to evaluate closure arguments, and
+            // we don't pass any arguments.
+            let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc) {
+                ControlFlow::Val(val) => (
+                    val,
+                    pgm.result_ok_cons
+                        .get(&vec![exn.clone(), a.clone()])
+                        .unwrap(),
+                ),
+
+                ControlFlow::Unwind(val) => (
+                    val,
+                    pgm.result_err_cons
+                        .get(&vec![exn.clone(), a.clone()])
+                        .unwrap(),
+                ),
+
+                ControlFlow::Break(_) | ControlFlow::Continue(_) | ControlFlow::Ret(_) => panic!(),
+            };
+
+            let object = heap.allocate(1 + args.len());
+            heap[object] = con_idx.as_u64();
+            heap[object + 1] = val;
+            FunRet::Val(object)
+        }
+
+        BuiltinFunDecl::ArrayNew { t } => {
+            debug_assert_eq!(args.len(), 1);
+            let cap = val_as_u32(args[0]);
+            let repr = Repr::from_mono_ty(t);
+            let cap_words = (cap as usize) * repr.elem_size_in_bytes().div_ceil(8);
+            let array = heap.allocate(cap_words + 2);
+            heap[array] = (match repr {
+                Repr::U8 => pgm.array_u8_con_idx,
+                Repr::U32 => pgm.array_u32_con_idx,
+                Repr::U64 => pgm.array_u64_con_idx,
+            })
+            .as_u64();
+            heap[array + 1] = u32_as_val(cap);
+            heap.values[(array + 2) as usize..(array as usize) + 2 + cap_words].fill(0);
+            FunRet::Val(array)
+        }
+
+        BuiltinFunDecl::ArrayLen => {
+            debug_assert_eq!(args.len(), 1);
+            let array = args[0];
+            FunRet::Val(heap[array + 1])
+        }
+
+        BuiltinFunDecl::ArrayGet { t } => {
+            debug_assert_eq!(args.len(), 2);
+            let array = args[0];
+            let idx = val_as_u32(args[1]);
+            let array_len = val_as_u32(heap[array + 1]);
+            if idx >= array_len {
+                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+            }
+            FunRet::Val(match Repr::from_mono_ty(t) {
+                Repr::U8 => {
+                    let payload: &[u8] = cast_slice(&heap.values[array as usize + 2..]);
+                    u8_as_val(payload[idx as usize])
+                }
+                Repr::U32 => {
+                    let payload: &[u32] = cast_slice(&heap.values[array as usize + 2..]);
+                    u32_as_val(payload[idx as usize])
+                }
+                Repr::U64 => {
+                    let payload: &[u64] = cast_slice(&heap.values[array as usize + 2..]);
+                    payload[idx as usize]
+                }
+            })
+        }
+
+        BuiltinFunDecl::ArraySet { t } => {
+            debug_assert_eq!(args.len(), 3);
+            let array = args[0];
+            let idx = args[1];
+            let elem = args[2];
+
+            let array_len = heap[array + 1];
+            if idx >= array_len {
+                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+            }
+
+            match Repr::from_mono_ty(t) {
+                Repr::U8 => {
+                    let payload: &mut [u8] = cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = val_as_u8(elem);
+                }
+
+                Repr::U32 => {
+                    let payload: &mut [u32] =
+                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = val_as_u32(elem);
+                }
+
+                Repr::U64 => {
+                    let payload: &mut [u64] =
+                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
+                    payload[idx as usize] = elem;
                 }
             }
-        }
-        Fields::Named(fields) => {
-            for (i, field_name) in fields.iter().enumerate() {
-                write!(&mut s, "{} = {}", field_name, heap[obj + 1 + (i as u64)]).unwrap();
-                if i != fields.len() - 1 {
-                    write!(&mut s, ", ").unwrap();
-                }
-            }
+
+            FunRet::Val(pgm.unit_alloc)
         }
     }
-
-    write!(&mut s, ")").unwrap();
-
-    s
 }
