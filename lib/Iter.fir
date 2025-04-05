@@ -4,6 +4,9 @@ trait Iterator[iter, item]:
     map(self: iter, f: Fn(item): b): Map[iter, item, b]
         Map(iter = self, f = f)
 
+    peekable(self: iter): Peekable[iter, item]
+        Peekable(iter = self, peeked = Option.None)
+
 trait Step[t]:
     step(self: t): t
 
@@ -48,3 +51,24 @@ impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]:
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
+
+type Peekable[iter, item]:
+    iter: iter
+    peeked: Option[item]
+
+impl[Iterator[iter, item]] Iterator[Peekable[iter, item], item]:
+    next(self: Peekable[iter, item]): Option[item]
+        match self.peeked:
+            Option.Some(peeked):
+                self.peeked = Option.None
+                Option.Some(peeked)
+            Option.None:
+                self.iter.next()
+
+Peekable.peek[Iterator[iter, item]](self: Peekable[iter, item]): Option[item]
+    match self.peeked:
+        Option.Some(peeked):
+            Option.Some(peeked)
+        Option.None:
+            self.peeked = self.iter.next()
+            self.peeked
