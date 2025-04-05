@@ -21,6 +21,9 @@ pub enum TokenKind {
     /// An identifier starting with a lowercase letter.
     LowerId,
 
+    /// A label is a lowercase id that starts with a single quote.
+    Label,
+
     // Keywords
     As,
     Break,
@@ -40,11 +43,11 @@ pub enum TokenKind {
     Match,
     Prim,
     Return,
-    Self_,
     Trait,
     Type,
     Var,
     While,
+    Loop,
 
     // Delimiters
     LParen,

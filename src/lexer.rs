@@ -44,11 +44,11 @@ lexgen::lexer! {
         "match" = TokenKind::Match,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
-        "self" = TokenKind::Self_,
         "trait" = TokenKind::Trait,
         "type" = TokenKind::Type,
         "var" = TokenKind::Var,
         "while" = TokenKind::While,
+        "loop" = TokenKind::Loop,
 
         // Delimiters
         "(" = TokenKind::LParen,
@@ -99,6 +99,8 @@ lexgen::lexer! {
         '~' $upper_id = TokenKind::TildeUpperId,
         $upper_id = TokenKind::UpperId,
         ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+
+        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')+ = TokenKind::Label,
 
         // Literals
         '"' => |lexer| {

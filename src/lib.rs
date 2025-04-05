@@ -1,12 +1,13 @@
 #![allow(clippy::too_many_arguments, clippy::type_complexity)]
 
 mod ast;
-mod closure_collector;
 mod collections;
 mod import_resolver;
 mod interpolation;
 mod interpreter;
 mod lexer;
+mod lowering;
+mod mono_ast;
 mod monomorph;
 mod parser;
 mod parser_utils;
@@ -19,6 +20,18 @@ mod utils;
 
 use lexgen_util::Loc;
 use smol_str::SmolStr;
+
+#[derive(Debug, Clone)]
+pub struct CompilerOpts {
+    pub typecheck: bool,
+    pub no_prelude: bool,
+    pub no_backtrace: bool,
+    pub print_parsed_ast: bool,
+    pub print_checked_ast: bool,
+    pub print_mono_ast: bool,
+    pub print_lowered_ast: bool,
+    pub main: String,
+}
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
@@ -82,7 +95,7 @@ mod native {
     use smol_str::SmolStr;
     use std::path::Path;
 
-    pub fn main() {
+    pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         let fir_root = match std::env::var("FIR_ROOT") {
             Ok(s) => s,
             Err(_) => {
@@ -92,47 +105,7 @@ mod native {
             }
         };
 
-        let mut typecheck = false;
-        let mut no_prelude = false;
-        let mut no_backtrace = false;
-        let mut print_parsed_ast = false;
-        let mut print_checked_ast = false;
-        let mut print_mono_ast = false;
-        let mut main: String = "main".to_string();
-
-        let mut arg_iter = std::env::args();
-        let mut args: Vec<String> = vec![];
-        while let Some(arg) = arg_iter.next() {
-            match arg.as_str() {
-                "--typecheck" => {
-                    typecheck = true;
-                }
-                "--no-prelude" => {
-                    no_prelude = true;
-                }
-                "--no-backtrace" => {
-                    no_backtrace = true;
-                }
-                "--print-parsed-ast" => {
-                    print_parsed_ast = true;
-                }
-                "--print-checked-ast" => {
-                    print_checked_ast = true;
-                }
-                "--print-mono-ast" => {
-                    print_mono_ast = true;
-                }
-                "--main" => match arg_iter.next() {
-                    Some(main_) => main = main_,
-                    None => panic!("--main argument takes a value, e.g. `--main myMainFunction`"),
-                },
-                _ => {
-                    args.push(arg);
-                }
-            }
-        }
-
-        if no_backtrace {
+        if opts.no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
                 if let Some(s) = panic_info.payload().downcast_ref::<String>() {
                     eprintln!("{}", s);
@@ -144,7 +117,7 @@ mod native {
             }));
         }
 
-        let file_path = Path::new(&args[1]); // "examples/Foo.fir"
+        let file_path = Path::new(&program); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
 
@@ -153,32 +126,38 @@ mod native {
             &fir_root,
             root_path.to_str().unwrap(),
             module,
-            !no_prelude, // import_prelude
+            !opts.no_prelude, // import_prelude
         );
 
-        if print_parsed_ast {
+        if opts.print_parsed_ast {
             ast::printer::print_module(&module);
         }
 
         type_checker::check_module(&mut module);
 
-        if print_checked_ast {
+        if opts.print_checked_ast {
             ast::printer::print_module(&module);
         }
 
-        if typecheck {
+        if opts.typecheck {
             return;
         }
 
-        module = monomorph::monomorphise(&module, &main);
+        let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
-        if print_mono_ast {
-            ast::printer::print_module(&module);
+        if opts.print_mono_ast {
+            mono_ast::printer::print_pgm(&mono_pgm);
         }
 
-        let input: &[String] = &args[1..];
+        let lowered_pgm = lowering::lower(&mut mono_pgm);
+
+        if opts.print_lowered_ast {
+            lowering::printer::print_pgm(&lowered_pgm);
+        }
+
         let mut w = std::io::stdout();
-        interpreter::run(&mut w, module, &main, input);
+        program_args.insert(0, program);
+        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, &program_args);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
@@ -276,10 +255,11 @@ mod wasm {
 
         type_checker::check_module(&mut module);
 
-        module = monomorph::monomorphise(&module, "main".into());
+        let mut mono_pgm = monomorph::monomorphise(&module, "main");
+        let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
-        interpreter::run(&mut w, module, "main", Some(input.trim()));
+        interpreter::run_with_input(&mut w, lowered_pgm, "main", input.trim());
     }
 
     #[wasm_bindgen(js_name = "version")]

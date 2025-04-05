@@ -3,7 +3,7 @@ mono_fn(alts: [A(x: I32), B(y: Str)])
         ~A(x = i): printStr("A(i=`i.toStr()`)")
         ~B(y = s): printStr("B(s=`s`)")
 
-poly_fn[r](alts: [A(x: I32), B(y: Str), ..r])
+poly_fn[VarRow[r]](alts: [A(x: I32), B(y: Str), ..r])
     match alts:
         ~A(x = i): printStr("A(i=`i.toStr()`)")
         ~B(y = s): printStr("B(s=`s`)")
@@ -15,13 +15,13 @@ if_variants_mono(): [A(x: I32), B(y: Str)]
     else:
         ~B(y = "ahoy")
 
-if_variants_poly[r](): [A(x: I32), B(y: Str), ..r]
+if_variants_poly[VarRow[r]](): [A(x: I32), B(y: Str), ..r]
     if Bool.True:
         ~A(x = 123)
     else:
         ~B(y = "ahoy")
 
-poly_return[r](): [B(y: Str), ..r]
+poly_return[VarRow[r]](): [B(y: Str), ..r]
     ~B(y = "ahoy")
 
 main()

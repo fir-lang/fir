@@ -1,4 +1,4 @@
-use crate::ast::{self, AssignOp};
+use crate::ast::{self, AssignOp, Id};
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};
 use crate::type_checker::pat::check_pat;
@@ -13,7 +13,7 @@ pub(super) fn check_stmts(
     stmts: &mut [ast::L<ast::Stmt>],
     expected_ty: Option<&Ty>,
     level: u32,
-    loop_depth: u32,
+    loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     let num_stmts = stmts.len();
     assert!(num_stmts != 0);
@@ -24,7 +24,7 @@ pub(super) fn check_stmts(
             stmt,
             if last { expected_ty } else { None },
             level,
-            loop_depth,
+            loop_stack,
         );
         if last {
             return stmt_ty;
@@ -39,16 +39,42 @@ fn check_stmt(
     stmt: &mut ast::L<ast::Stmt>,
     expected_ty: Option<&Ty>,
     level: u32,
-    loop_depth: u32,
+    loop_stack: &mut Vec<Option<Id>>,
 ) -> Ty {
     match &mut stmt.node {
-        ast::Stmt::Break | ast::Stmt::Continue => {
-            if loop_depth == 0 {
+        ast::Stmt::Break {
+            label,
+            level: loop_level,
+        }
+        | ast::Stmt::Continue {
+            label,
+            level: loop_level,
+        } => {
+            assert_eq!(*loop_level, 0);
+
+            if loop_stack.is_empty() {
                 panic!(
                     "{}: `break` or `continue` statement not inside a loop",
                     loc_display(&stmt.loc)
                 );
             }
+
+            if let Some(label) = label {
+                match loop_stack
+                    .iter()
+                    .rev()
+                    .enumerate()
+                    .find(|id| id.1.as_ref() == Some(label))
+                {
+                    Some((depth, _)) => {
+                        *loop_level = depth as u32;
+                    }
+                    None => {
+                        panic!("{}: no loop with label {}", loc_display(&stmt.loc), label);
+                    }
+                }
+            }
+
             unify_expected_ty(
                 Ty::unit(),
                 expected_ty,
@@ -70,7 +96,7 @@ fn check_stmt(
                 rhs,
                 pat_expected_ty.as_ref(),
                 level + 1,
-                loop_depth,
+                loop_stack,
             );
             tc_state.env.exit();
 
@@ -105,7 +131,7 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&var_ty), level, loop_depth);
+                            check_expr(tc_state, rhs, Some(&var_ty), level, loop_stack);
                             return Ty::unit();
                         }
 
@@ -143,11 +169,11 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_depth);
+                    check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    let object_ty = check_expr(tc_state, object, None, level, loop_depth);
+                    let object_ty = check_expr(tc_state, object, None, level, loop_stack);
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
@@ -161,10 +187,7 @@ fn check_stmt(
                                 )
                             }),
 
-                        Ty::App(con, args) => match args {
-                            TyArgs::Positional(args) => select_field(
-                                tc_state, con, args, field, &lhs.loc,
-                            )
+                        Ty::App(con, args) => select_field(tc_state, con, args, field, &lhs.loc)
                             .unwrap_or_else(|| {
                                 panic!(
                                     "{}: Type {} does not have field {}",
@@ -173,8 +196,6 @@ fn check_stmt(
                                     field
                                 )
                             }),
-                            TyArgs::Named(_) => panic!(),
-                        },
 
                         Ty::Anonymous {
                             labels,
@@ -206,7 +227,7 @@ fn check_stmt(
 
                     let method = match op {
                         ast::AssignOp::Eq => {
-                            check_expr(tc_state, rhs, Some(&lhs_ty), level, loop_depth);
+                            check_expr(tc_state, rhs, Some(&lhs_ty), level, loop_stack);
                             return Ty::unit();
                         }
 
@@ -238,7 +259,7 @@ fn check_stmt(
                     *rhs = desugared_rhs;
                     *op = AssignOp::Eq;
 
-                    check_expr(tc_state, rhs, None, level, loop_depth);
+                    check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
                 _ => todo!("{}: Assignment with LHS: {:?}", loc_display(&lhs.loc), lhs),
@@ -254,56 +275,70 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_depth),
+        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_stack),
 
         ast::Stmt::For(ast::ForStmt {
-            var,
-            ty,
+            label,
+            pat,
+            ast_ty: ty,
+            tc_ty,
             expr,
             expr_ty,
             body,
         }) => {
             assert!(expr_ty.is_none());
 
-            let ty = ty
-                .as_ref()
-                .map(|ty| convert_ast_ty(&tc_state.tys.tys, ty, &stmt.loc));
-
-            // Expect the iterator to have fresh type `X` and add predicate `Iterator[X[Item = A]]`
-            // with fresh type `A`.
-            let iterator_ty = tc_state
+            // Fresh `iter` for the predicate `Iterator[iter, item]`.
+            let iterator_ty_var = tc_state
                 .var_gen
                 .new_var(level, Kind::Star, expr.loc.clone());
 
-            // TODO: loc should be the loc of `var`, which we don't have.
-            let item_ty = ty.clone().unwrap_or_else(|| {
-                Ty::Var(
-                    tc_state
-                        .var_gen
-                        .new_var(level, Kind::Star, expr.loc.clone()),
-                )
-            });
+            // The type `item` for the predicate `Iterator[iter, item]`. This will the the pattern
+            // type (when available) or a fresh type variable.
+            let item_ty_var = ty
+                .as_ref()
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .unwrap_or_else(|| {
+                    Ty::Var(
+                        tc_state
+                            .var_gen
+                            .new_var(level, Kind::Star, expr.loc.clone()),
+                    )
+                });
 
-            tc_state.preds.add(Pred {
-                ty_var: iterator_ty.clone(),
+            *tc_ty = Some(item_ty_var.clone());
+
+            // Add predicate `Iterator[iter, item]`.
+            tc_state.preds.insert(Pred {
                 trait_: SmolStr::new_static("Iterator"),
-                assoc_tys: [(SmolStr::new_static("Item"), item_ty.clone())]
-                    .into_iter()
-                    .collect(),
+                params: vec![Ty::Var(iterator_ty_var.clone()), item_ty_var.clone()],
                 loc: stmt.loc.clone(),
             });
 
             *expr_ty = Some(check_expr(
                 tc_state,
                 expr,
-                Some(&Ty::Var(iterator_ty.clone())),
+                Some(&Ty::Var(iterator_ty_var.clone())),
                 level,
-                loop_depth,
+                loop_stack,
             ));
 
             tc_state.env.enter();
-            tc_state.env.insert(var.clone(), item_ty);
-            check_stmts(tc_state, body, None, level, loop_depth + 1);
+
+            let pat_ty = check_pat(tc_state, pat, level);
+            unify(
+                &pat_ty,
+                &item_ty_var,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
+
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
+
             tc_state.env.exit();
             unify_expected_ty(
                 Ty::unit(),
@@ -315,9 +350,48 @@ fn check_stmt(
             )
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
-            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_depth);
-            check_stmts(tc_state, body, None, level, loop_depth + 1);
+        ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
+            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
+            unify_expected_ty(
+                Ty::unit(),
+                expected_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &stmt.loc,
+            )
+        }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label,
+            pat,
+            cond,
+            body,
+        }) => {
+            tc_state.env.enter();
+            let cond_ty = check_expr(tc_state, cond, None, level, loop_stack);
+            tc_state.env.exit();
+
+            let pat_ty = check_pat(tc_state, pat, level);
+
+            unify(
+                &pat_ty,
+                &cond_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
+
+            tc_state.env.enter();
+            loop_stack.push(label.clone());
+            check_stmts(tc_state, body, None, level, loop_stack);
+            loop_stack.pop();
+            tc_state.env.exit();
+
             unify_expected_ty(
                 Ty::unit(),
                 expected_ty,

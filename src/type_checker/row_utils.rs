@@ -1,17 +1,17 @@
 use crate::ast::Id;
-use crate::collections::{Map, ScopeMap};
+use crate::collections::*;
 use crate::type_checker::ty::*;
 
 pub(crate) fn collect_rows(
     cons: &ScopeMap<Id, TyCon>,
     ty: &Ty, // record or variant, used in errors
     ty_kind: RecordOrVariant,
-    labels: &Map<Id, Ty>,
+    labels: &TreeMap<Id, Ty>,
     mut extension: Option<Box<Ty>>,
-) -> (Map<Id, Ty>, Option<Ty>) {
-    let mut all_labels: Map<Id, Ty> = labels
+) -> (TreeMap<Id, Ty>, Option<Ty>) {
+    let mut all_labels: TreeMap<Id, Ty> = labels
         .iter()
-        .map(|(id, ty)| (id.clone(), ty.clone()))
+        .map(|(id, ty)| (id.clone(), ty.deep_normalize(cons)))
         .collect();
 
     while let Some(ext) = extension {

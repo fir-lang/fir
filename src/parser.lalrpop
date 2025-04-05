@@ -2,11 +2,13 @@
 
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
-use crate::parser_utils::parse_char_lit;
+use crate::parser_utils::{parse_char_lit, process_param_list};
 use crate::token::*;
 
 use std::convert::Infallible;
 use std::rc::Rc;
+
+use smol_str::SmolStr;
 
 use lexgen_util::{LexerError, Loc};
 
@@ -20,6 +22,7 @@ extern {
         UpperId => Token { kind: TokenKind::UpperId, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
+        Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
         "[" => Token { kind: TokenKind::LBracket, .. },
@@ -67,7 +70,6 @@ extern {
         "else" => Token { kind: TokenKind::Else, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "match" => Token { kind: TokenKind::Match, .. },
-        "self" => Token { kind: TokenKind::Self_, .. },
         "for" => Token { kind: TokenKind::For, .. },
         "while" => Token { kind: TokenKind::While, .. },
         "in" => Token { kind: TokenKind::In, .. },
@@ -76,6 +78,7 @@ extern {
         "prim" => Token { kind: TokenKind::Prim, .. },
         "trait" => Token { kind: TokenKind::Trait, .. },
         "impl" => Token { kind: TokenKind::Impl, .. },
+        "loop" => Token { kind: TokenKind::Loop, .. },
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
@@ -128,6 +131,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
 
@@ -135,6 +139,7 @@ TypeDecl: L<TypeDecl> = {
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
+            type_param_kinds: vec![],
             rhs: None,
         }),
 }
@@ -228,7 +233,7 @@ TypeNamed: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
-    <name:UpperId> "[" <args:Sep<TypeArg, ",">> "]" =>
+    <name:UpperId> "[" <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 }
 
@@ -274,6 +279,7 @@ FunDecl: L<FunDecl> = {
 
     <l:@L> <sig:FunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
+            parent_ty: None,
             name: sig.0,
             sig: sig.1,
             body: Some(body),
@@ -281,6 +287,7 @@ FunDecl: L<FunDecl> = {
 
     <l:@L> "prim"? <sig:FunSig> NEWLINE <r:@R> =>
         L::new(module, l, r, FunDecl {
+            parent_ty: None,
             name: sig.0,
             sig: sig.1,
             body: None,
@@ -289,6 +296,7 @@ FunDecl: L<FunDecl> = {
     <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
+            parent_ty: None,
             name: sig.0,
             sig: sig.1,
             body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
@@ -298,28 +306,109 @@ FunDecl: L<FunDecl> = {
 
 FunSig: (L<Id>, FunSig) = {
     <name:LLowerId>
-            <type_params:Context>
-            "(" <self_:("self" ","?)?> <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+            <context:Context>
+            <param_list:ParamList>
             <ret:ReturnType>
-            =>
+            => {
         (name,
             FunSig {
-                type_params,
-                self_: self_.is_some(),
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                context,
+                self_: param_list.0,
+                params: param_list.1,
                 exceptions: ret.0,
                 return_ty: ret.1,
-            }),
+            })
+    },
 
-    <name:LLowerId> <type_params:Context> <ret:ReturnType> =>
+    <name:LLowerId> <context:Context> <ret:ReturnType> => {
         (name,
             FunSig {
-                type_params,
-                self_: false,
+                context,
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: ret.0,
                 return_ty: ret.1,
             })
+    },
+}
+
+TopFunDecl: L<FunDecl> = {
+    <l:@L> <sig:TopFunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> => {
+        let (parent_ty, name, sig): (Option<L<Id>>, L<Id>, FunSig) = sig;
+        L::new(module, l, r, FunDecl {
+            parent_ty,
+            name,
+            sig,
+            body: Some(body),
+        })
+    },
+
+    <l:@L> "prim"? <sig:TopFunSig> NEWLINE <r:@R> => {
+        let (parent_ty, name, sig) = sig;
+        L::new(module, l, r, FunDecl {
+            parent_ty,
+            name,
+            sig,
+            body: None,
+        })
+    },
+
+    <l:@L> <sig:TopFunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+        let L { loc, node } = rhs;
+        let (parent_ty, name, sig) = sig;
+        L::new(module, l, r, FunDecl {
+            parent_ty,
+            name,
+            sig,
+            body: Some(vec![L { loc: loc.clone(), node: Stmt::Expr(L { loc: loc.clone(), node: node }) }]),
+        })
+    },
+}
+
+TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
+    <parent_ty:ParentTy?> <name:LLowerId>
+            <context:Context>
+            <param_list:ParamList>
+            <ret:ReturnType>
+            => {
+        (
+            parent_ty,
+            name,
+            FunSig {
+                context,
+                self_: param_list.0,
+                params: param_list.1,
+                exceptions: ret.0,
+                return_ty: ret.1,
+            }
+        )
+    },
+
+    <parent_ty:ParentTy?> <name:LLowerId> <context:Context> <ret:ReturnType> => {
+        (
+            parent_ty,
+            name,
+            FunSig {
+                context,
+                self_: SelfParam::No,
+                params: vec![],
+                exceptions: ret.0,
+                return_ty: ret.1,
+            }
+        )
+    },
+}
+
+ParamList: (SelfParam, Vec<(Id, L<Type>)>) = {
+    <l:@L> "(" <params:Sep<Param, ",">> ")" => {
+        process_param_list(params, module, &l)
+    },
+}
+
+Param: (SmolStr, Option<L<Type>>) = {
+    <id:LowerId> <ty:(":" <LType>)?> => {
+        (id.smol_str(), ty)
+    },
 }
 
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
@@ -333,6 +422,10 @@ ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
 
     ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" <ty:LType> =>
         (Some(L::new(module, l, r, Type::Variant { alts, extension, })), Some(ty)),
+}
+
+ParentTy: L<Id> = {
+    <ty:LUpperId> "." => ty,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -351,9 +444,9 @@ pub LStmt: L<Stmt> = {
 }
 
 Stmt: Stmt = {
-    "break" NEWLINE => Stmt::Break,
+    "break" <label:Label?> NEWLINE => Stmt::Break { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
 
-    "continue" NEWLINE => Stmt::Continue,
+    "continue" <label:Label?> NEWLINE => Stmt::Continue { label: label.map(|l| SmolStr::new(&l.smol_str()[1..])), level: 0 },
 
     "let" <lhs:LPat> <ty:(":" <LType>)?> "=" <rhs:LInlineExpr> NEWLINE =>
         Stmt::Let(LetStmt { lhs, ty, rhs }),
@@ -381,20 +474,46 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    "for" <id:LowerId> "in" <expr:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    <label:LoopLabel?> "for" <pat:LPat> <ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::For(ForStmt {
-            var: id.smol_str(),
-            ty: None,
+            label,
+            pat,
+            ast_ty,
+            tc_ty: None,
             expr,
             expr_ty: None,
-            body: statements,
+            body,
         }),
 
-    "while" <cond:LExpr> ":" NEWLINE INDENT <statements:LStmts> DEDENT =>
+    <label:LoopLabel?> "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
+            label,
             cond,
-            body:statements,
+            body,
         }),
+
+    <label:LoopLabel?> "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Stmt::WhileLet(WhileLetStmt {
+            label,
+            pat,
+            cond,
+            body,
+        }),
+
+    <label:LoopLabel?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Stmt::While(WhileStmt {
+            label,
+            cond: L::new(module, l, r, Expr::ConstrSelect(ConstrSelectExpr {
+                ty: SmolStr::new_static("Bool"),
+                constr: SmolStr::new_static("True"),
+                ty_args: vec![],
+            })),
+            body,
+        }),
+}
+
+LoopLabel: SmolStr = {
+    <label:Label> ":" => SmolStr::new(&label.smol_str().as_str()[1..])
 }
 
 Alts: Vec<Alt> = {
@@ -471,11 +590,14 @@ LInlineExpr: L<Expr> = {
 // Inline expressions can be made statements with a NEWLINE after them.
 InlineExpr: Expr = {
     #[precedence(level = "0")]
-    "self" =>
-        Expr::Self_,
-
-    <id:LowerId> =>
-        Expr::Var(VarExpr { id: id.smol_str(), ty_args: vec![] }),
+    <id:LowerId> => {
+        let str = id.smol_str();
+        if str == "self" {
+            Expr::Self_
+        } else {
+            Expr::Var(VarExpr { id: str, ty_args: vec![] })
+        }
+    },
 
     <id:UpperId> =>
         Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
@@ -653,6 +775,9 @@ InlineExpr: Expr = {
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
+    "-" <l:@L> <expr:InlineExpr> <r:@R> =>
+        Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
+
     #[precedence(level = "3")]
     <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
         Expr::Variant(VariantExpr {
@@ -801,8 +926,8 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
-                self_: false,
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
@@ -815,8 +940,8 @@ InlineExpr: Expr = {
          <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
-                self_: false,
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
                 params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
                 exceptions: ret.0,
                 return_ty: ret.1,
@@ -828,8 +953,8 @@ InlineExpr: Expr = {
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
-                self_: false,
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
                 return_ty: None,
@@ -841,8 +966,8 @@ InlineExpr: Expr = {
     "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
-                type_params: vec![],
-                self_: false,
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
                 params: vec![],
                 exceptions: None,
                 return_ty: None,
@@ -886,7 +1011,7 @@ LPat: L<Pat> = {
 
 Pat: Pat = {
     #[precedence(level = "0")]
-    <id:LowerId> => Pat::Var(id.smol_str()),
+    <id:LowerId> => Pat::Var(VarPat { var: id.smol_str(), ty: None }),
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
@@ -975,21 +1100,23 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <ty:TypeParam> "]" ":"
-            NEWLINE INDENT <items:TraitDeclItem+> DEDENT <r:@R> =>
+    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" ":"
+            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
-            ty,
+            type_params,
+            type_param_kinds: vec![],
             items,
-        })
-}
+        }),
 
-TraitDeclItem: L<TraitDeclItem> = {
-    <l:@L> "type" <name:UpperId> NEWLINE <r:@R> =>
-        L::new(module, l, r, TraitDeclItem::AssocTy(name.smol_str())),
+    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" <r:@R> =>
+        L::new(module, l, r, TraitDecl {
+            name,
+            type_params,
+            type_param_kinds: vec![],
+            items: vec![],
+        }),
 
-    <fun_decl:FunDecl> =>
-         fun_decl.map(TraitDeclItem::Fun),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -999,38 +1126,30 @@ TraitDeclItem: L<TraitDeclItem> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:(<LUpperId> "for")?> <ty:LTypeNamed> ":"
-            NEWLINE INDENT <items:ImplDeclItem*> DEDENT <r:@R> => {
+    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" ":"
+            NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,
-            ty,
+            tys,
             items,
         })
-    }
+    },
+
+    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" <r:@R> => {
+        L::new(module, l, r, ImplDecl {
+            context,
+            trait_,
+            tys,
+            items: vec![],
+        })
+    },
 }
 
-// type Context = Vec<TypeParam>;
 Context: Context = {
-    => vec![],
+    => Context { type_params: vec![], preds: vec![] },
 
-    "[" <tys:Sep<TypeParam, ",">> "]" => tys,
-}
-
-TypeParam: TypeParam = {
-    <id:LLowerId> =>
-        TypeParam { id, bounds: vec![] },
-
-    <id:LLowerId> ":" <bounds:Sep<LType, "+">> =>
-        TypeParam { id, bounds },
-}
-
-ImplDeclItem: L<ImplDeclItem> = {
-    <l:@L> "type" <name:UpperId> "=" <ty:LType> NEWLINE <r:@R> =>
-        L::new(module, l, r, ImplDeclItem::AssocTy(AssocTyDecl { name: name.smol_str(), ty })),
-
-    <fun_decl:FunDecl> =>
-        fun_decl.map(ImplDeclItem::Fun),
+    "[" <tys:Sep<LType, ",">> "]" => Context { type_params: vec![], preds: tys },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1047,7 +1166,7 @@ TopDecl: L<TopDecl> = {
     NEWLINE* <l:@L> <type_decl:TypeDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Type(type_decl)),
 
-    NEWLINE* <l:@L> <fun_decl:FunDecl> <r:@R> =>
+    NEWLINE* <l:@L> <fun_decl:TopFunDecl> <r:@R> =>
         L::new(module, l, r, TopDecl::Fun(fun_decl)),
 
     NEWLINE* <l:@L> <import_decl:ImportDecl> <r:@R> =>

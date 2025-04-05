@@ -2,54 +2,53 @@
 type Char:
     _codePoint: U32
 
-impl Eq for Char:
-    __eq(self, other: Char): Bool
+impl Eq[Char]:
+    __eq(self: Char, other: Char): Bool
         self._codePoint == other._codePoint
 
-impl Ord for Char:
-    cmp(self, other: Char): Ordering
+impl Ord[Char]:
+    cmp(self: Char, other: Char): Ordering
         self._codePoint.cmp(other._codePoint)
 
-impl Char:
-    fromU32(codePoint: U32): Option[Char]
-        if codePoint >= 0x110000 || (codePoint >= 0xD800 && codePoint <= 0xDFFF):
-            return Option.None
+Char.fromU32(codePoint: U32): Option[Char]
+    if codePoint >= 0x110000 || (codePoint >= 0xD800 && codePoint <= 0xDFFF):
+        return Option.None
 
-        Option.Some(Char(_codePoint = codePoint))
+    Option.Some(Char(_codePoint = codePoint))
 
-    asU32(self): U32
-        self._codePoint
+Char.asU32(self): U32
+    self._codePoint
 
-    lenUtf8(self): U32
-        if self._codePoint < 0x80:
-            1
-        elif self._codePoint < 0x800:
-            2
-        elif self._codePoint < 0x10000:
-            3
-        else:
-            4
+Char.lenUtf8(self): U32
+    if self._codePoint < 0x80:
+        1
+    elif self._codePoint < 0x800:
+        2
+    elif self._codePoint < 0x10000:
+        3
+    else:
+        4
 
-    isAsciiWhitespace(self): Bool
-        self == ' ' || self == '\t' || self == '\n' || self == '\r'
-            # TODO:
-            # || self == '\x0C'
+Char.isAsciiWhitespace(self): Bool
+    self == ' ' || self == '\t' || self == '\n' || self == '\r'
+        # TODO:
+        # || self == '\x0C'
 
-    isAsciiUppercase(self): Bool
-        self._codePoint >= 'A'._codePoint && self._codePoint <= 'Z'._codePoint
+Char.isAsciiUppercase(self): Bool
+    self._codePoint >= 'A'._codePoint && self._codePoint <= 'Z'._codePoint
 
-    isAsciiLowercase(self): Bool
-        self._codePoint >= 'a'._codePoint && self._codePoint <= 'z'._codePoint
+Char.isAsciiLowercase(self): Bool
+    self._codePoint >= 'a'._codePoint && self._codePoint <= 'z'._codePoint
 
-    isAsciiDigit(self): Bool
-        self._codePoint >= '0'._codePoint && self._codePoint <= '9'._codePoint
+Char.isAsciiDigit(self): Bool
+    self._codePoint >= '0'._codePoint && self._codePoint <= '9'._codePoint
 
-    isAsciiAlphanumeric(self): Bool
-        self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
+Char.isAsciiAlphanumeric(self): Bool
+    self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
 
-impl ToStr for Char:
-    toStr(self): Str
-        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
+impl ToStr[Char]:
+    toStr(self: Char): Str
+        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2u32)
         strBuf.push('\'')
         strBuf.push(self)
         strBuf.push('\'')

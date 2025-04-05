@@ -1,6 +1,6 @@
 testFor(n: I32): I32
     let sum = 0i32
-    for i in range(0, n):
+    for i: I32 in range(0, n):
         # TODO: Use modulus once we have it.
         if i & 0b1 == 0b1:
             continue

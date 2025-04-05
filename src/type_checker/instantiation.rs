@@ -5,7 +5,7 @@ use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
     match stmt {
-        ast::Stmt::Break | ast::Stmt::Continue => {}
+        ast::Stmt::Break { .. } | ast::Stmt::Continue { .. } => {}
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
             normalize_pat(&mut lhs.node, cons);
@@ -20,12 +20,18 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
         ast::Stmt::Expr(expr) => normalize_expr(&mut expr.node, cons),
 
         ast::Stmt::For(ast::ForStmt {
-            var: _,
-            ty: _,
+            label: _,
+            pat,
+            ast_ty: _,
+            tc_ty,
             expr,
             expr_ty,
             body,
         }) => {
+            if let Some(tc_ty) = tc_ty {
+                *tc_ty = tc_ty.deep_normalize(cons);
+            }
+            normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut expr.node, cons);
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
@@ -33,7 +39,24 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
             *expr_ty = Some(expr_ty.as_ref().unwrap().deep_normalize(cons));
         }
 
-        ast::Stmt::While(ast::WhileStmt { cond, body }) => {
+        ast::Stmt::While(ast::WhileStmt {
+            label: _,
+            cond,
+            body,
+        }) => {
+            normalize_expr(&mut cond.node, cons);
+            for stmt in body {
+                normalize_instantiation_types(&mut stmt.node, cons);
+            }
+        }
+
+        ast::Stmt::WhileLet(ast::WhileLetStmt {
+            label: _,
+            pat,
+            cond,
+            body,
+        }) => {
+            normalize_pat(&mut pat.node, cons);
             normalize_expr(&mut cond.node, cons);
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
@@ -69,6 +92,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,
             object_ty,
+            method_ty_id: _,
             method: _,
             ty_args,
         }) => {
@@ -156,11 +180,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
 fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
     match pat {
-        ast::Pat::Var(_)
-        | ast::Pat::Ignore
-        | ast::Pat::Str(_)
-        | ast::Pat::Char(_)
-        | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Var(ast::VarPat { var: _, ty }) => {
+            *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
+        }
+
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: _,

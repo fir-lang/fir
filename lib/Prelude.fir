@@ -6,70 +6,84 @@ import Str
 import StrBuf
 import Vec
 
+# A marker trait used to mark a type parameter as a record row.
+#
+# This is temporary until we implement kind inference. (#46)
+trait RecRow[t]
+
+# A marker trait used to mark a type parameter as a variant row.
+#
+# This is temporary until we implement kind inference. (#46)
+trait VarRow[t]
+
 # The `+` operator.
 trait Add[t]:
-    __add(self, other: t): t
+    __add(self: t, other: t): t
 
 # The `-` operator.
 trait Sub[t]:
-    __sub(self, other: t): t
+    __sub(self: t, other: t): t
+
+# The unary `-` operator.
+trait Neg[t]:
+    __neg(self: t): t
 
 # The `*` operator.
 trait Mul[t]:
-    __mul(self, other: t): t
+    __mul(self: t, other: t): t
 
 # The `/` operator.
 trait Div[t]:
-    __div(self, other: t): t
+    __div(self: t, other: t): t
 
 # The `==` operator.
 trait Eq[t]:
-    __eq(self, other: t): Bool
+    __eq(self: t, other: t): Bool
 
-    __neq(self, other: t): Bool
+    __neq(self: t, other: t): Bool
         !self.__eq(other)
 
 # The `|` operator.
 trait BitOr[t]:
-    __bitor(self, other: t): t
+    __bitor(self: t, other: t): t
 
 # The `&` operator.
 trait BitAnd[t]:
-    __bitand(self, other: t): t
+    __bitand(self: t, other: t): t
 
 # The `<<` operator.
 trait Shl[t]:
-    __shl(self, other: t): t
+    __shl(self: t, other: t): t
 
 # The `>>` operator.
 trait Shr[t]:
-    __shr(self, other: t): t
+    __shr(self: t, other: t): t
 
 trait Ord[t]:
-    cmp(self, other: t): Ordering
+    cmp(self: t, other: t): Ordering
 
-    __lt(self, other: t): Bool
+    __lt(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Less: Bool.True
             _: Bool.False
 
-    __le(self, other: t): Bool
+    __le(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Less | Ordering.Equal: Bool.True
             _: Bool.False
 
-    __gt(self, other: t): Bool
+    __gt(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Greater: Bool.True
             _: Bool.False
 
-    __ge(self, other: t): Bool
+    __ge(self: t, other: t): Bool
         match self.cmp(other):
             Ordering.Greater | Ordering.Equal: Bool.True
             _: Bool.False
 
 trait ToStr[t]:
-    toStr(self): Str
+    toStr(self: t): Str
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
@@ -77,17 +91,16 @@ type Void
 
 prim type Array[t]
 
-impl Array[t]:
-    prim new(len: U32): Array[t]
-    prim len(self): U32
-    prim get(self, idx: U32): t
-    prim set(self, idx: U32, elem: t)
+prim Array.new(len: U32): Array[t]
+prim Array.len(self: Array[t]): U32
+prim Array.get(self: Array[t], idx: U32): t
+prim Array.set(self: Array[t], idx: U32, elem: t)
 
-impl[t: ToStr] ToStr for Array[t]:
-    toStr(self): Str
+impl[ToStr[t]] ToStr[Array[t]]:
+    toStr(self: Array[t]): Str
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
-        for i in range(0u32, self.len()):
+        for i: U32 in range(0u32, self.len()):
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())
@@ -95,47 +108,45 @@ impl[t: ToStr] ToStr for Array[t]:
         buf.toStr()
 
 prim printStr(s: Str)
-prim panic[t: ToStr](msg: t): Void
+prim panic[ToStr[t]](msg: t): Void
 
 type Option[t]:
     None
     Some(t)
 
-impl[t: ToStr] ToStr for Option[t]:
-    toStr(self): Str
+impl[ToStr[t]] ToStr[Option[t]]:
+    toStr(self: Option[t]): Str
         match self:
             Option.None: "Option.None"
             Option.Some(t): "Option.Some(`t.toStr()`)"
 
-impl Option[t]:
-    unwrap(self): t
-        match self:
-            Option.None: panic("Unwrapping Option.None")
-            Option.Some(value): value
+Option.unwrap(self: Option[t]): t
+    match self:
+        Option.None: panic("Unwrapping Option.None")
+        Option.Some(value): value
 
 type Result[e, t]:
     Err(e)
     Ok(t)
 
-impl[e: ToStr, t: ToStr] ToStr for Result[e, t]:
-    toStr(self): Str
+impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
+    toStr(self: Result[e, t]): Str
         match self:
             Result.Err(e): "Result.Err(`e.toStr()`)"
             Result.Ok(t): "Result.Ok(`t.toStr()`)"
 
-impl[e, t] Result[e, t]:
-    mapErr(self, f: Fn(e): e2): Result[e2, t]
-        match self:
-            Result.Ok(a): Result.Ok(a)
-            Result.Err(e): Result.Err(f(e))
+Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
+    match self:
+        Result.Ok(a): Result.Ok(a)
+        Result.Err(e): Result.Err(f(e))
 
 type Ordering:
     Less
     Equal
     Greater
 
-impl ToStr for Ordering:
-    toStr(self): Str
+impl ToStr[Ordering]:
+    toStr(self: Ordering): Str
         match self:
             Ordering.Less: "Ordering.Less"
             Ordering.Equal: "Ordering.Equal"
@@ -145,8 +156,8 @@ type Bool:
     False
     True
 
-impl ToStr for Bool:
-    toStr(self): Str
+impl ToStr[Bool]:
+    toStr(self: Bool): Str
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"

@@ -21,26 +21,26 @@ main()
 
     printStr("---")
 
-    for char in s.chars():
+    for char: Char in s.chars():
         printStr(char.toStr())
 
     printStr("---")
 
     let charIter = s.chars()
     printStr(charIter.asStr())
-    charIter.next()
+    let _: Option[Char] = charIter.next()
     printStr(charIter.asStr())
-    charIter.next()
+    let _: Option[Char] = charIter.next()
     printStr(charIter.asStr())
-    charIter.next()
+    let _: Option[Char] = charIter.next()
     printStr(charIter.asStr())
-    charIter.next()
+    let _: Option[Char] = charIter.next()
 
     printStr("---")
 
     # goldentests ignores trailing empty lines, so add some noise to the last empty lines.
     printStr("\"`charIter.asStr()`\"")
-    charIter.next()
+    let _: Option[Char] = charIter.next()
     printStr("\"`charIter.asStr()`\"")
 
 # expected stdout:

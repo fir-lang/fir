@@ -1,6 +1,6 @@
 testFor(n: I32): I32
     let sum = 0i32
-    for i in range(0, 10000):
+    for i: I32 in range(0, 10000):
         if sum > 100:
             break
         sum += i
@@ -27,4 +27,3 @@ main()
 # 105
 # 105
 # 105
-

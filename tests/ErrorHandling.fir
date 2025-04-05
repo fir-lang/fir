@@ -6,7 +6,7 @@ parseU32(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
 
     let result: U32 = 0
 
-    for c in s.chars():
+    for c: Char in s.chars():
         if c < '0' || c > '9':
             return Result.Err(~InvalidDigit)
 
@@ -63,7 +63,7 @@ parseU32FromFile(filePath: Str): Result[[InvalidDigit, Overflow, EmptyInput, IoE
 parseWith(vec: Vec[Str], parseFn: Fn(Str): Result[errs, a]): Result[errs, Vec[a]]
     let ret = Vec.withCapacity(vec.len())
 
-    for s in vec.iter():
+    for s: Str in vec.iter():
         match parseFn(s):
             Result.Err(err): return Result.Err(err)
             Result.Ok(val): ret.push(val)
@@ -91,13 +91,13 @@ parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): U32): Result[[I
 
 parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
     if s.len() == 0:
-        return throw(~EmptyInput)
+        throw(~EmptyInput)
 
     let result: U32 = 0
 
-    for c in s.chars():
+    for c: Char in s.chars():
         if c < '0' || c > '9':
-            return throw(~InvalidDigit)
+            throw(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
@@ -167,6 +167,21 @@ main
     printStr(parseU32UsingExnVersion("").mapErr(parseIntErrorToStr).toStr())
     # printStr(parseU32UsingExnVersion("100000000000000000000000").mapErr(parseIntErrorToStr).toStr())
 
+# ----- parseU32FromFile
+# io error
+#
+# ----- parseWith
+# Result.Ok([1,2,3])
+# Result.Err(invalid digit)
+#
+# ----- parseWithErrorHandler
+# Result.Ok(123)
+#
+# ----- parseU32UsingExnVersion
+# Result.Ok(123)
+# Result.Err(invalid digit)
+# Result.Err(empty input)
+
 # expected stdout:
 # ----- parseU32
 # Result.Ok(123)
@@ -187,3 +202,4 @@ main
 # Result.Ok(123)
 # Result.Err(invalid digit)
 # Result.Err(empty input)
+
