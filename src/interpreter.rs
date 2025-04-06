@@ -1683,5 +1683,17 @@ fn call_builtin_fun<W: Write>(
 
             FunRet::Val(pgm.unit_alloc)
         }
+
+        BuiltinFunDecl::ReadFileUtf8 => {
+            debug_assert_eq!(args.len(), 1);
+            let path = args[0];
+            let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
+            let file_contents = std::fs::read_to_string(path_str).unwrap();
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                file_contents.as_bytes(),
+            ))
+        }
     }
 }
