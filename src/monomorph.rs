@@ -532,10 +532,14 @@ fn mono_stmt(
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
+            let cond = mono_l_expr(cond, ty_map, poly_pgm, mono_pgm, locals);
+            locals.enter();
+            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
+            locals.exit();
             mono::Stmt::While(mono::WhileStmt {
                 label: label.clone(),
-                cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm, locals),
-                body: mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals),
+                cond,
+                body,
             })
         }
 
@@ -822,15 +826,19 @@ fn mono_expr(
             branches: branches
                 .iter()
                 .map(|(expr, stmts)| {
-                    (
-                        mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
-                        mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals),
-                    )
+                    let cond = mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals);
+                    locals.enter();
+                    let stmts = mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals);
+                    locals.exit();
+                    (cond, stmts)
                 })
                 .collect(),
-            else_branch: else_branch
-                .as_ref()
-                .map(|stmts| mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals)),
+            else_branch: else_branch.as_ref().map(|stmts| {
+                locals.enter();
+                let stmts = mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals);
+                locals.exit();
+                stmts
+            }),
         }),
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
