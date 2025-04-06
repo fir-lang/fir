@@ -710,8 +710,10 @@ fn eval<W: Write>(
                 },
 
                 HeapObj::Builtin(builtin) => panic!(
-                    "Trying to select field of {:?}, object addr = {}",
-                    builtin, object
+                    "{}: Trying to select field of {:?}, object addr = {}",
+                    loc_display(loc),
+                    builtin,
+                    object
                 ),
 
                 HeapObj::Variant(_) => panic!(),
@@ -1633,7 +1635,12 @@ fn call_builtin_fun<W: Write>(
             let idx = val_as_u32(args[1]);
             let array_len = val_as_u32(heap[array + 1]);
             if idx >= array_len {
-                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+                panic!(
+                    "{}: OOB array access (idx = {}, len = {})",
+                    loc_display(loc),
+                    idx,
+                    array_len
+                );
             }
             FunRet::Val(match Repr::from_mono_ty(t) {
                 Repr::U8 => {
