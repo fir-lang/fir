@@ -410,7 +410,14 @@ fn mono_top_fn(
         None => return,
     };
 
-    let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
+    let mut locals: ScopeSet<Id> = Default::default();
+    fun_decl
+        .sig
+        .params
+        .iter()
+        .for_each(|(id, _)| locals.insert(id.clone()));
+
+    let mono_body = mono_l_stmts(body, &ty_map, poly_pgm, mono_pgm, &mut locals);
 
     match &fun_decl.parent_ty {
         Some(parent_ty) => {
@@ -441,6 +448,7 @@ fn mono_stmt(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
     loc: &ast::Loc,
 ) -> mono::Stmt {
     match stmt {
@@ -454,20 +462,23 @@ fn mono_stmt(
             level: *level,
         },
 
-        ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => mono::Stmt::Let(mono::LetStmt {
-            lhs: mono_l_pat(lhs, ty_map, poly_pgm, mono_pgm),
-            rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm),
-        }),
+        ast::Stmt::Let(ast::LetStmt { lhs, ty: _, rhs }) => {
+            let rhs = mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm, locals);
+            let lhs = mono_l_pat(lhs, ty_map, poly_pgm, mono_pgm, locals);
+            mono::Stmt::Let(mono::LetStmt { lhs, rhs })
+        }
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
             mono::Stmt::Assign(mono::AssignStmt {
-                lhs: mono_l_expr(lhs, ty_map, poly_pgm, mono_pgm),
-                rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm),
+                lhs: mono_l_expr(lhs, ty_map, poly_pgm, mono_pgm, locals),
+                rhs: mono_l_expr(rhs, ty_map, poly_pgm, mono_pgm, locals),
                 op: *op,
             })
         }
 
-        ast::Stmt::Expr(expr) => mono::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
+        ast::Stmt::Expr(expr) => {
+            mono::Stmt::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
+        }
 
         ast::Stmt::For(ast::ForStmt {
             label: _,
@@ -502,11 +513,19 @@ fn mono_stmt(
                 loc,
             );
 
+            let expr = expr.map_as_ref(|expr_| {
+                mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc)
+            });
+
+            locals.enter();
+            let pat = mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals);
+            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
+            locals.exit();
+
             mono::Stmt::For(mono::ForStmt {
-                pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
-                expr: expr
-                    .map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc)),
-                body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+                pat,
+                expr,
+                body,
                 iter_ty: mono_iter_ty,
                 item_ty: mono_item_ty,
             })
@@ -515,8 +534,8 @@ fn mono_stmt(
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
             mono::Stmt::While(mono::WhileStmt {
                 label: label.clone(),
-                cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
-                body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+                cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm, locals),
+                body: mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals),
             })
         }
 
@@ -525,12 +544,19 @@ fn mono_stmt(
             pat,
             cond,
             body,
-        }) => mono::Stmt::WhileLet(mono::WhileLetStmt {
-            label: label.clone(),
-            pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm),
-            cond: mono_l_expr(cond, ty_map, poly_pgm, mono_pgm),
-            body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
-        }),
+        }) => {
+            let cond = mono_l_expr(cond, ty_map, poly_pgm, mono_pgm, locals);
+            locals.enter();
+            let pat = mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals);
+            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
+            locals.exit();
+            mono::Stmt::WhileLet(mono::WhileLetStmt {
+                label: label.clone(),
+                pat,
+                cond,
+                body,
+            })
+        }
     }
 }
 
@@ -540,18 +566,21 @@ fn mono_expr(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
     loc: &ast::Loc,
 ) -> mono::Expr {
     match expr {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
-            let poly_decl = match poly_pgm.top.get(var) {
-                Some(poly_decl) => poly_decl,
-                None => {
-                    // Local variable, cannot be polymorphic.
-                    assert!(ty_args.is_empty());
-                    return mono::Expr::LocalVar(var.clone());
-                }
-            };
+            if locals.is_bound(var) {
+                // Local variable, cannot be polymorphic.
+                assert!(ty_args.is_empty());
+                return mono::Expr::LocalVar(var.clone());
+            }
+
+            let poly_decl = poly_pgm
+                .top
+                .get(var)
+                .unwrap_or_else(|| panic!("{}: Unbound variable {}", loc_display(loc), var));
 
             let mono_ty_args = ty_args
                 .iter()
@@ -587,7 +616,7 @@ fn mono_expr(
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             mono::Expr::FieldSelect(mono::FieldSelectExpr {
-                object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm),
+                object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
                 field: field.clone(),
             })
         }
@@ -606,7 +635,7 @@ fn mono_expr(
 
             mono_method(method_ty_id, method, &mono_ty_args, poly_pgm, mono_pgm, loc);
 
-            let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm);
+            let mono_object = mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals);
 
             let _mono_object_ty =
                 mono_tc_ty(object_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
@@ -698,12 +727,12 @@ fn mono_expr(
         ast::Expr::Self_ => mono::Expr::Self_,
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => mono::Expr::Call(mono::CallExpr {
-            fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm),
+            fun: mono_bl_expr(fun, ty_map, poly_pgm, mono_pgm, locals),
             args: args
                 .iter()
                 .map(|ast::CallArg { name, expr }| mono::CallArg {
                     name: name.clone(),
-                    expr: mono_l_expr(expr, ty_map, poly_pgm, mono_pgm),
+                    expr: mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
                 })
                 .collect(),
         }),
@@ -713,31 +742,32 @@ fn mono_expr(
                 .iter()
                 .map(|part| match part {
                     StringPart::Str(str) => mono::StringPart::Str(str.clone()),
-                    StringPart::Expr(expr) => {
-                        mono::StringPart::Expr(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm))
-                    }
+                    StringPart::Expr(expr) => mono::StringPart::Expr(mono_l_expr(
+                        expr, ty_map, poly_pgm, mono_pgm, locals,
+                    )),
                 })
                 .collect(),
         ),
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             mono::Expr::BinOp(mono::BinOpExpr {
-                left: mono_bl_expr(left, ty_map, poly_pgm, mono_pgm),
-                right: mono_bl_expr(right, ty_map, poly_pgm, mono_pgm),
+                left: mono_bl_expr(left, ty_map, poly_pgm, mono_pgm, locals),
+                right: mono_bl_expr(right, ty_map, poly_pgm, mono_pgm, locals),
                 op: *op,
             })
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr }) => mono::Expr::UnOp(mono::UnOpExpr {
             op: op.clone(),
-            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm),
+            expr: mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
         ast::Expr::Record(fields) => mono::Expr::Record(
             fields
                 .iter()
                 .map(|named_field| {
-                    named_field.map_as_ref(|field| mono_l_expr(field, ty_map, poly_pgm, mono_pgm))
+                    named_field
+                        .map_as_ref(|field| mono_l_expr(field, ty_map, poly_pgm, mono_pgm, locals))
                 })
                 .collect(),
         ),
@@ -747,18 +777,20 @@ fn mono_expr(
                 id: id.clone(),
                 args: args
                     .iter()
-                    .map(|arg| arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm)))
+                    .map(|arg| {
+                        arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm, locals))
+                    })
                     .collect(),
             })
         }
 
         ast::Expr::Return(expr) => {
-            mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm))
+            mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
         }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
             mono::Expr::Match(mono::MatchExpr {
-                scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm),
+                scrutinee: mono_bl_expr(scrutinee, ty_map, poly_pgm, mono_pgm, locals),
                 alts: alts
                     .iter()
                     .map(
@@ -766,12 +798,17 @@ fn mono_expr(
                              pattern,
                              guard,
                              rhs,
-                         }| mono::Alt {
-                            pattern: mono_l_pat(pattern, ty_map, poly_pgm, mono_pgm),
-                            guard: guard
-                                .as_ref()
-                                .map(|expr| mono_l_expr(expr, ty_map, poly_pgm, mono_pgm)),
-                            rhs: mono_lstmts(rhs, ty_map, poly_pgm, mono_pgm),
+                         }| {
+                            locals.enter();
+                            let alt = mono::Alt {
+                                pattern: mono_l_pat(pattern, ty_map, poly_pgm, mono_pgm, locals),
+                                guard: guard.as_ref().map(|expr| {
+                                    mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)
+                                }),
+                                rhs: mono_l_stmts(rhs, ty_map, poly_pgm, mono_pgm, locals),
+                            };
+                            locals.exit();
+                            alt
                         },
                     )
                     .collect(),
@@ -786,20 +823,28 @@ fn mono_expr(
                 .iter()
                 .map(|(expr, stmts)| {
                     (
-                        mono_l_expr(expr, ty_map, poly_pgm, mono_pgm),
-                        mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm),
+                        mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals),
+                        mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals),
                     )
                 })
                 .collect(),
             else_branch: else_branch
                 .as_ref()
-                .map(|stmts| mono_lstmts(stmts, ty_map, poly_pgm, mono_pgm)),
+                .map(|stmts| mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals)),
         }),
 
         ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
             assert!(sig.context.type_params.is_empty());
             assert!(matches!(sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
+
+            locals.enter();
+            sig.params
+                .iter()
+                .for_each(|(arg, _)| locals.insert(arg.clone()));
+            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
+            locals.exit();
+
             mono::Expr::Fn(mono::FnExpr {
                 sig: mono::FunSig {
                     self_: mono::SelfParam::No,
@@ -811,7 +856,7 @@ fn mono_expr(
                     return_ty: mono_opt_l_ty(&sig.return_ty, ty_map, poly_pgm, mono_pgm),
                     exceptions: mono_opt_l_ty(&sig.exceptions, ty_map, poly_pgm, mono_pgm),
                 },
-                body: mono_lstmts(body, ty_map, poly_pgm, mono_pgm),
+                body,
             })
         }
     }
@@ -918,7 +963,14 @@ fn mono_method(
                     None => return,
                 };
 
-                let mono_body = mono_lstmts(body, &substs, poly_pgm, mono_pgm);
+                let mut locals: ScopeSet<Id> = Default::default();
+                method
+                    .sig
+                    .params
+                    .iter()
+                    .for_each(|(id, _)| locals.insert(id.clone()));
+
+                let mono_body = mono_l_stmts(body, &substs, poly_pgm, mono_pgm, &mut locals);
 
                 mono_pgm
                     .associated
@@ -1007,7 +1059,14 @@ fn mono_method(
             None => return,
         };
 
-        let mono_body = mono_lstmts(body, &ty_map, poly_pgm, mono_pgm);
+        let mut locals: ScopeSet<Id> = Default::default();
+        method
+            .sig
+            .params
+            .iter()
+            .for_each(|(id, _)| locals.insert(id.clone()));
+
+        let mono_body = mono_l_stmts(body, &ty_map, poly_pgm, mono_pgm, &mut locals);
 
         mono_pgm
             .associated
@@ -1025,16 +1084,17 @@ fn mono_method(
     panic!("Type {} is not a trait or type", method_ty_id)
 }
 
-fn mono_lstmts(
+fn mono_l_stmts(
     lstmts: &[ast::L<ast::Stmt>],
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> Vec<ast::L<mono::Stmt>> {
     lstmts
         .iter()
         .map(|lstmt| {
-            lstmt.map_as_ref(|stmt| mono_stmt(stmt, ty_map, poly_pgm, mono_pgm, &lstmt.loc))
+            lstmt.map_as_ref(|stmt| mono_stmt(stmt, ty_map, poly_pgm, mono_pgm, locals, &lstmt.loc))
         })
         .collect()
 }
@@ -1044,8 +1104,11 @@ fn mono_bl_expr(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> Box<ast::L<mono::Expr>> {
-    Box::new(expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc)))
+    Box::new(
+        expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc)),
+    )
 }
 
 fn mono_l_expr(
@@ -1053,8 +1116,9 @@ fn mono_l_expr(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> ast::L<mono::Expr> {
-    expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, &expr.loc))
+    expr.map_as_ref(|expr_| mono_expr(expr_, ty_map, poly_pgm, mono_pgm, locals, &expr.loc))
 }
 
 fn mono_pat(
@@ -1062,10 +1126,12 @@ fn mono_pat(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> mono::Pat {
     match pat {
         ast::Pat::Var(ast::VarPat { var, ty }) => {
             let mono_ty = mono_tc_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm);
+            locals.insert(var.clone());
             mono::Pat::Var(mono::VarPat {
                 var: var.clone(),
                 ty: mono_ty,
@@ -1078,11 +1144,14 @@ fn mono_pat(
 
         ast::Pat::Char(c) => mono::Pat::Char(*c),
 
-        ast::Pat::StrPfx(pfx, var) => mono::Pat::StrPfx(pfx.clone(), var.clone()),
+        ast::Pat::StrPfx(pfx, var) => {
+            locals.insert(var.clone());
+            mono::Pat::StrPfx(pfx.clone(), var.clone())
+        }
 
         ast::Pat::Or(pat1, pat2) => mono::Pat::Or(
-            mono_bl_pat(pat1, ty_map, poly_pgm, mono_pgm),
-            mono_bl_pat(pat2, ty_map, poly_pgm, mono_pgm),
+            mono_bl_pat(pat1, ty_map, poly_pgm, mono_pgm, locals),
+            mono_bl_pat(pat2, ty_map, poly_pgm, mono_pgm, locals),
         ),
 
         ast::Pat::Constr(ast::ConstrPattern {
@@ -1106,7 +1175,7 @@ fn mono_pat(
 
             let mono_fields: Vec<ast::Named<ast::L<mono::Pat>>> = fields
                 .iter()
-                .map(|field| mono_named_l_pat(field, ty_map, poly_pgm, mono_pgm))
+                .map(|field| mono_named_l_pat(field, ty_map, poly_pgm, mono_pgm, locals))
                 .collect();
 
             mono::Pat::Constr(mono::ConstrPattern {
@@ -1122,7 +1191,7 @@ fn mono_pat(
         ast::Pat::Record(fields) => mono::Pat::Record(
             fields
                 .iter()
-                .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm))
+                .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm, locals))
                 .collect(),
         ),
 
@@ -1133,7 +1202,7 @@ fn mono_pat(
                     .iter()
                     .map(|ast::Named { name, node }| ast::Named {
                         name: name.clone(),
-                        node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm),
+                        node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm, locals),
                     })
                     .collect(),
             })
@@ -1146,8 +1215,9 @@ fn mono_l_pat(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> ast::L<mono::Pat> {
-    pat.map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm))
+    pat.map_as_ref(|pat| mono_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
 fn mono_bl_pat(
@@ -1155,8 +1225,9 @@ fn mono_bl_pat(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> Box<ast::L<mono::Pat>> {
-    Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
+    Box::new(mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
 fn mono_named_l_pat(
@@ -1164,8 +1235,9 @@ fn mono_named_l_pat(
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
+    locals: &mut ScopeSet<Id>,
 ) -> ast::Named<ast::L<mono::Pat>> {
-    pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm))
+    pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
 fn mono_self_param(
