@@ -10,9 +10,9 @@ pub fn add_missing_type_params(pgm: &mut ast::Module) {
                 add_missing_type_params_fun(&mut decl.node.sig, &mut Default::default(), &decl.loc)
             }
 
-            ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node),
+            ast::TopDecl::Impl(decl) => add_missing_type_params_impl(&mut decl.node, &decl.loc),
 
-            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node),
+            ast::TopDecl::Trait(decl) => add_missing_type_params_trait(&mut decl.node, &decl.loc),
 
             ast::TopDecl::Type(decl) => add_missing_type_params_type(&mut decl.node),
 
@@ -65,7 +65,7 @@ fn add_missing_type_params_fun(
     }
 }
 
-fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
+fn add_missing_type_params_impl(decl: &mut ast::ImplDecl, _loc: &ast::Loc) {
     assert!(decl.context.type_params.is_empty()); // first time visiting this impl
 
     let mut impl_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();
@@ -77,11 +77,6 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     for ty in &decl.tys {
         collect_tvs(&ty.node, &ty.loc, &mut impl_context_var_kinds);
     }
-
-    // Default kinds before checking functions.
-    impl_context_var_kinds
-        .values_mut()
-        .for_each(|kind| *kind = Some(kind.clone().unwrap_or(Kind::Star)));
 
     let impl_context_vars: OrderSet<Id> = impl_context_var_kinds.keys().cloned().collect();
 
@@ -95,13 +90,17 @@ fn add_missing_type_params_impl(decl: &mut ast::ImplDecl) {
     decl.context.type_params = impl_context_vars
         .into_iter()
         .map(|id| {
-            let kind = impl_context_var_kinds.get(&id).unwrap().clone().unwrap();
+            let kind = impl_context_var_kinds
+                .get(&id)
+                .unwrap()
+                .clone()
+                .unwrap_or(Kind::Star);
             (id, kind)
         })
         .collect();
 }
 
-fn add_missing_type_params_trait(decl: &mut ast::TraitDecl) {
+fn add_missing_type_params_trait(decl: &mut ast::TraitDecl, _loc: &ast::Loc) {
     assert!(decl.type_param_kinds.is_empty());
 
     let mut trait_context_var_kinds: OrderMap<Id, Option<Kind>> = Default::default();

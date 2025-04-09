@@ -88,7 +88,7 @@ impl LoweredPgm {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        write!(buffer, "{}: ", local.name).unwrap();
+                        write!(buffer, "{}: {}: ", i, local.name).unwrap();
                         local.ty.print(buffer);
                     }
                     buffer.push('\n');

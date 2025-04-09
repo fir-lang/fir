@@ -433,18 +433,36 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
 
         let trait_con_id = &impl_decl.trait_.node.clone();
 
+        // Check that the trait in the impl block is really a trait.
+        if !tys
+            .get_con(trait_con_id)
+            .unwrap_or_else(|| panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id))
+            .is_trait()
+        {
+            panic!(
+                "{}: {} in impl declararation is not a trait",
+                loc_display(&decl.loc),
+                trait_con_id
+            );
+        }
+
+        // Check that the number of type parameters in the trait matches number of arguments in the
+        // impl.
+        // TODO: We should also check the kinds here.
+        let trait_arity = tys.get_con(trait_con_id).unwrap().arity();
+        if trait_arity as usize != impl_decl.tys.len() {
+            panic!(
+                "{}: Trait {} takes {} type arguments, but impl passes {}",
+                loc_display(&decl.loc),
+                trait_con_id,
+                trait_arity,
+                impl_decl.tys.len()
+            );
+        }
+
         // New scope for the context.
         assert_eq!(tys.len_scopes(), 1);
         tys.enter_scope();
-
-        /*
-        let impl_var_kinds: Map<Id, Kind> = impl_decl
-            .context
-            .type_params
-            .iter()
-            .map(|(param, kind)| (param.clone(), kind.clone()))
-            .collect();
-        */
 
         let _impl_context = convert_and_bind_context(
             &mut tys,
@@ -453,29 +471,14 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             &decl.loc,
         );
 
-        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap_or_else(|| {
-            panic!("{}: Unknown trait {}", loc_display(&decl.loc), trait_con_id)
-        });
-
+        let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
-
         let trait_methods = match &mut trait_ty_con.details {
             TyConDetails::Trait(TraitDetails { ref methods }) => methods,
-
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
-                panic!(
-                    "{}: {} in impl declararation is not a trait",
-                    loc_display(&decl.loc),
-                    trait_con_id
-                );
+                panic!() // checked above
             }
         };
-
-        // Type constructor of the type implementing the trait.
-        // TODO: We are passing empty con map here to avoid borrow checking issues. This will fail
-        // when the trait arugment is a type synonym, which we should reject anyway, but with a
-        // proper error message.
-        // let (self_ty_con, _) = impl_ty.con(&Default::default()).unwrap();
 
         for (method, method_decl) in trait_methods {
             if method_decl.fun_decl.node.body.is_none() {

@@ -710,8 +710,10 @@ fn eval<W: Write>(
                 },
 
                 HeapObj::Builtin(builtin) => panic!(
-                    "Trying to select field of {:?}, object addr = {}",
-                    builtin, object
+                    "{}: Trying to select field of {:?}, object addr = {}",
+                    loc_display(loc),
+                    builtin,
+                    object
                 ),
 
                 HeapObj::Variant(_) => panic!(),
@@ -1633,7 +1635,12 @@ fn call_builtin_fun<W: Write>(
             let idx = val_as_u32(args[1]);
             let array_len = val_as_u32(heap[array + 1]);
             if idx >= array_len {
-                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+                panic!(
+                    "{}: OOB array access (idx = {}, len = {})",
+                    loc_display(loc),
+                    idx,
+                    array_len
+                );
             }
             FunRet::Val(match Repr::from_mono_ty(t) {
                 Repr::U8 => {
@@ -1682,6 +1689,18 @@ fn call_builtin_fun<W: Write>(
             }
 
             FunRet::Val(pgm.unit_alloc)
+        }
+
+        BuiltinFunDecl::ReadFileUtf8 => {
+            debug_assert_eq!(args.len(), 1);
+            let path = args[0];
+            let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
+            let file_contents = std::fs::read_to_string(path_str).unwrap();
+            FunRet::Val(heap.allocate_str(
+                pgm.str_con_idx.as_u64(),
+                pgm.array_u8_con_idx.as_u64(),
+                file_contents.as_bytes(),
+            ))
         }
     }
 }

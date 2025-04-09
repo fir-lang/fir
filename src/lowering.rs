@@ -4,7 +4,7 @@
 pub mod printer;
 
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Named, UnOp, L};
+use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Loc, Named, UnOp, L};
 use crate::record_collector::{collect_records, RecordShape, VariantShape};
 
 use smol_str::SmolStr;
@@ -227,6 +227,8 @@ pub enum BuiltinFunDecl {
     ArraySet {
         t: mono::Type,
     },
+
+    ReadFileUtf8,
 }
 
 #[derive(Debug)]
@@ -584,7 +586,7 @@ pub struct FunScope {
 }
 
 impl FunScope {
-    fn use_var(&mut self, var: &Id) -> LocalIdx {
+    fn use_var(&mut self, var: &Id, _loc: &Loc) -> LocalIdx {
         // Check if bound.
         match self.bounds.get(var) {
             Some(idx) => *idx,
@@ -596,7 +598,7 @@ impl FunScope {
                     None => {
                         // Use the variable in the parent function so that the parent function will
                         // capture it if it needs to.
-                        let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var);
+                        let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var, _loc);
                         let var_ty: mono::Type = self.parent_fun_scope.as_ref().unwrap().locals
                             [alloc_idx.as_usize()]
                         .ty
@@ -979,6 +981,14 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         // prim throw(exn: [..r]): {..r} a
                         assert_eq!(fun_ty_args.len(), 2); // r, a
                         lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Throw));
+                    }
+
+                    "readFileUtf8" => {
+                        // prim readFileUtf8(path: Str): Str
+                        assert_eq!(fun_ty_args.len(), 1); // exception
+                        lowered_pgm
+                            .funs
+                            .push(Fun::Builtin(BuiltinFunDecl::ReadFileUtf8));
                     }
 
                     other => {
@@ -1641,13 +1651,13 @@ fn lower_l_stmt(
 
 fn lower_expr(
     expr: &mono::Expr,
-    _loc: &mono::Loc,
+    loc: &mono::Loc,
     closures: &mut Vec<Closure>,
     indices: &mut Indices,
     scope: &mut FunScope,
 ) -> Expr {
     match expr {
-        mono::Expr::LocalVar(var) => Expr::LocalVar(scope.use_var(var)),
+        mono::Expr::LocalVar(var) => Expr::LocalVar(scope.use_var(var, loc)),
 
         mono::Expr::TopVar(mono::VarExpr { id, ty_args }) => {
             Expr::TopVar(*indices.funs.get(id).unwrap().get(ty_args).unwrap())
@@ -1837,19 +1847,24 @@ fn lower_expr(
             branches: branches
                 .iter()
                 .map(|(cond, rhs)| {
-                    (
-                        lower_l_expr(cond, closures, indices, scope),
-                        rhs.iter()
-                            .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
-                            .collect(),
-                    )
+                    let cond = lower_l_expr(cond, closures, indices, scope);
+                    scope.bounds.enter();
+                    let rhs = rhs
+                        .iter()
+                        .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
+                        .collect();
+                    scope.bounds.exit();
+                    (cond, rhs)
                 })
                 .collect(),
             else_branch: else_branch.as_ref().map(|stmts| {
-                stmts
+                scope.bounds.enter();
+                let stmts = stmts
                     .iter()
                     .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
-                    .collect()
+                    .collect();
+                scope.bounds.exit();
+                stmts
             }),
         }),
 
