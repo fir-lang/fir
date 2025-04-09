@@ -1,7 +1,7 @@
 trait Iterator[iter, item, errs]:
     next(self: iter): {..errs} Option[item]
 
-    map(self: iter, f: Fn(item): b): {..errs} Map[iter, item, b]
+    map(self: iter, f: Fn(item): {..errs} b): {..errs2} Map[iter, item, b, errs]
         Map(iter = self, f = f)
 
     peekable(self: iter): {..errs} Peekable[iter, item]
@@ -42,12 +42,12 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, errs]:
             self.current = self.current.step()
             Option.Some(current)
 
-type Map[iter, a, b]:
+type Map[iter, a, b, errs]:
     iter: iter
-    f: Fn(a): b
+    f: Fn(a): {..errs} b
 
-impl[Iterator[iter, a, errs]] Iterator[Map[iter, a, b], b, errs]:
-    next(self: Map[iter, a, b]): {..errs} Option[b]
+impl[Iterator[iter, a, errs]] Iterator[Map[iter, a, b, errs], b, errs]:
+    next(self: Map[iter, a, b, errs]): {..errs} Option[b]
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
@@ -65,7 +65,7 @@ impl[Iterator[iter, item, errs]] Iterator[Peekable[iter, item], item, errs]:
             Option.None:
                 self.iter.next()
 
-Peekable.peek[Iterator[iter, item]](self: Peekable[iter, item]): Option[item]
+Peekable.peek[Iterator[iter, item, errs]](self: Peekable[iter, item]): {..errs} Option[item]
     match self.peeked:
         Option.Some(peeked):
             Option.Some(peeked)
