@@ -1,10 +1,10 @@
-trait Iterator[iter, item]:
-    next(self: iter): Option[item]
+trait Iterator[iter, item, errs]:
+    next(self: iter): {..errs} Option[item]
 
-    map(self: iter, f: Fn(item): b): Map[iter, item, b]
+    map(self: iter, f: Fn(item): b): {..errs} Map[iter, item, b]
         Map(iter = self, f = f)
 
-    peekable(self: iter): Peekable[iter, item]
+    peekable(self: iter): {..errs} Peekable[iter, item]
         Peekable(iter = self, peeked = Option.None)
 
 trait Step[t]:
@@ -20,8 +20,8 @@ type RangeIterator[t]:
     current: t
     end: t
 
-impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t]:
-    next(self: RangeIterator[t]): Option[t]
+impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, errs]:
+    next(self: RangeIterator[t]): {..errs} Option[t]
         if self.current >= self.end:
             Option.None
         else:
@@ -33,8 +33,8 @@ type InclusiveRangeIterator[t]:
     current: t
     end: t
 
-impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t]:
-    next(self: InclusiveRangeIterator[t]): Option[t]
+impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, errs]:
+    next(self: InclusiveRangeIterator[t]): {..errs} Option[t]
         if self.current > self.end:
             Option.None
         else:
@@ -46,8 +46,8 @@ type Map[iter, a, b]:
     iter: iter
     f: Fn(a): b
 
-impl[Iterator[iter, a]] Iterator[Map[iter, a, b], b]:
-    next(self: Map[iter, a, b]): Option[b]
+impl[Iterator[iter, a, errs]] Iterator[Map[iter, a, b], b, errs]:
+    next(self: Map[iter, a, b]): {..errs} Option[b]
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
@@ -56,8 +56,8 @@ type Peekable[iter, item]:
     iter: iter
     peeked: Option[item]
 
-impl[Iterator[iter, item]] Iterator[Peekable[iter, item], item]:
-    next(self: Peekable[iter, item]): Option[item]
+impl[Iterator[iter, item, errs]] Iterator[Peekable[iter, item], item, errs]:
+    next(self: Peekable[iter, item]): {..errs} Option[item]
         match self.peeked:
             Option.Some(peeked):
                 self.peeked = Option.None
