@@ -1,174 +1,4 @@
-# A self lexer.
-
-type Token:
-    kind: TokenKind
-    text: Str
-    byteIdx: U32
-
-impl ToStr[Token]:
-    toStr(self: Token): Str
-        "`self.kind.toStr()`(`self.byteIdx.toStr()`, \"`self.text`\")"
-
-type TokenKind:
-    # An identifier starting with an uppercase letter.
-    UpperId
-
-    # An identifier starting with a lowercase letter.
-    LowerId
-
-    # Keywords
-    As
-    Break
-    Continue
-    Elif
-    Else
-    Export
-    Fn_
-    UpperFn
-    For
-    If
-    Impl
-    Import
-    In
-    Jump
-    Let
-    Match
-    Prim
-    Return
-    Self_
-    Trait
-    Type
-    Var
-    While
-
-    # Delimiters
-    LParen
-    RParen
-    LBracket
-    RBracket
-    LBrace
-    RBrace
-    SingleQuote
-
-    # Punctuation
-    Colon
-    Comma
-    Dot
-    Backslash
-    Underscore
-
-    # Operators
-    Amp
-    AmpAmp
-    DotDot
-    DotDotEq
-    Eq
-    EqEq
-    Exclamation
-    ExclamationEq
-    LAngle
-    DoubleLAngle
-    LAngleEq
-    Minus
-    MinusEq
-    Pipe
-    PipePipe
-    Plus
-    PlusEq
-    RAngle
-    DoubleRAngle
-    RAngleEq
-    Star
-    StarEq
-
-    # Literals
-    String
-    Int(Option[IntKind])
-    HexInt(Option[IntKind])
-    BinInt(Option[IntKind])
-    Char(Char)
-
-impl ToStr[TokenKind]:
-    toStr(self: TokenKind): Str
-        match self:
-            TokenKind.UpperId: "UpperId"
-            TokenKind.LowerId: "LowerId"
-            TokenKind.As: "As"
-            TokenKind.Break: "Break"
-            TokenKind.Continue: "Continue"
-            TokenKind.Elif: "Elif"
-            TokenKind.Else: "Else"
-            TokenKind.Export: "Export"
-            TokenKind.Fn_: "Fn"
-            TokenKind.UpperFn: "UpperFn"
-            TokenKind.For: "For"
-            TokenKind.If: "If"
-            TokenKind.Impl: "Impl"
-            TokenKind.Import: "Import"
-            TokenKind.In: "In"
-            TokenKind.Jump: "Jump"
-            TokenKind.Let: "Let"
-            TokenKind.Match: "Match"
-            TokenKind.Prim: "Prim"
-            TokenKind.Return: "Return"
-            TokenKind.Self_: "Self"
-            TokenKind.Trait: "Trait"
-            TokenKind.Type: "Type"
-            TokenKind.Var: "Var"
-            TokenKind.While: "While"
-            TokenKind.LParen: "LParen"
-            TokenKind.RParen: "RParen"
-            TokenKind.LBracket: "LBracket"
-            TokenKind.RBracket: "RBracket"
-            TokenKind.LBrace: "LBrace"
-            TokenKind.RBrace: "RBrace"
-            TokenKind.SingleQuote: "SingleQuote"
-            TokenKind.Colon: "Colon"
-            TokenKind.Comma: "Comma"
-            TokenKind.Dot: "Dot"
-            TokenKind.Backslash: "Backslash"
-            TokenKind.Underscore: "Underscore"
-            TokenKind.Amp: "Amp"
-            TokenKind.AmpAmp: "AmpAmp"
-            TokenKind.DotDot: "DotDot"
-            TokenKind.DotDotEq: "DotDotEq"
-            TokenKind.Eq: "Eq"
-            TokenKind.EqEq: "EqEq"
-            TokenKind.Exclamation: "Exclamation"
-            TokenKind.ExclamationEq: "ExclamationEq"
-            TokenKind.LAngle: "LAngle"
-            TokenKind.DoubleLAngle: "DoubleLAngle"
-            TokenKind.LAngleEq: "LAngleEq"
-            TokenKind.Minus: "Minus"
-            TokenKind.MinusEq: "MinusEq"
-            TokenKind.Pipe: "Pipe"
-            TokenKind.PipePipe: "PipePipe"
-            TokenKind.Plus: "Plus"
-            TokenKind.PlusEq: "PlusEq"
-            TokenKind.RAngle: "RAngle"
-            TokenKind.DoubleRAngle: "DoubleRAngle"
-            TokenKind.RAngleEq: "RAngleEq"
-            TokenKind.Star: "Star"
-            TokenKind.StarEq: "StarEq"
-            TokenKind.String: "String"
-            TokenKind.Int(kind): "Int(`kind.toStr()`)"
-            TokenKind.HexInt(kind): "HexInt(`kind.toStr()`)"
-            TokenKind.BinInt(kind): "BinInt(`kind.toStr()`)"
-            TokenKind.Char(char): "Char(`char.toStr()`)"
-
-type IntKind:
-    I8
-    U8
-    I32
-    U32
-
-impl ToStr[IntKind]:
-    toStr(self: IntKind): Str
-        match self:
-            IntKind.I8: "I8"
-            IntKind.U8: "U8"
-            IntKind.I32: "I32"
-            IntKind.U32: "U32"
+import Token
 
 type Lexer:
     _input: Str
@@ -491,7 +321,7 @@ Lexer.next(self): {LexerError(error: Str), ..r} Option[Token]
 
             if uppercaseId || lowercaseId:
                 let endIdx = self._byteIdx + 1
-                while self._input.len() > endIdx && isIdCont(self._input.charAt(endIdx)):
+                while self._input.len() > endIdx && _isIdCont(self._input.charAt(endIdx)):
                     endIdx += 1
                 let id = self._input.substr(self._byteIdx, endIdx)
                 let kind = if uppercaseId:
@@ -593,7 +423,7 @@ Lexer._skipMultiLineComment(self): {LexerError(error: Str), ..r}
 
     throw(~LexerError(error = "unterminated multi-line comment"))
 
-isIdCont(c: Char): Bool
+_isIdCont(c: Char): Bool
     c.isAsciiAlphanumeric() || c == '_'
 
 tokenize(input: Str): (tokens: Vec[Token], error: Option[(error: Str)])
@@ -605,13 +435,3 @@ tokenize(input: Str): (tokens: Vec[Token], error: Option[(error: Str)])
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(~LexerError(error = error)): return (tokens = tokens, error = Option.Some((error = error)))
     (tokens = tokens, error = Option.None)
-
-main(args: Array[Str])
-    let filePath = args.get(1)
-    let fileContents = readFileUtf8(filePath)
-    let (tokens = tokens, error = error) = tokenize(fileContents)
-    for token: Token in tokens.iter():
-        printStr(token.toStr())
-    match error:
-        Option.Some((error = error)): printStr("ERROR: `error`")
-        Option.None: ()
