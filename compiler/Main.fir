@@ -1,3 +1,4 @@
+import Ast
 import Lexer
 
 main(args: Array[Str])
