@@ -430,11 +430,82 @@ Lexer.next(self): {LexerError(error: Str), ..r} Option[Token]
         ########################################################################################
         # Literals
 
-        "\"" _:
+        "\"" rest:
             return Option.Some(self._string())
 
-        "'" _:
+        "'" rest:
             return Option.Some(self._char())
+
+        "0b" rest:
+            panic("TODO")
+
+        "0x" rest:
+            panic("TODO")
+
+        other:
+            let c = self._nextChar()
+
+            if c.isAsciiDigit():
+                let digitsStart = self._byteIdx
+                self._byteIdx += 1
+
+                let digitsEnd = self._byteIdx
+                while digitsEnd < self._input.len():
+                    let c = self._input.charAt(digitsEnd)
+                    if c != '_' && !c.isAsciiDigit():
+                        break
+                    digitsEnd += 1
+
+                self._byteIdx = digitsEnd
+
+                # Check type suffix
+                let rest = self._input.substr(digitsEnd, self._input.len())
+                let typeSuffix = IntKind.U32
+                match rest:
+                    "u8" rest:
+                        typeSuffix = IntKind.U8
+                        byteIdx += 2
+                    "i8" rest:
+                        typeSuffix = IntKind.I8
+                        byteIdx += 2
+                    "u32" rest:
+                        typeSuffix = IntKind.U32
+                        byteIdx += 3
+                    "i32" rest:
+                        typeSuffix = IntKind.I32
+                        byteIdx += 3
+                    _:
+                        ()
+
+                return Option.Some(Token(
+                    kind = TokenKind.Int(Option.Some(typeSuffix)),
+                    text = self._input.substr(digitsStart, digitsEnd),
+                    byteIdx = byteIdx,
+                ))
+
+            let uppercaseId = c.isAsciiUppercase()
+
+            # TODO: This is a bug in the Rust lexer as well: we should _a
+            # should be lowercase, _A should be uppercase.
+            let lowercaseId = c.isAsciiLowercase() || c == '_'
+
+            if uppercaseId || lowercaseId:
+                let endIdx = self._byteIdx + 1
+                while self._input.len() > endIdx && isIdCont(self._input.charAt(endIdx)):
+                    endIdx += 1
+                let id = self._input.substr(self._byteIdx, endIdx)
+                let kind = if uppercaseId:
+                    TokenKind.UpperId
+                else:
+                    TokenKind.LowerId
+                self._byteIdx = endIdx
+                return Option.Some(Token(
+                    kind = kind,
+                    text = id,
+                    byteIdx = byteIdx
+                ))
+
+            panic("TODO: `c.toStr()` at `byteIdx.toStr()`")
 
     throw(~LexerError(error = "unterminated string"))
 
@@ -482,25 +553,25 @@ Lexer._string(self): {LexerError(error: Str), ..errs} Token
 
 # NB. Initial '\'' should NOT be consumed.
 Lexer._char(self): {LexerError(error: Str), ..errs} Token
-    let idx = self._byteIdx + 1
+    let idx = self._byteIdx
     self._byteIdx += 1
-    let char = match input.charAt(idx):
+    let char = match self._nextChar():
         '\\':
-            idx += 1
-            match input.charAt(idx):
+            self._byteIdx += 1
+            match self._nextChar():
                 '\'': '\''
                 '\\': '\\'
                 'n': '\n'
                 't': '\t'
                 'r': '\r'
-                other: panic("Invalid escape character in character literal at `idx.toStr()`")
+                other: throw(~LexerError(error = "invalid escape character in character literal: '`other.toStr()`'"))
         c: c
-    idx += 1
-    if input.charAt(idx) != '\'':
-        panic("Unterminated character literal at `idx.toStr()`")
+    self._byteIdx += 1
+    if self._nextChar() != '\'':
+        throw(~LexerError(error = "unterminated character literal"))
 
-    tokens.push(Token(kind = TokenKind.Char(c), text = input.substr(byteIdx, idx + 1), byteIdx = byteIdx))
-    byteIdx = idx + 1
+    self._byteIdx += 1
+    Token(kind = TokenKind.Char(char), text = self._input.substr(idx, self._byteIdx), byteIdx = idx)
 
 Lexer._skipSingleLineComment(self)
     while self._byteIdx < self._input.len():
@@ -780,7 +851,7 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
             ########################################################################################
             # Literals
 
-            "\"" _:
+            "\"" rest:
                 let startIdx = byteIdx
                 byteIdx += 1
                 while byteIdx < input.len():
@@ -812,7 +883,7 @@ tokenize_(input: Str, byteIdx: U32, tokens: Vec[Token])
 
                 tokens.push(Token(kind = TokenKind.String, text = input.substr(startIdx, byteIdx), byteIdx = startIdx))
 
-            "'" _:
+            "'" rest:
                 let idx = byteIdx + 1
                 let char = match input.charAt(idx):
                     '\\':
