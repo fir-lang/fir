@@ -161,6 +161,7 @@ pub enum BuiltinFunDecl {
     BitOrU8,
     BitOrI32,
     BitOrU32,
+    BitXorU32,
     ToStrI8,
     ToStrU8,
     ToStrI32,
@@ -197,6 +198,7 @@ pub enum BuiltinFunDecl {
     U8Eq,
     I32Eq,
     U32Eq,
+    U32Mod,
 
     /// `prim throw(exn: [..r]): {..r} a`
     ///
@@ -1126,6 +1128,24 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             }
                         }
 
+                        ("BitXor", "__bitxor") => {
+                            assert_eq!(fun_ty_args.len(), 2); // self, exception
+                            match &fun_ty_args[0] {
+                                mono::Type::Named(mono::NamedType { name, args }) => {
+                                    match name.as_str() {
+                                        "U32" => {
+                                            assert!(args.is_empty());
+                                            lowered_pgm
+                                                .funs
+                                                .push(Fun::Builtin(BuiltinFunDecl::BitXorU32));
+                                        }
+                                        _ => panic!(),
+                                    }
+                                }
+                                _ => panic!(),
+                            }
+                        }
+
                         ("ToStr", "toStr") => {
                             assert_eq!(fun_ty_args.len(), 2); // self, exception
                             match &fun_ty_args[0] {
@@ -1172,6 +1192,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::U32AsI32));
+                        }
+
+                        ("U32", "mod") => {
+                            assert_eq!(fun_ty_args.len(), 1); // exception
+                            lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::U32Mod));
                         }
 
                         ("U8", "asU32") => {

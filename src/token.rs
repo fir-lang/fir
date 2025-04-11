@@ -70,6 +70,7 @@ pub enum TokenKind {
     Amp,
     AmpAmp,
     Caret,
+    CaretEq,
     DotDot,
     DotDotEq,
     Eq,

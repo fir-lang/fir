@@ -75,6 +75,7 @@ lexgen::lexer! {
         "+=" = TokenKind::PlusEq,
         "-=" = TokenKind::MinusEq,
         "*=" = TokenKind::StarEq,
+        "^=" = TokenKind::CaretEq,
         "+" = TokenKind::Plus,
         "-" = TokenKind::Minus,
         "*" = TokenKind::Star,

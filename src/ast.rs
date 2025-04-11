@@ -419,6 +419,7 @@ pub enum AssignOp {
     PlusEq,
     MinusEq,
     StarEq,
+    CaretEq,
 }
 
 #[derive(Debug, Clone)]

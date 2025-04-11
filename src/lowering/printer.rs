@@ -207,6 +207,7 @@ impl Stmt {
                     AssignOp::PlusEq => "+=",
                     AssignOp::MinusEq => "-=",
                     AssignOp::StarEq => "*=",
+                    AssignOp::CaretEq => "^=",
                 });
                 buffer.push(' ');
                 rhs.node.print(buffer, indent);
