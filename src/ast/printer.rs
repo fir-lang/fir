@@ -382,6 +382,7 @@ impl Stmt {
                     AssignOp::PlusEq => "+=",
                     AssignOp::MinusEq => "-=",
                     AssignOp::StarEq => "*=",
+                    AssignOp::CaretEq => "^=",
                 };
                 buffer.push(' ');
                 buffer.push_str(op_str);

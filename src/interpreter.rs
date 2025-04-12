@@ -1296,6 +1296,23 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(u32_as_val(val_as_u32(i1) | val_as_u32(i2)))
         }
 
+        BuiltinFunDecl::BitXorU32 => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            FunRet::Val(u32_as_val(val_as_u32(i1) ^ val_as_u32(i2)))
+        }
+
+        BuiltinFunDecl::U32Mod => {
+            debug_assert_eq!(args.len(), 2);
+            let i1 = args[0];
+            let i2 = args[1];
+            if i2 == 0 {
+                panic!("{}: Div by zero", loc_display(loc));
+            }
+            FunRet::Val(u32_as_val(val_as_u32(i1) % val_as_u32(i2)))
+        }
+
         BuiltinFunDecl::ToStrI8 => {
             debug_assert_eq!(args.len(), 1);
             let i = args[0];
@@ -1504,28 +1521,28 @@ fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 2);
             let i1 = args[0];
             let i2 = args[1];
-            FunRet::Val(i8_as_val(val_as_i8(i1) * val_as_i8(i2)))
+            FunRet::Val(i8_as_val(val_as_i8(i1).overflowing_mul(val_as_i8(i2)).0))
         }
 
         BuiltinFunDecl::U8Mul => {
             debug_assert_eq!(args.len(), 2);
             let i1 = args[0];
             let i2 = args[1];
-            FunRet::Val(u8_as_val(val_as_u8(i1) * val_as_u8(i2)))
+            FunRet::Val(u8_as_val(val_as_u8(i1).overflowing_mul(val_as_u8(i2)).0))
         }
 
         BuiltinFunDecl::I32Mul => {
             debug_assert_eq!(args.len(), 2);
             let i1 = args[0];
             let i2 = args[1];
-            FunRet::Val(i32_as_val(val_as_i32(i1) * val_as_i32(i2)))
+            FunRet::Val(i32_as_val(val_as_i32(i1).overflowing_mul(val_as_i32(i2)).0))
         }
 
         BuiltinFunDecl::U32Mul => {
             debug_assert_eq!(args.len(), 2);
             let i1 = args[0];
             let i2 = args[1];
-            FunRet::Val(u32_as_val(val_as_u32(i1) * val_as_u32(i2)))
+            FunRet::Val(u32_as_val(val_as_u32(i1).overflowing_mul(val_as_u32(i2)).0))
         }
 
         BuiltinFunDecl::I8Div => {

@@ -1,5 +1,6 @@
 import Char
 import Exn
+import HashMap
 import Iter
 import Num
 import Str
@@ -46,6 +47,10 @@ trait Eq[t]:
 # The `|` operator.
 trait BitOr[t]:
     __bitor(self: t, other: t): t
+
+# The `^` operator.
+trait BitXor[t]:
+    __bitxor(self: t, other: t): t
 
 # The `&` operator.
 trait BitAnd[t]:
@@ -163,3 +168,6 @@ impl ToStr[Bool]:
             Bool.False: "Bool.False"
 
 prim readFileUtf8(path: Str): Str
+
+trait Hash[t]:
+    hash(self: t): U32

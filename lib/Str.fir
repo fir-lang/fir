@@ -106,6 +106,15 @@ impl Eq[Str]:
 
         Bool.True
 
+impl Hash[Str]:
+    hash(self: Str): U32
+        let hash: U32 = 2166136261
+        for byteIdx: U32 in range(self._start, self._start + self._len):
+            let byte = self._bytes.get(byteIdx)
+            hash *= 16777619
+            hash ^= byte.asU32()
+        hash
+
 impl ToStr[Str]:
     toStr(self: Str): Str = self
 

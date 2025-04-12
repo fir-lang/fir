@@ -140,6 +140,8 @@ fn check_stmt(
                         ast::AssignOp::MinusEq => "__sub",
 
                         ast::AssignOp::StarEq => "__mul",
+
+                        ast::AssignOp::CaretEq => "__bitxor",
                     };
 
                     // `lhs.method(rhs)`
@@ -236,6 +238,8 @@ fn check_stmt(
                         ast::AssignOp::MinusEq => "__sub",
 
                         ast::AssignOp::StarEq => "__mul",
+
+                        ast::AssignOp::CaretEq => "__bitxor",
                     };
 
                     // `lhs.method(rhs)`

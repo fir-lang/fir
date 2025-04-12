@@ -69,6 +69,9 @@ impl BitAnd[U32]:
 impl BitOr[U32]:
     prim __bitor(self: U32, other: U32): U32
 
+impl BitXor[U32]:
+    prim __bitxor(self: U32, other: U32): U32
+
 impl Shl[U32]:
     prim __shl(self: U32, shift: U32): U32
 
@@ -80,6 +83,8 @@ impl ToStr[U32]:
 
 impl Step[U32]:
     step(self: U32): U32 = self + 1u32
+
+prim U32.mod(self: U32, rhs: U32): U32
 
 prim type I8
 
