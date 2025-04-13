@@ -530,6 +530,8 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .return_ty
                 .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
 
+            fun_decl.loc = decl.loc.clone();
+
             impl_decl.items.push(fun_decl);
         }
 
