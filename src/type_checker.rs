@@ -556,6 +556,11 @@ fn collect_schemes(
     let mut associated_fn_schemes: Map<Id, Map<Id, Scheme>> = Default::default();
     let mut method_schemes: Map<Id, Vec<(Id, Scheme)>> = Default::default();
 
+    // Unique variable generator, used in substitutions to rename domain variables before
+    // substitution to avoid capturing.
+    // TODO: This should be generalized and used in all substitutions.
+    let mut uniq_gen: u32 = 0;
+
     for decl in module {
         // New scope for type and function contexts.
         assert_eq!(tys.len_scopes(), 1);
@@ -1000,28 +1005,23 @@ fn collect_schemes(
                         })
                         .scheme;
 
-                    let mut trait_fun_scheme = trait_fun_scheme0.clone();
+                    let mut trait_fun_scheme = trait_fun_scheme0.rename_qvars(uniq_gen);
+
+                    let uniq = uniq_gen;
+                    uniq_gen += 1;
 
                     // Substitute trait arguments. Add free variables of the arguments to the
                     // context.
-
-                    /*
-                    // TODO: FIXME: Variables already bound in the trait type scheme should be renamed.
-                    let bound_vars: Set<&Id> = trait_fun_scheme
-                        .quantified_vars
-                        .iter()
-                        .map(|(id, _)| id)
-                        .collect();
-                    */
 
                     let mut arg_fvs: OrderMap<Id, Option<Kind>> = Default::default();
 
                     for ((ty_param, _), ty_arg) in
                         trait_ty_con.ty_params.iter().zip(impl_decl.node.tys.iter())
                     {
+                        let ty_param_renamed = rename_domain_var(ty_param, uniq);
                         kind_inference::collect_tvs(&ty_arg.node, &ty_arg.loc, &mut arg_fvs);
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
-                        trait_fun_scheme = trait_fun_scheme.subst(ty_param, &ty_arg);
+                        trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }
 
                     trait_fun_scheme.quantified_vars.splice(
@@ -1438,4 +1438,9 @@ fn resolve_preds(
             });
         }
     }
+}
+
+fn rename_domain_var(var: &Id, uniq: u32) -> Id {
+    // Add the comment character '#' to make sure it won't conflict with a user variable.
+    SmolStr::new(format!("{}#{}", var, uniq))
 }

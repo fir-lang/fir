@@ -2,7 +2,7 @@
 
 use crate::ast::{self, Id};
 use crate::collections::*;
-use crate::type_checker::loc_display;
+use crate::type_checker::{loc_display, rename_domain_var};
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -393,6 +393,40 @@ impl Scheme {
             &right_vars,
             loc,
         )
+    }
+
+    /// Rename the quantified variables in the scheme, adding the unique number to the names.
+    pub(super) fn rename_qvars(&self, uniq: u32) -> Scheme {
+        let mut subst_map: Map<Id, Ty> = Default::default();
+
+        let new_quantified_vars: Vec<(Id, Kind)> = self
+            .quantified_vars
+            .iter()
+            .map(|(qvar, kind)| {
+                let new_qvar = rename_domain_var(qvar, uniq);
+                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone()));
+                (new_qvar, kind.clone())
+            })
+            .collect();
+
+        Scheme {
+            quantified_vars: new_quantified_vars,
+            preds: self
+                .preds
+                .iter()
+                .map(|pred| Pred {
+                    trait_: pred.trait_.clone(),
+                    params: pred
+                        .params
+                        .iter()
+                        .map(|ty| ty.subst_qvars(&subst_map))
+                        .collect(),
+                    loc: pred.loc.clone(),
+                })
+                .collect(),
+            ty: self.ty.subst_qvars(&subst_map),
+            loc: self.loc.clone(),
+        }
     }
 }
 
