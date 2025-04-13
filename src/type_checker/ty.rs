@@ -361,7 +361,13 @@ impl Scheme {
             .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
-        assert_eq!(left_vars.len(), self.quantified_vars.len());
+        assert_eq!(
+            left_vars.len(),
+            self.quantified_vars.len(),
+            "{}: {:?}",
+            loc_display(loc),
+            self.quantified_vars,
+        );
 
         let right_vars: Map<Id, u32> = other
             .quantified_vars
@@ -370,7 +376,13 @@ impl Scheme {
             .map(|(i, (qvar, _))| (qvar.clone(), i as u32))
             .collect();
 
-        assert_eq!(right_vars.len(), other.quantified_vars.len());
+        assert_eq!(
+            right_vars.len(),
+            other.quantified_vars.len(),
+            "{}: {:?}",
+            loc_display(loc),
+            other.quantified_vars,
+        );
 
         ty_eq_modulo_alpha(
             cons,
