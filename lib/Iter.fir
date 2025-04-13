@@ -46,8 +46,10 @@ type Map[iter, a, b, errs]:
     iter: iter
     f: Fn(a): {..errs} b
 
-impl[Iterator[iter, a, errs]] Iterator[Map[iter, a, b, errs], b, errs]:
-    next(self: Map[iter, a, b, errs]): {..errs} Option[b]
+# BUG(#86): To work around substitution bugs, give quantified variables
+# different names than the quantified variables of `Iterator`.
+impl[Iterator[iter1, a1, errs1]] Iterator[Map[iter1, a1, b1, errs1], b1, errs1]:
+    next(self: Map[iter1, a1, b1, errs1]): {..errs1} Option[b1]
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
