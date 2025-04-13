@@ -11,5 +11,5 @@ main
         Result.Err(~E2): printStr("E2 caught")
 
 # expected stdout:
-# tests/Issue81.fir:8:5: Unexhaustive pattern match
+# tests/MonomorphiserShadowing.fir:8:5: Unexhaustive pattern match
 # E1 caught
