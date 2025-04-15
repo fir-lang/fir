@@ -189,6 +189,8 @@ struct TcFunState<'a> {
     /// After checking the body, these predicates should all be resolved by the function context and
     /// trait environment (in `PgmTypes`).
     preds: &'a mut Set<Pred>,
+
+    assumps: &'a Set<Pred>,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -1137,6 +1139,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         tys,
         preds: &mut preds,
         exceptions,
+        assumps: &assumps,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
@@ -1255,6 +1258,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 tys,
                 preds: &mut preds,
                 exceptions,
+                assumps: &assumps,
             };
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
@@ -1329,7 +1333,7 @@ fn resolve_preds(
         // Normalize to improve error messages.
         pred.params
             .iter_mut()
-            .for_each(|ty| *ty = ty.normalize(tys.tys.cons()));
+            .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons()));
 
         if pred.trait_ == "RecRow" {
             match &pred.params[0] {

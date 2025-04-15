@@ -7,6 +7,17 @@ trait Iterator[iter, item, errs]:
     peekable(self: iter): {..errs} Peekable[iter, item]
         Peekable(iter = self, peeked = Option.None)
 
+    mapResult(self: iter, f: Fn(Result[[..errsOld], Option[item]]): {..errsNew} Option[b]): MapResult[iter, item, b, errsOld, errsNew]
+        MapResult(iter = self, f = f)
+
+type MapResult[iter, item, b, varRowErrsOld, varRowErrsNew]:
+    iter: iter
+    f: Fn(Result[[..varRowErrsOld], Option[item]]): {..varRowErrsNew} Option[b]
+
+impl[Iterator[iter1, item1, varRowErrsOld1]] Iterator[MapResult[iter1, item1, b1, varRowErrsOld1, varRowErrsNew1], b1, varRowErrsNew1]:
+    next(self: MapResult[iter1, item1, b1, varRowErrsOld1, varRowErrsNew1]): {..varRowErrsNew1} Option[b1]
+        self.f(try(self.iter.next))
+
 trait Step[t]:
     step(self: t): t
 

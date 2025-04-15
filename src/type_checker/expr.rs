@@ -884,7 +884,7 @@ pub(super) fn check_expr(
             let new_preds: Set<Pred> = replace(tc_state.preds, old_preds);
             crate::type_checker::resolve_preds(
                 tc_state.trait_env,
-                &Default::default(), // assumptions
+                tc_state.assumps,
                 tc_state.tys,
                 new_preds,
                 tc_state.var_gen,
