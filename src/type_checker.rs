@@ -958,14 +958,7 @@ fn collect_schemes(
                     };
 
                     let impl_fun_scheme = Scheme {
-                        quantified_vars: impl_decl
-                            .node
-                            .context
-                            .type_params
-                            .iter()
-                            .cloned()
-                            .chain(fun.node.sig.context.type_params.iter().cloned())
-                            .collect(),
+                        quantified_vars: fun.node.sig.context.type_params.clone(),
                         preds: impl_assumps
                             .iter()
                             .cloned()
@@ -1023,13 +1016,6 @@ fn collect_schemes(
                         let ty_arg = convert_ast_ty(tys, &ty_arg.node, &ty_arg.loc);
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }
-
-                    trait_fun_scheme.quantified_vars.splice(
-                        0..0,
-                        arg_fvs
-                            .into_iter()
-                            .map(|(id, kind)| (id, kind.unwrap_or(Kind::Star))),
-                    );
 
                     if !trait_fun_scheme.eq_modulo_alpha(
                         tys.cons(),

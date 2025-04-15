@@ -799,20 +799,43 @@ impl Type {
                 None => Type::Var(var_.clone()),
             },
 
-            Type::Record { fields, extension } => Type::Record {
-                fields: fields
+            Type::Record { fields, extension } => {
+                let mut fields: Vec<Named<Type>> = fields
                     .iter()
                     .map(|Named { name, node }| Named {
                         name: name.clone(),
                         node: node.subst_ids(substs),
                     })
-                    .collect(),
-                // NB. This does not substitute row types.
-                extension: extension.clone(),
-            },
+                    .collect();
 
-            Type::Variant { alts, extension } => Type::Variant {
-                alts: alts
+                let mut extension = extension.clone();
+
+                if let Some(ext) = &extension {
+                    if let Some(ext_ty) = substs.get(ext) {
+                        match ext_ty {
+                            Type::Var(new_ext) => extension = Some(new_ext.clone()),
+
+                            Type::Record {
+                                fields: ext_fields,
+                                extension: new_ext,
+                            } => {
+                                fields.extend(ext_fields.iter().cloned());
+                                extension = new_ext.clone();
+                            }
+
+                            _ => panic!(
+                                "Weird substitution for record extension {}: {}",
+                                ext, ext_ty
+                            ),
+                        }
+                    };
+                }
+
+                Type::Record { fields, extension }
+            }
+
+            Type::Variant { alts, extension } => {
+                let mut alts: Vec<VariantAlt> = alts
                     .iter()
                     .map(|VariantAlt { con, fields }| VariantAlt {
                         con: con.clone(),
@@ -824,10 +847,33 @@ impl Type {
                             })
                             .collect(),
                     })
-                    .collect(),
-                // NB. This does not substitute row types.
-                extension: extension.clone(),
-            },
+                    .collect();
+
+                let mut extension = extension.clone();
+
+                if let Some(ext) = &extension {
+                    if let Some(ext_ty) = substs.get(ext) {
+                        match ext_ty {
+                            Type::Var(new_ext) => extension = Some(new_ext.clone()),
+
+                            Type::Variant {
+                                alts: ext_alts,
+                                extension: new_ext,
+                            } => {
+                                alts.extend(ext_alts.iter().cloned());
+                                extension = new_ext.clone();
+                            }
+
+                            _ => panic!(
+                                "Weird substitution for variant extension {}: {}",
+                                ext, ext_ty
+                            ),
+                        }
+                    }
+                }
+
+                Type::Variant { alts, extension }
+            }
 
             Type::Fn(FnType {
                 args,

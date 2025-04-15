@@ -519,19 +519,25 @@ fn ty_eq_modulo_alpha(
                 return true;
             }
 
-            let qvar1_idx = ty1_qvars.get(qvar1).unwrap_or_else(|| {
-                panic!(
-                    "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
-                    loc_display(loc), qvar1, ty1_qvars, extra_qvars
-                )
-            });
-            let qvar2_idx = ty2_qvars.get(qvar2).unwrap_or_else(|| {
-                panic!(
-                    "{}: BUG: ty_eq_modulo_alpha: Quantified type variable {:?} is not in the set {:?} or {:?}",
-                    loc_display(loc), qvar2, ty2_qvars, extra_qvars
-                )
-            });
-            qvar1_idx == qvar2_idx
+            let qvar1_idx = ty1_qvars.get(qvar1);
+            let qvar2_idx = ty2_qvars.get(qvar2);
+
+            match (qvar1_idx, qvar2_idx) {
+                (None, None) => qvar1 == qvar2,
+                (Some(idx1), Some(idx2)) => idx1 == idx2,
+                (Some(_), None) => panic!(
+                    "{}: BUG: QVar {} is quantified in the left type but not on the right",
+                    loc_display(loc),
+                    qvar1
+                ),
+                (None, Some(_)) => {
+                    panic!(
+                        "{}: BUG: QVar {} is quantified in the right type but not on the left",
+                        loc_display(loc),
+                        qvar2
+                    )
+                }
+            }
         }
 
         (
