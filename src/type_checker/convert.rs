@@ -46,7 +46,11 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             .unwrap_or_else(|| panic!("{}: Unknown type variable {}", loc_display(loc), var))
             .clone(),
 
-        ast::Type::Record { fields, extension } => {
+        ast::Type::Record {
+            fields,
+            extension,
+            is_row,
+        } => {
             let mut ty_fields: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::Named { name, node } in fields {
@@ -74,11 +78,15 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
                 kind: RecordOrVariant::Record,
-                is_row: false,
+                is_row: *is_row,
             }
         }
 
-        ast::Type::Variant { alts, extension } => {
+        ast::Type::Variant {
+            alts,
+            extension,
+            is_row,
+        } => {
             let mut ty_alts: TreeMap<Id, Ty> = TreeMap::new();
 
             for ast::VariantAlt { con, fields } in alts {
@@ -118,7 +126,7 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                     None => panic!("{}: Unbound type variable {}", loc_display(loc), var),
                 }),
                 kind: RecordOrVariant::Variant,
-                is_row: false,
+                is_row: *is_row,
             }
         }
 

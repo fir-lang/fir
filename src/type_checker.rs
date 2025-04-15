@@ -100,6 +100,7 @@ fn add_exception_types(module: &mut ast::Module) {
                             node: ast::Type::Variant {
                                 alts: Default::default(),
                                 extension: None,
+                                is_row: false,
                             },
                             loc: ast::Loc::dummy(),
                         });
@@ -141,6 +142,7 @@ fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
         node: ast::Type::Variant {
             alts: Default::default(),
             extension: Some(EXN_QVAR_ID),
+            is_row: false,
         },
         loc: ast::Loc {
             module,

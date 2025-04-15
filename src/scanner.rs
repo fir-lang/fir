@@ -76,8 +76,10 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
         last_loc = l;
 
         match token_kind {
-            TokenKind::LParen => delimiter_stack.push(Delimiter::Paren),
-            TokenKind::LBracket => delimiter_stack.push(Delimiter::Bracket),
+            TokenKind::LParen | TokenKind::LParenRow => delimiter_stack.push(Delimiter::Paren),
+            TokenKind::LBracket | TokenKind::LBracketRow => {
+                delimiter_stack.push(Delimiter::Bracket)
+            }
             TokenKind::LBrace => delimiter_stack.push(Delimiter::Brace),
 
             TokenKind::RParen => {

@@ -52,8 +52,10 @@ lexgen::lexer! {
 
         // Delimiters
         "(" = TokenKind::LParen,
+        "row(" = TokenKind::LParenRow,
         ")" = TokenKind::RParen,
         "[" = TokenKind::LBracket,
+        "row[" = TokenKind::LBracketRow,
         "]" = TokenKind::RBracket,
         "{" = TokenKind::LBrace,
         "}" = TokenKind::RBrace,

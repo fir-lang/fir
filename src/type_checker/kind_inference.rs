@@ -197,7 +197,11 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             tvs.entry(var.clone()).or_insert(None);
         }
 
-        ast::Type::Record { fields, extension } => {
+        ast::Type::Record {
+            fields,
+            extension,
+            is_row: _,
+        } => {
             for field in fields {
                 collect_tvs(&field.node, loc, tvs);
             }
@@ -215,7 +219,11 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             }
         }
 
-        ast::Type::Variant { alts, extension } => {
+        ast::Type::Variant {
+            alts,
+            extension,
+            is_row: _,
+        } => {
             for alt in alts {
                 for field in &alt.fields {
                     collect_tvs(&field.node, loc, tvs);

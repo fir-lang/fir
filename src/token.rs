@@ -51,8 +51,10 @@ pub enum TokenKind {
 
     // Delimiters
     LParen,
+    LParenRow,
     RParen,
     LBracket,
+    LBracketRow,
     RBracket,
     LBrace,
     RBrace,

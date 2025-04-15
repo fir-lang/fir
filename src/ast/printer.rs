@@ -215,8 +215,16 @@ impl Type {
 
             Type::Var(var) => buffer.push_str(var),
 
-            Type::Record { fields, extension } => {
-                buffer.push('(');
+            Type::Record {
+                fields,
+                extension,
+                is_row,
+            } => {
+                if *is_row {
+                    buffer.push_str("row(");
+                } else {
+                    buffer.push('(');
+                }
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
@@ -234,8 +242,16 @@ impl Type {
                 buffer.push(')');
             }
 
-            Type::Variant { alts, extension } => {
-                buffer.push('[');
+            Type::Variant {
+                alts,
+                extension,
+                is_row,
+            } => {
+                if *is_row {
+                    buffer.push_str("row[");
+                } else {
+                    buffer.push('[');
+                }
                 for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");

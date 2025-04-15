@@ -170,7 +170,15 @@ pub(super) fn unify(
         ) => {
             // TODO: Are these type errors or bugs?
             assert_eq!(kind1, kind2);
-            assert_eq!(is_row_1, is_row_2);
+
+            if is_row_1 != is_row_2 {
+                panic!(
+                    "{}: Unable to row type with *: {} ~ {}",
+                    loc_display(loc),
+                    ty1,
+                    ty2
+                );
+            }
 
             let (labels1, mut extension1) =
                 collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
