@@ -24,8 +24,10 @@ extern {
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
+        "row(" => Token { kind: TokenKind::LParenRow, .. },
         ")" => Token { kind: TokenKind::RParen, .. },
         "[" => Token { kind: TokenKind::LBracket, .. },
+        "row[" => Token { kind: TokenKind::LBracketRow, .. },
         "]" => Token { kind: TokenKind::RBracket, .. },
         "{" => Token { kind: TokenKind::LBrace, .. },
         "}" => Token { kind: TokenKind::RBrace, .. },
@@ -224,10 +226,16 @@ Type: Type = {
         }),
 
     "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
-        Type::Record { fields, extension },
+        Type::Record { fields, extension, is_row: false },
+
+    "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension, is_row: true },
 
     "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
-        Type::Variant { alts, extension, },
+        Type::Variant { alts, extension, is_row: false },
+
+    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, is_row: true },
 }
 
 TypeNamed: Type = {
@@ -416,13 +424,13 @@ ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
     => (None, None),
 
     ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, })), None),
+        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), None),
 
     ":" <ty:LType> =>
         (None, Some(ty)),
 
     ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" <ty:LType> =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, })), Some(ty)),
+        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), Some(ty)),
 }
 
 ParentTy: L<Id> = {

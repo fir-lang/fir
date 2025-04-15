@@ -183,12 +183,14 @@ pub enum Type {
     Record {
         fields: Vec<Named<Type>>,
         extension: Option<Id>,
+        is_row: bool,
     },
 
     /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
         alts: Vec<VariantAlt>,
         extension: Option<Id>,
+        is_row: bool,
     },
 
     /// A function type: `Fn(I32): Bool`.
@@ -799,7 +801,11 @@ impl Type {
                 None => Type::Var(var_.clone()),
             },
 
-            Type::Record { fields, extension } => {
+            Type::Record {
+                fields,
+                extension,
+                is_row,
+            } => {
                 let mut fields: Vec<Named<Type>> = fields
                     .iter()
                     .map(|Named { name, node }| Named {
@@ -818,7 +824,9 @@ impl Type {
                             Type::Record {
                                 fields: ext_fields,
                                 extension: new_ext,
+                                is_row,
                             } => {
+                                assert!(*is_row);
                                 fields.extend(ext_fields.iter().cloned());
                                 extension = new_ext.clone();
                             }
@@ -831,10 +839,18 @@ impl Type {
                     };
                 }
 
-                Type::Record { fields, extension }
+                Type::Record {
+                    fields,
+                    extension,
+                    is_row: *is_row,
+                }
             }
 
-            Type::Variant { alts, extension } => {
+            Type::Variant {
+                alts,
+                extension,
+                is_row,
+            } => {
                 let mut alts: Vec<VariantAlt> = alts
                     .iter()
                     .map(|VariantAlt { con, fields }| VariantAlt {
@@ -859,7 +875,9 @@ impl Type {
                             Type::Variant {
                                 alts: ext_alts,
                                 extension: new_ext,
+                                is_row,
                             } => {
+                                assert!(*is_row);
                                 alts.extend(ext_alts.iter().cloned());
                                 extension = new_ext.clone();
                             }
@@ -872,7 +890,11 @@ impl Type {
                     }
                 }
 
-                Type::Variant { alts, extension }
+                Type::Variant {
+                    alts,
+                    extension,
+                    is_row: *is_row,
+                }
             }
 
             Type::Fn(FnType {

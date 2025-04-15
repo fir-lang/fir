@@ -1331,6 +1331,7 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
             ast::Type::Record {
                 fields: fields1,
                 extension,
+                is_row: _, // TODO: Do we need to check this?
             },
             mono::Type::Record { fields: fields2 },
         ) => {
@@ -1591,7 +1592,13 @@ fn mono_ast_ty(
 
         ast::Type::Var(var) => ty_map.get(var).unwrap().clone(),
 
-        ast::Type::Record { fields, extension } => {
+        ast::Type::Record {
+            fields,
+            extension,
+            is_row,
+        } => {
+            assert!(!*is_row);
+
             let mut names: Set<&Id> = Default::default();
             for field in fields {
                 if let Some(name) = &field.name {
@@ -1623,7 +1630,13 @@ fn mono_ast_ty(
             mono::Type::Record { fields }
         }
 
-        ast::Type::Variant { alts, extension } => {
+        ast::Type::Variant {
+            alts,
+            extension,
+            is_row,
+        } => {
+            assert!(!*is_row);
+
             let mut cons: Set<&Id> = Default::default();
             for ast::VariantAlt { con, .. } in alts {
                 let new = cons.insert(con);
