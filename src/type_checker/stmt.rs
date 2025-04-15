@@ -312,10 +312,36 @@ fn check_stmt(
 
             *tc_ty = Some(item_ty_var.clone());
 
+            let call_site_exc_ty = &tc_state.exceptions;
+
+            let iter_trait_exc_ty_var = tc_state.var_gen.new_var(
+                level,
+                Kind::Row(RecordOrVariant::Variant),
+                expr.loc.clone(),
+            );
+
+            unify(
+                call_site_exc_ty,
+                &Ty::Anonymous {
+                    labels: Default::default(),
+                    extension: Some(Box::new(Ty::Var(iter_trait_exc_ty_var.clone()))),
+                    kind: RecordOrVariant::Variant,
+                    is_row: false,
+                },
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &expr.loc,
+            );
+
             // Add predicate `Iterator[iter, item]`.
             tc_state.preds.insert(Pred {
                 trait_: SmolStr::new_static("Iterator"),
-                params: vec![Ty::Var(iterator_ty_var.clone()), item_ty_var.clone()],
+                params: vec![
+                    Ty::Var(iterator_ty_var.clone()),
+                    item_ty_var.clone(),
+                    Ty::Var(iter_trait_exc_ty_var),
+                ],
                 loc: stmt.loc.clone(),
             });
 

@@ -42,9 +42,10 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, errs]:
             self.current = self.current.step()
             Option.Some(current)
 
-type Map[iter, a, b, errs]:
+# NOTE: The row type parameter needs to start with `recRow` to have kind `row(variant)`.
+type Map[iter, a, b, recRowErrs]:
     iter: iter
-    f: Fn(a): {..errs} b
+    f: Fn(a): {..recRowErrs} b
 
 # BUG(#86): To work around substitution bugs, give quantified variables
 # different names than the quantified variables of `Iterator`.
