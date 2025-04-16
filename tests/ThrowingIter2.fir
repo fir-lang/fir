@@ -48,18 +48,21 @@ main
     strings.push("4b")
     strings.push("")
 
-    let ret = try(fn(): {EmptyInput, Overflow} () {
-        for x: U32 in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
+    let iter: VecIter[Str] = strings.iter()
+
+    let ret: Result[[EmptyInput, Overflow], ()] = try(fn(): {EmptyInput, Overflow} () {
+        for x: U32 in iter.map(parseU32Exn).mapResult(handleInvalidDigit):
             printStr(x.toStr())
     })
 
     match ret:
-        Result.Ok(()) | Result.Err(~Overflow): printStr("WAT")
-        Result.Err(~EmptyInput): printStr("OK")
+        Result.Err(~EmptyInput): printStr("EmptyInput")
+        Result.Err(~Overflow): printStr("Overflow")
+        Result.Ok(()): printStr("OK")
 
 # expected stdout:
 # 1
 # 2
 # 3
 # 0
-# OK
+# EmptyInput
