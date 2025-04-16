@@ -7,7 +7,7 @@ trait Iterator[iter, item, errs]:
     peekable(self: iter): {..errs} Peekable[iter, item]
         Peekable(iter = self, peeked = Option.None)
 
-    mapResult(self: iter, f: Fn(Result[[..errsOld], Option[item]]): {..errsNew} Option[b]): MapResult[iter, item, b, errsOld, errsNew]
+    mapResult(self: iter, f: Fn(Result[[..errs], Option[item]]): {..errsNew} Option[b]): MapResult[iter, item, b, errs, errsNew]
         MapResult(iter = self, f = f)
 
 type MapResult[iter, item, b, varRowErrsOld, varRowErrsNew]:
