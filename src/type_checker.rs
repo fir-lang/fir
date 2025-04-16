@@ -189,6 +189,8 @@ struct TcFunState<'a> {
     /// After checking the body, these predicates should all be resolved by the function context and
     /// trait environment (in `PgmTypes`).
     preds: &'a mut Set<Pred>,
+
+    assumps: &'a Set<Pred>,
 }
 
 const EXN_QVAR_ID: Id = SmolStr::new_static("?exn");
@@ -1137,6 +1139,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
         tys,
         preds: &mut preds,
         exceptions,
+        assumps: &assumps,
     };
 
     if let Some(body) = &mut fun.node.body.as_mut() {
@@ -1255,6 +1258,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                 tys,
                 preds: &mut preds,
                 exceptions,
+                assumps: &assumps,
             };
 
             check_stmts(&mut tc_state, body, Some(&ret_ty), 0, &mut Vec::new());
@@ -1325,84 +1329,100 @@ fn resolve_preds(
     let mut ambiguous_var_rows: Vec<TyVarRef> = vec![];
     let mut ambiguous_rec_rows: Vec<TyVarRef> = vec![];
 
-    'goals: while let Some(mut pred) = goals.pop() {
-        // Normalize to improve error messages.
-        pred.params
-            .iter_mut()
-            .for_each(|ty| *ty = ty.normalize(tys.tys.cons()));
+    // TODO: Not sure if this is a bug or not, but resolving a predicate may allow other predicates
+    // to be resolved as well. Keep looping as long as we resolve predicates.
+    let mut progress = true;
 
-        if pred.trait_ == "RecRow" {
-            match &pred.params[0] {
-                Ty::Anonymous { kind, is_row, .. } => {
-                    if *is_row && *kind == RecordOrVariant::Record {
+    while progress {
+        progress = false;
+        let mut next_goals: Vec<Pred> = vec![];
+
+        'goals: while let Some(mut pred) = goals.pop() {
+            pred.params
+                .iter_mut()
+                .for_each(|ty| *ty = ty.deep_normalize(tys.tys.cons()));
+
+            if pred.trait_ == "RecRow" {
+                match &pred.params[0] {
+                    Ty::Anonymous { kind, is_row, .. } => {
+                        if *is_row && *kind == RecordOrVariant::Record {
+                            continue;
+                        }
+                    }
+                    Ty::Var(var_ref) => {
+                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
+                        ambiguous_rec_rows.push(var_ref.clone());
                         continue;
                     }
+                    _ => {}
                 }
-                Ty::Var(var_ref) => {
-                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Record));
-                    ambiguous_rec_rows.push(var_ref.clone());
-                    continue;
-                }
-                _ => {}
             }
-        }
 
-        if pred.trait_ == "VarRow" {
-            match &pred.params[0] {
-                Ty::Anonymous { kind, is_row, .. } => {
-                    if *is_row && *kind == RecordOrVariant::Variant {
+            if pred.trait_ == "VarRow" {
+                match &pred.params[0] {
+                    Ty::Anonymous { kind, is_row, .. } => {
+                        if *is_row && *kind == RecordOrVariant::Variant {
+                            continue;
+                        }
+                    }
+                    Ty::Var(var_ref) => {
+                        assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
+                        ambiguous_var_rows.push(var_ref.clone());
                         continue;
                     }
+                    _ => {}
                 }
-                Ty::Var(var_ref) => {
-                    assert_eq!(var_ref.kind(), Kind::Row(RecordOrVariant::Variant));
-                    ambiguous_var_rows.push(var_ref.clone());
-                    continue;
+            }
+
+            for assump in assumps {
+                // We can't use set lookup as locs will be different.
+                if assump.trait_ == pred.trait_ && assump.params == pred.params {
+                    // No need to flip `progress` as we haven't done any unification.
+                    continue 'goals;
                 }
-                _ => {}
             }
+
+            let trait_impls = match trait_env.get(&pred.trait_) {
+                Some(impls) => impls,
+                None => panic!(
+                    "{}: Unable to resolve pred {}",
+                    loc_display(&pred.loc.clone()),
+                    Pred {
+                        trait_: pred.trait_,
+                        params: pred.params,
+                        loc: pred.loc
+                    },
+                ),
+            };
+
+            for impl_ in trait_impls {
+                if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc)
+                {
+                    next_goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
+                        trait_,
+                        params,
+                        loc: pred.loc.clone(),
+                    }));
+                    progress = true;
+                    continue 'goals;
+                }
+            }
+
+            // Try again after making progress (unifying stuff).
+            next_goals.push(pred);
         }
 
-        for assump in assumps {
-            // We can't use set lookup as locs will be different.
-            if assump.trait_ == pred.trait_ && assump.params == pred.params {
-                continue 'goals;
-            }
+        goals = next_goals;
+    }
+
+    if !goals.is_empty() {
+        use std::fmt::Write;
+        let mut msg = String::new();
+        write!(&mut msg, "Unable to resolve predicates:").unwrap();
+        for goal in goals {
+            write!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
         }
-
-        let trait_impls = match trait_env.get(&pred.trait_) {
-            Some(impls) => impls,
-            None => panic!(
-                "{}: Unable to resolve pred {}",
-                loc_display(&pred.loc.clone()),
-                Pred {
-                    trait_: pred.trait_,
-                    params: pred.params,
-                    loc: pred.loc
-                },
-            ),
-        };
-
-        for impl_ in trait_impls {
-            if let Some(subgoals) = impl_.try_match(&pred.params, var_gen, &tys.tys, &pred.loc) {
-                goals.extend(subgoals.into_iter().map(|(trait_, params)| Pred {
-                    trait_,
-                    params,
-                    loc: pred.loc.clone(),
-                }));
-                continue 'goals;
-            }
-        }
-
-        panic!(
-            "{}: Unable to resolve {}",
-            loc_display(&pred.loc.clone()),
-            Pred {
-                trait_: pred.trait_,
-                params: pred.params,
-                loc: pred.loc
-            },
-        );
+        panic!("{}", msg);
     }
 
     for rec_row in ambiguous_rec_rows {

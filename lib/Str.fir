@@ -136,8 +136,8 @@ CharIter.asStr(self): Str
         _len = self._end - self._idx
     )
 
-impl Iterator[CharIter, Char]:
-    next(self: CharIter): Option[Char]
+impl Iterator[CharIter, Char, errs]:
+    next(self: CharIter): {..errs} Option[Char]
         if self._idx == self._end:
             return Option.None
 
@@ -150,8 +150,8 @@ type CharIndices:
     _str: Str
     _idx: U32
 
-impl Iterator[CharIndices, (char: Char, idx: U32)]:
-    next(self: CharIndices): Option[(char: Char, idx: U32)]
+impl Iterator[CharIndices, (char: Char, idx: U32), errs]:
+    next(self: CharIndices): {..errs} Option[(char: Char, idx: U32)]
         if self._idx == self._str.len():
             return Option.None
 
@@ -194,8 +194,8 @@ type SplitWhitespace:
     _str: Str
     _idx: U32
 
-impl Iterator[SplitWhitespace, Str]:
-    next(self: SplitWhitespace): Option[Str]
+impl Iterator[SplitWhitespace, Str, errs]:
+    next(self: SplitWhitespace): {..errs} Option[Str]
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
@@ -233,8 +233,8 @@ type Lines:
     _str: Str
     _idx: U32
 
-impl Iterator[Lines, Str]:
-    next(self: Lines): Option[Str]
+impl Iterator[Lines, Str, errs]:
+    next(self: Lines): {..errs} Option[Str]
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 
