@@ -48,11 +48,20 @@ main
     strings.push("4b")
     strings.push("")
 
-    for x: Result[[Overflow, EmptyInput], U32] in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit).untry():
+    for x: Result[[Overflow, EmptyInput], U32] in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match x:
             Result.Err(~Overflow): printStr("Overflow")
             Result.Err(~EmptyInput): printStr("EmptyInput")
             Result.Ok(value): printStr(value.toStr())
+
+parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
+    let result: U32 = 0
+    for i: Result[[Overflow, EmptyInput], U32] in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
+        match i:
+            Result.Err(~Overflow): printStr("Overflow")
+            Result.Err(~EmptyInput): printStr("Empty input")
+            Result.Ok(i): result += i
+    result
 
 # expected stdout:
 # 1

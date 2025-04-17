@@ -10,8 +10,8 @@ trait Iterator[iter, item, errs]:
     mapResult(self: iter, f: Fn(Result[[..errs], Option[item]]): {..errsNew} Option[b]): MapResult[iter, item, b, errs, errsNew]
         MapResult(iter = self, f = f)
 
-    untry(self: iter): Untry[iter, item, errs]
-        Untry(iter = self)
+    try(self: iter): Try[iter, item, errs]
+        Try(iter = self)
 
 trait Step[t]:
     step(self: t): t
@@ -90,11 +90,11 @@ impl[Iterator[iter1, item1, varRowErrsOld1]] Iterator[MapResult[iter1, item1, b1
     next(self: MapResult[iter1, item1, b1, varRowErrsOld1, varRowErrsNew1]): {..varRowErrsNew1} Option[b1]
         self.f(try(self.iter.next))
 
-type Untry[iter, item, errs]:
+type Try[iter, item, errs]:
     iter: iter
 
-impl[Iterator[iter1, item1, varRowErrs1]] Iterator[Untry[iter1, item1, varRowErrs1], Result[[..varRowErrs1], item1], varRowErrs2]:
-    next(self: Untry[iter1, item1, varRowErrs1]): {..varRowErrs2} Option[Result[[..varRowErrs1], item1]]
+impl[Iterator[iter1, item1, varRowErrs1]] Iterator[Try[iter1, item1, varRowErrs1], Result[[..varRowErrs1], item1], varRowErrs2]:
+    next(self: Try[iter1, item1, varRowErrs1]): {..varRowErrs2} Option[Result[[..varRowErrs1], item1]]
         match try(fn(): {..varRowErrs1} Option[item1] { self.iter.next() }):
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
