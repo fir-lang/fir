@@ -552,8 +552,6 @@ impl Expr {
                 buffer.push('\'');
             }
 
-            Expr::Self_ => buffer.push_str("self"),
-
             Expr::BinOp(BinOpExpr { left, right, op }) => {
                 let left_parens = expr_parens(&left.node);
                 let right_parens = expr_parens(&left.node);

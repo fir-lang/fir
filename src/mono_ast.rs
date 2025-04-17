@@ -224,7 +224,6 @@ pub enum Expr {
     Int(IntExpr),
     String(Vec<StringPart>),
     Char(char),
-    Self_,
     BinOp(BinOpExpr),
     UnOp(UnOpExpr),
     Record(Vec<Named<L<Expr>>>),

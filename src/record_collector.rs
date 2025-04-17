@@ -296,7 +296,6 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
         | mono::Expr::TopVar(_)
         | mono::Expr::Constr(_)
         | mono::Expr::Int(_)
-        | mono::Expr::Self_
         | mono::Expr::Char(_) => {}
 
         mono::Expr::String(parts) => {

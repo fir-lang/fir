@@ -1777,8 +1777,6 @@ fn lower_expr(
 
         mono::Expr::Char(char) => Expr::Char(*char),
 
-        mono::Expr::Self_ => Expr::LocalVar(LocalIdx(0)),
-
         mono::Expr::BinOp(mono::BinOpExpr {
             left,
             right,
@@ -2114,6 +2112,7 @@ fn lower_source_fun(
                 name: SmolStr::new_static("self"),
                 ty: self_mono_ty,
             });
+            bounds.insert(SmolStr::new_static("self"), LocalIdx(0));
         }
         mono::SelfParam::Explicit(self_ty) => {
             params.push(Ty::from_mono_ty(&self_ty.node));
