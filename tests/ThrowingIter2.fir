@@ -48,10 +48,8 @@ main
     strings.push("4b")
     strings.push("")
 
-    let iter: VecIter[Str] = strings.iter()
-
-    let ret: Result[[EmptyInput, Overflow], ()] = try(fn(): {EmptyInput, Overflow} () {
-        for x: U32 in iter.map(parseU32Exn).mapResult(handleInvalidDigit):
+    let ret = try(fn(): {EmptyInput, Overflow} () {
+        for x: U32 in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
             printStr(x.toStr())
     })
 
