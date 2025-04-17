@@ -159,9 +159,9 @@ fn visit_fields(
 
 fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>, variants: &mut Set<VariantShape>) {
     match ty {
-        mono::Type::Named(mono::NamedType { name: _, args }) => args
-            .iter()
-            .for_each(|arg| visit_ty(&arg.node, records, variants)),
+        mono::Type::Named(mono::NamedType { name: _, args }) => {
+            args.iter().for_each(|arg| visit_ty(arg, records, variants))
+        }
 
         mono::Type::Record { fields } => {
             records.insert(RecordShape::from_named_things(fields));

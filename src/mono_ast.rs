@@ -59,7 +59,7 @@ pub enum Type {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NamedType {
     pub name: Id,
-    pub args: Vec<L<Type>>,
+    pub args: Vec<Type>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

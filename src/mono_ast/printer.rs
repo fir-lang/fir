@@ -156,7 +156,7 @@ impl Type {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        arg.node.print(buffer);
+                        arg.print(buffer);
                     }
                     buffer.push(']');
                 }

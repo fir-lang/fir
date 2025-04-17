@@ -113,7 +113,7 @@ For the fields that the type checker fills in as `Ty`, we convert to AST `Type`.
 TODO: Do we use `object_ty`?
 */
 
-use crate::ast::{self, Id};
+use crate::ast::{self, Id, Named};
 use crate::collections::*;
 use crate::interpolation::StringPart;
 use crate::mono_ast as mono;
@@ -994,11 +994,17 @@ fn mono_method(
             }
         }
 
+        let args = ty_args
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<String>>()
+            .join(", ");
+
         panic!(
-            "{}: Unable to find matching impl for {} type args {:?}",
+            "{}: Unable to find matching impl for {} type args [{}]",
             loc_display(loc),
             method_ty_id,
-            ty_args,
+            args,
         );
     }
 
@@ -1181,7 +1187,7 @@ fn mono_pat(
                 mono_pgm,
             );
 
-            let mono_fields: Vec<ast::Named<ast::L<mono::Pat>>> = fields
+            let mono_fields: Vec<Named<ast::L<mono::Pat>>> = fields
                 .iter()
                 .map(|field| mono_named_l_pat(field, ty_map, poly_pgm, mono_pgm, locals))
                 .collect();
@@ -1208,7 +1214,7 @@ fn mono_pat(
                 constr: constr.clone(),
                 fields: fields
                     .iter()
-                    .map(|ast::Named { name, node }| ast::Named {
+                    .map(|Named { name, node }| Named {
                         name: name.clone(),
                         node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm, locals),
                     })
@@ -1239,12 +1245,12 @@ fn mono_bl_pat(
 }
 
 fn mono_named_l_pat(
-    pat: &ast::Named<ast::L<ast::Pat>>,
+    pat: &Named<ast::L<ast::Pat>>,
     ty_map: &Map<Id, mono::Type>,
     poly_pgm: &PolyPgm,
     mono_pgm: &mut MonoPgm,
     locals: &mut ScopeSet<Id>,
-) -> ast::Named<ast::L<mono::Pat>> {
+) -> Named<ast::L<mono::Pat>> {
     pat.map_as_ref(|pat| mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals))
 }
 
@@ -1319,7 +1325,7 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
             debug_assert_eq!(args1.len(), args2.len());
 
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                if !match_(&arg1.node, &arg2.node, substs) {
+                if !match_(&arg1.node, arg2, substs) {
                     return false;
                 }
             }
@@ -1365,12 +1371,68 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
                     mono::Type::Record {
                         fields: fields2_map
                             .iter()
-                            .map(|(field2_name, field2_ty)| ast::Named {
+                            .map(|(field2_name, field2_ty)| Named {
                                 name: Some((*field2_name).clone()),
                                 node: (*field2_ty).clone(),
                             })
                             .collect(),
                     },
+                );
+            }
+
+            true
+        }
+
+        (
+            ast::Type::Variant {
+                alts: alts1,
+                extension,
+                is_row: _,
+            },
+            mono::Type::Variant { alts: alts2 },
+        ) => {
+            let mut labels1_map: Map<Id, Vec<Named<ast::Type>>> = Default::default();
+            for ast::VariantAlt { con, fields } in alts1 {
+                let old = labels1_map.insert(con.clone(), fields.clone());
+                assert!(old.is_none());
+            }
+
+            let mut labels2_map: Map<Id, Vec<Named<mono::Type>>> = Default::default();
+            for mono::VariantAlt { con, fields } in alts2 {
+                let old = labels2_map.insert(con.clone(), fields.clone());
+                assert!(old.is_none());
+            }
+
+            for (label, label1_ty) in &labels1_map {
+                let label2_ty = match labels2_map.remove(label) {
+                    Some(label2_ty) => label2_ty,
+                    None => return false,
+                };
+                if label1_ty.len() != label2_ty.len() {
+                    return false;
+                }
+                for (label1_field, label2_field) in label1_ty.iter().zip(label2_ty.iter()) {
+                    assert!(label1_field.name.is_none());
+                    assert!(label2_field.name.is_none());
+                    if !match_(&label1_field.node, &label2_field.node, substs) {
+                        return false;
+                    }
+                }
+            }
+
+            if !labels2_map.is_empty() && extension.is_none() {
+                return false;
+            }
+
+            if !labels2_map.is_empty() {
+                let mut alts: Vec<mono::VariantAlt> = labels2_map
+                    .into_iter()
+                    .map(|(label, fields)| mono::VariantAlt { con: label, fields })
+                    .collect();
+                alts.sort_by_key(|alt| alt.con.clone());
+                substs.insert(
+                    extension.as_ref().unwrap().clone(),
+                    mono::Type::Variant { alts },
                 );
             }
 
@@ -1428,19 +1490,11 @@ fn mono_tc_ty(
 
         Ty::App(con, args) => {
             let ty_decl = poly_pgm.ty.get(&con).unwrap();
-            let mono_args: Vec<ast::L<mono::Type>> = args
+            let mono_args: Vec<mono::Type> = args
                 .iter()
-                .map(|arg| ast::L {
-                    node: mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm),
-                    loc: ast::Loc::dummy(),
-                })
+                .map(|arg| mono_tc_ty(arg, ty_map, poly_pgm, mono_pgm))
                 .collect();
-            let mono_ty_decl = mono_ty_decl(
-                ty_decl,
-                &mono_args.iter().map(|l| l.node.clone()).collect::<Vec<_>>(),
-                poly_pgm,
-                mono_pgm,
-            );
+            let mono_ty_decl = mono_ty_decl(ty_decl, &mono_args, poly_pgm, mono_pgm);
             mono::Type::Named(mono::NamedType {
                 name: mono_ty_decl,
                 args: mono_args,
@@ -1574,16 +1628,11 @@ fn mono_ast_ty(
     match ty {
         ast::Type::Named(ast::NamedType { name: con, args }) => {
             let ty_decl = poly_pgm.ty.get(con).unwrap_or_else(|| panic!("{}", con));
-            let mono_args: Vec<ast::L<mono::Type>> = args
+            let mono_args: Vec<mono::Type> = args
                 .iter()
-                .map(|arg| arg.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                .map(|arg| mono_ast_ty(&arg.node, ty_map, poly_pgm, mono_pgm))
                 .collect();
-            let mono_ty_decl_id = mono_ty_decl(
-                ty_decl,
-                &mono_args.iter().map(|l| l.node.clone()).collect::<Vec<_>>(),
-                poly_pgm,
-                mono_pgm,
-            );
+            let mono_ty_decl_id = mono_ty_decl(ty_decl, &mono_args, poly_pgm, mono_pgm);
             mono::Type::Named(mono::NamedType {
                 name: mono_ty_decl_id,
                 args: mono_args,
@@ -1651,7 +1700,7 @@ fn mono_ast_ty(
                     con: con.clone(),
                     fields: fields
                         .iter()
-                        .map(|ast::Named { name, node }| ast::Named {
+                        .map(|Named { name, node }| Named {
                             name: name.clone(),
                             node: mono_ast_ty(node, ty_map, poly_pgm, mono_pgm),
                         })
