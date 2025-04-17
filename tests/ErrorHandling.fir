@@ -1,3 +1,5 @@
+# Code for the blog post: https://osa1.net/posts/2025-01-18-fir-error-handling.html
+#
 # TODO: Enable overflow tests after adding operators that allow overflows.
 
 parseU32(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
@@ -202,4 +204,3 @@ main
 # Result.Ok(123)
 # Result.Err(invalid digit)
 # Result.Err(empty input)
-
