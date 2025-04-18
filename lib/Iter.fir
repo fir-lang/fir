@@ -4,7 +4,7 @@ trait Iterator[iter, item, exn]:
     map(self: iter, f: Fn(item): exn b): Map[iter, item, b, exn]
         Map(iter = self, f = f)
 
-    peekable(self: iter): Peekable[iter, item]
+    peekable(self: iter): Peekable[iter, item, exn]
         Peekable(iter = self, peeked = Option.None)
 
     mapResult(self: iter, f: Fn(Result[exn, Option[item]]): exn2 Option[b]): MapResult[iter, item, b, exn, exn2]
@@ -61,12 +61,12 @@ impl[Iterator[iter1, a1, exn1]] Iterator[Map[iter1, a1, b1, exn1], b1, exn1]:
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
 
-type Peekable[iter, item]:
+type Peekable[iter, item, exn]:
     iter: iter
     peeked: Option[item]
 
-impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item], item, exn]:
-    next(self: Peekable[iter, item]): exn Option[item]
+impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
+    next(self: Peekable[iter, item, exn]): exn Option[item]
         match self.peeked:
             Option.Some(peeked):
                 self.peeked = Option.None
@@ -74,7 +74,7 @@ impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item], item, exn]:
             Option.None:
                 self.iter.next()
 
-Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item]): exn Option[item]
+Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]): exn Option[item]
     match self.peeked:
         Option.Some(peeked):
             Option.Some(peeked)

@@ -14,7 +14,7 @@ impl Iterator[Iter, U32, exn]:
 
 main
     let iter = Iter(next = 0)
-    let peekable: Peekable[Iter, U32] = iter.peekable()
+    let peekable = iter.peekable()
     let next: Option[U32] = peekable.next()
     printStr(next.toStr())
     let next: Option[U32] = peekable.peek()
