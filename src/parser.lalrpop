@@ -232,11 +232,14 @@ LTypeNamed: L<Type> = {
 }
 
 Type: Type = {
+    #[precedence(level = "0")]
     <ty:TypeNamed> => ty,
 
     <var:LowerId> =>
         Type::Var(var.smol_str()),
 
+    #[precedence(level = "1")]
+    #[assoc(side = "right")]
     "Fn" "(" <args:Sep<LType, ",">> ")" <ret:ReturnType>  =>
         Type::Fn(FnType {
             args,
@@ -255,6 +258,29 @@ Type: Type = {
 
     "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
+}
+
+TypeNoFn: Type = {
+    <ty:TypeNamed> => ty,
+
+    <var:LowerId> =>
+        Type::Var(var.smol_str()),
+
+    "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension, is_row: false },
+
+    "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension, is_row: true },
+
+    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, is_row: false },
+
+    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, is_row: true },
+}
+
+LTypeNoFn: L<Type> = {
+    <l:@L> <ty:TypeNoFn> <r:@R> => L::new(module, l, r, ty),
 }
 
 TypeNamed: Type = {
@@ -442,14 +468,7 @@ Param: (SmolStr, Option<L<Type>>) = {
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
     => (None, None),
 
-    ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), None),
-
-    ":" <ty:LType> =>
-        (None, Some(ty)),
-
-    ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" <ty:LType> =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), Some(ty)),
+    ":" <ty1:LTypeNoFn?> <ty2:LType> => (ty1, Some(ty2)),
 }
 
 ParentTy: L<Id> = {

@@ -1,24 +1,24 @@
-f1(): {E1, ..r}
+f1(): [E1, ..r] ()
     throw(~E1)
 
-f2(): {E2, ..r}
+f2(): [E2, ..r] ()
     untry(Result.Err(~E2))
 
-f3(): {E1, E2, ..r}
+f3(): [E1, E2, ..r] ()
     f1()
     f2()
 
-forEach(vec: Vec[t], f: Fn(t): {..r}): {..r}
+forEach(vec: Vec[t], f: Fn(t): [..r] ()): [..r] ()
     for t in vec.iter():
         f(t)
 
-throwOnOdd(i: U32): {OddNumberError(i: U32), ..r}
+throwOnOdd(i: U32): [OddNumberError(i: U32), ..r] ()
     if i & 1 == 0:
         throw(~OddNumberError(i = i))
 
-forEachWithControlFlow(vec: Vec[t], f: Fn(t): {Break, ..r}): {..r} Result[[..r], ()]
+forEachWithControlFlow(vec: Vec[t], f: Fn(t): [Break, ..r] ()): [..r] Result[[..r], ()]
     for t in vec.iter():
-        match try(fn(): {Break, ..r} { f(t) }):
+        match try(fn(): [Break, ..r] () { f(t) }):
             Result.Err(~Break): break
             Result.Err(other): return Result.Err(other)
             Result.Ok(()): ()
@@ -40,19 +40,19 @@ main()
     vec.push(2)
     vec.push(3)
 
-    match try(fn(): {OddNumberError(i: U32)} () { forEach(vec, throwOnOdd) }):
+    match try(fn(): [OddNumberError(i: U32)] () { forEach(vec, throwOnOdd) }):
         Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
         Result.Ok(()): ()
 
     printStr("---")
 
-    forEachWithControlFlow(vec, fn(i: U32): {Break} {
+    forEachWithControlFlow(vec, fn(i: U32): [Break] () {
         printStr(i.toStr())
     })
 
     printStr("---")
 
-    forEachWithControlFlow(vec, fn(i: U32): {Break} {
+    forEachWithControlFlow(vec, fn(i: U32): [Break] () {
         printStr(i.toStr())
         if i & 0b1 == 0:
             throw(~Break)

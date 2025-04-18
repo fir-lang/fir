@@ -12,7 +12,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 
     return Option.Some(result)
 
-parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
+parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -41,7 +41,7 @@ main
     strings.push("3")
     strings.push("4b")
 
-    let ret = try(fn(): {EmptyInput, InvalidDigit, Overflow} () {
+    let ret = try(fn(): [EmptyInput, InvalidDigit, Overflow] () {
         for x: U32 in strings.iter().map(parseU32Exn):
             printStr(x.toStr())
     })
