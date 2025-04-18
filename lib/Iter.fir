@@ -1,16 +1,16 @@
-trait Iterator[iter, item, errs]:
-    next(self: iter): [..errs] Option[item]
+trait Iterator[iter, item, exn]:
+    next(self: iter): exn Option[item]
 
-    map(self: iter, f: Fn(item): [..errs] b): [..errs2] Map[iter, item, b, errs]
+    map(self: iter, f: Fn(item): exn b): Map[iter, item, b, exn]
         Map(iter = self, f = f)
 
-    peekable(self: iter): [..errs] Peekable[iter, item]
+    peekable(self: iter): Peekable[iter, item, exn]
         Peekable(iter = self, peeked = Option.None)
 
-    mapResult(self: iter, f: Fn(Result[[..errs], Option[item]]): [..errsNew] Option[b]): MapResult[iter, item, b, errs, errsNew]
+    mapResult(self: iter, f: Fn(Result[exn, Option[item]]): exn2 Option[b]): MapResult[iter, item, b, exn, exn2]
         MapResult(iter = self, f = f)
 
-    try(self: iter): Try[iter, item, errs]
+    try(self: iter): Try[iter, item, exn]
         Try(iter = self)
 
 trait Step[t]:
@@ -26,8 +26,8 @@ type RangeIterator[t]:
     current: t
     end: t
 
-impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, errs]:
-    next(self: RangeIterator[t]): [..errs] Option[t]
+impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
+    next(self: RangeIterator[t]): exn Option[t]
         if self.current >= self.end:
             Option.None
         else:
@@ -39,8 +39,8 @@ type InclusiveRangeIterator[t]:
     current: t
     end: t
 
-impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, errs]:
-    next(self: InclusiveRangeIterator[t]): [..errs] Option[t]
+impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
+    next(self: InclusiveRangeIterator[t]): exn Option[t]
         if self.current > self.end:
             Option.None
         else:
@@ -49,24 +49,24 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, errs]:
             Option.Some(current)
 
 # NOTE: The row type parameter needs to start with `recRow` to have kind `row(variant)`.
-type Map[iter, a, b, recRowErrs]:
+type Map[iter, a, b, exn]:
     iter: iter
-    f: Fn(a): [..recRowErrs] b
+    f: Fn(a): exn b
 
 # BUG(#86): To work around substitution bugs, give quantified variables
 # different names than the quantified variables of `Iterator`.
-impl[Iterator[iter1, a1, errs1]] Iterator[Map[iter1, a1, b1, errs1], b1, errs1]:
-    next(self: Map[iter1, a1, b1, errs1]): [..errs1] Option[b1]
+impl[Iterator[iter1, a1, exn1]] Iterator[Map[iter1, a1, b1, exn1], b1, exn1]:
+    next(self: Map[iter1, a1, b1, exn1]): exn1 Option[b1]
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
 
-type Peekable[iter, item]:
+type Peekable[iter, item, exn]:
     iter: iter
     peeked: Option[item]
 
-impl[Iterator[iter, item, errs]] Iterator[Peekable[iter, item], item, errs]:
-    next(self: Peekable[iter, item]): [..errs] Option[item]
+impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
+    next(self: Peekable[iter, item, exn]): exn Option[item]
         match self.peeked:
             Option.Some(peeked):
                 self.peeked = Option.None
@@ -74,7 +74,7 @@ impl[Iterator[iter, item, errs]] Iterator[Peekable[iter, item], item, errs]:
             Option.None:
                 self.iter.next()
 
-Peekable.peek[Iterator[iter, item, errs]](self: Peekable[iter, item]): [..errs] Option[item]
+Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]): exn Option[item]
     match self.peeked:
         Option.Some(peeked):
             Option.Some(peeked)
@@ -82,20 +82,20 @@ Peekable.peek[Iterator[iter, item, errs]](self: Peekable[iter, item]): [..errs] 
             self.peeked = self.iter.next()
             self.peeked
 
-type MapResult[iter, item, b, varRowErrsOld, varRowErrsNew]:
+type MapResult[iter, item, b, exnOld, exnNew]:
     iter: iter
-    f: Fn(Result[[..varRowErrsOld], Option[item]]): [..varRowErrsNew] Option[b]
+    f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]
 
-impl[Iterator[iter1, item1, varRowErrsOld1]] Iterator[MapResult[iter1, item1, b1, varRowErrsOld1, varRowErrsNew1], b1, varRowErrsNew1]:
-    next(self: MapResult[iter1, item1, b1, varRowErrsOld1, varRowErrsNew1]): [..varRowErrsNew1] Option[b1]
+impl[Iterator[iter1, item1, exnOld1]] Iterator[MapResult[iter1, item1, b1, exnOld1, exnNew1], b1, exnNew1]:
+    next(self: MapResult[iter1, item1, b1, exnOld1, exnNew1]): exnNew1 Option[b1]
         self.f(try(self.iter.next))
 
-type Try[iter, item, errs]:
+type Try[iter, item, exn]:
     iter: iter
 
-impl[Iterator[iter1, item1, varRowErrs1]] Iterator[Try[iter1, item1, varRowErrs1], Result[[..varRowErrs1], item1], varRowErrs2]:
-    next(self: Try[iter1, item1, varRowErrs1]): [..varRowErrs2] Option[Result[[..varRowErrs1], item1]]
-        match try(fn(): [..varRowErrs1] Option[item1] { self.iter.next() }):
+impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1, item1], exn2]:
+    next(self: Try[iter1, item1, exn1]): exn2 Option[Result[exn1, item1]]
+        match try(fn(): exn1 Option[item1] { self.iter.next() }):
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None

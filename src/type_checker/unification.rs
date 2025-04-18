@@ -169,7 +169,7 @@ pub(super) fn unify(
             },
         ) => {
             // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2);
+            assert_eq!(kind1, kind2, "{}", loc_display(loc));
 
             if is_row_1 != is_row_2 {
                 panic!(

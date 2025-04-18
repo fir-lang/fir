@@ -345,7 +345,6 @@ impl Scheme {
     pub(super) fn eq_modulo_alpha(
         &self,
         cons: &ScopeMap<Id, TyCon>,
-        extra_qvars: &Set<Id>,
         other: &Scheme,
         loc: &ast::Loc,
     ) -> bool {
@@ -384,15 +383,7 @@ impl Scheme {
             other.quantified_vars,
         );
 
-        ty_eq_modulo_alpha(
-            cons,
-            extra_qvars,
-            &self.ty,
-            &other.ty,
-            &left_vars,
-            &right_vars,
-            loc,
-        )
+        ty_eq_modulo_alpha(cons, &self.ty, &other.ty, &left_vars, &right_vars, loc)
     }
 
     /// Rename the quantified variables in the scheme, adding the unique number to the names.
@@ -432,7 +423,6 @@ impl Scheme {
 
 fn ty_eq_modulo_alpha(
     cons: &ScopeMap<Id, TyCon>,
-    extra_qvars: &Set<Id>,
     ty1: &Ty,
     ty2: &Ty,
     ty1_qvars: &Map<Id, u32>,
@@ -451,9 +441,10 @@ fn ty_eq_modulo_alpha(
                 return false;
             }
             args1.len() == args2.len()
-                && args1.iter().zip(args2.iter()).all(|(ty1, ty2)| {
-                    ty_eq_modulo_alpha(cons, extra_qvars, ty1, ty2, ty1_qvars, ty2_qvars, loc)
-                })
+                && args1
+                    .iter()
+                    .zip(args2.iter())
+                    .all(|(ty1, ty2)| ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc))
         }
 
         (
@@ -498,7 +489,7 @@ fn ty_eq_modulo_alpha(
 
             for (label1, ty1) in labels1 {
                 let ty2 = labels2.get(&label1).unwrap();
-                if !ty_eq_modulo_alpha(cons, extra_qvars, &ty1, ty2, ty1_qvars, ty2_qvars, loc) {
+                if !ty_eq_modulo_alpha(cons, &ty1, ty2, ty1_qvars, ty2_qvars, loc) {
                     return false;
                 }
             }
@@ -509,13 +500,13 @@ fn ty_eq_modulo_alpha(
                 (None, None) => true,
 
                 (Some(ext1), Some(ext2)) => {
-                    ty_eq_modulo_alpha(cons, extra_qvars, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
+                    ty_eq_modulo_alpha(cons, &ext1, &ext2, ty1_qvars, ty2_qvars, loc)
                 }
             }
         }
 
         (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
-            if qvar1 == qvar2 && extra_qvars.contains(qvar1) {
+            if qvar1 == qvar2 {
                 return true;
             }
 
@@ -559,15 +550,7 @@ fn ty_eq_modulo_alpha(
             match (args1, args2) {
                 (FunArgs::Positional(args1), FunArgs::Positional(args2)) => {
                     for (arg1, arg2) in args1.iter().zip(args2.iter()) {
-                        if !ty_eq_modulo_alpha(
-                            cons,
-                            extra_qvars,
-                            arg1,
-                            arg2,
-                            ty1_qvars,
-                            ty2_qvars,
-                            loc,
-                        ) {
+                        if !ty_eq_modulo_alpha(cons, arg1, arg2, ty1_qvars, ty2_qvars, loc) {
                             return false;
                         }
                     }
@@ -584,15 +567,7 @@ fn ty_eq_modulo_alpha(
                     for name in names1 {
                         let ty1 = args1.get(name).unwrap();
                         let ty2 = args2.get(name).unwrap();
-                        if !ty_eq_modulo_alpha(
-                            cons,
-                            extra_qvars,
-                            ty1,
-                            ty2,
-                            ty1_qvars,
-                            ty2_qvars,
-                            loc,
-                        ) {
+                        if !ty_eq_modulo_alpha(cons, ty1, ty2, ty1_qvars, ty2_qvars, loc) {
                             return false;
                         }
                     }
@@ -610,7 +585,6 @@ fn ty_eq_modulo_alpha(
                 (Some(exceptions1), Some(exceptions2)) => {
                     if !ty_eq_modulo_alpha(
                         cons,
-                        extra_qvars,
                         exceptions1,
                         exceptions2,
                         ty1_qvars,
@@ -622,7 +596,7 @@ fn ty_eq_modulo_alpha(
                 }
             }
 
-            ty_eq_modulo_alpha(cons, extra_qvars, ret1, ret2, ty1_qvars, ty2_qvars, loc)
+            ty_eq_modulo_alpha(cons, ret1, ret2, ty1_qvars, ty2_qvars, loc)
         }
 
         _ => false,

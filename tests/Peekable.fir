@@ -1,8 +1,8 @@
 type Iter:
     next: U32
 
-impl Iterator[Iter, U32, errs]:
-    next(self: Iter): [..errs] Option[U32]
+impl Iterator[Iter, U32, exn]:
+    next(self: Iter): exn Option[U32]
         if self.next == 3:
             printStr("Stopping")
             Option.None
@@ -14,7 +14,7 @@ impl Iterator[Iter, U32, errs]:
 
 main
     let iter = Iter(next = 0)
-    let peekable: Peekable[Iter, U32] = iter.peekable()
+    let peekable = iter.peekable()
     let next: Option[U32] = peekable.next()
     printStr(next.toStr())
     let next: Option[U32] = peekable.peek()
