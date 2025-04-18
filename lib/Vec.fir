@@ -111,8 +111,8 @@ type VecIter[t]:
     _vec: Vec[t]
     _idx: U32
 
-impl Iterator[VecIter[t], t, errs]:
-    next(self: VecIter[t]): [..errs] Option[t]
+impl Iterator[VecIter[t], t, exn]:
+    next(self: VecIter[t]): exn Option[t]
         if self._idx >= self._vec.len():
             return Option.None
 

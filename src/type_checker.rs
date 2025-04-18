@@ -136,14 +136,10 @@ fn add_exception_types(module: &mut ast::Module) {
     }
 }
 
-// The default exception type: `[..?exn]`.
+// The default exception type: `?exn`.
 fn exn_type(module: std::rc::Rc<str>, line: u16) -> ast::L<ast::Type> {
     ast::L {
-        node: ast::Type::Variant {
-            alts: Default::default(),
-            extension: Some(EXN_QVAR_ID),
-            is_row: false,
-        },
+        node: ast::Type::Var(EXN_QVAR_ID),
         loc: ast::Loc {
             module,
             line_start: line,
@@ -1021,12 +1017,7 @@ fn collect_schemes(
                         trait_fun_scheme = trait_fun_scheme.subst(&ty_param_renamed, &ty_arg);
                     }
 
-                    if !trait_fun_scheme.eq_modulo_alpha(
-                        tys.cons(),
-                        &Default::default(),
-                        &impl_fun_scheme,
-                        &fun.loc,
-                    ) {
+                    if !trait_fun_scheme.eq_modulo_alpha(tys.cons(), &impl_fun_scheme, &fun.loc) {
                         panic!(
                             "{}: Trait method implementation of {} does not match the trait method type
                                 Trait method type:          {}
@@ -1418,9 +1409,9 @@ fn resolve_preds(
     if !goals.is_empty() {
         use std::fmt::Write;
         let mut msg = String::new();
-        write!(&mut msg, "Unable to resolve predicates:").unwrap();
+        writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
         for goal in goals {
-            write!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
+            writeln!(&mut msg, "{}: {}", loc_display(&goal.loc.clone()), goal).unwrap();
         }
         panic!("{}", msg);
     }

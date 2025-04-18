@@ -10,5 +10,5 @@ impl T[I32]:
 # expected exit status: 101
 # expected stderr:
 # tests/TraitImplFail4.fir:7:5: Trait method implementation of a does not match the trait method type
-#                                 Trait method type:          [?exn#0: row(variant)] Fn(I32): [..?exn#0] ()
-#                                 Implementation method type: [?exn: row(variant)] Fn(I32): [..?exn] I32
+#                                 Trait method type:          [?exn#0: *] Fn(I32): ?exn#0 ()
+#                                 Implementation method type: [?exn: *] Fn(I32): ?exn I32

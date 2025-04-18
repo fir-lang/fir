@@ -1,8 +1,8 @@
 type Iter:
     next: U32
 
-impl Iterator[Iter, U32, errs]:
-    next(self: Iter): [..errs] Option[U32]
+impl Iterator[Iter, U32, exn]:
+    next(self: Iter): exn Option[U32]
         if self.next == 3:
             printStr("Stopping")
             Option.None
