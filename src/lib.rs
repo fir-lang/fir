@@ -170,9 +170,51 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        let tokens = scanner::scan(lexer::lex(&contents, &module_path));
+        let tokens =
+            combine_uppercase_lbrackets(scanner::scan(lexer::lex(&contents, &module_path)));
         parse_module(&module_path, tokens)
     }
+}
+
+use token::{Token, TokenKind};
+
+fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
+    let mut new_tokens = Vec::with_capacity(tokens.len());
+
+    let mut iter = tokens.into_iter().peekable();
+    while let Some((l, t, r)) = iter.next() {
+        if let TokenKind::UpperId = t.kind {
+            if let Some((
+                l_next,
+                Token {
+                    kind: TokenKind::LBracket,
+                    text: _,
+                },
+                r_next,
+            )) = iter.peek()
+            {
+                // TODO: This assumes 1-byte character, which holds today, but may not in the
+                // future.
+                if r.byte_idx == l_next.byte_idx {
+                    let r_next = *r_next;
+                    iter.next(); // consume '['
+                    new_tokens.push((
+                        l,
+                        Token {
+                            kind: TokenKind::UpperIdLBracket,
+                            text: t.text, // NB. Does not include the lbracket in text as parser needs the id text
+                        },
+                        r_next,
+                    ));
+                    continue;
+                }
+            }
+        }
+
+        new_tokens.push((l, t, r));
+    }
+
+    new_tokens
 }
 
 #[cfg(not(target_arch = "wasm32"))]

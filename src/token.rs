@@ -16,6 +16,11 @@ impl Token {
 pub enum TokenKind {
     /// An identifier starting with an uppercase letter.
     UpperId,
+
+    /// An identifier starting with an uppercase letter, followed by a '['.
+    UpperIdLBracket,
+
+    /// An identifier starting with a '~' followed by uppercase letter.
     TildeUpperId,
 
     /// An identifier starting with a lowercase letter.
