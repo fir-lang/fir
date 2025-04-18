@@ -1,3 +1,5 @@
+# Code for the blog post: https://osa1.net/posts/2025-04-17-throwing-iterators-fir.html
+
 sum(nums: Vec[U32]): U32
     let result: U32 = 0
     for i: U32 in nums.iter():
@@ -135,8 +137,8 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 
 # NB. The first two lines should disappear with #49.
 # expected stdout:
-# tests/ThrowingIter.fir:48:5: Unexhaustive pattern match
-# tests/ThrowingIter.fir:54:5: Unexhaustive pattern match
+# tests/ThrowingIter.fir:50:5: Unexhaustive pattern match
+# tests/ThrowingIter.fir:56:5: Unexhaustive pattern match
 # 6
 # 6
 # InvalidDigit

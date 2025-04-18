@@ -64,3 +64,8 @@ build_site: generate_parser
     # Copy standard library
     rm $OUT_DIR/fir/lib/*
     cp lib/* $OUT_DIR/fir/lib/
+
+    # Copy samples
+    cp examples/ArithmeticExpressions.fir $OUT_DIR/ArithmeticExpressions.fir
+    cp tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir
+    cp tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
