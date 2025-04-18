@@ -10,7 +10,7 @@ trait Iterator[iter, item, exn]:
     mapResult(self: iter, f: Fn(Result[exn, Option[item]]): exn2 Option[b]): MapResult[iter, item, b, exn, exn2]
         MapResult(iter = self, f = f)
 
-    try(self: iter): Try[iter, item, errs]
+    try(self: iter): Try[iter, item, exn]
         Try(iter = self)
 
 trait Step[t]:
