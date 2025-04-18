@@ -1,4 +1,4 @@
-test(f: Fn(): {Err} U32)
+test(f: Fn(): [Err] U32)
     ()
 
 main

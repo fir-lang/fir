@@ -20,6 +20,7 @@ extern {
 
     enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
+        UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
@@ -119,6 +120,10 @@ LUpperId: L<Id> = {
     <l:@L> <id:UpperId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
 
+LUpperIdLBracket: L<Id> = {
+    <l:@L> <id:UpperIdLBracket> <r:@R> => L::new(module, l, r, id.smol_str()),
+}
+
 LLowerId: L<Id> = {
     <l:@L> <id:LowerId> <r:@R> => L::new(module, l, r, id.smol_str()),
 }
@@ -130,7 +135,15 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> "type" <type_name:UpperId> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+        L::new(module, l, r, TypeDecl {
+            name: type_name.smol_str(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: Some(rhs),
+        }),
+
+    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
@@ -138,7 +151,15 @@ TypeDecl: L<TypeDecl> = {
             rhs: Some(rhs),
         }),
 
-    <l:@L> "prim"? "type" <type_name:UpperId> <type_params:TypeParams> NEWLINE <r:@R> =>
+    <l:@L> "prim"? "type" <type_name:UpperId> NEWLINE <r:@R> =>
+        L::new(module, l, r, TypeDecl {
+            name: type_name.smol_str(),
+            type_params: vec![],
+            type_param_kinds: vec![],
+            rhs: None,
+        }),
+
+    <l:@L> "prim"? "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
@@ -156,9 +177,7 @@ TypeDeclRhs: TypeDeclRhs = {
 }
 
 TypeParams: Vec<Id> = {
-    => vec![],
-
-    "[" <params:Sep<LowerId, ",">> "]" =>
+    <params:Sep<LowerId, ",">> "]" =>
         params.into_iter().map(|id| id.smol_str()).collect(),
 }
 
@@ -213,11 +232,14 @@ LTypeNamed: L<Type> = {
 }
 
 Type: Type = {
+    #[precedence(level = "0")]
     <ty:TypeNamed> => ty,
 
     <var:LowerId> =>
         Type::Var(var.smol_str()),
 
+    #[precedence(level = "1")]
+    #[assoc(side = "right")]
     "Fn" "(" <args:Sep<LType, ",">> ")" <ret:ReturnType>  =>
         Type::Fn(FnType {
             args,
@@ -238,11 +260,34 @@ Type: Type = {
         Type::Variant { alts, extension, is_row: true },
 }
 
+TypeNoFn: Type = {
+    <ty:TypeNamed> => ty,
+
+    <var:LowerId> =>
+        Type::Var(var.smol_str()),
+
+    "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension, is_row: false },
+
+    "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
+        Type::Record { fields, extension, is_row: true },
+
+    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, is_row: false },
+
+    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+        Type::Variant { alts, extension, is_row: true },
+}
+
+LTypeNoFn: L<Type> = {
+    <l:@L> <ty:TypeNoFn> <r:@R> => L::new(module, l, r, ty),
+}
+
 TypeNamed: Type = {
     <name:UpperId> =>
         Type::Named(NamedType { name: name.smol_str(), args: vec![] }),
 
-    <name:UpperId> "[" <args:Sep<LType, ",">> "]" =>
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
 }
 
@@ -423,14 +468,7 @@ Param: (SmolStr, Option<L<Type>>) = {
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
     => (None, None),
 
-    ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), None),
-
-    ":" <ty:LType> =>
-        (None, Some(ty)),
-
-    ":" "{" <l:@L> <alts:Sep<VariantAlt, ",">> <extension:RowExtension> <r:@R> "}" <ty:LType> =>
-        (Some(L::new(module, l, r, Type::Variant { alts, extension, is_row: false })), Some(ty)),
+    ":" <ty1:LTypeNoFn?> <ty2:LType> => (ty1, Some(ty2)),
 }
 
 ParentTy: L<Id> = {
@@ -1110,7 +1148,7 @@ ImportDecl: L<ImportDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TraitDecl: L<TraitDecl> = {
-    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" ":"
+    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" ":"
             NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
@@ -1119,7 +1157,7 @@ TraitDecl: L<TraitDecl> = {
             items,
         }),
 
-    <l:@L> "trait" <name:LUpperId> "[" <type_params:Sep<LLowerId, ",">> "]" <r:@R> =>
+    <l:@L> "trait" <name:LUpperIdLBracket> <type_params:Sep<LLowerId, ",">> "]" <r:@R> =>
         L::new(module, l, r, TraitDecl {
             name,
             type_params,
@@ -1136,7 +1174,7 @@ TraitDecl: L<TraitDecl> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImplDecl: L<ImplDecl> = {
-    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" ":"
+    <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" ":"
             NEWLINE INDENT <items:FunDecl+> DEDENT <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
@@ -1146,7 +1184,7 @@ ImplDecl: L<ImplDecl> = {
         })
     },
 
-    <l:@L> "impl" <context:Context> <trait_:LUpperId> "[" <tys:Sep<LType, ",">> "]" <r:@R> => {
+    <l:@L> "impl" <context:Context> <trait_:LUpperIdLBracket> <tys:Sep<LType, ",">> "]" <r:@R> => {
         L::new(module, l, r, ImplDecl {
             context,
             trait_,

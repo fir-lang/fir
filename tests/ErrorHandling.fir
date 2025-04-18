@@ -91,7 +91,7 @@ parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): U32): Result[[I
         Result.Err(other): Result.Err(other)
         Result.Ok(val): Result.Ok(val)
 
-parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
+parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -113,15 +113,15 @@ parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
 
     result
 
-readFileExn(s: Str): {IoError, ..r} Str
+readFileExn(s: Str): [IoError, ..r] Str
     # We don't have the standard library support for file IO yet, just return
     # an error for now.
     throw(~IoError)
 
-parseU32FromFileExn(filePath: Str): {InvalidDigit, Overflow, EmptyInput, IoError, ..r} U32
+parseU32FromFileExn(filePath: Str): [InvalidDigit, Overflow, EmptyInput, IoError, ..r] U32
     parseU32Exn(readFileExn(filePath))
 
-parseWithExn(vec: Vec[Str], parseFn: Fn(Str): {..errs} a): {..errs} Vec[a]
+parseWithExn(vec: Vec[Str], parseFn: Fn(Str): [..errs] a): [..errs] Vec[a]
     let ret = Vec.withCapacity(vec.len())
     for s in vec.iter():
         ret.push(parseFn(s))
@@ -130,7 +130,7 @@ parseWithExn(vec: Vec[Str], parseFn: Fn(Str): {..errs} a): {..errs} Vec[a]
 parseU32UsingExnVersion(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
     try({ parseU32Exn(s) })
 
-parseU32UsingResultVersion(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
+parseU32UsingResultVersion(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     untry(parseU32(s))
 
 main

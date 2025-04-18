@@ -10,13 +10,13 @@ parseSum(nums: Vec[Str]): U32
         result += i
     result
 
-parseSumPropagateErrors(nums: Vec[Str]): {Overflow, EmptyInput, InvalidDigit, ..errs} U32
+parseSumPropagateErrors(nums: Vec[Str]): [Overflow, EmptyInput, InvalidDigit, ..errs] U32
     let result: U32 = 0
     for i: U32 in nums.iter().map(parseU32Exn):
         result += i
     result
 
-parseSumHandleInvalidDigits(nums: Vec[Str]): {Overflow, EmptyInput, ..errs} U32
+parseSumHandleInvalidDigits(nums: Vec[Str]): [Overflow, EmptyInput, ..errs] U32
     let result: U32 = 0
     for i: U32 in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
         result += i
@@ -68,7 +68,7 @@ main
 #
 ####################################################################################################
 
-handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): {..errs} Option[U32]
+handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): [..errs] Option[U32]
     match parseResult:
         Result.Ok(result): result
         Result.Err(~InvalidDigit): Option.Some(0u32)
@@ -91,7 +91,7 @@ parseU32(s: Str): U32
 
     result
 
-parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
+parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 

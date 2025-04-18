@@ -1,8 +1,8 @@
 type T:
     a: U32
 
-T.captureSelf(self: T): Fn(): {..errs} ()
-    fn(): {..errs} () {
+T.captureSelf(self: T): Fn(): [..errs] ()
+    fn(): [..errs] () {
         printStr(self.a.toStr())
     }
 

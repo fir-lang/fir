@@ -12,7 +12,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 
     return Option.Some(result)
 
-parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
+parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -34,7 +34,7 @@ parseU32Exn(s: Str): {InvalidDigit, Overflow, EmptyInput, ..r} U32
 
     result
 
-handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): {..errs} Option[U32]
+handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): [..errs] Option[U32]
     match parseResult:
         Result.Ok(result): result
         Result.Err(~InvalidDigit): Option.Some(0u32)
