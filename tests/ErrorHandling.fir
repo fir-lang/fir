@@ -121,7 +121,7 @@ readFileExn(s: Str): [IoError, ..r] Str
 parseU32FromFileExn(filePath: Str): [InvalidDigit, Overflow, EmptyInput, IoError, ..r] U32
     parseU32Exn(readFileExn(filePath))
 
-parseWithExn(vec: Vec[Str], parseFn: Fn(Str): [..errs] a): [..errs] Vec[a]
+parseWithExn(vec: Vec[Str], parseFn: Fn(Str): exn a): exn Vec[a]
     let ret = Vec.withCapacity(vec.len())
     for s in vec.iter():
         ret.push(parseFn(s))
