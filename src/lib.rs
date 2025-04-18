@@ -37,7 +37,8 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
-fn parse_module(module: &SmolStr, tokens: Vec<(Loc, token::Token, Loc)>) -> ast::Module {
+fn parse_module(module: &SmolStr, contents: &str) -> ast::Module {
+    let tokens = combine_uppercase_lbrackets(scanner::scan(lexer::lex(contents, module)));
     let parser = parser::TopDeclsParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
@@ -170,9 +171,7 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        let tokens =
-            combine_uppercase_lbrackets(scanner::scan(lexer::lex(&contents, &module_path)));
-        parse_module(&module_path, tokens)
+        parse_module(&module_path, &contents)
     }
 }
 
@@ -234,8 +233,7 @@ mod wasm {
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
-        let tokens = scanner::scan(lexer::lex(&contents, module));
-        parse_module(module, tokens)
+        parse_module(&module, &contents)
     }
 
     fn fetch_sync(url: &str) -> Option<String> {
@@ -291,8 +289,7 @@ mod wasm {
         clear_program_output();
 
         let module_name = SmolStr::new_static("FirWeb");
-        let tokens = scanner::scan(lexer::lex(pgm, &module_name));
-        let module = parse_module(&module_name, tokens);
+        let module = parse_module(&module_name, pgm);
         let mut module = import_resolver::resolve_imports("fir", "", module, true);
 
         type_checker::check_module(&mut module);
