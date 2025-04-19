@@ -853,19 +853,11 @@ pub(super) fn check_expr(
 
             let exceptions = match &sig.exceptions {
                 Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
-                None => {
-                    let row = tc_state.var_gen.new_var(
-                        level + 1,
-                        Kind::Row(RecordOrVariant::Variant),
-                        expr.loc.clone(),
-                    );
-                    Ty::Anonymous {
-                        labels: Default::default(),
-                        extension: Some(Box::new(Ty::Var(row))),
-                        kind: RecordOrVariant::Variant,
-                        is_row: false,
-                    }
-                }
+                None => Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level + 1, Kind::Star, expr.loc.clone()),
+                ),
             };
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
