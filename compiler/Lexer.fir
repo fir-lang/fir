@@ -1,14 +1,20 @@
+import Ast
+import Error
 import Token
 
 type Lexer:
+    _file: Str
     _input: Str
     _byteIdx: U32
+
+Lexer._fail(self, msg: Str): Error a
+    throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0), msg = msg))
 
 # NB. Panics if OOB.
 Lexer._nextChar(self): Char
     self._input.charAt(self._byteIdx)
 
-Lexer.next(self): {LexerError(error: Str), ..r} Option[Token]
+Lexer.next(self): Error Option[Token]
     if self._byteIdx == self._input.len():
         return Option.None
 
@@ -337,10 +343,10 @@ Lexer.next(self): {LexerError(error: Str), ..r} Option[Token]
 
             panic("TODO: `c.toStr()` at `byteIdx.toStr()`")
 
-    throw(~LexerError(error = "unterminated string"))
+    self._fail("unterminated string")
 
 # NB. Initial '"' should NOT be consumed.
-Lexer._string(self): {LexerError(error: Str), ..errs} Token
+Lexer._string(self): Error Token
     let startIdx = self._byteIdx
     self._byteIdx += 1 # Skip initial '#'
     while self._byteIdx < self._input.len():
@@ -375,14 +381,14 @@ Lexer._string(self): {LexerError(error: Str), ..errs} Token
                     '`' | '"' | 'n' | 't' | 'r' | '\\':
                         self._byteIdx += 1
                     other:
-                        throw(~LexerError(error = "invalid escape: '`other.toStr()`'"))
+                        self._fail("invalid escape: '`other.toStr()`'")
 
             _: self._byteIdx += 1
 
-    throw(~LexerError(error = "unterminated string literal"))
+    self._fail("unterminated string literal")
 
 # NB. Initial '\'' should NOT be consumed.
-Lexer._char(self): {LexerError(error: Str), ..errs} Token
+Lexer._char(self): Error Token
     let idx = self._byteIdx
     self._byteIdx += 1
     let char = match self._nextChar():
@@ -394,11 +400,11 @@ Lexer._char(self): {LexerError(error: Str), ..errs} Token
                 'n': '\n'
                 't': '\t'
                 'r': '\r'
-                other: throw(~LexerError(error = "invalid escape character in character literal: '`other.toStr()`'"))
+                other: self._fail("invalid escape character in character literal: '`other.toStr()`'")
         c: c
     self._byteIdx += 1
     if self._nextChar() != '\'':
-        throw(~LexerError(error = "unterminated character literal"))
+        self._fail("unterminated character literal")
 
     self._byteIdx += 1
     Token(kind = TokenKind.Char(char), text = self._input.substr(idx, self._byteIdx), byteIdx = idx)
@@ -410,7 +416,7 @@ Lexer._skipSingleLineComment(self)
         if c == '\n':
             return ()
 
-Lexer._skipMultiLineComment(self): {LexerError(error: Str), ..r}
+Lexer._skipMultiLineComment(self): Error ()
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += 1
@@ -421,17 +427,17 @@ Lexer._skipMultiLineComment(self): {LexerError(error: Str), ..r}
                     self._byteIdx += 1
                     return ()
 
-    throw(~LexerError(error = "unterminated multi-line comment"))
+    self._fail("unterminated multi-line comment")
 
 _isIdCont(c: Char): Bool
     c.isAsciiAlphanumeric() || c == '_'
 
-tokenize(input: Str): (tokens: Vec[Token], error: Option[(error: Str)])
+tokenize(file: Str, contents: Str): (tokens: Vec[Token], error: Option[Error])
     let tokens = Vec.withCapacity(1000)
-    let lexer = Lexer(_input = input, _byteIdx = 0)
+    let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0)
     loop:
         match try({ lexer.next() }):
             Result.Ok(Option.None): break
             Result.Ok(Option.Some(t)): tokens.push(t)
-            Result.Err(~LexerError(error = error)): return (tokens = tokens, error = Option.Some((error = error)))
+            Result.Err(error): return (tokens = tokens, error = Option.Some(error))
     (tokens = tokens, error = Option.None)
