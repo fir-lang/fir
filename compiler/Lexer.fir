@@ -429,7 +429,7 @@ Lexer._string(self): Error Token
                     '`' | '"' | 'n' | 't' | 'r' | '\\':
                         self._byteIdx += 1
                     other:
-                        self._fail("invalid escape: '`other.toStr()`'")
+                        self._fail("invalid escape: '`other`'")
 
             other: self._byteIdx += other.lenUtf8()
 
@@ -448,7 +448,7 @@ Lexer._char(self): Error Token
                 'n': '\n'
                 't': '\t'
                 'r': '\r'
-                other: self._fail("invalid escape character in character literal: '`other.toStr()`'")
+                other: self._fail("invalid escape character in character literal: '`other`'")
         c: c
     self._byteIdx += char.lenUtf8()
     if self._nextChar() != '\'':

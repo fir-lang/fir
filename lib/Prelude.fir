@@ -124,7 +124,7 @@ impl[ToStr[t]] ToStr[Option[t]]:
     toStr(self: Option[t]): Str
         match self:
             Option.None: "Option.None"
-            Option.Some(t): "Option.Some(`t.toStr()`)"
+            Option.Some(t): "Option.Some(`t`)"
 
 Option.unwrap(self: Option[t]): t
     match self:
@@ -138,8 +138,8 @@ type Result[e, t]:
 impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
     toStr(self: Result[e, t]): Str
         match self:
-            Result.Err(e): "Result.Err(`e.toStr()`)"
-            Result.Ok(t): "Result.Ok(`t.toStr()`)"
+            Result.Err(e): "Result.Err(`e`)"
+            Result.Ok(t): "Result.Ok(`t`)"
 
 Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
     match self:

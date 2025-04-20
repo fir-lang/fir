@@ -48,13 +48,13 @@ Vec.pop(self: Vec[t]): Option[t]
 
 Vec.set(self: Vec[t], idx: U32, elem: t)
     if idx >= self._len:
-        panic("Vec.set OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
+        panic("Vec.set OOB (len=`self._len`, idx=`idx`)")
 
     self._data.set(idx, elem)
 
 Vec.get(self: Vec[t], idx: U32): t
     if idx >= self._len:
-        panic("Vec.get OOB (len=`self._len.toStr()`, idx=`idx.toStr()`)")
+        panic("Vec.get OOB (len=`self._len`, idx=`idx`)")
 
     self._data.get(idx)
 

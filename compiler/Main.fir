@@ -8,5 +8,5 @@ main(args: Array[Str])
     for token: Token in tokens.iter():
         print(token)
     match error:
-        Option.Some(error): printStr("ERROR: `error.loc.byteIdx.toStr()`: `error.msg`")
+        Option.Some(error): printStr("ERROR: `error.loc.byteIdx`: `error.msg`")
         Option.None: ()

@@ -13,7 +13,6 @@ type TokenKind:
     # An identifier starting with a lowercase letter.
     LowerId
 
-
     # Keywords
     As
     Break
@@ -96,7 +95,7 @@ type IntKind:
 
 impl ToStr[Token]:
     toStr(self: Token): Str
-        "`self.kind.toStr()`(`self.byteIdx.toStr()`, \"`self.text`\")"
+        "`self.kind`(`self.byteIdx`, \"`self.text`\")"
 
 impl ToStr[TokenKind]:
     toStr(self: TokenKind): Str
@@ -105,9 +104,9 @@ impl ToStr[TokenKind]:
             TokenKind.AmpAmp: "AmpAmp"
             TokenKind.As: "As"
             TokenKind.Backslash: "Backslash"
-            TokenKind.BinInt(kind): "BinInt(`kind.toStr()`)"
+            TokenKind.BinInt(kind): "BinInt(`kind`)"
             TokenKind.Break: "Break"
-            TokenKind.Char(char): "Char(`char.toStr()`)"
+            TokenKind.Char(char): "Char(`char`)"
             TokenKind.Colon: "Colon"
             TokenKind.Comma: "Comma"
             TokenKind.Continue: "Continue"
@@ -125,12 +124,12 @@ impl ToStr[TokenKind]:
             TokenKind.Export: "Export"
             TokenKind.Fn_: "Fn"
             TokenKind.For: "For"
-            TokenKind.HexInt(kind): "HexInt(`kind.toStr()`)"
+            TokenKind.HexInt(kind): "HexInt(`kind`)"
             TokenKind.If: "If"
             TokenKind.Impl: "Impl"
             TokenKind.Import: "Import"
             TokenKind.In: "In"
-            TokenKind.Int(kind): "Int(`kind.toStr()`)"
+            TokenKind.Int(kind): "Int(`kind`)"
             TokenKind.Jump: "Jump"
             TokenKind.LAngle: "LAngle"
             TokenKind.LAngleEq: "LAngleEq"
