@@ -34,6 +34,22 @@ jobs:
       - name: Test
         run: cargo test
 
+  run_compiler_tests:
+    name: Run compiler tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Test
+        run: bash compiler/test_lexer.sh
+
   check_formatting:
     name: Check formatting
     runs-on: ubuntu-latest

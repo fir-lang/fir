@@ -7,8 +7,12 @@ type TokenKind:
     # An identifier starting with an uppercase letter.
     UpperId
 
+    # An identifier starting with '~', followed by an uppercase letter.
+    TildeUpperId
+
     # An identifier starting with a lowercase letter.
     LowerId
+
 
     # Keywords
     As
@@ -56,12 +60,13 @@ type TokenKind:
     AmpAmp
     DotDot
     DotDotEq
+    DoubleLAngle
+    DoubleRAngle
     Eq
     EqEq
     Exclamation
     ExclamationEq
     LAngle
-    DoubleLAngle
     LAngleEq
     Minus
     MinusEq
@@ -70,10 +75,11 @@ type TokenKind:
     Plus
     PlusEq
     RAngle
-    DoubleRAngle
     RAngleEq
+    Slash
     Star
     StarEq
+    Tilde
 
     # Literals
     String
@@ -95,70 +101,72 @@ impl ToStr[Token]:
 impl ToStr[TokenKind]:
     toStr(self: TokenKind): Str
         match self:
-            TokenKind.UpperId: "UpperId"
-            TokenKind.LowerId: "LowerId"
-            TokenKind.As: "As"
-            TokenKind.Break: "Break"
-            TokenKind.Continue: "Continue"
-            TokenKind.Elif: "Elif"
-            TokenKind.Else: "Else"
-            TokenKind.Export: "Export"
-            TokenKind.Fn_: "Fn"
-            TokenKind.UpperFn: "UpperFn"
-            TokenKind.For: "For"
-            TokenKind.If: "If"
-            TokenKind.Impl: "Impl"
-            TokenKind.Import: "Import"
-            TokenKind.In: "In"
-            TokenKind.Jump: "Jump"
-            TokenKind.Let: "Let"
-            TokenKind.Match: "Match"
-            TokenKind.Prim: "Prim"
-            TokenKind.Return: "Return"
-            TokenKind.Self_: "Self"
-            TokenKind.Trait: "Trait"
-            TokenKind.Type: "Type"
-            TokenKind.Var: "Var"
-            TokenKind.While: "While"
-            TokenKind.LParen: "LParen"
-            TokenKind.RParen: "RParen"
-            TokenKind.LBracket: "LBracket"
-            TokenKind.RBracket: "RBracket"
-            TokenKind.LBrace: "LBrace"
-            TokenKind.RBrace: "RBrace"
-            TokenKind.SingleQuote: "SingleQuote"
-            TokenKind.Colon: "Colon"
-            TokenKind.Comma: "Comma"
-            TokenKind.Dot: "Dot"
-            TokenKind.Backslash: "Backslash"
-            TokenKind.Underscore: "Underscore"
             TokenKind.Amp: "Amp"
             TokenKind.AmpAmp: "AmpAmp"
+            TokenKind.As: "As"
+            TokenKind.Backslash: "Backslash"
+            TokenKind.BinInt(kind): "BinInt(`kind.toStr()`)"
+            TokenKind.Break: "Break"
+            TokenKind.Char(char): "Char(`char.toStr()`)"
+            TokenKind.Colon: "Colon"
+            TokenKind.Comma: "Comma"
+            TokenKind.Continue: "Continue"
+            TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
             TokenKind.DotDotEq: "DotDotEq"
+            TokenKind.DoubleLAngle: "DoubleLAngle"
+            TokenKind.DoubleRAngle: "DoubleRAngle"
+            TokenKind.Elif: "Elif"
+            TokenKind.Else: "Else"
             TokenKind.Eq: "Eq"
             TokenKind.EqEq: "EqEq"
             TokenKind.Exclamation: "Exclamation"
             TokenKind.ExclamationEq: "ExclamationEq"
+            TokenKind.Export: "Export"
+            TokenKind.Fn_: "Fn"
+            TokenKind.For: "For"
+            TokenKind.HexInt(kind): "HexInt(`kind.toStr()`)"
+            TokenKind.If: "If"
+            TokenKind.Impl: "Impl"
+            TokenKind.Import: "Import"
+            TokenKind.In: "In"
+            TokenKind.Int(kind): "Int(`kind.toStr()`)"
+            TokenKind.Jump: "Jump"
             TokenKind.LAngle: "LAngle"
-            TokenKind.DoubleLAngle: "DoubleLAngle"
             TokenKind.LAngleEq: "LAngleEq"
+            TokenKind.LBrace: "LBrace"
+            TokenKind.LBracket: "LBracket"
+            TokenKind.LParen: "LParen"
+            TokenKind.Let: "Let"
+            TokenKind.LowerId: "LowerId"
+            TokenKind.Match: "Match"
             TokenKind.Minus: "Minus"
             TokenKind.MinusEq: "MinusEq"
             TokenKind.Pipe: "Pipe"
             TokenKind.PipePipe: "PipePipe"
             TokenKind.Plus: "Plus"
             TokenKind.PlusEq: "PlusEq"
+            TokenKind.Prim: "Prim"
             TokenKind.RAngle: "RAngle"
-            TokenKind.DoubleRAngle: "DoubleRAngle"
             TokenKind.RAngleEq: "RAngleEq"
+            TokenKind.RBrace: "RBrace"
+            TokenKind.RBracket: "RBracket"
+            TokenKind.RParen: "RParen"
+            TokenKind.Return: "Return"
+            TokenKind.Self_: "Self"
+            TokenKind.SingleQuote: "SingleQuote"
+            TokenKind.Slash: "Slash"
             TokenKind.Star: "Star"
             TokenKind.StarEq: "StarEq"
             TokenKind.String: "String"
-            TokenKind.Int(kind): "Int(`kind.toStr()`)"
-            TokenKind.HexInt(kind): "HexInt(`kind.toStr()`)"
-            TokenKind.BinInt(kind): "BinInt(`kind.toStr()`)"
-            TokenKind.Char(char): "Char(`char.toStr()`)"
+            TokenKind.TildeUpperId: "TildeUpperId"
+            TokenKind.Trait: "Trait"
+            TokenKind.Type: "Type"
+            TokenKind.Underscore: "Underscore"
+            TokenKind.UpperFn: "UpperFn"
+            TokenKind.UpperId: "UpperId"
+            TokenKind.Var: "Var"
+            TokenKind.While: "While"
 
 impl ToStr[IntKind]:
     toStr(self: IntKind): Str
