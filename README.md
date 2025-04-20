@@ -45,6 +45,14 @@ Some notable features are:
 
 - Tail call elimination (explicit with a keyword)
 
+For introduction, see blog posts:
+
+- [Error handling in Fir][1]
+- [Throwing iterators in Fir][2]
+
+[1]: https://osa1.net/posts/2025-01-18-fir-error-handling.html
+[2]: https://osa1.net/posts/2025-04-17-throwing-iterators-fir.html
+
 # Goals
 
 We want Fir to be a productive programming language when you need static types,
