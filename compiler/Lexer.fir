@@ -263,6 +263,10 @@ Lexer.next(self): Error Option[Token]
             self._byteIdx += 1
             return Option.Some(Token(kind = TokenKind.RAngle, text = ">", byteIdx = byteIdx))
 
+        "/" rest:
+            self._byteIdx += 1
+            return Option.Some(Token(kind = TokenKind.Slash, text = "/", byteIdx = byteIdx))
+
         ########################################################################################
         # Literals
 
@@ -306,6 +310,25 @@ Lexer.next(self): Error Option[Token]
                 byteIdx = byteIdx,
             ))
 
+        "~" rest:
+            let idStart = self._byteIdx
+            self._byteIdx += 1
+            if self._byteIdx < self._input.len() && self._nextChar().isAsciiUppercase():
+                self._byteIdx += 1
+                while self._byteIdx < self._input.len() && _isIdCont(self._nextChar()):
+                    self._byteIdx += 1
+                return Option.Some(Token(
+                    kind = TokenKind.TildeUpperId,
+                    text = self._input.substr(idStart, self._byteIdx),
+                    byteIdx = idStart,
+                ))
+            else:
+                return Option.Some(Token(
+                    kind = TokenKind.Tilde,
+                    text = "~",
+                    byteIdx = idStart,
+                ))
+
         other:
             let c = self._nextChar()
 
@@ -348,7 +371,7 @@ Lexer.next(self): Error Option[Token]
                     byteIdx = byteIdx
                 ))
 
-            panic("TODO: `c.toStr()` at `byteIdx.toStr()`")
+            panic("TODO: `c` at `byteIdx`")
 
 Lexer._intTypeSuffix(self): Error IntKind
     let rest = self._input.substr(self._byteIdx, self._input.len())
@@ -408,7 +431,7 @@ Lexer._string(self): Error Token
                     other:
                         self._fail("invalid escape: '`other.toStr()`'")
 
-            _: self._byteIdx += 1
+            other: self._byteIdx += other.lenUtf8()
 
     self._fail("unterminated string literal")
 
@@ -427,7 +450,7 @@ Lexer._char(self): Error Token
                 'r': '\r'
                 other: self._fail("invalid escape character in character literal: '`other.toStr()`'")
         c: c
-    self._byteIdx += 1
+    self._byteIdx += char.lenUtf8()
     if self._nextChar() != '\'':
         self._fail("unterminated character literal")
 
@@ -437,14 +460,14 @@ Lexer._char(self): Error Token
 Lexer._skipSingleLineComment(self)
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
-        self._byteIdx += 1
+        self._byteIdx += c.lenUtf8()
         if c == '\n':
             return ()
 
 Lexer._skipMultiLineComment(self): Error ()
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
-        self._byteIdx += 1
+        self._byteIdx += c.lenUtf8()
         if c == '|':
             if self._byteIdx < self._input.len():
                 let c = self._nextChar()
