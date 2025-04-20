@@ -15,11 +15,11 @@ Lexer._nextChar(self): Char
     self._input.charAt(self._byteIdx)
 
 Lexer.next(self): Error Option[Token]
+    while self._byteIdx < self._input.len() && self._nextChar().isAsciiWhitespace():
+        self._byteIdx += 1
+
     if self._byteIdx == self._input.len():
         return Option.None
-
-    while self._nextChar().isAsciiWhitespace():
-        self._byteIdx += 1
 
     if self._nextChar() == '#':
         self._byteIdx += 1
@@ -141,12 +141,12 @@ Lexer.next(self): Error Option[Token]
             return Option.Some(Token(kind = TokenKind.RParen, text = ")", byteIdx = byteIdx))
 
         "[" rest:
-            return Option.Some(Token(kind = TokenKind.LBracket, text = "[", byteIdx = byteIdx))
             self._byteIdx += 1
+            return Option.Some(Token(kind = TokenKind.LBracket, text = "[", byteIdx = byteIdx))
 
         "]" rest:
-            return Option.Some(Token(kind = TokenKind.RBracket, text = "]", byteIdx = byteIdx))
             self._byteIdx += 1
+            return Option.Some(Token(kind = TokenKind.RBracket, text = "]", byteIdx = byteIdx))
 
         "{" rest:
             self._byteIdx += 1
@@ -273,10 +273,38 @@ Lexer.next(self): Error Option[Token]
             return Option.Some(self._char())
 
         "0b" rest:
-            panic("TODO")
+            let digitsStart = self._byteIdx
+            self._byteIdx += 1
+
+            while self._byteIdx < self._input.len():
+                let c = self._nextChar()
+                if c != '_' && !c.isAsciiBinDigit():
+                    break
+                self._byteIdx += 1
+
+            let typeSuffix = self._intTypeSuffix()
+            return Option.Some(Token(
+                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                text = self._input.substr(digitsStart, self._byteIdx),
+                byteIdx = byteIdx,
+            ))
 
         "0x" rest:
-            panic("TODO")
+            let digitsStart = self._byteIdx
+            self._byteIdx += 1
+
+            while self._byteIdx < self._input.len():
+                let c = self._nextChar()
+                if c != '_' || !c.isAsciiHexDigit():
+                    break
+                self._byteIdx += 1
+
+            let typeSuffix = self._intTypeSuffix()
+            return Option.Some(Token(
+                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                text = self._input.substr(digitsStart, self._byteIdx),
+                byteIdx = byteIdx,
+            ))
 
         other:
             let c = self._nextChar()
@@ -285,44 +313,23 @@ Lexer.next(self): Error Option[Token]
                 let digitsStart = self._byteIdx
                 self._byteIdx += 1
 
-                let digitsEnd = self._byteIdx
-                while digitsEnd < self._input.len():
-                    let c = self._input.charAt(digitsEnd)
+                while self._byteIdx < self._input.len():
+                    let c = self._nextChar()
                     if c != '_' && !c.isAsciiDigit():
                         break
-                    digitsEnd += 1
+                    self._byteIdx += 1
 
-                self._byteIdx = digitsEnd
-
-                # Check type suffix
-                let rest = self._input.substr(digitsEnd, self._input.len())
-                let typeSuffix = IntKind.U32
-                match rest:
-                    "u8" rest:
-                        typeSuffix = IntKind.U8
-                        byteIdx += 2
-                    "i8" rest:
-                        typeSuffix = IntKind.I8
-                        byteIdx += 2
-                    "u32" rest:
-                        typeSuffix = IntKind.U32
-                        byteIdx += 3
-                    "i32" rest:
-                        typeSuffix = IntKind.I32
-                        byteIdx += 3
-                    _:
-                        ()
-
+                let typeSuffix = self._intTypeSuffix()
                 return Option.Some(Token(
                     kind = TokenKind.Int(Option.Some(typeSuffix)),
-                    text = self._input.substr(digitsStart, digitsEnd),
+                    text = self._input.substr(digitsStart, self._byteIdx),
                     byteIdx = byteIdx,
                 ))
 
             let uppercaseId = c.isAsciiUppercase()
 
-            # TODO: This is a bug in the Rust lexer as well: we should _a
-            # should be lowercase, _A should be uppercase.
+            # TODO: This is a bug in the Rust lexer as well: _a should be
+            # lowercase, _A should be uppercase.
             let lowercaseId = c.isAsciiLowercase() || c == '_'
 
             if uppercaseId || lowercaseId:
@@ -343,7 +350,25 @@ Lexer.next(self): Error Option[Token]
 
             panic("TODO: `c.toStr()` at `byteIdx.toStr()`")
 
-    self._fail("unterminated string")
+Lexer._intTypeSuffix(self): Error IntKind
+    let rest = self._input.substr(self._byteIdx, self._input.len())
+    let typeSuffix = IntKind.U32
+    match rest:
+        "u8" rest:
+            typeSuffix = IntKind.U8
+            self._byteIdx += 2
+        "i8" rest:
+            typeSuffix = IntKind.I8
+            self._byteIdx += 2
+        "u32" rest:
+            typeSuffix = IntKind.U32
+            self._byteIdx += 3
+        "i32" rest:
+            typeSuffix = IntKind.I32
+            self._byteIdx += 3
+        _:
+            ()
+    typeSuffix
 
 # NB. Initial '"' should NOT be consumed.
 Lexer._string(self): Error Token

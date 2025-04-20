@@ -46,6 +46,12 @@ Char.isAsciiDigit(self): Bool
 Char.isAsciiAlphanumeric(self): Bool
     self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
 
+Char.isAsciiHexDigit(self): Bool
+    self.isAsciiDigit() || (self._codePoint >= 'a'._codePoint && self._codePoint <= 'f'._codePoint && self._codePoint >= 'A'._codePoint && self._codePoint <= 'F'._codePoint)
+
+Char.isAsciiBinDigit(self): Bool
+    self == '0' || self == '1'
+
 impl ToStr[Char]:
     toStr(self: Char): Str
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2u32)
