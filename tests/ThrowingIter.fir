@@ -28,8 +28,8 @@ parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
     let result: U32 = 0
     for i: Result[[Overflow, EmptyInput], U32] in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match i:
-            Result.Err(~Overflow): printStr("Overflow")
-            Result.Err(~EmptyInput): printStr("Empty input")
+            Result.Err(~Overflow): print("Overflow")
+            Result.Err(~EmptyInput): print("Empty input")
             Result.Ok(i): result += i
     result
 
@@ -38,31 +38,31 @@ main
     nums.push(1)
     nums.push(2)
     nums.push(3)
-    printStr(sum(nums).toStr())
+    print(sum(nums))
 
     let strs: Vec[Str] = Vec.withCapacity(10)
     strs.push("1")
     strs.push("2")
     strs.push("3")
-    printStr(parseSum(strs).toStr())
+    print(parseSum(strs))
 
     strs.push("a")
     match try({ parseSumPropagateErrors(strs) }):
-        Result.Ok(sum): printStr(sum.toStr())
-        Result.Err(~Overflow): printStr("Overflow")
-        Result.Err(~EmptyInput): printStr("EmptyInput")
-        Result.Err(~InvalidDigit): printStr("InvalidDigit")
+        Result.Ok(sum): print(sum)
+        Result.Err(~Overflow): print("Overflow")
+        Result.Err(~EmptyInput): print("EmptyInput")
+        Result.Err(~InvalidDigit): print("InvalidDigit")
 
     match try({ parseSumHandleInvalidDigits(strs) }):
-        Result.Ok(sum): printStr(sum.toStr())
-        Result.Err(~Overflow): printStr("Overflow")
-        Result.Err(~EmptyInput): printStr("EmptyInput")
+        Result.Ok(sum): print(sum)
+        Result.Err(~Overflow): print("Overflow")
+        Result.Err(~EmptyInput): print("EmptyInput")
 
     strs.push("")
     strs.push("100000000000000000000000000000000")
     strs.push("4")
 
-    printStr(parseSumHandleInvalidDigitsLogRest(strs).toStr())
+    print(parseSumHandleInvalidDigitsLogRest(strs))
 
 ####################################################################################################
 #

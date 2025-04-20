@@ -1,7 +1,7 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-main(pgm: Str) = printStr(eval(parse(pgm)).toStr())
+main(pgm: Str) = print(eval(parse(pgm)))
 
 type Term:
     True
@@ -59,10 +59,11 @@ eval(term: Term): Value
                 Value.Bool(bool): panic("IsZero argument evaluated to bool `bool`")
                 Value.Num(value): Value.Bool(value == 0)
 
-Value.toStr(self): Str
-    match self:
-        Value.Bool(value): value.toStr()
-        Value.Num(value): value.toStr()
+impl ToStr[Value]:
+    toStr(self: Value): Str
+        match self:
+            Value.Bool(value): value.toStr()
+            Value.Num(value): value.toStr()
 
 parse(pgm: Str): Term
     let (term = term, rest = rest) = parseWithRest(pgm)

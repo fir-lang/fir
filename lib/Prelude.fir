@@ -113,6 +113,7 @@ impl[ToStr[t]] ToStr[Array[t]]:
         buf.toStr()
 
 prim printStr(s: Str)
+print[ToStr[a]](a: a) = printStr(a.toStr())
 prim panic[ToStr[t]](msg: t): Void
 
 type Option[t]:
