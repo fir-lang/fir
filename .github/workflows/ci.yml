@@ -48,7 +48,9 @@ jobs:
             override: true
 
       - name: Test
-        run: bash compiler/test_lexer.sh
+        run: |
+            export FIR_ROOT=$(pwd)
+            bash compiler/test_lexer.sh
 
   check_formatting:
     name: Check formatting
