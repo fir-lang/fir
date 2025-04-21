@@ -95,7 +95,7 @@ type Try[iter, item, exn]:
 
 impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1, item1], exn2]:
     next(self: Try[iter1, item1, exn1]): exn2 Option[Result[exn1, item1]]
-        match try(fn(): exn1 Option[item1] { self.iter.next() }):
+        match try(self.iter.next):
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
