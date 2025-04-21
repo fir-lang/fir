@@ -422,6 +422,82 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         }
     }
 
+    // Add self types to impl methods with implicit self type.
+    // Trait declarations can't have implicit self type (checked in the previous type). If an impl
+    // method is missing the self type, we copy the trait method self type, with the trait type
+    // parameters substituted with the impl type arguments.
+    for decl in module.iter_mut() {
+        let impl_decl = match &mut decl.node {
+            ast::TopDecl::Impl(impl_decl) => &mut impl_decl.node,
+            _ => continue,
+        };
+
+        for impl_fun_decl in &mut impl_decl.items {
+            if !matches!(impl_fun_decl.node.sig.self_, ast::SelfParam::Implicit) {
+                continue;
+            }
+
+            // New scope for the context.
+            assert_eq!(tys.len_scopes(), 1);
+            tys.enter_scope();
+
+            let _impl_context = convert_and_bind_context(
+                &mut tys,
+                &impl_decl.context,
+                TyVarConversion::ToQVar,
+                &decl.loc,
+            );
+
+            let trait_con_id = &impl_decl.trait_.node.clone();
+
+            let trait_ty_params: Vec<Id> = tys
+                .get_con(trait_con_id)
+                .unwrap()
+                .ty_params
+                .iter()
+                .map(|(param, _)| param.clone())
+                .collect();
+
+            // Map type parameters of the trait to the impl types.
+            let substs: Vec<(Id, Ty)> = trait_ty_params
+                .iter()
+                .cloned()
+                .zip(
+                    impl_decl
+                        .tys
+                        .iter()
+                        .map(|ty| convert_ast_ty(&tys, &ty.node, &ty.loc)),
+                )
+                .collect();
+
+            let trait_method_scheme = tys
+                .get_con(trait_con_id)
+                .unwrap()
+                .trait_details()
+                .unwrap()
+                .methods
+                .get(&impl_fun_decl.node.name.node)
+                .unwrap()
+                .scheme
+                .clone();
+
+            let impl_method_scheme = substs
+                .iter()
+                .fold(trait_method_scheme, |scheme, (var, ty)| {
+                    scheme.subst(var, ty)
+                });
+
+            let impl_self_type = match impl_method_scheme.ty {
+                Ty::Fun {
+                    args: FunArgs::Positional(args),
+                    ret: _,
+                    exceptions: _,
+                } => args[0].clone(),
+                _ => panic!(),
+            };
+        }
+    }
+
     // Add default methods to impls.
     //
     // We don't need to type check default methods copied to impls, but for now we do.
