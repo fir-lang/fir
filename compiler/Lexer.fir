@@ -267,6 +267,10 @@ Lexer.next(self): Error Option[Token]
             self._byteIdx += 1
             return Option.Some(Token(kind = TokenKind.Slash, text = "/", byteIdx = byteIdx))
 
+        "\\" rest:
+            self._byteIdx += 1
+            return Option.Some(Token(kind = TokenKind.Backslash, text = "\\", byteIdx = byteIdx))
+
         ########################################################################################
         # Literals
 

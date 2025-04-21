@@ -15,17 +15,22 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
     let mut last_loc = tokens[0].0;
     let mut delimiter_stack: Vec<Delimiter> = vec![];
 
+    // Skip the indentation tokens after a backlash.
+    let mut skip_indent = false;
+
     for (l, token, r) in tokens {
         let token_kind = token.kind;
 
         if token_kind == TokenKind::Backslash {
             // TODO: We should probably check that the next line should be on a new line, but it's
             // OK to just skip indentation token generation for now.
+            skip_indent = true;
             continue;
         }
 
         if matches!(delimiter_stack.last(), None | Some(Delimiter::Brace))
             && l.line != last_loc.line
+            && !skip_indent
         {
             // Generate a newline at the last line.
             new_tokens.push((
@@ -98,6 +103,8 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
         }
 
         new_tokens.push((l, token, r));
+
+        skip_indent = false;
     }
 
     // Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
