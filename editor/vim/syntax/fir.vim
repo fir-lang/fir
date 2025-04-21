@@ -41,6 +41,9 @@ syntax region firParen   transparent matchgroup=firParens   start='(' end=')'
 syntax region firBracket transparent matchgroup=firBrackets start="\[" end="\]"
 syntax region firBraces  transparent matchgroup=firBraces start="{" end="}"
 
+syntax match firComma ","
+syntax match firColon ":"
+
 syn region firBlockComment start="#|" end="|#"
   \ contains=
   \ firBlockCommentBlockComment,
@@ -48,6 +51,8 @@ syn region firBlockComment start="#|" end="|#"
   \ @Spell
 
 syn keyword firTodo TODO FIXME BUG contained
+
+syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^"
 
 highlight default link firKeyword Keyword
 highlight default link firLineComment Comment
@@ -60,3 +65,6 @@ highlight default link firParens Delimiter
 highlight default link firBraces Delimiter
 highlight default link firBlockComment Comment
 highlight default link firTodo Todo
+highlight default link firOperator Operator
+highlight default link firComma Delimiter
+highlight default link firColon Delimiter
