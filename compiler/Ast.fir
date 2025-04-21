@@ -3,17 +3,21 @@ type Loc:
     byteIdx: U32
     byteLen: U32
 
+type L[a]:
+    loc: Loc
+    node: a
+
 type Id:
     name: Str
     idx: U32
     loc: Loc
 
 type TopDecl:
-    Type(TypeDecl)
-    Fun(FunDecl)
-    Import(ImportDecl)
-    Trait(TraitDecl)
-    Impl(ImplDecl)
+    Type(L[TypeDecl])
+    Fun(L[FunDecl])
+    Import(L[ImportDecl])
+    Trait(L[TraitDecl])
+    Impl(L[ImplDecl])
 
 type TypeDecl:
     name: Id
@@ -39,26 +43,26 @@ type ConstructorDecl:
 
 type ConstructorFields:
     Empty
-    Named(Vec[(name: Id, ty: Type)])
-    Unnamed(Vec[Type])
+    Named(Vec[(name: Id, ty: L[Type])])
+    Unnamed(Vec[L[Type]])
 
 type FunDecl:
     parentTy: Option[Id]
     name: Id
     sig: FunSig
-    body: Option[Vec[Stmt]]
+    body: Option[Vec[L[Stmt]]]
 
 type FunSig:
     context: Context
     self_: SelfParam
-    params: Vec[(name: Id, ty: Type)]
-    returnTy: Option[Type]
-    exceptions: Option[Type]
+    params: Vec[(name: Id, ty: L[Type])]
+    returnTy: Option[L[Type]]
+    exceptions: Option[L[Type]]
 
 type SelfParam:
     No
     Implicit
-    Explicit(Type)
+    Explicit(L[Type])
 
 type ImportDecl:
     path: Vec[Str]
@@ -72,14 +76,14 @@ type TraitDecl:
 type ImplDecl:
     context: Context
     trait_: Id
-    tys: Vec[Type]
+    tys: Vec[L[Type]]
     items: Vec[FunDecl]
 
 type Type:
     Named(NamedType)
     Var(Id)
     Record:
-        fields: Vec[Named[Type]]
+        fields: Vec[Named[L[Type]]]
         extension: Option[Id]
     Variant:
         alts: Vec[VariantAlt]
@@ -87,15 +91,15 @@ type Type:
 
 type VariantAlt:
     con: Id
-    fields: Vec[Named[Type]]
+    fields: Vec[Named[L[Type]]]
 
 type Context:
     typeParams: Vec[(name: Id, kind: Kind)]
-    preds: Vec[Type]
+    preds: Vec[L[Type]]
 
 type NamedType:
     name: Id
-    args: Vec[Type]
+    args: Vec[L[Type]]
 
 type Named[t]:
     name: Option[Id]
@@ -117,13 +121,13 @@ type Stmt:
         level: U32
 
 type LetStmt:
-    lhs: Pat
-    ty: Option[Type]
-    rhs: Expr
+    lhs: L[Pat]
+    ty: Option[L[Type]]
+    rhs: L[Expr]
 
 type AssignStmt:
-    lhs: Expr
-    rhs: Expr
+    lhs: L[Expr]
+    rhs: L[Expr]
     op: AssignOp
 
 type AssignOp:
@@ -135,47 +139,47 @@ type AssignOp:
 
 type ForStmt:
     label: Option[Id]
-    pat: Pat
-    astTy: Option[Type]
-    tcTy: Option[Type]  # TODO: type-checking type
-    expr: Expr
-    exprTy: Option[Type] # TODO: type-checking type
-    body: Vec[Stmt]
+    pat: L[Pat]
+    astTy: Option[L[Type]]
+    tcTy: Option[L[Type]]  # TODO: type-checking type
+    expr: L[Expr]
+    exprTy: Option[L[Type]] # TODO: type-checking type
+    body: Vec[L[Stmt]]
 
 type WhileStmt:
     label: Option[Id]
-    cond: Expr
-    body: Vec[Stmt]
+    cond: L[Expr]
+    body: Vec[L[Stmt]]
 
 type WhileLetStmt:
     label: Option[Id]
-    pat: Pat
-    cond: Expr
-    body: Vec[Stmt]
+    pat: L[Pat]
+    cond: L[Expr]
+    body: Vec[L[Stmt]]
 
 type Pat:
     Var(VarPat)
     Constr(ConstrPat)
     Variant(VariantPat)
-    Record(Vec[Named[Pat]])
+    Record(Vec[Named[L[Pat]]])
     Ignore
     Str(Str)
     Char(Char)
     StrPfx(Str, Id)
-    Or(Pat, Pat)
+    Or(L[Pat], L[Pat])
 
 type VarPat:
     var_: Id
-    ty: Option[Type]    # TODO: This should be type-checking type instead of AST type
+    ty: Option[L[Type]]    # TODO: This should be type-checking type instead of AST type
 
 type ConstrPat:
     constr: Constructor
-    fields: Vec[Named[Pat]]
-    tyArgs: Vec[Type]   # TODO: This should be type-checking type instead of AST type
+    fields: Vec[Named[L[Pat]]]
+    tyArgs: Vec[L[Type]]   # TODO: This should be type-checking type instead of AST type
 
 type VariantPat:
     constr: Id
-    fields: Vec[Named[Pat]]
+    fields: Vec[Named[L[Pat]]]
 
 type Constructor:
     type_: Id
@@ -195,49 +199,49 @@ type Expr:
     Self
     BinOp(BinOpExpr)
     UnOp(UnOpExpr)
-    Record(Vec[Named[Expr]])
+    Record(Vec[Named[L[Expr]]])
     Variant(VariantExpr)
-    Return(Expr)
+    Return(L[Expr])
     Match(MatchExpr)
     If(IfExpr)
     Fn_(FnExpr)
 
 type VarExpr:
     id: Id
-    tyArgs: Vec[Type]
+    tyArgs: Vec[L[Type]]
 
 type ConstrExpr:
     id: Id
-    tyArgs: Vec[Type]
+    tyArgs: Vec[L[Type]]
 
 type ConstrSelectExpr:
     ty: Id
     constr: Id
-    tyArgs: Vec[Type]
+    tyArgs: Vec[L[Type]]
 
 type FieldSelectExpr:
-    object: Expr
+    object: L[Expr]
     field: Id
 
 type MethodSelectExpr:
-    object: Expr
-    objectTy: Option[Type]  # TODO: type-checking type
+    object: L[Expr]
+    objectTy: Option[L[Type]]  # TODO: type-checking type
     methodTyId: Id
     method: Id
-    tyArgs: Vec[Type]       # TODO: type-checking type
+    tyArgs: Vec[L[Type]]       # TODO: type-checking type
 
 type AssocFnSelectExpr:
     ty: Id
     member: Id
-    tyArgs: Vec[Type]       # TODO: type-checking type
+    tyArgs: Vec[L[Type]]       # TODO: type-checking type
 
 type CallExpr:
-    fun: Expr
+    fun: L[Expr]
     args: Vec[CallArg]
 
 type CallArg:
     name: Option[Id]
-    expr: Expr
+    expr: L[Expr]
 
 type IntExpr:
     text: Str
@@ -247,37 +251,37 @@ type IntExpr:
 
 type StrPart:
     Str(Str)
-    Expr(Expr)
+    Expr(L[Expr])
 
 type BinOpExpr:
-    left: Expr
-    right: Expr
-    tyArgs: Vec[Type]       # TODO: type-checking type
+    left: L[Expr]
+    right: L[Expr]
+    tyArgs: Vec[L[Type]]       # TODO: type-checking type
 
 type UnOpExpr:
     op: UnOp
-    expr: Expr
+    expr: L[Expr]
 
 type VariantExpr:
     id: Id
-    args: Vec[Named[Expr]]
+    args: Vec[Named[L[Expr]]]
 
 type MatchExpr:
-    scrutinee: Expr
+    scrutinee: L[Expr]
     alts: Vec[Alt]
 
 type Alt:
-    pattern: Pat
-    guard: Option[Expr]
-    rhs: Vec[Stmt]
+    pattern: L[Pat]
+    guard: Option[L[Expr]]
+    rhs: Vec[L[Stmt]]
 
 type IfExpr:
-    branches: Vec[(guard: Expr, body: Vec[Stmt])]
-    else_branch: Option[Vec[Stmt]]
+    branches: Vec[(guard: L[Expr], body: Vec[L[Stmt]])]
+    else_branch: Option[Vec[L[Stmt]]]
 
 type FnExpr:
     sig: FunSig
-    body: Vec[Stmt]
+    body: Vec[L[Stmt]]
     idx: U32
 
 type UnOp:
