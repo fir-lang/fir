@@ -480,20 +480,20 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
             }
         };
 
-        for (method, method_decl) in trait_methods {
-            if method_decl.fun_decl.node.body.is_none() {
+        for (trait_method_id, trait_method_decl) in trait_methods {
+            if trait_method_decl.fun_decl.node.body.is_none() {
                 continue;
             }
 
             if impl_decl
                 .items
                 .iter()
-                .any(|item| &item.node.name.node == method)
+                .any(|item| &item.node.name.node == trait_method_id)
             {
                 continue;
             }
 
-            let mut fun_decl = method_decl.fun_decl.clone();
+            let mut impl_fun_decl = trait_method_decl.fun_decl.clone();
 
             // Map type parameters of the trait to the impl types.
             let substs: Map<Id, ast::Type> = trait_type_params
@@ -502,15 +502,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
                 .collect();
 
-            fun_decl.node.sig.self_ = match fun_decl.node.sig.self_ {
+            impl_fun_decl.node.sig.self_ = match impl_fun_decl.node.sig.self_ {
                 ast::SelfParam::No => ast::SelfParam::No,
-                ast::SelfParam::Implicit => ast::SelfParam::Implicit,
+                ast::SelfParam::Implicit => {
+                    // Traits methods can't have implicit `self` type, checked in the previous pass
+                    // in this function (`collect_cons`).
+                    panic!()
+                }
                 ast::SelfParam::Explicit(ty) => {
                     ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
                 }
             };
 
-            fun_decl.node.sig.params = fun_decl
+            impl_fun_decl.node.sig.params = impl_fun_decl
                 .node
                 .sig
                 .params
@@ -518,21 +522,21 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
                 .collect();
 
-            fun_decl.node.sig.exceptions = fun_decl
+            impl_fun_decl.node.sig.exceptions = impl_fun_decl
                 .node
                 .sig
                 .exceptions
                 .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
 
-            fun_decl.node.sig.return_ty = fun_decl
+            impl_fun_decl.node.sig.return_ty = impl_fun_decl
                 .node
                 .sig
                 .return_ty
                 .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
 
-            fun_decl.loc = decl.loc.clone();
+            impl_fun_decl.loc = decl.loc.clone();
 
-            impl_decl.items.push(fun_decl);
+            impl_decl.items.push(impl_fun_decl);
         }
 
         tys.exit_scope();
