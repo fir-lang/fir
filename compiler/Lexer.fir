@@ -462,7 +462,7 @@ Lexer._skipSingleLineComment(self)
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()
         if c == '\n':
-            return ()
+            return
 
 Lexer._skipMultiLineComment(self): Error ()
     while self._byteIdx < self._input.len():
@@ -473,7 +473,7 @@ Lexer._skipMultiLineComment(self): Error ()
                 let c = self._nextChar()
                 if c == '#':
                     self._byteIdx += 1
-                    return ()
+                    return
 
     self._fail("unterminated multi-line comment")
 

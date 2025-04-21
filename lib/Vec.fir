@@ -75,7 +75,7 @@ Vec.sort[Ord[t]](self: Vec[t])
 
 _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32)
     if low >= high:
-        return ()   # TODO: Allow returning without a value
+        return
 
     let p = _partition(vec, low, high)
 

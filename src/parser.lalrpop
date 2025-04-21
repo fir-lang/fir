@@ -965,6 +965,9 @@ InlineExpr: Expr = {
             op: BinOp::Or,
         }),
 
+    <l:@L> "return" <r:@R> =>
+        Expr::Return(Box::new(L::new(module, l, r, Expr::Record(vec![])))),
+
     #[precedence(level = "12")]
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
