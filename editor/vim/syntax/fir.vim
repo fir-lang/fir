@@ -33,6 +33,8 @@ highlight default link firDecNumber firNumber
 
 syntax match firType "\<[A-Z][a-zA-Z0-9_']*\>"
 
+syntax match firVariable "\<_\?[a-z][a-zA-Z0-9_']*\>"
+
 syntax cluster firStringContains contains=firInterpolation
 syntax region firString matchgroup=firStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell,@firStringContains
 syntax match firInterpolation contained "`\([^`]\+\)`" extend
@@ -60,6 +62,7 @@ highlight default link firNumber Number
 highlight default link firStringDelimiter String
 highlight default link firString String
 highlight default link firType Type
+highlight default link firVariable Variable
 highlight default link firBrackets Delimiter
 highlight default link firParens Delimiter
 highlight default link firBraces Delimiter
