@@ -37,11 +37,12 @@ syntax match firVariable "\<_\?[a-z][a-zA-Z0-9_']*\>"
 
 syntax cluster firStringContains contains=firInterpolation
 syntax region firString matchgroup=firStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell,@firStringContains
+syntax region firChar start=+'+ skip=+\\\\\|\\'+ end=+'+
 syntax match firInterpolation contained "`\([^`]\+\)`" extend
 
 syntax region firParen   transparent matchgroup=firParens   start='(' end=')'
 syntax region firBracket transparent matchgroup=firBrackets start="\[" end="\]"
-syntax region firBraces  transparent matchgroup=firBraces start="{" end="}"
+syntax region firBraces  transparent matchgroup=firBraces   start="{" end="}"
 
 syntax match firComma ","
 syntax match firColon ":"
@@ -61,6 +62,7 @@ highlight default link firLineComment Comment
 highlight default link firNumber Number
 highlight default link firStringDelimiter String
 highlight default link firString String
+highlight default link firChar Character
 highlight default link firType Type
 highlight default link firVariable Variable
 highlight default link firBrackets Delimiter
