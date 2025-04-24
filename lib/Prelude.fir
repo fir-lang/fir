@@ -126,11 +126,10 @@ impl[ToStr[t]] ToStr[Option[t]]:
             Option.None: "Option.None"
             Option.Some(t): "Option.Some(`t`)"
 
-# TODO: This conflicts with `Iterator.map`, see #97.
-# Option.map(self: Option[t1], f: Fn(t1): exn t2): exn Option[t2]
-#     match self:
-#         Option.None: Option.None
-#         Option.Some(val): Option.Some(f(val))
+Option.map(self: Option[t1], f: Fn(t1): exn t2): exn Option[t2]
+    match self:
+        Option.None: Option.None
+        Option.Some(val): Option.Some(f(val))
 
 Option.unwrap(self: Option[t]): t
     match self:

@@ -1056,6 +1056,8 @@ fn select_method(
     loc: &ast::Loc,
     level: u32,
 ) -> Option<(Id, Scheme)> {
+    let mut candidates: Vec<(Id, Scheme)> = vec![];
+
     for (ty_id, candidate) in tc_state.tys.method_schemes.get(method)? {
         // Don't add predicates to the current predicate set. We will instantiate the scheme again
         // in the call site and use predicates generated from that.
@@ -1082,9 +1084,37 @@ fn select_method(
             level,
             loc,
         ) {
-            return Some((ty_id.clone(), candidate.clone()));
+            candidates.push((ty_id.clone(), candidate.clone()));
         }
     }
 
-    None
+    if candidates.len() > 1 {
+        // If there's an associated function among the candidates, pick it. Otherwise fail with an
+        // ambiguity error.
+        for (i, candidate) in candidates.iter().enumerate() {
+            if !tc_state
+                .tys
+                .tys
+                .cons()
+                .get(&candidate.0)
+                .unwrap()
+                .is_trait()
+            {
+                return Some(candidates.remove(i));
+            }
+        }
+
+        let candidates_str: Vec<String> = candidates
+            .iter()
+            .map(|(ty_id, _)| format!("{}.{}", ty_id, method))
+            .collect();
+
+        panic!(
+            "{}: Ambiguous method call, candidates: {}",
+            loc_display(loc),
+            candidates_str.join(", ")
+        );
+    }
+
+    candidates.pop()
 }
