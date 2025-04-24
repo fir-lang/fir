@@ -69,6 +69,17 @@ Vec.iter(self: Vec[t]): VecIter[t]
         _idx = 0,
     )
 
+Vec.first(self: Vec[t]): Option[t]
+    if self.len() == 0:
+        return Option.None
+    Option.Some(self._data.get(0))
+
+Vec.last(self: Vec[t]): Option[t]
+    let len = self.len()
+    if len == 0:
+        return Option.None
+    Option.Some(self._data.get(len - 1))
+
 Vec.sort[Ord[t]](self: Vec[t])
     if self.len() != 0:
         _quicksort(self, 0, self.len() - 1)
