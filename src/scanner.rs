@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 use lexgen_util::Loc;
 
-pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
+pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Loc)> {
     if tokens.is_empty() {
         return vec![];
     }
@@ -88,15 +88,36 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
             TokenKind::LBrace => delimiter_stack.push(Delimiter::Brace),
 
             TokenKind::RParen => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Paren));
+                if delimiter_stack.pop() != Some(Delimiter::Paren) {
+                    panic!(
+                        "{}:{}:{}: ')' without matching '('",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             TokenKind::RBracket => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Bracket));
+                if delimiter_stack.pop() != Some(Delimiter::Bracket) {
+                    panic!(
+                        "{}:{}:{}: ']' without matching '['",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             TokenKind::RBrace => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Brace));
+                if delimiter_stack.pop() != Some(Delimiter::Brace) {
+                    panic!(
+                        "{}:{}:{}: '}}' without matching '{{'",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             _ => {}
@@ -154,7 +175,7 @@ mod tests {
     use indoc::indoc;
 
     fn scan_wo_locs(input: &str) -> Vec<TokenKind> {
-        scan(crate::lexer::lex(input, "test"))
+        scan(crate::lexer::lex(input, "test"), "test")
             .into_iter()
             .map(|(_, t, _)| t.kind)
             .collect()
