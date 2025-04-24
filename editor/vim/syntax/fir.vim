@@ -27,9 +27,7 @@ syntax keyword firKeyword
 
 syntax region firLineComment start="#" end="$"  contains=@Spell
 
-syntax match firDecNumber display "[0-9][0-9_]*"
-
-highlight default link firDecNumber firNumber
+syntax match firNumber display "\<\(0x\|0X\|0b\|0B\)\?[a-fA-F0-9][a-fA-F0-9_]*\(u8\|u16\|u32\|u64\|i8\|i16\|i32\|i64\)\?\>"
 
 syntax match firType "\<[A-Z][a-zA-Z0-9_']*\>"
 
