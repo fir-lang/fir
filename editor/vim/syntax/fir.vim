@@ -38,9 +38,12 @@ syntax region firString matchgroup=firStringDelimiter start=+"+ skip=+\\\\\|\\"+
 syntax region firChar start=+'+ skip=+\\\\\|\\'+ end=+'+
 syntax match firInterpolation contained "`\([^`]\+\)`" extend
 
-syntax region firParen   transparent matchgroup=firParens   start='(' end=')'
-syntax region firBracket transparent matchgroup=firBrackets start="\[" end="\]"
-syntax region firBraces  transparent matchgroup=firBraces   start="{" end="}"
+syntax match firParenStart "("
+syntax match firParenEnd ")"
+syntax match firBracketStart "\["
+syntax match firBracketEnd "\]"
+syntax match firBraceStart "{"
+syntax match firBraceEnd "}"
 
 syntax match firComma ","
 syntax match firColon ":"
@@ -63,11 +66,14 @@ highlight default link firString String
 highlight default link firChar Character
 highlight default link firType Type
 highlight default link firVariable Variable
-highlight default link firBrackets Delimiter
-highlight default link firParens Delimiter
-highlight default link firBraces Delimiter
 highlight default link firBlockComment Comment
 highlight default link firTodo Todo
 highlight default link firOperator Operator
 highlight default link firComma Delimiter
 highlight default link firColon Delimiter
+highlight default link firParenStart Delimiter
+highlight default link firParenEnd Delimiter
+highlight default link firBraceStart Delimiter
+highlight default link firBraceEnd Delimiter
+highlight default link firBracketStart Delimiter
+highlight default link firBracketEnd Delimiter
