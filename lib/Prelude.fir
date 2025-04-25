@@ -3,6 +3,8 @@ import Exn
 import HashMap
 import Iter
 import Num
+import Option
+import Result
 import Str
 import StrBuf
 import Vec
@@ -115,67 +117,6 @@ impl[ToStr[t]] ToStr[Array[t]]:
 prim printStr(s: Str)
 print[ToStr[a]](a: a) = printStr(a.toStr())
 prim panic[ToStr[t]](msg: t): Void
-
-type Option[t]:
-    None
-    Some(t)
-
-impl[ToStr[t]] ToStr[Option[t]]:
-    toStr(self: Option[t]): Str
-        match self:
-            Option.None: "Option.None"
-            Option.Some(t): "Option.Some(`t`)"
-
-impl[Eq[t]] Eq[Option[t]]:
-    __eq(self: Option[t], other: Option[t]): Bool
-        match (left = self, right = other):
-            (left = Option.None, right = Option.None): Bool.True
-            (left = Option.Some(left), right = Option.Some(right)): left == right
-            _: Bool.False
-
-Option.map(self: Option[t1], f: Fn(t1): exn t2): exn Option[t2]
-    match self:
-        Option.None: Option.None
-        Option.Some(val): Option.Some(f(val))
-
-Option.unwrap(self: Option[t]): t
-    match self:
-        Option.None: panic("Unwrapping Option.None")
-        Option.Some(val): val
-
-Option.unwrapOr(self: Option[t], default: t): t
-    match self:
-        Option.None: default
-        Option.Some(val): val
-
-Option.unwrapOrElse(self: Option[t], f: Fn(): exn t): exn t
-    match self:
-        Option.None: f()
-        Option.Some(val): val
-
-Option.guard(self: Option[t], guard: Fn(t): exn Bool): exn Option[t]
-    match self:
-        Option.None: Option.None
-        Option.Some(val):
-            if guard(val):
-                Option.Some(val)
-            else:
-                Option.None
-
-type Result[e, t]:
-    Err(e)
-    Ok(t)
-
-impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
-    toStr(self: Result[e, t]): Str
-        match self:
-            Result.Err(e): "Result.Err(`e`)"
-            Result.Ok(t): "Result.Ok(`t`)"
-
-Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
-    match self:
-        Result.Ok(a): Result.Ok(a)
-        Result.Err(e): Result.Err(f(e))
 
 type Ordering:
     Less
