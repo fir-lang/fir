@@ -895,13 +895,10 @@ fn mono_expr(
                         loc: ast::Loc::dummy(),
                         node: mono_tc_ty(ret, ty_map, poly_pgm, mono_pgm),
                     }),
-                    exceptions: match exceptions {
-                        Some(ty) => Some(ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
-                        }),
-                        None => None,
-                    },
+                    exceptions: exceptions.as_ref().map(|ty| ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
+                    }),
                 },
                 body,
             })
