@@ -124,7 +124,7 @@ type Ordering:
     Greater
 
 impl ToStr[Ordering]:
-    toStr(self: Ordering): Str
+    toStr(self): Str
         match self:
             Ordering.Less: "Ordering.Less"
             Ordering.Equal: "Ordering.Equal"
@@ -135,7 +135,7 @@ type Bool:
     True
 
 impl ToStr[Bool]:
-    toStr(self: Bool): Str
+    toStr(self): Str
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"

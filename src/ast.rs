@@ -271,6 +271,7 @@ pub enum SelfParam {
     No,
     Implicit,
     Explicit(L<Type>),
+    Inferred(Ty),
 }
 
 #[derive(Debug, Clone)]
@@ -293,7 +294,7 @@ impl FunDecl {
     pub fn num_params(&self) -> u32 {
         (match self.sig.self_ {
             SelfParam::No => 0,
-            SelfParam::Implicit | SelfParam::Explicit(_) => 1,
+            SelfParam::Implicit | SelfParam::Explicit(_) | SelfParam::Inferred(_) => 1,
         }) + (self.sig.params.len() as u32)
     }
 }

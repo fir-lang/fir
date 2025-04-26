@@ -185,7 +185,9 @@ fn pgm_to_poly_pgm(pgm: Vec<ast::TopDecl>) -> PolyPgm {
                             .or_default()
                             .insert(fun_decl.node.name.node.clone(), fun_decl.node);
                     }
-                    ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                    ast::SelfParam::Implicit
+                    | ast::SelfParam::Explicit(_)
+                    | ast::SelfParam::Inferred(_) => {
                         method
                             .entry(parent_ty.node)
                             .or_default()
@@ -1266,6 +1268,10 @@ fn mono_self_param(
         ast::SelfParam::Explicit(ty) => mono::SelfParam::Explicit(
             ty.map_as_ref(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)),
         ),
+        ast::SelfParam::Inferred(ty) => mono::SelfParam::Explicit(ast::L {
+            loc: ast::Loc::dummy(),
+            node: mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
+        }),
     }
 }
 

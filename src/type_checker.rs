@@ -369,6 +369,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         ast::SelfParam::Explicit(ty) => {
                             arg_tys.insert(0, convert_ast_ty(&tys, &ty.node, &ty.loc));
                         }
+                        ast::SelfParam::Inferred(ty) => {
+                            arg_tys.insert(0, ty.clone());
+                        }
                     }
 
                     let ret_ty: Ty = match &fun.node.sig.return_ty {
@@ -495,6 +498,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 } => args[0].clone(),
                 _ => panic!(),
             };
+
+            impl_fun_decl.node.sig.self_ = ast::SelfParam::Inferred(impl_self_type);
+
+            tys.exit_scope();
         }
     }
 
@@ -587,6 +594,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 }
                 ast::SelfParam::Explicit(ty) => {
                     ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
+                }
+                ast::SelfParam::Inferred(_) => {
+                    panic!() // can't happen
                 }
             };
 
@@ -729,6 +739,9 @@ fn collect_schemes(
                         ast::SelfParam::Explicit(ty) => {
                             arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
                         }
+                        ast::SelfParam::Inferred(ty) => {
+                            arg_tys.insert(0, ty.clone());
+                        }
                     }
 
                     let ret_ty: Ty = match &fun.node.sig.return_ty {
@@ -806,6 +819,9 @@ fn collect_schemes(
                     ast::SelfParam::Explicit(ty) => {
                         arg_tys.insert(0, convert_ast_ty(tys, &ty.node, &ty.loc));
                     }
+                    ast::SelfParam::Inferred(ty) => {
+                        arg_tys.insert(0, ty.clone());
+                    }
                 }
 
                 let ret_ty: Ty = match &sig.return_ty {
@@ -835,7 +851,9 @@ fn collect_schemes(
                     Some(parent_ty) => {
                         match sig.self_ {
                             ast::SelfParam::No => {}
-                            ast::SelfParam::Implicit | ast::SelfParam::Explicit(_) => {
+                            ast::SelfParam::Implicit
+                            | ast::SelfParam::Explicit(_)
+                            | ast::SelfParam::Inferred(_) => {
                                 method_schemes
                                     .entry(name.node.clone())
                                     .or_default()
@@ -1019,6 +1037,9 @@ fn collect_schemes(
                             let ty = convert_ast_ty(tys, &ty.node, &ty.loc);
                             arg_tys.insert(0, ty);
                         }
+                        ast::SelfParam::Inferred(ty) => {
+                            arg_tys.insert(0, ty.clone());
+                        }
                     }
 
                     let ret_ty: Ty = match &sig.return_ty {
@@ -1181,6 +1202,9 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
                 convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
             );
         }
+        ast::SelfParam::Inferred(ty) => {
+            env.insert(SmolStr::new_static("self"), ty.clone());
+        }
     }
 
     for (param_name, param_ty) in &fun.node.sig.params {
@@ -1300,6 +1324,9 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
                         SmolStr::new("self"),
                         convert_ast_ty(&tys.tys, &ty.node, &ty.loc),
                     );
+                }
+                ast::SelfParam::Inferred(ty) => {
+                    env.insert(SmolStr::new("self"), ty.clone());
                 }
             }
 

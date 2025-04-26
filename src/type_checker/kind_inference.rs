@@ -43,6 +43,9 @@ fn add_missing_type_params_fun(
         ast::SelfParam::Explicit(ty) => {
             collect_tvs(&ty.node, &ty.loc, tvs);
         }
+        ast::SelfParam::Inferred(_) => {
+            panic!(); // can't happen at this stage
+        }
     }
     for (_, param_ty) in &sig.params {
         collect_tvs(&param_ty.node, &param_ty.loc, tvs);
