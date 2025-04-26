@@ -984,6 +984,7 @@ InlineExpr: Expr = {
             },
             body,
             idx: 0,
+            inferred_ty: None,
         }),
 
     "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
@@ -998,6 +999,7 @@ InlineExpr: Expr = {
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
+            inferred_ty: None,
         }),
 
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
@@ -1011,6 +1013,7 @@ InlineExpr: Expr = {
             },
             body,
             idx: 0,
+            inferred_ty: None,
         }),
 
     "{" <body:LInlineExpr> "}" =>
@@ -1024,6 +1027,7 @@ InlineExpr: Expr = {
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
+            inferred_ty: None,
         }),
 }
 

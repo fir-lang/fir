@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: 53ecb3bf7f6ce1b835d79a97bf7b0a3705d1dea66d1275048b36ec8affdfbfbc
+// sha3: 8a322cb2537ca17f9108f06166f69017e31676baa4dd4241b8da3939f9a31b63
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -45341,6 +45341,7 @@ fn __action135<'a>(
         },
         body,
         idx: 0,
+        inferred_ty: None,
     })
 }
 
@@ -45380,6 +45381,7 @@ fn __action136<'a>(
             node: Stmt::Expr(body),
         }],
         idx: 0,
+        inferred_ty: None,
     })
 }
 
@@ -45411,6 +45413,7 @@ fn __action137<'a>(
         },
         body,
         idx: 0,
+        inferred_ty: None,
     })
 }
 
@@ -45442,6 +45445,7 @@ fn __action138<'a>(
             node: Stmt::Expr(body),
         }],
         idx: 0,
+        inferred_ty: None,
     })
 }
 

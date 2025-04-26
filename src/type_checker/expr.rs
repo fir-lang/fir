@@ -834,11 +834,17 @@ pub(super) fn check_expr(
             branch_tys.pop().unwrap()
         }
 
-        ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
+        ast::Expr::Fn(ast::FnExpr {
+            sig,
+            body,
+            idx,
+            inferred_ty,
+        }) => {
             assert!(sig.context.type_params.is_empty());
             assert!(sig.context.preds.is_empty());
             assert!(matches!(&sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
+            assert!(inferred_ty.is_none());
 
             let (expected_args, expected_ret, expected_exceptions) = match expected_ty {
                 Some(expected_ty) => match expected_ty.normalize(tc_state.tys.tys.cons()) {
@@ -939,14 +945,16 @@ pub(super) fn check_expr(
                 exceptions: Some(Box::new(exceptions)),
             };
 
-            unify_expected_ty(
+            let ty = unify_expected_ty(
                 ty,
                 expected_ty,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
                 &expr.loc,
-            )
+            );
+            *inferred_ty = Some(ty.clone());
+            ty
         }
     }
 }

@@ -170,10 +170,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             sig: _,
             body,
             idx: _,
+            inferred_ty,
         }) => {
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
+            inferred_ty.as_mut().unwrap().deep_normalize(cons);
         }
     }
 }

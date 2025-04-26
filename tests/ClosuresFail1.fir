@@ -6,4 +6,4 @@ main
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101
-# expected stderr: tests/ClosuresFail1.fir:5:10: Unable to unify types I32 and U32
+# expected stderr: tests/ClosuresFail1.fir:5:12: Unable to unify types I32 and U32

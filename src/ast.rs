@@ -716,6 +716,7 @@ pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
     pub idx: u32,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
