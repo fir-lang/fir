@@ -336,6 +336,9 @@ impl FunSig {
                     buffer.push_str(", ");
                 }
             }
+            SelfParam::Inferred(_) => {
+                todo!()
+            }
         }
         for (i, (param_name, param_ty)) in self.params.iter().enumerate() {
             if i != 0 {

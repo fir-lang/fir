@@ -3,11 +3,11 @@ type Char:
     _codePoint: U32
 
 impl Eq[Char]:
-    __eq(self: Char, other: Char): Bool
+    __eq(self, other: Char): Bool
         self._codePoint == other._codePoint
 
 impl Ord[Char]:
-    cmp(self: Char, other: Char): Ordering
+    cmp(self, other: Char): Ordering
         self._codePoint.cmp(other._codePoint)
 
 Char.fromU32(codePoint: U32): Option[Char]
@@ -53,7 +53,7 @@ Char.isAsciiBinDigit(self): Bool
     self == '0' || self == '1'
 
 impl ToStr[Char]:
-    toStr(self: Char): Str
+    toStr(self): Str
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2u32)
         strBuf.push('\'')
         strBuf.push(self)
