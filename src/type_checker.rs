@@ -355,7 +355,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         .sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(&tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &fun.node.sig.self_ {
@@ -519,7 +522,9 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .sig
                 .params
                 .into_iter()
-                .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
+                .map(|(param, param_ty)| {
+                    (param, param_ty.map(|ty| ty.map(|ty| ty.subst_ids(&substs))))
+                })
                 .collect();
 
             impl_fun_decl.node.sig.exceptions = impl_fun_decl
@@ -639,7 +644,10 @@ fn collect_schemes(
                         .sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &fun.node.sig.self_ {
@@ -701,7 +709,10 @@ fn collect_schemes(
                 let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
-                    .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                    .map(|(_name, ty)| {
+                        let ty = ty.as_ref().unwrap();
+                        convert_ast_ty(tys, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 match &sig.self_ {
@@ -930,7 +941,10 @@ fn collect_schemes(
                     let mut arg_tys: Vec<Ty> = sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &sig.self_ {
@@ -1108,6 +1122,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     }
 
     for (param_name, param_ty) in &fun.node.sig.params {
+        let param_ty = param_ty.as_ref().unwrap();
         env.insert(
             param_name.clone(),
             convert_ast_ty(&tys.tys, &param_ty.node, &fun.loc),
@@ -1228,6 +1243,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             }
 
             for (param_name, param_ty) in &fun.node.sig.params {
+                let param_ty = param_ty.as_ref().unwrap();
                 env.insert(
                     param_name.clone(),
                     convert_ast_ty(&tys.tys, &param_ty.node, &param_ty.loc),

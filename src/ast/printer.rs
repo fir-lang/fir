@@ -342,8 +342,10 @@ impl FunSig {
                 buffer.push_str(", ");
             }
             buffer.push_str(param_name);
-            buffer.push_str(": ");
-            param_ty.node.print(buffer);
+            if let Some(param_ty) = param_ty {
+                buffer.push_str(": ");
+                param_ty.node.print(buffer);
+            }
         }
         buffer.push(')');
         if self.exceptions.is_some() || self.return_ty.is_some() {
@@ -780,8 +782,10 @@ impl Expr {
                         buffer.push_str(", ");
                     }
                     buffer.push_str(param_name);
-                    buffer.push_str(": ");
-                    param_ty.node.print(buffer);
+                    if let Some(param_ty) = param_ty {
+                        buffer.push_str(": ");
+                        param_ty.node.print(buffer);
+                    }
                 }
                 buffer.push(')');
                 if sig.exceptions.is_some() || sig.return_ty.is_some() {

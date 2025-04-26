@@ -860,11 +860,50 @@ pub(super) fn check_expr(
                 ),
             };
 
+            let (expected_args, expected_ret, expected_exceptions) = match expected_ty {
+                Some(expected_ty) => match expected_ty.deep_normalize(tc_state.tys.tys.cons()) {
+                    Ty::Fun {
+                        args,
+                        ret,
+                        exceptions,
+                    } => (Some(args), Some(ret), Some(exceptions)),
+
+                    Ty::Con(_)
+                    | Ty::Var(_)
+                    | Ty::App(_, _)
+                    | Ty::QVar(_)
+                    | Ty::Anonymous { .. } => (None, None, None),
+                },
+                None => (None, None, None),
+            };
+
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
-            for (param_name, param_ty) in &sig.params {
-                let param_ty = convert_ast_ty(&tc_state.tys.tys, &param_ty.node, &expr.loc);
-                tc_state.env.insert(param_name.clone(), param_ty.clone());
-                param_tys.push(param_ty.clone());
+            for (param_idx, (param_name, param_ty)) in sig.params.iter().enumerate() {
+                let param_ty_converted: Option<Ty> = param_ty
+                    .as_ref()
+                    .map(|param_ty| convert_ast_ty(&tc_state.tys.tys, &param_ty.node, &expr.loc));
+
+                let param_ty_converted: Ty = param_ty_converted.unwrap_or_else(|| {
+                    expected_args
+                        .as_ref()
+                        .and_then(|expected_args| match expected_args {
+                            FunArgs::Positional(expected_args) => {
+                                expected_args.get(param_idx).cloned()
+                            }
+                            FunArgs::Named(_) => None,
+                        })
+                        .unwrap_or_else(|| {
+                            panic!(
+                                "{}: fn expr needs argument type annotations",
+                                loc_display(&expr.loc)
+                            )
+                        })
+                });
+
+                tc_state
+                    .env
+                    .insert(param_name.clone(), param_ty_converted.clone());
+                param_tys.push(param_ty_converted.clone());
             }
 
             let old_ret_ty = replace(&mut tc_state.return_ty, ret_ty.clone());

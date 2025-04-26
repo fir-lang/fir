@@ -341,7 +341,7 @@ fn mono_top_fn(
         .map(|(param_name, param_ty)| {
             (
                 param_name.clone(),
-                mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
             )
         })
         .collect();
@@ -859,7 +859,12 @@ fn mono_expr(
                     params: sig
                         .params
                         .iter()
-                        .map(|(arg, ty)| (arg.clone(), mono_l_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                        .map(|(arg, ty)| {
+                            (
+                                arg.clone(),
+                                mono_l_ty(ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+                            )
+                        })
                         .collect(),
                     return_ty: mono_opt_l_ty(&sig.return_ty, ty_map, poly_pgm, mono_pgm),
                     exceptions: mono_opt_l_ty(&sig.exceptions, ty_map, poly_pgm, mono_pgm),
@@ -925,7 +930,7 @@ fn mono_method(
                     .map(|(param_name, param_ty)| {
                         (
                             param_name.clone(),
-                            mono_l_ty(param_ty, &substs, poly_pgm, mono_pgm),
+                            mono_l_ty(param_ty.as_ref().unwrap(), &substs, poly_pgm, mono_pgm),
                         )
                     })
                     .collect();
@@ -1027,7 +1032,7 @@ fn mono_method(
             .map(|(param_name, param_ty)| {
                 (
                     param_name.clone(),
-                    mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                    mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
                 )
             })
             .collect();
