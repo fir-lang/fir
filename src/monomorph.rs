@@ -341,7 +341,7 @@ fn mono_top_fn(
         .map(|(param_name, param_ty)| {
             (
                 param_name.clone(),
-                mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
             )
         })
         .collect();
@@ -841,10 +841,31 @@ fn mono_expr(
             }),
         }),
 
-        ast::Expr::Fn(ast::FnExpr { sig, body, idx }) => {
-            assert!(sig.context.type_params.is_empty());
-            assert!(matches!(sig.self_, ast::SelfParam::No));
+        ast::Expr::Fn(ast::FnExpr {
+            sig,
+            body,
+            idx,
+            inferred_ty,
+        }) => {
             assert_eq!(*idx, 0);
+
+            let (args, ret, exceptions) = match inferred_ty.as_ref().unwrap() {
+                Ty::Fun {
+                    args,
+                    ret,
+                    exceptions,
+                } => (
+                    match args {
+                        FunArgs::Positional(args) => args,
+                        FunArgs::Named(_) => panic!(),
+                    },
+                    ret,
+                    exceptions,
+                ),
+                _ => panic!(),
+            };
+
+            assert_eq!(args.len(), sig.params.len());
 
             locals.enter();
             sig.params
@@ -859,10 +880,25 @@ fn mono_expr(
                     params: sig
                         .params
                         .iter()
-                        .map(|(arg, ty)| (arg.clone(), mono_l_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                        .zip(args.iter())
+                        .map(|((arg, _ast_ty), ty)| {
+                            (
+                                arg.clone(),
+                                ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
+                                },
+                            )
+                        })
                         .collect(),
-                    return_ty: mono_opt_l_ty(&sig.return_ty, ty_map, poly_pgm, mono_pgm),
-                    exceptions: mono_opt_l_ty(&sig.exceptions, ty_map, poly_pgm, mono_pgm),
+                    return_ty: Some(ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: mono_tc_ty(ret, ty_map, poly_pgm, mono_pgm),
+                    }),
+                    exceptions: exceptions.as_ref().map(|ty| ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm),
+                    }),
                 },
                 body,
             })
@@ -925,7 +961,7 @@ fn mono_method(
                     .map(|(param_name, param_ty)| {
                         (
                             param_name.clone(),
-                            mono_l_ty(param_ty, &substs, poly_pgm, mono_pgm),
+                            mono_l_ty(param_ty.as_ref().unwrap(), &substs, poly_pgm, mono_pgm),
                         )
                     })
                     .collect();
@@ -1027,7 +1063,7 @@ fn mono_method(
             .map(|(param_name, param_ty)| {
                 (
                     param_name.clone(),
-                    mono_l_ty(param_ty, &ty_map, poly_pgm, mono_pgm),
+                    mono_l_ty(param_ty.as_ref().unwrap(), &ty_map, poly_pgm, mono_pgm),
                 )
             })
             .collect();

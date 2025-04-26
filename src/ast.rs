@@ -256,13 +256,23 @@ pub struct FunSig {
     /// Parameters of the function.
     ///
     /// Note: this does not include `self`!
-    pub params: Vec<(Id, L<Type>)>,
+    ///
+    /// Type is optional for `fn` expressions, where we can sometimes use the type information from
+    /// the `fn` use site to give types to arguments.
+    pub params: Vec<(Id, Option<L<Type>>)>,
 
     /// Optional return type.
+    ///
+    /// When not available in a top-level definition, this defaults to `()`. In a `fn`, we use the
+    /// type information at the `fn` use site or fail and ask user to add type annotation.
     pub return_ty: Option<L<Type>>,
 
-    /// The exception signature. If exists, this will be a variant type. Store as `Type` to make it
-    /// easier to process with rest of the types.
+    /// The exception signature.
+    ///
+    /// When not available in a top-level definition, this will be a quantified type variable that
+    /// is not used anywhere else in the signature.
+    ///
+    /// When not available in a `fn` expr, the exception type will be inferred.
     pub exceptions: Option<L<Type>>,
 }
 
@@ -705,6 +715,7 @@ pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
     pub idx: u32,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

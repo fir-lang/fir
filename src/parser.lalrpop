@@ -453,7 +453,7 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
     },
 }
 
-ParamList: (SelfParam, Vec<(Id, L<Type>)>) = {
+ParamList: (SelfParam, Vec<(Id, Option<L<Type>>)>) = {
     <l:@L> "(" <params:Sep<Param, ",">> ")" => {
         process_param_list(params, module, &l)
     },
@@ -972,8 +972,7 @@ InlineExpr: Expr = {
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 
-
-    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
          <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
@@ -985,9 +984,10 @@ InlineExpr: Expr = {
             },
             body,
             idx: 0,
+            inferred_ty: None,
         }),
 
-    "fn" "(" <params:Sep<(<LowerId> ":" <LType>), ",">> ")"
+    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
          <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
@@ -999,6 +999,7 @@ InlineExpr: Expr = {
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
+            inferred_ty: None,
         }),
 
     "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
@@ -1012,6 +1013,7 @@ InlineExpr: Expr = {
             },
             body,
             idx: 0,
+            inferred_ty: None,
         }),
 
     "{" <body:LInlineExpr> "}" =>
@@ -1025,6 +1027,7 @@ InlineExpr: Expr = {
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
+            inferred_ty: None,
         }),
 }
 

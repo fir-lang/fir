@@ -45,7 +45,9 @@ fn add_missing_type_params_fun(
         }
     }
     for (_, param_ty) in &sig.params {
-        collect_tvs(&param_ty.node, &param_ty.loc, tvs);
+        if let Some(param_ty) = param_ty {
+            collect_tvs(&param_ty.node, &param_ty.loc, tvs);
+        }
     }
     if let Some(exn) = &sig.exceptions {
         collect_tvs(&exn.node, &exn.loc, tvs);
