@@ -8,7 +8,37 @@ impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
             Result.Err(e): "Result.Err(`e`)"
             Result.Ok(t): "Result.Ok(`t`)"
 
+Result.map(self: Result[e, t], f: Fn(t): t2): Result[e, t2]
+    match self:
+        Result.Ok(val): Result.Ok(f(val))
+        Result.Err(err): Result.Err(err)
+
 Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
     match self:
-        Result.Ok(a): Result.Ok(a)
-        Result.Err(e): Result.Err(f(e))
+        Result.Ok(val): Result.Ok(val)
+        Result.Err(err): Result.Err(f(err))
+
+Result.unwrap[ToStr[e]](self: Result[e, t]): t
+    match self:
+        Result.Ok(val): val
+        Result.Err(err): panic(err.toStr())
+
+Result.unwrapOr(self: Result[e, t], default: t): t
+    match self:
+        Result.Ok(val): val
+        Result.Err(_): default
+
+Result.unwrapOrElse(self: Result[e, t], f: Fn(e): exn t): exn t
+    match self:
+        Result.Ok(val): val
+        Result.Err(err): f(err)
+
+Reuslt.isOk(self: Result[e, t]): Bool
+    match self:
+        Result.Ok(_): Bool.True
+        Result.Err(_): Bool.False
+
+Reuslt.isErr(self: Result[e, t]): Bool
+    match self:
+        Result.Ok(_): Bool.False
+        Result.Err(_): Bool.True
