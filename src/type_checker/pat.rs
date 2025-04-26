@@ -115,7 +115,16 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     .iter_mut()
                     .map(|named| {
                         (
-                            named.name.as_ref().unwrap().clone(),
+                            named
+                                .name
+                                .as_ref()
+                                .unwrap_or_else(|| {
+                                    panic!(
+                                        "{}: Record pattern with unnamed field",
+                                        loc_display(&named.node.loc)
+                                    )
+                                })
+                                .clone(),
                             check_pat(tc_state, &mut named.node, level),
                         )
                     })
