@@ -4,7 +4,7 @@ use std::cmp::Ordering;
 
 use lexgen_util::Loc;
 
-pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
+pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Loc)> {
     if tokens.is_empty() {
         return vec![];
     }
@@ -15,17 +15,22 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
     let mut last_loc = tokens[0].0;
     let mut delimiter_stack: Vec<Delimiter> = vec![];
 
+    // Skip the indentation tokens after a backlash.
+    let mut skip_indent = false;
+
     for (l, token, r) in tokens {
         let token_kind = token.kind;
 
         if token_kind == TokenKind::Backslash {
             // TODO: We should probably check that the next line should be on a new line, but it's
             // OK to just skip indentation token generation for now.
+            skip_indent = true;
             continue;
         }
 
         if matches!(delimiter_stack.last(), None | Some(Delimiter::Brace))
             && l.line != last_loc.line
+            && !skip_indent
         {
             // Generate a newline at the last line.
             new_tokens.push((
@@ -83,21 +88,44 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Token, Loc)> {
             TokenKind::LBrace => delimiter_stack.push(Delimiter::Brace),
 
             TokenKind::RParen => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Paren));
+                if delimiter_stack.pop() != Some(Delimiter::Paren) {
+                    panic!(
+                        "{}:{}:{}: ')' without matching '('",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             TokenKind::RBracket => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Bracket));
+                if delimiter_stack.pop() != Some(Delimiter::Bracket) {
+                    panic!(
+                        "{}:{}:{}: ']' without matching '['",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             TokenKind::RBrace => {
-                assert_eq!(delimiter_stack.pop(), Some(Delimiter::Brace));
+                if delimiter_stack.pop() != Some(Delimiter::Brace) {
+                    panic!(
+                        "{}:{}:{}: '}}' without matching '{{'",
+                        module,
+                        l.line + 1,
+                        l.col + 1
+                    );
+                }
             }
 
             _ => {}
         }
 
         new_tokens.push((l, token, r));
+
+        skip_indent = false;
     }
 
     // Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
@@ -147,7 +175,7 @@ mod tests {
     use indoc::indoc;
 
     fn scan_wo_locs(input: &str) -> Vec<TokenKind> {
-        scan(crate::lexer::lex(input, "test"))
+        scan(crate::lexer::lex(input, "test"), "test")
             .into_iter()
             .map(|(_, t, _)| t.kind)
             .collect()

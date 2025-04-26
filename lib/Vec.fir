@@ -69,13 +69,24 @@ Vec.iter(self: Vec[t]): VecIter[t]
         _idx = 0,
     )
 
+Vec.first(self: Vec[t]): Option[t]
+    if self.len() == 0:
+        return Option.None
+    Option.Some(self._data.get(0))
+
+Vec.last(self: Vec[t]): Option[t]
+    let len = self.len()
+    if len == 0:
+        return Option.None
+    Option.Some(self._data.get(len - 1))
+
 Vec.sort[Ord[t]](self: Vec[t])
     if self.len() != 0:
         _quicksort(self, 0, self.len() - 1)
 
 _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32)
     if low >= high:
-        return ()   # TODO: Allow returning without a value
+        return
 
     let p = _partition(vec, low, high)
 

@@ -41,6 +41,7 @@ lexgen::lexer! {
         "in" = TokenKind::In,
         "jump" = TokenKind::Jump,
         "let" = TokenKind::Let,
+        "loop" = TokenKind::Loop,
         "match" = TokenKind::Match,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
@@ -48,7 +49,6 @@ lexgen::lexer! {
         "type" = TokenKind::Type,
         "var" = TokenKind::Var,
         "while" = TokenKind::While,
-        "loop" = TokenKind::Loop,
 
         // Delimiters
         "(" = TokenKind::LParen,
