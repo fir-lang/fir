@@ -840,28 +840,8 @@ pub(super) fn check_expr(
             assert!(matches!(&sig.self_, ast::SelfParam::No));
             assert_eq!(*idx, 0);
 
-            tc_state.env.enter(); // for term params
-
-            let ret_ty = match &sig.return_ty {
-                Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
-                None => Ty::Var(
-                    tc_state
-                        .var_gen
-                        .new_var(level + 1, Kind::Star, expr.loc.clone()),
-                ),
-            };
-
-            let exceptions = match &sig.exceptions {
-                Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
-                None => Ty::Var(
-                    tc_state
-                        .var_gen
-                        .new_var(level + 1, Kind::Star, expr.loc.clone()),
-                ),
-            };
-
             let (expected_args, expected_ret, expected_exceptions) = match expected_ty {
-                Some(expected_ty) => match expected_ty.deep_normalize(tc_state.tys.tys.cons()) {
+                Some(expected_ty) => match expected_ty.normalize(tc_state.tys.tys.cons()) {
                     Ty::Fun {
                         args,
                         ret,
@@ -875,6 +855,32 @@ pub(super) fn check_expr(
                     | Ty::Anonymous { .. } => (None, None, None),
                 },
                 None => (None, None, None),
+            };
+
+            tc_state.env.enter(); // for term params
+
+            let ret_ty = match &sig.return_ty {
+                Some(ty) => convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc),
+                None => match expected_ret {
+                    Some(ret) => (*ret).clone(),
+                    None => Ty::Var(tc_state.var_gen.new_var(
+                        level + 1,
+                        Kind::Star,
+                        expr.loc.clone(),
+                    )),
+                },
+            };
+
+            let exceptions = match &sig.exceptions {
+                Some(exc) => convert_ast_ty(&tc_state.tys.tys, &exc.node, &exc.loc),
+                None => match expected_exceptions {
+                    Some(Some(exn)) => (*exn).clone(),
+                    _ => Ty::Var(
+                        tc_state
+                            .var_gen
+                            .new_var(level + 1, Kind::Star, expr.loc.clone()),
+                    ),
+                },
             };
 
             let mut param_tys: Vec<Ty> = Vec::with_capacity(sig.params.len());
