@@ -62,7 +62,7 @@ parseU32FromFile(filePath: Str): Result[[InvalidDigit, Overflow, EmptyInput, IoE
 
     parseU32(fileContents)
 
-parseWith(vec: Vec[Str], parseFn: Fn(Str): Result[errs, a]): Result[errs, Vec[a]]
+parseWith(vec: Vec[Str], parseFn: Fn(Str): exn Result[errs, a]): exn Result[errs, Vec[a]]
     let ret = Vec.withCapacity(vec.len())
 
     for s: Str in vec.iter():
@@ -72,7 +72,7 @@ parseWith(vec: Vec[Str], parseFn: Fn(Str): Result[errs, a]): Result[errs, Vec[a]
 
     Result.Ok(ret)
 
-parseWith2(vec: Vec[Str], parseFn: Fn(Str): Result[[OtherError, ..r], a]): Result[[..r], Vec[a]]
+parseWith2(vec: Vec[Str], parseFn: Fn(Str): exn Result[[OtherError, ..r], a]): exn Result[[..r], Vec[a]]
     let ret = Vec.withCapacity(vec.len())
 
     for s in vec.iter():
@@ -85,7 +85,7 @@ parseWith2(vec: Vec[Str], parseFn: Fn(Str): Result[[OtherError, ..r], a]): Resul
 
 handleSomeErrs(error: [Overflow, OtherError]): U32 = 0
 
-parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): U32): Result[[InvalidDigit, EmptyInput, ..r2], U32]
+parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): exn U32): exn Result[[InvalidDigit, EmptyInput, ..r2], U32]
     match parseU32(input):
         Result.Err(~Overflow): Result.Ok(handler(~Overflow))
         Result.Err(other): Result.Err(other)

@@ -8,13 +8,6 @@ use crate::type_checker::ty_map::TyMap;
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
-            // TODO FIXME HACK: `tys` is also used to map an associated type `T` (a `Type::Named`)
-            // to `Self.T`, so we need to check var map here when converting a constructor.
-            if let Some(ty) = tys.get_var(name) {
-                assert!(args.is_empty());
-                return ty.clone();
-            }
-
             let ty_con = tys
                 .get_con(name)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
@@ -134,20 +127,30 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             args,
             ret,
             exceptions,
-        }) => Ty::Fun {
-            args: FunArgs::Positional(
+        }) => {
+            let args = FunArgs::Positional(
                 args.iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect(),
-            ),
-            ret: Box::new(match ret {
+            );
+
+            let ret = Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
                 None => Ty::unit(),
-            }),
-            exceptions: exceptions
-                .as_ref()
-                .map(|ty| Box::new(convert_ast_ty(tys, &ty.node, &ty.loc))),
-        },
+            });
+
+            let exceptions = exceptions.as_ref().unwrap_or_else(|| {
+                panic!("{}: Function type without exception type", loc_display(loc))
+            });
+
+            let exceptions = Box::new(convert_ast_ty(tys, &exceptions.node, &exceptions.loc));
+
+            Ty::Fun {
+                args,
+                ret,
+                exceptions: Some(exceptions),
+            }
+        }
     }
 }
 
