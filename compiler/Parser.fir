@@ -113,7 +113,7 @@ Parser._eofLoc(self): Loc
 
 # --------------------------------------------------------------------------------------------------
 
-_parserTest(name: Str, input: Str, parseFn: Fn(Parser): Error a, astCheck: Fn(a): ())
+_parserTest(name: Str, input: Str, parseFn: Fn(Parser): Error a, astCheck: Fn(a): Error ())
     printNoNl(name)
     let (tokens = tokens, error = error) = tokenize("Test.fir", input)
     error.map(fn(err) { panic(err.msg) })
