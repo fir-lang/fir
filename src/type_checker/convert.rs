@@ -8,13 +8,6 @@ use crate::type_checker::ty_map::TyMap;
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
         ast::Type::Named(ast::NamedType { name, args }) => {
-            // TODO FIXME HACK: `tys` is also used to map an associated type `T` (a `Type::Named`)
-            // to `Self.T`, so we need to check var map here when converting a constructor.
-            if let Some(ty) = tys.get_var(name) {
-                assert!(args.is_empty());
-                return ty.clone();
-            }
-
             let ty_con = tys
                 .get_con(name)
                 .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
