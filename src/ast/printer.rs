@@ -778,7 +778,7 @@ impl Expr {
                 sig,
                 body,
                 idx: _,
-                inferred_ty: _,
+                inferred_ty,
             }) => {
                 buffer.push_str("fn");
                 buffer.push('(');
@@ -805,14 +805,16 @@ impl Expr {
                     }
                     ret_ty.node.print(buffer);
                 }
-                buffer.push('\n');
-                for (i, stmt) in body.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
+                if let Some(inferred_ty) = inferred_ty {
+                    write!(buffer, " #| inferred type = {} |# ", inferred_ty).unwrap();
+                }
+                buffer.push_str("{\n");
+                for stmt in body.iter() {
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
                     stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
                 }
+                buffer.push('}');
             }
         }
     }
