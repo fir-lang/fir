@@ -703,6 +703,17 @@ fn collect_schemes(
                     },
                 loc,
             }) => {
+                // Check that `parent_ty` exists.
+                if let Some(parent_ty) = parent_ty {
+                    if tys.get_con(&parent_ty.node).is_none() {
+                        panic!(
+                            "{}: Unknown type {}",
+                            loc_display(&decl.loc),
+                            &parent_ty.node
+                        );
+                    }
+                }
+
                 let fun_preds: Set<Pred> =
                     convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar, loc);
 
@@ -721,8 +732,8 @@ fn collect_schemes(
                         // The parent type should have no type arguments.
                         match parent_ty {
                             Some(parent_ty) => {
-                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap_or_else(||
-                                    panic!("{}: Unknown type {}", loc_display(&decl.loc), &parent_ty.node));
+                                // We checked above that the parent type exists.
+                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap();
                                 if !parent_ty_con.ty_params.is_empty() {
                                     panic!(
                                         "{}: Can't infer `self` type as the parent type {} has type parameters",

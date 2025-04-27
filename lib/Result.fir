@@ -33,12 +33,12 @@ Result.unwrapOrElse(self: Result[e, t], f: Fn(e): exn t): exn t
         Result.Ok(val): val
         Result.Err(err): f(err)
 
-Reuslt.isOk(self: Result[e, t]): Bool
+Result.isOk(self: Result[e, t]): Bool
     match self:
         Result.Ok(_): Bool.True
         Result.Err(_): Bool.False
 
-Reuslt.isErr(self: Result[e, t]): Bool
+Result.isErr(self: Result[e, t]): Bool
     match self:
         Result.Ok(_): Bool.False
         Result.Err(_): Bool.True
