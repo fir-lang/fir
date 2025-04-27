@@ -114,8 +114,16 @@ impl[ToStr[t]] ToStr[Array[t]]:
         buf.push(']')
         buf.toStr()
 
-prim printStr(s: Str)
+prim printStrNoNl(s: Str)
+
+printStr(s: Str)
+    printStrNoNl(s)
+    printStrNoNl("\n")
+
 print[ToStr[a]](a: a) = printStr(a.toStr())
+
+printNoNl[ToStr[a]](a: a) = printStrNoNl(a.toStr())
+
 prim panic[ToStr[t]](msg: t): Void
 
 type Ordering:

@@ -148,7 +148,7 @@ pub enum Fun {
 #[derive(Debug)]
 pub enum BuiltinFunDecl {
     Panic,
-    PrintStr,
+    PrintStrNoNl,
     ShrI8,
     ShrU8,
     ShrI32,
@@ -957,11 +957,11 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                 lowered_pgm.funs.push(Fun::Source(source_fun));
             } else {
                 match fun_id.as_str() {
-                    "printStr" => {
+                    "printStrNoNl" => {
                         assert_eq!(fun_ty_args.len(), 1); // exception
                         lowered_pgm
                             .funs
-                            .push(Fun::Builtin(BuiltinFunDecl::PrintStr));
+                            .push(Fun::Builtin(BuiltinFunDecl::PrintStrNoNl));
                     }
 
                     "panic" => {
