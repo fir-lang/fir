@@ -113,16 +113,45 @@ Parser._eofLoc(self): Loc
 
 # --------------------------------------------------------------------------------------------------
 
-_parserTest(name: Str, input: Str, parseFn: Fn(Parser): Error a, astCheck: Fn(a): Error ())
+_parserTest( \
+        name: Str, input: Str, \
+        parseFn: Fn(Parser): Error a, \
+        astCheck: Fn(a): [AssertionError(msg: Str)] ())
     printNoNl(name)
     let (tokens = tokens, error = error) = tokenize("Test.fir", input)
-    error.map(fn(err) { panic(err.msg) })
+    match error:
+        Option.Some(err):
+            print("\t\tLexer error: `err.msg`")
+            return
+        Option.None:
+            ()
 
     let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
-    try({ astCheck(parseFn(parser)) }).unwrapOrElse(fn(err) { panic(err.msg) })
-    print("\t\tOK")
+
+    let ast = match try({ parseFn(parser) }):
+        Result.Err(err):
+            print("\t\tParser error: `err.msg`")
+            return
+        Result.Ok(ast):
+            ast
+
+    match try({ astCheck(ast) }):
+        Result.Ok(()): print("\t\tOK")
+        Result.Err(~AssertionError(msg = msg)): print("\t\tAssertion error: `msg`")
 
 parserTests
+    _parserTest(
+        "simpleExpr -- parse failure test",
+        "~~~",
+        Parser.simpleExpr,
+        fn(ast) { () })
+
+    _parserTest(
+        "simpleExpr -- assertion failure test",
+        "1u32",
+        Parser.simpleExpr,
+        fn(ast) { assertEq(1u32, 2u32) })
+
     _parserTest("simpleExpr - Constr", "A", Parser.simpleExpr, fn(ast) {
         match ast:
             Expr.Constr(constr):
