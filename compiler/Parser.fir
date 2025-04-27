@@ -43,8 +43,46 @@ Parser.simpleExpr(self): Error Expr
                     id = self._id(token),
                     tyArgs = Vec.withCapacity(0)))
 
+        TokenKind.Int(kind):
+            Expr.Int(IntExpr(
+                text = token.text,
+                suffix = kind,
+                radix = 10,
+
+                # Type checker will update this based on `suffix`, or the inferred type if suffix is
+                # not available.
+                parsed = 0u32,
+            ))
+
+        TokenKind.HexInt(kind):
+            Expr.Int(IntExpr(
+                text = token.text,
+                suffix = kind,
+                radix = 16,
+                parsed = 0u32, # TODO
+            ))
+
+        TokenKind.BinInt(kind):
+            Expr.Int(IntExpr(
+                text = token.text,
+                suffix = kind,
+                radix = 2,
+                parsed = 0u32, # TODO
+            ))
+
+        TokenKind.Str:
+            # TODO: Parse parts
+            let parts: Vec[StrPart] = Vec.withCapacity(1)
+            parts.push(StrPart.Str(token.text))
+            Expr.Str(parts)
+
+        TokenKind.Char:
+            Expr.Char('a') # TODO: Parse char
+
         other:
-            panic("TODO")
+            throw(Error(
+                loc = self._tokenLoc(token),
+                msg = "unexpected token"))
 
 Parser._lookahead(self, amount: U32): Option[Token]
     let idx = self._idx + amount
@@ -73,9 +111,39 @@ Parser._eofLoc(self): Loc
     let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0u32)
     Loc(file = self._file, byteIdx = byteIdx, byteLen = 0)
 
-parserTest(input: Str, parseFn: Fn(Parser): Error a, astCheck: Fn(a): ())
+# --------------------------------------------------------------------------------------------------
+
+_parserTest(name: Str, input: Str, parseFn: Fn(Parser): Error a, astCheck: Fn(a): ())
+    printNoNl(name)
     let (tokens = tokens, error = error) = tokenize("Test.fir", input)
     error.map(fn(err) { panic(err.msg) })
-    
+
     let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
     try({ astCheck(parseFn(parser)) }).unwrapOrElse(fn(err) { panic(err.msg) })
+    print("\t\tOK")
+
+parserTests
+    _parserTest("simpleExpr - Constr", "A", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.Constr(constr):
+                assertEq("A", constr.id.name)
+            _:
+                panic("Expected constr")
+    })
+
+    _parserTest("simpleExpr - ConstrSelect", "A.B", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.ConstrSelect(constr):
+                assertEq("A", constr.ty.name)
+                assertEq("B", constr.constr.name)
+            _:
+                panic("Expected constr selection")
+    })
+
+    _parserTest("simpleExpr - Int decimal", "123u32", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.Int(int):
+                assertEq("123u32", int.text)
+            _:
+                panic("Expected int")
+    })

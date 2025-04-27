@@ -406,7 +406,7 @@ Lexer._string(self): Error Token
             '"':
                 self._byteIdx += 1
                 return Token(
-                    kind = TokenKind.String,
+                    kind = TokenKind.Str,
                     text = self._input.substr(startIdx, self._byteIdx),
                     byteIdx = startIdx
                 )
@@ -459,7 +459,7 @@ Lexer._char(self): Error Token
         self._fail("unterminated character literal")
 
     self._byteIdx += 1
-    Token(kind = TokenKind.Char(char), text = self._input.substr(idx, self._byteIdx), byteIdx = idx)
+    Token(kind = TokenKind.Char, text = self._input.substr(idx, self._byteIdx), byteIdx = idx)
 
 Lexer._skipSingleLineComment(self)
     while self._byteIdx < self._input.len():

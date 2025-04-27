@@ -1203,12 +1203,12 @@ fn call_builtin_fun<W: Write>(
             panic!("{}: PANIC: {}", loc_display(loc), msg);
         }
 
-        BuiltinFunDecl::PrintStr => {
+        BuiltinFunDecl::PrintStrNoNl => {
             debug_assert_eq!(args.len(), 1);
             let str = args[0];
             debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
             let bytes = heap.str_bytes(str);
-            writeln!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
+            write!(w, "{}", String::from_utf8_lossy(bytes)).unwrap();
             FunRet::Val(pgm.unit_alloc)
         }
 

@@ -81,11 +81,11 @@ type TokenKind:
     Tilde
 
     # Literals
-    String
+    Str
     Int(Option[IntKind])
     HexInt(Option[IntKind])
     BinInt(Option[IntKind])
-    Char(Char)
+    Char
 
 type IntKind:
     I8
@@ -106,7 +106,7 @@ impl ToStr[TokenKind]:
             TokenKind.Backslash: "Backslash"
             TokenKind.BinInt(kind): "BinInt(`kind`)"
             TokenKind.Break: "Break"
-            TokenKind.Char(char): "Char(`char`)"
+            TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"
             TokenKind.Comma: "Comma"
             TokenKind.Continue: "Continue"
@@ -157,7 +157,7 @@ impl ToStr[TokenKind]:
             TokenKind.Slash: "Slash"
             TokenKind.Star: "Star"
             TokenKind.StarEq: "StarEq"
-            TokenKind.String: "String"
+            TokenKind.Str: "Str"
             TokenKind.TildeUpperId: "TildeUpperId"
             TokenKind.Trait: "Trait"
             TokenKind.Type: "Type"
@@ -240,11 +240,11 @@ impl Eq[TokenKind]:
             (left = TokenKind.Star, right = TokenKind.Star): Bool.True
             (left = TokenKind.StarEq, right = TokenKind.StarEq): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
-            (left = TokenKind.String, right = TokenKind.String): Bool.True
+            (left = TokenKind.Str, right = TokenKind.Str): Bool.True
             (left = TokenKind.Int(intKind1), right = TokenKind.Int(intKind2)): intKind1 == intKind2
             (left = TokenKind.HexInt(intKind1), right = TokenKind.HexInt(intKind2)): intKind1 == intKind2
             (left = TokenKind.BinInt(intKind1), right = TokenKind.BinInt(intKind2)): intKind1 == intKind2
-            (left = TokenKind.Char(char1), right = TokenKind.Char(char2)): char1 == char2
+            (left = TokenKind.Char, right = TokenKind.Char): Bool.True
             _: Bool.False
 
 impl Eq[IntKind]:

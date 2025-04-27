@@ -20,12 +20,3 @@ main(args: Array[Str])
 assertEq[Eq[t], ToStr[t]](val1: t, val2: t)
     if val1 != val2:
         panic("Expected `val1`, found `val2`")
-
-parserTests
-    parserTest("A", Parser.simpleExpr, fn(ast) {
-        match ast:
-            Expr.Constr(constr):
-                assertEq(constr.id.name, "A")
-            _:
-                panic("Expected constr")
-    })

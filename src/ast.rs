@@ -679,8 +679,8 @@ pub struct IntExpr {
 
     /// Filled in by the type checker. The parsed integer.
     ///
-    /// This should be the integer value as expected by the interpreter. E.g. `-1u64` should be
-    /// `0x00000000000000ff`, instead of `0xffffffffffffffff`.
+    /// This will be the integer value in two's complement, extended to unsiged 64-bit.
+    /// E.g. `-1u8` will be `0x00000000000000ff`, instead of `0xffffffffffffffff`.
     pub parsed: u64,
 }
 
