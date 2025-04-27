@@ -127,20 +127,30 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             args,
             ret,
             exceptions,
-        }) => Ty::Fun {
-            args: FunArgs::Positional(
+        }) => {
+            let args = FunArgs::Positional(
                 args.iter()
                     .map(|ty| convert_ast_ty(tys, &ty.node, &ty.loc))
                     .collect(),
-            ),
-            ret: Box::new(match ret {
+            );
+
+            let ret = Box::new(match ret {
                 Some(ret) => convert_ast_ty(tys, &ret.node, &ret.loc),
                 None => Ty::unit(),
-            }),
-            exceptions: exceptions
-                .as_ref()
-                .map(|ty| Box::new(convert_ast_ty(tys, &ty.node, &ty.loc))),
-        },
+            });
+
+            let exceptions = exceptions.as_ref().unwrap_or_else(|| {
+                panic!("{}: Function type without exception type", loc_display(loc))
+            });
+
+            let exceptions = Box::new(convert_ast_ty(tys, &exceptions.node, &exceptions.loc));
+
+            Ty::Fun {
+                args,
+                ret,
+                exceptions: Some(exceptions),
+            }
+        }
     }
 }
 

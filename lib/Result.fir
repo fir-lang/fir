@@ -8,12 +8,12 @@ impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
             Result.Err(e): "Result.Err(`e`)"
             Result.Ok(t): "Result.Ok(`t`)"
 
-Result.map(self: Result[e, t], f: Fn(t): t2): Result[e, t2]
+Result.map(self: Result[e, t], f: Fn(t): exn t2): exn Result[e, t2]
     match self:
         Result.Ok(val): Result.Ok(f(val))
         Result.Err(err): Result.Err(err)
 
-Result.mapErr(self: Result[e, t], f: Fn(e): e2): Result[e2, t]
+Result.mapErr(self: Result[e, t], f: Fn(e): exn e2): exn Result[e2, t]
     match self:
         Result.Ok(val): Result.Ok(val)
         Result.Err(err): Result.Err(f(err))
