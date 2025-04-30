@@ -3,6 +3,12 @@ type Loc:
     byteIdx: U32
     byteLen: U32
 
+# TODO: Debug assert that `self.file == other.file`
+Loc.combine(self, other: Loc): Loc
+    Loc(file = self.file,
+        byteIdx = self.byteIdx,
+        byteLen = other.byteIdx + other.byteLen - self.byteIdx)
+
 ## Things with location information.
 type L[a]:
     loc: Loc
@@ -492,7 +498,25 @@ type StrPart:
 type BinOpExpr:
     left: L[Expr]
     right: L[Expr]
-    tyArgs: Vec[L[Type]]       # TODO: type-checking type
+    op: BinOp
+
+type BinOp:
+    Add
+    And
+    BitAnd
+    BitOr
+    Divide
+    Equal
+    Gt
+    GtEq
+    LeftShift
+    Lt
+    LtEq
+    Multiply
+    NotEqual
+    Or
+    RightShift
+    Subtract
 
 type UnOpExpr:
     op: UnOp
@@ -524,3 +548,45 @@ type FnExpr:
 type UnOp:
     Not
     Neg
+
+# --------------------------------------------------------------------------------------------------
+
+impl ToStr[BinOp]:
+    toStr(self: BinOp): Str
+        match self:
+            BinOp.Add: "Add"
+            BinOp.And: "And"
+            BinOp.BitAnd: "BitAnd"
+            BinOp.BitOr: "BitOr"
+            BinOp.Divide: "Divide"
+            BinOp.Equal: "Equal"
+            BinOp.Gt: "Gt"
+            BinOp.GtEq: "GtEq"
+            BinOp.LeftShift: "LeftShift"
+            BinOp.Lt: "Lt"
+            BinOp.LtEq: "LtEq"
+            BinOp.Multiply: "Multiply"
+            BinOp.NotEqual: "NotEqual"
+            BinOp.Or: "Or"
+            BinOp.RightShift: "RightShift"
+            BinOp.Subtract: "Subtract"
+
+impl Eq[BinOp]:
+    __eq(self: BinOp, other: BinOp): Bool
+        match (left = self, right = other):
+            (left = BinOp.Add, right = BinOp.Add): Bool.True
+            (left = BinOp.And, right = BinOp.And): Bool.True
+            (left = BinOp.BitAnd, right = BinOp.BitOr): Bool.True
+            (left = BinOp.Divide, right = BinOp.Divide): Bool.True
+            (left = BinOp.Equal, right = BinOp.Equal): Bool.True
+            (left = BinOp.Gt, right = BinOp.Gt): Bool.True
+            (left = BinOp.GtEq, right = BinOp.GtEq): Bool.True
+            (left = BinOp.LeftShift, right = BinOp.LeftShift): Bool.True
+            (left = BinOp.Lt, right = BinOp.Lt): Bool.True
+            (left = BinOp.LtEq, right = BinOp.LtEq): Bool.True
+            (left = BinOp.Multiply, right = BinOp.Multiply): Bool.True
+            (left = BinOp.NotEqual, right = BinOp.NotEqual): Bool.True
+            (left = BinOp.Or, right = BinOp.Or): Bool.True
+            (left = BinOp.RightShift, right = BinOp.RightShift): Bool.True
+            (left = BinOp.Subtract, right = BinOp.Subtract): Bool.True
+            _: Bool.False
