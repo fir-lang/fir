@@ -47,6 +47,7 @@ impl PatCoverage {
             ast::Pat::Constr(ast::ConstrPattern {
                 constr,
                 fields,
+                ignore_rest: _,
                 ty_args: _,
             }) => {
                 let con = Con::from_ast_con(constr);
@@ -314,9 +315,9 @@ impl PatCoverage {
             } => {
                 match args {
                     FunArgs::Positional(args) => {
-                        // If we have a pattern for the constructor, it should have the
-                        // right number of fields.
-                        assert_eq!(args.len(), con_field_pats.unnamed.len());
+                        // The constructor can have more fields than the pattern, extra fields in
+                        // the pattern are ignored with `..`.
+                        assert!(con_field_pats.unnamed.len() <= args.len());
 
                         for (fun_arg, fun_arg_pat) in args.iter().zip(con_field_pats.unnamed.iter())
                         {
@@ -328,18 +329,19 @@ impl PatCoverage {
 
                     FunArgs::Named(args) => {
                         // Same as above.
-                        assert_eq!(
-                            args.keys().collect::<Set<_>>(),
-                            con_field_pats.named.keys().collect::<Set<_>>()
-                        );
+                        assert!(con_field_pats
+                            .named
+                            .keys()
+                            .collect::<Set<_>>()
+                            .is_subset(&args.keys().collect::<Set<_>>()));
 
                         for (arg_name, arg_ty) in args.iter() {
-                            if !con_field_pats
-                                .named
-                                .get(arg_name)
-                                .unwrap()
-                                .is_exhaustive(arg_ty, tc_state, loc)
-                            {
+                            let field_pat = match con_field_pats.named.get(arg_name) {
+                                Some(field_pat) => field_pat,
+                                None => continue,
+                            };
+
+                            if !field_pat.is_exhaustive(arg_ty, tc_state, loc) {
                                 return false;
                             }
                         }

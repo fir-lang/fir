@@ -834,6 +834,7 @@ impl Pat {
             Pat::Constr(ConstrPattern {
                 constr: Constructor { type_, constr },
                 fields,
+                ignore_rest,
                 ty_args,
             }) => {
                 buffer.push_str(type_);
@@ -853,7 +854,7 @@ impl Pat {
                     buffer.push(']');
                 }
 
-                if !fields.is_empty() {
+                if !fields.is_empty() || *ignore_rest {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {
                         if i != 0 {
@@ -864,6 +865,12 @@ impl Pat {
                             buffer.push_str(" = ");
                         }
                         field.node.node.print(buffer);
+                    }
+                    if *ignore_rest {
+                        if !fields.is_empty() {
+                            buffer.push_str(", ");
+                        }
+                        buffer.push_str("..");
                     }
                     buffer.push(')');
                 }

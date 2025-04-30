@@ -56,7 +56,7 @@ syn region firBlockComment start="#|" end="|#"
 
 syn keyword firTodo TODO FIXME BUG contained
 
-syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^"
+syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^\|\.\."
 
 highlight default link firKeyword Keyword
 highlight default link firLineComment Comment

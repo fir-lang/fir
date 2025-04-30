@@ -1207,6 +1207,7 @@ fn mono_pat(
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
             fields,
+            ignore_rest: _,
             ty_args,
         }) => {
             let ty_decl = poly_pgm.ty.get(type_).unwrap();

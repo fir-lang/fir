@@ -1104,12 +1104,29 @@ Constructor: Constructor = {
 
 ConstrPattern: ConstrPattern = {
     <constr:Constructor> =>
-        ConstrPattern { constr, fields: vec![], ty_args: vec![] },
+        ConstrPattern { constr, fields: vec![], ignore_rest: false, ty_args: vec![] },
+
+    <constr:Constructor> "(" ".." ")" =>
+        ConstrPattern {
+            constr,
+            fields: vec![],
+            ignore_rest: true,
+            ty_args: vec![],
+        },
 
     <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
         ConstrPattern {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
+            ignore_rest: false,
+            ty_args: vec![],
+        },
+
+    <constr:Constructor> "(" <fields:(<PatternField> ",")+> ".." ")" =>
+        ConstrPattern {
+            constr,
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
+            ignore_rest: true,
             ty_args: vec![],
         },
 }

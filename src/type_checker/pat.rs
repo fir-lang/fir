@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::*;
-use crate::type_checker::apply::apply;
+use crate::type_checker::apply::apply_con_ty;
 use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::row_utils::collect_rows;
 use crate::type_checker::ty::*;
@@ -29,6 +29,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     constr: pat_con_name,
                 },
             fields: pat_fields,
+            ignore_rest,
             ty_args,
         }) => {
             debug_assert!(ty_args.is_empty());
@@ -83,7 +84,23 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             // the type the pattern will never match.
             let (con_ty, con_ty_args) =
                 con_scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &pat.loc);
+
             *ty_args = con_ty_args.into_iter().map(Ty::Var).collect();
+
+            // If consturctor takes named arguments, fields pattern need to be named, or a variable
+            // pattern, as shorthand for `foo = foo`.
+            // Update shorthands to the long form to keep things simple in `apply_con_ty`.
+            if let Ty::Fun { args, .. } = &con_ty {
+                if args.is_named() {
+                    for pat_field in pat_fields.iter_mut() {
+                        if pat_field.name.is_none() {
+                            if let ast::Pat::Var(var_pat) = &pat_field.node.node {
+                                pat_field.name = Some(var_pat.var.clone());
+                            }
+                        }
+                    }
+                }
+            }
 
             // Apply argument pattern types to the function type.
             let pat_field_tys: Vec<ast::Named<Ty>> = pat_fields
@@ -94,13 +111,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply(
+            apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
                 &pat.loc,
+                *ignore_rest,
             )
         }
 
@@ -300,6 +318,7 @@ pub(super) fn refine_pat_binders(
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { type_, constr },
             fields: field_pats,
+            ignore_rest: _,
             ty_args: _,
         }) => {
             let con_field_coverage = match coverage.get_con_fields(type_, constr.as_ref()) {

@@ -393,7 +393,11 @@ pub struct VarPat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
+
     pub fields: Vec<Named<L<Pat>>>,
+
+    /// Whether we ignore fields with `..`: `MyStruct(a = 1u32, ..)`.
+    pub ignore_rest: bool,
 
     /// Inferred type arguments of the constructor. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
