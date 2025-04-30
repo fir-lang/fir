@@ -59,7 +59,7 @@ Parser.simpleExpr(self): Error Expr
                 text = token.text,
                 suffix = kind,
                 radix = 16,
-                parsed = 0u32, # TODO
+                parsed = 0u32,  # same as above
             ))
 
         TokenKind.BinInt(kind):
@@ -67,7 +67,7 @@ Parser.simpleExpr(self): Error Expr
                 text = token.text,
                 suffix = kind,
                 radix = 2,
-                parsed = 0u32, # TODO
+                parsed = 0u32,  # same as above
             ))
 
         TokenKind.Str:
@@ -77,12 +77,27 @@ Parser.simpleExpr(self): Error Expr
             Expr.Str(parts)
 
         TokenKind.Char:
-            Expr.Char('a') # TODO: Parse char
+            Expr.Char(_parseChar(token.text))
 
         other:
             throw(Error(
                 loc = self._tokenLoc(token),
                 msg = "unexpected token"))
+
+_parseChar(charTest: Str): Char
+    let chars = charTest.chars()
+    let _: Option[Char] = chars.next() # skip initial '
+    match chars.next():
+        Option.Some('\\'):
+            match chars.next():
+                Option.Some('n'): '\n'
+                Option.Some('t'): '\t'
+                Option.Some('r'): '\r'
+                Option.Some('\\'): '\\'
+                Option.Some('\''): '\''
+                other: panic("Strange char character after opening quote: `other`")
+        Option.Some(other): other
+        Option.None: panic("Unterminated char literal")
 
 Parser._lookahead(self, amount: U32): Option[Token]
     let idx = self._idx + amount
@@ -154,10 +169,8 @@ parserTests
 
     _parserTest("simpleExpr - Constr", "A", Parser.simpleExpr, fn(ast) {
         match ast:
-            Expr.Constr(constr):
-                assertEq("A", constr.id.name)
-            _:
-                panic("Expected constr")
+            Expr.Constr(constr): assertEq("A", constr.id.name)
+            _: throw(~AssertionError(msg = "Expected constr"))
     })
 
     _parserTest("simpleExpr - ConstrSelect", "A.B", Parser.simpleExpr, fn(ast) {
@@ -166,13 +179,29 @@ parserTests
                 assertEq("A", constr.ty.name)
                 assertEq("B", constr.constr.name)
             _:
-                panic("Expected constr selection")
+                throw(~AssertionError(msg = "Expected constr selection"))
     })
 
     _parserTest("simpleExpr - Int decimal", "123u32", Parser.simpleExpr, fn(ast) {
         match ast:
-            Expr.Int(int):
-                assertEq("123u32", int.text)
-            _:
-                panic("Expected int")
+            Expr.Int(int): assertEq("123u32", int.text)
+            _: throw(~AssertionError(msg = "Expected int"))
+    })
+
+    _parserTest("simpleExpr - Char simple", "'a'", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.Char('a'): ()
+            _: throw(~AssertionError(msg = "Expected int"))
+    })
+
+    _parserTest("simpleExpr - Char escape newline", "'\\n'", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.Char('\n'): ()
+            _: throw(~AssertionError(msg = "Expected int"))
+    })
+
+    _parserTest("simpleExpr - Char escape single quote", "'\\''", Parser.simpleExpr, fn(ast) {
+        match ast:
+            Expr.Char('\''): ()
+            _: throw(~AssertionError(msg = "Expected int"))
     })

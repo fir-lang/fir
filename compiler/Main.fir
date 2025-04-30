@@ -17,6 +17,6 @@ main(args: Array[Str])
     print("")
     parserTests()
 
-assertEq[Eq[t], ToStr[t]](val1: t, val2: t): [AssertionError(msg: Str), ..r] ()
-    if val1 != val2:
-        throw(~AssertionError(msg = "Expected `val1`, found `val2`"))
+assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
+    if expected != found:
+        throw(~AssertionError(msg = "Expected `expected`, found `found`"))
