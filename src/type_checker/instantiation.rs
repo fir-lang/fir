@@ -191,6 +191,7 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
         ast::Pat::Constr(ast::ConstrPattern {
             constr: _,
             fields,
+            ignore_rest: _,
             ty_args,
         }) => {
             for field in fields {

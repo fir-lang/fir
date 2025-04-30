@@ -158,7 +158,10 @@ pub struct VarPat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
+
+    // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
+
     pub ty_args: Vec<Type>,
 }
 

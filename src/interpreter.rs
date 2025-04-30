@@ -1054,37 +1054,15 @@ fn try_bind_pat(
             }
 
             let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
-            match &con.fields {
-                ConFields::Named(con_fields) => {
-                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_some()));
-                    debug_assert_eq!(con_fields.len(), field_pats.len());
-                    for (i, (con_field_name, _)) in con_fields.iter().enumerate() {
-                        let field_value = heap[value + 1 + (i as u64)];
-                        let field_pat = field_pats
-                            .iter()
-                            .find_map(|pat| {
-                                if pat.name.as_ref().unwrap() == con_field_name {
-                                    Some(&pat.node)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap();
-                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
-                            return false;
-                        }
-                    }
-                }
 
-                ConFields::Unnamed(con_fields) => {
-                    debug_assert!(field_pats.iter().all(|pat| pat.name.is_none()));
-                    debug_assert_eq!(con_fields.len(), field_pats.len());
-                    for (i, field_pat) in field_pats.iter().enumerate() {
-                        let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
-                            return false;
-                        }
-                    }
+            // Consturctor can have more fields than the pattern, so iterate pattern fields.
+            for (mut field_idx, field_pat) in field_pats.iter().enumerate() {
+                if let Some(field_name) = &field_pat.name {
+                    field_idx = con.fields.find_named_field_idx(field_name);
+                }
+                let field_value = heap[value + 1 + (field_idx as u64)];
+                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                    return false;
                 }
             }
 

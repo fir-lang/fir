@@ -509,6 +509,8 @@ pub enum Pat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: HeapObjIdx,
+
+    // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
 }
 
