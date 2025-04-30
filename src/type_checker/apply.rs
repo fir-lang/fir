@@ -51,8 +51,6 @@ pub(crate) fn apply_con_ty(
                         let name = match arg.name.as_ref() {
                             Some(name) => name,
                             None => {
-                                // TODO: We will allow this in the future, as shorthand for `a = a`
-                                // when the consturctor takes named arguments.
                                 panic!(
                                     "{}: Constructor takes named arguments, but applied positional argument",
                                     loc_display(loc)

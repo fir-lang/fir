@@ -87,6 +87,21 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
             *ty_args = con_ty_args.into_iter().map(Ty::Var).collect();
 
+            // If consturctor takes named arguments, fields pattern need to be named, or a variable
+            // pattern, as shorthand for `foo = foo`.
+            // Update shorthands to the long form to keep things simple in `apply_con_ty`.
+            if let Ty::Fun { args, .. } = &con_ty {
+                if args.is_named() {
+                    for pat_field in pat_fields.iter_mut() {
+                        if pat_field.name.is_none() {
+                            if let ast::Pat::Var(var_pat) = &pat_field.node.node {
+                                pat_field.name = Some(var_pat.var.clone());
+                            }
+                        }
+                    }
+                }
+            }
+
             // Apply argument pattern types to the function type.
             let pat_field_tys: Vec<ast::Named<Ty>> = pat_fields
                 .iter_mut()

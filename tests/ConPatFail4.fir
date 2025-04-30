@@ -11,4 +11,4 @@ main
 # args: --no-backtrace
 # expected exit status: 101
 # expected stderr:
-# tests/ConPatFail4.fir:9:9: Constructor takes named arguments, but applied positional argument
+# tests/ConPatFail4.fir:9:9: Constructor takes named arguments {a, b, c}, but applied {a, b}
