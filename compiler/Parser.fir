@@ -306,6 +306,10 @@ parserTests
 
     _parserTest("expr - binop +", "1 + 2", fn(s) { Parser.expr(s, 0) }, fn(ast) {
         match ast.node:
-            Expr.BinOp(binop): assertEq(binop.op, BinOp.Add)
+            Expr.BinOp(BinOpExpr(
+                left  = L(node = Expr.Int(IntExpr(text = "1", ..)), ..),
+                right = L(node = Expr.Int(IntExpr(text = "2", ..)), ..),
+                op    = BinOp.Add
+            )): ()
             _: throw(~AssertionError(msg = "Expected binop"))
     })
