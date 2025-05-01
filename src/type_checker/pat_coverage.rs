@@ -370,11 +370,17 @@ enum ConShape {
 }
 
 fn con_shape(ty_con: &Id, tys: &TyMap) -> ConShape {
-    let cons = tys.get_con(ty_con).unwrap().con_details().unwrap();
-    if cons.len() == 1 {
-        ConShape::Product
+    let ty_details = tys.get_con(ty_con).unwrap().con_details().unwrap();
+    if ty_details.sum {
+        ConShape::Sum(
+            ty_details
+                .cons
+                .iter()
+                .map(|con| con.name.clone().unwrap())
+                .collect(),
+        )
     } else {
-        ConShape::Sum(cons.iter().map(|con| con.name.clone().unwrap()).collect())
+        ConShape::Product
     }
 }
 

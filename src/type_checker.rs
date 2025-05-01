@@ -238,7 +238,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .cloned()
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                        details: TyConDetails::Type(TypeDetails {
+                            cons: vec![],
+                            sum: true,
+                        }),
                     },
                 );
             }
@@ -290,18 +293,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
                             let cons: Vec<ConShape> =
                                 sum_cons.iter().map(ConShape::from_ast).collect();
-                            TyConDetails::Type(TypeDetails { cons })
+                            TyConDetails::Type(TypeDetails { cons, sum: true })
                         }
 
-                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type(TypeDetails {
-                            cons: vec![ConShape {
-                                name: None,
-                                fields: ConFieldShape::from_ast(fields),
-                            }],
+                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
+                            cons: vec![ConShape { name: None }],
+                            sum: false,
                         }),
                     },
 
-                    None => TyConDetails::Type(TypeDetails { cons: vec![] }),
+                    None => TyConDetails::Type(TypeDetails {
+                        cons: vec![],
+                        sum: true,
+                    }),
                 };
 
                 tys.get_con_mut(&ty_decl.node.name).unwrap().details = details;
