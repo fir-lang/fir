@@ -1563,7 +1563,7 @@ fn lower_stmt(
     match stmt {
         mono::Stmt::Let(mono::LetStmt { lhs, rhs }) => {
             let rhs = lower_l_expr(rhs, closures, indices, scope);
-            let lhs = lower_l_pat(lhs, indices, scope);
+            let lhs = lower_l_pat(lhs, indices, scope, &mut Default::default());
             Stmt::Let(LetStmt { lhs, rhs })
         }
 
@@ -1608,7 +1608,7 @@ fn lower_stmt(
 
             let expr = lower_l_expr(expr, closures, indices, scope);
             scope.bounds.enter();
-            let pat = lower_l_pat(pat, indices, scope);
+            let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
             let body = body
                 .iter()
                 .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
@@ -1641,7 +1641,7 @@ fn lower_stmt(
         }) => {
             let cond = lower_l_expr(cond, closures, indices, scope);
             scope.bounds.enter();
-            let pat = lower_l_pat(pat, indices, scope);
+            let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
             let body = body
                 .iter()
                 .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
@@ -1846,7 +1846,7 @@ fn lower_expr(
                          rhs,
                      }| {
                         scope.bounds.enter();
-                        let pattern = lower_l_pat(pattern, indices, scope);
+                        let pattern = lower_l_pat(pattern, indices, scope, &mut Default::default());
                         let guard = guard
                             .as_ref()
                             .map(|guard| lower_l_expr(guard, closures, indices, scope));
@@ -1977,17 +1977,31 @@ fn lower_bl_expr(
     Box::new(bl_expr.map_as_ref(|expr| lower_expr(expr, &bl_expr.loc, closures, indices, scope)))
 }
 
-fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pat {
+fn lower_pat(
+    pat: &mono::Pat,
+    indices: &mut Indices,
+    scope: &mut FunScope,
+
+    // This map is to map binders in alternatives of or patterns to the same local.
+    //
+    // Only in or pattern alternatives we allow same binders, so if we see a binder for the second
+    // time, we must be checking another alternative of an or pattern.
+    mapped_binders: &mut Map<Id, LocalIdx>,
+) -> Pat {
     match pat {
-        mono::Pat::Var(mono::VarPat { var, ty }) => {
-            let var_idx = LocalIdx(scope.locals.len() as u32);
-            scope.locals.push(LocalInfo {
-                name: var.clone(),
-                ty: ty.clone(),
-            });
-            scope.bounds.insert(var.clone(), var_idx);
-            Pat::Var(var_idx)
-        }
+        mono::Pat::Var(mono::VarPat { var, ty }) => match mapped_binders.get(var) {
+            Some(idx) => Pat::Var(*idx),
+            None => {
+                let var_idx = LocalIdx(scope.locals.len() as u32);
+                scope.locals.push(LocalInfo {
+                    name: var.clone(),
+                    ty: ty.clone(),
+                });
+                scope.bounds.insert(var.clone(), var_idx);
+                mapped_binders.insert(var.clone(), var_idx);
+                Pat::Var(var_idx)
+            }
+        },
 
         mono::Pat::Constr(mono::ConstrPattern {
             constr: mono::Constructor { type_, constr },
@@ -2014,7 +2028,9 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pa
                 constr: con_idx,
                 fields: fields
                     .iter()
-                    .map(|named_f| named_f.map_as_ref(|f| lower_l_pat(f, indices, scope)))
+                    .map(|named_f| {
+                        named_f.map_as_ref(|f| lower_l_pat(f, indices, scope, mapped_binders))
+                    })
                     .collect(),
             })
         }
@@ -2027,7 +2043,7 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pa
             Pat::Record(RecordPattern {
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_pat(field, indices, scope))
+                    .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))
                     .collect(),
                 idx,
             })
@@ -2042,7 +2058,7 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pa
                 constr: constr.clone(),
                 fields: fields
                     .iter()
-                    .map(|field| lower_nl_pat(field, indices, scope))
+                    .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))
                     .collect(),
                 idx,
             })
@@ -2068,8 +2084,8 @@ fn lower_pat(pat: &mono::Pat, indices: &mut Indices, scope: &mut FunScope) -> Pa
         }
 
         mono::Pat::Or(p1, p2) => Pat::Or(
-            Box::new(lower_l_pat(p1, indices, scope)),
-            Box::new(lower_l_pat(p2, indices, scope)),
+            Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),
+            Box::new(lower_l_pat(p2, indices, scope, mapped_binders)),
         ),
     }
 }
@@ -2078,12 +2094,18 @@ fn lower_nl_pat(
     pat: &Named<L<mono::Pat>>,
     indices: &mut Indices,
     scope: &mut FunScope,
+    mapped_binders: &mut Map<Id, LocalIdx>,
 ) -> Named<L<Pat>> {
-    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope))
+    pat.map_as_ref(|pat| lower_l_pat(pat, indices, scope, mapped_binders))
 }
 
-fn lower_l_pat(pat: &L<mono::Pat>, indices: &mut Indices, scope: &mut FunScope) -> L<Pat> {
-    pat.map_as_ref(|pat| lower_pat(pat, indices, scope))
+fn lower_l_pat(
+    pat: &L<mono::Pat>,
+    indices: &mut Indices,
+    scope: &mut FunScope,
+    mapped_binders: &mut Map<Id, LocalIdx>,
+) -> L<Pat> {
+    pat.map_as_ref(|pat| lower_pat(pat, indices, scope, mapped_binders))
 }
 
 fn lower_source_fun(
