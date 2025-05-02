@@ -18,7 +18,7 @@ Parser.expr(self, prec: U32): Error L[Expr]
         Option.None: return simpleExpr
         Option.Some(next): next
 
-    let (leftPrec = leftPrec, rightPrec = rightPrec, op = op) = match _opPrec(next.kind):
+    let (leftPrec, rightPrec, op) = match _opPrec(next.kind):
         Option.None: return simpleExpr
         Option.Some(prec): prec
 
