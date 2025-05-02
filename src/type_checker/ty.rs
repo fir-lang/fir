@@ -226,19 +226,18 @@ pub(super) struct TraitMethod {
 pub(super) struct TypeDetails {
     /// Value constructors of the type.
     pub(super) cons: Vec<ConShape>,
+
+    /// Whether the type is a sum type.
+    ///
+    /// A product type will always have one constructor in `cons`.
+    ///
+    /// A sum type can have any number of constructors in `cons`.
+    pub(super) sum: bool,
 }
 
-// TODO: Probably make this an enum with `product` and `sum` variants.
 #[derive(Debug, Clone)]
 pub(super) struct ConShape {
     pub(super) name: Option<Id>,
-    pub(super) fields: ConFieldShape,
-}
-
-#[derive(Debug, Clone)]
-pub(super) enum ConFieldShape {
-    Unnamed(u32),
-    Named(Set<Id>),
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
@@ -947,7 +946,10 @@ impl TyCon {
         TyCon {
             id,
             ty_params: vec![],
-            details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+            details: TyConDetails::Type(TypeDetails {
+                cons: vec![],
+                sum: true,
+            }),
         }
     }
 
@@ -963,7 +965,7 @@ impl TyCon {
         self.details.trait_details()
     }
 
-    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
         self.details.con_details()
     }
 }
@@ -980,9 +982,9 @@ impl TyConDetails {
         }
     }
 
-    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
         match self {
-            TyConDetails::Type(TypeDetails { cons }) => Some(cons),
+            TyConDetails::Type(ty_details) => Some(ty_details),
             _ => None,
         }
     }
@@ -990,22 +992,9 @@ impl TyConDetails {
 
 impl ConShape {
     pub(super) fn from_ast(con: &ast::ConstructorDecl) -> ConShape {
-        let ast::ConstructorDecl { name, fields } = con;
+        let ast::ConstructorDecl { name, fields: _ } = con;
         ConShape {
             name: Some(name.clone()),
-            fields: ConFieldShape::from_ast(fields),
-        }
-    }
-}
-
-impl ConFieldShape {
-    pub(super) fn from_ast(fields: &ast::ConstructorFields) -> ConFieldShape {
-        match fields {
-            ast::ConstructorFields::Empty => ConFieldShape::Unnamed(0),
-            ast::ConstructorFields::Unnamed(fields) => ConFieldShape::Unnamed(fields.len() as u32),
-            ast::ConstructorFields::Named(fields) => {
-                ConFieldShape::Named(fields.iter().map(|(k, _)| k.clone()).collect())
-            }
         }
     }
 }

@@ -308,12 +308,19 @@ pub(super) fn check_expr(
                         }
 
                         FunArgs::Named(param_tys) => {
-                            for arg in args.iter() {
+                            for arg in args.iter_mut() {
                                 if arg.name.is_none() {
-                                    panic!(
-                                        "{}: Positional argument applied to function that expects named arguments",
-                                        loc_display(&expr.loc),
-                                    );
+                                    match &arg.expr.node {
+                                        ast::Expr::Var(ast::VarExpr { id, ty_args: _ }) => {
+                                            arg.name = Some(id.clone());
+                                        }
+                                        _ => {
+                                            panic!(
+                                                "{}: Positional argument applied to function that expects named arguments",
+                                                loc_display(&expr.loc),
+                                            );
+                                        }
+                                    }
                                 }
                             }
 
@@ -1074,30 +1081,26 @@ pub(super) fn select_field(
     assert_eq!(ty_con.ty_params.len(), ty_args.len());
 
     match &ty_con.details {
-        TyConDetails::Type(TypeDetails { cons }) => match cons.len() {
-            1 => {
-                let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
-                let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
-                let con_ty = con_scheme.instantiate_with_tys(ty_args);
+        TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
+            let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
+            let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
+            let con_ty = con_scheme.instantiate_with_tys(ty_args);
 
-                match con_ty {
-                    Ty::Fun {
-                        args: FunArgs::Named(fields),
-                        ret: _,
-                        exceptions: _,
-                    } => fields.get(field).cloned(),
-                    _ => None,
-                }
+            match con_ty {
+                Ty::Fun {
+                    args: FunArgs::Named(fields),
+                    ret: _,
+                    exceptions: _,
+                } => fields.get(field).cloned(),
+                _ => None,
             }
-
-            _ => None,
-        },
-
-        TyConDetails::Trait(_) => None,
+        }
 
         TyConDetails::Synonym(_) => {
             panic!("{}: Type synonym in select_field", loc_display(loc));
         }
+
+        _ => None,
     }
 }
 

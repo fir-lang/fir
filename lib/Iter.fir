@@ -13,6 +13,14 @@ trait Iterator[iter, item, exn]:
     try(self: iter): Try[iter, item, exn]
         Try(iter = self)
 
+    # TODO: This currently can't be called because `item` is ambiguous, and
+    # currently we have no way of specifying it.
+    count(self: iter): exn U32
+        let n = 0u32
+        for _: item in self:
+            n += 1
+        n
+
 trait Step[t]:
     step(self: t): t
 

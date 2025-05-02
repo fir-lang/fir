@@ -238,7 +238,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .cloned()
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                        details: TyConDetails::Type(TypeDetails {
+                            cons: vec![],
+                            sum: true,
+                        }),
                     },
                 );
             }
@@ -290,18 +293,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
                             let cons: Vec<ConShape> =
                                 sum_cons.iter().map(ConShape::from_ast).collect();
-                            TyConDetails::Type(TypeDetails { cons })
+                            TyConDetails::Type(TypeDetails { cons, sum: true })
                         }
 
-                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type(TypeDetails {
-                            cons: vec![ConShape {
-                                name: None,
-                                fields: ConFieldShape::from_ast(fields),
-                            }],
+                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
+                            cons: vec![ConShape { name: None }],
+                            sum: false,
                         }),
                     },
 
-                    None => TyConDetails::Type(TypeDetails { cons: vec![] }),
+                    None => TyConDetails::Type(TypeDetails {
+                        cons: vec![],
+                        sum: true,
+                    }),
                 };
 
                 tys.get_con_mut(&ty_decl.node.name).unwrap().details = details;
@@ -505,39 +509,13 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
                 .collect();
 
-            impl_fun_decl.node.sig.self_ = match impl_fun_decl.node.sig.self_ {
-                ast::SelfParam::No => ast::SelfParam::No,
-                ast::SelfParam::Implicit => {
-                    // Traits methods can't have implicit `self` type, checked in the previous pass
-                    // in this function (`collect_cons`).
-                    panic!()
+            if let Some(body) = &mut impl_fun_decl.node.body {
+                for stmt in body {
+                    stmt.node.subst_ty_ids(&substs);
                 }
-                ast::SelfParam::Explicit(ty) => {
-                    ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
-                }
-            };
+            }
 
-            impl_fun_decl.node.sig.params = impl_fun_decl
-                .node
-                .sig
-                .params
-                .into_iter()
-                .map(|(param, param_ty)| {
-                    (param, param_ty.map(|ty| ty.map(|ty| ty.subst_ids(&substs))))
-                })
-                .collect();
-
-            impl_fun_decl.node.sig.exceptions = impl_fun_decl
-                .node
-                .sig
-                .exceptions
-                .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
-
-            impl_fun_decl.node.sig.return_ty = impl_fun_decl
-                .node
-                .sig
-                .return_ty
-                .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
+            impl_fun_decl.node.sig.subst_ty_ids(&substs);
 
             impl_fun_decl.loc = decl.loc.clone();
 

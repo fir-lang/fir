@@ -45,6 +45,8 @@ impl Step[I32]:
 
 prim type U32
 
+U32.max(): U32 = 4294967295u32
+
 impl Add[U32]:
     prim __add(self: U32, other: U32): U32
 

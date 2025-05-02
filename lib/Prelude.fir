@@ -4,6 +4,7 @@ import HashMap
 import Iter
 import Num
 import Option
+import PPrint
 import Result
 import Str
 import StrBuf

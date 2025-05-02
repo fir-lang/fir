@@ -938,3 +938,212 @@ impl Type {
         }
     }
 }
+
+impl Stmt {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match self {
+            Stmt::Let(LetStmt { lhs: _, ty, rhs }) => {
+                if let Some(ty) = ty {
+                    ty.node = ty.node.subst_ids(substs);
+                }
+                rhs.node.subst_ty_ids(substs);
+            }
+
+            Stmt::Assign(AssignStmt { lhs, rhs, op: _ }) => {
+                lhs.node.subst_ty_ids(substs);
+                rhs.node.subst_ty_ids(substs);
+            }
+
+            Stmt::Expr(expr) => expr.node.subst_ty_ids(substs),
+
+            Stmt::For(ForStmt {
+                label: _,
+                pat: _,
+                ast_ty,
+                tc_ty: _,
+                expr,
+                expr_ty: _,
+                body,
+            }) => {
+                if let Some(ast_ty) = ast_ty {
+                    ast_ty.node = ast_ty.node.subst_ids(substs);
+                }
+                expr.node.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Stmt::While(WhileStmt {
+                label: _,
+                cond,
+                body,
+            }) => {
+                cond.node.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Stmt::WhileLet(WhileLetStmt {
+                label: _,
+                pat: _,
+                cond,
+                body,
+            }) => {
+                cond.node.subst_ty_ids(substs);
+
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Stmt::Break { label: _, level: _ } => {}
+
+            Stmt::Continue { label: _, level: _ } => {}
+        }
+    }
+}
+
+impl Expr {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match self {
+            Expr::Var(_)
+            | Expr::Constr(_)
+            | Expr::ConstrSelect(_)
+            | Expr::AssocFnSelect(_)
+            | Expr::Int(_)
+            | Expr::Char(_)
+            | Expr::Self_ => {}
+
+            Expr::FieldSelect(FieldSelectExpr { object, field: _ }) => {
+                object.node.subst_ty_ids(substs);
+            }
+
+            Expr::MethodSelect(MethodSelectExpr {
+                object,
+                object_ty: _,
+                method_ty_id: _,
+                method: _,
+                ty_args: _,
+            }) => {
+                object.node.subst_ty_ids(substs);
+            }
+
+            Expr::Call(CallExpr { fun, args }) => {
+                fun.node.subst_ty_ids(substs);
+                for CallArg { name: _, expr } in args {
+                    expr.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::String(parts) => {
+                for part in parts {
+                    match part {
+                        StringPart::Str(_) => {}
+                        StringPart::Expr(expr) => expr.node.subst_ty_ids(substs),
+                    }
+                }
+            }
+
+            Expr::BinOp(BinOpExpr { left, right, op: _ }) => {
+                left.node.subst_ty_ids(substs);
+                right.node.subst_ty_ids(substs);
+            }
+
+            Expr::UnOp(UnOpExpr { op: _, expr }) => {
+                expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Record(fields) => {
+                for field in fields {
+                    field.node.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Variant(VariantExpr { id: _, args }) => {
+                for field in args {
+                    field.node.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Return(expr) => expr.node.subst_ty_ids(substs),
+
+            Expr::Match(MatchExpr { scrutinee, alts }) => {
+                scrutinee.node.subst_ty_ids(substs);
+                for Alt {
+                    pattern: _,
+                    guard,
+                    rhs,
+                } in alts
+                {
+                    if let Some(guard) = guard {
+                        guard.node.subst_ty_ids(substs);
+                    }
+                    for stmt in rhs {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+            }
+
+            Expr::If(IfExpr {
+                branches,
+                else_branch,
+            }) => {
+                for (lhs, rhs) in branches {
+                    lhs.node.subst_ty_ids(substs);
+                    for stmt in rhs {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+            }
+
+            Expr::Fn(FnExpr {
+                sig,
+                body,
+                idx: _,
+                inferred_ty: _,
+            }) => {
+                sig.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+        }
+    }
+}
+
+impl FunSig {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match &mut self.self_ {
+            SelfParam::No => {}
+            SelfParam::Implicit => {
+                // Traits methods can't have implicit `self` type, checked in the previous pass
+                // in this function (`collect_cons`).
+                panic!()
+            }
+            SelfParam::Explicit(ty) => {
+                ty.node = ty.node.subst_ids(substs);
+            }
+        }
+
+        for (_, param_ty) in &mut self.params {
+            if let Some(param_ty) = param_ty {
+                param_ty.node = param_ty.node.subst_ids(substs);
+            }
+        }
+
+        if let Some(return_ty) = &mut self.return_ty {
+            return_ty.node = return_ty.node.subst_ids(substs);
+        }
+
+        if let Some(exceptions) = &mut self.exceptions {
+            exceptions.node = exceptions.node.subst_ids(substs);
+        }
+    }
+}
