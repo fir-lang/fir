@@ -1239,7 +1239,10 @@ fn mono_pat(
             })
         }
 
-        ast::Pat::Record(fields) => mono::Pat::Record(
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+        }) => mono::Pat::Record(
             fields
                 .iter()
                 .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm, locals))

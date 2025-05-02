@@ -121,12 +121,19 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             )
         }
 
-        ast::Pat::Record(fields) => {
-            let extension_var = Ty::Var(tc_state.var_gen.new_var(
-                level,
-                Kind::Row(RecordOrVariant::Record),
-                pat.loc.clone(),
-            ));
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest,
+        }) => {
+            let extension: Option<Box<Ty>> = if *ignore_rest {
+                Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                    level,
+                    Kind::Row(RecordOrVariant::Record),
+                    pat.loc.clone(),
+                ))))
+            } else {
+                None
+            };
 
             // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand
             // for `foo = foo`.
@@ -155,7 +162,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                         )
                     })
                     .collect(),
-                extension: Some(Box::new(extension_var)),
+                extension,
                 kind: RecordOrVariant::Record,
                 is_row: false,
             }
@@ -461,7 +468,10 @@ pub(super) fn refine_pat_binders(
             } // field loop
         } // variant
 
-        ast::Pat::Record(fields) => {
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+        }) => {
             let (record_labels, _) = match ty {
                 Ty::Anonymous {
                     labels,

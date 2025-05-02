@@ -202,7 +202,10 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
-        ast::Pat::Record(fields) => fields
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+        }) => fields
             .iter_mut()
             .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons)),
 
