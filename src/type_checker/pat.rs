@@ -127,21 +127,30 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 Kind::Row(RecordOrVariant::Record),
                 pat.loc.clone(),
             ));
+
+            // Similar to constructor patterns, update unnamed variable pattern `foo` as shorthand
+            // for `foo = foo`.
+            for field in fields.iter_mut() {
+                if field.name.is_some() {
+                    continue;
+                }
+
+                if let ast::Pat::Var(var_pat) = &field.node.node {
+                    field.name = Some(var_pat.var.clone());
+                } else {
+                    panic!(
+                        "{}: Record pattern with unnamed field",
+                        loc_display(&field.node.loc)
+                    )
+                }
+            }
+
             Ty::Anonymous {
                 labels: fields
                     .iter_mut()
                     .map(|named| {
                         (
-                            named
-                                .name
-                                .as_ref()
-                                .unwrap_or_else(|| {
-                                    panic!(
-                                        "{}: Record pattern with unnamed field",
-                                        loc_display(&named.node.loc)
-                                    )
-                                })
-                                .clone(),
+                            named.name.as_ref().unwrap().clone(),
                             check_pat(tc_state, &mut named.node, level),
                         )
                     })
