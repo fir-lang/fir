@@ -308,12 +308,19 @@ pub(super) fn check_expr(
                         }
 
                         FunArgs::Named(param_tys) => {
-                            for arg in args.iter() {
+                            for arg in args.iter_mut() {
                                 if arg.name.is_none() {
-                                    panic!(
-                                        "{}: Positional argument applied to function that expects named arguments",
-                                        loc_display(&expr.loc),
-                                    );
+                                    match &arg.expr.node {
+                                        ast::Expr::Var(ast::VarExpr { id, ty_args: _ }) => {
+                                            arg.name = Some(id.clone());
+                                        }
+                                        _ => {
+                                            panic!(
+                                                "{}: Positional argument applied to function that expects named arguments",
+                                                loc_display(&expr.loc),
+                                            );
+                                        }
+                                    }
                                 }
                             }
 
