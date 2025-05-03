@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: 4208b62d50606e7313c59988d0a15e89a859ffc0018aa45ab9dfca58e7cbe2a5
+// sha3: fa27e23a6cf5c4f3d0fc2da5d76416f48575a0a6ba66f0d363a04ffcaae073a7
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -45962,6 +45962,7 @@ fn __action148<'a>(
             .map(|(name, pat)| Named { name, node: pat })
             .collect(),
         ignore_rest: false,
+        inferred_ty: None,
     })
 }
 
@@ -45984,6 +45985,7 @@ fn __action149<'a>(
             .map(|(name, pat)| Named { name, node: pat })
             .collect(),
         ignore_rest: true,
+        inferred_ty: None,
     })
 }
 

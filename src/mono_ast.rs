@@ -141,7 +141,7 @@ pub enum Pat {
     Var(VarPat),
     Constr(ConstrPattern),
     Variant(VariantPattern),
-    Record(Vec<Named<L<Pat>>>),
+    Record(RecordPattern),
     Ignore,
     Str(String),
     Char(char),
@@ -169,6 +169,12 @@ pub struct ConstrPattern {
 pub struct Constructor {
     pub type_: Id,
     pub constr: Option<Id>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordPattern {
+    pub fields: Vec<Named<L<Pat>>>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]

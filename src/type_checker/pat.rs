@@ -124,7 +124,10 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Record(ast::RecordPattern {
             fields,
             ignore_rest,
+            inferred_ty,
         }) => {
+            assert!(inferred_ty.is_none());
+
             let extension: Option<Box<Ty>> = if *ignore_rest {
                 Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
                     level,
@@ -152,7 +155,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 }
             }
 
-            Ty::Anonymous {
+            let ty = Ty::Anonymous {
                 labels: fields
                     .iter_mut()
                     .map(|named| {
@@ -165,7 +168,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 extension,
                 kind: RecordOrVariant::Record,
                 is_row: false,
-            }
+            };
+            *inferred_ty = Some(ty.clone());
+            ty
         }
 
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
@@ -471,6 +476,7 @@ pub(super) fn refine_pat_binders(
         ast::Pat::Record(ast::RecordPattern {
             fields,
             ignore_rest: _,
+            inferred_ty: _,
         }) => {
             let (record_labels, _) = match ty {
                 Ty::Anonymous {

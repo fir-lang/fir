@@ -407,6 +407,7 @@ pub struct ConstrPattern {
 pub struct RecordPattern {
     pub fields: Vec<Named<L<Pat>>>,
     pub ignore_rest: bool,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]

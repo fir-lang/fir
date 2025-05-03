@@ -1081,16 +1081,16 @@ fn try_bind_pat(
             match record_shape {
                 RecordShape::NamedFields { fields } => {
                     for (i, field_name) in fields.iter().enumerate() {
-                        let field_pat = field_pats
-                            .iter()
-                            .find_map(|pat| {
-                                if pat.name.as_ref().unwrap() == field_name {
-                                    Some(&pat.node)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap();
+                        let field_pat = match field_pats.iter().find_map(|pat| {
+                            if pat.name.as_ref().unwrap() == field_name {
+                                Some(&pat.node)
+                            } else {
+                                None
+                            }
+                        }) {
+                            None => continue,
+                            Some(pat) => pat,
+                        };
                         let field_value = heap[value + 1 + (i as u64)];
                         if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
                             return false;

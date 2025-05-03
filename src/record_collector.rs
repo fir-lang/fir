@@ -272,11 +272,11 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>, variants: &mut Set
             }
         }
 
-        mono::Pat::Record(fields) => {
+        mono::Pat::Record(mono::RecordPattern { fields, ty }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
             }
-            records.insert(RecordShape::from_named_things(fields));
+            visit_ty(ty, records, variants);
         }
 
         mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
