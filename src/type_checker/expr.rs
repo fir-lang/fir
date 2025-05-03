@@ -742,7 +742,7 @@ pub(super) fn check_expr(
                     check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
                 }
 
-                rhs_tys.push(check_stmts(tc_state, rhs, None, level, loop_stack));
+                rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
 
                 tc_state.env.exit();
 
@@ -756,6 +756,10 @@ pub(super) fn check_expr(
                 println!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
             }
 
+            // Unify RHS types. When the `expected_ty` is available this doesn't do anything.
+            // Otherwise this checks that all branches return the same type.
+            // We could do this only when `expected_ty` is not available, but it shouldn't hurt to
+            // do it always.
             for rhs_tys in rhs_tys.windows(2) {
                 unify(
                     &rhs_tys[0],
@@ -767,6 +771,7 @@ pub(super) fn check_expr(
                 );
             }
 
+            // Same as above, only useful when `expected_ty` is not available.
             unify_expected_ty(
                 rhs_tys.pop().unwrap(),
                 expected_ty,
@@ -791,11 +796,9 @@ pub(super) fn check_expr(
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
                     level,
-                    &expr.loc,
+                    &cond.loc,
                 );
-
                 let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
-
                 branch_tys.push(body_ty);
             }
 
