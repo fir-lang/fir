@@ -364,7 +364,7 @@ pub enum Pat {
     /// Matches a variant.
     Variant(VariantPattern),
 
-    Record(Vec<Named<L<Pat>>>),
+    Record(RecordPattern),
 
     /// Underscore, aka. wildcard.
     Ignore,
@@ -401,6 +401,13 @@ pub struct ConstrPattern {
 
     /// Inferred type arguments of the constructor. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordPattern {
+    pub fields: Vec<Named<L<Pat>>>,
+    pub ignore_rest: bool,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]

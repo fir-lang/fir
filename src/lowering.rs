@@ -2035,10 +2035,14 @@ fn lower_pat(
             })
         }
 
-        mono::Pat::Record(fields) => {
+        mono::Pat::Record(mono::RecordPattern { fields, ty }) => {
+            let record_ty_fields = match ty {
+                mono::Type::Record { fields } => fields,
+                mono::Type::Named(_) | mono::Type::Variant { .. } | mono::Type::Fn(_) => panic!(),
+            };
             let idx = *indices
                 .records
-                .get(&RecordShape::from_named_things(fields))
+                .get(&RecordShape::from_named_things(record_ty_fields))
                 .unwrap();
             Pat::Record(RecordPattern {
                 fields: fields

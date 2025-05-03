@@ -74,7 +74,11 @@ impl PatCoverage {
                 variant_pats.add(fields);
             }
 
-            ast::Pat::Record(fields) => {
+            ast::Pat::Record(ast::RecordPattern {
+                fields,
+                ignore_rest: _,
+                inferred_ty: _,
+            }) => {
                 self.records.add(fields);
             }
 

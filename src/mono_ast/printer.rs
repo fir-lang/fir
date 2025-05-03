@@ -792,7 +792,7 @@ impl Pat {
                 }
             }
 
-            Pat::Record(fields) => {
+            Pat::Record(RecordPattern { fields, ty }) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
@@ -805,7 +805,8 @@ impl Pat {
                     }
                     node.node.print(buffer);
                 }
-                buffer.push(')');
+                buffer.push_str("): ");
+                ty.print(buffer);
             }
 
             Pat::Ignore => buffer.push('_'),

@@ -202,9 +202,16 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
-        ast::Pat::Record(fields) => fields
-            .iter_mut()
-            .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons)),
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+            inferred_ty,
+        }) => {
+            fields
+                .iter_mut()
+                .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
+        }
 
         ast::Pat::Variant(ast::VariantPattern { constr: _, fields }) => {
             for field in fields.iter_mut() {

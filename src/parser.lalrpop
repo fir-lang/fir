@@ -1072,7 +1072,18 @@ Pat: Pat = {
     <var:VariantPattern> => Pat::Variant(var),
 
     "(" <fields:Sep<PatternField, ",">> ")" =>
-        Pat::Record(fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect()),
+        Pat::Record(RecordPattern {
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
+            ignore_rest: false,
+            inferred_ty: None,
+        }),
+
+    "(" <fields:(<PatternField> ",")+> ".." ")" =>
+        Pat::Record(RecordPattern {
+            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
+            ignore_rest: true,
+            inferred_ty: None,
+        }),
 
     "_" => Pat::Ignore,
 

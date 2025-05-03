@@ -1239,12 +1239,17 @@ fn mono_pat(
             })
         }
 
-        ast::Pat::Record(fields) => mono::Pat::Record(
-            fields
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+            inferred_ty,
+        }) => mono::Pat::Record(mono::RecordPattern {
+            fields: fields
                 .iter()
                 .map(|named_pat| mono_named_l_pat(named_pat, ty_map, poly_pgm, mono_pgm, locals))
                 .collect(),
-        ),
+            ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
+        }),
 
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
             mono::Pat::Variant(mono::VariantPattern {

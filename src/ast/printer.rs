@@ -894,7 +894,11 @@ impl Pat {
                 }
             }
 
-            Pat::Record(fields) => {
+            Pat::Record(RecordPattern {
+                fields,
+                ignore_rest,
+                inferred_ty,
+            }) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
@@ -907,7 +911,16 @@ impl Pat {
                     }
                     node.node.print(buffer);
                 }
+                if *ignore_rest {
+                    if !fields.is_empty() {
+                        buffer.push_str(", ");
+                    }
+                    buffer.push_str("..");
+                }
                 buffer.push(')');
+                if let Some(inferred_ty) = inferred_ty {
+                    write!(buffer, " #| inferred type = {} |# ", inferred_ty).unwrap();
+                }
             }
 
             Pat::Ignore => buffer.push('_'),
