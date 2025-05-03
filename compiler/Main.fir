@@ -1,4 +1,5 @@
 import Ast
+import AstPrinter
 import Lexer
 import Parser
 
