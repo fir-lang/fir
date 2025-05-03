@@ -116,9 +116,17 @@ Doc.blank(spaces: U32): Doc = Doc._Blank(spaces)
 
 Doc.ifFlat(doc1: Doc, doc2: Doc): Doc
     match doc1:
-        Doc._IfFlat(flat = doc1, ..) | doc1: Doc._IfFlat(flat = doc1, notFlat = doc2)
+        Doc._IfFlat(flat = doc1, ..) | doc1:
+            Doc._IfFlat(flat = doc1, notFlat = doc2)
 
-Doc.break_(i: U32): Doc = Doc.ifFlat(Doc.blank(i), Doc.hardLine())
+Doc.whenFlat(doc: Doc): Doc
+    Doc.ifFlat(doc, Doc.empty())
+
+Doc.whenNotFlat(doc: Doc): Doc
+    Doc.ifFlat(Doc.empty(), doc)
+
+Doc.break_(i: U32): Doc
+    Doc.ifFlat(Doc.blank(i), Doc.hardLine())
 
 Doc.nest(self, indent: U32): Doc
     Doc._Nest(req = self._req(), indent, doc = self)
