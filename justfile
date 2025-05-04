@@ -19,7 +19,6 @@ test: build
     cargo test
 
     goldentests target/debug/fir tests '# '
-    goldentests target/debug/fir examples '# '
 
 # Only run type checking tests.
 test_tc: build
@@ -32,7 +31,6 @@ update_tc_tests: build
 
 update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
-    goldentests target/debug/fir examples '# ' --overwrite
 
 build: generate_parser
     cargo build
@@ -66,6 +64,6 @@ build_site: generate_parser
     cp lib/* $OUT_DIR/fir/lib/
 
     # Copy samples
-    cp examples/ArithmeticExpressions.fir $OUT_DIR/ArithmeticExpressions.fir
     cp tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir
     cp tests/ThrowingIter.fir $OUT_DIR/ThrowingIter.fir
+    cp tests/PPrintExample.fir $OUT_DIR/PPrintExample.fir

@@ -1,6 +1,15 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
+testMain(): [] ()
+    main("0")
+    main("succ(0)")
+    main("succ(succ(0))")
+    main("succ(pred(succ(0)))")
+    main("pred(succ(pred(succ(0))))")
+    main("if true then succ(0) else 0")
+    main("if iszero(0) then succ(0) else 0")
+
 main(pgm: Str) = print(eval(parse(pgm)))
 
 type Term:
@@ -134,14 +143,6 @@ expectKeyword(pgm: Str, kw: Str): Str
         panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
 
-testMain(): [] ()
-    main("0")
-    main("succ(0)")
-    main("succ(succ(0))")
-    main("succ(pred(succ(0)))")
-    main("pred(succ(pred(succ(0))))")
-    main("if true then succ(0) else 0")
-    main("if iszero(0) then succ(0) else 0")
 
 # args: --main testMain
 # expected stdout:
