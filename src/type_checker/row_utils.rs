@@ -46,7 +46,11 @@ pub(crate) fn collect_rows(
                         kind,
                         is_row,
                     } => {
-                        assert!(is_row, "{:#?}", ty);
+                        assert!(
+                            is_row,
+                            "Extension variable in anonymous type is not a row: {:#?}",
+                            ty
+                        );
                         assert_eq!(kind, ty_kind);
                         for (label_id, label_ty) in labels {
                             if all_labels.insert(label_id, label_ty).is_some() {

@@ -173,7 +173,7 @@ pub(super) fn unify(
 
             if is_row_1 != is_row_2 {
                 panic!(
-                    "{}: Unable to row type with *: {} ~ {}",
+                    "{}: Unable to unify row type with *: {} ~ {}",
                     loc_display(loc),
                     ty1,
                     ty2
