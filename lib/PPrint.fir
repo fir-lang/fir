@@ -42,7 +42,7 @@ Doc.print(self, width: U32): Str
     # to estimate better numbers using the `Doc` type.
     let output = StrBuf.withCapacity(512)
     let state = _State(width, column = 0, output)
-    self._print(state, 0u32, Bool.False)
+    self._print(state, 0, Bool.False)
     output.toStr()
 
 Doc._print(self, state: _State, indent: U32, flatten: Bool)
@@ -85,7 +85,7 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool)
 
 Doc._req(self): U32
     match self:
-        Doc._Empty: 0u32
+        Doc._Empty: 0
         Doc._Str(lenChars, ..): lenChars
         Doc._Blank(spaces): spaces
         Doc._IfFlat(flat, ..): flat._req()
@@ -108,7 +108,7 @@ Doc.char(c: Char): Doc
     buf.push(c)
     Doc.str(buf.toStr())
 
-Doc.space: Doc = Doc._Str(str = " ", lenChars = 1u32)
+Doc.space: Doc = Doc._Str(str = " ", lenChars = 1)
 
 Doc.hardLine: Doc = Doc._HardLine
 
