@@ -18,6 +18,17 @@ main(args: Array[Str])
     print("")
     parserTests()
 
+    print("")
+    print("PRINTER TESTS")
+    print("")
+
+    _parserTest(
+        "pprint BinOp",
+        "1 + 2 + 3",
+        fn(s) { Parser.expr(s,0) },
+        fn(expr) { print(expr.node.pprint().print(40)) },
+    )
+
 assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
     if expected != found:
         throw(~AssertionError(msg = "Expected `expected`, found `found`"))

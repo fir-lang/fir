@@ -35,32 +35,52 @@ Expr.pprint(self): Doc
             # TODO: Print all of the details
             Doc.str(text)
 
-        Expr.Str(_):
-            panic("Expr.Str")
+        Expr.Str(parts):
+            let doc = Doc.char('"')
+            for part: StrPart in parts.iter():
+                match part:
+                    StrPart.Str(str):
+                        # TODO: Escapes
+                        doc = doc.cat(Doc.str(str))
+                    StrPart.Expr(expr):
+                        doc = doc.cat(Doc.char('`')).cat(expr.node.pprint()).cat(Doc.char('`'))
+            doc
 
-        Expr.Char(_):
-            panic("Expr.Char")
+        Expr.Char(char):
+            # TODO: Escapes
+            Doc.char('\'').cat(Doc.char(char)).cat(Doc.char('\''))
 
         Expr.Self:
-            panic("Expr.Self")
+            Doc.str("self")
 
-        Expr.BinOp(_):
-            panic("Expr.BinOp")
+        Expr.BinOp(BinOpExpr(left, right, op)):
+            # TODO: Precedence and parens
+            # TODO: Operator string
+            left.node.pprint() \
+                .cat(Doc.blank(1)) \
+                .cat(Doc.str(op.toStr())) \
+                .cat(Doc.blank(1)) \
+                .cat(right.node.pprint())
 
-        Expr.UnOp(_):
-            panic("Expr.UnOp")
+        Expr.UnOp(UnOpExpr(op, expr)):
+            let opChar = match op:
+                UnOp.Not: '!'
+                UnOp.Neg: '-'
+            Doc.char(opChar).cat(expr.node.pprint())
 
-        Expr.Record(_):
-            panic("Expr.Record")
+        Expr.Record(fields):
+            _ppParenNamedFields(fields)
 
-        Expr.Variant(_):
-            panic("Expr.Variant")
+        Expr.Variant(VariantExpr(id, args)):
+            Doc.char('[').cat(Doc.str(id.name)).cat(_ppParenNamedFields(args)).cat(Doc.char(']'))
 
-        Expr.Return(_):
-            panic("Expr.Return")
+        Expr.Return(expr):
+            Doc.str("return ").cat(expr.node.pprint())
 
-        Expr.Match(_):
-            panic("Expr.Match")
+        Expr.Match(MatchExpr(scrutinee, alts)):
+            Doc.str("match ").cat(scrutinee.node.pprint()).cat(Doc.char(':')).cat(Doc.hardLine()) \
+                .cat(interleave(alts.iter().map(_ppAlt), Doc.hardLine())) \
+                .cat(Doc.hardLine())
 
         Expr.If(_):
             panic("Expr.If")
@@ -81,6 +101,20 @@ _ppTyArgs(args: Vec[L[Type]]): Doc
     Doc.char('[') \
         .cat(interleave(args.iter().map(fn(l: L[Type]): Doc { l.node.pprint() }), Doc.str(", "))) \
         .cat(Doc.char(']'))
+
+_ppParenNamedFields(fields: Vec[Named[L[Expr]]]): Doc
+    Doc.char('(').cat(interleave(fields.iter().map(_ppNamedArg), Doc.str(", "))).cat(Doc.char(')'))
+
+_ppNamedArg(arg: Named[L[Expr]]): Doc
+    let doc = match arg.name:
+        Option.Some(name):
+            Doc.str(name.name).cat(Doc.str(" = "))
+        Option.None:
+            Doc.empty()
+    doc.cat(arg.node.node.pprint())
+
+_ppAlt(alt: Alt): Doc
+    panic("TODO")
 
 _needsParens(expr: Expr): Bool
     match expr:
