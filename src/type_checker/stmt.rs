@@ -75,14 +75,13 @@ fn check_stmt(
                 }
             }
 
-            unify_expected_ty(
-                Ty::unit(),
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &stmt.loc,
-            )
+            expected_ty.cloned().unwrap_or_else(|| {
+                Ty::Var(
+                    tc_state
+                        .var_gen
+                        .new_var(level, Kind::Star, stmt.loc.clone()),
+                )
+            })
         }
 
         ast::Stmt::Let(ast::LetStmt { lhs, ty, rhs }) => {
