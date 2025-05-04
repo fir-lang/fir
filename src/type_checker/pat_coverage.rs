@@ -135,7 +135,7 @@ impl PatCoverage {
         }
 
         match ty.normalize(tc_state.tys.tys.cons()) {
-            Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys.tys) {
+            Ty::Con(ty_con, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
                     let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
@@ -169,7 +169,7 @@ impl PatCoverage {
                 }
             },
 
-            Ty::App(ty_con, ty_args) => match con_shape(&ty_con, &tc_state.tys.tys) {
+            Ty::App(ty_con, ty_args, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
                     let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
@@ -291,7 +291,7 @@ impl PatCoverage {
 
             Ty::Var(_) => false,
 
-            Ty::QVar(_) | Ty::Fun { .. } => panic!(),
+            Ty::QVar(_, _) | Ty::Fun { .. } => panic!(),
         }
     }
 
@@ -355,7 +355,7 @@ impl PatCoverage {
                 true
             }
 
-            Ty::App(_, _) | Ty::Con(_) => {
+            Ty::App(_, _, _) | Ty::Con(_, _) => {
                 // Constructor doesn't have fields.
                 assert!(con_field_pats.named.is_empty());
                 assert!(con_field_pats.unnamed.is_empty());

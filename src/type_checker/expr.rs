@@ -283,6 +283,15 @@ pub(super) fn check_expr(
                         );
                     }
 
+                    let ret_ty = unify_expected_ty(
+                        *ret_ty,
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    );
+
                     match param_tys {
                         FunArgs::Positional(param_tys) => {
                             for arg in args.iter() {
@@ -370,14 +379,7 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    unify_expected_ty(
-                        *ret_ty,
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
-                    )
+                    ret_ty
                 }
 
                 _ => panic!(
@@ -396,10 +398,10 @@ pub(super) fn check_expr(
         }) => {
             let kind: ast::IntKind = suffix.unwrap_or_else(|| {
                 match expected_ty.map(|ty| ty.normalize(tc_state.tys.tys.cons())) {
-                    Some(Ty::Con(con)) if con == "I8" => ast::IntKind::I8,
-                    Some(Ty::Con(con)) if con == "U8" => ast::IntKind::U8,
-                    Some(Ty::Con(con)) if con == "I32" => ast::IntKind::I32,
-                    Some(Ty::Con(con)) if con == "U32" => ast::IntKind::U32,
+                    Some(Ty::Con(con, _kind)) if con == "I8" => ast::IntKind::I8,
+                    Some(Ty::Con(con, _kind)) if con == "U8" => ast::IntKind::U8,
+                    Some(Ty::Con(con, _kind)) if con == "I32" => ast::IntKind::I32,
+                    Some(Ty::Con(con, _kind)) if con == "U32" => ast::IntKind::U32,
 
                     None | Some(Ty::Var(_)) => {
                         // Try defaulting as i32.
@@ -426,7 +428,7 @@ pub(super) fn check_expr(
                         )
                     }) as u8 as u64;
                     unify_expected_ty(
-                        Ty::Con("I8".into()),
+                        Ty::Con("I8".into(), Kind::Star),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -444,7 +446,7 @@ pub(super) fn check_expr(
                         )
                     }) as u64;
                     unify_expected_ty(
-                        Ty::Con("U8".into()),
+                        Ty::Con("U8".into(), Kind::Star),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -462,7 +464,7 @@ pub(super) fn check_expr(
                         )
                     }) as u32 as u64;
                     unify_expected_ty(
-                        Ty::Con("I32".into()),
+                        Ty::Con("I32".into(), Kind::Star),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -480,7 +482,7 @@ pub(super) fn check_expr(
                         )
                     }) as u64;
                     unify_expected_ty(
-                        Ty::Con("U32".into()),
+                        Ty::Con("U32".into(), Kind::Star),
                         expected_ty,
                         tc_state.tys.tys.cons(),
                         tc_state.var_gen,
@@ -562,7 +564,7 @@ pub(super) fn check_expr(
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
                 ast::BinOp::And | ast::BinOp::Or => {
-                    let bool_ty = Ty::Con("Bool".into());
+                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
                     check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
                     check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
                     return bool_ty;
@@ -864,10 +866,10 @@ pub(super) fn check_expr(
                         exceptions,
                     } => (Some(args), Some(ret), Some(exceptions)),
 
-                    Ty::Con(_)
+                    Ty::Con(_, _)
                     | Ty::Var(_)
-                    | Ty::App(_, _)
-                    | Ty::QVar(_)
+                    | Ty::App(_, _, _)
+                    | Ty::QVar(_, _)
                     | Ty::Anonymous { .. } => (None, None, None),
                 },
                 None => (None, None, None),
@@ -982,7 +984,7 @@ fn check_field_select(
 ) -> (Ty, ast::Expr) {
     // TODO: What if we have a method and a field with the same name?
     match object_ty {
-        Ty::Con(con) => {
+        Ty::Con(con, _) => {
             if let Some(field_ty) = select_field(tc_state, con, &[], field, loc) {
                 return (
                     field_ty,
@@ -994,7 +996,7 @@ fn check_field_select(
             }
         }
 
-        Ty::App(con, args) => {
+        Ty::App(con, args, _) => {
             if let Some(field_ty) = select_field(tc_state, con, args, field, loc) {
                 return (
                     field_ty,

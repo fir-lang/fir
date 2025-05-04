@@ -9,5 +9,5 @@ f1()
 #              ?exn
 #              (
 #                 Anonymous { labels: {"A": Anonymous { labels: {}, extension: None, kind: Record, is_row: false }}, extension: Some(Var(TyVarRef(TyVar { id: 2, kind: Row(Variant), level: 0, link: None, loc: tests/ExnFail4.fir:2:11-2:13 }))), kind: Variant, is_row: false }
-#                 Con("?exn")
+#                 Con("?exn", Star)
 #              )

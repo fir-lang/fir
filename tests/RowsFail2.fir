@@ -7,11 +7,12 @@ main()
     test((x = 123, y = 456))
 
 # args: --typecheck --no-backtrace
+# expected exit status: 101
 # expected stderr:
 # tests/RowsFail2.fir:4:5: Unable to unify types
 #              r and
 #              row()
 #              (
-#                 Con("r")
+#                 Con("r", Row(Record))
 #                 Anonymous { labels: {}, extension: None, kind: Record, is_row: true }
 #              )

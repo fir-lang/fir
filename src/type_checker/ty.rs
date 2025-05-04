@@ -34,7 +34,7 @@ pub struct Scheme {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
-    Con(Id),
+    Con(Id, Kind),
 
     /// A unification variable, created by a type scheme when instantiated.
     Var(TyVarRef),
@@ -44,12 +44,12 @@ pub enum Ty {
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Id, Vec<Ty>),
+    App(Id, Vec<Ty>, Kind),
 
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
-    QVar(Id),
+    QVar(Id, Kind),
 
     /// A function type, e.g. `Fn(U32): Str`, `Fn(x: U32, y: U32): T`.
     Fun {
@@ -153,7 +153,7 @@ pub struct TyVar {
 /// Kind of a unification variable.
 ///
 /// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Kind {
     Star,
     Row(RecordOrVariant),
@@ -400,7 +400,7 @@ impl Scheme {
             .iter()
             .map(|(qvar, kind)| {
                 let new_qvar = rename_domain_var(qvar, uniq);
-                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone()));
+                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), kind.clone()));
                 (new_qvar, kind.clone())
             })
             .collect();
@@ -437,11 +437,11 @@ fn ty_eq_modulo_alpha(
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
     match (&ty1_normalized, &ty2_normalized) {
-        (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
+        (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
 
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
-        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+        (Ty::App(con1, args1, _), Ty::App(con2, args2, _)) => {
             if con1 != con2 {
                 return false;
             }
@@ -510,7 +510,7 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
+        (Ty::QVar(qvar1, _), Ty::QVar(qvar2, _)) => {
             if qvar1 == qvar2 {
                 return true;
             }
@@ -629,7 +629,7 @@ impl Ty {
     }
 
     pub(super) fn bool() -> Ty {
-        Ty::Con(SmolStr::new_static("Bool"))
+        Ty::Con(SmolStr::new_static("Bool"), Kind::Star)
     }
 
     pub(super) fn to_str_id() -> Id {
@@ -637,23 +637,46 @@ impl Ty {
     }
 
     pub(super) fn str() -> Ty {
-        Ty::Con(SmolStr::new_static("Str"))
+        Ty::Con(SmolStr::new_static("Str"), Kind::Star)
     }
 
     pub(super) fn char() -> Ty {
-        Ty::Con(SmolStr::new_static("Char"))
+        Ty::Con(SmolStr::new_static("Char"), Kind::Star)
+    }
+
+    pub fn kind(&self) -> Kind {
+        match self {
+            Ty::Con(_, kind) => kind.clone(),
+
+            Ty::Var(var) => var.kind(),
+
+            Ty::App(_, _, kind) => kind.clone(),
+
+            Ty::QVar(_, kind) => kind.clone(),
+
+            Ty::Fun { .. } => Kind::Star,
+
+            Ty::Anonymous { is_row, kind, .. } => {
+                if *is_row {
+                    Kind::Row(*kind)
+                } else {
+                    Kind::Star
+                }
+            }
+        }
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
-            Ty::Con(id) => Ty::Con(id.clone()),
+            Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(con, args) => Ty::App(
+            Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -671,11 +694,11 @@ impl Ty {
                 is_row: *is_row,
             },
 
-            Ty::QVar(qvar) => {
+            Ty::QVar(qvar, kind) => {
                 if qvar == var {
                     ty.clone()
                 } else {
-                    Ty::QVar(qvar.clone())
+                    Ty::QVar(qvar.clone(), kind.clone())
                 }
             }
 
@@ -702,13 +725,14 @@ impl Ty {
 
     pub(super) fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
         match self {
-            Ty::Con(con) => Ty::Con(con.clone()),
+            Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(ty, tys) => Ty::App(
+            Ty::App(ty, tys, kind) => Ty::App(
                 ty.clone(),
                 tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -728,7 +752,7 @@ impl Ty {
                 is_row: *is_row,
             },
 
-            Ty::QVar(id) => vars
+            Ty::QVar(id, _) => vars
                 .get(id)
                 .cloned()
                 .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
@@ -763,7 +787,7 @@ impl Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
 
-            Ty::Con(con) => match cons.get(con) {
+            Ty::Con(con, _) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
                     TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
@@ -787,7 +811,7 @@ impl Ty {
                 var_ref_link
             }
 
-            Ty::Con(con) => match cons.get(con) {
+            Ty::Con(con, _) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
                     TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
@@ -795,9 +819,10 @@ impl Ty {
                 None => self.clone(),
             },
 
-            Ty::App(con, args) => Ty::App(
+            Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|ty| ty.deep_normalize(cons)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -842,24 +867,24 @@ impl Ty {
                     .map(|exn| Box::new(exn.deep_normalize(cons))),
             },
 
-            Ty::QVar(_) => panic!(),
+            Ty::QVar(_, _) => panic!(),
         }
     }
 
     /// Get the type constructor of the type and the type arguments.
     pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
-            Ty::Con(con) => Some((con.clone(), vec![])),
+            Ty::Con(con, _) => Some((con.clone(), vec![])),
 
-            Ty::App(con, args) => Some((con.clone(), args.clone())),
+            Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
-            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_) | Ty::Fun { .. } => None,
+            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
         }
     }
 
     pub(super) fn is_void(&self) -> bool {
         match self {
-            Ty::Con(con) => con == &SmolStr::new_static("Void"),
+            Ty::Con(con, _) => con == &SmolStr::new_static("Void"),
             _ => false,
         }
     }
@@ -1004,11 +1029,11 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id) => write!(f, "{}", id),
+            Ty::Con(id, _) => write!(f, "{}", id),
 
             Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
 
-            Ty::App(id, args) => {
+            Ty::App(id, args, _) => {
                 write!(f, "{}[", id)?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
@@ -1050,7 +1075,7 @@ impl fmt::Display for Ty {
                 write!(f, "{}", right_delim)
             }
 
-            Ty::QVar(id) => write!(f, "{}", id),
+            Ty::QVar(id, _) => write!(f, "{}", id),
 
             Ty::Fun {
                 args,

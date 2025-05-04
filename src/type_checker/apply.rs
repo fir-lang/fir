@@ -112,7 +112,7 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::Con(_) | Ty::Var(_) | Ty::App(_, _) | Ty::Anonymous { .. } | Ty::QVar(_) => {
+        Ty::Con(_, _) | Ty::Var(_) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
             if args.is_empty() {
                 return con_ty.clone();
             }

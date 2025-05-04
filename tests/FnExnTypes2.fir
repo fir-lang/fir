@@ -12,6 +12,6 @@ main
 #              Str and
 #              []
 #              (
-#                 Con("Str")
+#                 Con("Str", Star)
 #                 Anonymous { labels: {}, extension: None, kind: Variant, is_row: false }
 #              )
