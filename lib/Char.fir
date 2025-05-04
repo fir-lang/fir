@@ -54,7 +54,7 @@ Char.isAsciiBinDigit(self): Bool
 
 impl ToStr[Char]:
     toStr(self: Char): Str
-        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2u32)
+        let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
         strBuf.push('\'')
         strBuf.push(self)
         strBuf.push('\'')
