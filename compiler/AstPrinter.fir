@@ -7,29 +7,29 @@ Expr.pprint(self): Doc
             Doc.str(ty.name).cat(Doc.char('.')).cat(Doc.str(constr.name)).cat(_ppTyArgs(tyArgs))
 
         Expr.FieldSelect(FieldSelectExpr(object, field)):
-            let parens = _needsParens(object.node)
+            let addParens = _needsParens(object.node)
             let doc = object.node.pprint()
-            if parens:
-                doc = Doc.char('(').cat(doc).cat(Doc.char(')'))
+            if addParens:
+                doc = parens(doc)
             doc.cat(Doc.char('.')).cat(Doc.str(field.name))
 
         Expr.MethodSelect(MethodSelectExpr(object, method, ..)):
             # TODO: Print all of the details.
-            let parens = _needsParens(object.node)
+            let addParens = _needsParens(object.node)
             let doc = object.node.pprint()
-            if parens:
-                doc = Doc.char('(').cat(doc).cat(Doc.char(')'))
+            if addParens:
+                doc = parens(doc)
             doc.cat(Doc.char('.')).cat(Doc.str(method.name))
 
         Expr.AssocFnSelect(AssocFnSelectExpr(ty, member, tyArgs)):
             Doc.str(ty.name).cat(Doc.char('.')).cat(Doc.str(member.name)).cat(_ppTyArgs(tyArgs))
 
         Expr.Call(CallExpr(fun, args)):
-            let parens = _needsParens(fun.node)
+            let addParens = _needsParens(fun.node)
             let doc = fun.node.pprint()
-            if parens:
-                doc = Doc.char('(').cat(doc).cat(Doc.char(')'))
-            doc.cat(Doc.char('(')).cat(interleave(args.iter().map(CallArg.pprint), Doc.str(", "))).cat(Doc.char(')'))
+            if addParens:
+                doc = parens(doc)
+            doc.cat(parens(interleave(args.iter().map(CallArg.pprint), Doc.str(", "))))
 
         Expr.Int(IntExpr(text, ..)):
             # TODO: Print all of the details
@@ -72,7 +72,7 @@ Expr.pprint(self): Doc
             _ppParenNamedFields(fields)
 
         Expr.Variant(VariantExpr(id, args)):
-            Doc.char('[').cat(Doc.str(id.name)).cat(_ppParenNamedFields(args)).cat(Doc.char(']'))
+            brackets(Doc.str(id.name).cat(_ppParenNamedFields(args)))
 
         Expr.Return(expr):
             Doc.str("return ").cat(expr.node.pprint())
@@ -82,39 +82,88 @@ Expr.pprint(self): Doc
                 .cat(interleave(alts.iter().map(_ppAlt), Doc.hardLine())) \
                 .cat(Doc.hardLine())
 
-        Expr.If(_):
-            panic("Expr.If")
+        Expr.If(IfExpr(branches, else_branch)):
+            let doc = _ppIfBranch("if", branches.get(0).guard, branches.get(0).body)
+            for branch: (guard: L[Expr], body: Vec[L[Stmt]]) in branches.iter().skip(1):
+                doc = doc.cat(_ppIfBranch("elif", branch.guard, branch.body))
+            match else_branch:
+                Option.None: ()
+                Option.Some(stmts):
+                    for stmt: L[Stmt] in stmts.iter():
+                        doc = doc.cat(stmt.node.pprint()).cat(Doc.hardLine())
+            doc
 
-        Expr.Fn_(_):
+        Expr.Fn_(FnExpr(sig, body, ..)):
             panic("Expr.Fn_")
 
 Type.pprint(self): Doc
-    panic("TODO")
+    match self:
+        Type.Named(NamedType(name, args)):
+            Doc.str(name.name).cat(_ppTyArgs(args))
+
+        Type.Var(var_):
+            Doc.str(var_.name)
+
+        Type.Record(fields, extension):
+            let doc = _ppNamedList(fields, Type.pprint)
+            match extension:
+                Option.None: ()
+                Option.Some(extension):
+                    if fields.len() == 0:
+                        doc = Doc.str("..")
+                    else:
+                        doc = doc.cat(Doc.str(", .."))
+            parens(doc)
+
+        Type.Variant(alts, extension): panic("")
+
+        Type.Fn_(fnType): panic("")
 
 CallArg.pprint(self): Doc
+    panic("TODO")
+
+Stmt.pprint(self): Doc
     panic("TODO")
 
 _ppTyArgs(args: Vec[L[Type]]): Doc
     if args.len() == 0:
         return Doc.empty()
 
-    Doc.char('[') \
-        .cat(interleave(args.iter().map(fn(l: L[Type]): Doc { l.node.pprint() }), Doc.str(", "))) \
-        .cat(Doc.char(']'))
+    brackets(commaSep(
+        args.iter().map(fn(l: L[Type]): Doc { l.node.pprint() })))
 
 _ppParenNamedFields(fields: Vec[Named[L[Expr]]]): Doc
-    Doc.char('(').cat(interleave(fields.iter().map(_ppNamedArg), Doc.str(", "))).cat(Doc.char(')'))
+    _ppNamedList(fields, Expr.pprint)
 
 _ppNamedArg(arg: Named[L[Expr]]): Doc
-    let doc = match arg.name:
+    _ppNamed(arg, Expr.pprint)
+
+_ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a): exn Doc): exn Doc
+    parens(commaSep(
+        namedList.iter().map(fn(a: Named[L[a]]): Doc { _ppNamed(a, ppItem) })))
+
+_ppNamed(named: Named[L[a]], ppItem: Fn(a): exn Doc): exn Doc
+    let doc = match named.name:
         Option.Some(name):
             Doc.str(name.name).cat(Doc.str(" = "))
         Option.None:
             Doc.empty()
-    doc.cat(arg.node.node.pprint())
+    doc.cat(ppItem(named.node.node))
 
 _ppAlt(alt: Alt): Doc
     panic("TODO")
+
+_ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
+    let doc = Doc.str(prefix) \
+        .cat(Doc.break_(1)) \
+        .cat(guard.node.pprint()) \
+        .cat(Doc.char(':')) \
+        .cat(Doc.hardLine())
+
+    for stmt: L[Stmt] in body.iter():
+        doc = doc.cat(stmt.node.pprint()).cat(Doc.hardLine())
+        
+    doc
 
 _needsParens(expr: Expr): Bool
     match expr:
@@ -122,6 +171,9 @@ _needsParens(expr: Expr): Bool
             Expr.If(_) | Expr.Fn_(_): Bool.True
 
         _: Bool.False
+
+commaSep[Iterator[iter, Doc, exn]](iter: iter): exn Doc
+    interleave(iter, Doc.str(", "))
 
 interleave[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
     let doc: Doc = match iter.next():
@@ -135,3 +187,6 @@ interleave[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
 
 parens(doc: Doc): Doc
     Doc.char('(').cat(doc).cat(Doc.char(')'))
+
+brackets(doc: Doc): Doc
+    Doc.char('[').cat(doc).cat(Doc.char(']'))

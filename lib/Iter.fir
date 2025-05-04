@@ -21,6 +21,9 @@ trait Iterator[iter, item, exn]:
             n += 1
         n
 
+    skip(self: iter, amount: U32): exn Skip[iter, item, exn]
+        Skip(iter = self, amount)
+
 trait Step[t]:
     step(self: t): t
 
@@ -107,3 +110,14 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
+
+type Skip[iter, item, exn]:
+    iter: iter
+    amount: U32
+
+impl[Iterator[iter1, item1, exn1]] Iterator[Skip[iter1, item1, exn1], item1, exn1]:
+    next(self: Skip[iter1, item1, exn1]): exn1 Option[item1]
+        while self.amount != 0:
+            let _: Option[item1] = self.iter.next()
+            self.amount -= 1
+        self.iter.next()
