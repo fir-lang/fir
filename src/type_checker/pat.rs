@@ -358,7 +358,7 @@ pub(super) fn refine_pat_binders(
             };
 
             let con_ty = match ty.normalize(tc_state.tys.tys.cons()) {
-                Ty::Con(con_id) => {
+                Ty::Con(con_id, _) => {
                     assert_eq!(&con_id, type_);
                     assert!(con_scheme.quantified_vars.is_empty());
 
@@ -366,12 +366,12 @@ pub(super) fn refine_pat_binders(
                     con_scheme.instantiate_with_tys(&[])
                 }
 
-                Ty::App(con_id, ty_args) => {
+                Ty::App(con_id, ty_args, _) => {
                     assert_eq!(&con_id, type_);
                     con_scheme.instantiate_with_tys(&ty_args)
                 }
 
-                Ty::Var(_) | Ty::QVar(_) | Ty::Fun { .. } | Ty::Anonymous { .. } => return,
+                Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } | Ty::Anonymous { .. } => return,
             };
 
             for (field_idx, field_pat) in field_pats.iter_mut().enumerate() {

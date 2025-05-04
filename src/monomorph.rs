@@ -1514,7 +1514,7 @@ fn mono_tc_ty(
             Kind::Row(RecordOrVariant::Variant) => mono::Type::Variant { alts: vec![] },
         },
 
-        Ty::Con(con) => {
+        Ty::Con(con, _kind) => {
             if let Some(ty) = ty_map.get(&con) {
                 return ty.clone();
             }
@@ -1530,7 +1530,7 @@ fn mono_tc_ty(
             })
         }
 
-        Ty::App(con, args) => {
+        Ty::App(con, args, _kind) => {
             let ty_decl = poly_pgm.ty.get(&con).unwrap();
             let mono_args: Vec<mono::Type> = args
                 .iter()
@@ -1546,7 +1546,7 @@ fn mono_tc_ty(
         // TODO: This should be a panic. After type checking, type parameters of the function will
         // be rigid type variables, which are represented as `Ty::Con`, and those will be mapped to
         // mono types in the `Ty::Con` case above.
-        Ty::QVar(var) => ty_map.get(&var).unwrap().clone(),
+        Ty::QVar(var, _kind) => ty_map.get(&var).unwrap().clone(),
 
         Ty::Fun {
             args,
@@ -1599,7 +1599,7 @@ fn mono_tc_ty(
 
                 if let Some(ty) = extension {
                     match &*ty {
-                        Ty::Con(con) => {
+                        Ty::Con(con, _kind) => {
                             let ext = ty_map.get(con).unwrap();
                             match ext {
                                 mono::Type::Record { fields } => {
@@ -1636,7 +1636,7 @@ fn mono_tc_ty(
 
                 if let Some(ty) = extension {
                     match &*ty {
-                        Ty::Con(con) => {
+                        Ty::Con(con, _kind) => {
                             let ext = ty_map.get(con).unwrap();
                             match ext {
                                 mono::Type::Variant { alts } => {

@@ -22,16 +22,16 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
                 )
             }
 
+            if args.is_empty() {
+                return Ty::Con(ty_con.id.clone(), Kind::Star);
+            }
+
             let converted_args: Vec<Ty> = args
                 .iter()
                 .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
                 .collect();
 
-            if converted_args.is_empty() {
-                return Ty::Con(ty_con.id.clone());
-            }
-
-            Ty::App(ty_con.id.clone(), converted_args)
+            Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
         }
 
         ast::Type::Var(var) => tys
@@ -194,14 +194,14 @@ pub(super) fn convert_and_bind_context(
         Set::with_capacity_and_hasher(context_ast.preds.len(), Default::default());
 
     // Bind type parameters.
-    for (id, _kind) in &context_ast.type_params {
+    for (id, kind) in &context_ast.type_params {
         match conversion {
             TyVarConversion::ToOpaque => {
                 tys.insert_con(id.clone(), TyCon::opaque(id.clone()));
-                tys.insert_var(id.clone(), Ty::Con(id.clone()));
+                tys.insert_var(id.clone(), Ty::Con(id.clone(), kind.clone()));
             }
             TyVarConversion::ToQVar => {
-                tys.insert_var(id.clone(), Ty::QVar(id.clone()));
+                tys.insert_var(id.clone(), Ty::QVar(id.clone(), kind.clone()));
             }
         }
     }
@@ -209,7 +209,7 @@ pub(super) fn convert_and_bind_context(
     // Convert preds.
     for ty in &context_ast.preds {
         let pred = match convert_ast_ty(tys, &ty.node, &ty.loc) {
-            Ty::App(con, args) => {
+            Ty::App(con, args, _kind) => {
                 // TODO: Check that `con` is a trait, arity and kinds match.
                 Pred {
                     trait_: con,

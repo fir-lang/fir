@@ -719,7 +719,7 @@ fn collect_schemes(
                                         &parent_ty.node
                                     );
                                 }
-                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone()));
+                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone(), Kind::Star));
                             }
                             None => panic!(
                                 "{}: Function with `self` type needs to have to be an associated function",
@@ -804,15 +804,27 @@ fn collect_schemes(
                 };
 
                 // Bind type parameters in the context for constructor schemes.
-                for ty_var in &ty_decl.node.type_params {
-                    tys.insert_var(ty_var.clone(), Ty::QVar(ty_var.clone()));
+                assert_eq!(
+                    ty_decl.node.type_params.len(),
+                    ty_decl.node.type_param_kinds.len()
+                );
+                for (ty_var, ty_var_kind) in ty_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .zip(ty_decl.node.type_param_kinds.iter())
+                {
+                    tys.insert_var(
+                        ty_var.clone(),
+                        Ty::QVar(ty_var.clone(), ty_var_kind.clone()),
+                    );
                 }
 
                 let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
 
                 // Return type of constructors.
                 let ret = if ty_vars.is_empty() {
-                    Ty::Con(ty_decl.node.name.clone())
+                    Ty::Con(ty_decl.node.name.clone(), Kind::Star)
                 } else {
                     Ty::App(
                         ty_decl.node.name.clone(),
@@ -820,8 +832,12 @@ fn collect_schemes(
                             .node
                             .type_params
                             .iter()
-                            .map(|ty_var| Ty::QVar(ty_var.clone()))
+                            .zip(ty_decl.node.type_param_kinds.iter())
+                            .map(|(ty_var, ty_var_kind)| {
+                                Ty::QVar(ty_var.clone(), ty_var_kind.clone())
+                            })
                             .collect(),
+                        Kind::Star,
                     )
                 };
 
@@ -1093,7 +1109,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
                     }
                     env.insert(
                         SmolStr::new_static("self"),
-                        Ty::Con(parent_ty_con.id.clone()),
+                        Ty::Con(parent_ty_con.id.clone(), Kind::Star),
                     );
                 }
                 None => panic!(

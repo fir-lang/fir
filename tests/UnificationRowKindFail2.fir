@@ -7,4 +7,4 @@ main
 # args: --typecheck --no-backtrace
 # expected exit status: 101
 # expected stderr:
-# tests/UnificationRowKindFail2.fir:5:29: Unable to row type with *: row(a: U32, ..row()) ~ (a: U32)
+# tests/UnificationRowKindFail2.fir:5:29: Unable to unify var with kind row(record) with type with kind *
