@@ -87,7 +87,7 @@ Parser.simpleExpr(self): Error L[Expr]
 
                     # Type checker will update this based on `suffix`, or the inferred type if suffix is
                     # not available.
-                    parsed = 0u32,
+                    parsed = 0,
                 ))
             )
 
@@ -99,7 +99,7 @@ Parser.simpleExpr(self): Error L[Expr]
                     text = token.text,
                     suffix = kind,
                     radix = 16,
-                    parsed = 0u32,  # same as above
+                    parsed = 0,  # same as above
                 ))
             )
 
@@ -111,7 +111,7 @@ Parser.simpleExpr(self): Error L[Expr]
                     text = token.text,
                     suffix = kind,
                     radix = 2,
-                    parsed = 0u32,  # same as above
+                    parsed = 0,  # same as above
                 ))
             )
 
@@ -162,7 +162,7 @@ Parser._tokenLoc(self, token: Token): Loc
     Loc(file = self._file, byteIdx = token.byteIdx, byteLen = token.text.len())
 
 Parser._id(self, token: Token): Id
-    Id(name = token.text, idx = 0u32, loc = self._tokenLoc(token))
+    Id(name = token.text, idx = 0, loc = self._tokenLoc(token))
 
 Parser._throwUnexpectedEof(self): Error a
     throw(Error(
@@ -170,59 +170,59 @@ Parser._throwUnexpectedEof(self): Error a
         msg = "unexpected end of file"))
 
 Parser._eofLoc(self): Loc
-    let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0u32)
+    let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0)
     Loc(file = self._file, byteIdx = byteIdx, byteLen = 0)
 
 # TODO: Tweak left and right precedences based on associativity.
 _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
     match token:
         TokenKind.Star:
-            Option.Some((leftPrec = 11u32, rightPrec = 11u32, op = BinOp.Multiply))
+            Option.Some((leftPrec = 11, rightPrec = 11, op = BinOp.Multiply))
 
         TokenKind.Slash:
-            Option.Some((leftPrec = 11u32, rightPrec = 11u32, op = BinOp.Divide))
+            Option.Some((leftPrec = 11, rightPrec = 11, op = BinOp.Divide))
 
         TokenKind.Plus:
-            Option.Some((leftPrec = 10u32, rightPrec = 10u32, op = BinOp.Add))
+            Option.Some((leftPrec = 10, rightPrec = 10, op = BinOp.Add))
 
         TokenKind.Minus:
-            Option.Some((leftPrec = 10u32, rightPrec = 10u32, op = BinOp.Subtract))
+            Option.Some((leftPrec = 10, rightPrec = 10, op = BinOp.Subtract))
 
         TokenKind.DoubleLAngle:
-            Option.Some((leftPrec = 9u32, rightPrec = 9u32, op = BinOp.LeftShift))
+            Option.Some((leftPrec = 9, rightPrec = 9, op = BinOp.LeftShift))
 
         TokenKind.DoubleRAngle:
-            Option.Some((leftPrec = 9u32, rightPrec = 9u32, op = BinOp.RightShift))
+            Option.Some((leftPrec = 9, rightPrec = 9, op = BinOp.RightShift))
 
         TokenKind.Amp:
-            Option.Some((leftPrec = 8u32, rightPrec = 8u32, op = BinOp.BitAnd))
+            Option.Some((leftPrec = 8, rightPrec = 8, op = BinOp.BitAnd))
 
         TokenKind.Pipe:
-            Option.Some((leftPrec = 7u32, rightPrec = 7u32, op = BinOp.BitAnd))
+            Option.Some((leftPrec = 7, rightPrec = 7, op = BinOp.BitAnd))
 
         TokenKind.EqEq:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.Equal))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.Equal))
 
         TokenKind.ExclamationEq:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.NotEqual))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.NotEqual))
 
         TokenKind.LAngle:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.Lt))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.Lt))
 
         TokenKind.RAngle:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.Gt))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.Gt))
 
         TokenKind.LAngleEq:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.LtEq))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.LtEq))
 
         TokenKind.RAngleEq:
-            Option.Some((leftPrec = 6u32, rightPrec = 6u32, op = BinOp.GtEq))
+            Option.Some((leftPrec = 6, rightPrec = 6, op = BinOp.GtEq))
 
         TokenKind.AmpAmp:
-            Option.Some((leftPrec = 5u32, rightPrec = 5u32, op = BinOp.And))
+            Option.Some((leftPrec = 5, rightPrec = 5, op = BinOp.And))
 
         TokenKind.PipePipe:
-            Option.Some((leftPrec = 4u32, rightPrec = 4u32, op = BinOp.Or))
+            Option.Some((leftPrec = 4, rightPrec = 4, op = BinOp.Or))
 
         _: Option.None
 
