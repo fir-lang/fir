@@ -56,11 +56,11 @@ Expr.pprint(self): Doc
         Expr.BinOp(BinOpExpr(left, right, op)):
             # TODO: Precedence and parens
             # TODO: Operator string
-            left.node.pprint() \
+            parens(left.node.pprint()) \
                 .cat(Doc.blank(1)) \
                 .cat(Doc.str(op.toStr())) \
                 .cat(Doc.blank(1)) \
-                .cat(right.node.pprint())
+                .cat(parens(right.node.pprint()))
 
         Expr.UnOp(UnOpExpr(op, expr)):
             let opChar = match op:
@@ -132,3 +132,6 @@ interleave[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
         doc = doc.cat(sep).cat(item)
 
     doc
+
+parens(doc: Doc): Doc
+    Doc.char('(').cat(doc).cat(Doc.char(')'))

@@ -11,27 +11,29 @@ type Parser:
     _idx: U32
 
 Parser.expr(self, prec: U32): Error L[Expr]
-    let simpleExpr = self.simpleExpr()
-    let leftLoc = simpleExpr.loc
+    let expr = self.simpleExpr()
 
-    let next = match self._nextToken():
-        Option.None: return simpleExpr
-        Option.Some(next): next
+    loop:
+        let next = match self._nextToken():
+            Option.None: break
+            Option.Some(next): next
 
-    let (leftPrec, rightPrec, op) = match _opPrec(next.kind):
-        Option.None: return simpleExpr
-        Option.Some(prec): prec
+        let (leftPrec, rightPrec, op) = match _opPrec(next.kind):
+            Option.None: break
+            Option.Some(prec): prec
 
-    if leftPrec > prec:
+        if leftPrec <= prec:
+            break
+
         self._idx += 1
         let right = self.expr(rightPrec)
         let rightLoc = right.loc
-        return L(
-            loc = leftLoc.combine(rightLoc),
-            node = Expr.BinOp(BinOpExpr(left = simpleExpr, right = right, op = op)),
+        expr = L(
+            loc = expr.loc.combine(rightLoc),
+            node = Expr.BinOp(BinOpExpr(left = expr, right = right, op = op)),
         )
 
-    simpleExpr
+    expr
 
 Parser.simpleExpr(self): Error L[Expr]
     let token = self._nextToken().unwrapOrElse({

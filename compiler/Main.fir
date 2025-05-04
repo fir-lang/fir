@@ -22,12 +22,26 @@ main(args: Array[Str])
     print("PRINTER TESTS")
     print("")
 
-    _parserTest(
-        "pprint BinOp",
-        "1 + 2 + 3",
-        fn(s) { Parser.expr(s,0) },
-        fn(expr) { print(expr.node.pprint().print(40)) },
-    )
+    print(parseExpr("1 + 2").pprint().print(80))
+    print(parseExpr("1 + 2 + 3").pprint().print(80))
+    print(parseExpr("1 * 2 + 3").pprint().print(80))
+    print(parseExpr("1 + 2 * 3").pprint().print(80))
+    print(parseExpr("1 * 2 * 3").pprint().print(80))
+
+parseExpr(input: Str): Expr
+    let (tokens, error) = tokenize("Test.fir", input)
+    match error:
+        Option.Some(err):
+            panic("\t\tLexer error: `err.msg`")
+        Option.None:
+            ()
+
+    let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
+    match try({ parser.expr(0) }):
+        Result.Err(err):
+            panic("\t\tParser error: `err.msg`")
+        Result.Ok(ast):
+            ast.node
 
 assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
     if expected != found:
