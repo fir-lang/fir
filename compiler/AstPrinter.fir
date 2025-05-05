@@ -29,7 +29,7 @@ Expr.pprint(self): Doc
             let doc = fun.node.pprint()
             if addParens:
                 doc = parens(doc)
-            doc + parens(interleave(args.iter().map(CallArg.pprint), Doc.str(", ")))
+            doc + parens(join(args.iter().map(CallArg.pprint), Doc.str(", ")))
 
         Expr.Int(IntExpr(text, ..)):
             # TODO: Print all of the details
@@ -79,7 +79,7 @@ Expr.pprint(self): Doc
 
         Expr.Match(MatchExpr(scrutinee, alts)):
             Doc.str("match ") + scrutinee.node.pprint() + Doc.char(':') + Doc.hardLine() \
-                + interleave(alts.iter().map(_ppAlt), Doc.hardLine()) \
+                + join(alts.iter().map(_ppAlt), Doc.hardLine()) \
                 + Doc.hardLine()
 
         Expr.If(IfExpr(branches, else_branch)):
@@ -116,7 +116,7 @@ Type.pprint(self): Doc
             parens(doc)
 
         Type.Variant(alts, extension):
-            let doc = interleave(alts.iter().map(_ppVariantAlt), Doc.str(", "))
+            let doc = join(alts.iter().map(_ppVariantAlt), Doc.str(", "))
             match extension:
                 Option.None: ()
                 Option.Some(extension):
@@ -165,7 +165,12 @@ Pat.pprint(self): Doc
     panic("TODO")
 
 AssignOp.pprint(self): Doc
-    panic("TODO")
+    match self:
+        AssignOp.Eq: Doc.str("=")
+        AssignOp.PlusEq: Doc.str("+=")
+        AssignOp.MinusEq: Doc.str("-=")
+        AssignOp.StarEq: Doc.str("*=")
+        AssignOp.CaretEq: Doc.str("^=")
 
 _ppTyArgs(args: Vec[L[Type]]): Doc
     if args.len() == 0:
@@ -193,7 +198,17 @@ _ppNamed(named: Named[L[a]], ppItem: Fn(a): exn Doc): exn Doc
     doc + ppItem(named.node.node)
 
 _ppAlt(alt: Alt): Doc
-    panic("TODO")
+    let doc = alt.pattern.node.pprint()
+    match alt.guard:
+        Option.None: ()
+        Option.Some(guard): panic("TODO")
+    doc += Doc.char(':') + Doc.hardLine() + _ppStmts(alt.rhs)
+    doc.nest(4)
+
+_ppStmts(stmts: Vec[L[Stmt]]): Doc
+    joinTrailing(
+        stmts.iter().map(fn(stmt: L[Stmt]): Doc { stmt.node.pprint() }),
+        Doc.hardLine())
 
 _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
     let doc = Doc.str(prefix) \
@@ -208,7 +223,10 @@ _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
     doc
 
 _ppVariantAlt(alt: VariantAlt): Doc
-    panic("TODO")
+    let doc = Doc.str(alt.con.name)
+    if alt.fields.len() != 0:
+        doc += _ppNamedList(alt.fields, Type.pprint)
+    doc
 
 _needsParens(expr: Expr): Bool
     match expr:
@@ -218,9 +236,9 @@ _needsParens(expr: Expr): Bool
         _: Bool.False
 
 commaSep[Iterator[iter, Doc, exn]](iter: iter): exn Doc
-    interleave(iter, Doc.str(", "))
+    join(iter, Doc.str(", "))
 
-interleave[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
+join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
     let doc: Doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc
@@ -229,6 +247,9 @@ interleave[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
         doc += sep + item
 
     doc
+
+joinTrailing[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
+    join(iter, sep) + sep
 
 parens(doc: Doc): Doc
     Doc.char('(') + doc + Doc.char(')')
