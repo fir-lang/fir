@@ -112,17 +112,59 @@ Type.pprint(self): Doc
                     if fields.len() == 0:
                         doc = Doc.str("..")
                     else:
-                        doc += Doc.str(", ..")
+                        doc += Doc.str(", ..") + Doc.str(extension.name)
             parens(doc)
 
-        Type.Variant(alts, extension): panic("")
+        Type.Variant(alts, extension):
+            let doc = interleave(alts.iter().map(_ppVariantAlt), Doc.str(", "))
+            match extension:
+                Option.None: ()
+                Option.Some(extension):
+                    if alts.len() == 0:
+                        doc = Doc.str("..")
+                    else:
+                        doc += Doc.str(", ..") + Doc.str(extension.name)
+            doc
 
         Type.Fn_(fnType): panic("")
 
 CallArg.pprint(self): Doc
-    panic("TODO")
+    let doc = match self.name:
+        Option.Some(name): Doc.str(name.name) + Doc.str(" = ")
+        Option.None: Doc.empty()
+    doc + self.expr.node.pprint()
 
 Stmt.pprint(self): Doc
+    match self:
+        Stmt.Let(LetStmt(lhs, ty, rhs)):
+            let doc = Doc.str("let ") + lhs.node.pprint()
+            match ty:
+                Option.None: ()
+                Option.Some(ty):
+                    doc += Doc.str(": ") + ty.node.pprint()
+            doc += Doc.str(" = ")
+            doc + rhs.node.pprint()
+
+        Stmt.Assign(AssignStmt(lhs, rhs, op)):
+            lhs.node.pprint() + Doc.blank(1) + op.pprint() + Doc.blank(1) + rhs.node.pprint()
+
+        Stmt.Expr(expr): expr.pprint()
+
+        Stmt.For(ForStmt(label, pat, astTy, tcTy = _, expr, exprTy = _, body)):
+            panic("TODO")
+
+        Stmt.While(_): panic("TODO")
+
+        Stmt.WhileLet(_): panic("TODO")
+
+        Stmt.Break(label, level): panic("TODO")
+
+        Stmt.Continue(label, level): panic("TODO")
+
+Pat.pprint(self): Doc
+    panic("TODO")
+
+AssignOp.pprint(self): Doc
     panic("TODO")
 
 _ppTyArgs(args: Vec[L[Type]]): Doc
@@ -164,6 +206,9 @@ _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
         doc += stmt.node.pprint() + Doc.hardLine()
         
     doc
+
+_ppVariantAlt(alt: VariantAlt): Doc
+    panic("TODO")
 
 _needsParens(expr: Expr): Bool
     match expr:
