@@ -632,9 +632,14 @@ pub(super) fn check_expr(
                     let left_binder_vars: Set<&Id> = left_binders.keys().collect();
                     let right_binder_vars: Set<&Id> = right_binders.keys().collect();
                     if !left_binder_vars.is_disjoint(&right_binder_vars) {
+                        let intersection: Vec<Id> = left_binder_vars
+                            .intersection(&right_binder_vars)
+                            .map(|id| (**id).clone())
+                            .collect();
                         panic!(
-                            "{}: Left and right exprs in `&&` bind same variables",
-                            loc_display(&expr.loc)
+                            "{}: Left and right exprs in `&&` bind same variables: {}",
+                            loc_display(&expr.loc),
+                            intersection.join(", "),
                         );
                     }
 
