@@ -234,12 +234,9 @@ _parserTest( \
         astCheck: Fn(a): [AssertionError(msg: Str)] ())
     printNoNl(name)
     let (tokens = tokens, error = error) = tokenize("Test.fir", input)
-    match error:
-        Option.Some(err):
-            print("\t\tLexer error: `err.msg`")
-            return
-        Option.None:
-            ()
+    if error is Option.Some(err):
+        print("\t\tLexer error: `err.msg`")
+        return
 
     let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
 

@@ -9,9 +9,8 @@ main(args: Array[Str])
     let (tokens = tokens, error = error) = tokenize(filePath, fileContents)
     for token: Token in tokens.iter():
         print(token)
-    match error:
-        Option.Some(error): printStr("ERROR: `error.loc.byteIdx`: `error.msg`")
-        Option.None: ()
+    if error is Option.Some(error):
+        printStr("ERROR: `error.loc.byteIdx`: `error.msg`")
 
     print("")
     print("PARSER TESTS")
@@ -30,11 +29,8 @@ main(args: Array[Str])
 
 parseExpr(input: Str): Expr
     let (tokens, error) = tokenize("Test.fir", input)
-    match error:
-        Option.Some(err):
-            panic("\t\tLexer error: `err.msg`")
-        Option.None:
-            ()
+    if error is Option.Some(err):
+        panic("\t\tLexer error: `err.msg`")
 
     let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
     match try({ parser.expr(0) }):

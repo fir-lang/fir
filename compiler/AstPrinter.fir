@@ -86,11 +86,9 @@ Expr.pprint(self): Doc
             let doc = _ppIfBranch("if", branches.get(0).guard, branches.get(0).body)
             for branch: (guard: L[Expr], body: Vec[L[Stmt]]) in branches.iter().skip(1):
                 doc += _ppIfBranch("elif", branch.guard, branch.body)
-            match else_branch:
-                Option.None: ()
-                Option.Some(stmts):
-                    for stmt: L[Stmt] in stmts.iter():
-                        doc += stmt.node.pprint() + Doc.hardLine()
+            if else_branch is Option.Some(stmts):
+                for stmt: L[Stmt] in stmts.iter():
+                    doc += stmt.node.pprint() + Doc.hardLine()
             doc
 
         Expr.Fn_(FnExpr(sig, body, ..)):
@@ -106,24 +104,20 @@ Type.pprint(self): Doc
 
         Type.Record(fields, extension):
             let doc = _ppNamedList(fields, Type.pprint)
-            match extension:
-                Option.None: ()
-                Option.Some(extension):
-                    if fields.len() == 0:
-                        doc = Doc.str("..")
-                    else:
-                        doc += Doc.str(", ..") + Doc.str(extension.name)
+            if extension is Option.Some(extension):
+                if fields.len() == 0:
+                    doc = Doc.str("..")
+                else:
+                    doc += Doc.str(", ..") + Doc.str(extension.name)
             parens(doc)
 
         Type.Variant(alts, extension):
             let doc = join(alts.iter().map(_ppVariantAlt), Doc.str(", "))
-            match extension:
-                Option.None: ()
-                Option.Some(extension):
-                    if alts.len() == 0:
-                        doc = Doc.str("..")
-                    else:
-                        doc += Doc.str(", ..") + Doc.str(extension.name)
+            if extension is Option.Some(extension):
+                if alts.len() == 0:
+                    doc = Doc.str("..")
+                else:
+                    doc += Doc.str(", ..") + Doc.str(extension.name)
             doc
 
         Type.Fn_(fnType): panic("")
@@ -138,10 +132,8 @@ Stmt.pprint(self): Doc
     match self:
         Stmt.Let(LetStmt(lhs, ty, rhs)):
             let doc = Doc.str("let ") + lhs.node.pprint()
-            match ty:
-                Option.None: ()
-                Option.Some(ty):
-                    doc += Doc.str(": ") + ty.node.pprint()
+            if ty is Option.Some(ty):
+                doc += Doc.str(": ") + ty.node.pprint()
             doc += Doc.str(" = ")
             doc + rhs.node.pprint()
 
@@ -199,9 +191,8 @@ _ppNamed(named: Named[L[a]], ppItem: Fn(a): exn Doc): exn Doc
 
 _ppAlt(alt: Alt): Doc
     let doc = alt.pattern.node.pprint()
-    match alt.guard:
-        Option.None: ()
-        Option.Some(guard): panic("TODO")
+    if alt.guard is Option.Some(guard):
+        panic("TODO")
     doc += Doc.char(':') + Doc.hardLine() + _ppStmts(alt.rhs)
     doc.nest(4)
 
@@ -229,11 +220,8 @@ _ppVariantAlt(alt: VariantAlt): Doc
     doc
 
 _needsParens(expr: Expr): Bool
-    match expr:
-        Expr.BinOp(_) | Expr.UnOp(_) | Expr.Return(_) | Expr.Match(_) | \
-            Expr.If(_) | Expr.Fn_(_): Bool.True
-
-        _: Bool.False
+    expr is Expr.BinOp(_) | Expr.UnOp(_) | Expr.Return(_) | Expr.Match(_) | \
+                Expr.If(_) | Expr.Fn_(_)
 
 commaSep[Iterator[iter, Doc, exn]](iter: iter): exn Doc
     join(iter, Doc.str(", "))
