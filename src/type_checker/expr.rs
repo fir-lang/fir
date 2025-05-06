@@ -621,8 +621,13 @@ pub(super) fn check_expr(
                     let bool_ty = Ty::Con("Bool".into(), Kind::Star);
                     let (_, mut left_binders) =
                         check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
+                    tc_state.env.enter();
+                    left_binders.iter().for_each(|(k, v)| {
+                        tc_state.env.insert(k.clone(), v.clone());
+                    });
                     let (_, right_binders) =
                         check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
+                    tc_state.env.exit();
 
                     let left_binder_vars: Set<&Id> = left_binders.keys().collect();
                     let right_binder_vars: Set<&Id> = right_binders.keys().collect();
