@@ -28,6 +28,16 @@ main
     if x is Option.None | Option.None || x is Option.Some(_):
         print("YES")
 
+    let res: Result[U32, U32] = Result.Ok(456)
+    if res is Result.Ok(a) | Result.Err(a):
+        print(a)
+
+    if res is Result.Ok(a) | Result.Err(a) && a.mod(2) == 0:
+        print(a)
+
+    if res is Result.Err(a) | Result.Ok(a) && a.mod(2) == 0:
+        print(a)
+
 # expected stdout:
 # NA
 # NA
@@ -37,3 +47,6 @@ main
 # NO
 # 123
 # YES
+# 456
+# 456
+# 456
