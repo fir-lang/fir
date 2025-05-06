@@ -440,9 +440,15 @@ fn check_stmt(
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
-            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+            let (_cond_ty, cond_binders) =
+                check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
             loop_stack.push(label.clone());
+            tc_state.env.enter();
+            cond_binders.into_iter().for_each(|(k, v)| {
+                tc_state.env.insert(k, v);
+            });
             check_stmts(tc_state, body, None, level, loop_stack);
+            tc_state.env.exit();
             loop_stack.pop();
             unify_expected_ty(
                 Ty::unit(),

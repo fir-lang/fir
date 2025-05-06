@@ -23,7 +23,7 @@ use smol_str::SmolStr;
 ///
 /// Other expressions don't bind any variables.
 ///
-/// Variables bound in `if` conditionals are used in conditional bodies.
+/// Variables bound in `if` and `while` conditionals are used in the bodies.
 pub(super) fn check_expr(
     tc_state: &mut TcFunState,
     expr: &mut ast::L<ast::Expr>,
