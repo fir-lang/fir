@@ -246,26 +246,6 @@ impl Stmt {
                 }
             }
 
-            Stmt::WhileLet(WhileLetStmt {
-                label,
-                pat,
-                cond,
-                body,
-            }) => {
-                if let Some(label) = label {
-                    write!(buffer, "{}: ", label).unwrap();
-                }
-                buffer.push_str("while let ");
-                pat.node.print(buffer);
-                buffer.push_str(" = ");
-                cond.node.print(buffer, indent);
-                buffer.push_str(":\n");
-                for stmt in body {
-                    buffer.push_str(&INDENTS[0..(indent + 2) as usize]);
-                    stmt.node.print(buffer, indent + 2);
-                }
-            }
-
             Stmt::Break { label, level: _ } => match label {
                 Some(label) => write!(buffer, "break {}", label).unwrap(),
                 None => buffer.push_str("break"),

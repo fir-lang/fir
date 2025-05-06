@@ -362,7 +362,6 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
-    WhileLet(WhileLetStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },
 }
@@ -396,14 +395,6 @@ pub struct ForStmt {
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
     pub label: Option<Id>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct WhileLetStmt {
-    pub label: Option<Id>,
-    pub pat: L<Pat>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
@@ -1639,28 +1630,6 @@ fn lower_stmt(
                 .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
                 .collect(),
         }),
-
-        mono::Stmt::WhileLet(mono::WhileLetStmt {
-            label,
-            pat,
-            cond,
-            body,
-        }) => {
-            let cond = lower_l_expr(cond, closures, indices, scope);
-            scope.bounds.enter();
-            let pat = lower_l_pat(pat, indices, scope, &mut Default::default());
-            let body = body
-                .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
-                .collect();
-            scope.bounds.exit();
-            Stmt::WhileLet(WhileLetStmt {
-                label: label.clone(),
-                pat,
-                cond,
-                body,
-            })
-        }
 
         mono::Stmt::Break { label, level } => Stmt::Break {
             label: label.clone(),

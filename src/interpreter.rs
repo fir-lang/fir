@@ -568,37 +568,6 @@ fn exec<W: Write>(
                 }
             },
 
-            Stmt::WhileLet(WhileLetStmt {
-                label: _,
-                pat,
-                cond,
-                body,
-            }) => loop {
-                let val = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
-                if !try_bind_pat(pgm, heap, pat, locals, val) {
-                    break 0; // FIXME: Return unit
-                }
-                match exec(w, pgm, heap, locals, body) {
-                    ControlFlow::Val(_val) => {}
-                    ControlFlow::Ret(val) => return ControlFlow::Ret(val),
-                    ControlFlow::Break(n) => {
-                        if n == 0 {
-                            break 0;
-                        } else {
-                            return ControlFlow::Break(n - 1);
-                        }
-                    }
-                    ControlFlow::Continue(n) => {
-                        if n == 0 {
-                            continue;
-                        } else {
-                            return ControlFlow::Continue(n - 1);
-                        }
-                    }
-                    ControlFlow::Unwind(val) => return ControlFlow::Unwind(val),
-                }
-            },
-
             Stmt::For(ForStmt {
                 pat,
                 expr,

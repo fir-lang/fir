@@ -238,19 +238,6 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>, variants: &mut 
                 visit_stmt(&stmt.node, records, variants);
             }
         }
-
-        mono::Stmt::WhileLet(mono::WhileLetStmt {
-            label: _,
-            pat,
-            cond,
-            body,
-        }) => {
-            visit_pat(&pat.node, records, variants);
-            visit_expr(&cond.node, records, variants);
-            for stmt in body {
-                visit_stmt(&stmt.node, records, variants);
-            }
-        }
     }
 }
 

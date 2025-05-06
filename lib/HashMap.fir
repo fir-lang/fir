@@ -58,7 +58,7 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
         let printed = 0
         for i: U32 in range(0u32, self._elems.len()):
             let elem = self._elems.get(i)
-            while let Option.Some(elem_) = elem:
+            while elem is Option.Some(elem_):
                 if printed != 0:
                     buf.pushStr(", ")
                 buf.pushStr(elem_.key.toStr())
