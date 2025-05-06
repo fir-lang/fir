@@ -1879,8 +1879,8 @@ fn lower_expr(
             branches: branches
                 .iter()
                 .map(|(cond, rhs)| {
-                    let cond = lower_l_expr(cond, closures, indices, scope);
                     scope.bounds.enter();
+                    let cond = lower_l_expr(cond, closures, indices, scope);
                     let rhs = rhs
                         .iter()
                         .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
