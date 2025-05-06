@@ -458,6 +458,14 @@ impl Expr {
             }
 
             Expr::ClosureAlloc(idx) => write!(buffer, "closure{}", idx.0).unwrap(),
+
+            Expr::Is(IsExpr { expr, pat }) => {
+                buffer.push('(');
+                expr.node.print(buffer, indent);
+                buffer.push_str(" is ");
+                pat.node.print(buffer);
+                buffer.push(')');
+            }
         }
     }
 }

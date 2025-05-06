@@ -387,5 +387,10 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
                 visit_stmt(&stmt.node, records, variants);
             }
         }
+
+        mono::Expr::Is(mono::IsExpr { expr, pat }) => {
+            visit_expr(&expr.node, records, variants);
+            visit_pat(&pat.node, records, variants);
+        }
     }
 }

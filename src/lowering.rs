@@ -429,6 +429,7 @@ pub enum Expr {
     Match(MatchExpr),
     If(IfExpr),
     ClosureAlloc(ClosureIdx),
+    Is(IsExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -491,6 +492,12 @@ pub struct Alt {
 pub struct IfExpr {
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,
     pub else_branch: Option<Vec<L<Stmt>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct IsExpr {
+    pub expr: Box<L<Expr>>,
+    pub pat: L<Pat>,
 }
 
 #[derive(Debug, Clone)]
@@ -1947,6 +1954,11 @@ fn lower_expr(
 
             Expr::ClosureAlloc(closure_idx)
         }
+
+        mono::Expr::Is(mono::IsExpr { expr, pat }) => Expr::Is(IsExpr {
+            expr: Box::new(lower_l_expr(expr, closures, indices, scope)),
+            pat: lower_l_pat(pat, indices, scope, &mut Default::default()),
+        }),
     }
 }
 

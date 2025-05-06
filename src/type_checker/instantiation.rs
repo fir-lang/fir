@@ -177,6 +177,11 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             }
             inferred_ty.as_mut().unwrap().deep_normalize(cons);
         }
+
+        ast::Expr::Is(ast::IsExpr { expr, pat }) => {
+            normalize_expr(&mut expr.node, cons);
+            normalize_pat(&mut pat.node, cons);
+        }
     }
 }
 
