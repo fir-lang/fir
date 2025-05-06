@@ -12,26 +12,41 @@ use std::mem::{replace, take};
 
 use smol_str::SmolStr;
 
+/// Returns the type of the expression, and binders that the expression binds.
+///
+/// Only boolean expressions bind variables.
+///
+/// - `<expr> is <pat>` binds the variables that `<pat>` binds.
+///
+/// - `<expr1> && <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
+///   `<expr1>` and `<expr2>` need to bind disjoint set of variables.
+///
+/// Other expressions don't bind any variables.
+///
+/// Variables bound in `if` conditionals are used in conditional bodies.
 pub(super) fn check_expr(
     tc_state: &mut TcFunState,
     expr: &mut ast::L<ast::Expr>,
     expected_ty: Option<&Ty>,
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
-) -> Ty {
+) -> (Ty, Map<Id, Ty>) {
     match &mut expr.node {
         ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
             debug_assert!(ty_args.is_empty());
 
             // Check if local.
             if let Some(ty) = tc_state.env.get(var) {
-                return unify_expected_ty(
-                    ty.clone(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
+                return (
+                    unify_expected_ty(
+                        ty.clone(),
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    ),
+                    Default::default(),
                 );
             }
 
@@ -42,13 +57,16 @@ pub(super) fn check_expr(
                     id: var.clone(),
                     ty_args: ty_args.into_iter().map(Ty::Var).collect(),
                 });
-                return unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
+                return (
+                    unify_expected_ty(
+                        ty,
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    ),
+                    Default::default(),
                 );
             }
 
@@ -66,13 +84,16 @@ pub(super) fn check_expr(
                 id: con.clone(),
                 ty_args: ty_args.into_iter().map(Ty::Var).collect(),
             });
-            unify_expected_ty(
-                ty,
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
@@ -87,7 +108,7 @@ pub(super) fn check_expr(
                         loc_display(&expr.loc)
                     ),
                 };
-                let ty = check_expr(tc_state, node, None, level, loop_stack);
+                let (ty, _) = check_expr(tc_state, node, None, level, loop_stack);
                 let old = arg_tys.insert(name.clone(), ty);
                 if old.is_some() {
                     panic!(
@@ -115,13 +136,16 @@ pub(super) fn check_expr(
                 is_row: false,
             };
 
-            unify_expected_ty(
-                ty,
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
@@ -129,7 +153,7 @@ pub(super) fn check_expr(
         // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             let ty = {
-                let object_ty = check_expr(tc_state, object, None, level, loop_stack);
+                let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
 
                 let ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                 match &ty_normalized {
@@ -165,13 +189,16 @@ pub(super) fn check_expr(
                     }
                 }
             };
-            unify_expected_ty(
-                ty,
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
@@ -210,13 +237,16 @@ pub(super) fn check_expr(
                 constr: constr.clone(),
                 ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
             });
-            unify_expected_ty(
-                con_ty,
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    con_ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
@@ -255,18 +285,21 @@ pub(super) fn check_expr(
                 member: member.clone(),
                 ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
             });
-            unify_expected_ty(
-                method_ty,
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    method_ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
         ast::Expr::Call(ast::CallExpr { fun, args }) => {
-            let fun_ty = check_expr(tc_state, fun, None, level, loop_stack);
+            let (fun_ty, _) = check_expr(tc_state, fun, None, level, loop_stack);
 
             match fun_ty.normalize(tc_state.tys.tys.cons()) {
                 Ty::Fun {
@@ -305,7 +338,7 @@ pub(super) fn check_expr(
 
                             let mut arg_tys: Vec<Ty> = Vec::with_capacity(args.len());
                             for (param_ty, arg) in param_tys.iter().zip(args.iter_mut()) {
-                                let arg_ty = check_expr(
+                                let (arg_ty, _) = check_expr(
                                     tc_state,
                                     &mut arg.expr,
                                     Some(param_ty),
@@ -349,7 +382,7 @@ pub(super) fn check_expr(
                             for arg in args {
                                 let arg_name: &Id = arg.name.as_ref().unwrap();
                                 let param_ty: &Ty = param_tys.get(arg_name).unwrap();
-                                let arg_ty = check_expr(
+                                let (arg_ty, _) = check_expr(
                                     tc_state,
                                     &mut arg.expr,
                                     Some(param_ty),
@@ -379,7 +412,7 @@ pub(super) fn check_expr(
                         );
                     }
 
-                    ret_ty
+                    (ret_ty, Default::default())
                 }
 
                 _ => panic!(
@@ -427,13 +460,16 @@ pub(super) fn check_expr(
                             err
                         )
                     }) as u8 as u64;
-                    unify_expected_ty(
-                        Ty::Con("I8".into(), Kind::Star),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
+                    (
+                        unify_expected_ty(
+                            Ty::Con("I8".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
                     )
                 }
 
@@ -445,13 +481,16 @@ pub(super) fn check_expr(
                             err
                         )
                     }) as u64;
-                    unify_expected_ty(
-                        Ty::Con("U8".into(), Kind::Star),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
+                    (
+                        unify_expected_ty(
+                            Ty::Con("U8".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
                     )
                 }
 
@@ -463,13 +502,16 @@ pub(super) fn check_expr(
                             err
                         )
                     }) as u32 as u64;
-                    unify_expected_ty(
-                        Ty::Con("I32".into(), Kind::Star),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
+                    (
+                        unify_expected_ty(
+                            Ty::Con("I32".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
                     )
                 }
 
@@ -481,13 +523,16 @@ pub(super) fn check_expr(
                             err
                         )
                     }) as u64;
-                    unify_expected_ty(
-                        Ty::Con("U32".into(), Kind::Star),
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
+                    (
+                        unify_expected_ty(
+                            Ty::Con("U32".into(), Kind::Star),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
                     )
                 }
             }
@@ -507,7 +552,7 @@ pub(super) fn check_expr(
                             params: vec![Ty::Var(expr_var.clone())],
                             loc: expr.loc.clone(),
                         });
-                        let part_ty =
+                        let (part_ty, _) =
                             check_expr(tc_state, expr, Some(&Ty::Var(expr_var)), level, loop_stack);
                         let expr_node = replace(&mut expr.node, ast::Expr::Self_);
                         expr.node = ast::Expr::Call(ast::CallExpr {
@@ -530,44 +575,83 @@ pub(super) fn check_expr(
                 }
             }
 
-            unify_expected_ty(
-                Ty::str(),
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    Ty::str(),
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
-        ast::Expr::Char(_) => unify_expected_ty(
-            Ty::char(),
-            expected_ty,
-            tc_state.tys.tys.cons(),
-            tc_state.var_gen,
-            level,
-            &expr.loc,
-        ),
-
-        ast::Expr::Self_ => match tc_state.env.get("self") {
-            Some(self_ty) => unify_expected_ty(
-                self_ty.clone(),
+        ast::Expr::Char(_) => (
+            unify_expected_ty(
+                Ty::char(),
                 expected_ty,
                 tc_state.tys.tys.cons(),
                 tc_state.var_gen,
                 level,
                 &expr.loc,
             ),
+            Default::default(),
+        ),
+
+        ast::Expr::Self_ => match tc_state.env.get("self") {
+            Some(self_ty) => (
+                unify_expected_ty(
+                    self_ty.clone(),
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
+            ),
             None => panic!("{}: Unbound self", loc_display(&expr.loc)),
         },
 
         ast::Expr::BinOp(ast::BinOpExpr { left, right, op }) => {
             let method = match op {
-                ast::BinOp::And | ast::BinOp::Or => {
+                ast::BinOp::And => {
+                    let bool_ty = Ty::Con("Bool".into(), Kind::Star);
+                    let (_, mut left_binders) =
+                        check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
+                    tc_state.env.enter();
+                    left_binders.iter().for_each(|(k, v)| {
+                        tc_state.env.insert(k.clone(), v.clone());
+                    });
+                    let (_, right_binders) =
+                        check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
+                    tc_state.env.exit();
+
+                    let left_binder_vars: Set<&Id> = left_binders.keys().collect();
+                    let right_binder_vars: Set<&Id> = right_binders.keys().collect();
+                    if !left_binder_vars.is_disjoint(&right_binder_vars) {
+                        let intersection: Vec<Id> = left_binder_vars
+                            .intersection(&right_binder_vars)
+                            .map(|id| (**id).clone())
+                            .collect();
+                        panic!(
+                            "{}: Left and right exprs in `&&` bind same variables: {}",
+                            loc_display(&expr.loc),
+                            intersection.join(", "),
+                        );
+                    }
+
+                    left_binders.extend(right_binders);
+                    return (bool_ty, left_binders);
+                }
+
+                ast::BinOp::Or => {
                     let bool_ty = Ty::Con("Bool".into(), Kind::Star);
                     check_expr(tc_state, left, Some(&bool_ty), level, loop_stack);
                     check_expr(tc_state, right, Some(&bool_ty), level, loop_stack);
-                    return bool_ty;
+                    return (bool_ty, Default::default());
                 }
 
                 ast::BinOp::Add => "__add",
@@ -634,13 +718,16 @@ pub(super) fn check_expr(
 
         ast::Expr::Record(fields) => {
             if fields.is_empty() {
-                return unify_expected_ty(
-                    Ty::unit(),
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
+                return (
+                    unify_expected_ty(
+                        Ty::unit(),
+                        expected_ty,
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    ),
+                    Default::default(),
                 );
             }
 
@@ -681,40 +768,46 @@ pub(super) fn check_expr(
                 let expected_ty = expected_fields
                     .as_ref()
                     .and_then(|expected_fields| expected_fields.get(field_name));
-                let field_ty =
+                let (field_ty, _) =
                     check_expr(tc_state, &mut field.node, expected_ty, level, loop_stack);
                 record_fields.insert(field_name.clone(), field_ty);
             }
 
-            unify_expected_ty(
-                Ty::Anonymous {
-                    labels: record_fields,
-                    extension: None,
-                    kind: RecordOrVariant::Record,
-                    is_row: false,
-                },
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    Ty::Anonymous {
+                        labels: record_fields,
+                        extension: None,
+                        kind: RecordOrVariant::Record,
+                        is_row: false,
+                    },
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
         ast::Expr::Return(expr) => {
             let return_ty = tc_state.return_ty.clone();
             check_expr(tc_state, expr, Some(&return_ty), level, loop_stack);
-            expected_ty.cloned().unwrap_or_else(|| {
-                Ty::Var(
-                    tc_state
-                        .var_gen
-                        .new_var(level, Kind::Star, expr.loc.clone()),
-                )
-            })
+            (
+                expected_ty.cloned().unwrap_or_else(|| {
+                    Ty::Var(
+                        tc_state
+                            .var_gen
+                            .new_var(level, Kind::Star, expr.loc.clone()),
+                    )
+                }),
+                Default::default(),
+            )
         }
 
         ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let scrut_ty = check_expr(tc_state, scrutinee, None, level, loop_stack);
+            let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
 
             let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
 
@@ -774,13 +867,16 @@ pub(super) fn check_expr(
             }
 
             // Same as above, only useful when `expected_ty` is not available.
-            unify_expected_ty(
-                rhs_tys.pop().unwrap(),
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &expr.loc,
+            (
+                unify_expected_ty(
+                    rhs_tys.pop().unwrap(),
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
             )
         }
 
@@ -791,7 +887,8 @@ pub(super) fn check_expr(
             let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
 
             for (cond, body) in branches {
-                let cond_ty = check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+                let (cond_ty, cond_binders) =
+                    check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
                 unify(
                     &cond_ty,
                     &Ty::bool(),
@@ -800,7 +897,12 @@ pub(super) fn check_expr(
                     level,
                     &cond.loc,
                 );
+                tc_state.env.enter();
+                cond_binders.into_iter().for_each(|(k, v)| {
+                    tc_state.env.insert(k, v);
+                });
                 let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
+                tc_state.env.exit();
                 branch_tys.push(body_ty);
             }
 
@@ -843,7 +945,7 @@ pub(super) fn check_expr(
                 }
             }
 
-            branch_tys.pop().unwrap()
+            (branch_tys.pop().unwrap(), Default::default())
         }
 
         ast::Expr::Fn(ast::FnExpr {
@@ -966,7 +1068,23 @@ pub(super) fn check_expr(
                 &expr.loc,
             );
             *inferred_ty = Some(ty.clone());
-            ty
+            (ty, Default::default())
+        }
+
+        ast::Expr::Is(ast::IsExpr { expr, pat }) => {
+            let (expr_ty, _) = check_expr(tc_state, expr, None, level, loop_stack);
+            tc_state.env.enter();
+            let pat_ty = check_pat(tc_state, pat, level);
+            let pat_binders: Map<Id, Ty> = tc_state.env.exit();
+            unify(
+                &pat_ty,
+                &expr_ty,
+                tc_state.tys.tys.cons(),
+                tc_state.var_gen,
+                level,
+                &pat.loc,
+            );
+            (Ty::bool(), pat_binders)
         }
     }
 }

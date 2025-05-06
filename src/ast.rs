@@ -548,6 +548,8 @@ pub enum Expr {
     If(IfExpr),
 
     Fn(FnExpr),
+
+    Is(IsExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -727,6 +729,15 @@ pub struct FnExpr {
     pub body: Vec<L<Stmt>>,
     pub idx: u32,
     pub inferred_ty: Option<Ty>,
+}
+
+/// `<expr> is <pat>`: matches expression against pattern.
+///
+/// Can bind variables.
+#[derive(Debug, Clone)]
+pub struct IsExpr {
+    pub expr: Box<L<Expr>>,
+    pub pat: L<Pat>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1120,6 +1131,10 @@ impl Expr {
                 for stmt in body {
                     stmt.node.subst_ty_ids(substs);
                 }
+            }
+
+            Expr::Is(IsExpr { expr, pat: _ }) => {
+                expr.node.subst_ty_ids(substs);
             }
         }
     }

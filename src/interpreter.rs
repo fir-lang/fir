@@ -963,6 +963,15 @@ fn eval<W: Write>(
 
             ControlFlow::Val(variant)
         }
+
+        Expr::Is(IsExpr { expr, pat }) => {
+            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+            ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val) {
+                pgm.true_alloc
+            } else {
+                pgm.false_alloc
+            })
+        }
     }
 }
 

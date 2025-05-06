@@ -241,6 +241,7 @@ pub enum Expr {
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
+    Is(IsExpr),
 }
 
 #[derive(Debug, Clone)]
@@ -318,6 +319,12 @@ pub struct UnOpExpr {
 pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct IsExpr {
+    pub expr: Box<L<Expr>>,
+    pub pat: L<Pat>,
 }
 
 #[derive(Debug, Clone)]

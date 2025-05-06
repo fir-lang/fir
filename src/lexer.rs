@@ -39,6 +39,7 @@ lexgen::lexer! {
         "impl" = TokenKind::Impl,
         "import" = TokenKind::Import,
         "in" = TokenKind::In,
+        "is" = TokenKind::Is,
         "jump" = TokenKind::Jump,
         "let" = TokenKind::Let,
         "loop" = TokenKind::Loop,

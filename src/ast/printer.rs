@@ -816,6 +816,14 @@ impl Expr {
                 }
                 buffer.push('}');
             }
+
+            Expr::Is(IsExpr { expr, pat }) => {
+                buffer.push('(');
+                expr.node.print(buffer, indent);
+                buffer.push_str(" is ");
+                pat.node.print(buffer);
+                buffer.push(')');
+            }
         }
     }
 }

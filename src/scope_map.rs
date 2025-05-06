@@ -28,8 +28,8 @@ impl<K, V> ScopeMap<K, V> {
     }
 
     /// Exit the current scope. Panics if we're not in a scope.
-    pub fn exit(&mut self) {
-        self.0.pop().unwrap();
+    pub fn exit(&mut self) -> Map<K, V> {
+        self.0.pop().unwrap()
     }
 
     /// Enter a new scope.

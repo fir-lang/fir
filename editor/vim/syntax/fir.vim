@@ -14,6 +14,7 @@ syntax keyword firKeyword
     \ impl
     \ import
     \ in
+    \ is
     \ jump
     \ let
     \ loop
