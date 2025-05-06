@@ -93,7 +93,8 @@ fn check_stmt(
                 });
 
             tc_state.env.enter();
-            let rhs_ty = check_expr(tc_state, rhs, Some(&pat_expected_ty), level + 1, loop_stack);
+            let (rhs_ty, _) =
+                check_expr(tc_state, rhs, Some(&pat_expected_ty), level + 1, loop_stack);
             tc_state.env.exit();
 
             let pat_ty = check_pat(tc_state, lhs, level);
@@ -171,7 +172,7 @@ fn check_stmt(
                 }
 
                 ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-                    let object_ty = check_expr(tc_state, object, None, level, loop_stack);
+                    let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
                     let lhs_ty: Ty = match &lhs_ty_normalized {
@@ -279,7 +280,7 @@ fn check_stmt(
             node: ast::Expr::Match(ast::MatchExpr { scrutinee, alts }),
             loc,
         }) if expected_ty.is_none() => {
-            let scrut_ty = check_expr(tc_state, scrutinee, None, level, loop_stack);
+            let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
 
             let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
 
@@ -333,7 +334,8 @@ fn check_stmt(
             loc: _,
         }) if expected_ty.is_none() => {
             for (cond, body) in branches {
-                let cond_ty = check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+                let (cond_ty, cond_binders) =
+                    check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
                 unify(
                     &cond_ty,
                     &Ty::bool(),
@@ -342,7 +344,12 @@ fn check_stmt(
                     level,
                     &cond.loc,
                 );
+                tc_state.env.enter();
+                cond_binders.into_iter().for_each(|(k, v)| {
+                    tc_state.env.insert(k, v);
+                });
                 check_stmts(tc_state, body, None, level, loop_stack);
+                tc_state.env.exit();
             }
             if let Some(else_body) = else_branch {
                 check_stmts(tc_state, else_body, None, level, loop_stack);
@@ -350,7 +357,7 @@ fn check_stmt(
             Ty::unit()
         }
 
-        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_stack),
+        ast::Stmt::Expr(expr) => check_expr(tc_state, expr, expected_ty, level, loop_stack).0,
 
         ast::Stmt::For(ast::ForStmt {
             label,
@@ -394,13 +401,16 @@ fn check_stmt(
                 loc: stmt.loc.clone(),
             });
 
-            *expr_ty = Some(check_expr(
-                tc_state,
-                expr,
-                Some(&Ty::Var(iterator_ty_var.clone())),
-                level,
-                loop_stack,
-            ));
+            *expr_ty = Some(
+                check_expr(
+                    tc_state,
+                    expr,
+                    Some(&Ty::Var(iterator_ty_var.clone())),
+                    level,
+                    loop_stack,
+                )
+                .0,
+            );
 
             tc_state.env.enter();
 
@@ -451,7 +461,7 @@ fn check_stmt(
             body,
         }) => {
             tc_state.env.enter();
-            let cond_ty = check_expr(tc_state, cond, None, level, loop_stack);
+            let (cond_ty, _) = check_expr(tc_state, cond, None, level, loop_stack);
             tc_state.env.exit();
 
             let pat_ty = check_pat(tc_state, pat, level);
