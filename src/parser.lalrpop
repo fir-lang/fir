@@ -540,14 +540,6 @@ Stmt: Stmt = {
             body,
         }),
 
-    <label:LoopLabel?> "while" "let" <pat:LPat> "=" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
-        Stmt::WhileLet(WhileLetStmt {
-            label,
-            pat,
-            cond,
-            body,
-        }),
-
     <label:LoopLabel?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
             label,

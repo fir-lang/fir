@@ -542,25 +542,6 @@ fn mono_stmt(
                 body,
             })
         }
-
-        ast::Stmt::WhileLet(ast::WhileLetStmt {
-            label,
-            pat,
-            cond,
-            body,
-        }) => {
-            let cond = mono_l_expr(cond, ty_map, poly_pgm, mono_pgm, locals);
-            locals.enter();
-            let pat = mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals);
-            let body = mono_l_stmts(body, ty_map, poly_pgm, mono_pgm, locals);
-            locals.exit();
-            mono::Stmt::WhileLet(mono::WhileLetStmt {
-                label: label.clone(),
-                pat,
-                cond,
-                body,
-            })
-        }
     }
 }
 

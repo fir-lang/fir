@@ -440,47 +440,16 @@ fn check_stmt(
         }
 
         ast::Stmt::While(ast::WhileStmt { label, cond, body }) => {
-            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+            let (_cond_ty, cond_binders) =
+                check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
             loop_stack.push(label.clone());
-            check_stmts(tc_state, body, None, level, loop_stack);
-            loop_stack.pop();
-            unify_expected_ty(
-                Ty::unit(),
-                expected_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &stmt.loc,
-            )
-        }
-
-        ast::Stmt::WhileLet(ast::WhileLetStmt {
-            label,
-            pat,
-            cond,
-            body,
-        }) => {
             tc_state.env.enter();
-            let (cond_ty, _) = check_expr(tc_state, cond, None, level, loop_stack);
-            tc_state.env.exit();
-
-            let pat_ty = check_pat(tc_state, pat, level);
-
-            unify(
-                &pat_ty,
-                &cond_ty,
-                tc_state.tys.tys.cons(),
-                tc_state.var_gen,
-                level,
-                &pat.loc,
-            );
-
-            tc_state.env.enter();
-            loop_stack.push(label.clone());
+            cond_binders.into_iter().for_each(|(k, v)| {
+                tc_state.env.insert(k, v);
+            });
             check_stmts(tc_state, body, None, level, loop_stack);
-            loop_stack.pop();
             tc_state.env.exit();
-
+            loop_stack.pop();
             unify_expected_ty(
                 Ty::unit(),
                 expected_ty,

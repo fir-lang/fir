@@ -459,31 +459,6 @@ impl Stmt {
                     stmt.node.print(buffer, indent + 4);
                 }
             }
-
-            Stmt::WhileLet(WhileLetStmt {
-                label,
-                pat,
-                cond,
-                body,
-            }) => {
-                if let Some(label) = label {
-                    buffer.push('\'');
-                    buffer.push_str(label);
-                    buffer.push_str(": ");
-                }
-                buffer.push_str("while let ");
-                pat.node.print(buffer);
-                buffer.push_str(" = ");
-                cond.node.print(buffer, 0);
-                buffer.push_str(":\n");
-                for (i, stmt) in body.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                }
-            }
         }
     }
 }

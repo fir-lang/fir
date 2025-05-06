@@ -316,7 +316,6 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
-    WhileLet(WhileLetStmt),
     Break {
         label: Option<Id>,
 
@@ -468,14 +467,6 @@ pub struct ForStmt {
 #[derive(Debug, Clone)]
 pub struct WhileStmt {
     pub label: Option<Id>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-}
-
-#[derive(Debug, Clone)]
-pub struct WhileLetStmt {
-    pub label: Option<Id>,
-    pub pat: L<Pat>,
     pub cond: L<Expr>,
     pub body: Vec<L<Stmt>>,
 }
@@ -998,19 +989,6 @@ impl Stmt {
                 body,
             }) => {
                 cond.node.subst_ty_ids(substs);
-                for stmt in body {
-                    stmt.node.subst_ty_ids(substs);
-                }
-            }
-
-            Stmt::WhileLet(WhileLetStmt {
-                label: _,
-                pat: _,
-                cond,
-                body,
-            }) => {
-                cond.node.subst_ty_ids(substs);
-
                 for stmt in body {
                     stmt.node.subst_ty_ids(substs);
                 }

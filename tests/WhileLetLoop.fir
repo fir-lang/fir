@@ -6,7 +6,7 @@ main
 
     let iter = v.iter()
     let next: Fn(): [] Option[U32] = iter.next
-    while let Option.Some(next) = next():
+    while next() is Option.Some(next):
         printStr(next.toStr())
 
 # expected stdout:
