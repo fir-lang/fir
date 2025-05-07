@@ -69,10 +69,10 @@ Expr.pprint(self): Doc
             Doc.char(opChar) + expr.node.pprint()
 
         Expr.Record(fields):
-            _ppParenNamedFields(fields)
+            _ppNamedList(fields, Expr.pprint)
 
         Expr.Variant(VariantExpr(id, args)):
-            brackets(Doc.str(id.name) + _ppParenNamedFields(args))
+            brackets(Doc.str(id.name) + _ppNamedList(args, Expr.pprint))
 
         Expr.Return(expr):
             Doc.str("return ") + expr.node.pprint()
@@ -180,7 +180,38 @@ Stmt.pprint(self): Doc
             doc
 
 Pat.pprint(self): Doc
-    panic("TODO")
+    match self:
+        Pat.Var(VarPat(var_, ty)):
+            Doc.str(var_.name)
+
+        Pat.Constr(ConstrPat(constr, fields, tyArgs)):
+            let doc = Doc.str(constr.type_.name)
+            if constr.constr is Option.Some(constr):
+                doc += Doc.char('.') + Doc.str(constr.name)
+            doc + parens(_ppNamedList(fields, Pat.pprint))
+
+        Pat.Variant(VariantPat(constr, fields)):
+            Doc.char('~') + Doc.str(constr.name) + parens(_ppNamedList(fields, Pat.pprint))
+
+        Pat.Record(fields):
+            _ppNamedList(fields, Pat.pprint)
+
+        Pat.Ignore:
+            Doc.char('_')
+
+        Pat.Str(str):
+            # TODO: Escapes
+            Doc.char('"') + Doc.str(str) + Doc.char('"')
+
+        Pat.Char(char):
+            # TODO: Escapes
+            Doc.char('\'') + Doc.char(char) + Doc.char('\'')
+
+        Pat.StrPfx(str, var_):
+            Pat.Str(str).pprint() + Doc.blank(1) + Doc.str(var_.name)
+
+        Pat.Or(pat1, pat2):
+            parens(pat1.node.pprint() + Doc.str(" | ") + pat2.node.pprint())
 
 AssignOp.pprint(self): Doc
     match self:
@@ -196,12 +227,6 @@ _ppTyArgs(args: Vec[L[Type]]): Doc
 
     brackets(commaSep(
         args.iter().map(fn(l: L[Type]): Doc { l.node.pprint() })))
-
-_ppParenNamedFields(fields: Vec[Named[L[Expr]]]): Doc
-    _ppNamedList(fields, Expr.pprint)
-
-_ppNamedArg(arg: Named[L[Expr]]): Doc
-    _ppNamed(arg, Expr.pprint)
 
 _ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a): exn Doc): exn Doc
     parens(commaSep(
