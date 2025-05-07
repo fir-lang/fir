@@ -81,7 +81,7 @@ jobs:
             override: true
 
       - name: Check lints
-        run: cargo clippy --all-targets --all
+        run: cargo clippy --all-targets --all -- -Dwarnings
 
   run_golden_tests:
     name: 'Run golden tests'
