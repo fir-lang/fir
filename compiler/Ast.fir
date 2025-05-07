@@ -94,8 +94,8 @@ type FunSig:
     context: Context
     self_: SelfParam
     params: Vec[(name: Id, ty: L[Type])]
-    returnTy: Option[L[Type]]
     exceptions: Option[L[Type]]
+    returnTy: Option[L[Type]]
 
 type SelfParam:
     No
@@ -377,6 +377,8 @@ type Expr:
 
     Fn_(FnExpr)
 
+    Is(IsExpr)
+
 type VarExpr:
     id: Id
 
@@ -537,6 +539,10 @@ type FnExpr:
     sig: FunSig
     body: Vec[L[Stmt]]
     idx: U32
+
+type IsExpr:
+    expr: L[Expr]
+    pat: L[Pat]
 
 type UnOp:
     Not

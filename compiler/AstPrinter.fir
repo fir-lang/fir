@@ -94,6 +94,9 @@ Expr.pprint(self): Doc
         Expr.Fn_(FnExpr(sig, body, ..)):
             panic("Expr.Fn_")
 
+        Expr.Is(IsExpr(expr, pat)):
+            expr.node.pprint() + Doc.str(" is ") + pat.node.pprint()
+
 Type.pprint(self): Doc
     match self:
         Type.Named(NamedType(name, args)):
@@ -220,6 +223,36 @@ AssignOp.pprint(self): Doc
         AssignOp.MinusEq: Doc.str("-=")
         AssignOp.StarEq: Doc.str("*=")
         AssignOp.CaretEq: Doc.str("^=")
+
+FunSig.pprint(self): Doc
+    let doc = Doc.empty()
+    if self.context.preds.len() != 0:
+        doc += brackets(
+            commaSep(self.context.preds.iter().map(fn(ty: L[Type]) { ty.node.pprint() })))
+
+    let argList = Doc.empty()
+    let firstArg = Bool.True
+
+    match self.self_:
+        SelfParam.No: ()
+        SelfParam.Implicit: argList += Doc.str("self")
+        SelfParam.Explicit(ty): argList += Doc.str("self: ") + ty.node.pprint()
+
+    for param: (name: Id, ty: L[Type]) in self.params.iter():
+        argList += Doc.str(", ") + Doc.str(param.name.name) + Doc.str(": ") + param.ty.node.pprint()
+
+    doc += parens(argList)
+
+    if self.exceptions is Option.Some(_) || self.returnTy is Option.Some(_):
+        doc += Doc.str(":")
+
+    if self.exceptions is Option.Some(ty):
+        doc += Doc.blank(1) + ty.node.pprint()
+
+    if self.returnTy is Option.Some(ty):
+        doc += Doc.blank(1) + ty.node.pprint()
+
+    doc
 
 _ppTyArgs(args: Vec[L[Type]]): Doc
     if args.len() == 0:
