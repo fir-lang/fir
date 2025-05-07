@@ -55,7 +55,6 @@ type TypeDeclRhs:
     ## A sum type, with more than one constructor.
     Sum(Vec[ConstructorDecl])
 
-
     ## A product type uses the type name as the constructor and only has fields.
     Product(ConstructorFields)
 
