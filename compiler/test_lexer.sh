@@ -3,7 +3,9 @@
 set -e
 set -x
 
+cargo build --release
+
 for file in tests/*.fir; do
     [ -e "$file" ] || continue
-    cargo run -- compiler/Main.fir -- "$file"
+    ./target/release/fir compiler/Main.fir -- "$file"
 done
