@@ -143,15 +143,41 @@ Stmt.pprint(self): Doc
         Stmt.Expr(expr): expr.pprint()
 
         Stmt.For(ForStmt(label, pat, astTy, tcTy = _, expr, exprTy = _, body)):
-            panic("TODO")
+            let doc = Doc.empty()
 
-        Stmt.While(_): panic("TODO")
+            if label is Option.Some(label):
+                doc += Doc.str(label.name) + Doc.str(": ")
 
-        Stmt.WhileLet(_): panic("TODO")
+            doc += Doc.str("for ") + pat.node.pprint()
 
-        Stmt.Break(label, level): panic("TODO")
+            if astTy is Option.Some(astTy):
+                doc += Doc.str(": ") + astTy.node.pprint()
 
-        Stmt.Continue(label, level): panic("TODO")
+            doc += Doc.str(" in ") + expr.node.pprint() + Doc.char(':') + Doc.hardLine()
+            doc += _ppStmts(body)
+            doc.nest(4)
+
+        Stmt.While(WhileStmt(label, cond, body)):
+            let doc = Doc.empty()
+
+            if label is Option.Some(label):
+                doc += Doc.str(label.name) + Doc.str(": ")
+
+            doc += Doc.str("while ") + cond.node.pprint() + Doc.str(": ") + Doc.hardLine()
+            doc += _ppStmts(body)
+            doc.nest(4)
+
+        Stmt.Break(label, level = _):
+            let doc = Doc.str("break")
+            if label is Option.Some(label):
+                doc += Doc.blank(1) + Doc.str(label.name)
+            doc
+
+        Stmt.Continue(label, level = _):
+            let doc = Doc.str("continue")
+            if label is Option.Some(label):
+                doc += Doc.blank(1) + Doc.str(label.name)
+            doc
 
 Pat.pprint(self): Doc
     panic("TODO")

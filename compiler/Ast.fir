@@ -211,7 +211,6 @@ type Stmt:
     Expr(Expr)
     For(ForStmt)
     While(WhileStmt)
-    WhileLet(WhileLetStmt)
     Break:
         label: Option[Id]
 
@@ -261,12 +260,6 @@ type ForStmt:
 
 type WhileStmt:
     label: Option[Id]
-    cond: L[Expr]
-    body: Vec[L[Stmt]]
-
-type WhileLetStmt:
-    label: Option[Id]
-    pat: L[Pat]
     cond: L[Expr]
     body: Vec[L[Stmt]]
 
