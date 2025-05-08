@@ -254,10 +254,14 @@ mod wasm {
     use wasm_bindgen::prelude::wasm_bindgen;
     use web_sys::XmlHttpRequest;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &SmolStr,
+        _print_tokens: bool,
+    ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
-        parse_module(&module, &contents)
+        parse_module(&module, &contents, false)
     }
 
     fn fetch_sync(url: &str) -> Option<String> {
@@ -313,8 +317,8 @@ mod wasm {
         clear_program_output();
 
         let module_name = SmolStr::new_static("FirWeb");
-        let module = parse_module(&module_name, pgm);
-        let mut module = import_resolver::resolve_imports("fir", "", module, true);
+        let module = parse_module(&module_name, pgm, false);
+        let mut module = import_resolver::resolve_imports("fir", "", module, true, false);
 
         type_checker::check_module(&mut module);
 
