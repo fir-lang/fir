@@ -139,13 +139,11 @@ Doc.group(self): Doc
         Doc._Group(req, doc = self)
 
 Doc.cat(self, doc2: Doc): Doc
-    match self:
-        Doc._Empty: return doc2
-        _: ()
+    if self is Doc._Empty:
+        return doc2
 
-    match doc2:
-        Doc._Empty: return self
-        _: ()
+    if doc2 is Doc._Empty:
+        return self
 
     Doc._Cat(req = self._req() + doc2._req(), doc1 = self, doc2)
 
