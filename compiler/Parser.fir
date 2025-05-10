@@ -49,25 +49,22 @@ Parser.simpleExpr(self): Error L[Expr]
             self._idx += 1
             if self._lookaheadKind(0, TokenKind.Dot).isSome():
                 self._idx += 1
-                match self._nextToken():
-                    Option.None:
-                        return self._throwUnexpectedEof()
-                    Option.Some(next):
-                        match next.kind:
-                            TokenKind.UpperId:
-                                let rightLoc = self._tokenLoc(next)
-                                self._idx += 1
-                                L(
-                                    loc = leftLoc.combine(rightLoc), node =
-                                    Expr.ConstrSelect(ConstrSelectExpr(
-                                        ty = self._id(token),
-                                        constr = self._id(next),
-                                        tyArgs = Vec.withCapacity(0)))
-                                )
-                            other:
-                                throw(Error(
-                                    loc = self._tokenLoc(next),
-                                    msg = "unexpected token"))
+                let next = self._nextTokenOrThrow()
+                match next.kind:
+                    TokenKind.UpperId:
+                        let rightLoc = self._tokenLoc(next)
+                        self._idx += 1
+                        L(
+                            loc = leftLoc.combine(rightLoc), node =
+                            Expr.ConstrSelect(ConstrSelectExpr(
+                                ty = self._id(token),
+                                constr = self._id(next),
+                                tyArgs = Vec.withCapacity(0)))
+                        )
+                    other:
+                        throw(Error(
+                            loc = self._tokenLoc(next),
+                            msg = "unexpected token"))
             else:
                 L(
                     loc = leftLoc,
@@ -155,6 +152,11 @@ Parser._lookahead(self, amount: U32): Option[Token]
 Parser._nextToken(self): Option[Token]
     self._lookahead(0)
 
+Parser._nextTokenOrThrow(self): Error Token
+    match self._lookahead(0):
+        Option.Some(token): token
+        Option.None: self._throwUnexpectedEof()
+
 Parser._lookaheadKind(self, amount: U32, kind: TokenKind): Option[Token]
     self._lookahead(amount).guard(fn(t) { t.kind == kind })
 
@@ -225,6 +227,61 @@ _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
             Option.Some((leftPrec = 4, rightPrec = 4, op = BinOp.Or))
 
         _: Option.None
+
+# --------------------------------------------------------------------------------------------------
+# Type declarations
+
+Parser.typeDecl(self): Error L[TypeDecl]
+    let token = self._nextTokenOrThrow()
+
+    if !(token is Token(kind = TokenKind.Type, ..)):
+        throw(Error(loc = self._tokenLoc(token), msg = "unexpected token"))
+
+    self._idx += 1
+
+    let name = match self._nextTokenOrThrow():
+        Token(kind = TokenKind.UpperId, text, ..): text
+        other: throw(Error(loc = self._tokenLoc(other), msg = "expected type name"))
+
+    self._idx += 1
+
+    let next = self._nextTokenOrThrow()
+    self._idx += 1
+
+    let typeParams: Vec[Id] = Vec.withCapacity(0)
+
+    if next.kind is TokenKind.LBracket:
+        loop:
+            let next = self._nextTokenOrThrow()
+            self._idx += 1
+
+            match next.kind:
+                TokenKind.LowerId: typeParams.push(self._id(next))
+                _: throw(Error(loc = self._tokenLoc(next), msg = "expected type parameter"))
+
+            next = self._nextTokenOrThrow()
+            self._idx += 1
+
+            match next.kind:
+                TokenKind.Comma: ()
+                TokenKind.RBracket: break
+                _: throw(Error(loc = self._tokenLoc(next), msg = "expected ',' or ']'"))
+
+            next = self._nextTokenOrThrow()
+            if next.kind is TokenKind.RBracket:
+                self._idx += 1
+                break
+
+            # Otherwise continue with the next type param.
+
+    next = self._nextTokenOrThrow()
+    self._idx += 1
+
+    if !(next.kind is TokenKind.Colon):
+        throw(Error(loc = self._tokenLoc(next), msg = "expected ':'"))
+
+    # TODO: Next is indentation tokens.
+    panic("TODO")
 
 # --------------------------------------------------------------------------------------------------
 
