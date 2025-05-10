@@ -375,7 +375,7 @@ pub enum Pat {
     Char(char),
 
     /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
-    StrPfx(String, Id),
+    StrPfx(String, Option<Id>),
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),

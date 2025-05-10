@@ -218,7 +218,9 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Str(_) => Ty::str(),
 
         ast::Pat::StrPfx(_, var) => {
-            tc_state.env.insert(var.clone(), Ty::str());
+            if let Some(var) = var {
+                tc_state.env.insert(var.clone(), Ty::str());
+            }
             Ty::str()
         }
 

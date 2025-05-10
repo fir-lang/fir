@@ -1091,8 +1091,8 @@ Pat: Pat = {
 
     <char:CharLit> => Pat::Char(parse_char_lit(&char.text)),
 
-    <str:StringLit> <id:LowerId> =>
-        Pat::StrPfx(copy_update_escapes(&str.text[1..str.text.len() - 1]), id.smol_str()),
+    <str:StringLit> <binder:StrPfxBinder> =>
+        Pat::StrPfx(copy_update_escapes(&str.text[1..str.text.len() - 1]), binder),
 
     #[precedence(level = "1")]
     #[assoc(side = "right")]
@@ -1102,6 +1102,11 @@ Pat: Pat = {
             Box::new(L::new(module, l2, r2, p2)),
         )
     }
+}
+
+StrPfxBinder: Option<Id> = {
+    <id:LowerId> => Some(id.smol_str()),
+    "_" => None,
 }
 
 Constructor: Constructor = {

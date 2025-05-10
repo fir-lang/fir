@@ -1181,7 +1181,9 @@ fn mono_pat(
         ast::Pat::Char(c) => mono::Pat::Char(*c),
 
         ast::Pat::StrPfx(pfx, var) => {
-            locals.insert(var.clone());
+            if let Some(var) = var {
+                locals.insert(var.clone());
+            }
             mono::Pat::StrPfx(pfx.clone(), var.clone())
         }
 
