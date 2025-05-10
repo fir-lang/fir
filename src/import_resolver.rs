@@ -20,6 +20,7 @@ pub fn resolve_imports(
     module_root: &str,
     module: ast::Module,
     import_prelude: bool,
+    print_tokens: bool,
 ) -> ast::Module {
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
     let mut imported_modules: Set<Vec<Id>> = Default::default();
@@ -33,13 +34,14 @@ pub fn resolve_imports(
         module,
         &mut new_module,
         &mut imported_modules,
+        print_tokens,
     );
 
     // Import Prelude if it's not already imported.
     let prelude_path = prelude_module_path();
     if import_prelude && !imported_modules.contains(&prelude_path) {
         let prelude_path_buf = module_path(fir_root.to_str().unwrap(), &PRELUDE);
-        let prelude_module = crate::parse_file(&prelude_path_buf, &PRELUDE);
+        let prelude_module = crate::parse_file(&prelude_path_buf, &PRELUDE, print_tokens);
         imported_modules.insert(prelude_path);
         resolve_imports_(
             fir_root_str,
@@ -47,6 +49,7 @@ pub fn resolve_imports(
             prelude_module,
             &mut new_module,
             &mut imported_modules,
+            print_tokens,
         );
     }
 
@@ -66,6 +69,7 @@ fn resolve_imports_(
     module: ast::Module,
     new_module: &mut ast::Module,
     imported_modules: &mut Set<Vec<Id>>,
+    print_tokens: bool,
 ) {
     for decl in module {
         match &decl.node {
@@ -92,13 +96,15 @@ fn resolve_imports_(
                 imported_modules.insert(path.clone());
 
                 let imported_module_path = module_path(root, imported_module);
-                let imported_module = crate::parse_file(&imported_module_path, imported_module);
+                let imported_module =
+                    crate::parse_file(&imported_module_path, imported_module, print_tokens);
                 resolve_imports_(
                     fir_lib_root,
                     module_root,
                     imported_module,
                     new_module,
                     imported_modules,
+                    print_tokens,
                 );
             }
         }

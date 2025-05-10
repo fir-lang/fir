@@ -522,7 +522,14 @@ impl Pat {
                 buffer.push_str(str); // TODO: escaping
                 buffer.push('"');
                 buffer.push(' ');
-                write!(buffer, "local{}", idx.0).unwrap();
+                match idx {
+                    Some(idx) => {
+                        write!(buffer, "local{}", idx.0).unwrap();
+                    }
+                    None => {
+                        buffer.push('_');
+                    }
+                }
             }
 
             Pat::Or(p1, p2) => {

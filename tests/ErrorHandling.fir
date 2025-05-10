@@ -36,7 +36,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
     if i1 != 0 && result / i1 != i2:
         return Option.None
 
-    return Option.Some(result)
+    Option.Some(result)
 
 parseIntErrorToStr(error: [InvalidDigit, Overflow, EmptyInput]): Str
     match error:

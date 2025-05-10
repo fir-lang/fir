@@ -1001,11 +1001,17 @@ fn try_bind_pat(
             debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
             let value_bytes = heap.str_bytes(value);
             if value_bytes.starts_with(pfx.as_bytes()) {
-                let pfx_len = pfx.len() as u32;
-                let len = heap.str_bytes(value).len() as u32;
-                let rest =
-                    heap.allocate_str_view(pgm.str_con_idx.as_u64(), value, pfx_len, len - pfx_len);
-                locals[var.as_usize()] = rest;
+                if let Some(var) = var {
+                    let pfx_len = pfx.len() as u32;
+                    let len = heap.str_bytes(value).len() as u32;
+                    let rest = heap.allocate_str_view(
+                        pgm.str_con_idx.as_u64(),
+                        value,
+                        pfx_len,
+                        len - pfx_len,
+                    );
+                    locals[var.as_usize()] = rest;
+                }
                 true
             } else {
                 false

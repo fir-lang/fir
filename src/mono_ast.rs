@@ -144,7 +144,7 @@ pub enum Pat {
     Ignore,
     Str(String),
     Char(char),
-    StrPfx(String, Id),
+    StrPfx(String, Option<Id>),
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 

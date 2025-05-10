@@ -26,6 +26,7 @@ pub struct CompilerOpts {
     pub typecheck: bool,
     pub no_prelude: bool,
     pub no_backtrace: bool,
+    pub print_tokens: bool,
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
@@ -37,8 +38,22 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
-fn parse_module(module: &SmolStr, contents: &str) -> ast::Module {
+fn parse_module(module: &SmolStr, contents: &str, print_tokens: bool) -> ast::Module {
     let tokens = combine_uppercase_lbrackets(scanner::scan(lexer::lex(contents, module), module));
+
+    if print_tokens {
+        for (l, t, _) in &tokens {
+            println!(
+                "{}:{}:{}: {:?} {:?}",
+                module,
+                l.line + 1,
+                l.col + 1,
+                t.kind,
+                t.text
+            );
+        }
+    }
+
     let parser = parser::TopDeclsParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
         Ok(ast) => ast,
@@ -122,12 +137,17 @@ mod native {
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
 
-        let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
+        let module = parse_file(
+            file_path,
+            &SmolStr::new(file_name_wo_ext.to_str().unwrap()),
+            opts.print_tokens,
+        );
         let mut module = import_resolver::resolve_imports(
             &fir_root,
             root_path.to_str().unwrap(),
             module,
             !opts.no_prelude, // import_prelude
+            opts.print_tokens,
         );
 
         if opts.print_parsed_ast {
@@ -161,7 +181,11 @@ mod native {
         interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, &program_args);
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &SmolStr,
+        print_tokens: bool,
+    ) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
@@ -171,7 +195,7 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        parse_module(&module_path, &contents)
+        parse_module(&module_path, &contents, print_tokens)
     }
 }
 
@@ -230,10 +254,14 @@ mod wasm {
     use wasm_bindgen::prelude::wasm_bindgen;
     use web_sys::XmlHttpRequest;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(
+        path: P,
+        module: &SmolStr,
+        _print_tokens: bool,
+    ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
-        parse_module(&module, &contents)
+        parse_module(&module, &contents, false)
     }
 
     fn fetch_sync(url: &str) -> Option<String> {
@@ -289,8 +317,8 @@ mod wasm {
         clear_program_output();
 
         let module_name = SmolStr::new_static("FirWeb");
-        let module = parse_module(&module_name, pgm);
-        let mut module = import_resolver::resolve_imports("fir", "", module, true);
+        let module = parse_module(&module_name, pgm, false);
+        let mut module = import_resolver::resolve_imports("fir", "", module, true, false);
 
         type_checker::check_module(&mut module);
 

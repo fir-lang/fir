@@ -925,7 +925,14 @@ impl Pat {
                 buffer.push_str(str); // TODO: escaping
                 buffer.push('"');
                 buffer.push(' ');
-                buffer.push_str(pat);
+                match pat {
+                    Some(pat) => {
+                        buffer.push_str(pat);
+                    }
+                    None => {
+                        buffer.push('_');
+                    }
+                }
             }
 
             Pat::Or(pat1, pat2) => {

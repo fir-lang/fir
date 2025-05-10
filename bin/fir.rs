@@ -20,6 +20,12 @@ fn main() {
                 .help("Don't print backtraces in panics."),
         )
         .arg(
+            clap::Arg::new(PRINT_TOKENS)
+                .long(PRINT_TOKENS)
+                .num_args(0)
+                .help("Print tokens."),
+        )
+        .arg(
             clap::Arg::new(PRINT_PARSED_AST)
                 .long(PRINT_PARSED_AST)
                 .num_args(0)
@@ -69,6 +75,7 @@ fn main() {
         typecheck: matches.get_flag(TYPECHECK),
         no_prelude: matches.get_flag(NO_PRELUDE),
         no_backtrace: matches.get_flag(NO_BACKTRACE),
+        print_tokens: matches.get_flag(PRINT_TOKENS),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
@@ -89,6 +96,7 @@ fn main() {
 const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
 const NO_BACKTRACE: &str = "no-backtrace";
+const PRINT_TOKENS: &str = "print-tokens";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
