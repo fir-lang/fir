@@ -21,7 +21,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
     let mut parts: Vec<StringPart> = vec![];
 
     let mut escape = false;
-    let mut chars = s.char_indices();
+    let mut chars = s.char_indices().peekable();
     let mut str_part_start: usize = 0;
 
     'outer: while let Some((byte_idx, char)) = chars.next() {
@@ -40,6 +40,13 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
         }
 
         if char == '\\' {
+            if let Some((_, '\n')) = chars.peek() {
+                while let Some((_, ' ' | '\t' | '\n' | '\r')) = chars.peek() {
+                    chars.next();
+                }
+                escape = false;
+                continue;
+            }
             escape = true;
             continue;
         }
@@ -123,18 +130,31 @@ fn update_loc(err_loc: &Loc, start_loc: &Loc) -> Loc {
     }
 }
 
+/// Copy the tokenized string, converting escape sequences to characters.
 pub(crate) fn copy_update_escapes(s: &str) -> String {
     let mut ret = String::with_capacity(s.len());
-    let mut chars = s.chars();
+    let mut chars = s.chars().peekable();
+
     while let Some(char) = chars.next() {
         if char == '\\' {
-            // Lexer should make sure backslash is folled by one of the valid escape characters.
+            // Escape sequences are recognized by the lexer, so we know '\\' is followed by one of
+            // the characters below.
             match chars.next().unwrap() {
                 '\\' => ret.push('\\'),
                 'n' => ret.push('\n'),
                 't' => ret.push('\t'),
                 'r' => ret.push('\r'),
                 '"' => ret.push('"'),
+                '\n' => {
+                    while let Some(next) = chars.peek().copied() {
+                        match next {
+                            ' ' | '\t' | '\n' | '\r' => {
+                                chars.next();
+                            }
+                            _ => break,
+                        }
+                    }
+                }
                 other => panic!("Weird escape character: {:?}", other),
             }
         } else {

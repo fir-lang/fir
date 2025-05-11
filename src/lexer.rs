@@ -149,6 +149,10 @@ lexgen::lexer! {
         // Escape characters
         '\\' ('"' | 'n' | 't' | 'r' | '\\') => |lexer| lexer.continue_(),
 
+        // "Continuation escape": backslash followed by newline ignores the newline and following
+        // whitespace.
+        '\\' '\n' => |lexer| lexer.switch(LexerRule::StringSkipWhitespace),
+
         _ => |lexer| lexer.continue_(),
     }
 
@@ -160,6 +164,11 @@ lexgen::lexer! {
         _ => |lexer| lexer.continue_(),
     }
 
+    rule StringSkipWhitespace {
+        ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        _ => |lexer| lexer.switch(LexerRule::String),
+    }
 
     rule Comment {
         "#|" =>
