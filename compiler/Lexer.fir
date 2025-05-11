@@ -2,6 +2,16 @@ import Ast
 import Error
 import Token
 
+tokenize(file: Str, contents: Str): (tokens: Vec[Token], error: Option[Error])
+    let tokens = Vec.withCapacity(1000)
+    let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0)
+    loop:
+        match try(lexer.next):
+            Result.Ok(Option.None): break
+            Result.Ok(Option.Some(t)): tokens.push(t)
+            Result.Err(error): return (tokens = tokens, error = Option.Some(error))
+    (tokens = tokens, error = Option.None)
+
 type Lexer:
     _file: Str
     _input: Str
@@ -483,13 +493,3 @@ Lexer._skipMultiLineComment(self): Error ()
 
 _isIdCont(c: Char): Bool
     c.isAsciiAlphanumeric() || c == '_'
-
-tokenize(file: Str, contents: Str): (tokens: Vec[Token], error: Option[Error])
-    let tokens = Vec.withCapacity(1000)
-    let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0)
-    loop:
-        match try(lexer.next):
-            Result.Ok(Option.None): break
-            Result.Ok(Option.Some(t)): tokens.push(t)
-            Result.Err(error): return (tokens = tokens, error = Option.Some(error))
-    (tokens = tokens, error = Option.None)
