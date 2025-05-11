@@ -5,7 +5,7 @@ import Lexer
 main(args: Array[Str])
     let filePath = args.get(1)
     let fileContents = readFileUtf8(filePath)
-    let (tokens = tokens, error = error) = tokenize(filePath, fileContents)
+    let (tokens, error) = tokenize(filePath, fileContents)
     for token: Token in tokens.iter():
         print(token)
     if error is Option.Some(error):
