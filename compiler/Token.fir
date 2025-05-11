@@ -89,6 +89,11 @@ type TokenKind:
     BinInt(Option[IntKind])
     Char
 
+    # Indentation
+    Newline
+    Indent
+    Dedent
+
 type IntKind:
     I8
     U8
