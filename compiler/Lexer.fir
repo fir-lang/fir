@@ -49,237 +49,237 @@ Lexer.next(self): Error Option[Token]
 
         "as" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.As, text = "as", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.As, text = "as", byteIdx))
 
         "break" _:
             self._byteIdx += 5
-            return Option.Some(Token(kind = TokenKind.Break, text = "break", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Break, text = "break", byteIdx))
 
         "continue" _:
             self._byteIdx += 8
-            return Option.Some(Token(kind = TokenKind.Continue, text = "continue", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Continue, text = "continue", byteIdx))
 
         "elif" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Elif, text = "elif", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Elif, text = "elif", byteIdx))
 
         "else" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Else, text = "else", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Else, text = "else", byteIdx))
 
         "export" _:
             self._byteIdx += 6
-            return Option.Some(Token(kind = TokenKind.Export, text = "export", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Export, text = "export", byteIdx))
 
         "fn" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.Fn_, text = "fn", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Fn_, text = "fn", byteIdx))
 
         "Fn" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.UpperFn, text = "Fn", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.UpperFn, text = "Fn", byteIdx))
 
         "for" _:
             self._byteIdx += 3
-            return Option.Some(Token(kind = TokenKind.For, text = "for", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.For, text = "for", byteIdx))
 
         "if" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.If, text = "if", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.If, text = "if", byteIdx))
 
         "impl" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Impl, text = "impl", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Impl, text = "impl", byteIdx))
 
         "import" _:
             self._byteIdx += 6
-            return Option.Some(Token(kind = TokenKind.Import, text = "import", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Import, text = "import", byteIdx))
 
         "in" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.In, text = "in", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.In, text = "in", byteIdx))
 
         "jump" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Jump, text = "jump", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Jump, text = "jump", byteIdx))
 
         "let" _:
             self._byteIdx += 3
-            return Option.Some(Token(kind = TokenKind.Let, text = "let", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Let, text = "let", byteIdx))
 
         "match" _:
             self._byteIdx += 5
-            return Option.Some(Token(kind = TokenKind.Match, text = "match", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Match, text = "match", byteIdx))
 
         "prim" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Prim, text = "prim", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Prim, text = "prim", byteIdx))
 
         "return" _:
             self._byteIdx += 6
-            return Option.Some(Token(kind = TokenKind.Return, text = "return", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Return, text = "return", byteIdx))
 
         "self" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Self_, text = "self", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Self_, text = "self", byteIdx))
 
         "trait" _:
             self._byteIdx += 5
-            return Option.Some(Token(kind = TokenKind.Trait, text = "trait", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Trait, text = "trait", byteIdx))
 
         "type" _:
             self._byteIdx += 4
-            return Option.Some(Token(kind = TokenKind.Type, text = "type", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Type, text = "type", byteIdx))
 
         "var" _:
             self._byteIdx += 3
-            return Option.Some(Token(kind = TokenKind.Var, text = "var", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Var, text = "var", byteIdx))
 
         "while" _:
             self._byteIdx += 5
-            return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx))
 
         ########################################################################################
         # Delimiters
 
         "(" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.LParen, text = "(", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.LParen, text = "(", byteIdx))
 
         ")" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.RParen, text = ")", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.RParen, text = ")", byteIdx))
 
         "[" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.LBracket, text = "[", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.LBracket, text = "[", byteIdx))
 
         "]" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.RBracket, text = "]", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.RBracket, text = "]", byteIdx))
 
         "{" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.LBrace, text = "{", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.LBrace, text = "{", byteIdx))
 
         "}" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.RBrace, text = "}", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.RBrace, text = "}", byteIdx))
 
         ########################################################################################
         # Punctuation
 
         "." _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx))
 
         "," _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Comma, text = ",", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Comma, text = ",", byteIdx))
 
         ":" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Colon, text = ":", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Colon, text = ":", byteIdx))
 
         "..=" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.DotDotEq, text = "..=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.DotDotEq, text = "..=", byteIdx))
 
         ".." _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx))
 
         ########################################################################################
         # Operators
 
         "==" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.EqEq, text = "==", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.EqEq, text = "==", byteIdx))
 
         "=" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Eq, text = "=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Eq, text = "=", byteIdx))
 
         "+=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.PlusEq, text = "+=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.PlusEq, text = "+=", byteIdx))
 
         "-=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.MinusEq, text = "-=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.MinusEq, text = "-=", byteIdx))
 
         "*=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.StarEq, text = "*=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.StarEq, text = "*=", byteIdx))
 
         "+" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Plus, text = "+", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Plus, text = "+", byteIdx))
 
         # TODO: Handle negative numbers here by checking whether `rest` starts with a digit.
         "-" rest:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Minus, text = "-", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Minus, text = "-", byteIdx))
 
         "*" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Star, text = "*", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Star, text = "*", byteIdx))
 
         "!=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.ExclamationEq, text = "!=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.ExclamationEq, text = "!=", byteIdx))
 
         "!" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Exclamation, text = "!", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Exclamation, text = "!", byteIdx))
 
         "&&" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx))
 
         "&" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Amp, text = "&", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Amp, text = "&", byteIdx))
 
         "||" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx))
 
         "|" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "|", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.PipePipe, text = "|", byteIdx))
 
         "<<" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.DoubleLAngle, text = "<<", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.DoubleLAngle, text = "<<", byteIdx))
 
         "<=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.LAngleEq, text = "<=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.LAngleEq, text = "<=", byteIdx))
 
         "<" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.LAngle, text = "<", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.LAngle, text = "<", byteIdx))
 
         ">>" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.DoubleRAngle, text = ">>", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.DoubleRAngle, text = ">>", byteIdx))
 
         ">=" _:
             self._byteIdx += 2
-            return Option.Some(Token(kind = TokenKind.RAngleEq, text = ">=", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.RAngleEq, text = ">=", byteIdx))
 
         ">" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.RAngle, text = ">", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.RAngle, text = ">", byteIdx))
 
         "/" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Slash, text = "/", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Slash, text = "/", byteIdx))
 
         "\\" _:
             self._byteIdx += 1
-            return Option.Some(Token(kind = TokenKind.Backslash, text = "\\", byteIdx = byteIdx))
+            return Option.Some(Token(kind = TokenKind.Backslash, text = "\\", byteIdx))
 
         ########################################################################################
         # Literals
@@ -304,7 +304,7 @@ Lexer.next(self): Error Option[Token]
             return Option.Some(Token(
                 kind = TokenKind.Int(Option.Some(typeSuffix)),
                 text = self._input.substr(digitsStart, self._byteIdx),
-                byteIdx = byteIdx,
+                byteIdx,
             ))
 
         "0x" _:
@@ -321,7 +321,7 @@ Lexer.next(self): Error Option[Token]
             return Option.Some(Token(
                 kind = TokenKind.Int(Option.Some(typeSuffix)),
                 text = self._input.substr(digitsStart, self._byteIdx),
-                byteIdx = byteIdx,
+                byteIdx,
             ))
 
         "~" _:
@@ -360,7 +360,7 @@ Lexer.next(self): Error Option[Token]
                 return Option.Some(Token(
                     kind = TokenKind.Int(Option.Some(typeSuffix)),
                     text = self._input.substr(digitsStart, self._byteIdx),
-                    byteIdx = byteIdx,
+                    byteIdx,
                 ))
 
             let uppercaseId = c.isAsciiUppercase()
@@ -380,9 +380,9 @@ Lexer.next(self): Error Option[Token]
                     TokenKind.LowerId
                 self._byteIdx = endIdx
                 return Option.Some(Token(
-                    kind = kind,
+                    kind,
                     text = id,
-                    byteIdx = byteIdx
+                    byteIdx,
                 ))
 
             panic("TODO: `c` at `byteIdx`")
