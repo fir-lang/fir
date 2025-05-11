@@ -2,6 +2,8 @@ type Token:
     kind: TokenKind
     text: Str
     byteIdx: U32
+    line: U32
+    col: U32
 
 type TokenKind:
     # An identifier starting with an uppercase letter.
@@ -95,7 +97,7 @@ type IntKind:
 
 impl ToStr[Token]:
     toStr(self: Token): Str
-        "`self.kind`(`self.byteIdx`, \"`self.text`\")"
+        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`self.text`\")"
 
 impl ToStr[TokenKind]:
     toStr(self: TokenKind): Str

@@ -161,7 +161,7 @@ Parser._lookaheadKind(self, amount: U32, kind: TokenKind): Option[Token]
     self._lookahead(amount).guard(fn(t) { t.kind == kind })
 
 Parser._tokenLoc(self, token: Token): Loc
-    Loc(file = self._file, byteIdx = token.byteIdx, byteLen = token.text.len())
+    Loc(file = self._file, byteIdx = token.byteIdx, byteLen = token.text.len(), line = token.line, col = token.col)
 
 Parser._id(self, token: Token): Id
     Id(name = token.text, idx = 0, loc = self._tokenLoc(token))
@@ -173,7 +173,7 @@ Parser._throwUnexpectedEof(self): Error a
 
 Parser._eofLoc(self): Loc
     let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0)
-    Loc(file = self._file, byteIdx = byteIdx, byteLen = 0)
+    Loc(file = self._file, byteIdx = byteIdx, byteLen = 0, line = 0, col = 0)
 
 # TODO: Tweak left and right precedences based on associativity.
 _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]

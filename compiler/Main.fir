@@ -2,6 +2,7 @@ import Ast
 import AstPrinter
 import Lexer
 import Parser
+import Scanner
 
 main(args: Array[Str])
     let filePath = args.get(1)
