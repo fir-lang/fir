@@ -8,6 +8,7 @@ main(args: Array[Str])
     let filePath = args.get(1)
     let fileContents = readFileUtf8(filePath)
     let (tokens, error) = tokenize(filePath, fileContents)
+    tokens = scan(tokens)
     for token: Token in tokens.iter():
         print(token)
     if error is Option.Some(error):

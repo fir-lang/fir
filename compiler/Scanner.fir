@@ -39,7 +39,7 @@ scan(tokens: Vec[Token]): Vec[Token]
 
             # Generate indentation tokens.
             loop:
-                let lastIndent = indentStack.last().unwrap()
+                let lastIndent = indentStack.last().unwrapOrElse({ panic("Indent stack is empty") })
                 match token.col.cmp(lastIndent):
                     Ordering.Greater:
                         indentStack.push(token.col)
@@ -92,32 +92,32 @@ scan(tokens: Vec[Token]): Vec[Token]
         newTokens.push(token)
         skipIndent = Bool.False
 
-        # Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
-        # doesn't have a '\n' at the end, probably to terminate the last statement?
-        let lastTok = newTokens.last().unwrap()
+    # Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
+    # doesn't have a '\n' at the end, probably to terminate the last statement?
+    let lastTok = newTokens.last().unwrap()
+    newTokens.push(Token(
+        kind = TokenKind.Newline,
+        text = "\n",
+        byteIdx = lastTok.byteIdx,
+        line = lastTok.line,
+        col = lastTok.col,
+    ))
+
+    # Terminate open blocks at the end.
+    while indentStack.pop() is Option.Some(indent):
+        if indent == 0:
+            # TODO: Make this an ssertion
+            if indentStack.len() != 0:
+                panic("")
+            break
+
         newTokens.push(Token(
-            kind = TokenKind.Newline,
-            text = "\n",
+            kind = TokenKind.Dedent,
+            text = "",
             byteIdx = lastTok.byteIdx,
             line = lastTok.line,
             col = lastTok.col,
         ))
-
-        # Terminate open blocks at the end.
-        while indentStack.pop() is Option.Some(indent):
-            if indent == 0:
-                # TODO: Make this an ssertion
-                if indentStack.len() != 0:
-                    panic("")
-                break
-
-            newTokens.push(Token(
-                kind = TokenKind.Dedent,
-                text = "",
-                byteIdx = lastTok.byteIdx,
-                line = lastTok.line,
-                col = lastTok.col,
-            ))
 
     newTokens
 

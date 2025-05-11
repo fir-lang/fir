@@ -173,6 +173,9 @@ impl ToStr[TokenKind]:
             TokenKind.UpperId: "UpperId"
             TokenKind.Var: "Var"
             TokenKind.While: "While"
+            TokenKind.Newline: "Newline"
+            TokenKind.Indent: "Indent"
+            TokenKind.Dedent: "Dedent"
 
 impl ToStr[IntKind]:
     toStr(self: IntKind): Str
