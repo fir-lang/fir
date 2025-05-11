@@ -141,12 +141,109 @@ scannerTests()
     expected.push(TokenKind.LowerId) # d
     expected.push(TokenKind.Newline)
     _scanTest(
-        "Indent simple",
-"a
+        "Indent simple - 1",
+        "\
+a
     b
     c
 d", expected)
-    ()
+
+    expected.clear()
+    expected.push(TokenKind.LowerId) # a
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # b
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # c
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.LowerId) # d
+    expected.push(TokenKind.Newline)
+    _scanTest(
+        "Indent simple - 2",
+        "\
+a
+    b
+        c
+d", expected)
+
+    expected.clear()
+    expected.push(TokenKind.LowerId) # a
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # b
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # c
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.Dedent)
+    _scanTest(
+        "Dedent at the end",
+        "\
+a
+    b
+        c", expected)
+
+    expected.clear()
+    expected.push(TokenKind.If)
+    expected.push(TokenKind.UpperId)
+    expected.push(TokenKind.Colon)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.LParen)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.LParen)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Comma)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Comma)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.RParen)
+    expected.push(TokenKind.Comma)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Comma)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.RParen)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Newline)
+    _scanTest(
+        "Line joining in parens",
+        "\
+if True:
+    test(test(
+                a,
+            b,
+c),
+x, y)
+z", expected)
+
+    expected.clear()
+    expected.push(TokenKind.Fn_)
+    expected.push(TokenKind.LParen)
+    expected.push(TokenKind.RParen)
+    expected.push(TokenKind.LBrace)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # a
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.LowerId) #b
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.RBrace)
+    expected.push(TokenKind.Newline)
+    _scanTest(
+        "Braces",
+        "\
+fn() {
+    a
+    b
+}", expected)
 
 _scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
     printNoNl(testName)
@@ -158,19 +255,22 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
         return
 
     let tokens = scan(tokens)
+    let tokenKinds: Vec[TokenKind] = Vec.withCapacity(tokens.len())
+    for token: Token in tokens.iter():
+        tokenKinds.push(token.kind)
 
     if tokens.len() != expected.len():
         print("\t\tExpected `expected.len()` tokens, generated `tokens.len()` tokens.")
         print("\t\tExpected tokens:  `expected`")
-        print("\t\tGenerated tokens: `tokens`")
+        print("\t\tGenerated tokens: `tokenKinds`")
 
     for i: U32 in range(0u32, tokens.len()):
-        if tokens.get(i).kind != expected.get(i):
-            print("\t\tToken `i` expected `expected.get(i)`, found `tokens.get(i).kind`")
+        if tokenKinds.get(i) != expected.get(i):
+            print("\t\tToken `i` expected `expected.get(i)`, found `tokenKinds.get(i)`")
             return
 
     print("\t\tOK")
-        
+
 _scan(input: Str): [AssertionError(msg: Str), ..r] Vec[TokenKind]
     let (tokens, error) = tokenize("Test", input)
     if error is Option.Some(error):
