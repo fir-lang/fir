@@ -15,6 +15,11 @@ main(args: Array[Str])
         printStr("ERROR: `error.loc.byteIdx`: `error.msg`")
 
     print("")
+    print("SCANNER TESTS")
+    print("")
+    scannerTests()
+
+    print("")
     print("PARSER TESTS")
     print("")
     parserTests()

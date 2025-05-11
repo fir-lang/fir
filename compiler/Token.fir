@@ -255,6 +255,9 @@ impl Eq[TokenKind]:
             (left = TokenKind.HexInt(intKind1), right = TokenKind.HexInt(intKind2)): intKind1 == intKind2
             (left = TokenKind.BinInt(intKind1), right = TokenKind.BinInt(intKind2)): intKind1 == intKind2
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
+            (left = TokenKind.Newline, right = TokenKind.Newline): Bool.True
+            (left = TokenKind.Indent, right = TokenKind.Indent): Bool.True
+            (left = TokenKind.Dedent, right = TokenKind.Dedent): Bool.True
             _: Bool.False
 
 impl Eq[IntKind]:

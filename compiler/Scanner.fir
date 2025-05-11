@@ -125,3 +125,58 @@ type Delimiter:
     Paren
     Bracket
     Brace
+
+# --------------------------------------------------------------------------------------------------
+
+scannerTests()
+    let expected: Vec[TokenKind] = Vec.withCapacity(10)
+    expected.push(TokenKind.LowerId) # a
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId) # b
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.LowerId) # c
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+    expected.push(TokenKind.LowerId) # d
+    expected.push(TokenKind.Newline)
+    _scanTest(
+        "Indent simple",
+"a
+    b
+    c
+d", expected)
+    ()
+
+_scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
+    printNoNl(testName)
+
+    let (tokens, error) = tokenize("Test.fir", input)
+
+    if error is Option.Some(error):
+        print("\t\tLexer error: `error.msg`")
+        return
+
+    let tokens = scan(tokens)
+
+    if tokens.len() != expected.len():
+        print("\t\tExpected `expected.len()` tokens, generated `tokens.len()` tokens.")
+        print("\t\tExpected tokens:  `expected`")
+        print("\t\tGenerated tokens: `tokens`")
+
+    for i: U32 in range(0u32, tokens.len()):
+        if tokens.get(i).kind != expected.get(i):
+            print("\t\tToken `i` expected `expected.get(i)`, found `tokens.get(i).kind`")
+            return
+
+    print("\t\tOK")
+        
+_scan(input: Str): [AssertionError(msg: Str), ..r] Vec[TokenKind]
+    let (tokens, error) = tokenize("Test", input)
+    if error is Option.Some(error):
+        throw(~AssertionError(msg = "Lexer failed: `error.msg`"))
+    let scanned = scan(tokens)
+    let tokenKinds: Vec[TokenKind] = Vec.withCapacity(scanned.len())
+    for token: Token in scanned.iter():
+        tokenKinds.push(token.kind)
+    tokenKinds

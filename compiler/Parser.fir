@@ -285,29 +285,6 @@ Parser.typeDecl(self): Error L[TypeDecl]
 
 # --------------------------------------------------------------------------------------------------
 
-_parserTest( \
-        name: Str, input: Str, \
-        parseFn: Fn(Parser): Error a, \
-        astCheck: Fn(a): [AssertionError(msg: Str)] ())
-    printNoNl(name)
-    let (tokens = tokens, error = error) = tokenize("Test.fir", input)
-    if error is Option.Some(err):
-        print("\t\tLexer error: `err.msg`")
-        return
-
-    let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
-
-    let ast = match try({ parseFn(parser) }):
-        Result.Err(err):
-            print("\t\tParser error: `err.msg`")
-            return
-        Result.Ok(ast):
-            ast
-
-    match try({ astCheck(ast) }):
-        Result.Ok(()): print("\t\tOK")
-        Result.Err(~AssertionError(msg = msg)): print("\t\tAssertion error: `msg`")
-
 parserTests
     _parserTest(
         "simpleExpr - parse failure test (expected to fail)",
@@ -369,3 +346,26 @@ parserTests
             )): ()
             _: throw(~AssertionError(msg = "Expected binop"))
     })
+
+_parserTest( \
+        testName: Str, input: Str, \
+        parseFn: Fn(Parser): Error a, \
+        astCheck: Fn(a): [AssertionError(msg: Str)] ())
+    printNoNl(testName)
+    let (tokens, error) = tokenize("Test.fir", input)
+    if error is Option.Some(error):
+        print("\t\tLexer error: `error.msg`")
+        return
+
+    let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
+
+    let ast = match try({ parseFn(parser) }):
+        Result.Err(err):
+            print("\t\tParser error: `err.msg`")
+            return
+        Result.Ok(ast):
+            ast
+
+    match try({ astCheck(ast) }):
+        Result.Ok(()): print("\t\tOK")
+        Result.Err(~AssertionError(msg = msg)): print("\t\tAssertion error: `msg`")
