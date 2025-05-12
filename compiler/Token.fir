@@ -2,6 +2,8 @@ type Token:
     kind: TokenKind
     text: Str
     byteIdx: U32
+    line: U32
+    col: U32
 
 type TokenKind:
     # An identifier starting with an uppercase letter.
@@ -87,6 +89,11 @@ type TokenKind:
     BinInt(Option[IntKind])
     Char
 
+    # Indentation
+    Newline
+    Indent
+    Dedent
+
 type IntKind:
     I8
     U8
@@ -95,7 +102,7 @@ type IntKind:
 
 impl ToStr[Token]:
     toStr(self: Token): Str
-        "`self.kind`(`self.byteIdx`, \"`self.text`\")"
+        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`self.text`\")"
 
 impl ToStr[TokenKind]:
     toStr(self: TokenKind): Str
@@ -166,6 +173,9 @@ impl ToStr[TokenKind]:
             TokenKind.UpperId: "UpperId"
             TokenKind.Var: "Var"
             TokenKind.While: "While"
+            TokenKind.Newline: "Newline"
+            TokenKind.Indent: "Indent"
+            TokenKind.Dedent: "Dedent"
 
 impl ToStr[IntKind]:
     toStr(self: IntKind): Str
@@ -245,6 +255,9 @@ impl Eq[TokenKind]:
             (left = TokenKind.HexInt(intKind1), right = TokenKind.HexInt(intKind2)): intKind1 == intKind2
             (left = TokenKind.BinInt(intKind1), right = TokenKind.BinInt(intKind2)): intKind1 == intKind2
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
+            (left = TokenKind.Newline, right = TokenKind.Newline): Bool.True
+            (left = TokenKind.Indent, right = TokenKind.Indent): Bool.True
+            (left = TokenKind.Dedent, right = TokenKind.Dedent): Bool.True
             _: Bool.False
 
 impl Eq[IntKind]:
