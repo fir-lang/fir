@@ -232,18 +232,17 @@ _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
 # Type declarations
 
 Parser.typeDecl(self): Error L[TypeDecl]
-    let token = self._nextTokenOrThrow()
+    let typeToken = self._nextTokenOrThrow()
 
-    if !(token is Token(kind = TokenKind.Type, ..)):
-        throw(Error(loc = self._tokenLoc(token), msg = "unexpected token"))
-
-    self._idx += 1
-
-    let name = match self._nextTokenOrThrow():
-        Token(kind = TokenKind.UpperId, text, ..): text
-        other: throw(Error(loc = self._tokenLoc(other), msg = "expected type name"))
+    if !(typeToken is Token(kind = TokenKind.Type, ..)):
+        throw(Error(loc = self._tokenLoc(typeToken), msg = "unexpected token"))
 
     self._idx += 1
+
+    let nameToken = self._expectFail(TokenKind.UpperId)
+    self._idx += 1
+
+    let name = nameToken.text
 
     let next = self._nextTokenOrThrow()
     self._idx += 1
@@ -274,14 +273,54 @@ Parser.typeDecl(self): Error L[TypeDecl]
 
             # Otherwise continue with the next type param.
 
-    next = self._nextTokenOrThrow()
+    if !(self._nextTokenOrThrow().kind is TokenKind.Colon):
+        return L(
+            loc = self._tokenLoc(typeToken).combine(self._tokenLoc(next)),
+            node = TypeDecl(
+                name = self._id(nameToken),
+                typeParams,
+                typeParamKinds = Vec.withCapacity(typeParams.len()),
+                rhs = Option.None))
+
     self._idx += 1
 
-    if !(next.kind is TokenKind.Colon):
-        throw(Error(loc = self._tokenLoc(next), msg = "expected ':'"))
+    self._expectFail(TokenKind.Newline)
+    self._idx += 1
 
-    # TODO: Next is indentation tokens.
-    panic("TODO")
+    self._expectFail(TokenKind.Indent)
+    self._idx += 1
+
+    let next = self._nextTokenOrThrow()
+    self._idx += 1
+
+    let rhs: TypeDeclRhs = match next.kind:
+        TokenKind.UpperId:
+            let alts: Vec[ConstructorDecl] = Vec.withCapacity(10)
+            panic("TODO")
+
+        TokenKind.LowerId:
+            let alts: Vec[ConstructorFields] = Vec.withCapacity(10)
+            panic("TODO")
+
+        other: throw(Error(loc = self._tokenLoc(next), msg = "expected upper or lower id"))
+
+    L(
+        loc = self._tokenLoc(typeToken).combine(self._tokenLoc(next)),
+        node = TypeDecl(
+            name = self._id(nameToken),
+            typeParams,
+            typeParamKinds = Vec.withCapacity(typeParams.len()),
+            rhs = Option.Some(rhs)))
+
+
+Parser._expectFail(self, expected: TokenKind): Error Token
+    let next = self._nextTokenOrThrow()
+    self._idx += 1
+
+    if next.kind != expected:
+        throw(Error(loc = self._tokenLoc(next), msg = "expected `expected`"))
+
+    next
 
 # --------------------------------------------------------------------------------------------------
 
