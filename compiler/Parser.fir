@@ -14,7 +14,7 @@ Parser.expr(self, prec: U32): Error L[Expr]
     let expr = self.simpleExpr()
 
     loop:
-        let next = match self._nextToken():
+        let next = match self._next():
             Option.None: break
             Option.Some(next): next
 
@@ -36,7 +36,7 @@ Parser.expr(self, prec: U32): Error L[Expr]
     expr
 
 Parser.simpleExpr(self): Error L[Expr]
-    let token = self._nextToken().unwrapOrElse({
+    let token = self._next().unwrapOrElse({
         return self._throwUnexpectedEof()
     })
     let leftLoc = self._tokenLoc(token)
@@ -49,7 +49,7 @@ Parser.simpleExpr(self): Error L[Expr]
             self._idx += 1
             if self._lookaheadKind(0, TokenKind.Dot).isSome():
                 self._idx += 1
-                let next = self._nextTokenOrThrow()
+                let next = self._nextOrThrow()
                 match next.kind:
                     TokenKind.UpperId:
                         let rightLoc = self._tokenLoc(next)
@@ -143,38 +143,6 @@ _parseChar(charTest: Str): Char
         Option.Some(other): other
         Option.None: panic("Unterminated char literal")
 
-Parser._lookahead(self, amount: U32): Option[Token]
-    let idx = self._idx + amount
-    if idx >= self._tokens.len():
-        return Option.None
-    Option.Some(self._tokens.get(idx))
-
-Parser._nextToken(self): Option[Token]
-    self._lookahead(0)
-
-Parser._nextTokenOrThrow(self): Error Token
-    match self._lookahead(0):
-        Option.Some(token): token
-        Option.None: self._throwUnexpectedEof()
-
-Parser._lookaheadKind(self, amount: U32, kind: TokenKind): Option[Token]
-    self._lookahead(amount).guard(fn(t) { t.kind == kind })
-
-Parser._tokenLoc(self, token: Token): Loc
-    Loc(file = self._file, byteIdx = token.byteIdx, byteLen = token.text.len(), line = token.line, col = token.col)
-
-Parser._id(self, token: Token): Id
-    Id(name = token.text, idx = 0, loc = self._tokenLoc(token))
-
-Parser._throwUnexpectedEof(self): Error a
-    throw(Error(
-        loc = self._eofLoc(),
-        msg = "unexpected end of file"))
-
-Parser._eofLoc(self): Loc
-    let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0)
-    Loc(file = self._file, byteIdx = byteIdx, byteLen = 0, line = 0, col = 0)
-
 # TODO: Tweak left and right precedences based on associativity.
 _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
     match token:
@@ -232,33 +200,32 @@ _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
 # Type declarations
 
 Parser.typeDecl(self): Error L[TypeDecl]
-    let typeToken = self._nextTokenOrThrow()
+    let typeToken = self._nextOrThrow()
 
     if !(typeToken is Token(kind = TokenKind.Type, ..)):
         throw(Error(loc = self._tokenLoc(typeToken), msg = "unexpected token"))
 
     self._idx += 1
 
-    let nameToken = self._expectFail(TokenKind.UpperId)
-    self._idx += 1
+    let nameToken = self._expect(TokenKind.UpperId)
 
     let name = nameToken.text
 
-    let next = self._nextTokenOrThrow()
+    let next = self._nextOrThrow()
     self._idx += 1
 
     let typeParams: Vec[Id] = Vec.withCapacity(0)
 
     if next.kind is TokenKind.LBracket:
         loop:
-            let next = self._nextTokenOrThrow()
+            let next = self._nextOrThrow()
             self._idx += 1
 
             match next.kind:
                 TokenKind.LowerId: typeParams.push(self._id(next))
                 _: throw(Error(loc = self._tokenLoc(next), msg = "expected type parameter"))
 
-            next = self._nextTokenOrThrow()
+            next = self._nextOrThrow()
             self._idx += 1
 
             match next.kind:
@@ -266,14 +233,14 @@ Parser.typeDecl(self): Error L[TypeDecl]
                 TokenKind.RBracket: break
                 _: throw(Error(loc = self._tokenLoc(next), msg = "expected ',' or ']'"))
 
-            next = self._nextTokenOrThrow()
+            next = self._nextOrThrow()
             if next.kind is TokenKind.RBracket:
                 self._idx += 1
                 break
 
             # Otherwise continue with the next type param.
 
-    if !(self._nextTokenOrThrow().kind is TokenKind.Colon):
+    if !(self._nextOrThrow().kind is TokenKind.Colon):
         return L(
             loc = self._tokenLoc(typeToken).combine(self._tokenLoc(next)),
             node = TypeDecl(
@@ -284,23 +251,26 @@ Parser.typeDecl(self): Error L[TypeDecl]
 
     self._idx += 1
 
-    self._expectFail(TokenKind.Newline)
-    self._idx += 1
+    self._expect(TokenKind.Newline)
+    self._expect(TokenKind.Indent)
 
-    self._expectFail(TokenKind.Indent)
-    self._idx += 1
-
-    let next = self._nextTokenOrThrow()
-    self._idx += 1
-
-    let rhs: TypeDeclRhs = match next.kind:
+    let rhs: TypeDeclRhs = match self._nextOrThrow().kind:
         TokenKind.UpperId:
             let alts: Vec[ConstructorDecl] = Vec.withCapacity(10)
-            panic("TODO")
+
+            loop:
+                alts.push(self.constructorDecl())
+                self._expect(TokenKind.Newline)
+                if self._nextOrThrow().kind is TokenKind.Dedent:
+                    self._idx += 1
+                    break
+
+            TypeDeclRhs.Sum(alts)
 
         TokenKind.LowerId:
-            let alts: Vec[ConstructorFields] = Vec.withCapacity(10)
-            panic("TODO")
+            let fields = self.constructorFields()
+            self._expect(TokenKind.Newline)
+            TypeDeclRhs.Product(fields)
 
         other: throw(Error(loc = self._tokenLoc(next), msg = "expected upper or lower id"))
 
@@ -312,15 +282,86 @@ Parser.typeDecl(self): Error L[TypeDecl]
             typeParamKinds = Vec.withCapacity(typeParams.len()),
             rhs = Option.Some(rhs)))
 
+Parser.constructorDecl(self): Error ConstructorDecl
+    let conName = self._expect(TokenKind.UpperId)
+    let fields = self.constructorFields()
+    ConstructorDecl(name = self._id(conName), fields)
 
-Parser._expectFail(self, expected: TokenKind): Error Token
-    let next = self._nextTokenOrThrow()
+Parser.constructorFields(self): Error ConstructorFields
+    match self._nextOrThrow().kind:
+        TokenKind.Colon:
+            self._idx += 1
+            self._expect(TokenKind.Newline)
+            self._expect(TokenKind.Indent)
+            let fields: Vec[(name: Id, ty: L[Type])] = Vec.withCapacity(5)
+            loop:
+                let fieldId = self._expect(TokenKind.LowerId)
+                self._expect(TokenKind.Colon)
+                let ty = self.ltype()
+                fields.push((name = self._id(fieldId), ty = ty))
+                self._expect(TokenKind.Newline)
+                if self._nextOrThrow().kind is TokenKind.Dedent:
+                    self._idx += 1
+                    break
+            return ConstructorFields.Named(fields)
+
+        TokenKind.LParen:
+            panic("TODO")
+
+        TokenKind.Newline:
+            ConstructorFields.Empty
+
+        other: throw(Error(
+            loc = self._eofLoc(),
+            msg = "unexpected end of file"))
+
+# --------------------------------------------------------------------------------------------------
+# Types
+
+Parser.ltype(self): Error L[Type]
+    panic("TODO")
+
+# --------------------------------------------------------------------------------------------------
+# Utilities and helpers
+
+Parser._expect(self, expected: TokenKind): Error Token
+    let next = self._nextOrThrow()
     self._idx += 1
-
     if next.kind != expected:
         throw(Error(loc = self._tokenLoc(next), msg = "expected `expected`"))
-
     next
+
+Parser._lookahead(self, amount: U32): Option[Token]
+    let idx = self._idx + amount
+    if idx >= self._tokens.len():
+        return Option.None
+    Option.Some(self._tokens.get(idx))
+
+Parser._next(self): Option[Token]
+    self._lookahead(0)
+
+Parser._nextOrThrow(self): Error Token
+    match self._lookahead(0):
+        Option.Some(token): token
+        Option.None: self._throwUnexpectedEof()
+
+Parser._lookaheadKind(self, amount: U32, kind: TokenKind): Option[Token]
+    self._lookahead(amount).guard(fn(t) { t.kind == kind })
+
+Parser._tokenLoc(self, token: Token): Loc
+    Loc(file = self._file, byteIdx = token.byteIdx, byteLen = token.text.len(), line = token.line, col = token.col)
+
+Parser._id(self, token: Token): Id
+    Id(name = token.text, idx = 0, loc = self._tokenLoc(token))
+
+Parser._throwUnexpectedEof(self): Error a
+    throw(Error(
+        loc = self._eofLoc(),
+        msg = "unexpected end of file"))
+
+Parser._eofLoc(self): Loc
+    let byteIdx = self._tokens.last().map(fn(t) { t.byteIdx }).unwrapOr(0)
+    Loc(file = self._file, byteIdx = byteIdx, byteLen = 0, line = 0, col = 0)
 
 # --------------------------------------------------------------------------------------------------
 
