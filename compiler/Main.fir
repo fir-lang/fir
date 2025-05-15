@@ -50,3 +50,7 @@ parseExpr(input: Str): Expr
 assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
     if expected != found:
         throw(~AssertionError(msg = "Expected `expected`, found `found`"))
+
+assert(condition: Bool, msg: Str): [AssertionError(msg: Str), ..r] ()
+    if !condition:
+        throw(~AssertionError(msg = msg))

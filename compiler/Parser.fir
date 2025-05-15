@@ -14,7 +14,7 @@ Parser.expr(self, prec: U32): Error L[Expr]
     let expr = self.simpleExpr()
 
     loop:
-        let next = match self._next():
+        let next = match self._nextOpt():
             Option.None: break
             Option.Some(next): next
 
@@ -36,7 +36,7 @@ Parser.expr(self, prec: U32): Error L[Expr]
     expr
 
 Parser.simpleExpr(self): Error L[Expr]
-    let token = self._next().unwrapOrElse({
+    let token = self._nextOpt().unwrapOrElse({
         return self._throwUnexpectedEof()
     })
     let leftLoc = self._tokenLoc(token)
@@ -49,7 +49,7 @@ Parser.simpleExpr(self): Error L[Expr]
             self._idx += 1
             if self._lookaheadKind(0, TokenKind.Dot).isSome():
                 self._idx += 1
-                let next = self._nextOrThrow()
+                let next = self._next()
                 match next.kind:
                     TokenKind.UpperId:
                         let rightLoc = self._tokenLoc(next)
@@ -200,7 +200,7 @@ _opPrec(token: TokenKind): Option[(leftPrec: U32, rightPrec: U32, op: BinOp)]
 # Type declarations
 
 Parser.typeDecl(self): Error L[TypeDecl]
-    let typeToken = self._nextOrThrow()
+    let typeToken = self._next()
 
     if !(typeToken is Token(kind = TokenKind.Type, ..)):
         throw(Error(loc = self._tokenLoc(typeToken), msg = "unexpected token"))
@@ -211,21 +211,21 @@ Parser.typeDecl(self): Error L[TypeDecl]
 
     let name = nameToken.text
 
-    let next = self._nextOrThrow()
+    let next = self._next()
     self._idx += 1
 
     let typeParams: Vec[Id] = Vec.withCapacity(0)
 
     if next.kind is TokenKind.LBracket:
         loop:
-            let next = self._nextOrThrow()
+            let next = self._next()
             self._idx += 1
 
             match next.kind:
                 TokenKind.LowerId: typeParams.push(self._id(next))
                 _: throw(Error(loc = self._tokenLoc(next), msg = "expected type parameter"))
 
-            next = self._nextOrThrow()
+            next = self._next()
             self._idx += 1
 
             match next.kind:
@@ -233,14 +233,14 @@ Parser.typeDecl(self): Error L[TypeDecl]
                 TokenKind.RBracket: break
                 _: throw(Error(loc = self._tokenLoc(next), msg = "expected ',' or ']'"))
 
-            next = self._nextOrThrow()
+            next = self._next()
             if next.kind is TokenKind.RBracket:
                 self._idx += 1
                 break
 
             # Otherwise continue with the next type param.
 
-    if !(self._nextOrThrow().kind is TokenKind.Colon):
+    if !(self._next().kind is TokenKind.Colon):
         return L(
             loc = self._tokenLoc(typeToken).combine(self._tokenLoc(next)),
             node = TypeDecl(
@@ -254,14 +254,14 @@ Parser.typeDecl(self): Error L[TypeDecl]
     self._expect(TokenKind.Newline)
     self._expect(TokenKind.Indent)
 
-    let rhs: TypeDeclRhs = match self._nextOrThrow().kind:
+    let rhs: TypeDeclRhs = match self._next().kind:
         TokenKind.UpperId:
             let alts: Vec[ConstructorDecl] = Vec.withCapacity(10)
 
             loop:
                 alts.push(self.constructorDecl())
                 self._expect(TokenKind.Newline)
-                if self._nextOrThrow().kind is TokenKind.Dedent:
+                if self._next().kind is TokenKind.Dedent:
                     self._idx += 1
                     break
 
@@ -288,7 +288,7 @@ Parser.constructorDecl(self): Error ConstructorDecl
     ConstructorDecl(name = self._id(conName), fields)
 
 Parser.constructorFields(self): Error ConstructorFields
-    match self._nextOrThrow().kind:
+    match self._next().kind:
         TokenKind.Colon:
             self._idx += 1
             self._expect(TokenKind.Newline)
@@ -300,7 +300,7 @@ Parser.constructorFields(self): Error ConstructorFields
                 let ty = self.ltype()
                 fields.push((name = self._id(fieldId), ty = ty))
                 self._expect(TokenKind.Newline)
-                if self._nextOrThrow().kind is TokenKind.Dedent:
+                if self._next().kind is TokenKind.Dedent:
                     self._idx += 1
                     break
             return ConstructorFields.Named(fields)
@@ -319,13 +319,99 @@ Parser.constructorFields(self): Error ConstructorFields
 # Types
 
 Parser.ltype(self): Error L[Type]
-    panic("TODO")
+    let first = self._next()
+    self._idx += 1
+
+    match first.kind:
+        TokenKind.UpperId:
+            if self._nextOpt() is Option.Some(Token(kind = TokenKind.LBracket, ..)):
+                self._idx += 1
+                panic("TODO: type parameters")
+
+            L(node = Type.Named(NamedType(name = self._id(first), args = Vec.withCapacity(0))),
+                loc = self._tokenLoc(first))
+
+        TokenKind.LowerId:
+            L(node = Type.Var(self._id(first)), loc = self._tokenLoc(first))
+
+        TokenKind.LParen:
+            let fields: Vec[Named[L[Type]]] = Vec.withCapacity(5)
+            let extension: Option[Id] = Option.None
+            let lastToken = first
+            let sawComma = Bool.False
+
+            loop:
+                # We're starting parsing, or we saw a ','.
+                let fieldToken = self._next()
+
+                if fieldToken.kind is TokenKind.RParen:
+                    self._idx += 1
+                    lastToken = fieldToken
+                    break
+
+                if sawComma && fieldToken.kind is TokenKind.DotDot:
+                    self._idx += 1
+                    let extensionName = self._expect(TokenKind.LowerId)
+                    extension = Option.Some(self._id(extensionName))
+                    lastToken = fieldToken
+                    break
+
+                let name: Option[Id] = Option.None
+                if fieldToken.kind is TokenKind.LowerId:
+                    self._idx += 1
+                    name = Option.Some(self._id(fieldToken))
+                    self._expect(TokenKind.Eq)
+
+                let ty = self.ltype()
+                fields.push(Named(name, node = ty))
+
+                if self._next().kind is TokenKind.Comma:
+                    sawComma = Bool.True
+                    self._idx += 1
+                else:
+                    sawComma = Bool.False
+
+            L(node = Type.Record(fields, extension),
+                loc = self._tokenLoc(first).combine(self._tokenLoc(lastToken)))
+
+        TokenKind.LBracket:
+            let alts: Vec[VariantAlt] = Vec.withCapacity(5)
+            let extension: Option[Id] = Option.None
+            let lastToken = first
+            let sawComma = Bool.False
+
+            loop:
+                # We're starting parsing, or we saw a ','.
+                let altToken = self._next()
+
+                if altToken.kind is TokenKind.RBracket:
+                    self._idx += 1
+                    lastToken = altToken
+                    break
+
+                if sawComma && altToken.kind is TokenKind.DotDot:
+                    self._idx += 1
+                    let extensionName = self._expect(TokenKind.LowerId)
+                    extension = Option.Some(self._id(extensionName))
+                    lastToken = altToken
+                    break
+
+                let name = self._expect(TokenKind.UpperId)
+
+                panic("TODO")
+            panic("TODO")
+
+        TokenKind.Fn_: panic("TODO")
+
+        other: throw(Error(
+            loc = self._tokenLoc(first),
+            msg = "expected upper or lower id, '(', '[', 'fn'"))
 
 # --------------------------------------------------------------------------------------------------
 # Utilities and helpers
 
 Parser._expect(self, expected: TokenKind): Error Token
-    let next = self._nextOrThrow()
+    let next = self._next()
     self._idx += 1
     if next.kind != expected:
         throw(Error(loc = self._tokenLoc(next), msg = "expected `expected`"))
@@ -337,10 +423,10 @@ Parser._lookahead(self, amount: U32): Option[Token]
         return Option.None
     Option.Some(self._tokens.get(idx))
 
-Parser._next(self): Option[Token]
+Parser._nextOpt(self): Option[Token]
     self._lookahead(0)
 
-Parser._nextOrThrow(self): Error Token
+Parser._next(self): Error Token
     match self._lookahead(0):
         Option.Some(token): token
         Option.None: self._throwUnexpectedEof()
@@ -425,6 +511,28 @@ parserTests
                 op    = BinOp.Add
             )): ()
             _: throw(~AssertionError(msg = "Expected binop"))
+    })
+
+    _parserTest("type - named wo args", "Foo", Parser.ltype, fn(ast) {
+        match ast.node:
+            Type.Named(NamedType(name, args)):
+                assertEq("Foo", name.name)
+                assertEq(0u32, args.len())
+            other: throw(~AssertionError(msg = "Expected named type wo args, found `other.pprint().print(80)`"))
+    })
+
+    _parserTest("type - variable", "foo", Parser.ltype, fn(ast) {
+        match ast.node:
+            Type.Var(var_): assertEq("foo", var_.name)
+            other: throw(~AssertionError(msg = "Expected type variable, found `other.pprint().print(80)`"))
+    })
+
+    _parserTest("type - record wo names", "(U32, a)", Parser.ltype, fn(ast) {
+        match ast.node:
+            Type.Record(fields, extension):
+                assertEq(2u32, fields.len())
+                assert(extension is Option.None, "Unexpected extension")
+            other: throw(~AssertionError(msg = "Unexpected type: `other.pprint().print(80)`"))
     })
 
 _parserTest( \
