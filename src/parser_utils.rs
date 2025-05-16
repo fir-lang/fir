@@ -1,5 +1,7 @@
 use crate::ast::{self, Id, L};
 
+use smol_str::SmolStr;
+
 pub(crate) fn parse_char_lit(text: &str) -> char {
     let mut chars = text.chars();
 
@@ -50,4 +52,10 @@ pub(crate) fn process_param_list(
     }
 
     (self_param, typed_params)
+}
+
+pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
+    let parts: Vec<SmolStr> = path.split('.').map(SmolStr::new).collect();
+    assert_eq!(parts.len(), 2);
+    parts
 }

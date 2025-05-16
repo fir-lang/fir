@@ -2,7 +2,7 @@
 
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
-use crate::parser_utils::{parse_char_lit, process_param_list};
+use crate::parser_utils::*;
 use crate::token::*;
 
 use std::convert::Infallible;
@@ -20,8 +20,10 @@ extern {
 
     enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
+        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
+        TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
@@ -643,6 +645,13 @@ InlineExpr: Expr = {
     <id:UpperId> =>
         Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id.smol_str(), ty_args: vec![] }),
 
+    <path:UpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(ConstrSelectExpr { ty: Some(ty), constr, ty_args: vec![] })
+    },
+
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
             0 => Expr::Record(vec![]),
@@ -799,18 +808,6 @@ InlineExpr: Expr = {
                 field: field.smol_str(),
             }),
         },
-
-    <expr:InlineExpr> "." <constr:UpperId> => {
-        match expr {
-            Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: ty, ty_args: _ }) => Expr::ConstrSelect(ConstrSelectExpr {
-                ty: Some(ty),
-                constr: constr.smol_str(),
-                ty_args: vec![],
-            }),
-
-            _ => panic!(),
-        }
-    },
 
     #[precedence(level = "2")]
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
@@ -1110,11 +1107,15 @@ StrPfxBinder: Option<Id> = {
 }
 
 Constructor: Constructor = {
-    <type_:UpperId> "." <constr:UpperId> =>
-        Constructor { type_: type_.smol_str(), constr: Some(constr.smol_str()) },
-
     <type_:UpperId> =>
         Constructor { type_: type_.smol_str(), constr: None },
+
+    <path:UpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Constructor { type_: ty, constr: Some(constr) }
+    }
 }
 
 ConstrPattern: ConstrPattern = {

@@ -102,6 +102,8 @@ lexgen::lexer! {
         let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
         '~' $upper_id = TokenKind::TildeUpperId,
         $upper_id = TokenKind::UpperId,
+        $upper_id '.' $upper_id = TokenKind::UpperIdPath,
+        '~' $upper_id '.' $upper_id = TokenKind::TildeUpperIdPath,
 
         '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
 
