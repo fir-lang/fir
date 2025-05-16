@@ -476,10 +476,7 @@ pub enum Expr {
     /// A variable: `x`.
     Var(VarExpr),
 
-    /// A product constructor: `Vec`, `Bool`, `I32`.
-    Constr(ConstrExpr),
-
-    /// A sum constructor: `Option.None`, `Result.Ok`, `Bool.True`.
+    /// A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
     ConstrSelect(ConstrSelectExpr),
 
     /// A field selection: `<expr>.x` where `x` is a field.
@@ -548,14 +545,6 @@ pub struct VarExpr {
     pub id: Id,
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
-    pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrExpr {
-    pub id: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
@@ -631,10 +620,9 @@ pub struct MethodSelectExpr {
     pub ty_args: Vec<Ty>,
 }
 
-/// A constructor selection: `Option.None`.
 #[derive(Debug, Clone)]
 pub struct ConstrSelectExpr {
-    pub ty: Id,
+    pub ty: Option<Id>,
     pub constr: Id,
 
     /// Inferred type arguments of the constructor. Filled by the type checker.
@@ -1005,7 +993,6 @@ impl Expr {
     pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
         match self {
             Expr::Var(_)
-            | Expr::Constr(_)
             | Expr::ConstrSelect(_)
             | Expr::AssocFnSelect(_)
             | Expr::Int(_)

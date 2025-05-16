@@ -544,7 +544,7 @@ Stmt: Stmt = {
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConstrSelect(ConstrSelectExpr {
-                ty: SmolStr::new_static("Bool"),
+                ty: Some(SmolStr::new_static("Bool")),
                 constr: SmolStr::new_static("True"),
                 ty_args: vec![],
             })),
@@ -641,7 +641,7 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
+        Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id.smol_str(), ty_args: vec![] }),
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
@@ -791,7 +791,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
         match expr {
-            Expr::Constr(ConstrExpr { id, ty_args: _ }) =>
+            Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id, ty_args: _ }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
@@ -802,8 +802,8 @@ InlineExpr: Expr = {
 
     <expr:InlineExpr> "." <constr:UpperId> => {
         match expr {
-            Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
+            Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: ty, ty_args: _ }) => Expr::ConstrSelect(ConstrSelectExpr {
+                ty: Some(ty),
                 constr: constr.smol_str(),
                 ty_args: vec![],
             }),

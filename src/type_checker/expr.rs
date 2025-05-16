@@ -73,30 +73,6 @@ pub(super) fn check_expr(
             panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
         }
 
-        ast::Expr::Constr(ast::ConstrExpr { id: con, ty_args }) => {
-            assert!(ty_args.is_empty());
-            let scheme = tc_state.tys.top_schemes.get(con).unwrap_or_else(|| {
-                panic!("{}: Unknown constructor {}", loc_display(&expr.loc), con)
-            });
-            let (ty, ty_args) =
-                scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
-            expr.node = ast::Expr::Constr(ast::ConstrExpr {
-                id: con.clone(),
-                ty_args: ty_args.into_iter().map(Ty::Var).collect(),
-            });
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
         ast::Expr::Variant(ast::VariantExpr { id, args }) => {
             let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
 
@@ -210,26 +186,33 @@ pub(super) fn check_expr(
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
-            let scheme = tc_state
-                .tys
-                .associated_fn_schemes
-                .get(ty)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Type {} is not in type environment",
-                        loc_display(&expr.loc),
-                        ty
-                    )
-                })
-                .get(constr)
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Type {} does not have the constructor {}",
-                        loc_display(&expr.loc),
-                        ty,
-                        constr
-                    )
-                });
+
+            let scheme = match ty {
+                Some(ty) => tc_state
+                    .tys
+                    .associated_fn_schemes
+                    .get(ty)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: Type {} is not in type environment",
+                            loc_display(&expr.loc),
+                            ty
+                        )
+                    })
+                    .get(constr)
+                    .unwrap_or_else(|| {
+                        panic!(
+                            "{}: Type {} does not have the constructor {}",
+                            loc_display(&expr.loc),
+                            ty,
+                            constr
+                        )
+                    }),
+                None => tc_state.tys.top_schemes.get(constr).unwrap_or_else(|| {
+                    panic!("{}: Unknown constructor {}", loc_display(&expr.loc), constr)
+                }),
+            };
+
             let (con_ty, con_ty_args) =
                 scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
             expr.node = ast::Expr::ConstrSelect(ast::ConstrSelectExpr {

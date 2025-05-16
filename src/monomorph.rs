@@ -580,25 +580,6 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::Constr(ast::ConstrExpr { id, ty_args }) => {
-            let poly_ty_decl = match poly_pgm.ty.get(id) {
-                None => panic!("Unknown constructor {}", id),
-                Some(ty_decl) => ty_decl,
-            };
-
-            let mono_ty_args = ty_args
-                .iter()
-                .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                .collect::<Vec<_>>();
-
-            let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-
-            mono::Expr::Constr(mono::ConstrExpr {
-                id: mono_ty_id,
-                ty_args: mono_ty_args,
-            })
-        }
-
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             mono::Expr::FieldSelect(mono::FieldSelectExpr {
                 object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
@@ -637,21 +618,41 @@ fn mono_expr(
             ty,
             constr,
             ty_args,
-        }) => {
-            let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
+        }) => match ty {
+            Some(ty) => {
+                let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
-            let mono_ty_args = ty_args
-                .iter()
-                .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                .collect::<Vec<_>>();
+                let mono_ty_args = ty_args
+                    .iter()
+                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                    .collect::<Vec<_>>();
 
-            let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-            mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
-                ty: mono_ty_id,
-                constr: constr.clone(),
-                ty_args: mono_ty_args,
-            })
-        }
+                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+                mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
+                    ty: mono_ty_id,
+                    constr: constr.clone(),
+                    ty_args: mono_ty_args,
+                })
+            }
+            None => {
+                let poly_ty_decl = match poly_pgm.ty.get(constr) {
+                    None => panic!("Unknown constructor {}", constr),
+                    Some(ty_decl) => ty_decl,
+                };
+
+                let mono_ty_args = ty_args
+                    .iter()
+                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                    .collect::<Vec<_>>();
+
+                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
+                mono::Expr::Constr(mono::ConstrExpr {
+                    id: mono_ty_id,
+                    ty_args: mono_ty_args,
+                })
+            }
+        },
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,

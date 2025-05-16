@@ -466,7 +466,7 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::Var(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }
@@ -513,10 +513,18 @@ impl Expr {
 
             Expr::ConstrSelect(ConstrSelectExpr {
                 ty,
-                constr: member,
+                constr,
                 ty_args,
-            })
-            | Expr::AssocFnSelect(AssocFnSelectExpr {
+            }) => {
+                if let Some(ty) = ty {
+                    buffer.push_str(ty);
+                    buffer.push('.');
+                }
+                buffer.push_str(constr);
+                print_ty_args(ty_args, buffer);
+            }
+
+            Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
                 member,
                 ty_args,
@@ -531,7 +539,6 @@ impl Expr {
                 let parens = !matches!(
                     &fun.node,
                     Expr::Var(_)
-                        | Expr::Constr(_)
                         | Expr::FieldSelect(_)
                         | Expr::ConstrSelect(_)
                         | Expr::MethodSelect(_)
@@ -995,7 +1002,7 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+        Expr::Var(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
     )
 }
 

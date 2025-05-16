@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: b18f742430dc0166ff6e457265cf4972a077c11ae787d7c02aa800e0bf6fc997
+// sha3: 8d2fef3d2d6fd076424d453014fe6aaf8686bc47c3e2948f5a5d56db0fc3df79
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -44387,7 +44387,7 @@ fn __action75<'a>(
             l,
             r,
             Expr::ConstrSelect(ConstrSelectExpr {
-                ty: SmolStr::new_static("Bool"),
+                ty: Some(SmolStr::new_static("Bool")),
                 constr: SmolStr::new_static("True"),
                 ty_args: vec![],
             }),
@@ -44652,8 +44652,9 @@ fn __action92<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action93<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::Constr(ConstrExpr {
-        id: id.smol_str(),
+    Expr::ConstrSelect(ConstrSelectExpr {
+        ty: None,
+        constr: id.smol_str(),
         ty_args: vec![],
     })
 }
@@ -44907,7 +44908,11 @@ fn __action101<'a>(
     (_, field, _): (Loc, Token, Loc),
 ) -> Expr {
     match expr {
-        Expr::Constr(ConstrExpr { id, ty_args: _ }) => Expr::AssocFnSelect(AssocFnSelectExpr {
+        Expr::ConstrSelect(ConstrSelectExpr {
+            ty: None,
+            constr: id,
+            ty_args: _,
+        }) => Expr::AssocFnSelect(AssocFnSelectExpr {
             ty: id,
             member: field.smol_str(),
             ty_args: vec![],
@@ -44934,13 +44939,15 @@ fn __action102<'a>(
 ) -> Expr {
     {
         match expr {
-            Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => {
-                Expr::ConstrSelect(ConstrSelectExpr {
-                    ty,
-                    constr: constr.smol_str(),
-                    ty_args: vec![],
-                })
-            }
+            Expr::ConstrSelect(ConstrSelectExpr {
+                ty: None,
+                constr: ty,
+                ty_args: _,
+            }) => Expr::ConstrSelect(ConstrSelectExpr {
+                ty: Some(ty),
+                constr: constr.smol_str(),
+                ty_args: vec![],
+            }),
 
             _ => panic!(),
         }
