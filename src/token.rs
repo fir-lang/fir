@@ -1,6 +1,6 @@
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: TokenKind,
     pub text: SmolStr,
