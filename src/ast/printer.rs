@@ -515,7 +515,11 @@ impl Expr {
                 ty,
                 constr,
                 ty_args,
+                variant,
             }) => {
+                if *variant {
+                    buffer.push('~');
+                }
                 if let Some(ty) = ty {
                     buffer.push_str(ty);
                     buffer.push('.');
@@ -822,11 +826,19 @@ impl Pat {
             }
 
             Pat::Constr(ConstrPattern {
-                constr: Constructor { type_, constr },
+                constr:
+                    Constructor {
+                        type_,
+                        constr,
+                        variant,
+                    },
                 fields,
                 ignore_rest,
                 ty_args,
             }) => {
+                if *variant {
+                    buffer.push(',');
+                }
                 buffer.push_str(type_);
                 if let Some(constr) = constr {
                     buffer.push('.');

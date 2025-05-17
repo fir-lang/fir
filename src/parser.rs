@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: bca54341efe7324e434be4a590b8479d2048c825f1a8500a609b1a364a7c4ad9
+// sha3: f910eb02bd8bd17e069cb9c6481980c0593a51da4a25cde0548045e178d60eb8
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -44372,6 +44372,7 @@ fn __action75<'a>(
                 ty: Some(SmolStr::new_static("Bool")),
                 constr: SmolStr::new_static("True"),
                 ty_args: vec![],
+                variant: false,
             }),
         ),
         body,
@@ -44638,6 +44639,7 @@ fn __action93<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
         ty: None,
         constr: id.smol_str(),
         ty_args: vec![],
+        variant: false,
     })
 }
 
@@ -44656,6 +44658,7 @@ fn __action94<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Expr 
             ty: Some(ty),
             constr,
             ty_args: vec![],
+            variant: false,
         })
     }
 }
@@ -44913,6 +44916,7 @@ fn __action102<'a>(
             ty: None,
             constr: id,
             ty_args: _,
+            variant: false,
         }) => Expr::AssocFnSelect(AssocFnSelectExpr {
             ty: id,
             member: field.smol_str(),
@@ -45923,6 +45927,7 @@ fn __action158<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> Con
     Constructor {
         type_: type_.smol_str(),
         constr: None,
+        variant: false,
     }
 }
 
@@ -45940,6 +45945,7 @@ fn __action159<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Cons
         Constructor {
             type_: ty,
             constr: Some(constr),
+            variant: false,
         }
     }
 }

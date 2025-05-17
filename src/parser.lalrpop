@@ -549,6 +549,7 @@ Stmt: Stmt = {
                 ty: Some(SmolStr::new_static("Bool")),
                 constr: SmolStr::new_static("True"),
                 ty_args: vec![],
+                variant: false,
             })),
             body,
         }),
@@ -643,13 +644,23 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id.smol_str(), ty_args: vec![] }),
+        Expr::ConstrSelect(ConstrSelectExpr {
+            ty: None,
+            constr: id.smol_str(),
+            ty_args: vec![],
+            variant: false,
+        }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(ConstrSelectExpr { ty: Some(ty), constr, ty_args: vec![] })
+        Expr::ConstrSelect(ConstrSelectExpr {
+            ty: Some(ty),
+            constr,
+            ty_args: vec![],
+            variant: false,
+        })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -800,7 +811,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
         match expr {
-            Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id, ty_args: _ }) =>
+            Expr::ConstrSelect(ConstrSelectExpr { ty: None, constr: id, ty_args: _, variant: false, }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
@@ -1108,13 +1119,13 @@ StrPfxBinder: Option<Id> = {
 
 Constructor: Constructor = {
     <type_:UpperId> =>
-        Constructor { type_: type_.smol_str(), constr: None },
+        Constructor { type_: type_.smol_str(), constr: None, variant: false, },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { type_: ty, constr: Some(constr) }
+        Constructor { type_: ty, constr: Some(constr), variant: false }
     }
 }
 

@@ -413,6 +413,11 @@ pub struct RecordPattern {
 pub struct Constructor {
     pub type_: Id,
     pub constr: Option<Id>,
+
+    /// Whether the constructor is in a variant.
+    ///
+    /// Variant constructors are marked with a '~' prefix.
+    pub variant: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -627,6 +632,11 @@ pub struct ConstrSelectExpr {
 
     /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
+
+    /// Whether the constructor is made a variant.
+    ///
+    /// Variant constructors are marked with a '~' prefix.
+    pub variant: bool,
 }
 
 /// An associated function or method selection:

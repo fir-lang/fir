@@ -184,10 +184,15 @@ pub(super) fn check_expr(
             ty,
             constr,
             ty_args,
+            variant,
         }) => {
             assert!(ty_args.is_empty());
 
-            let scheme = match ty {
+            let ty = ty.clone();
+            let constr = constr.clone();
+            let variant = *variant;
+
+            let scheme = match &ty {
                 Some(ty) => tc_state
                     .tys
                     .associated_fn_schemes
@@ -199,7 +204,7 @@ pub(super) fn check_expr(
                             ty
                         )
                     })
-                    .get(constr)
+                    .get(&constr)
                     .unwrap_or_else(|| {
                         panic!(
                             "{}: Type {} does not have the constructor {}",
@@ -208,21 +213,43 @@ pub(super) fn check_expr(
                             constr
                         )
                     }),
-                None => tc_state.tys.top_schemes.get(constr).unwrap_or_else(|| {
+                None => tc_state.tys.top_schemes.get(&constr).unwrap_or_else(|| {
                     panic!("{}: Unknown constructor {}", loc_display(&expr.loc), constr)
                 }),
             };
 
             let (con_ty, con_ty_args) =
                 scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+
             expr.node = ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
                 ty: ty.clone(),
                 constr: constr.clone(),
                 ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
+                variant,
             });
+
+            let ty = if variant {
+                let variant_id = match ty {
+                    Some(ty) => SmolStr::new(&format!("{}.{}", ty, constr)),
+                    None => constr.clone(),
+                };
+                Ty::Anonymous {
+                    labels: [(variant_id, con_ty)].into_iter().collect(),
+                    extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                        level,
+                        Kind::Row(RecordOrVariant::Variant),
+                        expr.loc.clone(),
+                    )))),
+                    kind: RecordOrVariant::Variant,
+                    is_row: false,
+                }
+            } else {
+                con_ty
+            };
+
             (
                 unify_expected_ty(
-                    con_ty,
+                    ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,
