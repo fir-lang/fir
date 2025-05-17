@@ -471,25 +471,6 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::Variant(VariantExpr { id, args }) => {
-                buffer.push('~');
-                buffer.push_str(id);
-                if !args.is_empty() {
-                    buffer.push('(');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &arg.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.node.print(buffer, 0);
-                    }
-                    buffer.push(')');
-                }
-            }
-
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
                 object.node.print(buffer, 0);
                 buffer.push('.');
@@ -873,24 +854,6 @@ impl Pat {
                             buffer.push_str(", ");
                         }
                         buffer.push_str("..");
-                    }
-                    buffer.push(')');
-                }
-            }
-
-            Pat::Variant(VariantPattern { constr, fields }) => {
-                buffer.push_str(constr);
-                if !fields.is_empty() {
-                    buffer.push('(');
-                    for (i, field) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &field.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        field.node.node.print(buffer);
                     }
                     buffer.push(')');
                 }

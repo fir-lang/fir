@@ -73,58 +73,6 @@ pub(super) fn check_expr(
             panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
         }
 
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, ref mut node } in args.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant expression with unnamed args not supported yet",
-                        loc_display(&expr.loc)
-                    ),
-                };
-                let (ty, _) = check_expr(tc_state, node, None, level, loop_stack);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant expression with dupliate fields",
-                        loc_display(&expr.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            let ty = Ty::Anonymous {
-                labels: [(id.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Variant),
-                    expr.loc.clone(),
-                )))),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
-            };
-
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
         // <object:Expr>.<field:Id>.
         // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {

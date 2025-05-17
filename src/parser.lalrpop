@@ -827,16 +827,6 @@ InlineExpr: Expr = {
     "-" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
 
-    #[precedence(level = "3")]
-    <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
-        Expr::Variant(VariantExpr {
-            id: id.text.as_str()[1..].into(),
-            args: match args {
-                Some(args) => args.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect(),
-                None => vec![],
-            },
-        }),
-
     #[precedence(level = "4")]
     #[assoc(side = "left")]
     <l1:@L> <left:InlineExpr> <r1:@R> "*" <l2:@L> <right:InlineExpr> <r2:@R> =>
@@ -1076,8 +1066,6 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
-    <var:VariantPattern> => Pat::Variant(var),
-
     "(" <fields:Sep<PatternField, ",">> ")" =>
         Pat::Record(RecordPattern {
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
@@ -1155,20 +1143,6 @@ ConstrPattern: ConstrPattern = {
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ignore_rest: true,
             ty_args: vec![],
-        },
-}
-
-VariantPattern: VariantPattern = {
-    <constr:TildeUpperId> =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: vec![],
-        },
-
-    <constr:TildeUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
         },
 }
 

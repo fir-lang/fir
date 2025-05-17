@@ -360,9 +360,6 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
-    /// Matches a variant.
-    Variant(VariantPattern),
-
     Record(RecordPattern),
 
     /// Underscore, aka. wildcard.
@@ -528,12 +525,6 @@ pub enum Expr {
     /// A record: `(1, 2)`, `(x = 123, msg = "hi")`.
     Record(Vec<Named<L<Expr>>>),
 
-    /// A variant: "~A" (nullary), "~ParseError(...)".
-    ///
-    /// Because "~A" is type checked differently from "~A(1)", we parse variant applications as
-    /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr),
-
     Return(Box<L<Expr>>),
 
     Match(MatchExpr),
@@ -551,12 +542,6 @@ pub struct VarExpr {
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -1050,12 +1035,6 @@ impl Expr {
 
             Expr::Record(fields) => {
                 for field in fields {
-                    field.node.node.subst_ty_ids(substs);
-                }
-            }
-
-            Expr::Variant(VariantExpr { id: _, args }) => {
-                for field in args {
                     field.node.node.subst_ty_ids(substs);
                 }
             }

@@ -27,6 +27,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 ast::Constructor {
                     type_: pat_ty_name,
                     constr: pat_con_name,
+                    variant,
                 },
             fields: pat_fields,
             ignore_rest,
@@ -110,7 +111,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply_con_ty(
+            let pat_ty = apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
@@ -118,7 +119,27 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
                 *ignore_rest,
-            )
+            );
+
+            if *variant {
+                let variant_id = match pat_con_name {
+                    Some(con) => smol_str::SmolStr::new(&format!("{}.{}", pat_ty_name, con)),
+                    None => pat_ty_name.clone(),
+                };
+                let extension_var = Ty::Var(tc_state.var_gen.new_var(
+                    level,
+                    Kind::Row(RecordOrVariant::Variant),
+                    pat.loc.clone(),
+                ));
+                Ty::Anonymous {
+                    labels: [(variant_id, pat_ty)].into_iter().collect(),
+                    extension: Some(Box::new(extension_var)),
+                    kind: RecordOrVariant::Variant,
+                    is_row: false,
+                }
+            } else {
+                pat_ty
+            }
         }
 
         ast::Pat::Record(ast::RecordPattern {
@@ -171,48 +192,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             };
             *inferred_ty = Some(ty.clone());
             ty
-        }
-
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            let extension_var = Ty::Var(tc_state.var_gen.new_var(
-                level,
-                Kind::Row(RecordOrVariant::Variant),
-                pat.loc.clone(),
-            ));
-
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, node } in fields.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant pattern with unnamed args not supported yet",
-                        loc_display(&pat.loc)
-                    ),
-                };
-                let ty = check_pat(tc_state, node, level);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant pattern with dupliate fields",
-                        loc_display(&pat.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            Ty::Anonymous {
-                labels: [(constr.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(extension_var)),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
-            }
         }
 
         ast::Pat::Str(_) => Ty::str(),
@@ -338,7 +317,12 @@ pub(super) fn refine_pat_binders(
         }
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+            constr:
+                ast::Constructor {
+                    type_,
+                    constr,
+                    variant: false,
+                },
             fields: field_pats,
             ignore_rest: _,
             ty_args: _,
@@ -417,11 +401,23 @@ pub(super) fn refine_pat_binders(
             } // field loop
         } // constr pattern
 
-        ast::Pat::Variant(ast::VariantPattern {
-            constr,
+        ast::Pat::Constr(ast::ConstrPattern {
+            constr:
+                ast::Constructor {
+                    type_,
+                    constr,
+                    variant: true,
+                },
             fields: field_pats,
+            ignore_rest: _,
+            ty_args: _,
         }) => {
-            let variant_field_coverage = match coverage.get_variant_fields(constr) {
+            let variant_id = match constr {
+                Some(con) => smol_str::SmolStr::new(&format!("{}.{}", type_, con)),
+                None => type_.clone(),
+            };
+
+            let variant_field_coverage = match coverage.get_variant_fields(&variant_id) {
                 Some(coverage) => coverage,
                 None => return,
             };
@@ -446,7 +442,7 @@ pub(super) fn refine_pat_binders(
                 _ => return,
             };
 
-            let (variant_field_tys, _) = match variant_ty_labels.get(constr).unwrap() {
+            let (variant_field_tys, _) = match variant_ty_labels.get(&variant_id).unwrap() {
                 Ty::Anonymous {
                     labels,
                     extension,
