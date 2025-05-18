@@ -50,8 +50,7 @@ pub enum Type {
 
     Record { fields: Vec<Named<Type>> },
 
-    // NB. Alts should be sorted by label.
-    Variant { alts: Vec<VariantAlt> },
+    Variant { alts: Vec<NamedType> },
 
     Fn(FnType),
 }
@@ -60,12 +59,6 @@ pub enum Type {
 pub struct NamedType {
     pub name: Id,
     pub args: Vec<Type>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>, // TODO: This is always unnamed, and type is always a record. Maybe simplify the type.
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

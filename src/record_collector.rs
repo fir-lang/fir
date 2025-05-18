@@ -168,8 +168,8 @@ fn visit_ty(ty: &mono::Type, records: &mut Set<RecordShape>, variants: &mut Set<
         }
 
         mono::Type::Variant { alts } => {
-            for mono::VariantAlt { con, fields } in alts {
-                variants.insert(VariantShape::from_con_and_fields(con, fields));
+            for mono::NamedType { name: _, args } in alts {
+                args.iter().for_each(|arg| visit_ty(arg, records, variants))
             }
         }
 

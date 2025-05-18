@@ -227,7 +227,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             is_row: _,
         } => {
             for alt in alts {
-                for field in &alt.fields {
+                for field in &alt.args {
                     collect_tvs(&field.node, loc, tvs);
                 }
             }

@@ -256,10 +256,10 @@ Type: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<TypeNamed2, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<TypeNamed2, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -275,10 +275,10 @@ TypeNoFn: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<TypeNamed2, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<TypeNamed2, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -292,6 +292,14 @@ TypeNamed: Type = {
 
     <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
+}
+
+TypeNamed2: NamedType = {
+    <name:UpperId> =>
+        NamedType { name: name.smol_str(), args: vec![] },
+
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        NamedType { name: name.smol_str(), args },
 }
 
 RowExtension: Option<Id> = {
@@ -313,13 +321,6 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
 RecordTypeField: Named<Type> = {
     <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
     <ty:Type> => Named { name: None, node: ty },
-}
-
-VariantAlt: VariantAlt = {
-    <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        VariantAlt { con: name.smol_str(), fields },
-    <name:UpperId> =>
-        VariantAlt { con: name.smol_str(), fields: vec![] },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

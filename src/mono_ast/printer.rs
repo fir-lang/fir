@@ -148,19 +148,7 @@ impl FunDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(NamedType { name, args }) => {
-                buffer.push_str(name);
-                if !args.is_empty() {
-                    buffer.push('[');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        arg.print(buffer);
-                    }
-                    buffer.push(']');
-                }
-            }
+            Type::Named(ty) => ty.print(buffer),
 
             Type::Record { fields } => {
                 buffer.push('(');
@@ -179,25 +167,11 @@ impl Type {
 
             Type::Variant { alts } => {
                 buffer.push('[');
-                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                for (i, ty) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    buffer.push_str(con);
-                    if !fields.is_empty() {
-                        buffer.push('(');
-                        for (i, Named { name, node }) in fields.iter().enumerate() {
-                            if i != 0 {
-                                buffer.push_str(", ");
-                            }
-                            if let Some(name) = name {
-                                buffer.push_str(name);
-                                buffer.push_str(": ");
-                            }
-                            node.print(buffer);
-                        }
-                        buffer.push(')');
-                    }
+                    ty.print(buffer);
                 }
                 buffer.push(']');
             }
@@ -242,6 +216,22 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+        }
+    }
+}
+
+impl NamedType {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.name);
+        if !self.args.is_empty() {
+            buffer.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buffer.push_str(", ");
+                }
+                arg.print(buffer);
+            }
+            buffer.push(']');
         }
     }
 }

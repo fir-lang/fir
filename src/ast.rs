@@ -188,19 +188,13 @@ pub enum Type {
 
     /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
-        alts: Vec<VariantAlt>,
+        alts: Vec<NamedType>,
         extension: Option<Id>,
         is_row: bool,
     },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
@@ -852,14 +846,14 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut alts: Vec<VariantAlt> = alts
+                let mut alts: Vec<NamedType> = alts
                     .iter()
-                    .map(|VariantAlt { con, fields }| VariantAlt {
-                        con: con.clone(),
-                        fields: fields
+                    .map(|NamedType { name, args }| NamedType {
+                        name: name.clone(),
+                        args: args
                             .iter()
-                            .map(|Named { name, node }| Named {
-                                name: name.clone(),
+                            .map(|L { loc, node }| L {
+                                loc: loc.clone(),
                                 node: node.subst_ids(substs),
                             })
                             .collect(),
