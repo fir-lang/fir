@@ -148,18 +148,8 @@ impl FunDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(NamedType { name, args }) => {
-                buffer.push_str(name);
-                if !args.is_empty() {
-                    buffer.push('[');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        arg.print(buffer);
-                    }
-                    buffer.push(']');
-                }
+            Type::Named(ty) => {
+                ty.print(buffer);
             }
 
             Type::Record { fields } => {
@@ -242,6 +232,22 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+        }
+    }
+}
+
+impl NamedType {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.name);
+        if !self.args.is_empty() {
+            buffer.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buffer.push_str(", ");
+                }
+                arg.print(buffer);
+            }
+            buffer.push(']');
         }
     }
 }
