@@ -199,7 +199,9 @@ impl ImplDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(ty) => ty.print(buffer),
+            Type::Named(ty) => {
+                ty.print(buffer);
+            }
 
             Type::Var(var) => buffer.push_str(var),
 

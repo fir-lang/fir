@@ -148,7 +148,9 @@ impl FunDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(ty) => ty.print(buffer),
+            Type::Named(ty) => {
+                ty.print(buffer);
+            }
 
             Type::Record { fields } => {
                 buffer.push('(');
