@@ -418,12 +418,6 @@ pub struct Constructor {
 }
 
 #[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
-}
-
-#[derive(Debug, Clone)]
 pub struct IfExpr {
     // At least one element
     pub branches: Vec<(L<Expr>, Vec<L<Stmt>>)>,

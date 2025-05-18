@@ -618,6 +618,7 @@ fn mono_expr(
             ty,
             constr,
             ty_args,
+            variant: _,
         }) => match ty {
             Some(ty) => {
                 let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
@@ -654,6 +655,19 @@ fn mono_expr(
             }
         },
 
+        /*
+        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
+            mono::Expr::Variant(mono::VariantExpr {
+                id: id.clone(),
+                args: args
+                    .iter()
+                    .map(|arg| {
+                        arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm, locals))
+                    })
+                    .collect(),
+            })
+        }
+        */
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
             member,
@@ -757,18 +771,6 @@ fn mono_expr(
                 })
                 .collect(),
         ),
-
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            mono::Expr::Variant(mono::VariantExpr {
-                id: id.clone(),
-                args: args
-                    .iter()
-                    .map(|arg| {
-                        arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm, locals))
-                    })
-                    .collect(),
-            })
-        }
 
         ast::Expr::Return(expr) => {
             mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
@@ -1194,7 +1196,12 @@ fn mono_pat(
         ),
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+            constr:
+                ast::Constructor {
+                    type_,
+                    constr,
+                    variant: _,
+                },
             fields,
             ignore_rest: _,
             ty_args,
@@ -1239,7 +1246,7 @@ fn mono_pat(
                 .collect(),
             ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
-
+        /*
         ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
             mono::Pat::Variant(mono::VariantPattern {
                 constr: constr.clone(),
@@ -1252,6 +1259,7 @@ fn mono_pat(
                     .collect(),
             })
         }
+        */
     }
 }
 

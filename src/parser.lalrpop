@@ -651,6 +651,14 @@ InlineExpr: Expr = {
             variant: false,
         }),
 
+    <id:TildeUpperId> =>
+        Expr::ConstrSelect(ConstrSelectExpr {
+            ty: None,
+            constr: SmolStr::new(&id.smol_str()[1..]),
+            ty_args: vec![],
+            variant: true
+        }),
+
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
@@ -660,6 +668,18 @@ InlineExpr: Expr = {
             constr,
             ty_args: vec![],
             variant: false,
+        })
+    },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = SmolStr::new(&parts.pop().unwrap()[1..]);
+        Expr::ConstrSelect(ConstrSelectExpr {
+            ty: Some(ty),
+            constr,
+            ty_args: vec![],
+            variant: true,
         })
     },
 
@@ -1109,11 +1129,21 @@ Constructor: Constructor = {
     <type_:UpperId> =>
         Constructor { type_: type_.smol_str(), constr: None, variant: false, },
 
+    <type_:TildeUpperId> =>
+        Constructor { type_: SmolStr::new(&type_.smol_str()[1..]), constr: None, variant: true, },
+
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Constructor { type_: ty, constr: Some(constr), variant: false }
+    },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = SmolStr::new(&parts.pop().unwrap()[1..]);
+        Constructor { type_: ty, constr: Some(constr), variant: true }
     }
 }
 
