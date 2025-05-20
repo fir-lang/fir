@@ -160,14 +160,13 @@ pub struct ConstrPattern {
 
     // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
-
-    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub type_: Id,
+    pub ty: Id,
     pub constr: Option<Id>,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
@@ -215,8 +214,7 @@ pub struct WhileStmt {
 pub enum Expr {
     LocalVar(Id),                     // a local variable
     TopVar(VarExpr),                  // a top-level function reference
-    Constr(ConstrExpr),               // a product constructor
-    ConstrSelect(ConstrSelectExpr),   // <id>.<id>, a sum constructor
+    ConstrSelect(Constructor),        // a product or sum constructor
     FieldSelect(FieldSelectExpr),     // <expr>.<id> (TODO: This could be lowered as function calls)
     MethodSelect(MethodSelectExpr),   // <id>.<id>, with an object captured as receiver
     AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
@@ -237,12 +235,6 @@ pub enum Expr {
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
-    pub id: Id,
-    pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrExpr {
     pub id: Id,
     pub ty_args: Vec<Type>,
 }
@@ -276,13 +268,6 @@ pub struct MethodSelectExpr {
     pub object: Box<L<Expr>>,
     pub method_ty_id: Id,
     pub method_id: Id,
-    pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
-    pub ty: Id,
-    pub constr: Id,
     pub ty_args: Vec<Type>,
 }
 

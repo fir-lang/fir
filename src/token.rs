@@ -1,6 +1,6 @@
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: TokenKind,
     pub text: SmolStr,
@@ -17,11 +17,17 @@ pub enum TokenKind {
     /// An identifier starting with an uppercase letter.
     UpperId,
 
+    /// `UpperId '.' UpperId`, without spaces in between.
+    UpperIdPath,
+
     /// An identifier starting with an uppercase letter, followed by a '['.
     UpperIdLBracket,
 
     /// An identifier starting with a '~' followed by uppercase letter.
     TildeUpperId,
+
+    /// `'~' UpperId '.' UpperId`, without spaces in between.
+    TildeUpperIdPath,
 
     /// An identifier starting with a lowercase letter.
     LowerId,

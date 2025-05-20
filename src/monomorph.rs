@@ -580,25 +580,6 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::Constr(ast::ConstrExpr { id, ty_args }) => {
-            let poly_ty_decl = match poly_pgm.ty.get(id) {
-                None => panic!("Unknown constructor {}", id),
-                Some(ty_decl) => ty_decl,
-            };
-
-            let mono_ty_args = ty_args
-                .iter()
-                .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                .collect::<Vec<_>>();
-
-            let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-
-            mono::Expr::Constr(mono::ConstrExpr {
-                id: mono_ty_id,
-                ty_args: mono_ty_args,
-            })
-        }
-
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
             mono::Expr::FieldSelect(mono::FieldSelectExpr {
                 object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
@@ -633,25 +614,46 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+        ast::Expr::ConstrSelect(ast::Constructor {
             ty,
             constr,
             ty_args,
-        }) => {
-            let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
+        }) => match constr {
+            Some(constr) => {
+                let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
-            let mono_ty_args = ty_args
-                .iter()
-                .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
-                .collect::<Vec<_>>();
+                let mono_ty_args = ty_args
+                    .iter()
+                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                    .collect::<Vec<_>>();
 
-            let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-            mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
-                ty: mono_ty_id,
-                constr: constr.clone(),
-                ty_args: mono_ty_args,
-            })
-        }
+                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+                mono::Expr::ConstrSelect(mono::Constructor {
+                    ty: mono_ty_id,
+                    constr: Some(constr.clone()),
+                    ty_args: mono_ty_args,
+                })
+            }
+            None => {
+                let poly_ty_decl = match poly_pgm.ty.get(ty) {
+                    None => panic!("Unknown constructor {}", ty),
+                    Some(ty_decl) => ty_decl,
+                };
+
+                let mono_ty_args = ty_args
+                    .iter()
+                    .map(|ty| mono_tc_ty(ty, ty_map, poly_pgm, mono_pgm))
+                    .collect::<Vec<_>>();
+
+                let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
+                mono::Expr::ConstrSelect(mono::Constructor {
+                    ty: mono_ty_id,
+                    constr: None,
+                    ty_args: mono_ty_args,
+                })
+            }
+        },
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
@@ -1193,12 +1195,16 @@ fn mono_pat(
         ),
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+            constr:
+                ast::Constructor {
+                    ty,
+                    constr,
+                    ty_args,
+                },
             fields,
             ignore_rest: _,
-            ty_args,
         }) => {
-            let ty_decl = poly_pgm.ty.get(type_).unwrap();
+            let ty_decl = poly_pgm.ty.get(ty).unwrap();
 
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()
@@ -1219,11 +1225,11 @@ fn mono_pat(
 
             mono::Pat::Constr(mono::ConstrPattern {
                 constr: mono::Constructor {
-                    type_: mono_ty_id,
+                    ty: mono_ty_id,
                     constr: constr.clone(),
+                    ty_args: mono_ty_args,
                 },
                 fields: mono_fields,
-                ty_args: mono_ty_args,
             })
         }
 

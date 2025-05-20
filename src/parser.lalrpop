@@ -2,7 +2,7 @@
 
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
-use crate::parser_utils::{parse_char_lit, process_param_list};
+use crate::parser_utils::*;
 use crate::token::*;
 
 use std::convert::Infallible;
@@ -20,8 +20,10 @@ extern {
 
     enum Token {
         UpperId => Token { kind: TokenKind::UpperId, .. },
+        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
+        TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
@@ -543,9 +545,9 @@ Stmt: Stmt = {
     <label:LoopLabel?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
         Stmt::While(WhileStmt {
             label,
-            cond: L::new(module, l, r, Expr::ConstrSelect(ConstrSelectExpr {
+            cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
                 ty: SmolStr::new_static("Bool"),
-                constr: SmolStr::new_static("True"),
+                constr: Some(SmolStr::new_static("True")),
                 ty_args: vec![],
             })),
             body,
@@ -641,7 +643,14 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::Constr(ConstrExpr { id: id.smol_str(), ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, ty_args: vec![] }),
+
+    <path:UpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), ty_args: vec![] })
+    },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
         match exprs.len() {
@@ -791,7 +800,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
         match expr {
-            Expr::Constr(ConstrExpr { id, ty_args: _ }) =>
+            Expr::ConstrSelect(Constructor { ty: id, constr: None, ty_args: _ }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
@@ -799,18 +808,6 @@ InlineExpr: Expr = {
                 field: field.smol_str(),
             }),
         },
-
-    <expr:InlineExpr> "." <constr:UpperId> => {
-        match expr {
-            Expr::Constr(ConstrExpr { id: ty, ty_args: _ }) => Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr: constr.smol_str(),
-                ty_args: vec![],
-            }),
-
-            _ => panic!(),
-        }
-    },
 
     #[precedence(level = "2")]
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
@@ -1110,23 +1107,26 @@ StrPfxBinder: Option<Id> = {
 }
 
 Constructor: Constructor = {
-    <type_:UpperId> "." <constr:UpperId> =>
-        Constructor { type_: type_.smol_str(), constr: Some(constr.smol_str()) },
+    <ty:UpperId> =>
+        Constructor { ty: ty.smol_str(), constr: None, ty_args: vec![] },
 
-    <type_:UpperId> =>
-        Constructor { type_: type_.smol_str(), constr: None },
+    <path:UpperIdPath> => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Constructor { ty, constr: Some(constr), ty_args: vec![] }
+    }
 }
 
 ConstrPattern: ConstrPattern = {
     <constr:Constructor> =>
-        ConstrPattern { constr, fields: vec![], ignore_rest: false, ty_args: vec![] },
+        ConstrPattern { constr, fields: vec![], ignore_rest: false },
 
     <constr:Constructor> "(" ".." ")" =>
         ConstrPattern {
             constr,
             fields: vec![],
             ignore_rest: true,
-            ty_args: vec![],
         },
 
     <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
@@ -1134,7 +1134,6 @@ ConstrPattern: ConstrPattern = {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ignore_rest: false,
-            ty_args: vec![],
         },
 
     <constr:Constructor> "(" <fields:(<PatternField> ",")+> ".." ")" =>
@@ -1142,7 +1141,6 @@ ConstrPattern: ConstrPattern = {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ignore_rest: true,
-            ty_args: vec![],
         },
 }
 

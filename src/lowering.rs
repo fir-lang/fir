@@ -1666,24 +1666,23 @@ fn lower_expr(
             Expr::TopVar(*indices.funs.get(id).unwrap().get(ty_args).unwrap())
         }
 
-        mono::Expr::Constr(mono::ConstrExpr { id, ty_args }) => {
-            Expr::Constr(*indices.product_cons.get(id).unwrap().get(ty_args).unwrap())
-        }
-
-        mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
+        mono::Expr::ConstrSelect(mono::Constructor {
             ty,
             constr,
             ty_args,
-        }) => Expr::Constr(
-            *indices
-                .sum_cons
-                .get(ty)
-                .unwrap()
-                .get(constr)
-                .unwrap()
-                .get(ty_args)
-                .unwrap(),
-        ),
+        }) => match constr {
+            Some(constr) => Expr::Constr(
+                *indices
+                    .sum_cons
+                    .get(ty)
+                    .unwrap()
+                    .get(constr)
+                    .unwrap()
+                    .get(ty_args)
+                    .unwrap(),
+            ),
+            None => Expr::Constr(*indices.product_cons.get(ty).unwrap().get(ty_args).unwrap()),
+        },
 
         mono::Expr::FieldSelect(mono::FieldSelectExpr { object, field }) => {
             Expr::FieldSelect(FieldSelectExpr {
@@ -1985,25 +1984,24 @@ fn lower_pat(
         },
 
         mono::Pat::Constr(mono::ConstrPattern {
-            constr: mono::Constructor { type_, constr },
+            constr:
+                mono::Constructor {
+                    ty,
+                    constr,
+                    ty_args,
+                },
             fields,
-            ty_args,
         }) => {
             let con_idx: HeapObjIdx = match constr {
                 Some(constr) => *indices
                     .sum_cons
-                    .get(type_)
+                    .get(ty)
                     .unwrap()
                     .get(constr)
                     .unwrap()
                     .get(ty_args)
                     .unwrap(),
-                None => *indices
-                    .product_cons
-                    .get(type_)
-                    .unwrap()
-                    .get(ty_args)
-                    .unwrap(),
+                None => *indices.product_cons.get(ty).unwrap().get(ty_args).unwrap(),
             };
             Pat::Constr(ConstrPattern {
                 constr: con_idx,

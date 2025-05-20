@@ -25,12 +25,12 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
                 ast::Constructor {
-                    type_: pat_ty_name,
+                    ty: pat_ty_name,
                     constr: pat_con_name,
+                    ty_args,
                 },
             fields: pat_fields,
             ignore_rest,
-            ty_args,
         }) => {
             debug_assert!(ty_args.is_empty());
 
@@ -338,10 +338,14 @@ pub(super) fn refine_pat_binders(
         }
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+            constr:
+                ast::Constructor {
+                    ty: type_,
+                    constr,
+                    ty_args: _,
+                },
             fields: field_pats,
             ignore_rest: _,
-            ty_args: _,
         }) => {
             let con_field_coverage = match coverage.get_con_fields(type_, constr.as_ref()) {
                 Some(coverage) => coverage,

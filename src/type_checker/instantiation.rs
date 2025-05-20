@@ -55,8 +55,7 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
         ast::Expr::Var(ast::VarExpr { ty_args, .. })
-        | ast::Expr::Constr(ast::ConstrExpr { ty_args, .. })
-        | ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty_args, .. })
+        | ast::Expr::ConstrSelect(ast::Constructor { ty_args, .. })
         | ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty_args, .. }) => ty_args
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
@@ -181,10 +180,9 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: _,
+            constr: ast::Constructor { ty_args, .. },
             fields,
             ignore_rest: _,
-            ty_args,
         }) => {
             for field in fields {
                 normalize_pat(&mut field.node.node, cons);

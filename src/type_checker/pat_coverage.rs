@@ -27,7 +27,7 @@ struct Con {
 impl Con {
     fn from_ast_con(con: &ast::Constructor) -> Self {
         Con {
-            ty: con.type_.clone(),
+            ty: con.ty.clone(),
             con: con.constr.clone(),
         }
     }
@@ -48,7 +48,6 @@ impl PatCoverage {
                 constr,
                 fields,
                 ignore_rest: _,
-                ty_args: _,
             }) => {
                 let con = Con::from_ast_con(constr);
                 let field_pats = self.cons.entry(con).or_default();

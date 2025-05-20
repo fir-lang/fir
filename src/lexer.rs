@@ -99,21 +99,22 @@ lexgen::lexer! {
         "%" = TokenKind::Percent,
         "^" = TokenKind::Caret,
 
-        let upper_id = $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
+        let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
         '~' $upper_id = TokenKind::TildeUpperId,
         $upper_id = TokenKind::UpperId,
-        '_' $upper_id = TokenKind::UpperId,
-        ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+        $upper_id '.' $upper_id = TokenKind::UpperIdPath,
+        '~' $upper_id '.' $upper_id = TokenKind::TildeUpperIdPath,
 
-        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')+ = TokenKind::Label,
+        '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+
+        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
 
         // Literals
         '"' => |lexer| {
             lexer.switch(LexerRule::String)
         },
 
-        // TODO: We should probably leave defaulting to the type checker.
-        let int = ['0'-'9' '_']+;
+        let int = ['0'-'9'] ['0'-'9' '_']*;
         $int+ = TokenKind::Int(None),
         $int+ "i32" = TokenKind::Int(Some(IntKind::I32)),
         $int+ "u32" = TokenKind::Int(Some(IntKind::U32)),
@@ -215,4 +216,66 @@ pub fn lex(src: &str, module: &str) -> Vec<(Loc, Token, Loc)> {
             )
         })
         .collect()
+}
+
+#[test]
+fn lex_ids() {
+    let input = "a _a __a __a__a_ B _B __B __B__B_";
+    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+    assert_eq!(
+        tokens,
+        vec![
+            Token {
+                kind: TokenKind::LowerId,
+                text: "a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "_a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "__a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "__a__a_".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "_B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "__B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "__B__B_".into(),
+            }
+        ]
+    );
+}
+
+#[test]
+fn lex_underscores() {
+    let input = "__";
+    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+    assert_eq!(
+        tokens,
+        vec![
+            Token {
+                kind: TokenKind::Underscore,
+                text: "_".into(),
+            },
+            Token {
+                kind: TokenKind::Underscore,
+                text: "_".into(),
+            }
+        ]
+    );
 }

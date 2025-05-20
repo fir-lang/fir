@@ -397,9 +397,6 @@ pub struct ConstrPattern {
 
     /// Whether we ignore fields with `..`: `MyStruct(a = 1u32, ..)`.
     pub ignore_rest: bool,
-
-    /// Inferred type arguments of the constructor. Filled in by the type checker.
-    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -411,8 +408,9 @@ pub struct RecordPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub type_: Id,
+    pub ty: Id,
     pub constr: Option<Id>,
+    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -476,11 +474,8 @@ pub enum Expr {
     /// A variable: `x`.
     Var(VarExpr),
 
-    /// A product constructor: `Vec`, `Bool`, `I32`.
-    Constr(ConstrExpr),
-
-    /// A sum constructor: `Option.None`, `Result.Ok`, `Bool.True`.
-    ConstrSelect(ConstrSelectExpr),
+    /// A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
+    ConstrSelect(Constructor),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
@@ -548,14 +543,6 @@ pub struct VarExpr {
     pub id: Id,
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
-    pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrExpr {
-    pub id: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
@@ -628,16 +615,6 @@ pub struct MethodSelectExpr {
     ///
     /// (If the method is not a trait method, then we don't care about the type parameter order.. I
     /// think?)
-    pub ty_args: Vec<Ty>,
-}
-
-/// A constructor selection: `Option.None`.
-#[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
-    pub ty: Id,
-    pub constr: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
@@ -1005,7 +982,6 @@ impl Expr {
     pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
         match self {
             Expr::Var(_)
-            | Expr::Constr(_)
             | Expr::ConstrSelect(_)
             | Expr::AssocFnSelect(_)
             | Expr::Int(_)

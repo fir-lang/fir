@@ -199,18 +199,8 @@ impl ImplDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(NamedType { name, args }) => {
-                buffer.push_str(name);
-                if !args.is_empty() {
-                    buffer.push('[');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        arg.node.print(buffer);
-                    }
-                    buffer.push(']');
-                }
+            Type::Named(ty) => {
+                ty.print(buffer);
             }
 
             Type::Var(var) => buffer.push_str(var),
@@ -308,6 +298,22 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+        }
+    }
+}
+
+impl NamedType {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.name);
+        if !self.args.is_empty() {
+            buffer.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buffer.push_str(", ");
+                }
+                arg.node.print(buffer);
+            }
+            buffer.push(']');
         }
     }
 }
@@ -466,7 +472,7 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::Var(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }
@@ -511,12 +517,11 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr: member,
-                ty_args,
-            })
-            | Expr::AssocFnSelect(AssocFnSelectExpr {
+            Expr::ConstrSelect(constr) => {
+                constr.print(buffer);
+            }
+
+            Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
                 member,
                 ty_args,
@@ -531,7 +536,6 @@ impl Expr {
                 let parens = !matches!(
                     &fun.node,
                     Expr::Var(_)
-                        | Expr::Constr(_)
                         | Expr::FieldSelect(_)
                         | Expr::ConstrSelect(_)
                         | Expr::MethodSelect(_)
@@ -815,27 +819,11 @@ impl Pat {
             }
 
             Pat::Constr(ConstrPattern {
-                constr: Constructor { type_, constr },
+                constr,
                 fields,
                 ignore_rest,
-                ty_args,
             }) => {
-                buffer.push_str(type_);
-                if let Some(constr) = constr {
-                    buffer.push('.');
-                    buffer.push_str(constr);
-                }
-
-                if !ty_args.is_empty() {
-                    buffer.push('[');
-                    for (i, ty_arg) in ty_args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        buffer.push_str(&ty_arg.to_string());
-                    }
-                    buffer.push(']');
-                }
+                constr.print(buffer);
 
                 if !fields.is_empty() || *ignore_rest {
                     buffer.push('(');
@@ -946,6 +934,17 @@ impl Pat {
     }
 }
 
+impl Constructor {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.ty);
+        if let Some(constr) = &self.constr {
+            buffer.push('.');
+            buffer.push_str(constr);
+        }
+        print_ty_args(&self.ty_args, buffer);
+    }
+}
+
 fn print_context(context: &Context, buffer: &mut String) {
     if context.type_params.is_empty() && context.preds.is_empty() {
         return;
@@ -995,7 +994,7 @@ fn print_ty_args(args: &[Ty], buffer: &mut String) {
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::Var(_) | Expr::Constr(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
+        Expr::Var(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
     )
 }
 
