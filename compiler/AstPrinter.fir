@@ -1,10 +1,10 @@
 Expr.pprint(self): Doc
     match self:
-        Expr.Var(VarExpr(id, tyArgs)) | Expr.Constr(ConstrExpr(id, tyArgs)):
+        Expr.Var(VarExpr(id, tyArgs)):
             Doc.str(id.name) + _ppTyArgs(tyArgs)
 
-        Expr.ConstrSelect(ConstrSelectExpr(ty, constr, tyArgs)):
-            Doc.str(ty.name) + Doc.char('.') + Doc.str(constr.name) + _ppTyArgs(tyArgs)
+        Expr.ConstrSelect(constr):
+            constr.pprint()
 
         Expr.FieldSelect(FieldSelectExpr(object, field)):
             let addParens = _needsParens(object.node)
@@ -187,11 +187,8 @@ Pat.pprint(self): Doc
         Pat.Var(VarPat(var_, ty)):
             Doc.str(var_.name)
 
-        Pat.Constr(ConstrPat(constr, fields, tyArgs)):
-            let doc = Doc.str(constr.type_.name)
-            if constr.constr is Option.Some(constr):
-                doc += Doc.char('.') + Doc.str(constr.name)
-            doc + parens(_ppNamedList(fields, Pat.pprint))
+        Pat.Constr(ConstrPat(constr, fields)):
+            constr.pprint() + parens(_ppNamedList(fields, Pat.pprint))
 
         Pat.Variant(VariantPat(constr, fields)):
             Doc.char('~') + Doc.str(constr.name) + parens(_ppNamedList(fields, Pat.pprint))
@@ -254,6 +251,12 @@ FunSig.pprint(self): Doc
 
     doc
 
+Constructor.pprint(self): Doc
+    let doc = Doc.str(self.ty.name)
+    if self.constr is Option.Some(constr):
+        doc += Doc.char('.') + Doc.str(constr.name)
+    doc + _ppTyArgs(self.tyArgs)
+
 _ppTyArgs(args: Vec[L[Type]]): Doc
     if args.len() == 0:
         return Doc.empty()
@@ -294,7 +297,7 @@ _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
 
     for stmt: L[Stmt] in body.iter():
         doc += stmt.node.pprint() + Doc.hardLine()
-        
+
     doc
 
 _ppVariantAlt(alt: VariantAlt): Doc

@@ -301,26 +301,23 @@ type ConstrPat:
     constr: Constructor
     fields: Vec[Named[L[Pat]]]
 
-    # Inferred type arguments of the constructor. Filled in by the type checker.
-    tyArgs: Vec[L[Type]]   # TODO: This should be type-checking type instead of AST type
-
 type VariantPat:
     constr: Id
     fields: Vec[Named[L[Pat]]]
 
 type Constructor:
-    type_: Id
+    ty: Id
     constr: Option[Id]
+
+    # Inferred type arguments of the constructor. Filled in by the type checker.
+    tyArgs: Vec[L[Type]]
 
 type Expr:
     ## A variable: `x`.
     Var(VarExpr)
 
-    ## A product constructor: `Vec`, `Bool`, `I32`.
-    Constr(ConstrExpr)
-
-    ## A sum constructor: `Option.None`, `Result.Ok`, `Bool.True`.
-    ConstrSelect(ConstrSelectExpr)
+    ## A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
+    ConstrSelect(Constructor)
 
     ## A field selection: `<expr>.x` where `x` is a field.
     ##
@@ -390,14 +387,6 @@ type VarExpr:
 
 type ConstrExpr:
     id: Id
-
-    ## Inferred type arguments of the constructor. Filled by the type checker.
-    tyArgs: Vec[L[Type]]
-
-## A constructor selection: `Option.None`.
-type ConstrSelectExpr:
-    ty: Id
-    constr: Id
 
     ## Inferred type arguments of the constructor. Filled by the type checker.
     tyArgs: Vec[L[Type]]
