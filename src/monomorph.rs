@@ -628,9 +628,9 @@ fn mono_expr(
                     .collect::<Vec<_>>();
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
-                mono::Expr::ConstrSelect(mono::ConstrSelectExpr {
+                mono::Expr::ConstrSelect(mono::Constructor {
                     ty: mono_ty_id,
-                    constr: constr.clone(),
+                    constr: Some(constr.clone()),
                     ty_args: mono_ty_args,
                 })
             }
@@ -647,8 +647,9 @@ fn mono_expr(
 
                 let mono_ty_id = mono_ty_decl(poly_ty_decl, &mono_ty_args, poly_pgm, mono_pgm);
 
-                mono::Expr::Constr(mono::ConstrExpr {
-                    id: mono_ty_id,
+                mono::Expr::ConstrSelect(mono::Constructor {
+                    ty: mono_ty_id,
+                    constr: None,
                     ty_args: mono_ty_args,
                 })
             }
@@ -1224,11 +1225,11 @@ fn mono_pat(
 
             mono::Pat::Constr(mono::ConstrPattern {
                 constr: mono::Constructor {
-                    type_: mono_ty_id,
+                    ty: mono_ty_id,
                     constr: constr.clone(),
+                    ty_args: mono_ty_args,
                 },
                 fields: mono_fields,
-                ty_args: mono_ty_args,
             })
         }
 

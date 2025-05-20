@@ -249,11 +249,7 @@ fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>, variants: &mut Set
         | mono::Pat::StrPfx(_, _)
         | mono::Pat::Char(_) => {}
 
-        mono::Pat::Constr(mono::ConstrPattern {
-            constr: _,
-            fields,
-            ty_args: _,
-        }) => {
+        mono::Pat::Constr(mono::ConstrPattern { constr: _, fields }) => {
             for field in fields {
                 visit_pat(&field.node.node, records, variants);
             }
@@ -281,7 +277,8 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
     match expr {
         mono::Expr::LocalVar(_)
         | mono::Expr::TopVar(_)
-        | mono::Expr::Constr(_)
+        | mono::Expr::ConstrSelect(_)
+        | mono::Expr::AssocFnSelect(_)
         | mono::Expr::Int(_)
         | mono::Expr::Char(_) => {}
 
@@ -306,8 +303,6 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
         }) => {
             visit_expr(&object.node, records, variants);
         }
-
-        mono::Expr::ConstrSelect(_) | mono::Expr::AssocFnSelect(_) => {}
 
         mono::Expr::Call(mono::CallExpr { fun, args }) => {
             visit_expr(&fun.node, records, variants);

@@ -399,7 +399,7 @@ impl Expr {
                 buffer.push_str(id);
             }
 
-            Expr::TopVar(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::TopVar(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
             }
@@ -443,12 +443,11 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr: member,
-                ty_args,
-            })
-            | Expr::AssocFnSelect(AssocFnSelectExpr {
+            Expr::ConstrSelect(constr) => {
+                constr.print(buffer);
+            }
+
+            Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
                 member,
                 ty_args,
@@ -464,7 +463,6 @@ impl Expr {
                     &fun.node,
                     Expr::LocalVar(_)
                         | Expr::TopVar(_)
-                        | Expr::Constr(_)
                         | Expr::FieldSelect(_)
                         | Expr::ConstrSelect(_)
                         | Expr::MethodSelect(_)
@@ -735,11 +733,15 @@ impl Pat {
             }
 
             Pat::Constr(ConstrPattern {
-                constr: Constructor { type_, constr },
+                constr:
+                    Constructor {
+                        ty,
+                        constr,
+                        ty_args,
+                    },
                 fields,
-                ty_args,
             }) => {
-                buffer.push_str(type_);
+                buffer.push_str(ty);
                 if let Some(constr) = constr {
                     buffer.push('.');
                     buffer.push_str(constr);
@@ -838,14 +840,21 @@ impl Pat {
     }
 }
 
+impl Constructor {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.ty);
+        if let Some(constr) = &self.constr {
+            buffer.push('.');
+            buffer.push_str(constr);
+        }
+        print_ty_args(&self.ty_args, buffer);
+    }
+}
+
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::LocalVar(_)
-            | Expr::TopVar(_)
-            | Expr::Constr(_)
-            | Expr::FieldSelect(_)
-            | Expr::ConstrSelect(_)
+        Expr::LocalVar(_) | Expr::TopVar(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
     )
 }
 
