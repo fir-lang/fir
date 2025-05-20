@@ -56,9 +56,9 @@ Parser.simpleExpr(self): Error L[Expr]
                         self._idx += 1
                         L(
                             loc = leftLoc.combine(rightLoc), node =
-                            Expr.ConstrSelect(ConstrSelectExpr(
+                            Expr.ConstrSelect(Constructor(
                                 ty = self._id(token),
-                                constr = self._id(next),
+                                constr = Option.Some(self._id(next)),
                                 tyArgs = Vec.withCapacity(0)))
                         )
                     other:
@@ -68,8 +68,9 @@ Parser.simpleExpr(self): Error L[Expr]
             else:
                 L(
                     loc = leftLoc,
-                    node = Expr.Constr(ConstrExpr(
-                        id = self._id(token),
+                    node = Expr.ConstrSelect(Constructor(
+                        ty = self._id(token),
+                        constr = Option.None,
                         tyArgs = Vec.withCapacity(0)))
                 )
 
@@ -466,7 +467,7 @@ parserTests
 
     _parserTest("simpleExpr - Constr", "A", Parser.simpleExpr, fn(ast) {
         match ast.node:
-            Expr.Constr(constr): assertEq("A", constr.id.name)
+            Expr.ConstrSelect(constr): assertEq("A", constr.ty.name)
             _: throw(~AssertionError(msg = "Expected constr"))
     })
 
@@ -474,7 +475,7 @@ parserTests
         match ast.node:
             Expr.ConstrSelect(constr):
                 assertEq("A", constr.ty.name)
-                assertEq("B", constr.constr.name)
+                assertEq("B", constr.constr.unwrap().name)
             _:
                 throw(~AssertionError(msg = "Expected constr selection"))
     })
