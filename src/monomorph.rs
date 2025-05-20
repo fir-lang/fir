@@ -614,12 +614,12 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+        ast::Expr::ConstrSelect(ast::Constructor {
             ty,
             constr,
             ty_args,
-        }) => match ty {
-            Some(ty) => {
+        }) => match constr {
+            Some(constr) => {
                 let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
 
                 let mono_ty_args = ty_args
@@ -635,8 +635,8 @@ fn mono_expr(
                 })
             }
             None => {
-                let poly_ty_decl = match poly_pgm.ty.get(constr) {
-                    None => panic!("Unknown constructor {}", constr),
+                let poly_ty_decl = match poly_pgm.ty.get(ty) {
+                    None => panic!("Unknown constructor {}", ty),
                     Some(ty_decl) => ty_decl,
                 };
 
@@ -1194,12 +1194,16 @@ fn mono_pat(
         ),
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: ast::Constructor { type_, constr },
+            constr:
+                ast::Constructor {
+                    ty,
+                    constr,
+                    ty_args,
+                },
             fields,
             ignore_rest: _,
-            ty_args,
         }) => {
-            let ty_decl = poly_pgm.ty.get(type_).unwrap();
+            let ty_decl = poly_pgm.ty.get(ty).unwrap();
 
             let mono_ty_args: Vec<mono::Type> = ty_args
                 .iter()

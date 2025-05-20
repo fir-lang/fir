@@ -517,17 +517,8 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr,
-                ty_args,
-            }) => {
-                if let Some(ty) = ty {
-                    buffer.push_str(ty);
-                    buffer.push('.');
-                }
-                buffer.push_str(constr);
-                print_ty_args(ty_args, buffer);
+            Expr::ConstrSelect(constr) => {
+                constr.print(buffer);
             }
 
             Expr::AssocFnSelect(AssocFnSelectExpr {
@@ -828,27 +819,11 @@ impl Pat {
             }
 
             Pat::Constr(ConstrPattern {
-                constr: Constructor { type_, constr },
+                constr,
                 fields,
                 ignore_rest,
-                ty_args,
             }) => {
-                buffer.push_str(type_);
-                if let Some(constr) = constr {
-                    buffer.push('.');
-                    buffer.push_str(constr);
-                }
-
-                if !ty_args.is_empty() {
-                    buffer.push('[');
-                    for (i, ty_arg) in ty_args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        buffer.push_str(&ty_arg.to_string());
-                    }
-                    buffer.push(']');
-                }
+                constr.print(buffer);
 
                 if !fields.is_empty() || *ignore_rest {
                     buffer.push('(');
@@ -956,6 +931,17 @@ impl Pat {
                 buffer.push(')');
             }
         }
+    }
+}
+
+impl Constructor {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.ty);
+        if let Some(constr) = &self.constr {
+            buffer.push('.');
+            buffer.push_str(constr);
+        }
+        print_ty_args(&self.ty_args, buffer);
     }
 }
 

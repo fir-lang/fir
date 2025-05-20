@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.1"
-// sha3: bca54341efe7324e434be4a590b8479d2048c825f1a8500a609b1a364a7c4ad9
+// sha3: da2e9f647af72997340e1bd90666559da9d53e99e8ed38a8b2745911daab9fb1
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -44368,9 +44368,9 @@ fn __action75<'a>(
             module,
             l,
             r,
-            Expr::ConstrSelect(ConstrSelectExpr {
-                ty: Some(SmolStr::new_static("Bool")),
-                constr: SmolStr::new_static("True"),
+            Expr::ConstrSelect(Constructor {
+                ty: SmolStr::new_static("Bool"),
+                constr: Some(SmolStr::new_static("True")),
                 ty_args: vec![],
             }),
         ),
@@ -44634,9 +44634,9 @@ fn __action92<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
     clippy::just_underscores_and_digits
 )]
 fn __action93<'a>(module: &'a Rc<str>, (_, id, _): (Loc, Token, Loc)) -> Expr {
-    Expr::ConstrSelect(ConstrSelectExpr {
-        ty: None,
-        constr: id.smol_str(),
+    Expr::ConstrSelect(Constructor {
+        ty: id.smol_str(),
+        constr: None,
         ty_args: vec![],
     })
 }
@@ -44652,9 +44652,9 @@ fn __action94<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Expr 
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(ConstrSelectExpr {
-            ty: Some(ty),
-            constr,
+        Expr::ConstrSelect(Constructor {
+            ty,
+            constr: Some(constr),
             ty_args: vec![],
         })
     }
@@ -44909,9 +44909,9 @@ fn __action102<'a>(
     (_, field, _): (Loc, Token, Loc),
 ) -> Expr {
     match expr {
-        Expr::ConstrSelect(ConstrSelectExpr {
-            ty: None,
-            constr: id,
+        Expr::ConstrSelect(Constructor {
+            ty: id,
+            constr: None,
             ty_args: _,
         }) => Expr::AssocFnSelect(AssocFnSelectExpr {
             ty: id,
@@ -45919,10 +45919,11 @@ fn __action157<'a>(module: &'a Rc<str>, (_, __0, _): (Loc, Token, Loc)) -> Optio
     clippy::needless_lifetimes,
     clippy::just_underscores_and_digits
 )]
-fn __action158<'a>(module: &'a Rc<str>, (_, type_, _): (Loc, Token, Loc)) -> Constructor {
+fn __action158<'a>(module: &'a Rc<str>, (_, ty, _): (Loc, Token, Loc)) -> Constructor {
     Constructor {
-        type_: type_.smol_str(),
+        ty: ty.smol_str(),
         constr: None,
+        ty_args: vec![],
     }
 }
 
@@ -45938,8 +45939,9 @@ fn __action159<'a>(module: &'a Rc<str>, (_, path, _): (Loc, Token, Loc)) -> Cons
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
         Constructor {
-            type_: ty,
+            ty,
             constr: Some(constr),
+            ty_args: vec![],
         }
     }
 }
@@ -45955,7 +45957,6 @@ fn __action160<'a>(module: &'a Rc<str>, (_, constr, _): (Loc, Constructor, Loc))
         constr,
         fields: vec![],
         ignore_rest: false,
-        ty_args: vec![],
     }
 }
 
@@ -45976,7 +45977,6 @@ fn __action161<'a>(
         constr,
         fields: vec![],
         ignore_rest: true,
-        ty_args: vec![],
     }
 }
 
@@ -46000,7 +46000,6 @@ fn __action162<'a>(
             .map(|(name, pat)| Named { name, node: pat })
             .collect(),
         ignore_rest: false,
-        ty_args: vec![],
     }
 }
 
@@ -46025,7 +46024,6 @@ fn __action163<'a>(
             .map(|(name, pat)| Named { name, node: pat })
             .collect(),
         ignore_rest: true,
-        ty_args: vec![],
     }
 }
 

@@ -397,9 +397,6 @@ pub struct ConstrPattern {
 
     /// Whether we ignore fields with `..`: `MyStruct(a = 1u32, ..)`.
     pub ignore_rest: bool,
-
-    /// Inferred type arguments of the constructor. Filled in by the type checker.
-    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -411,8 +408,9 @@ pub struct RecordPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub type_: Id,
+    pub ty: Id,
     pub constr: Option<Id>,
+    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -477,7 +475,7 @@ pub enum Expr {
     Var(VarExpr),
 
     /// A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
-    ConstrSelect(ConstrSelectExpr),
+    ConstrSelect(Constructor),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
@@ -617,15 +615,6 @@ pub struct MethodSelectExpr {
     ///
     /// (If the method is not a trait method, then we don't care about the type parameter order.. I
     /// think?)
-    pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
-    pub ty: Option<Id>,
-    pub constr: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
     pub ty_args: Vec<Ty>,
 }
 

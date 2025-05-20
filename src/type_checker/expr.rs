@@ -180,15 +180,15 @@ pub(super) fn check_expr(
 
         ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
 
-        ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+        ast::Expr::ConstrSelect(ast::Constructor {
             ty,
             constr,
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
 
-            let scheme = match ty {
-                Some(ty) => tc_state
+            let scheme = match constr {
+                Some(constr) => tc_state
                     .tys
                     .associated_fn_schemes
                     .get(ty)
@@ -208,14 +208,14 @@ pub(super) fn check_expr(
                             constr
                         )
                     }),
-                None => tc_state.tys.top_schemes.get(constr).unwrap_or_else(|| {
-                    panic!("{}: Unknown constructor {}", loc_display(&expr.loc), constr)
+                None => tc_state.tys.top_schemes.get(ty).unwrap_or_else(|| {
+                    panic!("{}: Unknown constructor {}", loc_display(&expr.loc), ty)
                 }),
             };
 
             let (con_ty, con_ty_args) =
                 scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
-            expr.node = ast::Expr::ConstrSelect(ast::ConstrSelectExpr {
+            expr.node = ast::Expr::ConstrSelect(ast::Constructor {
                 ty: ty.clone(),
                 constr: constr.clone(),
                 ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
