@@ -73,58 +73,6 @@ pub(super) fn check_expr(
             panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
         }
 
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, ref mut node } in args.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant expression with unnamed args not supported yet",
-                        loc_display(&expr.loc)
-                    ),
-                };
-                let (ty, _) = check_expr(tc_state, node, None, level, loop_stack);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant expression with dupliate fields",
-                        loc_display(&expr.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            let ty = Ty::Anonymous {
-                labels: [(id.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Variant),
-                    expr.loc.clone(),
-                )))),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
-            };
-
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
         // <object:Expr>.<field:Id>.
         // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
         ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
@@ -184,14 +132,19 @@ pub(super) fn check_expr(
             ty,
             constr,
             ty_args,
+            variant,
         }) => {
             assert!(ty_args.is_empty());
 
-            let scheme = match constr {
+            let ty = ty.clone();
+            let constr = constr.clone();
+            let variant = *variant;
+
+            let scheme = match &constr {
                 Some(constr) => tc_state
                     .tys
                     .associated_fn_schemes
-                    .get(ty)
+                    .get(&ty)
                     .unwrap_or_else(|| {
                         panic!(
                             "{}: Type {} is not in type environment",
@@ -208,21 +161,65 @@ pub(super) fn check_expr(
                             constr
                         )
                     }),
-                None => tc_state.tys.top_schemes.get(ty).unwrap_or_else(|| {
+                None => tc_state.tys.top_schemes.get(&ty).unwrap_or_else(|| {
                     panic!("{}: Unknown constructor {}", loc_display(&expr.loc), ty)
                 }),
             };
 
             let (con_ty, con_ty_args) =
                 scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+
             expr.node = ast::Expr::ConstrSelect(ast::Constructor {
                 ty: ty.clone(),
                 constr: constr.clone(),
                 ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
+                variant,
             });
+
+            let ty: Ty = if variant {
+                match con_ty {
+                    Ty::Con(_, _) => Ty::Anonymous {
+                        labels: [(ty.clone(), con_ty.clone())].into_iter().collect(),
+                        extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                            level,
+                            Kind::Row(RecordOrVariant::Variant),
+                            expr.loc.clone(),
+                        )))),
+                        kind: RecordOrVariant::Variant,
+                        is_row: false,
+                    },
+
+                    Ty::Fun {
+                        args,
+                        ret,
+                        exceptions,
+                    } => {
+                        assert!(exceptions.is_none());
+                        Ty::Fun {
+                            args: args.clone(),
+                            ret: Box::new(Ty::Anonymous {
+                                labels: [(ty.clone(), (*ret).clone())].into_iter().collect(),
+                                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
+                                    level,
+                                    Kind::Row(RecordOrVariant::Variant),
+                                    expr.loc.clone(),
+                                )))),
+                                kind: RecordOrVariant::Variant,
+                                is_row: false,
+                            }),
+                            exceptions: None,
+                        }
+                    }
+
+                    _ => panic!(),
+                }
+            } else {
+                con_ty.clone()
+            };
+
             (
                 unify_expected_ty(
-                    con_ty,
+                    ty,
                     expected_ty,
                     tc_state.tys.tys.cons(),
                     tc_state.var_gen,

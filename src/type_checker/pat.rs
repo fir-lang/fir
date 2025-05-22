@@ -147,14 +147,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 &pat.loc,
                 *ignore_rest,
             );
-            
+
             if *variant {
                 let extension_var = Ty::Var(tc_state.var_gen.new_var(
                     level,
                     Kind::Row(RecordOrVariant::Variant),
                     pat.loc.clone(),
                 ));
-                
+
                 Ty::Anonymous {
                     labels: [(pat_ty_name.clone(), pat_ty)].into_iter().collect(),
                     extension: Some(Box::new(extension_var)),
