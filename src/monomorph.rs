@@ -618,6 +618,7 @@ fn mono_expr(
             ty,
             constr,
             ty_args,
+            variant: _,
         }) => match constr {
             Some(constr) => {
                 let poly_ty_decl = poly_pgm.ty.get(ty).unwrap();
@@ -758,18 +759,6 @@ fn mono_expr(
                 })
                 .collect(),
         ),
-
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            mono::Expr::Variant(mono::VariantExpr {
-                id: id.clone(),
-                args: args
-                    .iter()
-                    .map(|arg| {
-                        arg.map_as_ref(|arg| mono_l_expr(arg, ty_map, poly_pgm, mono_pgm, locals))
-                    })
-                    .collect(),
-            })
-        }
 
         ast::Expr::Return(expr) => {
             mono::Expr::Return(mono_bl_expr(expr, ty_map, poly_pgm, mono_pgm, locals))
@@ -1200,6 +1189,7 @@ fn mono_pat(
                     ty,
                     constr,
                     ty_args,
+                    variant: _,
                 },
             fields,
             ignore_rest: _,
@@ -1244,19 +1234,6 @@ fn mono_pat(
                 .collect(),
             ty: mono_tc_ty(inferred_ty.as_ref().unwrap(), ty_map, poly_pgm, mono_pgm),
         }),
-
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            mono::Pat::Variant(mono::VariantPattern {
-                constr: constr.clone(),
-                fields: fields
-                    .iter()
-                    .map(|Named { name, node }| Named {
-                        name: name.clone(),
-                        node: mono_l_pat(node, ty_map, poly_pgm, mono_pgm, locals),
-                    })
-                    .collect(),
-            })
-        }
     }
 }
 

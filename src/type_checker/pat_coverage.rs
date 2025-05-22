@@ -68,11 +68,6 @@ impl PatCoverage {
                 }
             }
 
-            ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-                let variant_pats = self.variants.entry(constr.clone()).or_default();
-                variant_pats.add(fields);
-            }
-
             ast::Pat::Record(ast::RecordPattern {
                 fields,
                 ignore_rest: _,
