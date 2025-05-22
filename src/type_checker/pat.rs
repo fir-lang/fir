@@ -28,6 +28,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                     ty: pat_ty_name,
                     constr: pat_con_name,
                     ty_args,
+                    variant,
                 },
             fields: pat_fields,
             ignore_rest,

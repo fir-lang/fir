@@ -242,25 +242,11 @@ impl Type {
                 } else {
                     buffer.push('[');
                 }
-                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                for (i, alt) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    buffer.push_str(con);
-                    if !fields.is_empty() {
-                        buffer.push('(');
-                        for (i, Named { name, node }) in fields.iter().enumerate() {
-                            if i != 0 {
-                                buffer.push_str(", ");
-                            }
-                            if let Some(name) = name {
-                                buffer.push_str(name);
-                                buffer.push_str(": ");
-                            }
-                            node.print(buffer);
-                        }
-                        buffer.push(')');
-                    }
+                    alt.print(buffer);
                 }
                 if let Some(ext) = extension {
                     if !alts.is_empty() {
@@ -475,25 +461,6 @@ impl Expr {
             Expr::Var(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
-            }
-
-            Expr::Variant(VariantExpr { id, args }) => {
-                buffer.push('~');
-                buffer.push_str(id);
-                if !args.is_empty() {
-                    buffer.push('(');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &arg.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.node.print(buffer, 0);
-                    }
-                    buffer.push(')');
-                }
             }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
@@ -847,24 +814,6 @@ impl Pat {
                 }
             }
 
-            Pat::Variant(VariantPattern { constr, fields }) => {
-                buffer.push_str(constr);
-                if !fields.is_empty() {
-                    buffer.push('(');
-                    for (i, field) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &field.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        field.node.node.print(buffer);
-                    }
-                    buffer.push(')');
-                }
-            }
-
             Pat::Record(RecordPattern {
                 fields,
                 ignore_rest,
@@ -936,6 +885,9 @@ impl Pat {
 
 impl Constructor {
     pub fn print(&self, buffer: &mut String) {
+        if self.variant {
+            buffer.push('~');
+        }
         buffer.push_str(&self.ty);
         if let Some(constr) = &self.constr {
             buffer.push('.');
