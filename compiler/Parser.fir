@@ -561,8 +561,7 @@ parserTests
             Type.Named(NamedType(name, args)):
                 assertEq("Foo", name.name)
                 assertEq(2u32, args.len())
-                # BUG TODO: Enabling both of these lines causes an interpreter panic. Enabling only
-                # one works.
+                # BUG(#122): `is` expression below updates `args` in the next statement.
                 # assert(args.get(0).node is Type.Named(NamedType(args, ..)) && args.len() == 0, "Wrong first arg")
                 # assert(args.get(1).node is Type.Var(_), "Wrong second arg")
             other: throw(~AssertionError(msg = "Expected named type args, found `other.pprint().print(80)`"))
