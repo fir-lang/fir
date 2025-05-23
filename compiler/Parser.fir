@@ -325,12 +325,40 @@ Parser.ltype(self): Error L[Type]
 
     match first.kind:
         TokenKind.UpperId:
+            let lastToken = first
+
+            # BUG TODO: We can't have capacity 0 here, interpreter crashes.
+            let args: Vec[L[Type]] = Vec.withCapacity(10)
+
             if self._nextOpt() is Option.Some(Token(kind = TokenKind.LBracket, ..)):
                 self._idx += 1
-                panic("TODO: type parameters")
 
-            L(node = Type.Named(NamedType(name = self._id(first), args = Vec.withCapacity(0))),
-                loc = self._tokenLoc(first))
+                let expectBracket = Bool.False
+
+                loop:
+                    let typeToken = self._next()
+
+                    if typeToken.kind is TokenKind.RBracket:
+                        self._idx += 1
+                        lastToken = typeToken
+                        break
+
+                    args.push(self.ltype())
+
+                    if self._next().kind is TokenKind.Comma:
+                        self._idx += 1
+                    elif self._next().kind is TokenKind.RBracket:
+                        break
+                    else:
+                        throw(Error(
+                            loc = self._tokenLoc(self._next()),
+                            msg = "expected ',' or ']'"))
+
+                if expectBracket:
+                    self._expect(TokenKind.RBracket)
+
+            L(node = Type.Named(NamedType(name = self._id(first), args)),
+                loc = self._tokenLoc(first).combine(self._tokenLoc(lastToken)))
 
         TokenKind.LowerId:
             L(node = Type.Var(self._id(first)), loc = self._tokenLoc(first))
@@ -527,6 +555,18 @@ parserTests
                 assertEq("Foo", name.name)
                 assertEq(0u32, args.len())
             other: throw(~AssertionError(msg = "Expected named type wo args, found `other.pprint().print(80)`"))
+    })
+
+    _parserTest("type - named w args", "Foo[A, b]", Parser.ltype, fn(ast) {
+        match ast.node:
+            Type.Named(NamedType(name, args)):
+                assertEq("Foo", name.name)
+                assertEq(2u32, args.len())
+                # BUG TODO: Enabling both of these lines causes an interpreter panic. Enabling only
+                # one works.
+                # assert(args.get(0).node is Type.Named(NamedType(args, ..)) && args.len() == 0, "Wrong first arg")
+                # assert(args.get(1).node is Type.Var(_), "Wrong second arg")
+            other: throw(~AssertionError(msg = "Expected named type args, found `other.pprint().print(80)`"))
     })
 
     _parserTest("type - variable", "foo", Parser.ltype, fn(ast) {
