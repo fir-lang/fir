@@ -590,39 +590,38 @@ pub struct FunScope {
 impl FunScope {
     fn use_var(&mut self, var: &Id, _loc: &Loc) -> LocalIdx {
         // Check if bound.
-        match self.bounds.get(var) {
-            Some(idx) => *idx,
-            None => {
-                // Should be bound in parent function. Reuse the index if we already assigned it
-                // one.
-                match self.captured_vars.get(var) {
-                    Some(fv) => fv.use_idx,
-                    None => {
-                        // Use the variable in the parent function so that the parent function will
-                        // capture it if it needs to.
-                        let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var, _loc);
-                        let var_ty: mono::Type = self.parent_fun_scope.as_ref().unwrap().locals
-                            [alloc_idx.as_usize()]
-                        .ty
-                        .clone();
+        if let Some(idx) = self.bounds.get(var) {
+            return *idx;
+        }
 
-                        // Assign new index.
-                        let use_idx = LocalIdx(self.locals.len() as u32);
-                        self.locals.push(LocalInfo {
-                            name: var.clone(),
-                            ty: var_ty,
-                        });
-                        self.captured_vars.insert(
-                            var.clone(),
-                            ClosureFv {
-                                id: var.clone(),
-                                alloc_idx,
-                                use_idx,
-                            },
-                        );
-                        use_idx
-                    }
-                }
+        // Should be bound in parent function. Reuse the index if we already assigned it
+        // one.
+        match self.captured_vars.get(var) {
+            Some(fv) => fv.use_idx,
+            None => {
+                // Use the variable in the parent function so that the parent function will
+                // capture it if it needs to.
+                let alloc_idx = self.parent_fun_scope.as_mut().unwrap().use_var(var, _loc);
+                let var_ty: mono::Type = self.parent_fun_scope.as_ref().unwrap().locals
+                    [alloc_idx.as_usize()]
+                .ty
+                .clone();
+
+                // Assign new index.
+                let use_idx = LocalIdx(self.locals.len() as u32);
+                self.locals.push(LocalInfo {
+                    name: var.clone(),
+                    ty: var_ty,
+                });
+                self.captured_vars.insert(
+                    var.clone(),
+                    ClosureFv {
+                        id: var.clone(),
+                        alloc_idx,
+                        use_idx,
+                    },
+                );
+                use_idx
             }
         }
     }
