@@ -327,8 +327,7 @@ Parser.ltype(self): Error L[Type]
         TokenKind.UpperId:
             let lastToken = first
 
-            # BUG TODO: We can't have capacity 0 here, interpreter crashes.
-            let args: Vec[L[Type]] = Vec.withCapacity(10)
+            let args: Vec[L[Type]] = Vec.withCapacity(0)
 
             if self._nextOpt() is Option.Some(Token(kind = TokenKind.LBracket, ..)):
                 self._idx += 1
