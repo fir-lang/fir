@@ -93,6 +93,9 @@ trait Ord[t]:
 trait ToStr[t]:
     toStr(self: t): Str
 
+impl ToStr[()]:
+    toStr(self: ()): Str = "()"
+
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
 type Void
