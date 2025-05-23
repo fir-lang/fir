@@ -31,7 +31,7 @@ Vec.push(self: Vec[t], elem: t)
     let cap = self._data.len()
 
     if self._len == cap:
-        let newData = Array.new(cap * 2)
+        let newData = Array.new((cap * 2) | 3)
         for i: U32 in range(0u32, cap):
             newData.set(i, self._data.get(i))
         self._data = newData
