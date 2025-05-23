@@ -358,10 +358,17 @@ Parser.ltype(self): Error L[Type]
                     break
 
                 let name: Option[Id] = Option.None
+
+                # Lower id could be a type variable or field name. Field name will be followed by
+                # '='.
                 if fieldToken.kind is TokenKind.LowerId:
                     self._idx += 1
-                    name = Option.Some(self._id(fieldToken))
-                    self._expect(TokenKind.Eq)
+                    if self._next().kind is TokenKind.Colon:
+                        name = Option.Some(self._id(fieldToken))
+                        self._idx += 1
+                    else:
+                        # Rewind to parse lower id as type variable.
+                        self._idx -= 1
 
                 let ty = self.ltype()
                 fields.push(Named(name, node = ty))
@@ -533,6 +540,20 @@ parserTests
             Type.Record(fields, extension):
                 assertEq(2u32, fields.len())
                 assert(extension is Option.None, "Unexpected extension")
+                assert(
+                    fields.iter().all(fn(field: Named[L[Type]]): Bool { field.name is Option.None }),
+                    "Field with name")
+            other: throw(~AssertionError(msg = "Unexpected type: `other.pprint().print(80)`"))
+    })
+
+    _parserTest("type - record w names", "(x: U32, y: a)", Parser.ltype, fn(ast) {
+        match ast.node:
+            Type.Record(fields, extension):
+                assertEq(2u32, fields.len())
+                assert(extension is Option.None, "Unexpected extension")
+                assert(
+                    fields.iter().all(fn(field: Named[L[Type]]): Bool { field.name is Option.Some(_) }),
+                    "Field without name")
             other: throw(~AssertionError(msg = "Unexpected type: `other.pprint().print(80)`"))
     })
 
