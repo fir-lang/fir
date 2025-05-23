@@ -24,6 +24,18 @@ trait Iterator[iter, item, exn]:
     skip(self: iter, amount: U32): exn Skip[iter, item, exn]
         Skip(iter = self, amount)
 
+    any(self: iter, f: Fn(item): exn Bool): exn Bool
+        for item: item in self:
+            if f(item):
+                return Bool.True
+        Bool.False
+
+    all(self: iter, f: Fn(item): exn Bool): exn Bool
+        for item: item in self:
+            if !f(item):
+                return Bool.False
+        Bool.True
+
 trait Step[t]:
     step(self: t): t
 
