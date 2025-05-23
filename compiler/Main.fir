@@ -1,6 +1,7 @@
 import Ast
 import AstPrinter
 import Lexer
+import Parser
 import Scanner
 
 main(args: Array[Str])
@@ -19,6 +20,37 @@ main(args: Array[Str])
     print("")
     scannerTests()
 
+    print("")
+    print("PARSER TESTS")
+    print("")
+    parserTests()
+
+    print("")
+    print("PRINTER TESTS")
+    print("")
+
+    print(parseExpr("1 + 2").pprint().print(80))
+    print(parseExpr("1 + 2 + 3").pprint().print(80))
+    print(parseExpr("1 * 2 + 3").pprint().print(80))
+    print(parseExpr("1 + 2 * 3").pprint().print(80))
+    print(parseExpr("1 * 2 * 3").pprint().print(80))
+
+parseExpr(input: Str): Expr
+    let (tokens, error) = tokenize("Test.fir", input)
+    if error is Option.Some(err):
+        panic("\t\tLexer error: `err.msg`")
+
+    let parser = Parser(_file = "Test.fir", _tokens = tokens, _idx = 0)
+    match try({ parser.expr(0) }):
+        Result.Err(err):
+            panic("\t\tParser error: `err.msg`")
+        Result.Ok(ast):
+            ast.node
+
 assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
     if expected != found:
         throw(~AssertionError(msg = "Expected `expected`, found `found`"))
+
+assert(condition: Bool, msg: Str): [AssertionError(msg: Str), ..r] ()
+    if !condition:
+        throw(~AssertionError(msg = msg))
