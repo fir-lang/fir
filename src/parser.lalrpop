@@ -570,10 +570,24 @@ Alt: Alt = {
             rhs: stmts,
         },
 
+    <pattern:LPat> "if" <guard:LExpr> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
+        Alt {
+            pattern,
+            guard: Some(guard),
+            rhs: stmts,
+        },
+
     <pattern:LPat> ":" <stmt:LStmt>  =>
         Alt {
             pattern,
             guard: None,
+            rhs: vec![stmt],
+        },
+
+    <pattern:LPat> "if" <guard:LExpr> ":" <stmt:LStmt>  =>
+        Alt {
+            pattern,
+            guard: Some(guard),
             rhs: vec![stmt],
         },
 }

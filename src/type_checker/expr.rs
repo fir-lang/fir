@@ -817,7 +817,11 @@ pub(super) fn check_expr(
                 refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
 
                 if let Some(guard) = guard {
-                    check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
+                    let (_, guard_binders) =
+                        check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
+                    guard_binders.into_iter().for_each(|(k, v)| {
+                        tc_state.env.insert(k, v);
+                    });
                 }
 
                 rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
