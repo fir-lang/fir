@@ -27,6 +27,10 @@ Vec.clear(self: Vec[t])
     # In the compiled version we should actually clear the elements to allow garbage collection.
     self._len = 0
 
+Vec.truncate(self: Vec[t], len: U32)
+    if len < self._len:
+        self._len = len
+
 Vec.push(self: Vec[t], elem: t)
     let cap = self._data.len()
 
