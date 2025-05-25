@@ -1,5 +1,5 @@
 main
-    let iter = once(1u32).chain(once(2u32))
+    let iter = once(1u32).chain(empty()).chain(once(2u32)).chain(empty())
 
     for i: U32 in iter:
         print(i)
@@ -17,10 +17,13 @@ main
     let iter = onceWith(fn() {
         print("OnceWith 1")
         'a'
-    }).chain(onceWith(fn() {
+    }) \
+    .chain(empty()) \
+    .chain(onceWith(fn() {
         print("OnceWith 2")
         'b'
-    }))
+    })) \
+    .chain(empty())
 
     for i: Char in iter:
         print(i)

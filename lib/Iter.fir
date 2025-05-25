@@ -170,6 +170,19 @@ impl Iterator[OnceWith[t, exn], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
+# TODO: We don't have a syntax to declare unit types.
+type Empty:
+    x: ()
+
+empty(): Empty
+    Empty(x = ())
+
+impl Iterator[Empty, item, exn]:
+    next(self: Empty): exn Option[item]
+        Option.None
+
+# --------------------------------------------------------------------------------------------------
+
 type Chain[iter1, iter2, item, exn]:
     iter1: Option[iter1]
     iter2: Option[iter2]
