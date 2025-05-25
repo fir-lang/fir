@@ -12,6 +12,22 @@ main
     for i: Char in iter:
         print(i)
 
+    print("---")
+
+    let iter = onceWith(fn() {
+        print("OnceWith 1")
+        'a'
+    }).chain(onceWith(fn() {
+        print("OnceWith 2")
+        'b'
+    }))
+
+    for i: Char in iter:
+        print(i)
+
+    for i: Char in iter:
+        print(i)
+
 # expected stdout:
 # 1
 # 2
@@ -20,3 +36,8 @@ main
 # 'c'
 # 'd'
 # 'e'
+# ---
+# OnceWith 1
+# 'a'
+# OnceWith 2
+# 'b'

@@ -153,6 +153,23 @@ impl Iterator[Once[t], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
+type OnceWith[t, exn]:
+    f: Option[Fn(): exn t]
+
+onceWith(f: Fn(): exn t): OnceWith[t, exn]
+    OnceWith(f = Option.Some(f))
+
+impl Iterator[OnceWith[t, exn], t, exn]:
+    next(self: OnceWith[t, exn]): exn Option[t]
+        match self.f:
+            Option.None:
+                Option.None
+            Option.Some(f):
+                self.f = Option.None
+                Option.Some(f())
+
+# --------------------------------------------------------------------------------------------------
+
 type Chain[iter1, iter2, item, exn]:
     iter1: Option[iter1]
     iter2: Option[iter2]
