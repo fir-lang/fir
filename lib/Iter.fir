@@ -36,6 +36,9 @@ trait Iterator[iter, item, exn]:
                 return Bool.False
         Bool.True
 
+    chain(self: iter, other: other): Chain[iter, other, item, exn]
+        Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
+
 trait Step[t]:
     step(self: t): t
 
@@ -133,3 +136,41 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Skip[iter1, item1, exn1], item1, exn
             let _: Option[item1] = self.iter.next()
             self.amount -= 1
         self.iter.next()
+
+# --------------------------------------------------------------------------------------------------
+
+type Once[t]:
+    val: Option[t]
+
+once(val: t): Once[t]
+    Once(val = Option.Some(val))
+
+impl Iterator[Once[t], t, exn]:
+    next(self: Once[t]): exn Option[t]
+        let val = self.val
+        self.val = Option.None
+        val
+
+# --------------------------------------------------------------------------------------------------
+
+type Chain[iter1, iter2, item, exn]:
+    iter1: Option[iter1]
+    iter2: Option[iter2]
+
+impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter1, iter2, item, exn], item, exn]:
+    next(self: Chain[iter1, iter2, item, exn]): exn Option[item]
+        if self.iter1 is Option.Some(iter1):
+            match iter1.next():
+                Option.Some(val):
+                    return Option.Some(val)
+                Option.None:
+                    self.iter1 = Option.None
+
+        if self.iter2 is Option.Some(iter2):
+            match iter2.next():
+                Option.Some(val):
+                    return Option.Some(val)
+                Option.None:
+                    self.iter2 = Option.None
+
+        Option.None
