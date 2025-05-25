@@ -806,6 +806,21 @@ impl Expr {
                 pat.node.print(buffer);
                 buffer.push(')');
             }
+
+            Expr::Seq(elems) => {
+                buffer.push('[');
+                for (i, (k, v)) in elems.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(k) = k {
+                        k.node.print(buffer, indent + 4);
+                        buffer.push_str(" = ");
+                    }
+                    v.node.print(buffer, indent + 4);
+                }
+                buffer.push(']');
+            }
         }
     }
 }

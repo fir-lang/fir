@@ -823,6 +823,9 @@ InlineExpr: Expr = {
             }),
         },
 
+    "[" <elems:Sep<SeqElem, ",">> "]" =>
+        Expr::Seq(elems),
+
     #[precedence(level = "2")]
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
@@ -1061,6 +1064,17 @@ CallArg: CallArg = {
             name: None,
             expr,
         },
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Sequence elements
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SeqElem: (Option<L<Expr>>, L<Expr>) = {
+    <expr:LInlineExpr> => (None, expr),
+    <key:LInlineExpr> "=" <value:LInlineExpr> => (Some(key), value),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
