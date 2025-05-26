@@ -120,8 +120,13 @@ fn check_stmt(
 
         ast::Stmt::Assign(ast::AssignStmt { lhs, rhs, op }) => {
             match &mut lhs.node {
-                ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
-                    debug_assert!(ty_args.is_empty());
+                ast::Expr::Var(ast::VarExpr {
+                    id: var,
+                    user_ty_args,
+                    ty_args,
+                }) => {
+                    assert!(ty_args.is_empty());
+                    assert!(user_ty_args.is_empty());
                     let var_ty = tc_state.env.get(var).cloned().unwrap_or_else(|| {
                         panic!("{}: Unbound variable {}", loc_display(&lhs.loc), var)
                     });
@@ -152,10 +157,12 @@ fn check_stmt(
                                         loc: stmt.loc.clone(),
                                         node: ast::Expr::Var(ast::VarExpr {
                                             id: var.clone(),
+                                            user_ty_args: vec![],
                                             ty_args: vec![],
                                         }),
                                     }),
                                     field: SmolStr::new_static(method),
+                                    user_ty_args: vec![],
                                 }),
                             }),
                             args: vec![ast::CallArg {
@@ -171,7 +178,13 @@ fn check_stmt(
                     check_expr(tc_state, rhs, None, level, loop_stack);
                 }
 
-                ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+                ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                    object,
+                    field,
+                    user_ty_args,
+                }) => {
+                    assert!(user_ty_args.is_empty());
+
                     let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
 
                     let lhs_ty_normalized = object_ty.normalize(tc_state.tys.tys.cons());
@@ -248,6 +261,7 @@ fn check_stmt(
                                 node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                                     object: Box::new(lhs.clone()),
                                     field: SmolStr::new_static(method),
+                                    user_ty_args: vec![],
                                 }),
                             }),
                             args: vec![ast::CallArg {
