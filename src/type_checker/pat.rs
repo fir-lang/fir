@@ -27,12 +27,14 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 ast::Constructor {
                     ty: pat_ty_name,
                     constr: pat_con_name,
+                    user_ty_args,
                     ty_args,
                 },
             fields: pat_fields,
             ignore_rest,
         }) => {
-            debug_assert!(ty_args.is_empty());
+            assert!(ty_args.is_empty());
+            assert!(user_ty_args.is_empty());
 
             let ty_con: &TyCon = tc_state.tys.tys.get_con(pat_ty_name).unwrap_or_else(|| {
                 panic!("{}: Undefined type {}", loc_display(&pat.loc), pat_ty_name)
@@ -369,6 +371,7 @@ pub(super) fn refine_pat_binders(
                 ast::Constructor {
                     ty: type_,
                     constr,
+                    user_ty_args: _,
                     ty_args: _,
                 },
             fields: field_pats,
