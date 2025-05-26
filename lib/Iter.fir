@@ -39,6 +39,9 @@ trait Iterator[iter, item, exn]:
     chain(self: iter, other: other): Chain[iter, other, item, exn]
         Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
 
+    sizeHint(self: iter): U32
+        0
+
 trait Step[t]:
     step(self: t): t
 
@@ -126,6 +129,9 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
 
+    # sizeHint(self: Try[iter1, item1, exn1])
+    #     self.iter.sizeHint()
+
 type Skip[iter, item, exn]:
     iter: iter
     amount: U32
@@ -136,6 +142,10 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Skip[iter1, item1, exn1], item1, exn
             let _: Option[item1] = self.iter.next()
             self.amount -= 1
         self.iter.next()
+
+    # TODO: sizeHint requires type arguments here
+    # sizeHint(self: Skip[iter1, item1, exn1]): U32
+    #     self.iter.sizeHint() - self.amount
 
 # --------------------------------------------------------------------------------------------------
 
@@ -150,6 +160,9 @@ impl Iterator[Once[t], t, exn]:
         let val = self.val
         self.val = Option.None
         val
+
+    sizeHint(self: Once[t]): U32
+        1
 
 # --------------------------------------------------------------------------------------------------
 
@@ -168,6 +181,9 @@ impl Iterator[OnceWith[t, exn], t, exn]:
                 self.f = Option.None
                 Option.Some(f())
 
+    sizeHint(self: OnceWith[t, exn]): U32
+        1
+
 # --------------------------------------------------------------------------------------------------
 
 # TODO: We don't have a syntax to declare unit types.
@@ -180,6 +196,9 @@ empty(): Empty
 impl Iterator[Empty, item, exn]:
     next(self: Empty): exn Option[item]
         Option.None
+
+    sizeHint(self: Empty): U32
+        0
 
 # --------------------------------------------------------------------------------------------------
 
@@ -204,3 +223,14 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
                     self.iter2 = Option.None
 
         Option.None
+
+    # sizeHint(self: Chain[iter1, iter2, item, exn]): U32
+    #     let hint: U32 = 0
+
+    #     if self.iter1 is Option.Some(iter):
+    #         hint += iter.sizeHint()
+
+    #     if self.iter2 is Option.Some(iter):
+    #         hint += iter.sizeHint()
+
+    #     hint
