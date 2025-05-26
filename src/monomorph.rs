@@ -555,7 +555,11 @@ fn mono_expr(
     loc: &ast::Loc,
 ) -> mono::Expr {
     match expr {
-        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+        ast::Expr::Var(ast::VarExpr {
+            id: var,
+            user_ty_args: _,
+            ty_args,
+        }) => {
             if locals.is_bound(var) {
                 // Local variable, cannot be polymorphic.
                 assert!(ty_args.is_empty());
@@ -580,12 +584,14 @@ fn mono_expr(
             })
         }
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
-            mono::Expr::FieldSelect(mono::FieldSelectExpr {
-                object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
-                field: field.clone(),
-            })
-        }
+        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+            object,
+            field,
+            user_ty_args: _,
+        }) => mono::Expr::FieldSelect(mono::FieldSelectExpr {
+            object: mono_bl_expr(object, ty_map, poly_pgm, mono_pgm, locals),
+            field: field.clone(),
+        }),
 
         ast::Expr::MethodSelect(ast::MethodSelectExpr {
             object,       // receiver
@@ -617,6 +623,7 @@ fn mono_expr(
         ast::Expr::ConstrSelect(ast::Constructor {
             ty,
             constr,
+            user_ty_args: _,
             ty_args,
         }) => match constr {
             Some(constr) => {
@@ -658,6 +665,7 @@ fn mono_expr(
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
             member,
+            user_ty_args: _,
             ty_args,
         }) => {
             let mono_ty_args: Vec<mono::Type> = ty_args
@@ -1201,6 +1209,7 @@ fn mono_pat(
                 ast::Constructor {
                     ty,
                     constr,
+                    user_ty_args: _,
                     ty_args,
                 },
             fields,

@@ -410,6 +410,14 @@ pub struct RecordPattern {
 pub struct Constructor {
     pub ty: Id,
     pub constr: Option<Id>,
+
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    ///
+    /// Always empty in patterns.
+    pub user_ty_args: Vec<L<Type>>,
+
+    /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
@@ -545,6 +553,10 @@ pub enum Expr {
 pub struct VarExpr {
     pub id: Id,
 
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    pub user_ty_args: Vec<L<Type>>,
+
     /// Inferred type arguments of the variable. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 }
@@ -571,7 +583,15 @@ pub struct CallArg {
 #[derive(Debug, Clone)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
+
     pub field: Id,
+
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    ///
+    /// Since fields can't have `forall` quantifiers, this will only be valid when the field is a
+    /// method, in which case the type checker will convert this node into `MethodSelectExpr`.
+    pub user_ty_args: Vec<L<Type>>,
 }
 
 /// A method selection: `<expr>.method`.
@@ -629,6 +649,10 @@ pub struct MethodSelectExpr {
 pub struct AssocFnSelectExpr {
     pub ty: Id,
     pub member: Id,
+
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    pub user_ty_args: Vec<L<Type>>,
 
     /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
@@ -991,7 +1015,11 @@ impl Expr {
             | Expr::Char(_)
             | Expr::Self_ => {}
 
-            Expr::FieldSelect(FieldSelectExpr { object, field: _ }) => {
+            Expr::FieldSelect(FieldSelectExpr {
+                object,
+                field: _,
+                user_ty_args: _,
+            }) => {
                 object.node.subst_ty_ids(substs);
             }
 

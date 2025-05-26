@@ -32,7 +32,11 @@ pub(super) fn check_expr(
     loop_stack: &mut Vec<Option<Id>>,
 ) -> (Ty, Map<Id, Ty>) {
     match &mut expr.node {
-        ast::Expr::Var(ast::VarExpr { id: var, ty_args }) => {
+        ast::Expr::Var(ast::VarExpr {
+            id: var,
+            user_ty_args,
+            ty_args,
+        }) => {
             debug_assert!(ty_args.is_empty());
 
             // Check if local.
@@ -50,27 +54,60 @@ pub(super) fn check_expr(
                 );
             }
 
-            if let Some(scheme) = tc_state.tys.top_schemes.get(var) {
+            let scheme = match tc_state.tys.top_schemes.get(var) {
+                Some(scheme) => scheme,
+                None => panic!("{}: Unbound variable {}", loc_display(&expr.loc), var),
+            };
+
+            let ty = if user_ty_args.is_empty() {
                 let (ty, ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+
                 expr.node = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
+                    user_ty_args: vec![],
                     ty_args: ty_args.into_iter().map(Ty::Var).collect(),
                 });
-                return (
-                    unify_expected_ty(
-                        ty,
-                        expected_ty,
-                        tc_state.tys.tys.cons(),
-                        tc_state.var_gen,
-                        level,
-                        &expr.loc,
-                    ),
-                    Default::default(),
-                );
-            }
 
-            panic!("{}: Unbound variable {}", loc_display(&expr.loc), var);
+                ty
+            } else {
+                if scheme.quantified_vars.len() != user_ty_args.len() {
+                    panic!(
+                        "{}: Variable {} takes {} type arguments, but applied to {}",
+                        loc_display(&expr.loc),
+                        var,
+                        scheme.quantified_vars.len(),
+                        user_ty_args.len()
+                    );
+                }
+
+                let user_ty_args_converted: Vec<Ty> = user_ty_args
+                    .iter()
+                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .collect();
+
+                let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+
+                expr.node = ast::Expr::Var(ast::VarExpr {
+                    id: var.clone(),
+                    user_ty_args: vec![],
+                    ty_args: user_ty_args_converted,
+                });
+
+                ty
+            };
+
+            (
+                unify_expected_ty(
+                    ty,
+                    expected_ty,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                ),
+                Default::default(),
+            )
         }
 
         ast::Expr::Variant(ast::VariantExpr { id, args }) => {
@@ -127,7 +164,11 @@ pub(super) fn check_expr(
 
         // <object:Expr>.<field:Id>.
         // This updates the expression as `MethodSelect` if the `field` turns out to be a method.
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field }) => {
+        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+            object,
+            field,
+            user_ty_args,
+        }) => {
             let ty = {
                 let (object_ty, _) = check_expr(tc_state, object, None, level, loop_stack);
 
@@ -139,6 +180,12 @@ pub(super) fn check_expr(
                         kind: RecordOrVariant::Record,
                         ..
                     } => {
+                        if !user_ty_args.is_empty() {
+                            panic!(
+                                "{}: Record field with type arguments",
+                                loc_display(&expr.loc),
+                            );
+                        }
                         let (labels, _) = crate::type_checker::row_utils::collect_rows(
                             tc_state.tys.tys.cons(),
                             &ty_normalized,
@@ -158,8 +205,15 @@ pub(super) fn check_expr(
                     }
 
                     other => {
-                        let (ty, new_expr) =
-                            check_field_select(tc_state, object, field, other, &expr.loc, level);
+                        let (ty, new_expr) = check_field_select(
+                            tc_state,
+                            object,
+                            field,
+                            user_ty_args,
+                            other,
+                            &expr.loc,
+                            level,
+                        );
                         expr.node = new_expr;
                         ty
                     }
@@ -183,6 +237,7 @@ pub(super) fn check_expr(
         ast::Expr::ConstrSelect(ast::Constructor {
             ty,
             constr,
+            user_ty_args,
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
@@ -213,13 +268,48 @@ pub(super) fn check_expr(
                 }),
             };
 
-            let (con_ty, con_ty_args) =
-                scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
-            expr.node = ast::Expr::ConstrSelect(ast::Constructor {
-                ty: ty.clone(),
-                constr: constr.clone(),
-                ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
-            });
+            let con_ty = if user_ty_args.is_empty() {
+                let (con_ty, con_ty_args) =
+                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+
+                expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    ty: ty.clone(),
+                    constr: constr.clone(),
+                    user_ty_args: vec![],
+                    ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
+                });
+
+                con_ty
+            } else {
+                if scheme.quantified_vars.len() != user_ty_args.len() {
+                    panic!(
+                        "{}: Constructor {}{}{} takes {} type arguments, but applied to {}",
+                        loc_display(&expr.loc),
+                        ty,
+                        if constr.is_some() { "." } else { "" },
+                        constr.as_ref().cloned().unwrap_or(SmolStr::new_static("")),
+                        scheme.quantified_vars.len(),
+                        user_ty_args.len()
+                    );
+                }
+
+                let user_ty_args_converted: Vec<Ty> = user_ty_args
+                    .iter()
+                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .collect();
+
+                let con_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+
+                expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    ty: ty.clone(),
+                    constr: constr.clone(),
+                    user_ty_args: vec![],
+                    ty_args: user_ty_args_converted,
+                });
+
+                con_ty
+            };
+
             (
                 unify_expected_ty(
                     con_ty,
@@ -236,9 +326,11 @@ pub(super) fn check_expr(
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
             member,
+            user_ty_args,
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
+
             let scheme = tc_state
                 .tys
                 .associated_fn_schemes
@@ -261,13 +353,48 @@ pub(super) fn check_expr(
                         member
                     )
                 });
-            let (method_ty, method_ty_args) =
-                scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
-            expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                ty: ty.clone(),
-                member: member.clone(),
-                ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
-            });
+
+            let method_ty = if user_ty_args.is_empty() {
+                let (method_ty, method_ty_args) =
+                    scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
+
+                expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    user_ty_args: vec![],
+                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                });
+
+                method_ty
+            } else {
+                if scheme.quantified_vars.len() != user_ty_args.len() {
+                    panic!(
+                        "{}: Associated function {}.{} takes {} type arguments, but applied to {}",
+                        loc_display(&expr.loc),
+                        ty,
+                        member,
+                        scheme.quantified_vars.len(),
+                        user_ty_args.len()
+                    );
+                }
+
+                let user_ty_args_converted: Vec<Ty> = user_ty_args
+                    .iter()
+                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                    .collect();
+
+                let method_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+
+                expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    user_ty_args: vec![],
+                    ty_args: user_ty_args_converted,
+                });
+
+                method_ty
+            };
+
             (
                 unify_expected_ty(
                     method_ty,
@@ -336,7 +463,11 @@ pub(super) fn check_expr(
                             for arg in args.iter_mut() {
                                 if arg.name.is_none() {
                                     match &arg.expr.node {
-                                        ast::Expr::Var(ast::VarExpr { id, ty_args: _ }) => {
+                                        ast::Expr::Var(ast::VarExpr {
+                                            id,
+                                            user_ty_args: _,
+                                            ty_args: _,
+                                        }) => {
                                             arg.name = Some(id.clone());
                                         }
                                         _ => {
@@ -661,6 +792,7 @@ pub(super) fn check_expr(
                         node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                             object: left.clone(),
                             field: SmolStr::new_static(method),
+                            user_ty_args: vec![],
                         }),
                     }),
                     args: vec![ast::CallArg {
@@ -687,6 +819,7 @@ pub(super) fn check_expr(
                             node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                                 object: arg.clone(),
                                 field: SmolStr::new_static("__neg"),
+                                user_ty_args: vec![],
                             }),
                         }),
                         args: vec![],
@@ -1081,6 +1214,7 @@ pub(super) fn check_expr(
                         loc: ast::Loc::dummy(),
                         node: ast::Expr::Var(ast::VarExpr {
                             id: SmolStr::new("empty"),
+                            user_ty_args: vec![],
                             ty_args: vec![],
                         }),
                     }),
@@ -1132,6 +1266,7 @@ pub(super) fn check_expr(
                             loc: ast::Loc::dummy(),
                             node: ast::Expr::Var(ast::VarExpr {
                                 id: SmolStr::new_static("onceWith"),
+                                user_ty_args: vec![],
                                 ty_args: vec![],
                             }),
                         }),
@@ -1173,6 +1308,7 @@ pub(super) fn check_expr(
                         node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
                             object: Box::new(elem),
                             field: SmolStr::new_static("chain"),
+                            user_ty_args: vec![],
                         }),
                     }),
                     args: vec![ast::CallArg {
@@ -1193,6 +1329,7 @@ fn check_field_select(
     tc_state: &mut TcFunState,
     object: &ast::L<ast::Expr>,
     field: &Id,
+    user_ty_args: &[ast::L<ast::Type>],
     object_ty: &Ty,
     loc: &ast::Loc,
     level: u32,
@@ -1201,11 +1338,15 @@ fn check_field_select(
     match object_ty {
         Ty::Con(con, _) => {
             if let Some(field_ty) = select_field(tc_state, con, &[], field, loc) {
+                if !user_ty_args.is_empty() {
+                    panic!("{}: Field passed type arguments", loc_display(loc));
+                }
                 return (
                     field_ty,
                     ast::Expr::FieldSelect(ast::FieldSelectExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
+                        user_ty_args: vec![],
                     }),
                 );
             }
@@ -1213,11 +1354,15 @@ fn check_field_select(
 
         Ty::App(con, args, _) => {
             if let Some(field_ty) = select_field(tc_state, con, args, field, loc) {
+                if !user_ty_args.is_empty() {
+                    panic!("{}: Field passed type arguments", loc_display(loc));
+                }
                 return (
                     field_ty,
                     ast::Expr::FieldSelect(ast::FieldSelectExpr {
                         object: Box::new(object.clone()),
                         field: field.clone(),
+                        user_ty_args: vec![],
                     }),
                 );
             }
@@ -1236,8 +1381,28 @@ fn check_field_select(
             )
         });
 
-    let (method_ty, method_ty_args) =
-        scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+    let (method_ty, method_ty_args) = if user_ty_args.is_empty() {
+        let (ty, args) = scheme.instantiate(level, tc_state.var_gen, tc_state.preds, loc);
+        (ty, args.into_iter().map(Ty::Var).collect())
+    } else {
+        if scheme.quantified_vars.len() != user_ty_args.len() {
+            panic!(
+                "{}: Method takes {} type arguments, but applied to {}",
+                loc_display(loc),
+                scheme.quantified_vars.len(),
+                user_ty_args.len()
+            );
+        }
+
+        let user_ty_args_converted: Vec<Ty> = user_ty_args
+            .iter()
+            .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+            .collect();
+
+        let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+
+        (ty, user_ty_args_converted)
+    };
 
     // Type arguments of the receiver already substituted for type parameters in
     // `select_method`. Drop 'self' argument.
@@ -1272,7 +1437,7 @@ fn check_field_select(
                     object_ty: Some(object_ty.clone()),
                     method_ty_id,
                     method: field.clone(),
-                    ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
+                    ty_args: method_ty_args,
                 }),
             )
         }

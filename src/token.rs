@@ -20,6 +20,9 @@ pub enum TokenKind {
     /// `UpperId '.' UpperId`, without spaces in between.
     UpperIdPath,
 
+    /// `UpperId '.' UpperId`, follwed by a '['.
+    UpperIdPathLBracket,
+
     /// An identifier starting with an uppercase letter, followed by a '['.
     UpperIdLBracket,
 
