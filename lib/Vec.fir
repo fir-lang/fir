@@ -5,6 +5,13 @@ type Vec[t]:
 Vec.withCapacity(cap: U32): Vec[t]
     Vec(_data = Array.new(cap), _len = 0)
 
+Vec.fromIter[Iterator[iter, item, exn]](iter: iter): exn Vec[item]
+    let size = iter.size[iter, item, exn, exn]().unwrapOr(10)
+    let vec = Vec.withCapacity(size)
+    for item: item in iter:
+        vec.push(item)
+    vec
+
 Vec.reserve(self: Vec[t], cap: U32)
     let len = self._len
     let newCap = self._data.len()

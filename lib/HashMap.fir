@@ -6,6 +6,12 @@ type Elem[k, v]:
     value: v
     next: Option[Elem[k, v]]
 
+HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter): exn HashMap[k, v]
+    let map = HashMap.withCapacity(10)
+    for item: (key: k, value: v) in iter:
+        map.insert(item.key, item.value)
+    map
+
 HashMap.withCapacity(cap: U32): HashMap[k, v]
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
     for i: U32 in range(0u32, cap):
