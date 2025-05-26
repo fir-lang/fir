@@ -13,12 +13,6 @@ trait Iterator[iter, item, exn]:
     try(self: iter): Try[iter, item, exn]
         Try(iter = self)
 
-    count(self: iter): exn U32
-        let n = 0u32
-        for _: item in self:
-            n += 1
-        n
-
     skip(self: iter, amount: U32): exn Skip[iter, item, exn]
         Skip(iter = self, amount)
 
@@ -36,6 +30,33 @@ trait Iterator[iter, item, exn]:
 
     chain(self: iter, other: other): Chain[iter, other, item, exn]
         Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
+
+    ## Count number of elements the iterator yields.
+    ##
+    ## Note that this consumes the iterator. The iterator won't yield any more elements after
+    ## calling this method.
+    ##
+    ## See also `size` for a version of this that returns the number of elements without consuming
+    ## the iterator.
+    count(self: iter): exn U32
+        let n = 0u32
+        for _: item in self:
+            n += 1
+        n
+
+    ## The number of elements the iterator will yield.
+    ##
+    ## Not all iterators know the number, and some iterators can yield infinitely. Those iterators
+    ## will return `None`.
+    ##
+    ## This method does not consume the iterator.
+    ##
+    ## If an iterator returns a `Option.Some(n)`, it should always yield `n` elements. It's a bug if
+    ## the iterator yields less or more.
+    size(self: iter): Option[U32]
+        Option.None
+
+# --------------------------------------------------------------------------------------------------
 
 trait Step[t]:
     step(self: t): t
@@ -59,6 +80,8 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
             self.current = self.current.step()
             Option.Some(current)
 
+# --------------------------------------------------------------------------------------------------
+
 type InclusiveRangeIterator[t]:
     current: t
     end: t
@@ -71,6 +94,8 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
             let current = self.current
             self.current = self.current.step()
             Option.Some(current)
+
+# --------------------------------------------------------------------------------------------------
 
 # NOTE: The row type parameter needs to start with `recRow` to have kind `row(variant)`.
 type Map[iter, a, b, exn]:
@@ -85,6 +110,11 @@ impl[Iterator[iter1, a1, exn1]] Iterator[Map[iter1, a1, b1, exn1], b1, exn1]:
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
 
+    size(self: Map[iter1, a1, b1, exn1]): exn2 Option[U32]
+        self.iter.size[iter1, a1, b1, exn2]()
+
+# --------------------------------------------------------------------------------------------------
+
 type Peekable[iter, item, exn]:
     iter: iter
     peeked: Option[item]
@@ -98,6 +128,9 @@ impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
             Option.None:
                 self.iter.next()
 
+    size(self: Peekable[iter, item, exn]): exn2 Option[U32]
+        self.iter.size[iter, item, exn, exn2]()
+
 Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]): exn Option[item]
     match self.peeked:
         Option.Some(peeked):
@@ -106,6 +139,8 @@ Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]): exn O
             self.peeked = self.iter.next()
             self.peeked
 
+# --------------------------------------------------------------------------------------------------
+
 type MapResult[iter, item, b, exnOld, exnNew]:
     iter: iter
     f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]
@@ -113,6 +148,11 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 impl[Iterator[iter1, item1, exnOld1]] Iterator[MapResult[iter1, item1, b1, exnOld1, exnNew1], b1, exnNew1]:
     next(self: MapResult[iter1, item1, b1, exnOld1, exnNew1]): exnNew1 Option[b1]
         self.f(try(self.iter.next))
+
+    size(self: MapResult[iter1, item1, b1, exnOld1, exnNew1]): exn3 Option[U32]
+        self.iter.size[iter1, item1, exnOld1, exn3]()
+
+# --------------------------------------------------------------------------------------------------
 
 type Try[iter, item, exn]:
     iter: iter
@@ -124,6 +164,11 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
 
+    size(self: Try[iter1, item1, exn1]): exn3 Option[U32]
+        self.iter.size[iter1, item1, exn1, exn3]()
+
+# --------------------------------------------------------------------------------------------------
+
 type Skip[iter, item, exn]:
     iter: iter
     amount: U32
@@ -134,6 +179,11 @@ impl[Iterator[iter1, item1, exn1]] Iterator[Skip[iter1, item1, exn1], item1, exn
             let _: Option[item1] = self.iter.next()
             self.amount -= 1
         self.iter.next()
+
+    size(self: Skip[iter1, item1, exn1]): exn2 Option[U32]
+        if self.iter.size[iter1, item1, exn1, exn2]() is Option.Some(size):
+            return Option.Some(size - self.amount)
+        Option.None
 
 # --------------------------------------------------------------------------------------------------
 
@@ -148,6 +198,9 @@ impl Iterator[Once[t], t, exn]:
         let val = self.val
         self.val = Option.None
         val
+
+    size(self: Once[t]): Option[U32]
+        Option.Some(1)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -166,6 +219,9 @@ impl Iterator[OnceWith[t, exn], t, exn]:
                 self.f = Option.None
                 Option.Some(f())
 
+    size(self: OnceWith[t, exn]): Option[U32]
+        Option.Some(1)
+
 # --------------------------------------------------------------------------------------------------
 
 # TODO: We don't have a syntax to declare unit types.
@@ -178,6 +234,9 @@ empty(): Empty
 impl Iterator[Empty, item, exn]:
     next(self: Empty): exn Option[item]
         Option.None
+
+    size(self: Empty): Option[U32]
+        Option.Some(0)
 
 # --------------------------------------------------------------------------------------------------
 
@@ -202,3 +261,18 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
                     self.iter2 = Option.None
 
         Option.None
+
+    size(self: Chain[iter1, iter2, item, exn]): exn2 Option[U32]
+        let hint: U32 = 0
+
+        if self.iter1 is Option.Some(iter):
+            match iter.size[iter1, item, exn, exn2]():
+                Option.None: return Option.None
+                Option.Some(hint_): hint += hint_
+
+        if self.iter2 is Option.Some(iter):
+            match iter.size[iter2, item, exn, exn2]():
+                Option.None: return Option.None
+                Option.Some(hint_): hint += hint_
+
+        Option.Some(hint)
