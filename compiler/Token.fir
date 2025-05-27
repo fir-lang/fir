@@ -81,6 +81,7 @@ type TokenKind:
     Star
     StarEq
     Tilde
+    Question
 
     # Literals
     Str
@@ -176,6 +177,7 @@ impl ToStr[TokenKind]:
             TokenKind.Newline: "Newline"
             TokenKind.Indent: "Indent"
             TokenKind.Dedent: "Dedent"
+            TokenKind.Question: "Question"
 
 impl ToStr[IntKind]:
     toStr(self: IntKind): Str

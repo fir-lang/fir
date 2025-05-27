@@ -18,7 +18,10 @@ watch:
 test: build
     cargo test
     goldentests target/debug/fir tests '# '
+
+    cargo run -- compiler/Peg.fir -- compiler/Fon.peg > compiler/Fon.fir
     cargo run -- compiler/Main.fir
+    cargo run -- compiler/FonTests.fir
 
 # Only run type checking tests.
 test_tc: build

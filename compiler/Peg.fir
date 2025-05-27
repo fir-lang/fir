@@ -1,0 +1,442 @@
+import Lexer
+import Scanner
+import Token
+
+main(args: Array[Str])
+    if args.len() != 2:
+        panic("Usage: Peg.fir <peg file>")
+
+    let input = args.get(1)
+    let contents = readFileUtf8(input)
+    let (tokens, error) = tokenize(input, contents)
+    if error is Option.Some(error):
+        panic(errStr(error))
+    let tokens = scan(tokens)
+
+    if tokens.len() == 0:
+        panic("Empty file")
+
+    let parser = Parser(file = input, tokens, idx = 0)
+    let decls = match try(parser.spec):
+        Result.Err(err): panic(errStr(err))
+        Result.Ok(decls): decls
+
+    if parser.idx != parser.tokens.len():
+        panic("Left over tokens")
+
+    let terminalPats: Option[HashMap[Str, Vec[Token]]] = Option.None
+    let terminalNames: Vec[Str] = Vec.withCapacity(decls.len())
+
+    for decl: TopDecl in decls.iter():
+        match decl:
+            TopDecl.Terminals(TerminalsDecl(terminals)):
+                if terminalPats is Option.Some(_):
+                    panic("Multiple terminals declarations")
+
+                let map: HashMap[Str, Vec[Token]] = HashMap.withCapacity(terminals.len() * 2)
+                for terminalDecl: TerminalDecl in terminals.iter():
+                    map.insert(terminalDecl.name.substr(1, terminalDecl.name.len() - 1), terminalDecl.pattern)
+
+                terminalPats = Option.Some(map)
+
+            TopDecl.NonTerminal(NonTerminalDecl(name, ..)):
+                terminalNames.push(name)
+
+    let terminalPats: HashMap[Str, Vec[Token]] = \
+        terminalPats.unwrapOrElse({ panic("Grammar missing terminals declaration") })
+
+    print("import ParseTree")
+    print("import Token")
+    print("")
+
+    print(generateNonTerminalType(terminalNames).print(80))
+    print("")
+
+    for decl: TopDecl in decls.iter():
+        let nonTerminal = match decl:
+            TopDecl.Terminals(_): continue
+            TopDecl.NonTerminal(nonTerminal): nonTerminal
+
+        let doc = generateNonTerminal(nonTerminal, terminalPats)
+        print(doc.print(80))
+
+errStr(err: Error): Str
+    "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
+
+capitalize(s: Str): exn Str
+    let buf = StrBuf.withCapacity(s.len())
+    let chars = s.chars()
+
+    if chars.next[CharIter, Char, exn]() is Option.Some(char):
+        buf.push(char.toAsciiUppercase())
+
+    while chars.next() is Option.Some(char):
+        buf.push(char)
+
+    buf.toStr()
+
+# --------------------------------------------------------------------------------------------------
+# Parsing PEG specs
+
+type Parser:
+    file: Str
+    tokens: Vec[Token]
+    idx: U32
+
+Parser.spec(self): Error Vec[TopDecl]
+    let decls: Vec[TopDecl] = Vec.withCapacity(10)
+    while self.idx != self.tokens.len():
+        decls.push(self.topDecl())
+    decls
+
+Parser.topDecl(self): Error TopDecl
+    match self.peek():
+        Option.Some(Token(kind = TokenKind.UpperId, text = "Terminals", ..)):
+            self.idx += 1
+            TopDecl.Terminals(self.terminals())
+
+        Option.Some(Token(kind = TokenKind.LowerId, text, ..)):
+            self.idx += 1
+            TopDecl.NonTerminal(self.nonTerminal(text))
+
+        Option.Some(other):
+            throw(Error(loc = self.tokenLoc(other), msg = "Unexpected token `other.kind`"))
+
+        Option.None:
+            throw(Error(loc = self.tokenLoc(self.tokens.last().unwrap()), msg = "Unexpected end of file"))
+
+Parser.terminals(self): Error TerminalsDecl
+    self.expect(TokenKind.Colon)
+    self.expect(TokenKind.Newline)
+    self.expect(TokenKind.Indent)
+
+    let terminals: Vec[TerminalDecl] = Vec.withCapacity(10)
+    loop:
+        let name = self.expect(TokenKind.Str)
+        self.expect(TokenKind.Eq)
+        let pattern: Vec[Token] = Vec.withCapacity(10)
+        while self.peek() is Option.Some(next) && next.kind != TokenKind.Newline:
+            pattern.push(next)
+            self.idx += 1
+        self.expect(TokenKind.Newline)
+        terminals.push(TerminalDecl(name = name.text, pattern))
+
+        if self.peek() is Option.Some(Token(kind = TokenKind.Dedent, ..)):
+            self.idx += 1
+            return TerminalsDecl(terminals)
+
+    panic("Unreachable")
+
+Parser.nonTerminal(self, name: Str): Error NonTerminalDecl
+    self.expect(TokenKind.Colon)
+    self.expect(TokenKind.Newline)
+    self.expect(TokenKind.Indent)
+
+    let alts: Vec[Alt] = Vec.withCapacity(10)
+    loop:
+        let symbols: Vec[Symbol] = Vec.withCapacity(10)
+        while self.peek() is Option.Some(next) && next.kind != TokenKind.Newline:
+            symbols.push(self.symbol())
+        self.expect(TokenKind.Newline)
+        alts.push(Alt(symbols))
+
+        if self.peek() is Option.Some(Token(kind = TokenKind.Dedent, ..)):
+            self.idx += 1
+            return NonTerminalDecl(name, alts)
+
+    panic("Unreachable")
+
+Parser.symbol(self): Error Symbol
+    let next = self.next()
+
+    let ignore = next.kind == TokenKind.Underscore
+
+    if ignore:
+        next = self.next()
+
+    let symbol = match next.kind:
+        TokenKind.LParen:
+            let group: Vec[Symbol] = Vec.withCapacity(10)
+            while self.peek() is Option.Some(next) && next.kind != TokenKind.RParen:
+                group.push(self.symbol())
+            self.expect(TokenKind.RParen)
+            Symbol.Group(group)
+
+        TokenKind.LowerId:
+            Symbol.NonTerminal(next.text)
+
+        TokenKind.Str:
+            Symbol.Terminal(next.text.substr(1, next.text.len() - 1))
+
+        other:
+            throw(Error(loc = self.tokenLoc(next), msg = "Unexpected token `other`"))
+
+    if self.peek() is Option.Some(next):
+        match next.kind:
+            TokenKind.Star:
+                self.idx += 1
+                symbol = Symbol.ZeroOrMore(symbol)
+
+            TokenKind.Plus:
+                self.idx += 1
+                symbol = Symbol.OneOrMore(symbol)
+
+            TokenKind.Question:
+                self.idx += 1
+                symbol = Symbol.Optional(symbol)
+
+            _: ()
+
+    if ignore:
+        symbol = Symbol.Ignore(symbol)
+
+    symbol
+
+Parser.peek(self): Option[Token]
+    if self.idx == self.tokens.len():
+        return Option.None
+    Option.Some(self.tokens.get(self.idx))
+
+Parser.next(self): Error Token
+    if self.idx == self.tokens.len():
+        throw(Error(loc = self.tokenLoc(self.tokens.last().unwrap()), msg = "Unexpected end of file"))
+    let token = self.tokens.get(self.idx)
+    self.idx += 1
+    token
+
+Parser.expect(self, kind: TokenKind): Error Token
+    match self.peek():
+        Option.Some(token) if token.kind == kind:
+            self.idx += 1
+            token
+
+        Option.Some(other):
+            throw(Error(loc = self.tokenLoc(other), msg = "Unexpected token `other`, expected `kind`"))
+
+        Option.None:
+            throw(Error(loc = self.tokenLoc(self.tokens.last().unwrap()), msg = "Unexpected end of file"))
+
+Parser.tokenLoc(self, token: Token): Loc
+    Loc(
+        file = self.file,
+        byteIdx = token.byteIdx,
+        byteLen = token.text.len(),
+        line = token.line,
+        col = token.col
+    )
+
+## A declaration in a PEG spec.
+type TopDecl:
+    ## Declares terminals in the grammar.
+    ##
+    ## A grammar needs to have one `Terminals` declaration.
+    Terminals(TerminalsDecl)
+
+    ## Declares a non-terminal in the grammar.
+    NonTerminal(NonTerminalDecl)
+
+## Declares terminals in the grammar.
+type TerminalsDecl:
+    terminals: Vec[TerminalDecl]
+
+## A terminal declaration. E.g. in
+##
+## ```
+## "Foo" = Token(kind = TokenKind.Foo, ..)
+## ```
+##
+## `name` will be `"Foo"`, `pattern` will be the tokens for the right-hand side of the equation.
+##
+## At least for now, we don't parse the pattern and make sure it's a valid Fir pattern. If the
+## pattern has syntax or type errors, we will still generate the code, and the generated code will
+## have syntax or type errors too.
+type TerminalDecl:
+    name: Str
+    pattern: Vec[Token]
+
+## A non-terminal declaration. E.g. in
+##
+## ```
+## jsonObject:
+##     "{" "}"
+##     "{" pair ("," pair)* "}"
+## ```
+##
+## `name` is `"jsonObject"`, and `alts` is the two alternatives.
+type NonTerminalDecl:
+    name: Str
+    alts: Vec[Alt]
+
+## Alternatives of a non-terminal.
+type Alt:
+    symbols: Vec[Symbol]
+
+## A symbol in an alternative.
+type Symbol:
+    ## A terminal. E.g. `Foo` above.
+    Terminal(Str)
+
+    ## A non-terminal. E.g. `jsonObject` above.
+    NonTerminal(Str)
+
+    ## Groups a list of symbols together. Parsed from parenthesized expressions: `("," pair)`.
+    Group(Vec[Symbol])
+
+    ## Parses the symbol zero or more times. Parsed from `*` suffix.
+    ZeroOrMore(Symbol)
+
+    ## Parses the symbol one or more times. Parsed from `+` suffix.
+    OneOrMore(Symbol)
+
+    ## Parses the symbol one or one times. Parsed from `?` suffix.
+    Optional(Symbol)
+
+    ## Parses the symbol, but does not add the parsed terminals and non-terminals to the tree.
+    ## Parsed from `_` prefix.
+    Ignore(Symbol)
+
+# --------------------------------------------------------------------------------------------------
+# Code generation
+
+generateNonTerminalType(nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("type NonTerminal:")
+    for name: Str in nonTerminalNames.iter():
+        doc += Doc.hardLine() + Doc.str(capitalize(name))
+    doc.nest(4)
+
+generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
+    let doc = Doc.str("`decl.name`(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)") \
+                + Doc.hardLine()
+
+    doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
+
+    # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
+    doc += Doc.str("let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)") + Doc.hardLine()
+
+    for alt: Alt in decl.alts.iter():
+        let altResultDoc = Doc.str("let altResult = try({")
+        for symbol: Symbol in alt.symbols.iter():
+            altResultDoc += Doc.hardLine() + generateSymbolParser(symbol, Bool.False, terminalPats)
+        altResultDoc = altResultDoc.nest(4)
+        altResultDoc += Doc.hardLine() + Doc.str("})") + Doc.hardLine()
+        doc += altResultDoc
+
+        let altResultMatchDoc = Doc.str("match altResult:") + Doc.hardLine()
+
+        let errAlt = Doc.str("Result.Err(err):") \
+            + Doc.hardLine() \
+            + Doc.str("cursor = cursor0") \
+            + Doc.hardLine() \
+            + Doc.str("nodes.clear()")
+        errAlt = errAlt.nest(4)
+
+        let okAlt = Doc.str("Result.Ok(()):") \
+            + Doc.hardLine() \
+            + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = cursor)") + Doc.hardLine()
+        okAlt = okAlt.nest(4)
+
+        altResultMatchDoc = (altResultMatchDoc + errAlt).nest(4) + (Doc.hardLine() + okAlt).nest(4)
+
+        doc += altResultMatchDoc + Doc.hardLine()
+
+    let failDoc = Doc.str("if cursor == tokens.len():") \
+        + Doc.hardLine() \
+        + Doc.str("throw(ParseError.UnexpectedEof)")
+    failDoc = failDoc.nest(4) + Doc.hardLine()
+    failDoc += (Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")).nest(4)
+
+    doc += failDoc + Doc.hardLine()
+
+    doc.nest(4)
+
+generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
+    match symbol:
+        Symbol.Terminal(terminal):
+            let patToks = terminalPats.get(terminal).unwrapOrElse({ panic("Unknown terminal: `terminal`") })
+            
+            let eofCheck = \
+                Doc.str("if cursor == tokens.len():") \
+                    + Doc.hardLine() \
+                    + Doc.str("throw(ParseError.UnexpectedEof)")
+
+            eofCheck = eofCheck.nest(4) + Doc.hardLine()
+
+            let tokenKindCheck = Doc.str("if tokens.get(cursor) is ") \
+                + tokensToCode(patToks) \
+                + Doc.char(':') \
+                + Doc.hardLine()
+
+            let nested = Doc.empty()
+            if !ignore:
+                nested += Doc.str("nodes.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
+            nested += Doc.str("cursor += 1")
+
+            tokenKindCheck = (tokenKindCheck + nested).nest(4) + Doc.hardLine()
+
+            tokenKindCheck += (Doc.str("else:") + Doc.hardLine()
+                    + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")).nest(4) + Doc.hardLine()
+
+            eofCheck + tokenKindCheck
+
+        Symbol.NonTerminal(nonTerminal):
+            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)") \
+                + Doc.hardLine() \
+                + Doc.str("cursor = nonTerminalResult.newCursor") \
+                + Doc.hardLine()
+
+            if !ignore:
+                doc += Doc.str("nodes.push(nonTerminalResult.tree)") + Doc.hardLine()
+
+            doc
+
+        Symbol.Group(symbols):
+            let doc = Doc.empty()
+            for symbol: Symbol in symbols.iter():
+                doc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
+            doc
+
+        Symbol.ZeroOrMore(symbol):
+            let loopDoc = Doc.str("loop:") + Doc.hardLine()
+
+            let tryDoc = Doc.str("let symResult = try({") + Doc.hardLine()
+            tryDoc += generateSymbolParser(symbol, ignore, terminalPats)
+            tryDoc = tryDoc.nest(4)
+            tryDoc += Doc.hardLine() + Doc.str("})")
+
+            loopDoc += tryDoc + Doc.hardLine()
+            loopDoc += (Doc.str("if symResult is Result.Err(_):") + Doc.hardLine() + Doc.str("break")).nest(4)
+
+            loopDoc.nest(4)
+
+        Symbol.OneOrMore(_):
+            Doc.str("TODO(+)")
+
+        Symbol.Optional(_):
+            Doc.str("TODO(?)")
+
+        Symbol.Ignore(symbol):
+            generateSymbolParser(symbol, Bool.True, terminalPats)
+
+tokensToCode(tokens: Vec[Token]): exn Doc
+    if tokens.len() == 0:
+        panic("tokensToCode: empty tokens")
+
+    let out = StrBuf.withCapacity(tokens.len() * 3)
+
+    let lastLine = tokens.get(0).line
+    let lastCol = tokens.get(0).col
+
+    for token: Token in tokens.iter():
+        if token.line != lastLine:
+            panic("tokensToCode: tokens span multiple lines")
+
+        while lastCol < token.col:
+            out.push(' ')
+            lastCol += 1
+
+        out.pushStr(token.text)
+
+        # TODO: We could iterate the text once, increment column and push chars.
+        lastCol += token.text.chars().count[CharIter, Char, exn]()
+
+    Doc.str(out.toStr())

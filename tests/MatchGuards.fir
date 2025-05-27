@@ -31,9 +31,11 @@ main
         _: panic("WAT")
 
 # expected stdout:
-# tests/MatchGuards.fir:13:5: Unexhaustive pattern match
 # 120
 # OK
 # 120
 # Option.Some(123)
 # 123
+
+# expected stderr: tests/MatchGuards.fir:13:5: Unexhaustive pattern match
+

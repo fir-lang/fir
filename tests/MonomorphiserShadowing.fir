@@ -10,6 +10,7 @@ main
         Result.Err(~E1): printStr("E1 caught")
         Result.Err(~E2): printStr("E2 caught")
 
-# expected stdout:
-# tests/MonomorphiserShadowing.fir:8:5: Unexhaustive pattern match
-# E1 caught
+# expected stdout: E1 caught
+
+# expected stderr: tests/MonomorphiserShadowing.fir:8:5: Unexhaustive pattern match
+

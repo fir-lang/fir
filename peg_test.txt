@@ -1,0 +1,39 @@
+Terminals:
+    "{" = Token(kind = TokenKind.LBrace, ..)
+    "}" = Token(kind = TokenKind.RBrace, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    "true" = Token(kind = TokenKind.LowerId, text = "true", ..)
+    "false" = Token(kind = TokenKind.LowerId, text = "false", ..)
+    "null" = Token(kind = TokenKind.LowerId, text = "null", ..)
+    "string" = Token(kind = TokenKind.Str, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+
+object:
+    "{" "}"
+    "{" pair ("," pair)* "}"
+
+array:
+    "[" "]"
+    "[" value ("," value)* "]"
+
+value:
+    object
+    array
+    string
+    boolean
+    null
+
+boolean:
+    "true"
+    "false"
+
+null:
+    "null"
+
+string:
+    "string"
+
+pair:
+    string ":" value

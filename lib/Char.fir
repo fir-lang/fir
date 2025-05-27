@@ -52,6 +52,16 @@ Char.isAsciiHexDigit(self): Bool
 Char.isAsciiBinDigit(self): Bool
     self == '0' || self == '1'
 
+Char.toAsciiUppercase(self): Char
+    if self.isAsciiLowercase():
+        return Char(_codePoint = self._codePoint - 32)
+    return self
+
+Char.toAsciiLowercase(self): Char
+    if self.isAsciiUppercase():
+        return Char(_codePoint = self._codePoint + 32)
+    return self
+
 impl ToStr[Char]:
     toStr(self: Char): Str
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)

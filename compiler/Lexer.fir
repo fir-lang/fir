@@ -1,4 +1,3 @@
-import Ast
 import Error
 import Token
 
@@ -353,6 +352,11 @@ Lexer.next(self): Error Option[Token]
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Backslash, text = "\\", byteIdx, line, col))
 
+        "?" _:
+            self._byteIdx += 1
+            self._col += 1
+            return Option.Some(Token(kind = TokenKind.Question, text = "?", byteIdx, line, col))
+
         ########################################################################################
         # Literals
 
@@ -460,8 +464,10 @@ Lexer.next(self): Error Option[Token]
 
             if uppercaseId || lowercaseId:
                 let endIdx = self._byteIdx + 1
+                self._col += 1
                 while self._input.len() > endIdx && _isIdCont(self._input.charAt(endIdx)):
                     endIdx += 1
+                    self._col += 1
                 let id = self._input.substr(self._byteIdx, endIdx)
                 let kind = if uppercaseId:
                     TokenKind.UpperId
