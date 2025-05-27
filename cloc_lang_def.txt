@@ -1,0 +1,9 @@
+# Fir language definition for cloc.
+#
+# Example use: cloc --read-lang-def=cloc_lang_def.txt lib compiler
+
+Fir
+    filter remove_inline #.*$
+    filter remove_between_general #| |#
+    extension fir
+    3rd_gen_scale 1.25
