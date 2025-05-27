@@ -817,8 +817,13 @@ fn eval<W: Write>(
                 rhs,
             } in alts
             {
-                assert!(guard.is_none()); // TODO
                 if try_bind_pat(pgm, heap, pattern, locals, scrut) {
+                    if let Some(guard) = guard {
+                        let guard = val!(eval(w, pgm, heap, locals, &guard.node, &guard.loc));
+                        if guard == pgm.true_alloc {
+                            return exec(w, pgm, heap, locals, rhs);
+                        }
+                    }
                     return exec(w, pgm, heap, locals, rhs);
                 }
             }

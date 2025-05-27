@@ -394,8 +394,11 @@ impl Expr {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize + 2]);
-                    assert!(guard.is_none()); // TODO
                     pattern.node.print(buffer);
+                    if let Some(guard) = guard {
+                        buffer.push_str(" if ");
+                        guard.node.print(buffer, indent + 8);
+                    }
                     buffer.push_str(":\n");
                     for stmt in rhs {
                         buffer.push_str(&INDENTS[0..indent as usize + 4]);

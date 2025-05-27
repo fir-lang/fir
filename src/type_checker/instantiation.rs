@@ -71,7 +71,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             StringPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
         }),
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
+        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+            object,
+            field: _,
+            user_ty_args,
+        }) => {
+            assert!(user_ty_args.is_empty());
             normalize_expr(&mut object.node, cons)
         }
 

@@ -22,6 +22,7 @@ extern {
         UpperId => Token { kind: TokenKind::UpperId, .. },
         UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
+        UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
         LowerId => Token { kind: TokenKind::LowerId, .. },
@@ -548,6 +549,7 @@ Stmt: Stmt = {
             cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
                 ty: SmolStr::new_static("Bool"),
                 constr: Some(SmolStr::new_static("True")),
+                user_ty_args: vec![],
                 ty_args: vec![],
             })),
             body,
@@ -570,10 +572,24 @@ Alt: Alt = {
             rhs: stmts,
         },
 
+    <pattern:LPat> "if" <guard:LExpr> ":" NEWLINE INDENT <stmts:LStmts> DEDENT =>
+        Alt {
+            pattern,
+            guard: Some(guard),
+            rhs: stmts,
+        },
+
     <pattern:LPat> ":" <stmt:LStmt>  =>
         Alt {
             pattern,
             guard: None,
+            rhs: vec![stmt],
+        },
+
+    <pattern:LPat> "if" <guard:LExpr> ":" <stmt:LStmt>  =>
+        Alt {
+            pattern,
+            guard: Some(guard),
             rhs: vec![stmt],
         },
 }
@@ -633,23 +649,34 @@ LInlineExpr: L<Expr> = {
 // Inline expressions can be made statements with a NEWLINE after them.
 InlineExpr: Expr = {
     #[precedence(level = "0")]
-    <id:LowerId> => {
+    <id:LowerId> <user_ty_args:UserTyArgs> => {
         let str = id.smol_str();
         if str == "self" {
+            assert!(user_ty_args.is_empty());
             Expr::Self_
         } else {
-            Expr::Var(VarExpr { id: str, ty_args: vec![] })
+            Expr::Var(VarExpr { id: str, user_ty_args, ty_args: vec![] })
         }
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+
+    <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
+        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+    },
+
+    <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+        let mut parts = path_parts(&path.text);
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -798,14 +825,15 @@ InlineExpr: Expr = {
             args,
         }),
 
-    <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> =>
+    <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { ty: id, constr: None, ty_args: _ }) =>
-                Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), ty_args: vec![] }),
+            Expr::ConstrSelect(Constructor { ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
+                Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), user_ty_args, ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
                 object: Box::new(L::new(module, l, r, expr)),
                 field: field.smol_str(),
+                user_ty_args,
             }),
         },
 
@@ -1049,6 +1077,11 @@ CallArg: CallArg = {
         },
 }
 
+UserTyArgs: Vec<L<Type>> = {
+    "[" <user_ty_args:Sep<LType, ",">> "]" => user_ty_args,
+    => vec![],
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 // Patterns
@@ -1108,13 +1141,13 @@ StrPfxBinder: Option<Id> = {
 
 Constructor: Constructor = {
     <ty:UpperId> =>
-        Constructor { ty: ty.smol_str(), constr: None, ty_args: vec![] },
+        Constructor { ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { ty, constr: Some(constr), ty_args: vec![] }
+        Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
     }
 }
 

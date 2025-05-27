@@ -472,8 +472,13 @@ impl Stmt {
 impl Expr {
     pub fn print(&self, buffer: &mut String, indent: u32) {
         match self {
-            Expr::Var(VarExpr { id, ty_args }) => {
+            Expr::Var(VarExpr {
+                id,
+                user_ty_args,
+                ty_args,
+            }) => {
                 buffer.push_str(id);
+                print_user_ty_args(user_ty_args, buffer);
                 print_ty_args(ty_args, buffer);
             }
 
@@ -496,10 +501,15 @@ impl Expr {
                 }
             }
 
-            Expr::FieldSelect(FieldSelectExpr { object, field }) => {
+            Expr::FieldSelect(FieldSelectExpr {
+                object,
+                field,
+                user_ty_args,
+            }) => {
                 object.node.print(buffer, 0);
                 buffer.push('.');
                 buffer.push_str(field);
+                print_user_ty_args(user_ty_args, buffer);
             }
 
             Expr::MethodSelect(MethodSelectExpr {
@@ -524,11 +534,13 @@ impl Expr {
             Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
                 member,
+                user_ty_args,
                 ty_args,
             }) => {
                 buffer.push_str(ty);
                 buffer.push('.');
                 buffer.push_str(member);
+                print_user_ty_args(user_ty_args, buffer);
                 print_ty_args(ty_args, buffer);
             }
 
@@ -698,8 +710,11 @@ impl Expr {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    assert!(guard.is_none()); // TODO
                     pattern.node.print(buffer);
+                    if let Some(guard) = guard {
+                        buffer.push_str(" if ");
+                        guard.node.print(buffer, indent + 8);
+                    }
                     buffer.push_str(":\n");
                     for (j, stmt) in rhs.iter().enumerate() {
                         if j != 0 {
@@ -973,6 +988,21 @@ fn print_context(context: &Context, buffer: &mut String) {
         ty.node.print(buffer);
     }
 
+    buffer.push(']');
+}
+
+fn print_user_ty_args(args: &[L<Type>], buffer: &mut String) {
+    if args.is_empty() {
+        return;
+    }
+
+    buffer.push('[');
+    for (i, ty) in args.iter().enumerate() {
+        if i != 0 {
+            buffer.push_str(", ");
+        }
+        ty.node.print(buffer);
+    }
     buffer.push(']');
 }
 
