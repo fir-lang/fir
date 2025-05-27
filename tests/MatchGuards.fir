@@ -4,6 +4,11 @@ main
         Option.Some(i) if i.mod(2) == 0: print(i)
         _: panic("WAT")
 
+    let x: Option[U32] = Option.Some(120)
+    match x:
+        Option.Some(i) if i.mod(2) == 1: panic("WAT")
+        _: print("OK")
+
     # Check exhaustiveness.
     match x:
         Option.Some(i) if i.mod(2) == 0: print(i)
@@ -26,8 +31,9 @@ main
         _: panic("WAT")
 
 # expected stdout:
-# tests/MatchGuards.fir:8:5: Unexhaustive pattern match
+# tests/MatchGuards.fir:13:5: Unexhaustive pattern match
 # 120
+# OK
 # 120
 # Option.Some(123)
 # 123

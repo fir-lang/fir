@@ -822,6 +822,8 @@ fn eval<W: Write>(
                         let guard = val!(eval(w, pgm, heap, locals, &guard.node, &guard.loc));
                         if guard == pgm.true_alloc {
                             return exec(w, pgm, heap, locals, rhs);
+                        } else {
+                            continue;
                         }
                     }
                     return exec(w, pgm, heap, locals, rhs);
