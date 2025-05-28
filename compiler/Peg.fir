@@ -323,27 +323,39 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
 
         let altResultMatchDoc = Doc.str("match altResult:") + Doc.hardLine()
 
-        let errAlt = Doc.str("Result.Err(err):") \
-            + Doc.hardLine() \
-            + Doc.str("cursor = cursor0") \
-            + Doc.hardLine() \
-            + Doc.str("nodes.clear()")
-        errAlt = errAlt.nest(4)
+        let errAlt = \
+            Doc.nested(
+                4,
+                Doc.str("Result.Err(err):")
+                    + Doc.hardLine()
+                    + Doc.str("cursor = cursor0")
+                    + Doc.hardLine()
+                    + Doc.str("nodes.clear()"))
 
-        let okAlt = Doc.str("Result.Ok(()):") \
-            + Doc.hardLine() \
-            + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = cursor)") + Doc.hardLine()
-        okAlt = okAlt.nest(4)
+        let okAlt = \
+            Doc.nested(
+                4,
+                Doc.str("Result.Ok(()):")
+                    + Doc.hardLine()
+                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = cursor)")
+                    + Doc.hardLine())
 
-        altResultMatchDoc = (altResultMatchDoc + errAlt).nest(4) + (Doc.hardLine() + okAlt).nest(4)
+        altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
 
         doc += altResultMatchDoc + Doc.hardLine()
 
-    let failDoc = Doc.str("if cursor == tokens.len():") \
-        + Doc.hardLine() \
-        + Doc.str("throw(ParseError.UnexpectedEof)")
-    failDoc = failDoc.nest(4) + Doc.hardLine()
-    failDoc += (Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")).nest(4)
+    let failDoc = \
+        Doc.nested(
+            4,
+            Doc.str("if cursor == tokens.len():")
+                + Doc.hardLine()
+                + Doc.str("throw(ParseError.UnexpectedEof)"))
+
+    failDoc += Doc.hardLine()
+    failDoc += \
+        Doc.nested(
+            4,
+            Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
 
     doc += failDoc + Doc.hardLine()
 
@@ -353,13 +365,15 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
     match symbol:
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse({ panic("Unknown terminal: `terminal`") })
-            
-            let eofCheck = \
-                Doc.str("if cursor == tokens.len():") \
-                    + Doc.hardLine() \
-                    + Doc.str("throw(ParseError.UnexpectedEof)")
 
-            eofCheck = eofCheck.nest(4) + Doc.hardLine()
+            let eofCheck = \
+                Doc.nested(
+                    4, 
+                    Doc.str("if cursor == tokens.len():") \
+                        + Doc.hardLine() \
+                        + Doc.str("throw(ParseError.UnexpectedEof)"))
+
+            eofCheck += Doc.hardLine()
 
             let tokenKindCheck = Doc.str("if tokens.get(cursor) is ") \
                 + tokensToCode(patToks) \
@@ -371,10 +385,16 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 nested += Doc.str("nodes.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
             nested += Doc.str("cursor += 1")
 
-            tokenKindCheck = (tokenKindCheck + nested).nest(4) + Doc.hardLine()
+            tokenKindCheck = Doc.nested(4, tokenKindCheck + nested) + Doc.hardLine()
 
-            tokenKindCheck += (Doc.str("else:") + Doc.hardLine()
-                    + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")).nest(4) + Doc.hardLine()
+            tokenKindCheck += \
+                Doc.nested(
+                    4,
+                    Doc.str("else:")
+                        + Doc.hardLine()
+                        + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
+
+            tokenKindCheck += Doc.hardLine()
 
             eofCheck + tokenKindCheck
 
@@ -404,7 +424,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
             tryDoc += Doc.hardLine() + Doc.str("})")
 
             loopDoc += tryDoc + Doc.hardLine()
-            loopDoc += (Doc.str("if symResult is Result.Err(_):") + Doc.hardLine() + Doc.str("break")).nest(4)
+            loopDoc += Doc.nested(4, Doc.str("if symResult is Result.Err(_):") + Doc.hardLine() + Doc.str("break"))
 
             loopDoc.nest(4)
 
