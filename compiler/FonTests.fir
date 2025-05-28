@@ -3,7 +3,7 @@ import Lexer
 
 main
     print("FON TESTS")
-    try({ runParser("true", value) }).unwrap()
+    try({ runParser("true", boolean) }).unwrap()
     ()
 
 type TestError:
@@ -27,7 +27,7 @@ runParser(
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
     if result.newCursor != tokens.len():
-        throw(TestError.Other("parser didn't consume all input"))
+        throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
     result.tree
 
 errStr(err: Error): Str
