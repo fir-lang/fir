@@ -56,7 +56,7 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool)
         Doc._Blank(spaces):
             for _: U32 in range(0u32, spaces):
                 state.output.push(' ')
-            state.column += indent
+            state.column += spaces
 
         Doc._HardLine:
             if flatten:
