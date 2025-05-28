@@ -975,7 +975,7 @@ fn assign<W: Write>(
 
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
-    ControlFlow::Val(val)
+    ControlFlow::Val(pgm.unit_alloc)
 }
 
 /// Tries to match a pattern. On successful match, returns a map with variables bound in the
