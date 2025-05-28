@@ -34,4 +34,3 @@ main
 # tests/OrPatBinders.fir:15:5: Unexhaustive pattern match
 # tests/OrPatBinders.fir:19:5: Unexhaustive pattern match
 # tests/OrPatBinders.fir:23:5: Unexhaustive pattern match
-

@@ -67,4 +67,3 @@ StrBuilder.char(self, c: Char): StrBuilder
 # 'x'
 
 # expected stderr: tests/IfMatchStmtChecking.fir:10:5: Unexhaustive pattern match
-

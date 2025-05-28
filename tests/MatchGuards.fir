@@ -38,4 +38,3 @@ main
 # 123
 
 # expected stderr: tests/MatchGuards.fir:13:5: Unexhaustive pattern match
-

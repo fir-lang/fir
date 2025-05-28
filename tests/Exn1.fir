@@ -75,4 +75,3 @@ main()
 # expected stderr:
 # tests/Exn1.fir:29:5: Unexhaustive pattern match
 # tests/Exn1.fir:33:5: Unexhaustive pattern match
-
