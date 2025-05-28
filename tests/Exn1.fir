@@ -61,8 +61,6 @@ main()
     ()
 
 # expected stdout:
-# tests/Exn1.fir:29:5: Unexhaustive pattern match
-# tests/Exn1.fir:33:5: Unexhaustive pattern match
 # OK
 # OK
 # Odd number: 2
@@ -73,3 +71,7 @@ main()
 # ---
 # 1
 # 2
+
+# expected stderr:
+# tests/Exn1.fir:29:5: Unexhaustive pattern match
+# tests/Exn1.fir:33:5: Unexhaustive pattern match

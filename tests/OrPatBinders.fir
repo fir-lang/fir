@@ -24,11 +24,13 @@ main
         Tree.Leaf(x) | Tree.Branch(Tree.Leaf(x) | Tree.Branch(Tree.Leaf(_), Tree.Leaf(x), _), _, _): print(x)
 
 # expected stdout:
+# 123
+# 123
+# 123
+# 123
+# 123
+
+# expected stderr:
 # tests/OrPatBinders.fir:15:5: Unexhaustive pattern match
 # tests/OrPatBinders.fir:19:5: Unexhaustive pattern match
 # tests/OrPatBinders.fir:23:5: Unexhaustive pattern match
-# 123
-# 123
-# 123
-# 123
-# 123
