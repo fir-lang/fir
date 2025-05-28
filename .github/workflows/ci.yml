@@ -18,6 +18,37 @@ jobs:
       - name: Build
         run: cargo build --verbose
 
+  check_formatting:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: 'Check formatting'
+        run: cargo fmt --all --check
+
+  check_lints:
+    name: Check lints
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get Rust stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Check lints
+        run: cargo clippy --all-targets --all -- -Dwarnings
+
   run_unit_tests:
     name: Run unit tests
     needs: [build]
@@ -51,37 +82,7 @@ jobs:
         run: |
             export FIR_ROOT=$(pwd)
             bash compiler/test_lexer.sh
-
-  check_formatting:
-    name: Check formatting
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
-      - name: 'Check formatting'
-        run: cargo fmt --all --check
-
-  check_lints:
-    name: Check lints
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Get Rust stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
-      - name: Check lints
-        run: cargo clippy --all-targets --all -- -Dwarnings
+            cargo run -- compiler/Main.fir
 
   run_golden_tests:
     name: 'Run golden tests'
@@ -103,3 +104,23 @@ jobs:
         run: |
           cargo build
           FIR_ROOT=${{ github.workspace }} goldentests target/debug/fir tests '# '
+
+  run_peg_tests:
+    name: Run PEG tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Test
+        run: |
+            export FIR_ROOT=$(pwd)
+            cargo run -- compiler/Peg.fir -- compiler/Fon.peg > compiler/Fon.fir
+            cargo run -- compiler/FonTests.fir
+            ! git status --porcelain | grep -q '^ M' 
