@@ -9,7 +9,7 @@ type A:
         y: U32
         z: U32
 
-main
+main()
     let x = 1u32
     let y = 2u32
     let z = 3u32

@@ -40,7 +40,7 @@ handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): [.
         Result.Err(~InvalidDigit): Option.Some(0u32)
         Result.Err(other): throw(other)
 
-main
+main()
     let strings: Vec[Str] = Vec.withCapacity(10)
     strings.push("1")
     strings.push("2")

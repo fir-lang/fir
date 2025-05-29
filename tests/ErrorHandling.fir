@@ -133,7 +133,7 @@ parseU32UsingExnVersion(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r
 parseU32UsingResultVersion(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
     untry(parseU32(s))
 
-main
+main()
     print("----- parseU32")
     print(parseU32("123").mapErr(parseIntErrorToStr))
     print(parseU32("12a3").mapErr(parseIntErrorToStr))

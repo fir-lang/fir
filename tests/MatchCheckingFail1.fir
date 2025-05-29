@@ -1,4 +1,4 @@
-main
+main()
     let x = match Bool.True:
         Bool.True: 1u32
         Bool.False: "Hi"

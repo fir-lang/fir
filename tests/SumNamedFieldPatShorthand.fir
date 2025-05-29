@@ -4,7 +4,7 @@ type T:
         y: U32
         z: U32
 
-main
+main()
     let val = T.A(x = 123u32, y = 456u32, z = 789u32)
 
     match val:

@@ -377,17 +377,6 @@ FunSig: (L<Id>, FunSig) = {
                 return_ty: ret.1,
             })
     },
-
-    <name:LLowerId> <context:Context> <ret:ReturnType> => {
-        (name,
-            FunSig {
-                context,
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: ret.0,
-                return_ty: ret.1,
-            })
-    },
 }
 
 TopFunDecl: L<FunDecl> = {
@@ -436,20 +425,6 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
                 context,
                 self_: param_list.0,
                 params: param_list.1,
-                exceptions: ret.0,
-                return_ty: ret.1,
-            }
-        )
-    },
-
-    <parent_ty:ParentTy?> <name:LLowerId> <context:Context> <ret:ReturnType> => {
-        (
-            parent_ty,
-            name,
-            FunSig {
-                context,
-                self_: SelfParam::No,
-                params: vec![],
                 exceptions: ret.0,
                 return_ty: ret.1,
             }

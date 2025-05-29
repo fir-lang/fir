@@ -1,8 +1,8 @@
-main
+main()
     let (z, x) = f()
     print("x = `x`, y = `y`, z = `z`")
 
-f: (x: U32, y: U32, z: U32) = (x = 123u32, y = 456u32, z = 789u32)
+f(): (x: U32, y: U32, z: U32) = (x = 123u32, y = 456u32, z = 789u32)
 
 # args: --no-backtrace
 # expected exit status: 101

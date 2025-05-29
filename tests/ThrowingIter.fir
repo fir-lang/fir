@@ -33,7 +33,7 @@ parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
             Result.Ok(i): result += i
     result
 
-main
+main()
     let nums: Vec[U32] = Vec.withCapacity(10)
     nums.push(1)
     nums.push(2)

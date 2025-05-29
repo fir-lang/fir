@@ -1,4 +1,4 @@
-main
+main()
     let iter = once(1u32).chain(empty()).chain(once(2u32)).chain(empty())
 
     for i: U32 in iter:

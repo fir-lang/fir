@@ -1,4 +1,4 @@
-main
+main()
     print(Option.None[U32])
     print(foo[[], U32]())
     print(T(x = ()).f[U32, [], Str]())

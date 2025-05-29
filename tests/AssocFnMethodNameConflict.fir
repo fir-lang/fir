@@ -12,7 +12,7 @@ impl Foo[T1]:
     foo(self: T1)
         print("(trait) T1.foo(a = `self.a`)")
 
-main
+main()
     let t1 = T1(a = 1u32)
     t1.foo()
 

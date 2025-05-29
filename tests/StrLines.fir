@@ -4,7 +4,7 @@ collect(iter: Lines): Vec[Str]
         vec.push(a)
     vec
 
-main
+main()
     let s = ""
     printStr(collect("".lines()).toStr())
     printStr(collect("a".lines()).toStr())

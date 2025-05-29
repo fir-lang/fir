@@ -1,7 +1,7 @@
 type Test[varRowVar]:
     variant: [..varRowVar]
 
-main
+main()
     let x: Test[[Foo]] = Test(variant = ~Foo)
 
 # args: --typecheck --no-backtrace

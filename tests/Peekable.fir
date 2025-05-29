@@ -12,7 +12,7 @@ impl Iterator[Iter, U32, exn]:
             self.next += 1
             Option.Some(next)
 
-main
+main()
     let iter = Iter(next = 0)
     let peekable = iter.peekable()
     let next: Option[U32] = peekable.next()
