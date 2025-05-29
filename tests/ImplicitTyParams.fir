@@ -13,7 +13,7 @@ X.f3(self: X[t], other: t2): t2
     other
 
 trait Test[t]:
-    f: a
-    x: Fn(a): [..r] b
+    f(): a
+    x(): Fn(a): [..r] b
 
 main() = ()

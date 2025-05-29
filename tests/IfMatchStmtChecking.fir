@@ -1,4 +1,4 @@
-main
+main()
     if Bool.False:
         1u32
 

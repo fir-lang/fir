@@ -1,4 +1,4 @@
-main
+main()
     let a: U32 = 0
     let x: Result[Str, ()] = try({
         a += 1

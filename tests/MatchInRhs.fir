@@ -7,7 +7,7 @@ test(arg: Result[U32, U32]): U32
 
     x
 
-main
+main()
     printStr(test(Result.Ok(10u32)).toStr())
     printStr(test(Result.Err(10u32)).toStr())
 

@@ -11,5 +11,5 @@ parseU32FromFile(filePath: Str): Result[[InvalidDigit, Overflow, EmptyInput, IoE
 
     parseU32(fileContents)
 
-main
+main()
     ()

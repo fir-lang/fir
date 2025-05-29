@@ -6,6 +6,6 @@ T.captureSelf(self: T): Fn(): [..errs] ()
         printStr(self.a.toStr())
     }
 
-main = T(a = 123).captureSelf()()
+main() = T(a = 123).captureSelf()()
 
 # expected stdout: 123

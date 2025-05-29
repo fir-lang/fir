@@ -2,7 +2,7 @@ type Tree:
     Leaf(U32)
     Branch(Tree, Tree, U32)
 
-main
+main()
     let t1 = Tree.Leaf(123u32)
     match t1:
         Tree.Leaf(x) | Tree.Branch(_, _, x): print(x)

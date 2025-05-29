@@ -1,4 +1,4 @@
-main
+main()
     let x: Option[U32] = Option.Some(123u32)
     print(x.map(fn(i) { i + 10 }))
     print(x.map(fn(i) { i.toStr() }))

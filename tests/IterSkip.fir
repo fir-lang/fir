@@ -12,7 +12,7 @@ impl Iterator[MyIter, U32, exn]:
             self.start += 1
             Option.Some(next)
 
-main
+main()
     print("----- 1")
     for x: U32 in MyIter(start = 0, end = 5).skip(0):
         print(x)

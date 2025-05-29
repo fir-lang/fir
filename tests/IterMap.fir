@@ -1,4 +1,4 @@
-main
+main()
     let sum = 0u32
     for x: U32 in "1 2 3".splitWhitespace().map(parseU32):
         sum += x
