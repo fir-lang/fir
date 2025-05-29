@@ -317,6 +317,7 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
         let altResultDoc = Doc.str("let altResult = try({")
         for symbol: Symbol in alt.symbols.iter():
             altResultDoc += Doc.hardLine() + generateSymbolParser(symbol, Bool.False, terminalPats)
+        altResultDoc += Doc.str("cursor")
         altResultDoc = altResultDoc.nest(4)
         altResultDoc += Doc.hardLine() + Doc.str("})") + Doc.hardLine()
         doc += altResultDoc
@@ -335,9 +336,9 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
         let okAlt = \
             Doc.nested(
                 4,
-                Doc.str("Result.Ok(()):")
+                Doc.str("Result.Ok(newCursor):")
                     + Doc.hardLine()
-                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = cursor)")
+                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = newCursor)")
                     + Doc.hardLine())
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
@@ -361,6 +362,17 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
 
     doc.nest(4)
 
+## Generate code for matching a single symbol.
+##
+## Throws a `ParseError` if matching fails.
+##
+## Matched values will be pushed to a variable called `nodes`, which should be a
+## `Vec[ParseTree[...]]` with the right terminal and non-terminal type arguments.
+##
+## Note: this updates the variable `cursor`, but since symbol matching is always done in a closure
+## in a `try` block, the `cursor` won't update the non-terminal function's `cursor` variable. The
+## use site of this function should return the value of `cursor` from the closure so that the
+## non-terminal function's `cursor` can be updated with the new value.
 generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
     match symbol:
         Symbol.Terminal(terminal):
@@ -420,11 +432,19 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
             let tryDoc = Doc.str("let symResult = try({") + Doc.hardLine()
             tryDoc += generateSymbolParser(symbol, ignore, terminalPats)
+            tryDoc += Doc.str("cursor")
             tryDoc = tryDoc.nest(4)
             tryDoc += Doc.hardLine() + Doc.str("})")
 
             loopDoc += tryDoc + Doc.hardLine()
-            loopDoc += Doc.nested(4, Doc.str("if symResult is Result.Err(_):") + Doc.hardLine() + Doc.str("break"))
+            loopDoc += \
+                Doc.nested(
+                    4,
+                    Doc.str("match symResult:")
+                        + Doc.hardLine()
+                        + Doc.nested(4, Doc.str("Result.Err(_):") + Doc.hardLine() + Doc.str("break"))
+                        + Doc.hardLine()
+                        + Doc.nested(4, Doc.str("Result.Ok(newCursor):") + Doc.hardLine() + Doc.str("cursor = newCursor")))
 
             loopDoc.nest(4)
 

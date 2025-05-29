@@ -1,10 +1,16 @@
-import Fon
 import Lexer
+import TestGrammar
 
 main
-    print("FON TESTS")
-    try({ runParser("true", boolean) }).unwrap()
-    ()
+    print("PEG TESTS")
+    runTest("a", terminalA)
+    runTest("b", terminalA)
+    runTest("a b", terminalA)
+    runTest("b", terminalB)
+    runTest("a b", terminalAThenB)
+    runTest("b", zeroOrMoreAThenB)
+    runTest("a b", zeroOrMoreAThenB)
+    runTest("a a b", zeroOrMoreAThenB)
 
 type TestError:
     ParseError(ParseError[Token])
@@ -22,7 +28,7 @@ runParser(
     ): TestError ParseTree[Token, NonTerminal]
     let (tokens, error) = tokenize("<test input>", input)
     if error is Option.Some(error):
-        panic(errStr(error))
+        panic(lexerErrorStr(error))
     let result = match try({ parseFn(tokens, 0) }):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
@@ -30,5 +36,14 @@ runParser(
         throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
     result.tree
 
-errStr(err: Error): Str
+runTest(
+        input: Str,
+        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    ): exn ()
+    printNoNl("\tParsing \"`input`\"\t")
+    match try({ runParser(input, parseFn) }):
+        Result.Ok(tree): print("OK")
+        Result.Err(err): print("ERR: `err`")
+
+lexerErrorStr(err: Error): Str
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

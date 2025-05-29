@@ -238,6 +238,11 @@ Lexer.next(self): Error Option[Token]
             self._col += 1
             return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx, line, col))
 
+        "_" _:
+            self._byteIdx += 1
+            self._col += 1
+            return Option.Some(Token(kind = TokenKind.Underscore, text = "_", byteIdx, line, col))
+
         ########################################################################################
         # Operators
 

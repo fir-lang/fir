@@ -1,0 +1,36 @@
+# PEG parsers in this file are used to test the PEG parser generator.
+
+Terminals:
+    "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
+    "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
+
+terminalA:
+    "a"
+
+terminalB:
+    "b"
+
+terminalAOrB:
+    "a"
+    "b"
+
+terminalAThenB:
+    "a" "b"
+
+zeroOrMoreAThenB:
+    "a"* "b"
+
+# oneOrMoreAThenB:
+#     "a"+ "b"
+
+# zeroOrOneAThenB:
+#     "a"? "b"
+
+ignoreAThenB:
+    _"a" "b"
+
+ignoreAThenIgnoreB:
+    _"a" _"b"
+
+ignoreGroupAThenB:
+    _("a" "b")
