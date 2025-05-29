@@ -103,7 +103,36 @@ type IntKind:
 
 impl ToStr[Token]:
     toStr(self: Token): Str
-        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`self.text`\")"
+        let text = if self.kind is TokenKind.Str | TokenKind.Newline | TokenKind.Indent:
+            _escape(self.text)
+        else:
+            self.text
+
+        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`text`\")"
+
+_escape(s: Str): Str
+    let buf = StrBuf.withCapacity(s.len() + 10)
+
+    for char: Char in s.chars():
+        match char:
+            '"':
+                buf.push('\\')
+                buf.push('"')
+            '\n':
+                buf.push('\\')
+                buf.push('n')
+            '\t':
+                buf.push('\\')
+                buf.push('t')
+            '\r':
+                buf.push('\\')
+                buf.push('r')
+            '\\':
+                buf.push('\\')
+                buf.push('\\')
+            other:
+                buf.push(other)
+    buf.toStr()
 
 impl ToStr[TokenKind]:
     toStr(self: TokenKind): Str
