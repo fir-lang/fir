@@ -192,7 +192,6 @@ terminalDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTre
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
             if tokens.get(cursor) is Token(kind = TokenKind.Newline, ..):
-                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                 cursor += 1
             else:
                 throw(ParseError.UnexpectedToken(tokens.get(cursor)))
@@ -216,7 +215,6 @@ terminalDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTre
                     if cursor == tokens.len():
                         throw(ParseError.UnexpectedEof)
                     if tokens.get(cursor) is Token(kind = TokenKind.Newline, ..):
-                        nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
                         throw(ParseError.UnexpectedToken(tokens.get(cursor)))

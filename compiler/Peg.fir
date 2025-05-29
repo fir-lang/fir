@@ -18,21 +18,22 @@ main(args: Array[Str])
     if tokens.len() == 0:
         panic("Empty file")
 
-    let declsNew = match try({ topDecls(tokens, 0) }):
+    let decls = match try({ topDecls(tokens, 0) }):
         Result.Err(err):
             panic(err)
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")
+            # print(result.tree.toDoc().print(80))
             convertParseTree(result.tree)
 
-    let parser = Parser(file = input, tokens, idx = 0)
-    let decls = match try(parser.spec):
-        Result.Err(err): panic(errStr(err))
-        Result.Ok(decls): decls
+    # let parser = Parser(file = input, tokens, idx = 0)
+    # let decls = match try(parser.spec):
+    #     Result.Err(err): panic(errStr(err))
+    #     Result.Ok(decls): decls
 
-    if parser.idx != parser.tokens.len():
-        panic("Left over tokens")
+    # if parser.idx != parser.tokens.len():
+    #     panic("Left over tokens")
 
     let terminalPats: Option[HashMap[Str, Vec[Token]]] = Option.None
     let terminalNames: Vec[Str] = Vec.withCapacity(decls.len())
@@ -634,7 +635,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 4,
                 Doc.str("let symResult = try({")
                     + Doc.hardLine()
-                    + generateSymbolParser(symbol, ignore, terminalPats)) \
+                    + generateSymbolParser(symbol, Bool.True, terminalPats)) \
                 + Doc.hardLine() \
                 + Doc.str("})") \
                 + Doc.hardLine() \

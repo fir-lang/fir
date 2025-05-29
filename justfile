@@ -46,7 +46,8 @@ generate_parser:
 update_generated_files:
     lalrpop src/parser.lalrpop
     cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-    cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.fir
+    cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
+    mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
 
 # build_site tested with:
 #
