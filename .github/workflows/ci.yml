@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get Rust stable toolchain
+      - name: Get stable toolchain
         uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
@@ -118,9 +118,12 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install goldentests
+        run: cargo install --git https://github.com/osa1/golden-tests --features=binary
+
       - name: Test
         run: |
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
             goldentests target/debug/fir compiler/PegTests.fir '# '
-            ! git status --porcelain | grep -q '^ M' 
+            ! git status --porcelain | grep -q '^ M'
