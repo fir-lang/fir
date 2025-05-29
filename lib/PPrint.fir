@@ -145,6 +145,9 @@ Doc.break_(i: U32): Doc
 Doc.nest(self, indent: U32): Doc
     Doc._Nest(req = self._req(), indent, doc = self)
 
+Doc.nested(indent: U32, doc: Doc): Doc
+    doc.nest(indent)
+
 Doc.group(self): Doc
     let req = self._req()
     if req is _SpaceReq.Infinite:
