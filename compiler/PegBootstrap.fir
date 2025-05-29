@@ -9,9 +9,12 @@ main()
     if error is Option.Some(error):
         panic(errStr(error))
     let tokens = scan(tokens)
-    match try({ terminalsDecl(tokens, 0) }):
-        Result.Err(err): print(err)
-        Result.Ok(result): print(result.tree.toDoc().print(80))
+    match try({ topDecls(tokens, 0) }):
+        Result.Err(err):
+            print(err)
+        Result.Ok(result):
+            print(result.tree.toDoc().print(80))
+            print("Leftover tokens: `tokens.len() - result.newCursor`")
 
 errStr(err: Error): Str
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

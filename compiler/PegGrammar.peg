@@ -5,6 +5,7 @@ Terminals:
     "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
     ":" = Token(kind = TokenKind.Colon, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "+" = Token(kind = TokenKind.Plus, ..)
     "?" = Token(kind = TokenKind.Question, ..)
@@ -25,13 +26,13 @@ topDecl:
     nonTerminalDecl
 
 terminalsDecl:
-    "Terminals" ":" "NEWLINE" "INDENT" terminalDecl+
+    "Terminals" ":" "NEWLINE" "INDENT" terminalDecl+ "DEDENT"
 
 terminalDecl:
     "Str" "=" (-"NEWLINE" "ANY")+ "NEWLINE"
 
 nonTerminalDecl:
-    "lowerId" ":" "NEWLINE" "INDENT" nonTerminalAlt+ "NEWLINE"
+    "lowerId" ":" "NEWLINE" "INDENT" nonTerminalAlt+ "DEDENT"
 
 nonTerminalAlt:
     symbol+ "NEWLINE"
@@ -40,15 +41,15 @@ symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
 
 symbolPrefix:
-    "-"                         # negative lookahead
-    "_"                         # ignore
+    "-"
+    "_"
 
 symbolNonRec:
-    "lowerId"                   # non-terminal
-    "Str"                       # terminal
-    "(" symbol+ ")"             # group
+    "lowerId"
+    "Str"
+    "(" symbol+ ")"
 
 symbolSuffix:
-    "*"                         # zero or more
-    "+"                         # one or more
-    "?"                         # zero or one
+    "*"
+    "+"
+    "?"
