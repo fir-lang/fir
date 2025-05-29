@@ -10,12 +10,45 @@ Terminals:
     "?" = Token(kind = TokenKind.Question, ..)
     "*" = Token(kind = TokenKind.Star, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
+
+topDecls:
+    topDecl+
+
+topDecl:
+    terminalsDecl
+    nonTerminalDecl
 
 terminalsDecl:
     "Terminals" ":" "NEWLINE" "INDENT" terminalDecl+
 
 terminalDecl:
     "Str" "=" (-"NEWLINE" "ANY")+ "NEWLINE"
+
+nonTerminalDecl:
+    "lowerId" ":" "NEWLINE" "INDENT" nonTerminalAlt+ "NEWLINE"
+
+nonTerminalAlt:
+    symbol+ "NEWLINE"
+
+symbol:
+    symbolPrefix? symbolNonRec symbolSuffix?
+
+symbolPrefix:
+    "-"                         # negative lookahead
+    "_"                         # ignore
+
+symbolNonRec:
+    "lowerId"                   # non-terminal
+    "Str"                       # terminal
+    "(" symbol+ ")"             # group
+
+symbolSuffix:
+    "*"                         # zero or more
+    "+"                         # one or more
+    "?"                         # zero or one
