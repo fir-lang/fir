@@ -45,6 +45,8 @@ main(args: Array[Str])
     let terminalPats: HashMap[Str, Vec[Token]] = \
         terminalPats.unwrapOrElse({ panic("Grammar missing terminals declaration") })
 
+    print("# This is generated file, do not edit.")
+    print("")
     print("import ParseTree")
     print("import Token")
     print("")
@@ -380,7 +382,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
             let eofCheck = \
                 Doc.nested(
-                    4, 
+                    4,
                     Doc.str("if cursor == tokens.len():") \
                         + Doc.hardLine() \
                         + Doc.str("throw(ParseError.UnexpectedEof)"))
@@ -448,11 +450,36 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
             loopDoc.nest(4)
 
-        Symbol.OneOrMore(_):
-            Doc.str("TODO(+)")
+        Symbol.OneOrMore(symbol):
+            generateSymbolParser(symbol, ignore, terminalPats) \
+                + generateSymbolParser(Symbol.ZeroOrMore(symbol), ignore, terminalPats)
 
-        Symbol.Optional(_):
-            Doc.str("TODO(?)")
+        Symbol.Optional(symbol):
+            let doc = Doc.str("let symResult = try({") + Doc.hardLine()
+            doc += generateSymbolParser(symbol, ignore, terminalPats)
+            doc += Doc.str("cursor")
+            doc = doc.nest(4)
+            doc += Doc.hardLine() + Doc.str("})")
+
+            doc += Doc.hardLine()
+            doc += \
+                Doc.nested(
+                    4,
+                    Doc.str("match symResult:")
+                        + Doc.hardLine()
+                        + Doc.nested(
+                            4,
+                            Doc.str("Result.Err(_):")
+                                + Doc.hardLine()
+                                + Doc.str("()"))         # TODO: We will need to truncate the tokens vec here
+                        + Doc.hardLine()
+                        + Doc.nested(
+                                4,
+                                Doc.str("Result.Ok(newCursor):")
+                                    + Doc.hardLine()
+                                    + Doc.str("cursor = newCursor")))
+
+            doc
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)

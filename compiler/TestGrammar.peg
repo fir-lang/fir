@@ -20,11 +20,11 @@ terminalAThenB:
 zeroOrMoreAThenB:
     "a"* "b"
 
-# oneOrMoreAThenB:
-#     "a"+ "b"
+oneOrMoreAThenB:
+    "a"+ "b"
 
-# zeroOrOneAThenB:
-#     "a"? "b"
+zeroOrOneAThenB:
+    "a"? "b"
 
 ignoreAThenB:
     _"a" "b"

@@ -11,6 +11,12 @@ main
     runTest("b", zeroOrMoreAThenB)
     runTest("a b", zeroOrMoreAThenB)
     runTest("a a b", zeroOrMoreAThenB)
+    runTest("b", oneOrMoreAThenB)
+    runTest("a b", oneOrMoreAThenB)
+    runTest("a a b", oneOrMoreAThenB)
+    runTest("a a b", zeroOrOneAThenB)
+    runTest("a b", zeroOrOneAThenB)
+    runTest("b", zeroOrOneAThenB)
 
 type TestError:
     ParseError(ParseError[Token])
