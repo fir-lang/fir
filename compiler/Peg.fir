@@ -55,6 +55,8 @@ main(args: Array[Str])
     print("")
     print(generateNonTerminalToStr(terminalNames).print(80))
     print("")
+    print(generateNonTerminalEq(terminalNames).print(80))
+    print("")
 
     let nonTerminalDeclIdx = 0
     for decl: TopDecl in decls.iter():
@@ -330,6 +332,21 @@ generateNonTerminalToStr(nonTerminalNames: Vec[Str]): Doc
     for name: Str in nonTerminalNames.iter():
         let capitalName = capitalize(name)
         matchDoc += Doc.hardLine() + Doc.str("NonTerminal.`capitalName`: \"`capitalName`\"")
+
+    (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
+
+generateNonTerminalEq(nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("impl Eq[NonTerminal]:")
+    doc += Doc.hardLine()
+
+    let fnDoc = Doc.str("__eq(self: NonTerminal, other: NonTerminal): Bool")
+    fnDoc += Doc.hardLine()
+
+    let matchDoc = Doc.str("match (left = self, right = other):")
+    for name: Str in nonTerminalNames.iter():
+        let capitalName = capitalize(name)
+        matchDoc += Doc.hardLine() + Doc.str("(left = NonTerminal.`capitalName`, right = NonTerminal.`capitalName`): Bool.True")
+    matchDoc += Doc.hardLine() + Doc.str("_: Bool.False")
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 

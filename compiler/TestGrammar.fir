@@ -35,6 +35,24 @@ impl ToStr[NonTerminal]:
             NonTerminal.NonTerminalsBacktrack: "NonTerminalsBacktrack"
             NonTerminal.NegLookahead: "NegLookahead"
 
+impl Eq[NonTerminal]:
+    __eq(self: NonTerminal, other: NonTerminal): Bool
+        match (left = self, right = other):
+            (left = NonTerminal.TerminalA, right = NonTerminal.TerminalA): Bool.True
+            (left = NonTerminal.TerminalB, right = NonTerminal.TerminalB): Bool.True
+            (left = NonTerminal.TerminalAOrB, right = NonTerminal.TerminalAOrB): Bool.True
+            (left = NonTerminal.TerminalAThenB, right = NonTerminal.TerminalAThenB): Bool.True
+            (left = NonTerminal.ZeroOrMoreAThenB, right = NonTerminal.ZeroOrMoreAThenB): Bool.True
+            (left = NonTerminal.OneOrMoreAThenB, right = NonTerminal.OneOrMoreAThenB): Bool.True
+            (left = NonTerminal.ZeroOrOneAThenB, right = NonTerminal.ZeroOrOneAThenB): Bool.True
+            (left = NonTerminal.IgnoreAThenB, right = NonTerminal.IgnoreAThenB): Bool.True
+            (left = NonTerminal.IgnoreAThenIgnoreB, right = NonTerminal.IgnoreAThenIgnoreB): Bool.True
+            (left = NonTerminal.IgnoreGroupAThenB, right = NonTerminal.IgnoreGroupAThenB): Bool.True
+            (left = NonTerminal.NonTerminals, right = NonTerminal.NonTerminals): Bool.True
+            (left = NonTerminal.NonTerminalsBacktrack, right = NonTerminal.NonTerminalsBacktrack): Bool.True
+            (left = NonTerminal.NegLookahead, right = NonTerminal.NegLookahead): Bool.True
+            _: Bool.False
+
 terminalA(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)

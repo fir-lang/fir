@@ -36,3 +36,17 @@ ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]): Doc
             doc += Doc.whenNotFlat(Doc.char(','))
 
             (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
+
+ParseTree.asTerminal(self: ParseTree[t, nt]): t
+    match self:
+        ParseTree.Terminal(t): t
+        ParseTree.NonTerminal(..): panic("ParseTree.asTerminal: tree is a non-terminal")
+
+ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](self: ParseTree[t, nt], kind_: nt): Vec[ParseTree[t, nt]]
+    match self:
+        ParseTree.Terminal(_):
+            panic("ParseTree.getNonTerminal: tree is a terminal")
+        ParseTree.NonTerminal(kind, nodes):
+            if kind != kind_:
+                panic("ParseTree.getNonTerminal: expected `kind_`, found `kind`")
+            nodes

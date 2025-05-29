@@ -29,6 +29,21 @@ impl ToStr[NonTerminal]:
             NonTerminal.SymbolNonRec: "SymbolNonRec"
             NonTerminal.SymbolSuffix: "SymbolSuffix"
 
+impl Eq[NonTerminal]:
+    __eq(self: NonTerminal, other: NonTerminal): Bool
+        match (left = self, right = other):
+            (left = NonTerminal.TopDecls, right = NonTerminal.TopDecls): Bool.True
+            (left = NonTerminal.TopDecl, right = NonTerminal.TopDecl): Bool.True
+            (left = NonTerminal.TerminalsDecl, right = NonTerminal.TerminalsDecl): Bool.True
+            (left = NonTerminal.TerminalDecl, right = NonTerminal.TerminalDecl): Bool.True
+            (left = NonTerminal.NonTerminalDecl, right = NonTerminal.NonTerminalDecl): Bool.True
+            (left = NonTerminal.NonTerminalAlt, right = NonTerminal.NonTerminalAlt): Bool.True
+            (left = NonTerminal.Symbol, right = NonTerminal.Symbol): Bool.True
+            (left = NonTerminal.SymbolPrefix, right = NonTerminal.SymbolPrefix): Bool.True
+            (left = NonTerminal.SymbolNonRec, right = NonTerminal.SymbolNonRec): Bool.True
+            (left = NonTerminal.SymbolSuffix, right = NonTerminal.SymbolSuffix): Bool.True
+            _: Bool.False
+
 topDecls(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
