@@ -126,4 +126,24 @@ jobs:
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
             goldentests target/debug/fir compiler/PegTests.fir '# '
+
+  check_generated_files:
+    name: Check that generated files are up-to-date
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Check
+        run: |
+            export FIR_ROOT=$(pwd)
+            cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+            cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
+            mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
             ! git status --porcelain | grep -q '^ M'
