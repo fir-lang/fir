@@ -345,7 +345,7 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
     for alt: Alt in decl.alts.iter():
         let altResultDoc = Doc.str("let altResult = try({") + Doc.hardLine()
         for symbol: Symbol in alt.symbols.iter():
-            altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats)
+            altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats) + Doc.hardLine()
         altResultDoc += Doc.str("cursor")
         altResultDoc = altResultDoc.nest(4)
         altResultDoc += Doc.hardLine() + Doc.str("})") + Doc.hardLine()
@@ -397,6 +397,9 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
 ## Matched values will be pushed to a variable called `nodes`, which should be a
 ## `Vec[ParseTree[...]]` with the right terminal and non-terminal type arguments.
 ##
+## Generated `Doc`s don't end with a hard-line, so these can be nested in other `Doc`s without
+## adding an empty indented line at the end.
+##
 ## Note: this updates the variable `cursor`, but since symbol matching is always done in a closure
 ## in a `try` block, the `cursor` won't update the non-terminal function's `cursor` variable. The
 ## use site of this function should return the value of `cursor` from the closure so that the
@@ -434,30 +437,33 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         + Doc.hardLine()
                         + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
 
-            eofCheck + tokenKindCheck + Doc.hardLine()
+            eofCheck + tokenKindCheck
 
         Symbol.NonTerminal(nonTerminal):
             let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)") \
                 + Doc.hardLine() \
-                + Doc.str("cursor = nonTerminalResult.newCursor") \
-                + Doc.hardLine()
+                + Doc.str("cursor = nonTerminalResult.newCursor")
 
             if !ignore:
-                doc += Doc.str("nodes.push(nonTerminalResult.tree)") + Doc.hardLine()
+                doc += Doc.hardLine() + Doc.str("nodes.push(nonTerminalResult.tree)")
 
             doc
 
         Symbol.Group(symbols):
             let doc = Doc.empty()
+            let symIdx: U32 = 0
             for symbol: Symbol in symbols.iter():
+                if symIdx != 0:
+                    doc += Doc.hardLine()
                 doc += generateSymbolParser(symbol, ignore, terminalPats)
+                symIdx += 1
             doc
 
         Symbol.ZeroOrMore(symbol):
             let loopDoc = Doc.str("loop:") + Doc.hardLine()
 
             let tryDoc = Doc.str("let symResult = try({") + Doc.hardLine()
-            tryDoc += generateSymbolParser(symbol, ignore, terminalPats)
+            tryDoc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
             tryDoc += Doc.str("cursor")
             tryDoc = tryDoc.nest(4)
             tryDoc += Doc.hardLine() + Doc.str("})")
@@ -472,15 +478,16 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         + Doc.hardLine()
                         + Doc.nested(4, Doc.str("Result.Ok(newCursor):") + Doc.hardLine() + Doc.str("cursor = newCursor")))
 
-            loopDoc.nest(4) + Doc.hardLine()
+            loopDoc.nest(4)
 
         Symbol.OneOrMore(symbol):
             generateSymbolParser(symbol, ignore, terminalPats) \
+                + Doc.hardLine() \
                 + generateSymbolParser(Symbol.ZeroOrMore(symbol), ignore, terminalPats)
 
         Symbol.Optional(symbol):
             let doc = Doc.str("let symResult = try({") + Doc.hardLine()
-            doc += generateSymbolParser(symbol, ignore, terminalPats)
+            doc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
             doc += Doc.str("cursor")
             doc = doc.nest(4)
             doc += Doc.hardLine() + Doc.str("})")
@@ -503,7 +510,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                                     + Doc.hardLine()
                                     + Doc.str("cursor = newCursor")))
 
-            doc + Doc.hardLine()
+            doc
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)
@@ -532,8 +539,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                             4,
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
-                                + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))) \ 
-                + Doc.hardLine()
+                                + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")))
 
 tokensToCode(tokens: Vec[Token]): exn Doc
     if tokens.len() == 0:

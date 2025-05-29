@@ -450,7 +450,6 @@ negLookahead(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTre
                 cursor += 1
             else:
                 throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-            
         })
         match symResult:
             Result.Err(_):
