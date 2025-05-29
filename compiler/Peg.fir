@@ -56,13 +56,17 @@ main(args: Array[Str])
     print(generateNonTerminalToStr(terminalNames).print(80))
     print("")
 
+    let nonTerminalDeclIdx = 0
     for decl: TopDecl in decls.iter():
         let nonTerminal = match decl:
             TopDecl.Terminals(_): continue
             TopDecl.NonTerminal(nonTerminal): nonTerminal
 
+        if nonTerminalDeclIdx != 0:
+            print("")
         let doc = generateNonTerminal(nonTerminal, terminalPats)
         print(doc.print(80))
+        nonTerminalDeclIdx += 1
 
 errStr(err: Error): Str
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
@@ -332,9 +336,9 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
     doc += Doc.str("let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)") + Doc.hardLine()
 
     for alt: Alt in decl.alts.iter():
-        let altResultDoc = Doc.str("let altResult = try({")
+        let altResultDoc = Doc.str("let altResult = try({") + Doc.hardLine()
         for symbol: Symbol in alt.symbols.iter():
-            altResultDoc += Doc.hardLine() + generateSymbolParser(symbol, Bool.False, terminalPats)
+            altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats)
         altResultDoc += Doc.str("cursor")
         altResultDoc = altResultDoc.nest(4)
         altResultDoc += Doc.hardLine() + Doc.str("})") + Doc.hardLine()
@@ -356,8 +360,7 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
                 4,
                 Doc.str("Result.Ok(newCursor):")
                     + Doc.hardLine()
-                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = newCursor)")
-                    + Doc.hardLine())
+                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = newCursor)"))
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
 
@@ -376,7 +379,7 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
             4,
             Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
 
-    doc += failDoc + Doc.hardLine()
+    doc += failDoc
 
     doc.nest(4)
 
@@ -424,9 +427,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         + Doc.hardLine()
                         + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
 
-            tokenKindCheck += Doc.hardLine()
-
-            eofCheck + tokenKindCheck
+            eofCheck + tokenKindCheck + Doc.hardLine()
 
         Symbol.NonTerminal(nonTerminal):
             let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)") \
@@ -442,7 +443,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
         Symbol.Group(symbols):
             let doc = Doc.empty()
             for symbol: Symbol in symbols.iter():
-                doc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
+                doc += generateSymbolParser(symbol, ignore, terminalPats)
             doc
 
         Symbol.ZeroOrMore(symbol):
@@ -464,7 +465,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         + Doc.hardLine()
                         + Doc.nested(4, Doc.str("Result.Ok(newCursor):") + Doc.hardLine() + Doc.str("cursor = newCursor")))
 
-            loopDoc.nest(4)
+            loopDoc.nest(4) + Doc.hardLine()
 
         Symbol.OneOrMore(symbol):
             generateSymbolParser(symbol, ignore, terminalPats) \
@@ -495,7 +496,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                                     + Doc.hardLine()
                                     + Doc.str("cursor = newCursor")))
 
-            doc
+            doc + Doc.hardLine()
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)
