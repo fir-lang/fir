@@ -26,16 +26,16 @@ topDecl:
     nonTerminalDecl
 
 terminalsDecl:
-    "Terminals" ":" "NEWLINE" "INDENT" terminalDecl+ "DEDENT"
+    "Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT"
 
 terminalDecl:
-    "Str" "=" (-"NEWLINE" "ANY")+ "NEWLINE"
+    "Str" "=" (-"NEWLINE" "ANY")+ _"NEWLINE"
 
 nonTerminalDecl:
-    "lowerId" ":" "NEWLINE" "INDENT" nonTerminalAlt+ "DEDENT"
+    "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
 
 nonTerminalAlt:
-    symbol+ "NEWLINE"
+    symbol+ _"NEWLINE"
 
 symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
@@ -47,7 +47,7 @@ symbolPrefix:
 symbolNonRec:
     "lowerId"
     "Str"
-    "(" symbol+ ")"
+    _"(" symbol+ _")"
 
 symbolSuffix:
     "*"
