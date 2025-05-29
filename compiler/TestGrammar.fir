@@ -14,6 +14,8 @@ type NonTerminal:
     IgnoreAThenB
     IgnoreAThenIgnoreB
     IgnoreGroupAThenB
+    NonTerminals
+    NonTerminalsBacktrack
 
 impl ToStr[NonTerminal]:
     toStr(self: NonTerminal): Str
@@ -28,6 +30,8 @@ impl ToStr[NonTerminal]:
             NonTerminal.IgnoreAThenB: "IgnoreAThenB"
             NonTerminal.IgnoreAThenIgnoreB: "IgnoreAThenIgnoreB"
             NonTerminal.IgnoreGroupAThenB: "IgnoreGroupAThenB"
+            NonTerminal.NonTerminals: "NonTerminals"
+            NonTerminal.NonTerminalsBacktrack: "NonTerminalsBacktrack"
 
 terminalA(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
@@ -372,6 +376,81 @@ ignoreGroupAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Par
             nodes.clear()
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.IgnoreGroupAThenB, nodes), newCursor = newCursor)
+            
+    if cursor == tokens.len():
+        throw(ParseError.UnexpectedEof)
+    else:
+        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+    
+nonTerminals(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    let cursor0 = cursor
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
+    let altResult = try({
+        let nonTerminalResult = terminalAOrB(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        
+        let nonTerminalResult = terminalAOrB(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.NonTerminals, nodes), newCursor = newCursor)
+            
+    if cursor == tokens.len():
+        throw(ParseError.UnexpectedEof)
+    else:
+        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+    
+nonTerminalsBacktrack(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    let cursor0 = cursor
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
+    let altResult = try({
+        let nonTerminalResult = terminalAOrB(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        
+        let nonTerminalResult = terminalAOrB(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes), newCursor = newCursor)
+            
+    let altResult = try({
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "c", ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes), newCursor = newCursor)
             
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)

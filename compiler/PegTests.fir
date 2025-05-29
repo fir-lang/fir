@@ -12,6 +12,9 @@ main
     runTest("'b' as terminalA (should fail)", "b", terminalA)
     runTest("'a b' as terminalA (should fail)", "a b", terminalA)
     runTest("'b' as terminalB", "b", terminalB)
+    runTest("'a' as terminalAOrB", "a", terminalAOrB)
+    runTest("'b' as terminalAOrB", "b", terminalAOrB)
+    runTest("'c' as terminalAOrB (should fail)", "c", terminalAOrB)
     runTest("'b b' as terminalAThenB (should fail)", "b b", terminalAThenB)
     runTest("'a b' as terminalAThenB", "a b", terminalAThenB)
     runTest("'b' as zeroOrMOreAThenB", "b", zeroOrMoreAThenB)
@@ -23,6 +26,11 @@ main
     runTest("'a a b' as zeroOrOneAThenB", "a a b", zeroOrOneAThenB)
     runTest("'a b' as zeroOrOneAThenB", "a b", zeroOrOneAThenB)
     runTest("'b' as zeroOrOneAThenB", "b", zeroOrOneAThenB)
+    runTest("'a b' as ignoreAThenB", "a b", ignoreAThenB)
+    runTest("'a b' as ignoreGroupAThenB", "a b", ignoreGroupAThenB)
+    runTest("'a a' as nonTerminals", "a a", nonTerminals)
+    runTest("'a b' as nonTerminals", "a b", nonTerminals)
+    runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
 
 type TestError:
     ParseError(ParseError[Token])

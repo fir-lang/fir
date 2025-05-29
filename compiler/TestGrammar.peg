@@ -3,6 +3,7 @@
 Terminals:
     "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
     "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
+    "c" = Token(kind = TokenKind.LowerId, text = "c", ..)
 
 terminalA:
     "a"
@@ -34,3 +35,10 @@ ignoreAThenIgnoreB:
 
 ignoreGroupAThenB:
     _("a" "b")
+
+nonTerminals:
+    terminalAOrB terminalAOrB
+
+nonTerminalsBacktrack:
+    terminalAOrB terminalAOrB
+    "c" "a"
