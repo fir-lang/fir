@@ -53,6 +53,8 @@ main(args: Array[Str])
 
     print(generateNonTerminalType(terminalNames).print(80))
     print("")
+    print(generateNonTerminalToStr(terminalNames).print(80))
+    print("")
 
     for decl: TopDecl in decls.iter():
         let nonTerminal = match decl:
@@ -305,6 +307,20 @@ generateNonTerminalType(nonTerminalNames: Vec[Str]): Doc
     for name: Str in nonTerminalNames.iter():
         doc += Doc.hardLine() + Doc.str(capitalize(name))
     doc.nest(4)
+
+generateNonTerminalToStr(nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("impl ToStr[NonTerminal]:")
+    doc += Doc.hardLine()
+
+    let fnDoc = Doc.str("toStr(self: NonTerminal): Str")
+    fnDoc += Doc.hardLine()
+
+    let matchDoc = Doc.str("match self:")
+    for name: Str in nonTerminalNames.iter():
+        let capitalName = capitalize(name)
+        matchDoc += Doc.hardLine() + Doc.str("NonTerminal.`capitalName`: \"`capitalName`\"")
+
+    (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
 generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
     let doc = Doc.str("`decl.name`(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)") \

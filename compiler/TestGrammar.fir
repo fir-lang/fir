@@ -15,6 +15,20 @@ type NonTerminal:
     IgnoreAThenIgnoreB
     IgnoreGroupAThenB
 
+impl ToStr[NonTerminal]:
+    toStr(self: NonTerminal): Str
+        match self:
+            NonTerminal.TerminalA: "TerminalA"
+            NonTerminal.TerminalB: "TerminalB"
+            NonTerminal.TerminalAOrB: "TerminalAOrB"
+            NonTerminal.TerminalAThenB: "TerminalAThenB"
+            NonTerminal.ZeroOrMoreAThenB: "ZeroOrMoreAThenB"
+            NonTerminal.OneOrMoreAThenB: "OneOrMoreAThenB"
+            NonTerminal.ZeroOrOneAThenB: "ZeroOrOneAThenB"
+            NonTerminal.IgnoreAThenB: "IgnoreAThenB"
+            NonTerminal.IgnoreAThenIgnoreB: "IgnoreAThenIgnoreB"
+            NonTerminal.IgnoreGroupAThenB: "IgnoreGroupAThenB"
+
 terminalA(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)

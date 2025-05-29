@@ -14,3 +14,25 @@ impl[ToStr[t]] ToStr[ParseError[t]]:
         match self:
             ParseError.UnexpectedEof: "unexpected end of input"
             ParseError.UnexpectedToken(t): "unexpected token `t`"
+
+ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]): Doc
+    match self:
+        ParseTree.Terminal(t):
+            Doc.str(t.toStr())
+
+        ParseTree.NonTerminal(kind, nodes):
+            if nodes.len() == 0:
+                return Doc.str(kind.toStr())
+
+            let doc = Doc.str(kind.toStr()) + Doc.char('(') + Doc.break_(0)
+            let nodeIdx: U32 = 0
+            for node: ParseTree[t, nt] in nodes.iter():
+                if nodeIdx != 0:
+                    doc += Doc.char(',') + Doc.break_(1)
+                doc += node.toDoc()
+                nodeIdx += 1
+
+            # Add a trailing comma when splitting the node list into lines.
+            doc += Doc.whenNotFlat(Doc.char(','))
+
+            (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
