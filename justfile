@@ -43,6 +43,11 @@ generate_parser:
     lalrpop src/parser.lalrpop
     cargo fmt -- src/parser.rs
 
+update_generated_files:
+    lalrpop src/parser.lalrpop
+    cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.fir
+
 # build_site tested with:
 #
 # - wasm-pack 0.12.1

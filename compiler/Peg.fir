@@ -158,8 +158,9 @@ Parser.symbol(self): Error Symbol
     let next = self.next()
 
     let ignore = next.kind == TokenKind.Underscore
+    let negLookahead = next.kind == TokenKind.Minus
 
-    if ignore:
+    if ignore || negLookahead:
         next = self.next()
 
     let symbol = match next.kind:
@@ -197,6 +198,8 @@ Parser.symbol(self): Error Symbol
 
     if ignore:
         symbol = Symbol.Ignore(symbol)
+    elif negLookahead:
+        symbol = Symbol.NegLookahead(symbol)
 
     symbol
 
@@ -302,6 +305,10 @@ type Symbol:
     ## Parses the symbol, but does not add the parsed terminals and non-terminals to the tree.
     ## Parsed from `_` prefix.
     Ignore(Symbol)
+
+    ## Negative lookahead: succeeds without incrementing the cursor if parsing fails. Parsed from
+    ## `-` prefix.
+    NegLookahead(Symbol)
 
 # --------------------------------------------------------------------------------------------------
 # Code generation
@@ -500,6 +507,33 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)
+
+        Symbol.NegLookahead(symbol):
+            let doc = Doc.str("let tokensLen0 = tokens.len()") + Doc.hardLine()
+            doc + Doc.nested(
+                4,
+                Doc.str("let symResult = try({")
+                    + Doc.hardLine()
+                    + generateSymbolParser(symbol, ignore, terminalPats)) \
+                + Doc.hardLine() \
+                + Doc.str("})") \
+                + Doc.hardLine() \
+                + Doc.nested(
+                    4,
+                    Doc.str("match symResult:")
+                        + Doc.hardLine()
+                        + Doc.nested(
+                            4,
+                            Doc.str("Result.Err(_):")
+                                + Doc.hardLine()
+                                + Doc.str("tokens.truncate(tokensLen0)"))
+                        + Doc.hardLine()
+                        + Doc.nested(
+                            4,
+                            Doc.str("Result.Ok(_):")
+                                + Doc.hardLine()
+                                + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))) \ 
+                + Doc.hardLine()
 
 tokensToCode(tokens: Vec[Token]): exn Doc
     if tokens.len() == 0:

@@ -16,6 +16,7 @@ type NonTerminal:
     IgnoreGroupAThenB
     NonTerminals
     NonTerminalsBacktrack
+    NegLookahead
 
 impl ToStr[NonTerminal]:
     toStr(self: NonTerminal): Str
@@ -32,6 +33,7 @@ impl ToStr[NonTerminal]:
             NonTerminal.IgnoreGroupAThenB: "IgnoreGroupAThenB"
             NonTerminal.NonTerminals: "NonTerminals"
             NonTerminal.NonTerminalsBacktrack: "NonTerminalsBacktrack"
+            NonTerminal.NegLookahead: "NegLookahead"
 
 terminalA(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
@@ -430,6 +432,42 @@ nonTerminalsBacktrack(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree:
             nodes.clear()
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes), newCursor = newCursor)
+    if cursor == tokens.len():
+        throw(ParseError.UnexpectedEof)
+    else:
+        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+
+negLookahead(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    let cursor0 = cursor
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
+    let altResult = try({
+        let tokensLen0 = tokens.len()
+        let symResult = try({
+            if cursor == tokens.len():
+                throw(ParseError.UnexpectedEof)
+            if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                cursor += 1
+            else:
+                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            
+        })
+        match symResult:
+            Result.Err(_):
+                tokens.truncate(tokensLen0)
+            Result.Ok(_):
+                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        let nonTerminalResult = terminalAOrB(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.NegLookahead, nodes), newCursor = newCursor)
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:

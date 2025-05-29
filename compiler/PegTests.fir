@@ -31,6 +31,8 @@ main()
     runTest("'a a' as nonTerminals", "a a", nonTerminals)
     runTest("'a b' as nonTerminals", "a b", nonTerminals)
     runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
+    runTest("'b' as negLookahead", "b", negLookahead)
+    runTest("'a' as negLookahead (should fail)", "a", negLookahead)
 
 type TestError:
     ParseError(ParseError[Token])

@@ -1,0 +1,21 @@
+# PEG grammar of PEG grammars.
+
+Terminals:
+    "lowerId" = Token(kind = TokenKind.LowerId, ..)
+    "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "?" = Token(kind = TokenKind.Question, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "ANY" = Token(..)
+
+terminalsDecl:
+    "Terminals" ":" "NEWLINE" "INDENT" terminalDecl+
+
+terminalDecl:
+    "Str" "=" (-"NEWLINE" "ANY")+ "NEWLINE"

@@ -42,3 +42,6 @@ nonTerminals:
 nonTerminalsBacktrack:
     terminalAOrB terminalAOrB
     "c" "a"
+
+negLookahead:
+    -"a" terminalAOrB
