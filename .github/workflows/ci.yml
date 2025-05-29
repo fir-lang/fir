@@ -122,5 +122,5 @@ jobs:
         run: |
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-            cargo run -- compiler/PegTests.fir
+            goldentests target/debug/fir compiler/PegTests.fir '# '
             ! git status --porcelain | grep -q '^ M' 

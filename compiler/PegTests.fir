@@ -69,3 +69,75 @@ runTest(
 
 lexerErrorStr(err: Error): Str
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
+
+# expected stdout:
+# 'a' as terminalA
+# TerminalA(LowerId(1:1:"a"))
+# 
+# 'b' as terminalA (should fail)
+# ERR: unexpected token LowerId(1:1:"b")
+# 
+# 'a b' as terminalA (should fail)
+# ERR: parser didn't consume all input, input len = 2, cursor after parsing = 1
+# 
+# 'b' as terminalB
+# TerminalB(LowerId(1:1:"b"))
+# 
+# 'a' as terminalAOrB
+# TerminalAOrB(LowerId(1:1:"a"))
+# 
+# 'b' as terminalAOrB
+# TerminalAOrB(LowerId(1:1:"b"))
+# 
+# 'c' as terminalAOrB (should fail)
+# ERR: unexpected token LowerId(1:1:"c")
+# 
+# 'b b' as terminalAThenB (should fail)
+# ERR: unexpected token LowerId(1:1:"b")
+# 
+# 'a b' as terminalAThenB
+# TerminalAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'b' as zeroOrMOreAThenB
+# ZeroOrMoreAThenB(LowerId(1:1:"b"))
+# 
+# 'a b' as zeroOrMoreAThenB
+# ZeroOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'a a b' as zeroOrMoreAThenB
+# ZeroOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
+# 
+# 'b' as oneOrMoreAThenB
+# ERR: unexpected token LowerId(1:1:"b")
+# 
+# 'a b' as oneOrMoreAThenB
+# OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'a a b' as oneOrMoreAThenB
+# OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
+# 
+# 'a a b' as zeroOrOneAThenB
+# ERR: unexpected token LowerId(1:1:"a")
+# 
+# 'a b' as zeroOrOneAThenB
+# ZeroOrOneAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'b' as zeroOrOneAThenB
+# ZeroOrOneAThenB(LowerId(1:1:"b"))
+# 
+# 'a b' as ignoreAThenB
+# IgnoreAThenB(LowerId(1:3:"b"))
+# 
+# 'a b' as ignoreGroupAThenB
+# IgnoreGroupAThenB
+# 
+# 'a a' as nonTerminals
+# NonTerminals(TerminalAOrB(LowerId(1:1:"a")), TerminalAOrB(LowerId(1:3:"a")))
+# 
+# 'a b' as nonTerminals
+# NonTerminals(TerminalAOrB(LowerId(1:1:"a")), TerminalAOrB(LowerId(1:3:"b")))
+# 
+# 'c a' as nonTerminalsBacktrack
+# NonTerminalsBacktrack(LowerId(1:1:"c"), LowerId(1:3:"a"))
+
+# expected stderr: compiler/Token.fir:110:9: Unexhaustive pattern match

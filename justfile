@@ -21,7 +21,7 @@ test: build
 
     cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
     cargo run -- compiler/Main.fir
-    cargo run -- compiler/PegTests.fir
+    goldentests target/debug/fir compiler/PegTests.fir '# '
 
 # Only run type checking tests.
 test_tc: build
@@ -34,6 +34,7 @@ update_tc_tests: build
 
 update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
+    goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
 
 build: generate_parser
     cargo build
