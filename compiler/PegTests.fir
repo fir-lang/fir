@@ -141,5 +141,11 @@ lexerErrorStr(err: Error): Str
 # 
 # 'c a' as nonTerminalsBacktrack
 # NonTerminalsBacktrack(LowerId(1:1:"c"), LowerId(1:3:"a"))
+# 
+# 'b' as negLookahead
+# NegLookahead(TerminalAOrB(LowerId(1:1:"b")))
+# 
+# 'a' as negLookahead (should fail)
+# ERR: unexpected token LowerId(1:1:"a")
 
-# expected stderr: compiler/Token.fir:110:9: Unexhaustive pattern match
+# expected stderr: compiler/Token.fir:139:9: Unexhaustive pattern match
