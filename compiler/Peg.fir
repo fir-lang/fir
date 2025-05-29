@@ -1,4 +1,6 @@
 import Lexer
+import ParseTree
+import PegGrammar
 import Scanner
 import Token
 
@@ -15,6 +17,14 @@ main(args: Array[Str])
 
     if tokens.len() == 0:
         panic("Empty file")
+
+    let declsNew = match try({ topDecls(tokens, 0) }):
+        Result.Err(err):
+            panic(err)
+        Result.Ok(result):
+            if result.newCursor != tokens.len():
+                panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")
+            convertParseTree(result.tree)
 
     let parser = Parser(file = input, tokens, idx = 0)
     let decls = match try(parser.spec):
@@ -237,6 +247,92 @@ Parser.tokenLoc(self, token: Token): Loc
         line = token.line,
         col = token.col
     )
+
+convertParseTree(tree: ParseTree[Token, NonTerminal]): Vec[TopDecl]
+    let topDecls = tree.asNonTerminal(NonTerminal.TopDecls)
+
+    let converted: Vec[TopDecl] = Vec.withCapacity(topDecls.len())
+
+    for topDecl: ParseTree[Token, NonTerminal] in topDecls.iter():
+        let topDecl = topDecl.asNonTerminal(NonTerminal.TopDecl).get(0)
+        match topDecl:
+            ParseTree.NonTerminal(kind = NonTerminal.TerminalsDecl, nodes):
+                converted.push(TopDecl.Terminals(convertTerminalsDecl(nodes)))
+
+            ParseTree.NonTerminal(kind = NonTerminal.NonTerminalDecl, nodes):
+                converted.push(TopDecl.NonTerminal(convertNonTerminalDecl(nodes)))
+
+            _:
+                panic("")
+
+    converted
+
+convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): TerminalsDecl
+    let terminals: Vec[TerminalDecl] = Vec.withCapacity(nodes.len())
+
+    for node: ParseTree[Token, NonTerminal] in nodes.iter():
+        let node = node.asNonTerminal(NonTerminal.TerminalDecl)
+        let name = node.get(0).asTerminal().text
+        let pattern: Vec[Token] = Vec.withCapacity(node.len() - 1)
+        for tok: ParseTree[Token, NonTerminal] in node.iter().skip(1):
+            pattern.push(tok.asTerminal())
+        terminals.push(TerminalDecl(name, pattern))
+
+    TerminalsDecl(terminals)
+
+convertNonTerminalDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): NonTerminalDecl
+    let name = nodes.get(0).asTerminal().text
+
+    let alts: Vec[Alt] = Vec.withCapacity(nodes.len() - 1)
+
+    for altTree: ParseTree[Token, NonTerminal] in nodes.iter().skip(1):
+        let altTreeNodes = altTree.asNonTerminal(NonTerminal.NonTerminalAlt)
+        alts.push(convertAlt(altTreeNodes))
+
+    NonTerminalDecl(name, alts)
+
+convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]): Alt
+    let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
+
+    for symbolTree: ParseTree[Token, NonTerminal] in nodes.iter():
+        symbols.push(convertSymbol(symbolTree.asNonTerminal(NonTerminal.Symbol)))
+
+    Alt(symbols)
+
+convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]): Symbol
+    let symbolIdx: U32 = if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, ..):
+        1
+    else:
+        0
+
+    let symbol = convertSymbolNonRec(nodes.get(symbolIdx).asNonTerminal(NonTerminal.SymbolNonRec))
+
+    if nodes.len() > symbolIdx + 1:
+        match nodes.get(symbolIdx + 1).asNonTerminal(NonTerminal.SymbolSuffix).get(0).asTerminal().text:
+            "*": symbol = Symbol.ZeroOrMore(symbol)
+            "+": symbol = Symbol.OneOrMore(symbol)
+            "?": symbol = Symbol.Optional(symbol)
+            _: panic("")
+
+    if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, nodes):
+        match nodes.get(0).asTerminal().text:
+            "-": symbol = Symbol.NegLookahead(symbol)
+            "_": symbol = Symbol.Ignore(symbol)
+
+    symbol
+
+convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]): Symbol
+    if nodes.len() == 1:
+        let terminal = nodes.get(0).asTerminal()
+        match terminal.kind:
+            TokenKind.LowerId: Symbol.NonTerminal(terminal.text)
+            TokenKind.Str: Symbol.Terminal(terminal.text.substr(1, terminal.text.len() - 1))
+            _: panic("")
+    else:
+        let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
+        for node: ParseTree[Token, NonTerminal] in nodes.iter():
+            symbols.push(convertSymbol(node.asNonTerminal(NonTerminal.Symbol)))
+        Symbol.Group(symbols)
 
 ## A declaration in a PEG spec.
 type TopDecl:

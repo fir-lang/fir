@@ -26,10 +26,10 @@ topDecl:
     nonTerminalDecl
 
 terminalsDecl:
-    "Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT"
+    _"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT"
 
 terminalDecl:
-    "Str" "=" (-"NEWLINE" "ANY")+ _"NEWLINE"
+    "Str" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
 
 nonTerminalDecl:
     "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
