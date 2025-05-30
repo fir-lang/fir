@@ -265,7 +265,6 @@ mod wasm {
 
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
-    use web_sys::XmlHttpRequest;
 
     pub fn parse_file<P: AsRef<Path> + Clone>(
         path: P,
@@ -273,22 +272,8 @@ mod wasm {
         _print_tokens: bool,
     ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
-        let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
+        let contents = read_file_utf8(&path);
         parse_module(&module, &contents, false)
-    }
-
-    fn fetch_sync(url: &str) -> Option<String> {
-        let xhr = XmlHttpRequest::new().unwrap();
-        xhr.open_with_async("GET", url, false).unwrap(); // false makes it synchronous
-
-        xhr.send().unwrap();
-
-        if xhr.status() == Ok(200) {
-            let response_text = xhr.response_text().unwrap().unwrap();
-            Some(response_text)
-        } else {
-            None
-        }
     }
 
     #[wasm_bindgen]
@@ -328,9 +313,8 @@ mod wasm {
     }
 
     #[wasm_bindgen(js_name = "run")]
-    pub fn run_wasm(pgm: &str, input: &str) {
-        clear_interpreter_output();
-        clear_program_output();
+    pub fn run_wasm(pgm: &str, mut args: Vec<String>) {
+        args.insert(0, pgm.to_string());
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm, false);
@@ -342,7 +326,7 @@ mod wasm {
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
-        interpreter::run_with_input(&mut w, lowered_pgm, "main", input.trim());
+        interpreter::run_with_args(&mut w, lowered_pgm, "main", &args);
     }
 
     #[wasm_bindgen(js_name = "version")]
