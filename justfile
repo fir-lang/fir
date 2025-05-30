@@ -22,6 +22,7 @@ test: build
     cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
     cargo run -- compiler/Main.fir
     goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
 
 # Only run type checking tests.
 test_tc: build
@@ -46,6 +47,7 @@ generate_parser:
 update_generated_files:
     lalrpop src/parser.lalrpop
     cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
     cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
     mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
 

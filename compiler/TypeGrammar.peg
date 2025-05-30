@@ -1,0 +1,25 @@
+Terminals:
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+
+type_:
+    namedType
+    "LowerId"
+    "(" ")"
+    "(" recordTypeField ("," recordTypeField)* ","? ")"
+    "(" recordTypeField ("," recordTypeField)* "," ".." "LowerId" ")"
+
+namedType:
+    "UpperId" "[" type_ ("," type_)* ","? "]"
+    "UpperId"
+
+recordTypeField:
+    "LowerId" ":" type_
+    type_

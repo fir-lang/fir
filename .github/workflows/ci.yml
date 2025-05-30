@@ -144,6 +144,7 @@ jobs:
         run: |
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+            cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
             cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
             mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
             ! git status --porcelain | grep -q '^ M'
