@@ -40,7 +40,6 @@ extern {
         "." => Token { kind: TokenKind::Dot, .. },
         "=" => Token { kind: TokenKind::Eq, .. },
         ".." => Token { kind: TokenKind::DotDot, .. },
-        "..=" => Token { kind: TokenKind::DotDotEq, .. },
         "_" => Token { kind: TokenKind::Underscore, .. },
         "==" => Token { kind: TokenKind::EqEq, .. },
         "+" => Token { kind: TokenKind::Plus, .. },

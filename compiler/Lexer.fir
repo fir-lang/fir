@@ -228,11 +228,6 @@ Lexer.next(self): Error Option[Token]
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Colon, text = ":", byteIdx, line, col))
 
-        "..=" _:
-            self._byteIdx += 1
-            self._col += 1
-            return Option.Some(Token(kind = TokenKind.DotDotEq, text = "..=", byteIdx, line, col))
-
         ".." _:
             self._byteIdx += 1
             self._col += 1
