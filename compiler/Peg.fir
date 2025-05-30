@@ -20,7 +20,7 @@ main(args: Array[Str])
 
     let decls = match try({ topDecls(tokens, 0) }):
         Result.Err(err):
-            panic(err)
+            panic(err.toStr())
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")

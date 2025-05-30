@@ -964,7 +964,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     "panic" => {
-                        assert_eq!(fun_ty_args.len(), 2); // ToStr, exception
+                        assert_eq!(fun_ty_args.len(), 1); // panic message
                         lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic));
                     }
 

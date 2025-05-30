@@ -112,7 +112,7 @@ print[ToStr[a]](a: a) = printStr(a.toStr())
 
 printNoNl[ToStr[a]](a: a) = printStrNoNl(a.toStr())
 
-prim panic[ToStr[t]](msg: t): Void
+prim panic(msg: Str): Void
 
 type Ordering:
     Less
