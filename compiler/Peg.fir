@@ -23,6 +23,7 @@ main(args: Array[Str])
             panic(err.toStr())
         Result.Ok(result):
             if result.newCursor != tokens.len():
+                print(result.tree.toDoc().print(80))
                 panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")
             # print(result.tree.toDoc().print(80))
             convertParseTree(result.tree)
