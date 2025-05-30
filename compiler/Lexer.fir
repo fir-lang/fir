@@ -62,117 +62,117 @@ Lexer.next(self): Error Option[Token]
         ########################################################################################
         # Keywords
 
-        "as" _:
+        "as" rest if !_isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.As, text = "as", byteIdx, line, col))
 
-        "break" _:
+        "break" rest if !_isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
             return Option.Some(Token(kind = TokenKind.Break, text = "break", byteIdx, line, col))
 
-        "continue" _:
+        "continue" rest if !_isIdContStr(rest):
             self._byteIdx += 8
             self._col += 8
             return Option.Some(Token(kind = TokenKind.Continue, text = "continue", byteIdx, line, col))
 
-        "elif" _:
+        "elif" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Elif, text = "elif", byteIdx, line, col))
 
-        "else" _:
+        "else" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Else, text = "else", byteIdx, line, col))
 
-        "export" _:
+        "export" rest if !_isIdContStr(rest):
             self._byteIdx += 6
             self._col += 6
             return Option.Some(Token(kind = TokenKind.Export, text = "export", byteIdx, line, col))
 
-        "fn" _:
+        "fn" rest if !_isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.Fn_, text = "fn", byteIdx, line, col))
 
-        "Fn" _:
+        "Fn" rest if !_isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.UpperFn, text = "Fn", byteIdx, line, col))
 
-        "for" _:
+        "for" rest if !_isIdContStr(rest):
             self._byteIdx += 3
             self._col += 3
             return Option.Some(Token(kind = TokenKind.For, text = "for", byteIdx, line, col))
 
-        "if" _:
+        "if" rest if !_isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.If, text = "if", byteIdx, line, col))
 
-        "impl" _:
+        "impl" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Impl, text = "impl", byteIdx, line, col))
 
-        "import" _:
+        "import" rest if !_isIdContStr(rest):
             self._byteIdx += 6
             self._col += 6
             return Option.Some(Token(kind = TokenKind.Import, text = "import", byteIdx, line, col))
 
-        "in" _:
+        "in" rest if !_isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.In, text = "in", byteIdx, line, col))
 
-        "jump" _:
+        "jump" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Jump, text = "jump", byteIdx, line, col))
 
-        "let" _:
+        "let" rest if !_isIdContStr(rest):
             self._byteIdx += 3
             self._col += 3
             return Option.Some(Token(kind = TokenKind.Let, text = "let", byteIdx, line, col))
 
-        "match" _:
+        "match" rest if !_isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
             return Option.Some(Token(kind = TokenKind.Match, text = "match", byteIdx, line, col))
 
-        "prim" _:
+        "prim" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Prim, text = "prim", byteIdx, line, col))
 
-        "return" _:
+        "return" rest if !_isIdContStr(rest):
             self._byteIdx += 6
             self._col += 6
             return Option.Some(Token(kind = TokenKind.Return, text = "return", byteIdx, line, col))
 
-        "self" _:
+        "self" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Self_, text = "self", byteIdx, line, col))
 
-        "trait" _:
+        "trait" rest if !_isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
             return Option.Some(Token(kind = TokenKind.Trait, text = "trait", byteIdx, line, col))
 
-        "type" _:
+        "type" rest if !_isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Type, text = "type", byteIdx, line, col))
 
-        "var" _:
+        "var" rest if !_isIdContStr(rest):
             self._byteIdx += 3
             self._col += 3
             return Option.Some(Token(kind = TokenKind.Var, text = "var", byteIdx, line, col))
 
-        "while" _:
+        "while" rest if !_isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
             return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx, line, col))
@@ -213,11 +213,6 @@ Lexer.next(self): Error Option[Token]
         ########################################################################################
         # Punctuation
 
-        "." _:
-            self._byteIdx += 1
-            self._col += 1
-            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx, line, col))
-
         "," _:
             self._byteIdx += 1
             self._col += 1
@@ -229,9 +224,14 @@ Lexer.next(self): Error Option[Token]
             return Option.Some(Token(kind = TokenKind.Colon, text = ":", byteIdx, line, col))
 
         ".." _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx, line, col))
+
+        "." _:
             self._byteIdx += 1
             self._col += 1
-            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx, line, col))
 
         "_" _:
             self._byteIdx += 1
@@ -619,3 +619,8 @@ Lexer._skipMultiLineComment(self): Error ()
 
 _isIdCont(c: Char): Bool
     c.isAsciiAlphanumeric() || c == '_'
+
+_isIdContStr(s: Str): Bool
+    match s.chars().next():
+        Option.Some(c): _isIdCont(c)
+        Option.None: Bool.False
