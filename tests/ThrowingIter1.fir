@@ -34,7 +34,7 @@ parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
 
     result
 
-main
+main()
     let strings: Vec[Str] = Vec.withCapacity(10)
     strings.push("1")
     strings.push("2")

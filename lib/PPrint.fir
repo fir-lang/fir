@@ -19,17 +19,17 @@ type Doc:
     _HardLine
 
     _Cat:
-        req: U32
+        req: _SpaceReq
         doc1: Doc
         doc2: Doc
 
     _Nest:
-        req: U32
+        req: _SpaceReq
         indent: U32
         doc: Doc
 
     _Group:
-        req: U32
+        req: _SpaceReq
         doc: Doc
 
 type _State:
@@ -56,7 +56,7 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool)
         Doc._Blank(spaces):
             for _: U32 in range(0u32, spaces):
                 state.output.push(' ')
-            state.column += indent
+            state.column += spaces
 
         Doc._HardLine:
             if flatten:
@@ -80,16 +80,30 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool)
             doc._print(state, indent + extraIndent, flatten)
 
         Doc._Group(req, doc):
-            let flatten = flatten || state.column + req <= state.width
+            if !flatten:
+                flatten = match req:
+                    _SpaceReq.Infinite: Bool.True
+                    _SpaceReq.Exact(req): state.column + req <= state.width
             doc._print(state, indent, flatten)
 
-Doc._req(self): U32
+# Space requirement.
+type _SpaceReq:
+    Exact(U32)
+    Infinite
+
+impl Add[_SpaceReq]:
+    __add(self: _SpaceReq, other: _SpaceReq): _SpaceReq
+        if self is _SpaceReq.Exact(req1) && other is _SpaceReq.Exact(req2):
+            return _SpaceReq.Exact(req1 + req2)
+        _SpaceReq.Infinite
+
+Doc._req(self): _SpaceReq
     match self:
-        Doc._Empty: 0
-        Doc._Str(lenChars, ..): lenChars
-        Doc._Blank(spaces): spaces
+        Doc._Empty: _SpaceReq.Exact(0)
+        Doc._Str(lenChars, ..): _SpaceReq.Exact(lenChars)
+        Doc._Blank(spaces): _SpaceReq.Exact(spaces)
         Doc._IfFlat(flat, ..): flat._req()
-        Doc._HardLine: U32.max()
+        Doc._HardLine: _SpaceReq.Infinite
         Doc._Cat(req, ..) | Doc._Nest(req, ..) | Doc._Group(req, ..): req
 
 _countChars(s: Str): U32
@@ -98,7 +112,7 @@ _countChars(s: Str): U32
         i += 1
     i
 
-Doc.empty: Doc = Doc._Empty
+Doc.empty(): Doc = Doc._Empty
 
 Doc.str(str: Str): Doc = Doc._Str(str, lenChars = _countChars(str))
 
@@ -108,9 +122,9 @@ Doc.char(c: Char): Doc
     buf.push(c)
     Doc.str(buf.toStr())
 
-Doc.space: Doc = Doc._Str(str = " ", lenChars = 1)
+Doc.space(): Doc = Doc._Str(str = " ", lenChars = 1)
 
-Doc.hardLine: Doc = Doc._HardLine
+Doc.hardLine(): Doc = Doc._HardLine
 
 Doc.blank(spaces: U32): Doc = Doc._Blank(spaces)
 
@@ -131,9 +145,12 @@ Doc.break_(i: U32): Doc
 Doc.nest(self, indent: U32): Doc
     Doc._Nest(req = self._req(), indent, doc = self)
 
+Doc.nested(indent: U32, doc: Doc): Doc
+    doc.nest(indent)
+
 Doc.group(self): Doc
     let req = self._req()
-    if req == U32.max():
+    if req is _SpaceReq.Infinite:
         self
     else:
         Doc._Group(req, doc = self)

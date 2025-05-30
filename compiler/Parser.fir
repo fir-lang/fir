@@ -486,7 +486,7 @@ Parser._eofLoc(self): Loc
 
 # --------------------------------------------------------------------------------------------------
 
-parserTests
+parserTests()
     _parserTest(
         "simpleExpr - parse failure test (expected to fail)",
         "~~~",

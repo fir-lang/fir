@@ -68,7 +68,7 @@ strToVec(s: Str): Vec[Char]
         chars.push(c)
     chars
 
-main
+main()
     let a = Parser.char('a')
     print(try({ a.parse(strToVec("a")).output }))
     print(try({ a.parse(strToVec("b")).output }))

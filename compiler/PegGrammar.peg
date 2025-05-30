@@ -1,0 +1,55 @@
+# PEG grammar of PEG grammars.
+
+Terminals:
+    "lowerId" = Token(kind = TokenKind.LowerId, ..)
+    "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "?" = Token(kind = TokenKind.Question, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "ANY" = Token(..)
+
+topDecls:
+    topDecl+
+
+topDecl:
+    terminalsDecl
+    nonTerminalDecl
+
+terminalsDecl:
+    _"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT"
+
+terminalDecl:
+    "Str" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
+
+nonTerminalDecl:
+    "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
+
+nonTerminalAlt:
+    symbol+ _"NEWLINE"
+
+symbol:
+    symbolPrefix? symbolNonRec symbolSuffix?
+
+symbolPrefix:
+    "-"
+    "_"
+
+symbolNonRec:
+    "lowerId"
+    "Str"
+    _"(" symbol+ _")"
+
+symbolSuffix:
+    "*"
+    "+"
+    "?"

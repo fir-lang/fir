@@ -33,7 +33,7 @@ parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
             Result.Ok(i): result += i
     result
 
-main
+main()
     let nums: Vec[U32] = Vec.withCapacity(10)
     nums.push(1)
     nums.push(2)
@@ -136,9 +136,8 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 ####################################################################################################
 
 # NB. The first two lines should disappear with #49.
+
 # expected stdout:
-# tests/ThrowingIter.fir:50:5: Unexhaustive pattern match
-# tests/ThrowingIter.fir:56:5: Unexhaustive pattern match
 # 6
 # 6
 # InvalidDigit
@@ -146,3 +145,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 # Empty input
 # Overflow
 # 10
+
+# expected stderr:
+# tests/ThrowingIter.fir:50:5: Unexhaustive pattern match
+# tests/ThrowingIter.fir:56:5: Unexhaustive pattern match

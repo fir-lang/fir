@@ -4,7 +4,7 @@ collect(iter: SplitWhitespace): Vec[Str]
         vec.push(a)
     vec
 
-main
+main()
     printStr(collect("".splitWhitespace()).toStr())
     printStr(collect("  ".splitWhitespace()).toStr())
     printStr(collect("a".splitWhitespace()).toStr())

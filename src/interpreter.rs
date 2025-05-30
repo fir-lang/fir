@@ -114,7 +114,6 @@ impl Pgm {
 }
 
 /// Run the program, passing the arguments `args` as the `Array[Str]` argument to `main`.
-#[cfg(not(target_arch = "wasm32"))]
 pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
     let mut heap = Heap::new();
     let pgm = Pgm::init(pgm, &mut heap);
@@ -166,63 +165,6 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
                 heap[arg_vec + 2 + (i as u64)] = arg_val;
             }
             vec![arg_vec]
-        }
-
-        other => panic!(
-            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
-            main, other
-        ),
-    };
-
-    call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
-}
-
-/// Run the program, passing the input `input` as the `Str` argument to `main`.
-#[cfg(target_arch = "wasm32")]
-pub fn run_with_input<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, input: &str) {
-    let mut heap = Heap::new();
-    let pgm = Pgm::init(pgm, &mut heap);
-
-    let main_fun: &SourceFunDecl = pgm
-        .funs
-        .iter()
-        .find_map(|fun| match fun {
-            Fun::Source(fun @ SourceFunDecl { name, .. }) if name.node.as_str() == main => {
-                Some(fun)
-            }
-            _ => None,
-        })
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
-
-    // `main` doesn't have a call site, called by the interpreter.
-    let call_loc = Loc {
-        module: "".into(),
-        line_start: 0,
-        col_start: 0,
-        byte_offset_start: 0,
-        line_end: 0,
-        col_end: 0,
-        byte_offset_end: 0,
-    };
-
-    // Check if main takes an input argument.
-    let arg_vec: Vec<u64> = match main_fun.params.len() {
-        0 => {
-            if !input.is_empty() {
-                println!(
-                    "WARNING: Main function `{}` does not take an input argument, but an input is passed to the interpreter",
-                    main
-                );
-            }
-            vec![]
-        }
-
-        1 => {
-            vec![heap.allocate_str(
-                pgm.str_con_idx.as_u64(),
-                pgm.array_u8_con_idx.as_u64(),
-                input.as_bytes(),
-            )]
         }
 
         other => panic!(
@@ -822,6 +764,8 @@ fn eval<W: Write>(
                         let guard = val!(eval(w, pgm, heap, locals, &guard.node, &guard.loc));
                         if guard == pgm.true_alloc {
                             return exec(w, pgm, heap, locals, rhs);
+                        } else {
+                            continue;
                         }
                     }
                     return exec(w, pgm, heap, locals, rhs);
@@ -973,7 +917,7 @@ fn assign<W: Write>(
 
         _ => todo!("Assign statement with fancy LHS at {:?}", &lhs.loc),
     }
-    ControlFlow::Val(val)
+    ControlFlow::Val(pgm.unit_alloc)
 }
 
 /// Tries to match a pattern. On successful match, returns a map with variables bound in the
@@ -1679,7 +1623,7 @@ fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let path = args[0];
             let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
-            let file_contents = std::fs::read_to_string(path_str).unwrap();
+            let file_contents = crate::read_file_utf8(path_str);
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),

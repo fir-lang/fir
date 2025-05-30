@@ -1,7 +1,7 @@
 test(f: Fn(): [Err] U32)
     ()
 
-main
+main()
     test({ 123u32 })
     test(fn() { 123u32 })
     test(fn(): U32 { 123 })

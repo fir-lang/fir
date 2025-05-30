@@ -333,7 +333,7 @@ fn check_stmt(
 
             let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, loc);
             if !exhaustive {
-                println!("{}: Unexhaustive pattern match", loc_display(loc));
+                eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
             }
 
             Ty::unit()

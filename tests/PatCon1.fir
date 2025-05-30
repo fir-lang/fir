@@ -1,4 +1,4 @@
-main
+main()
     match f():
         Foo(a, b):
             print(a)

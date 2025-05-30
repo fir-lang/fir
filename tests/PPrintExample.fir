@@ -1,4 +1,4 @@
-main
+main()
     let args: Vec[Doc] = Vec.withCapacity(10)
     args.push(Doc.str("longArgument1"))
 

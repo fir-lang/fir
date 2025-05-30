@@ -1,4 +1,4 @@
-main
+main()
     let x: Option[U32] = Option.None
     if x is Option.Some(a) || a == 0:
         ()

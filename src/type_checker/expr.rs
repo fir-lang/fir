@@ -968,7 +968,7 @@ pub(super) fn check_expr(
 
             let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
             if !exhaustive {
-                println!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
+                eprintln!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
             }
 
             // Unify RHS types. When the `expected_ty` is available this doesn't do anything.

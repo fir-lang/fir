@@ -1,4 +1,4 @@
-main
+main()
     if Bool.False:
         1u32
 
@@ -61,8 +61,9 @@ StrBuilder.char(self, c: Char): StrBuilder
     self
 
 # expected stdout:
-# tests/IfMatchStmtChecking.fir:10:5: Unexhaustive pattern match
 # 1
 # 1
 # OK
 # 'x'
+
+# expected stderr: tests/IfMatchStmtChecking.fir:10:5: Unexhaustive pattern match

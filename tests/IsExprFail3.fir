@@ -1,4 +1,4 @@
-main
+main()
     let x: Option[U32] = Option.None
     let y: Option[U32] = Option.None
     if x is Option.Some(a) && y is Option.Some(a):
