@@ -111,4 +111,5 @@ main()
 # 'a' as negLookahead (should fail)
 # ERR: unexpected token LowerId(1:1:"a")
 
-# expected stderr: compiler/Token.fir:139:9: Unexhaustive pattern match
+# expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
+

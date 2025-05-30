@@ -36,6 +36,7 @@ update_tc_tests: build
 update_tests: build
     goldentests target/debug/fir tests '# ' --overwrite
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
 
 build: generate_parser
     cargo build

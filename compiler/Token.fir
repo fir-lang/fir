@@ -60,7 +60,6 @@ type TokenKind:
     Amp
     AmpAmp
     DotDot
-    DotDotEq
     DoubleLAngle
     DoubleRAngle
     Eq
@@ -149,7 +148,6 @@ impl ToStr[TokenKind]:
             TokenKind.Continue: "Continue"
             TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
-            TokenKind.DotDotEq: "DotDotEq"
             TokenKind.DoubleLAngle: "DoubleLAngle"
             TokenKind.DoubleRAngle: "DoubleRAngle"
             TokenKind.Elif: "Elif"
@@ -260,7 +258,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.Amp, right = TokenKind.Amp): Bool.True
             (left = TokenKind.AmpAmp, right = TokenKind.AmpAmp): Bool.True
             (left = TokenKind.DotDot, right = TokenKind.DotDot): Bool.True
-            (left = TokenKind.DotDotEq, right = TokenKind.DotDotEq): Bool.True
             (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle): Bool.True
             (left = TokenKind.DoubleRAngle, right = TokenKind.DoubleRAngle): Bool.True
             (left = TokenKind.Eq, right = TokenKind.Eq): Bool.True

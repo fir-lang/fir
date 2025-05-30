@@ -213,11 +213,6 @@ Lexer.next(self): Error Option[Token]
         ########################################################################################
         # Punctuation
 
-        "." _:
-            self._byteIdx += 1
-            self._col += 1
-            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx, line, col))
-
         "," _:
             self._byteIdx += 1
             self._col += 1
@@ -228,15 +223,15 @@ Lexer.next(self): Error Option[Token]
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Colon, text = ":", byteIdx, line, col))
 
-        "..=" _:
-            self._byteIdx += 1
-            self._col += 1
-            return Option.Some(Token(kind = TokenKind.DotDotEq, text = "..=", byteIdx, line, col))
-
         ".." _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx, line, col))
+
+        "." _:
             self._byteIdx += 1
             self._col += 1
-            return Option.Some(Token(kind = TokenKind.DotDot, text = "..", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx, line, col))
 
         "_" _:
             self._byteIdx += 1
