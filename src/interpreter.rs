@@ -1681,7 +1681,7 @@ fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let path = args[0];
             let path_str = std::str::from_utf8(heap.str_bytes(path)).unwrap();
-            let file_contents = std::fs::read_to_string(path_str).unwrap();
+            let file_contents = crate::read_file_utf8(path_str);
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),

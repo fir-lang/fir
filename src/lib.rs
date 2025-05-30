@@ -201,6 +201,11 @@ mod native {
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
         parse_module(&module_path, &contents, print_tokens)
     }
+
+    /// The `readFileUtf8` primitive.
+    pub fn read_file_utf8(path: &str) -> String {
+        std::fs::read_to_string(path).unwrap()
+    }
 }
 
 use token::{Token, TokenKind};
@@ -249,7 +254,7 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{main, parse_file};
+pub use native::{main, parse_file, read_file_utf8};
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
@@ -302,6 +307,9 @@ mod wasm {
 
         #[wasm_bindgen(js_name = "clearProgramOutput")]
         fn clear_program_output();
+
+        #[wasm_bindgen(js_name = "readFileUtf8")]
+        pub fn read_file_utf8(path: &str) -> String;
     }
 
     #[wasm_bindgen(js_name = "setupPanicHook")]
@@ -357,7 +365,7 @@ mod wasm {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::parse_file;
+pub use wasm::{parse_file, read_file_utf8};
 
 #[cfg(test)]
 mod tests {
