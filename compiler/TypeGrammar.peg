@@ -1,5 +1,5 @@
 Terminals:
-    "LowerId" = Token(kind = TokenKind.LowerId, ..)
+    "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
@@ -18,13 +18,7 @@ type_:
     "[" "]"
     "[" variantAlt ("," variantAlt)* "," ".." "LowerId" "]"
     "[" variantAlt ("," variantAlt)* ","? "]"
-    # TODO: We should allow empty productions, and use then in non-terminals
-    # for function type arguments and return types.
-    #
-    # Currently if I have N parts that can be empty, I need to list all
-    # alternatives as 2^N productions.
-    # "Fn" "(" ")" returnType
-    # "Fn" "(" fnArgs ")" returnType
+    "Fn" "(" fnArgs? ")" returnType?
 
 namedType:
     "UpperId" "[" type_ ("," type_)* ","? "]"
@@ -41,3 +35,12 @@ recordTypeField:
 variantAlt:
     "UpperId" "(" recordTypeFields ")"
     "UpperId"
+
+fnArgs:
+    param ("," param)* ","?
+
+param:
+    "LowerId" (":" type_)?
+
+returnType:
+    ":" type_ type_?
