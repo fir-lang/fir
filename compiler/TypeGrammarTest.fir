@@ -10,7 +10,13 @@ main()
     runTest_("(a, b)", type_)
     runTest_("(x: T)", type_)
     runTest_("(x: T1, y: T2)", type_)
+    runTest_("(x: T1, y: T2,)", type_)
     runTest_("(x: T1, y: T2, ..r)", type_)
+    runTest_("[]", type_)
+    runTest_("[A]", type_)
+    runTest_("[A, B]", type_)
+    runTest_("[A, B,]", type_)
+    runTest_("[A, B, ..foo]", type_)
 
 # expected stdout:
 # asdf

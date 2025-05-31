@@ -6,21 +6,27 @@ import Token
 type NonTerminal:
     Type_
     NamedType
+    RecordTypeFields
     RecordTypeField
+    VariantAlt
 
 impl ToStr[NonTerminal]:
     toStr(self: NonTerminal): Str
         match self:
             NonTerminal.Type_: "Type_"
             NonTerminal.NamedType: "NamedType"
+            NonTerminal.RecordTypeFields: "RecordTypeFields"
             NonTerminal.RecordTypeField: "RecordTypeField"
+            NonTerminal.VariantAlt: "VariantAlt"
 
 impl Eq[NonTerminal]:
     __eq(self: NonTerminal, other: NonTerminal): Bool
         match (left = self, right = other):
             (left = NonTerminal.Type_, right = NonTerminal.Type_): Bool.True
             (left = NonTerminal.NamedType, right = NonTerminal.NamedType): Bool.True
+            (left = NonTerminal.RecordTypeFields, right = NonTerminal.RecordTypeFields): Bool.True
             (left = NonTerminal.RecordTypeField, right = NonTerminal.RecordTypeField): Bool.True
+            (left = NonTerminal.VariantAlt, right = NonTerminal.VariantAlt): Bool.True
             _: Bool.False
 
 type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
@@ -85,43 +91,9 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
             cursor += 1
         else:
             throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-        let nonTerminalResult = recordTypeField(tokens, cursor)
+        let nonTerminalResult = recordTypeFields(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
-        loop:
-            let symResult = try({
-                if cursor == tokens.len():
-                    throw(ParseError.UnexpectedEof)
-                if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                    nodes.push(ParseTree.Terminal(tokens.get(cursor)))
-                    cursor += 1
-                else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-                let nonTerminalResult = recordTypeField(tokens, cursor)
-                cursor = nonTerminalResult.newCursor
-                nodes.push(nonTerminalResult.tree)
-                cursor
-            })
-            match symResult:
-                Result.Err(_):
-                    break
-                Result.Ok(newCursor):
-                    cursor = newCursor
-        let symResult = try({
-            if cursor == tokens.len():
-                throw(ParseError.UnexpectedEof)
-            if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
-                cursor += 1
-            else:
-                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-            cursor
-        })
-        match symResult:
-            Result.Err(_):
-                ()
-            Result.Ok(newCursor):
-                cursor = newCursor
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.RParen, ..):
@@ -140,12 +112,35 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
     let altResult = try({
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
-        if tokens.get(cursor) is Token(kind = TokenKind.LParen, ..):
+        if tokens.get(cursor) is Token(kind = TokenKind.LBracket, ..):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-        let nonTerminalResult = recordTypeField(tokens, cursor)
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.RBracket, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes), newCursor = newCursor)
+    let altResult = try({
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LBracket, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        let nonTerminalResult = variantAlt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
@@ -157,7 +152,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
                     cursor += 1
                 else:
                     throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-                let nonTerminalResult = recordTypeField(tokens, cursor)
+                let nonTerminalResult = variantAlt(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 nodes.push(nonTerminalResult.tree)
                 cursor
@@ -190,7 +185,67 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
             throw(ParseError.UnexpectedToken(tokens.get(cursor)))
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
-        if tokens.get(cursor) is Token(kind = TokenKind.RParen, ..):
+        if tokens.get(cursor) is Token(kind = TokenKind.RBracket, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes), newCursor = newCursor)
+    let altResult = try({
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LBracket, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        let nonTerminalResult = variantAlt(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        loop:
+            let symResult = try({
+                if cursor == tokens.len():
+                    throw(ParseError.UnexpectedEof)
+                if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+                    nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                    cursor += 1
+                else:
+                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                let nonTerminalResult = variantAlt(tokens, cursor)
+                cursor = nonTerminalResult.newCursor
+                nodes.push(nonTerminalResult.tree)
+                cursor
+            })
+            match symResult:
+                Result.Err(_):
+                    break
+                Result.Ok(newCursor):
+                    cursor = newCursor
+        let symResult = try({
+            if cursor == tokens.len():
+                throw(ParseError.UnexpectedEof)
+            if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                cursor += 1
+            else:
+                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            cursor
+        })
+        match symResult:
+            Result.Err(_):
+                ()
+            Result.Ok(newCursor):
+                cursor = newCursor
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.RBracket, ..):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -299,6 +354,112 @@ namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[T
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
+recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    let cursor0 = cursor
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
+    let altResult = try({
+        let nonTerminalResult = recordTypeField(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        loop:
+            let symResult = try({
+                if cursor == tokens.len():
+                    throw(ParseError.UnexpectedEof)
+                if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+                    nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                    cursor += 1
+                else:
+                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                let nonTerminalResult = recordTypeField(tokens, cursor)
+                cursor = nonTerminalResult.newCursor
+                nodes.push(nonTerminalResult.tree)
+                cursor
+            })
+            match symResult:
+                Result.Err(_):
+                    break
+                Result.Ok(newCursor):
+                    cursor = newCursor
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.DotDot, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes), newCursor = newCursor)
+    let altResult = try({
+        let nonTerminalResult = recordTypeField(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        loop:
+            let symResult = try({
+                if cursor == tokens.len():
+                    throw(ParseError.UnexpectedEof)
+                if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+                    nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                    cursor += 1
+                else:
+                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                let nonTerminalResult = recordTypeField(tokens, cursor)
+                cursor = nonTerminalResult.newCursor
+                nodes.push(nonTerminalResult.tree)
+                cursor
+            })
+            match symResult:
+                Result.Err(_):
+                    break
+                Result.Ok(newCursor):
+                    cursor = newCursor
+        let symResult = try({
+            if cursor == tokens.len():
+                throw(ParseError.UnexpectedEof)
+            if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
+                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+                cursor += 1
+            else:
+                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            cursor
+        })
+        match symResult:
+            Result.Err(_):
+                ()
+            Result.Ok(newCursor):
+                cursor = newCursor
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes), newCursor = newCursor)
+    if cursor == tokens.len():
+        throw(ParseError.UnexpectedEof)
+    else:
+        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+
 recordTypeField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
@@ -340,6 +501,63 @@ recordTypeField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
             nodes.clear()
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes), newCursor = newCursor)
+    if cursor == tokens.len():
+        throw(ParseError.UnexpectedEof)
+    else:
+        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+
+variantAlt(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+    let cursor0 = cursor
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
+    let altResult = try({
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.UpperId, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.LParen, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        let nonTerminalResult = recordTypeFields(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        nodes.push(nonTerminalResult.tree)
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.RParen, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes), newCursor = newCursor)
+    let altResult = try({
+        if cursor == tokens.len():
+            throw(ParseError.UnexpectedEof)
+        if tokens.get(cursor) is Token(kind = TokenKind.UpperId, ..):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        cursor
+    })
+    match altResult:
+        Result.Err(err):
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok(newCursor):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes), newCursor = newCursor)
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
