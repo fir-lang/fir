@@ -1,8 +1,21 @@
+
 import Lexer
 import PegTestLib
 import TypeGrammar
 
-main()
+main(args: Array[Str])
+    if args.len() > 2:
+        print("USAGE: One argument to parse argument as type decl")
+        print("       No arguments to run unit tests")
+        print("       You passed: `args.len() - 1` arguments.")
+        panic("")
+
+    if args.len() == 2:
+        let result = runTestIndent(args.get(1), typeDecl)
+        if !result:
+            print("FAIL")
+        return
+
     runTest_("asdf", type_)
     runTest_("Asdf", type_)
     runTest_("()", type_)
@@ -33,6 +46,25 @@ type Foo:
 type Option[t]:
     None
     Some(t)", typeDecl)
+
+    runTestIndent("\
+type VecIter[t]:
+    _vec: Vec[t]
+    _idx: U32", typeDecl)
+
+    runTestIndent("\
+type Result[e, t]:
+    Err(e)
+    Ok(t)", typeDecl)
+
+    runTestIndent("\
+type _SpaceReq:
+    Exact(U32)
+    Infinite", typeDecl)
+
+    runTestIndent("prim type U64", typeDecl)
+
+    ()
 
 # expected stdout:
 # asdf
@@ -223,5 +255,49 @@ type Option[t]:
 #         ConDecl(UpperId(3:5:"Some"), UnnamedFields(Type_(LowerId(3:10:"t")))),
 #     ),
 # )
+# 
+# type VecIter[t]:
+#     _vec: Vec[t]
+#     _idx: U32
+# TypeDecl(
+#     UpperId(1:6:"VecIter"),
+#     TypeParams(LowerId(1:14:"t")),
+#     TypeDeclRhs(
+#         NamedField(
+#             LowerId(2:5:"_vec"),
+#             Type_(NamedType(UpperId(2:11:"Vec"), Type_(LowerId(2:15:"t")))),
+#         ),
+#         NamedField(LowerId(3:5:"_idx"), Type_(NamedType(UpperId(3:11:"U32")))),
+#     ),
+# )
+# 
+# type Result[e, t]:
+#     Err(e)
+#     Ok(t)
+# TypeDecl(
+#     UpperId(1:6:"Result"),
+#     TypeParams(LowerId(1:13:"e"), LowerId(1:16:"t")),
+#     TypeDeclRhs(
+#         ConDecl(UpperId(2:5:"Err"), UnnamedFields(Type_(LowerId(2:9:"e")))),
+#         ConDecl(UpperId(3:5:"Ok"), UnnamedFields(Type_(LowerId(3:8:"t")))),
+#     ),
+# )
+# 
+# type _SpaceReq:
+#     Exact(U32)
+#     Infinite
+# TypeDecl(
+#     UpperId(1:6:"_SpaceReq"),
+#     TypeDeclRhs(
+#         ConDecl(
+#             UpperId(2:5:"Exact"),
+#             UnnamedFields(Type_(NamedType(UpperId(2:11:"U32")))),
+#         ),
+#         ConDecl(UpperId(3:5:"Infinite")),
+#     ),
+# )
+# 
+# prim type U64
+# TypeDecl(Prim(1:1:"prim"), UpperId(1:11:"U64"))
 
 # expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match

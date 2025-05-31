@@ -51,12 +51,17 @@ runTest_(
 runTestIndent(
         input: Str,
         parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
-    ): exn ()
+    ): exn Bool
     print(input)
-    match try({ runParser(input, parseFn, Bool.True) }):
-        Result.Ok(tree): print(tree.toDoc().print(80))
-        Result.Err(err): print("ERR: `err`")
+    let result = match try({ runParser(input, parseFn, Bool.True) }):
+        Result.Ok(tree):
+            print(tree.toDoc().print(80))
+            Bool.True
+        Result.Err(err):
+            print("ERR: `err`")
+            Bool.False
     print("")
+    result
 
 lexerErrorStr(err: Error): Str
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

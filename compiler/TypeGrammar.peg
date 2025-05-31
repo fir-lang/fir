@@ -2,6 +2,7 @@ Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "type" = Token(kind = TokenKind.Type, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
@@ -62,6 +63,8 @@ returnType:
 
 typeDecl:
     _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
+    _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+    "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
 
 typeParams:
     "LowerId" (_"," "LowerId")* ","?
