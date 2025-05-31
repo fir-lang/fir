@@ -233,7 +233,7 @@ Lexer.next(self): Error Option[Token]
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Dot, text = ".", byteIdx, line, col))
 
-        "_" _:
+        "_" rest if !_isIdContStr(rest):
             self._byteIdx += 1
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Underscore, text = "_", byteIdx, line, col))
@@ -456,11 +456,15 @@ Lexer.next(self): Error Option[Token]
                     col,
                 ))
 
-            let uppercaseId = c.isAsciiUppercase()
+            # The `other` starts with '_' then there must be an identifier char after it, as the
+            # other case is handled above. This character specifies the casing.
+            let caseCheckIdx = if c == '_':
+                self._byteIdx + 1
+            else:
+                self._byteIdx
 
-            # TODO: This is a bug in the Rust lexer as well: _a should be
-            # lowercase, _A should be uppercase.
-            let lowercaseId = c.isAsciiLowercase() || c == '_'
+            let uppercaseId = self._input.charAt(caseCheckIdx).isAsciiUppercase()
+            let lowercaseId = self._input.charAt(caseCheckIdx).isAsciiLowercase()
 
             if uppercaseId || lowercaseId:
                 let endIdx = self._byteIdx + 1

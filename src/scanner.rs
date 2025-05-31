@@ -78,7 +78,7 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Lo
             }
         }
 
-        last_loc = l;
+        last_loc = r;
 
         match token_kind {
             TokenKind::LParen | TokenKind::LParenRow => delimiter_stack.push(Delimiter::Paren),

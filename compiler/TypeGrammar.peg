@@ -64,8 +64,8 @@ typeDecl:
     _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
 
 typeParams:
-    "LowerId"
     "LowerId" (_"," "LowerId")* ","?
+    "LowerId"
 
 typeDeclRhs:
     conDecl+

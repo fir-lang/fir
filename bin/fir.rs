@@ -50,6 +50,12 @@ fn main() {
                 .help("Print AST after lowering."),
         )
         .arg(
+            clap::Arg::new(TEST_TYPE_DECL_PARSING)
+                .long(TEST_TYPE_DECL_PARSING)
+                .num_args(0)
+                .help("Pass type declarations to compiler's type declaration parser for testing"),
+        )
+        .arg(
             clap::Arg::new(MAIN)
                 .long(MAIN)
                 .num_args(1)
@@ -81,6 +87,7 @@ fn main() {
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
+        test_type_decl_parsing: matches.get_flag(TEST_TYPE_DECL_PARSING),
     };
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
@@ -104,6 +111,7 @@ const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
+const TEST_TYPE_DECL_PARSING: &str = "test-type-decl-parsing";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.
