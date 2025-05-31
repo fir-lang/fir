@@ -1,3 +1,6 @@
+import Token
+import Lexer
+
 scan(tokens: Vec[Token]): Vec[Token]
     if tokens.len() == 0:
         return tokens
@@ -128,7 +131,7 @@ type Delimiter:
 
 # --------------------------------------------------------------------------------------------------
 
-scannerTests()
+scannerTests(): [] ()
     let expected: Vec[TokenKind] = Vec.withCapacity(10)
     expected.push(TokenKind.LowerId) # a
     expected.push(TokenKind.Newline)
@@ -244,6 +247,24 @@ fn() {
     a
     b
 }", expected)
+
+    expected.clear()
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Colon)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Indent)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.LowerId)
+    expected.push(TokenKind.Newline)
+    expected.push(TokenKind.Dedent)
+
+    _scanTest(
+        "Layout tokens after comments",
+        "\
+symbolNonRec:
+    a  # foo
+    b  # bar", expected)
 
 _scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
     printNoNl(testName)

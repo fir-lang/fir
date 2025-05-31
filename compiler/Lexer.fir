@@ -598,9 +598,11 @@ Lexer._skipSingleLineComment(self)
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()
-        self._col += c.lenUtf8()         # TODO: Handle non-ascii
         if c == '\n':
+            self._col = 0
+            self._line += 1
             return
+        self._col += c.lenUtf8()         # TODO: Handle non-ascii
 
 Lexer._skipMultiLineComment(self): Error ()
     while self._byteIdx < self._input.len():
