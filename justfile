@@ -31,9 +31,11 @@ compiler_unit_test:
 
 compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
 
 compiler_update_goldens:
-    goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
 
 build: generate_parser
     cargo build
@@ -46,6 +48,7 @@ update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
     cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
     output=$(cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg)
     if [ $? -eq 0 ]; then
         echo "$output" > compiler/PegGrammar.fir
