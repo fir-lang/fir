@@ -51,10 +51,7 @@ variantAlt:
     "UpperId"
 
 fnArgs:
-    param (_"," param)* ","?
-
-param:
-    "LowerId" (_":" type_)?
+    type_ (_"," type_)* ","?
 
 returnType:
     _":" type_ type_?

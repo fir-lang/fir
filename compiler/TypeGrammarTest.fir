@@ -70,6 +70,11 @@ type Type:
         alts: Vec[VariantAlt]
         extension: Option[Id]", typeDecl)
 
+    runTestIndent("\
+type MapResult[iter, item, b, exnOld, exnNew]:
+    iter: iter
+    f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]", typeDecl)
+
     ()
 
 # expected stdout:
@@ -219,18 +224,10 @@ type Type:
 # )
 # 
 # Fn(self)
-# Type_(FnType(FnArgs(Param(Self(1:4:"self")))))
+# Type_(FnType(FnArgs(Type_(Self(1:4:"self")))))
 # 
 # Fn(self, a: U32): [] Foo
-# Type_(
-#     FnType(
-#         FnArgs(
-#             Param(Self(1:4:"self")),
-#             Param(LowerId(1:10:"a"), Type_(NamedType(UpperId(1:13:"U32")))),
-#         ),
-#         ReturnType(Type_(VariantType), Type_(NamedType(UpperId(1:22:"Foo")))),
-#     ),
-# )
+# ERR: unexpected token UpperFn(1:1:"Fn")
 # 
 # Map[Foo, Bar]
 # Type_(
@@ -336,6 +333,52 @@ type Type:
 #         ),
 #     ),
 # )
+# 
+# type MapResult[iter, item, b, exnOld, exnNew]:
+#     iter: iter
+#     f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]
+# TypeDecl(
+#     UpperId(1:6:"MapResult"),
+#     TypeParams(
+#         LowerId(1:16:"iter"),
+#         LowerId(1:22:"item"),
+#         LowerId(1:28:"b"),
+#         LowerId(1:31:"exnOld"),
+#         LowerId(1:39:"exnNew"),
+#     ),
+#     TypeDeclRhs(
+#         NamedField(LowerId(2:5:"iter"), Type_(LowerId(2:11:"iter"))),
+#         NamedField(
+#             LowerId(3:5:"f"),
+#             Type_(
+#                 FnType(
+#                     FnArgs(
+#                         Type_(
+#                             NamedType(
+#                                 UpperId(3:11:"Result"),
+#                                 Type_(LowerId(3:18:"exnOld")),
+#                                 Type_(
+#                                     NamedType(
+#                                         UpperId(3:26:"Option"),
+#                                         Type_(LowerId(3:33:"item")),
+#                                     ),
+#                                 ),
+#                             ),
+#                         ),
+#                     ),
+#                     ReturnType(
+#                         Type_(LowerId(3:42:"exnNew")),
+#                         Type_(
+#                             NamedType(
+#                                 UpperId(3:49:"Option"),
+#                                 Type_(LowerId(3:56:"b")),
+#                             ),
+#                         ),
+#                     ),
+#                 ),
+#             ),
+#         ),
+#     ),
+# )
 
 # expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
-

@@ -13,7 +13,6 @@ type NonTerminal:
     RecordTypeField
     VariantAlt
     FnArgs
-    Param
     ReturnType
     TypeDecl
     TypeParams
@@ -34,7 +33,6 @@ impl ToStr[NonTerminal]:
             NonTerminal.RecordTypeField: "RecordTypeField"
             NonTerminal.VariantAlt: "VariantAlt"
             NonTerminal.FnArgs: "FnArgs"
-            NonTerminal.Param: "Param"
             NonTerminal.ReturnType: "ReturnType"
             NonTerminal.TypeDecl: "TypeDecl"
             NonTerminal.TypeParams: "TypeParams"
@@ -55,7 +53,6 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.RecordTypeField, right = NonTerminal.RecordTypeField): Bool.True
             (left = NonTerminal.VariantAlt, right = NonTerminal.VariantAlt): Bool.True
             (left = NonTerminal.FnArgs, right = NonTerminal.FnArgs): Bool.True
-            (left = NonTerminal.Param, right = NonTerminal.Param): Bool.True
             (left = NonTerminal.ReturnType, right = NonTerminal.ReturnType): Bool.True
             (left = NonTerminal.TypeDecl, right = NonTerminal.TypeDecl): Bool.True
             (left = NonTerminal.TypeParams, right = NonTerminal.TypeParams): Bool.True
@@ -700,7 +697,7 @@ fnArgs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Toke
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
-        let nonTerminalResult = param(tokens, cursor)
+        let nonTerminalResult = type_(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
@@ -712,7 +709,7 @@ fnArgs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Toke
                     cursor += 1
                 else:
                     throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-                let nonTerminalResult = param(tokens, cursor)
+                let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 nodes.push(nonTerminalResult.tree)
                 cursor
@@ -747,48 +744,6 @@ fnArgs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Toke
             nodes.clear()
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.FnArgs, nodes), newCursor = newCursor)
-    if cursor == tokens.len():
-        throw(ParseError.UnexpectedEof)
-    else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-
-param(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
-    let cursor0 = cursor
-    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
-    let altResult = try({
-        if cursor == tokens.len():
-            throw(ParseError.UnexpectedEof)
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId | TokenKind.Self_, ..):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
-            cursor += 1
-        else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-        let nodesLen0 = nodes.len()
-        let symResult = try({
-            if cursor == tokens.len():
-                throw(ParseError.UnexpectedEof)
-            if tokens.get(cursor) is Token(kind = TokenKind.Colon, ..):
-                cursor += 1
-            else:
-                throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-            let nonTerminalResult = type_(tokens, cursor)
-            cursor = nonTerminalResult.newCursor
-            nodes.push(nonTerminalResult.tree)
-            cursor
-        })
-        match symResult:
-            Result.Err(_):
-                nodes.truncate(nodesLen0)
-            Result.Ok(newCursor):
-                cursor = newCursor
-        cursor
-    })
-    match altResult:
-        Result.Err(err):
-            cursor = cursor0
-            nodes.clear()
-        Result.Ok(newCursor):
-            return (tree = ParseTree.NonTerminal(kind = NonTerminal.Param, nodes), newCursor = newCursor)
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
