@@ -339,4 +339,30 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn layout_after_comments() {
+        // At the end of the input, we should terminate the open blocks.
+        let input = indoc! {"
+            symbolNonRec:
+                a  # foo
+                b  # bar
+        "};
+        let toks = scan_wo_locs(input);
+        #[rustfmt::skip]
+        assert_eq!(
+            toks,
+            vec![
+                LowerId,
+                Colon,
+                Newline,
+                Indent,
+                    LowerId, // a
+                    Newline,
+                    LowerId, // b
+                    Newline,
+                Dedent,
+            ]
+        );
+    }
 }

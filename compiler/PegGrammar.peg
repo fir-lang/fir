@@ -41,15 +41,15 @@ symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
 
 symbolPrefix:
-    "-"
-    "_"
+    "-"                 # negative lookahead (fails when symbol succeeds)
+    "_"                 # silence, or ignore (don't push match to the tree)
 
 symbolNonRec:
-    "lowerId"
-    "Str"
-    _"(" symbol+ _")"
+    "lowerId"           # non-terminal
+    "Str"               # terminal
+    _"(" symbol+ _")"   # group
 
 symbolSuffix:
-    "*"
-    "+"
-    "?"
+    "*"                 # zero or more
+    "+"                 # one or more
+    "?"                 # optional (zero or one)

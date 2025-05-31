@@ -427,7 +427,8 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         4,
                         Doc.str("let symResult = try({")
                             + Doc.hardLine()
-                            + generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
+                            + generateSymbolParser(symbol, ignore, terminalPats)
+                            + Doc.hardLine()
                             + Doc.str("cursor"))
                     + Doc.hardLine()
                     + Doc.str("})")
