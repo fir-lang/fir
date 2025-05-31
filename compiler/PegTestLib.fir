@@ -1,3 +1,5 @@
+import Scanner
+
 type TestError:
     ParseError(ParseError[Token])
     Other(Str)
@@ -10,11 +12,14 @@ impl ToStr[TestError]:
 
 runParser(
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
+        runScan: Bool,
     ): TestError ParseTree[Token, NonTerminal]
     let (tokens, error) = tokenize("<test input>", input)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
+    if runScan:
+        tokens = scan(tokens)
     let result = match try({ parseFn(tokens, 0) }):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
@@ -25,20 +30,30 @@ runParser(
 runTest(
         testName: Str,
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
     ): exn ()
     print(testName)
-    match try({ runParser(input, parseFn) }):
+    match try({ runParser(input, parseFn, Bool.False) }):
         Result.Ok(tree): print(tree.toDoc().print(80))
         Result.Err(err): print("ERR: `err`")
     print("")
 
 runTest_(
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
     ): exn ()
     print(input)
-    match try({ runParser(input, parseFn) }):
+    match try({ runParser(input, parseFn, Bool.False) }):
+        Result.Ok(tree): print(tree.toDoc().print(80))
+        Result.Err(err): print("ERR: `err`")
+    print("")
+
+runTestIndent(
+        input: Str,
+        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
+    ): exn ()
+    print(input)
+    match try({ runParser(input, parseFn, Bool.True) }):
         Result.Ok(tree): print(tree.toDoc().print(80))
         Result.Err(err): print("ERR: `err`")
     print("")

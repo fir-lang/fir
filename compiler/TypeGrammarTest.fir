@@ -25,6 +25,15 @@ main()
     runTest_("Fn(self, a: U32): [] Foo", type_)
     runTest_("Map[Foo, Bar]", type_)
 
+    runTestIndent("\
+type Foo:
+    a: U32", typeDecl)
+
+    runTestIndent("\
+type Option[t]:
+    None
+    Some(t)", typeDecl)
+
 # expected stdout:
 # asdf
 # Type_(LowerId(1:1:"asdf"))
@@ -191,6 +200,27 @@ main()
 #         UpperId(1:1:"Map"),
 #         Type_(NamedType(UpperId(1:5:"Foo"))),
 #         Type_(NamedType(UpperId(1:10:"Bar"))),
+#     ),
+# )
+# 
+# type Foo:
+#     a: U32
+# TypeDecl(
+#     UpperId(1:6:"Foo"),
+#     TypeDeclRhs(
+#         NamedField(LowerId(2:5:"a"), Type_(NamedType(UpperId(2:8:"U32")))),
+#     ),
+# )
+# 
+# type Option[t]:
+#     None
+#     Some(t)
+# TypeDecl(
+#     UpperId(1:6:"Option"),
+#     TypeParams(LowerId(1:13:"t")),
+#     TypeDeclRhs(
+#         ConDecl(UpperId(2:5:"None")),
+#         ConDecl(UpperId(3:5:"Some"), UnnamedFields(Type_(LowerId(3:10:"t")))),
 #     ),
 # )
 
