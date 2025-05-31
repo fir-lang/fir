@@ -145,6 +145,7 @@ pub(crate) fn copy_update_escapes(s: &str) -> String {
                 't' => ret.push('\t'),
                 'r' => ret.push('\r'),
                 '"' => ret.push('"'),
+                '`' => ret.push('`'),
                 '\n' => {
                     while let Some(next) = chars.peek().copied() {
                         match next {

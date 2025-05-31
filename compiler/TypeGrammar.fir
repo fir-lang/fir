@@ -1216,12 +1216,6 @@ conDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Tok
             cursor += 1
         else:
             throw(ParseError.UnexpectedToken(tokens.get(cursor)))
-        if cursor == tokens.len():
-            throw(ParseError.UnexpectedEof)
-        if tokens.get(cursor) is Token(kind = TokenKind.Newline, ..):
-            cursor += 1
-        else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
         cursor
     })
     match altResult:

@@ -75,7 +75,7 @@ typeDeclRhs:
     namedField+
 
 conDecl:
-    "UpperId" _":" _"NEWLINE" _"INDENT" namedField+ _"DEDENT" _"NEWLINE"
+    "UpperId" _":" _"NEWLINE" _"INDENT" namedField+ _"DEDENT"
     "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
     "UpperId" _"NEWLINE"
 

@@ -64,6 +64,12 @@ type _SpaceReq:
 
     runTestIndent("prim type U64", typeDecl)
 
+    runTestIndent("\
+type Type:
+    Variant:
+        alts: Vec[VariantAlt]
+        extension: Option[Id]", typeDecl)
+
     ()
 
 # expected stdout:
@@ -299,5 +305,37 @@ type _SpaceReq:
 # 
 # prim type U64
 # TypeDecl(Prim(1:1:"prim"), UpperId(1:11:"U64"))
+# 
+# type Type:
+#     Variant:
+#         alts: Vec[VariantAlt]
+#         extension: Option[Id]
+# TypeDecl(
+#     UpperId(1:6:"Type"),
+#     TypeDeclRhs(
+#         ConDecl(
+#             UpperId(2:5:"Variant"),
+#             NamedField(
+#                 LowerId(3:9:"alts"),
+#                 Type_(
+#                     NamedType(
+#                         UpperId(3:15:"Vec"),
+#                         Type_(NamedType(UpperId(3:19:"VariantAlt"))),
+#                     ),
+#                 ),
+#             ),
+#             NamedField(
+#                 LowerId(4:9:"extension"),
+#                 Type_(
+#                     NamedType(
+#                         UpperId(4:20:"Option"),
+#                         Type_(NamedType(UpperId(4:27:"Id"))),
+#                     ),
+#                 ),
+#             ),
+#         ),
+#     ),
+# )
 
 # expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
+
