@@ -417,25 +417,38 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
             doc
 
         Symbol.ZeroOrMore(symbol):
-            let loopDoc = Doc.str("loop:") + Doc.hardLine()
-
-            let tryDoc = Doc.str("let symResult = try({") + Doc.hardLine()
-            tryDoc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
-            tryDoc += Doc.str("cursor")
-            tryDoc = tryDoc.nest(4)
-            tryDoc += Doc.hardLine() + Doc.str("})")
-
-            loopDoc += tryDoc + Doc.hardLine()
-            loopDoc += \
-                Doc.nested(
-                    4,
-                    Doc.str("match symResult:")
-                        + Doc.hardLine()
-                        + Doc.nested(4, Doc.str("Result.Err(_):") + Doc.hardLine() + Doc.str("break"))
-                        + Doc.hardLine()
-                        + Doc.nested(4, Doc.str("Result.Ok(newCursor):") + Doc.hardLine() + Doc.str("cursor = newCursor")))
-
-            loopDoc.nest(4)
+            Doc.nested(
+                4,
+                Doc.str("loop:")
+                    + Doc.hardLine()
+                    + Doc.str("let nodesLen0 = nodes.len()")
+                    + Doc.hardLine()
+                    + Doc.nested(
+                        4,
+                        Doc.str("let symResult = try({")
+                            + Doc.hardLine()
+                            + generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
+                            + Doc.str("cursor"))
+                    + Doc.hardLine()
+                    + Doc.str("})")
+                    + Doc.hardLine()
+                    + Doc.nested(
+                          4,
+                          Doc.str("match symResult:")
+                              + Doc.hardLine()
+                              + Doc.nested(
+                                  4,
+                                  Doc.str("Result.Err(_):")
+                                      + Doc.hardLine()
+                                      + Doc.str("nodes.truncate(nodesLen0)")
+                                      + Doc.hardLine()
+                                      + Doc.str("break"))
+                              + Doc.hardLine()
+                              + Doc.nested(
+                                  4,
+                                  Doc.str("Result.Ok(newCursor):")
+                                      + Doc.hardLine()
+                                      + Doc.str("cursor = newCursor"))))
 
         Symbol.OneOrMore(symbol):
             generateSymbolParser(symbol, ignore, terminalPats) \
@@ -443,31 +456,33 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + generateSymbolParser(Symbol.ZeroOrMore(symbol), ignore, terminalPats)
 
         Symbol.Optional(symbol):
-            let doc = Doc.str("let symResult = try({") + Doc.hardLine()
-            doc += generateSymbolParser(symbol, ignore, terminalPats) + Doc.hardLine()
-            doc += Doc.str("cursor")
-            doc = doc.nest(4)
-            doc += Doc.hardLine() + Doc.str("})")
-
-            doc += Doc.hardLine()
-            doc += \
-                Doc.nested(
-                    4,
-                    Doc.str("match symResult:")
-                        + Doc.hardLine()
-                        + Doc.nested(
-                            4,
-                            Doc.str("Result.Err(_):")
-                                + Doc.hardLine()
-                                + Doc.str("()"))         # TODO: We will need to truncate the tokens vec here
-                        + Doc.hardLine()
-                        + Doc.nested(
+            Doc.str("let nodesLen0 = nodes.len()") \
+            + Doc.hardLine() \
+            + Doc.nested(
+                  4,
+                  Doc.str("let symResult = try({")
+                      + Doc.hardLine()
+                      + generateSymbolParser(symbol, ignore, terminalPats)
+                      + Doc.hardLine()
+                      + Doc.str("cursor")) \
+                  + Doc.hardLine() \
+                  + Doc.str("})") \
+                  + Doc.hardLine() \
+                  + Doc.nested(
+                        4,
+                        Doc.str("match symResult:")
+                            + Doc.hardLine()
+                            + Doc.nested(
                                 4,
-                                Doc.str("Result.Ok(newCursor):")
+                                Doc.str("Result.Err(_):")
                                     + Doc.hardLine()
-                                    + Doc.str("cursor = newCursor")))
-
-            doc
+                                    + Doc.str("nodes.truncate(nodesLen0)"))
+                            + Doc.hardLine()
+                            + Doc.nested(
+                                    4,
+                                    Doc.str("Result.Ok(newCursor):")
+                                        + Doc.hardLine()
+                                        + Doc.str("cursor = newCursor")))
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)

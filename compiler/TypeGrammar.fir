@@ -144,6 +144,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -159,6 +160,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
@@ -210,6 +212,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -225,9 +228,11 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
+        let nodesLen0 = nodes.len()
         let symResult = try({
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
@@ -240,7 +245,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
         })
         match symResult:
             Result.Err(_):
-                ()
+                nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
         if cursor == tokens.len():
@@ -285,6 +290,7 @@ namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[T
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -300,9 +306,11 @@ namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[T
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
+        let nodesLen0 = nodes.len()
         let symResult = try({
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
@@ -315,7 +323,7 @@ namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[T
         })
         match symResult:
             Result.Err(_):
-                ()
+                nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
         if cursor == tokens.len():
@@ -362,6 +370,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -377,6 +386,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
@@ -414,6 +424,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -429,9 +440,11 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
+        let nodesLen0 = nodes.len()
         let symResult = try({
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
@@ -444,7 +457,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
         })
         match symResult:
             Result.Err(_):
-                ()
+                nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
         cursor

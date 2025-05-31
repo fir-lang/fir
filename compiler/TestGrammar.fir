@@ -177,6 +177,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -189,6 +190,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
@@ -224,6 +226,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
         else:
             throw(ParseError.UnexpectedToken(tokens.get(cursor)))
         loop:
+            let nodesLen0 = nodes.len()
             let symResult = try({
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
@@ -236,6 +239,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
             })
             match symResult:
                 Result.Err(_):
+                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
@@ -263,6 +267,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
+        let nodesLen0 = nodes.len()
         let symResult = try({
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
@@ -275,7 +280,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
         })
         match symResult:
             Result.Err(_):
-                ()
+                nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
         if cursor == tokens.len():
