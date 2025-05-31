@@ -33,7 +33,7 @@ compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
 
 compiler_update_goldens:
-    goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
 
 build: generate_parser
     cargo build
