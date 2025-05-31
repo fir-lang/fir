@@ -78,7 +78,7 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Lo
             }
         }
 
-        last_loc = l;
+        last_loc = r;
 
         match token_kind {
             TokenKind::LParen | TokenKind::LParenRow => delimiter_stack.push(Delimiter::Paren),
@@ -363,6 +363,39 @@ mod tests {
                     Newline,
                 Dedent,
             ]
+        );
+    }
+
+    #[test]
+    fn newline_token_location() {
+        use smol_str::SmolStr;
+        let input = "a\nb";
+        let toks: Vec<(Loc, Token, Loc)> = scan(crate::lexer::lex(input, "test"), "test");
+        #[rustfmt::skip]
+        assert_eq!(
+            toks,
+            [
+                (
+                    Loc { line: 0, col: 0, byte_idx: 0 },
+                    Token { kind: LowerId, text: SmolStr::new("a") },
+                    Loc { line: 0, col: 1, byte_idx: 1 }
+                ),
+                (
+                    Loc { line: 0, col: 1, byte_idx: 1 },
+                    Token { kind: Newline, text: SmolStr::new("") },
+                    Loc { line: 0, col: 1, byte_idx: 1 }
+                ),
+                (
+                    Loc { line: 1, col: 0, byte_idx: 2 },
+                    Token { kind: LowerId, text: SmolStr::new("b") },
+                    Loc { line: 1, col: 1, byte_idx: 3 }
+                ),
+                (
+                    Loc { line: 1, col: 1, byte_idx: 3 },
+                    Token { kind: Newline, text: SmolStr::new("") },
+                    Loc { line: 1, col: 1, byte_idx: 3 }
+                )
+            ],
         );
     }
 }
