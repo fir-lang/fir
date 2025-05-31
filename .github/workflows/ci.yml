@@ -49,8 +49,8 @@ jobs:
       - name: Check lints
         run: cargo clippy --all-targets --all -- -Dwarnings
 
-  run_unit_tests:
-    name: Run unit tests
+  run_compiler_unit_tests:
+    name: Compiler unit tests
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -61,12 +61,15 @@ jobs:
         with:
             toolchain: stable
             override: true
+
+      - name: Install just
+        run: sudo apt install -y just
 
       - name: Test
-        run: cargo test
+        run: just compiler_unit_test
 
-  run_compiler_tests:
-    name: Run compiler tests
+  run_compiler_golden_tests:
+    name: Compiler golden tests
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -78,35 +81,20 @@ jobs:
             toolchain: stable
             override: true
 
-      - name: Test
-        run: |
-            export FIR_ROOT=$(pwd)
-            bash compiler/test_lexer.sh
-            cargo run -- compiler/Main.fir
-
-  run_golden_tests:
-    name: 'Run golden tests'
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
+      - name: Install just
+        run: sudo apt install -y just
 
       - name: Install goldentests
         run: cargo install --git https://github.com/osa1/golden-tests --features=binary
 
-      - name: Run tests
-        run: |
-          cargo build
-          FIR_ROOT=${{ github.workspace }} goldentests target/debug/fir tests '# '
+      - name: Build interpreter
+        run: cargo build --verbose
 
-  run_peg_tests:
-    name: Run PEG tests
+      - name: Test
+        run: just compiler_golden_test
+
+  run_interpreter_unit_tests:
+    name: Interpreter unit tests
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -118,15 +106,36 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Test
+        run: just interpreter_unit_test
+
+  run_interpreter_golden_tests:
+    name: Interpreter golden tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: Install goldentests
         run: cargo install --git https://github.com/osa1/golden-tests --features=binary
 
+      - name: Build interpreter
+        run: cargo build --verbose
+
       - name: Test
-        run: |
-            export FIR_ROOT=$(pwd)
-            cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-            goldentests target/debug/fir compiler/PegTests.fir '# '
-            goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
+        run: just interpreter_golden_test
 
   check_generated_files:
     name: Check that generated files are up-to-date
@@ -141,11 +150,17 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Install lalrpop
+        run: cargo install lalrpop
+
+      - name: Build interpreter
+        run: cargo build --verbose
+
       - name: Check
         run: |
-            export FIR_ROOT=$(pwd)
-            cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-            cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
-            cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
-            mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
+            just update_generated_files
+            git -P diff
             ! git status --porcelain | grep -q '^ M'
