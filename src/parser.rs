@@ -1,4 +1,4 @@
-// auto-generated: "lalrpop 0.22.1"
+// auto-generated: "lalrpop 0.22.2"
 // sha3: 4428e5c4f9a6c1266499069b65e506fb2e6ffe7898dbc92e7e6a19f553a1d002
 #![allow(clippy::all)]
 use crate::ast::*;
@@ -4803,7 +4803,7 @@ mod __parse__LExpr {
                     nonterminal_produced: 162,
                 }
             }
-            _ => panic!("invalid reduction index {}", __reduce_index)
+            _ => panic!("invalid reduction index {__reduce_index}",)
         }
     }
     pub struct LExprParser {
@@ -6093,7 +6093,7 @@ mod __parse__LExpr {
             400 => {
                 __reduce400(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
-            _ => panic!("invalid action code {}", __action)
+            _ => panic!("invalid action code {__action}")
         };
         let __states_len = __states.len();
         __states.truncate(__states_len - __pop_states);
@@ -19260,7 +19260,7 @@ mod __parse__LStmt {
                     nonterminal_produced: 162,
                 }
             }
-            _ => panic!("invalid reduction index {}", __reduce_index)
+            _ => panic!("invalid reduction index {__reduce_index}",)
         }
     }
     pub struct LStmtParser {
@@ -20550,7 +20550,7 @@ mod __parse__LStmt {
             400 => {
                 __reduce400(module, __lookahead_start, __symbols, core::marker::PhantomData::<(&())>)
             }
-            _ => panic!("invalid action code {}", __action)
+            _ => panic!("invalid action code {__action}")
         };
         let __states_len = __states.len();
         __states.truncate(__states_len - __pop_states);
@@ -34468,7 +34468,7 @@ mod __parse__TopDecls {
                 }
             }
             400 => __state_machine::SimulatedReduce::Accept,
-            _ => panic!("invalid reduction index {}", __reduce_index)
+            _ => panic!("invalid reduction index {__reduce_index}",)
         }
     }
     pub struct TopDeclsParser {
@@ -35758,7 +35758,7 @@ mod __parse__TopDecls {
                 let __nt = super::__action2::<>(module, __sym0);
                 return Some(Ok(__nt));
             }
-            _ => panic!("invalid action code {}", __action)
+            _ => panic!("invalid action code {__action}")
         };
         let __states_len = __states.len();
         __states.truncate(__states_len - __pop_states);
