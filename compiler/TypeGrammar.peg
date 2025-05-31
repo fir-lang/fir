@@ -13,34 +13,43 @@ Terminals:
 type_:
     namedType
     "LowerId"
-    "(" ")"
-    "(" recordTypeFields ")"
-    "[" "]"
-    "[" variantAlt ("," variantAlt)* "," ".." "LowerId" "]"
-    "[" variantAlt ("," variantAlt)* ","? "]"
-    "Fn" "(" fnArgs? ")" returnType?
+    recordType
+    variantType
+    fnType
+
+recordType:
+    _"(" _")"
+    _"(" recordTypeFields _")"
+
+variantType:
+    _"[" _"]"
+    _"[" variantAlt (_"," variantAlt)* _"," _".." "LowerId" _"]"
+    _"[" variantAlt (_"," variantAlt)* _","? _"]"
+
+fnType:
+    _"Fn" _"(" fnArgs? _")" returnType?
 
 namedType:
-    "UpperId" "[" type_ ("," type_)* ","? "]"
+    "UpperId" _"[" type_ (_"," type_)* _","? _"]"
     "UpperId"
 
 recordTypeFields:
-    recordTypeField ("," recordTypeField)* "," ".." "LowerId"
-    recordTypeField ("," recordTypeField)* ","?
+    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
+    recordTypeField (_"," recordTypeField)* _","?
 
 recordTypeField:
-    "LowerId" ":" type_
+    "LowerId" _":" type_
     type_
 
 variantAlt:
-    "UpperId" "(" recordTypeFields ")"
+    "UpperId" _"(" recordTypeFields _")"
     "UpperId"
 
 fnArgs:
-    param ("," param)* ","?
+    param (_"," param)* ","?
 
 param:
-    "LowerId" (":" type_)?
+    "LowerId" (_":" type_)?
 
 returnType:
-    ":" type_ type_?
+    _":" type_ type_?
