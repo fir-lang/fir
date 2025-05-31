@@ -6,7 +6,6 @@
 
 mod ast;
 mod collections;
-mod file_utils;
 mod import_resolver;
 mod interpolation;
 mod interpreter;
@@ -37,7 +36,6 @@ pub struct CompilerOpts {
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
     pub main: String,
-    pub test_type_decl_parsing: bool,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -158,58 +156,6 @@ mod native {
 
         if opts.print_parsed_ast {
             ast::printer::print_module(&module);
-        }
-
-        if opts.test_type_decl_parsing {
-            let compiler_opts = CompilerOpts {
-                typecheck: false,
-                no_prelude: false,
-                no_backtrace: false,
-                print_tokens: false,
-                print_parsed_ast: false,
-                print_checked_ast: false,
-                print_mono_ast: false,
-                print_lowered_ast: false,
-                main: "main".to_string(),
-                test_type_decl_parsing: false,
-            };
-            for decl in module {
-                if let ast::TopDecl::Type(type_decl) = &decl.node {
-                    println!("-------------------------");
-                    println!(
-                        "Parsing {}:{}:{}-{}:{}",
-                        type_decl.loc.module,
-                        type_decl.loc.line_start + 1,
-                        type_decl.loc.col_start + 1,
-                        type_decl.loc.line_end + 1,
-                        type_decl.loc.col_end + 1,
-                    );
-                    let file_contents =
-                        std::fs::read_to_string(std::path::Path::new(&*type_decl.loc.module))
-                            .unwrap();
-                    let decl = crate::file_utils::extract_text(
-                        &file_contents,
-                        (
-                            type_decl.loc.line_start as usize,
-                            type_decl.loc.col_start as usize,
-                        ),
-                        (
-                            type_decl.loc.line_end as usize,
-                            type_decl.loc.col_end as usize,
-                        ),
-                    )
-                    .unwrap();
-                    let decl = decl.trim();
-                    // println!("{}", decl);
-                    main(
-                        compiler_opts.clone(),
-                        "compiler/TypeGrammarTest.fir".to_string(),
-                        vec![decl.to_string()],
-                    );
-                    println!("-------------------------");
-                }
-            }
-            return;
         }
 
         type_checker::check_module(&mut module);
