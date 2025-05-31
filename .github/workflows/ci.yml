@@ -126,6 +126,7 @@ jobs:
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
             goldentests target/debug/fir compiler/PegTests.fir '# '
+            goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
 
   check_generated_files:
     name: Check that generated files are up-to-date
@@ -144,6 +145,7 @@ jobs:
         run: |
             export FIR_ROOT=$(pwd)
             cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+            cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
             cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg > compiler/PegGrammar.new.fir
             mv compiler/PegGrammar.new.fir compiler/PegGrammar.fir
             ! git status --porcelain | grep -q '^ M'
