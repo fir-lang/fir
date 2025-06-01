@@ -103,7 +103,7 @@ fn resolve_imports_(
                     crate::parse_file(&imported_module_path, imported_module, print_tokens);
                 resolve_imports_(
                     import_paths,
-                    module_root,
+                    root,
                     imported_module,
                     new_module,
                     imported_modules,
