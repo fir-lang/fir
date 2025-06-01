@@ -1,16 +1,17 @@
 main()
+    # Nested function calls, indented differently based on requested string width.
     let args: Vec[Doc] = Vec.withCapacity(10)
     args.push(Doc.str("longArgument1"))
 
     let nestedCallArgs: Vec[Doc] = Vec.withCapacity(10)
     nestedCallArgs.push(Doc.str("arg1"))
     nestedCallArgs.push(Doc.str("arg2"))
-    args.push(call(Doc.str("myOtherFunction"), nestedCallArgs))
+    args.push(makeCallSyntax(Doc.str("myOtherFunction"), nestedCallArgs))
 
     let nestedCallArgs: Vec[Doc] = Vec.withCapacity(10)
-    args.push(call(Doc.str("yetAnotherFunction"), nestedCallArgs))
+    args.push(makeCallSyntax(Doc.str("yetAnotherFunction"), nestedCallArgs))
 
-    let doc = call(Doc.str("myFunction"), args)
+    let doc = makeCallSyntax(Doc.str("myFunction"), args)
 
     # Break at column 10: splits all groups into lines.
     print(doc.print(10))
@@ -21,7 +22,20 @@ main()
     # Break at column 100: prints the whole expression as one line.
     print(doc.print(100))
 
-call(fun: Doc, args: Vec[Doc]): Doc
+    print("")
+
+    # Pretty printing combinators allow composing `Doc` values with multiple lines, without breaking
+    # indentation and alignment.
+    #
+    # `expectationFailure` generates an error message. As arguments, we pass `Doc`s with multiple
+    # lines and indentation. In the output, the second lines are indented the same amount relative
+    # to the first lines.
+    print(expectationFailure(
+        Doc.nested(2, Doc.str("First user line") + Doc.hardLine() + Doc.str("indented 2")),
+        Doc.nested(4, Doc.str("Second user line") + Doc.hardLine() + Doc.str("indented 4")),
+    ).print(80))
+
+makeCallSyntax(fun: Doc, args: Vec[Doc]): Doc
     if args.len() == 0:
         return fun + Doc.str("()")
 
@@ -42,6 +56,13 @@ call(fun: Doc, args: Vec[Doc]): Doc
 
     (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
 
+expectationFailure(expected: Doc, found: Doc): Doc
+    let expectedStr = "Expected: "
+    let foundStr = "Found: "
+    Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected) \
+        + Doc.hardLine() \
+        + Doc.nested(foundStr.len(), Doc.str(foundStr) + found)
+
 # expected stdout:
 # myFunction(
 #     longArgument1,
@@ -57,3 +78,8 @@ call(fun: Doc, args: Vec[Doc]): Doc
 #     yetAnotherFunction(),
 # )
 # myFunction(longArgument1, myOtherFunction(arg1, arg2), yetAnotherFunction())
+# 
+# Expected: First user line
+#             indented 2
+# Found: Second user line
+#            indented 4
