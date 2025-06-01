@@ -1182,6 +1182,11 @@ PatternField: (Option<Id>, L<Pat>) = {
 ImportDecl: L<ImportDecl> = {
     <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R> =>
         L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
+
+    <l:@L> "import" <path:UpperIdPath> NEWLINE <r:@R> => {
+        let path = path.text.split(".").map(|part| SmolStr::new(part)).collect();
+        L::new(module, l, r, ImportDecl { path })
+    },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

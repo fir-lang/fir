@@ -1,5 +1,5 @@
 use crate::ast::{self, Id};
-use crate::collections::Set;
+use crate::collections::{Map, Set};
 
 use std::path::PathBuf;
 
@@ -16,7 +16,7 @@ use smol_str::SmolStr;
 /// Imports `Fir.Prelude` always. Any other import path needs to have one component and will be
 /// resolved to a file at the root.
 pub fn resolve_imports(
-    fir_root: &str,
+    import_paths: &Map<String, String>,
     module_root: &str,
     module: ast::Module,
     import_prelude: bool,
@@ -25,11 +25,10 @@ pub fn resolve_imports(
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
     let mut imported_modules: Set<Vec<Id>> = Default::default();
 
-    let fir_root = fir_lib_root(fir_root);
-    let fir_root_str = fir_root.to_str().unwrap();
+    let fir_root = import_paths.get("Fir").unwrap();
 
     resolve_imports_(
-        fir_root_str,
+        import_paths,
         module_root,
         module,
         &mut new_module,
@@ -38,14 +37,14 @@ pub fn resolve_imports(
     );
 
     // Import Prelude if it's not already imported.
-    let prelude_path = prelude_module_path();
+    let prelude_path = vec![FIR.clone(), PRELUDE.clone()];
     if import_prelude && !imported_modules.contains(&prelude_path) {
-        let prelude_path_buf = module_path(fir_root.to_str().unwrap(), &PRELUDE);
+        let prelude_path_buf = module_path(fir_root, &PRELUDE);
         let prelude_module = crate::parse_file(&prelude_path_buf, &PRELUDE, print_tokens);
         imported_modules.insert(prelude_path);
         resolve_imports_(
-            fir_root_str,
-            fir_root_str,
+            import_paths,
+            fir_root,
             prelude_module,
             &mut new_module,
             &mut imported_modules,
@@ -59,12 +58,8 @@ pub fn resolve_imports(
 static FIR: Id = SmolStr::new_static("Fir");
 static PRELUDE: Id = SmolStr::new_static("Prelude");
 
-fn prelude_module_path() -> Vec<Id> {
-    vec![FIR.clone(), PRELUDE.clone()]
-}
-
 fn resolve_imports_(
-    fir_lib_root: &str,
+    import_paths: &Map<String, String>,
     module_root: &str,
     module: ast::Module,
     new_module: &mut ast::Module,
@@ -84,12 +79,20 @@ fn resolve_imports_(
                     continue;
                 }
 
-                let root = if path.len() == 2 && path[0] == "Fir" {
-                    fir_lib_root
-                } else if path.len() == 1 {
-                    module_root
+                // NB. We don't support directories in import paths currently.
+                assert!(
+                    path.len() <= 2,
+                    "We don't allow directories in import paths currently. Invalid path: {}",
+                    path.join(".")
+                );
+
+                let root = if path.len() == 2 {
+                    match import_paths.get(path[0].as_str()) {
+                        Some(root) => root,
+                        None => panic!("Path {} is not in import paths", path[0]),
+                    }
                 } else {
-                    panic!("Unsupported import path: {:?}", path);
+                    module_root
                 };
 
                 let imported_module = path.last().unwrap();
@@ -99,7 +102,7 @@ fn resolve_imports_(
                 let imported_module =
                     crate::parse_file(&imported_module_path, imported_module, print_tokens);
                 resolve_imports_(
-                    fir_lib_root,
+                    import_paths,
                     module_root,
                     imported_module,
                     new_module,
@@ -116,12 +119,5 @@ fn module_path(root: &str, module: &Id) -> PathBuf {
     path.push(root);
     path.push(module.as_str());
     path.set_extension("fir");
-    path
-}
-
-fn fir_lib_root(fir_root: &str) -> PathBuf {
-    let mut path = PathBuf::new();
-    path.push(fir_root);
-    path.push("lib");
     path
 }
