@@ -11,7 +11,7 @@ type ParseError[t]:
 
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]): Str
-        self.toDoc().print(80)
+        self.toDoc().render(80)
 
 impl[ToStr[t]] ToStr[ParseError[t]]:
     toStr(self: ParseError[t]): Str

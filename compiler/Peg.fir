@@ -23,9 +23,9 @@ main(args: Array[Str])
             panic(err.toStr())
         Result.Ok(result):
             if result.newCursor != tokens.len():
-                print(result.tree.toDoc().print(80))
+                print(result.tree.toDoc().render(80))
                 panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")
-            # print(result.tree.toDoc().print(80))
+            # print(result.tree.toDoc().render(80))
             convertParseTree(result.tree)
 
     let terminalPats: Option[HashMap[Str, Vec[Token]]] = Option.None
@@ -55,11 +55,11 @@ main(args: Array[Str])
     print("import Token")
     print("")
 
-    print(generateNonTerminalType(terminalNames).print(80))
+    print(generateNonTerminalType(terminalNames).render(80))
     print("")
-    print(generateNonTerminalToStr(terminalNames).print(80))
+    print(generateNonTerminalToStr(terminalNames).render(80))
     print("")
-    print(generateNonTerminalEq(terminalNames).print(80))
+    print(generateNonTerminalEq(terminalNames).render(80))
     print("")
 
     let nonTerminalDeclIdx = 0
@@ -71,7 +71,7 @@ main(args: Array[Str])
         if nonTerminalDeclIdx != 0:
             print("")
         let doc = generateNonTerminal(nonTerminal, terminalPats)
-        print(doc.print(80))
+        print(doc.render(80))
         nonTerminalDeclIdx += 1
 
 errStr(err: Error): Str
