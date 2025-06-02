@@ -86,5 +86,22 @@ generateUnnamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]): Doc
 generateType(nodes: Vec[ParseTree[Token, NonTerminal]]): Doc
     Doc.str("TODO")
 
+type MatchBuilder:
+    scrut: Doc
+    alts: Vec[(pat: Doc, body: Doc)]
+
+MatchBuilder.withScrut(scrut: Doc): MatchBuilder
+    MatchBuilder(scrut, alts = Vec.withCapacity(5))
+
+MatchBuilder.alt(self, pat: Doc, body: Doc): MatchBuilder
+    self.alts.push((pat = pat, body = body))
+    self
+
+MatchBuilder.render(self): Doc
+    let alts = Doc.empty()
+    for alt: (pat: Doc, body: Doc) in self.alts.iter():
+        alts += Doc.nested(4, alt.pat + Doc.char(':') + Doc.break_(1) + alt.body).group()
+    Doc.nested(4, Doc.str("match ") + self.scrut + Doc.char(':') + Doc.hardLine() + alts)
+
 test()
     print("Running ToStr derive tests...")
