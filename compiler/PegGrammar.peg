@@ -1,8 +1,17 @@
 # PEG grammar of PEG grammars.
 
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
 Terminals:
     "lowerId" = Token(kind = TokenKind.LowerId, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
+    "type" = Token(kind = TokenKind.Type, ..)
+    "import" = Token(kind = TokenKind.Import, ..)
     ":" = Token(kind = TokenKind.Colon, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
@@ -15,21 +24,35 @@ Terminals:
     "=" = Token(kind = TokenKind.Eq, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
 
-topDecls:
-    topDecl+
+grammar:
+    importDecls typeDecls terminalsDecl nonTerminalDecls
 
-topDecl:
-    terminalsDecl
-    nonTerminalDecl
+importDecls:
+    importDecl*
+
+importDecl:
+    _"import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+
+typeDecls:
+    typeDecl*
+
+typeDecl:
+    # NB. We can generalize the right-hand side to types using the compiler's
+    # type parser.
+    _"type" "UpperId" _"=" "UpperId" _"NEWLINE"
 
 terminalsDecl:
-    _"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT"
+    (_"Terminals" _":" _"NEWLINE" _"INDENT" terminalDecl+ _"DEDENT")?
 
 terminalDecl:
     "Str" _"=" (-"NEWLINE" "ANY")+ _"NEWLINE"
+
+nonTerminalDecls:
+    nonTerminalDecl*
 
 nonTerminalDecl:
     "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"

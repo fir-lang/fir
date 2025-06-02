@@ -18,7 +18,7 @@ main(args: Array[Str])
     if tokens.len() == 0:
         panic("Empty file")
 
-    let decls = match try({ topDecls(tokens, 0) }):
+    let grammar = match try({ grammar(tokens, 0) }):
         Result.Err(err):
             panic(err.toStr())
         Result.Ok(result):
@@ -28,49 +28,35 @@ main(args: Array[Str])
             # print(result.tree.toDoc().render(80))
             convertParseTree(result.tree)
 
-    let terminalPats: Option[HashMap[Str, Vec[Token]]] = Option.None
-    let terminalNames: Vec[Str] = Vec.withCapacity(decls.len())
+    let terminalPats: HashMap[Str, Vec[Token]] = HashMap.withCapacity(grammar.terminalsDecl.terminals.len() * 2)
+    for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
+        terminalPats.insert(terminalDecl.name.substr(1, terminalDecl.name.len() - 1), terminalDecl.pattern)
 
-    for decl: TopDecl in decls.iter():
-        match decl:
-            TopDecl.Terminals(TerminalsDecl(terminals)):
-                if terminalPats is Option.Some(_):
-                    panic("Multiple terminals declarations")
-
-                let map: HashMap[Str, Vec[Token]] = HashMap.withCapacity(terminals.len() * 2)
-                for terminalDecl: TerminalDecl in terminals.iter():
-                    map.insert(terminalDecl.name.substr(1, terminalDecl.name.len() - 1), terminalDecl.pattern)
-
-                terminalPats = Option.Some(map)
-
-            TopDecl.NonTerminal(NonTerminalDecl(name, ..)):
-                terminalNames.push(name)
-
-    let terminalPats: HashMap[Str, Vec[Token]] = \
-        terminalPats.unwrapOrElse({ panic("Grammar missing terminals declaration") })
+    let nonTerminalNames: Vec[Str] = Vec.withCapacity(grammar.nonTerminalDecls.len())
+    for nonTerminal: NonTerminalDecl in grammar.nonTerminalDecls.iter():
+        nonTerminalNames.push(nonTerminal.name)
 
     print("# This is generated file, do not edit.")
     print("")
-    print("import ParseTree")
-    print("import Token")
-    print("")
 
-    print(generateNonTerminalType(terminalNames).render(80))
+    for import_: Str in grammar.imports.iter():
+        print("import `import_`")
+
+    if grammar.imports.len() != 0:
+        print("")
+
+    print(generateNonTerminalType(grammar.nonTerminalType, nonTerminalNames).render(80))
     print("")
-    print(generateNonTerminalToStr(terminalNames).render(80))
+    print(generateNonTerminalToStr(grammar.nonTerminalType, nonTerminalNames).render(80))
     print("")
-    print(generateNonTerminalEq(terminalNames).render(80))
+    print(generateNonTerminalEq(grammar.nonTerminalType, nonTerminalNames).render(80))
     print("")
 
     let nonTerminalDeclIdx = 0
-    for decl: TopDecl in decls.iter():
-        let nonTerminal = match decl:
-            TopDecl.Terminals(_): continue
-            TopDecl.NonTerminal(nonTerminal): nonTerminal
-
+    for nonTerminalDecl: NonTerminalDecl in grammar.nonTerminalDecls.iter():
         if nonTerminalDeclIdx != 0:
             print("")
-        let doc = generateNonTerminal(nonTerminal, terminalPats)
+        let doc = generateNonTerminal(grammar.terminalType, grammar.nonTerminalType, nonTerminalDecl, terminalPats)
         print(doc.render(80))
         nonTerminalDeclIdx += 1
 
@@ -92,24 +78,71 @@ capitalize(s: Str): exn Str
 # --------------------------------------------------------------------------------------------------
 # Parsing PEG specs
 
-convertParseTree(tree: ParseTree[Token, NonTerminal]): Vec[TopDecl]
-    let topDecls = tree.asNonTerminal(NonTerminal.TopDecls)
+type Grammar:
+    imports: Vec[Str]
+    terminalType: Str
+    nonTerminalType: Str
+    terminalsDecl: TerminalsDecl
+    nonTerminalDecls: Vec[NonTerminalDecl]
 
-    let converted: Vec[TopDecl] = Vec.withCapacity(topDecls.len())
+convertParseTree(tree: ParseTree[Token, NonTerminal]): Grammar
+    let grammar = tree.asNonTerminal(NonTerminal.Grammar)
 
-    for topDecl: ParseTree[Token, NonTerminal] in topDecls.iter():
-        let topDecl = topDecl.asNonTerminal(NonTerminal.TopDecl).get(0)
-        match topDecl:
-            ParseTree.NonTerminal(kind = NonTerminal.TerminalsDecl, nodes):
-                converted.push(TopDecl.Terminals(convertTerminalsDecl(nodes)))
+    # This code is a bit hacky.. We used to have a proper AST type that we kept after bootstrapping,
+    # but that AST didn't have imports and types, and I don't want make it more complicated. So for
+    # now we print the imports directly and generate the AST for the rest.
+    let importDecls = grammar.get(0).asNonTerminal(NonTerminal.ImportDecls)
+    let imports: Vec[Str] = Vec.withCapacity(importDecls.len())
+    let importStr = StrBuf.withCapacity(50)
+    for importDecl: ParseTree[Token, NonTerminal] in importDecls.iter():
+        let importDeclNodes = importDecl.asNonTerminal(NonTerminal.ImportDecl)
+        importStr.clear()
+        for i: U32 in range(0u32, importDeclNodes.len()):
+            if i != 0:
+                importStr.push('.')
+            importStr.pushStr(importDeclNodes.get(i).asTerminal().text)
+        imports.push(importStr.toStr())
 
-            ParseTree.NonTerminal(kind = NonTerminal.NonTerminalDecl, nodes):
-                converted.push(TopDecl.NonTerminal(convertNonTerminalDecl(nodes)))
+    let typeDecls = grammar.get(1).asNonTerminal(NonTerminal.TypeDecls)
+    let terminalType: Option[Str] = Option.None
+    let nonTerminalType: Option[Str] = Option.None
+    for typeDecl: ParseTree[Token, NonTerminal] in typeDecls.iter():
+        let nodes = typeDecl.asNonTerminal(NonTerminal.TypeDecl)
+        let typeName = nodes.get(0).asTerminal().text
+        let typeValue = nodes.get(1).asTerminal().text
+        match typeName:
+            "Terminal":
+                if terminalType is Option.Some(_):
+                    panic("Terminal type declared multiple times.")
+                terminalType = Option.Some(typeValue)
+            "NonTerminal":
+                if nonTerminalType is Option.Some(_):
+                    panic("Non-terminal type declared multiple times.")
+                nonTerminalType = Option.Some(typeValue)
+            other:
+                panic("Unknown type declaration: `other`")
 
-            _:
-                panic("")
+    if terminalType is Option.None:
+        panic("Terminal type is not defined")
 
-    converted
+    if nonTerminalType is Option.None:
+        panic("Non-terminal type is not defined")
+
+    let terminalsDecl = grammar.get(2).asNonTerminal(NonTerminal.TerminalsDecl)
+    let terminalsDecl = convertTerminalsDecl(terminalsDecl)
+
+    let nonTerminalDecls = grammar.get(3).asNonTerminal(NonTerminal.NonTerminalDecls)
+    let converted: Vec[NonTerminalDecl] = Vec.withCapacity(nonTerminalDecls.len())
+    for decl: ParseTree[Token, NonTerminal] in nonTerminalDecls.iter():
+        converted.push(convertNonTerminalDecl(decl.asNonTerminal(NonTerminal.NonTerminalDecl)))
+
+    Grammar(
+        imports,
+        terminalType = terminalType.unwrap(),
+        nonTerminalType = nonTerminalType.unwrap(),
+        terminalsDecl,
+        nonTerminalDecls = converted,
+    )
 
 convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): TerminalsDecl
     let terminals: Vec[TerminalDecl] = Vec.withCapacity(nodes.len())
@@ -255,49 +288,49 @@ type Symbol:
 # --------------------------------------------------------------------------------------------------
 # Code generation
 
-generateNonTerminalType(nonTerminalNames: Vec[Str]): Doc
-    let doc = Doc.str("type NonTerminal:")
+generateNonTerminalType(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("type `typeName`:")
     for name: Str in nonTerminalNames.iter():
         doc += Doc.hardLine() + Doc.str(capitalize(name))
     doc.nest(4)
 
-generateNonTerminalToStr(nonTerminalNames: Vec[Str]): Doc
-    let doc = Doc.str("impl ToStr[NonTerminal]:")
+generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("impl ToStr[`typeName`]:")
     doc += Doc.hardLine()
 
-    let fnDoc = Doc.str("toStr(self: NonTerminal): Str")
+    let fnDoc = Doc.str("toStr(self: `typeName`): Str")
     fnDoc += Doc.hardLine()
 
     let matchDoc = Doc.str("match self:")
     for name: Str in nonTerminalNames.iter():
         let capitalName = capitalize(name)
-        matchDoc += Doc.hardLine() + Doc.str("NonTerminal.`capitalName`: \"`capitalName`\"")
+        matchDoc += Doc.hardLine() + Doc.str("`typeName`.`capitalName`: \"`capitalName`\"")
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
-generateNonTerminalEq(nonTerminalNames: Vec[Str]): Doc
-    let doc = Doc.str("impl Eq[NonTerminal]:")
+generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+    let doc = Doc.str("impl Eq[`typeName`]:")
     doc += Doc.hardLine()
 
-    let fnDoc = Doc.str("__eq(self: NonTerminal, other: NonTerminal): Bool")
+    let fnDoc = Doc.str("__eq(self: `typeName`, other: `typeName`): Bool")
     fnDoc += Doc.hardLine()
 
     let matchDoc = Doc.str("match (left = self, right = other):")
     for name: Str in nonTerminalNames.iter():
         let capitalName = capitalize(name)
-        matchDoc += Doc.hardLine() + Doc.str("(left = NonTerminal.`capitalName`, right = NonTerminal.`capitalName`): Bool.True")
+        matchDoc += Doc.hardLine() + Doc.str("(left = `typeName`.`capitalName`, right = `typeName`.`capitalName`): Bool.True")
     matchDoc += Doc.hardLine() + Doc.str("_: Bool.False")
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
-generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
-    let doc = Doc.str("`decl.name`(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)") \
+generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
+    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32): ParseError[`terminalType`] (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32)") \
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
 
     # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
-    doc += Doc.str("let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)") + Doc.hardLine()
+    doc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.withCapacity(0)") + Doc.hardLine()
 
     for alt: Alt in decl.alts.iter():
         let altResultDoc = Doc.str("let altResult = try({") + Doc.hardLine()
@@ -324,7 +357,7 @@ generateNonTerminal(decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]
                 4,
                 Doc.str("Result.Ok(newCursor):")
                     + Doc.hardLine()
-                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = NonTerminal.`capitalize(decl.name)`, nodes), newCursor = newCursor)"))
+                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = `nonTerminalType`.`capitalize(decl.name)`, nodes), newCursor = newCursor)"))
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
 
