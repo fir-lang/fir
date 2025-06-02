@@ -1,4 +1,4 @@
-main()
+main():
     let \
     vec \
     : \

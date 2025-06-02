@@ -1,7 +1,7 @@
-f1(): [A] a
+f1() [A] a:
     throw(~A)
 
-f2(): [A] a
+f2() [A] a:
     throw(~B)
 
 # args: --typecheck --no-backtrace

@@ -1,22 +1,22 @@
-f1(): [E1, ..r] ()
+f1() [E1, ..r] ():
     throw(~E1)
 
-f2(): [E2, ..r] ()
+f2() [E2, ..r] ():
     untry(Result.Err(~E2))
 
-f3(): [E1, E2, ..r] ()
+f3() [E1, E2, ..r] ():
     f1()
     f2()
 
-forEach(vec: Vec[t], f: Fn(t): [..r] ()): [..r] ()
+forEach(vec: Vec[t], f: Fn(t) [..r] ()) [..r] ():
     for t in vec.iter():
         f(t)
 
-throwOnOdd(i: U32): [OddNumberError(i: U32), ..r] ()
+throwOnOdd(i: U32) [OddNumberError(i: U32), ..r] ():
     if i & 1 == 0:
         throw(~OddNumberError(i = i))
 
-forEachWithControlFlow(vec: Vec[t], f: Fn(t): [Break, ..r] ()): [..r] Result[[..r], ()]
+forEachWithControlFlow(vec: Vec[t], f: Fn(t) [Break, ..r] ()) [..r] Result[[..r], ()]:
     for t in vec.iter():
         match try(fn(): [Break, ..r] () { f(t) }):
             Result.Err(~Break): break
@@ -25,7 +25,7 @@ forEachWithControlFlow(vec: Vec[t], f: Fn(t): [Break, ..r] ()): [..r] Result[[..
 
     Result.Ok(())
 
-main()
+main():
     match try(f1):
         Result.Err(~E1): printStr("OK")
         Result.Ok(()): panic("")

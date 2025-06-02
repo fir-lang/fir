@@ -1,4 +1,4 @@
-main()
+main():
     if Bool.True || panic("FAIL 1"):
         printStr("OK 1")
 

@@ -1,10 +1,10 @@
-a(f1: Fn(): [..errs] ()): [..errs] ()
+a(f1: Fn() [..errs] ()) [..errs] ():
     f1()
 
-f1(): [E1, ..r] ()
+f1() [E1, ..r] ():
     throw(~E1)
 
-main()
+main():
     match try({ a(f1) }):
         Result.Ok(()): ()
         Result.Err(~E1): printStr("E1 caught")

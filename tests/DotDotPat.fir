@@ -3,7 +3,7 @@ type Foo:
     b: U32
     c: U32
 
-main()
+main():
     let x = Foo(a = 1u32, b = 2u32, c = 3u32)
 
     match x:

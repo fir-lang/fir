@@ -15,23 +15,21 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Lo
     let mut last_loc = tokens[0].0;
     let mut delimiter_stack: Vec<Delimiter> = vec![];
 
-    // Skip the indentation tokens after a backlash.
-    let mut skip_indent = false;
+    // Only generate `INDENT` after a `:`.
+    let mut generate_indent = false;
 
     for (l, token, r) in tokens {
         let token_kind = token.kind;
 
-        if token_kind == TokenKind::Backslash {
-            // TODO: We should probably check that the next line should be on a new line, but it's
-            // OK to just skip indentation token generation for now.
-            skip_indent = true;
-            continue;
-        }
-
         if matches!(delimiter_stack.last(), None | Some(Delimiter::Brace))
             && l.line != last_loc.line
-            && !skip_indent
         {
+            // If the last new line is indented relative to the last line, don't generate a NEWLINE.
+            if l.col > *indent_stack.last().unwrap() && !generate_indent {
+                new_tokens.push((l, token, r));
+                continue;
+            }
+
             // Generate a newline at the last line.
             new_tokens.push((
                 last_loc,
@@ -47,6 +45,7 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Lo
                 let last_indent = *indent_stack.last().unwrap();
                 match l.col.cmp(&last_indent) {
                     Ordering::Greater => {
+                        assert!(generate_indent); // other case handled above
                         indent_stack.push(l.col);
                         new_tokens.push((
                             l,
@@ -123,9 +122,9 @@ pub fn scan(tokens: Vec<(Loc, Token, Loc)>, module: &str) -> Vec<(Loc, Token, Lo
             _ => {}
         }
 
-        new_tokens.push((l, token, r));
+        generate_indent = matches!(token.kind, TokenKind::Colon | TokenKind::LBrace);
 
-        skip_indent = false;
+        new_tokens.push((l, token, r));
     }
 
     // Python 3 seems to always generate a NEWLINE at the end before DEDENTs, even when the line
@@ -195,13 +194,9 @@ mod tests {
             toks,
             vec![
                 LowerId, // a
-                Newline,
-                Indent,
                 LowerId, // b
-                Newline,
                 LowerId, // c
                 Newline,
-                Dedent,
                 LowerId, // d
                 Newline,
             ]
@@ -211,8 +206,8 @@ mod tests {
     #[test]
     fn dedent_multiple() {
         let input = indoc! {"
-            a
-                b
+            a:
+                b:
                     c
             d
         "};
@@ -222,9 +217,11 @@ mod tests {
             toks,
             vec![
                 LowerId, // a
+                Colon,
                 Newline,
                 Indent,
                 LowerId, // b
+                Colon,
                 Newline,
                 Indent,
                 LowerId, // c
@@ -241,8 +238,8 @@ mod tests {
     fn dedent_eof() {
         // At the end of the input, we should terminate the open blocks.
         let input = indoc! {"
-            a
-                b
+            a:
+                b:
                     c
         "};
         let toks = scan_wo_locs(input);
@@ -251,9 +248,11 @@ mod tests {
             toks,
             vec![
                 LowerId, // a
+                Colon,
                 Newline,
                 Indent,
                 LowerId, // b
+                Colon,
                 Newline,
                 Indent,
                 LowerId, // c

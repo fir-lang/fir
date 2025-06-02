@@ -1,4 +1,4 @@
-main()
+main():
     let x: Option[U32] = Option.Some(120)
     match x:
         Option.Some(i) if i.mod(2) == 0: print(i)

@@ -1,4 +1,4 @@
-main()
+main():
     printStr(('a' == 'a').toStr())
     printStr(('a' == 'b').toStr())
     match 'a':

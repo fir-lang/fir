@@ -1,19 +1,19 @@
 type T:
     i: I32
 
-T.print(self)
+T.print(self):
     printStr("T(i = `self.i`)")
 
 type MyBool:
     False
     True
 
-MyBool.print(self)
+MyBool.print(self):
     match self:
         MyBool.False: printStr("False")
         MyBool.True: printStr("True")
 
-main()
+main():
     let a = T(i = 123).print
     let b = MyBool.True.print
     let c = MyBool.False.print

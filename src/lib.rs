@@ -401,7 +401,7 @@ mod tests {
     #[test]
     fn parse_fn_1() {
         let pgm = indoc::indoc! {"
-            asdf()
+            asdf():
                 let q = match t():
                     A.X: 1
                 q
@@ -413,7 +413,7 @@ mod tests {
         dbg!(ast);
 
         let pgm = indoc::indoc! {"
-            asdf()
+            asdf():
                 let q = if A:
                     1
                 else:

@@ -1,18 +1,17 @@
-
 type T1:
     a: U32
 
 trait Foo[t]:
     foo(self: t)
 
-T1.foo(self)
+T1.foo(self):
     print("(associated) T1.foo(a = `self.a`)")
 
 impl Foo[T1]:
-    foo(self: T1)
+    foo(self: T1):
         print("(trait) T1.foo(a = `self.a`)")
 
-main()
+main():
     let t1 = T1(a = 1u32)
     t1.foo()
 

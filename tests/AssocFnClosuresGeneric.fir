@@ -1,13 +1,13 @@
 type T:
     i: I32
 
-T.print1[ToStr[a]](self, other: a)
+T.print1[ToStr[a]](self, other: a):
     printStr("T(i = `self.i`, other = `other.toStr()`)")
 
-T.print2(self)
+T.print2(self):
     printStr("T(i = `self.i`)")
 
-main()
+main():
     let f1 = T(i = 1).print1
     f1("hi")
 

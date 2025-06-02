@@ -1,9 +1,9 @@
-main()
+main():
     print(Option.None[U32])
     print(foo[[], U32]())
     print(T(x = ()).f[U32, [], Str]())
 
-foo(): Option[t]
+foo() Option[t]:
     Option.None[t]
 
 type T[a]:
