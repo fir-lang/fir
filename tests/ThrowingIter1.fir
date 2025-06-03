@@ -1,10 +1,10 @@
-checkedAdd(i1: U32, i2: U32): Option[U32]
+checkedAdd(i1: U32, i2: U32) Option[U32]
     if i1 > 4294967295u32 - i2:
         return Option.None
 
     return Option.Some(i1 + i2)
 
-checkedMul(i1: U32, i2: U32): Option[U32]
+checkedMul(i1: U32, i2: U32) Option[U32]
     let result = i1 * i2
 
     if i1 != 0 && result / i1 != i2:
@@ -12,7 +12,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 
     return Option.Some(result)
 
-parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
+parseU32Exn(s: Str) [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -26,11 +26,11 @@ parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
 
         result = match checkedMul(result, 10):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): newResult
+            Option.Some(newResult) newResult
 
         result = match checkedAdd(result, digit):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): newResult
+            Option.Some(newResult) newResult
 
     result
 
@@ -41,14 +41,14 @@ main()
     strings.push("3")
     strings.push("4b")
 
-    let ret = try(fn(): [EmptyInput, InvalidDigit, Overflow] () {
+    let ret = try(fn() [EmptyInput, InvalidDigit, Overflow] () {
         for x: U32 in strings.iter().map(parseU32Exn):
             printStr(x.toStr())
     })
 
     match ret:
-        Result.Ok(()) | Result.Err(~EmptyInput) | Result.Err(~Overflow): printStr("WAT")
-        Result.Err(~InvalidDigit): printStr("OK")
+        Result.Ok(()) | Result.Err(~EmptyInput) | Result.Err(~Overflow) printStr("WAT")
+        Result.Err(~InvalidDigit) printStr("OK")
 
 # expected stdout:
 # 1

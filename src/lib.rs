@@ -45,6 +45,7 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
 
 fn parse_module(module: &SmolStr, contents: &str, print_tokens: bool) -> ast::Module {
     let tokens = combine_uppercase_lbrackets(scanner::scan(lexer::lex(contents, module), module));
+    // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
 
     if print_tokens {
         for (l, t, _) in &tokens {

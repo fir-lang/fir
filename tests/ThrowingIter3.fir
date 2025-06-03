@@ -1,10 +1,10 @@
-checkedAdd(i1: U32, i2: U32): Option[U32]
+checkedAdd(i1: U32, i2: U32) Option[U32]
     if i1 > 4294967295u32 - i2:
         return Option.None
 
     return Option.Some(i1 + i2)
 
-checkedMul(i1: U32, i2: U32): Option[U32]
+checkedMul(i1: U32, i2: U32) Option[U32]
     let result = i1 * i2
 
     if i1 != 0 && result / i1 != i2:
@@ -12,7 +12,7 @@ checkedMul(i1: U32, i2: U32): Option[U32]
 
     return Option.Some(result)
 
-parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
+parseU32Exn(s: Str) [InvalidDigit, Overflow, EmptyInput, ..r] U32
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -26,19 +26,19 @@ parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
 
         result = match checkedMul(result, 10):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): newResult
+            Option.Some(newResult) newResult
 
         result = match checkedAdd(result, digit):
             Option.None: throw(~Overflow)
-            Option.Some(newResult): newResult
+            Option.Some(newResult) newResult
 
     result
 
-handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): [..errs] Option[U32]
+handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) [..errs] Option[U32]
     match parseResult:
-        Result.Ok(result): result
-        Result.Err(~InvalidDigit): Option.Some(0u32)
-        Result.Err(other): throw(other)
+        Result.Ok(result) result
+        Result.Err(~InvalidDigit) Option.Some(0u32)
+        Result.Err(other) throw(other)
 
 main()
     let strings: Vec[Str] = Vec.withCapacity(10)
@@ -50,17 +50,17 @@ main()
 
     for x: Result[[Overflow, EmptyInput], U32] in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match x:
-            Result.Err(~Overflow): printStr("Overflow")
-            Result.Err(~EmptyInput): printStr("EmptyInput")
-            Result.Ok(value): printStr(value.toStr())
+            Result.Err(~Overflow) printStr("Overflow")
+            Result.Err(~EmptyInput) printStr("EmptyInput")
+            Result.Ok(value) printStr(value.toStr())
 
-parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
+parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]) U32
     let result: U32 = 0
     for i: Result[[Overflow, EmptyInput], U32] in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match i:
-            Result.Err(~Overflow): printStr("Overflow")
-            Result.Err(~EmptyInput): printStr("Empty input")
-            Result.Ok(i): result += i
+            Result.Err(~Overflow) printStr("Overflow")
+            Result.Err(~EmptyInput) printStr("Empty input")
+            Result.Ok(i) result += i
     result
 
 # expected stdout:

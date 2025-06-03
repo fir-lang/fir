@@ -2,8 +2,8 @@ test(arg: Result[U32, U32]) U32:
     let x = 123u32
 
     x = match arg:
-        Result.Ok(val): val
-        Result.Err(err): return err
+        Result.Ok(val) val
+        Result.Err(err) return err
 
     x
 

@@ -1,10 +1,10 @@
-main()
+main():
     match f():
         Foo: ()
 
 type Foo
 
-f(): Foo = panic("")
+f() Foo = panic("")
 
 # args: --no-backtrace
 # expected exit status: 101

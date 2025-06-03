@@ -3,7 +3,7 @@ optionInt() Option[I32] = Option.Some(123)
 main():
     match optionInt():
         Option.None: ()
-        Option.Some(i): panic("optionInt returned `i`")
+        Option.Some(i) panic("optionInt returned `i`")
 
 # args: --no-backtrace
 # expected stderr:

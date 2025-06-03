@@ -1,7 +1,7 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-testMain(): [] ()
+testMain() [] ()
     main("0")
     main("succ(0)")
     main("succ(succ(0))")
@@ -55,24 +55,24 @@ eval(term: Term) Value:
 
         Term.Succ(term):
             match eval(term):
-                Value.Bool(bool): panic("Succ argument evaluated to bool `bool`")
-                Value.Num(value): Value.Num(value + 1)
+                Value.Bool(bool) panic("Succ argument evaluated to bool `bool`")
+                Value.Num(value) Value.Num(value + 1)
 
         Term.Pred(term):
             match eval(term):
-                Value.Bool(bool): panic("Pred argument evaluated to bool `bool`")
-                Value.Num(value): Value.Num(value - 1)
+                Value.Bool(bool) panic("Pred argument evaluated to bool `bool`")
+                Value.Num(value) Value.Num(value - 1)
 
         Term.IsZero(term):
             match eval(term):
-                Value.Bool(bool): panic("IsZero argument evaluated to bool `bool`")
-                Value.Num(value): Value.Bool(value == 0)
+                Value.Bool(bool) panic("IsZero argument evaluated to bool `bool`")
+                Value.Num(value) Value.Bool(value == 0)
 
 impl ToStr[Value]:
     toStr(self: Value) Str:
         match self:
-            Value.Bool(value): value.toStr()
-            Value.Num(value): value.toStr()
+            Value.Bool(value) value.toStr()
+            Value.Num(value) value.toStr()
 
 parse(pgm: Str) Term:
     let (term = term, rest = rest) = parseWithRest(pgm)

@@ -1,4 +1,4 @@
-test(): U32 = 123u32
+test() U32 = 123u32
 
 main():
     match test():

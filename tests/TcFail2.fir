@@ -5,7 +5,7 @@ type Bool:
     False
     True
 
-Bool.toStr(self): Str
+Bool.toStr(self) Str:
     Bool.False
 
 # args: --typecheck --no-prelude --no-backtrace
