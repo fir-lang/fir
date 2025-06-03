@@ -59,8 +59,8 @@ makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
 expectationFailure(expected: Doc, found: Doc) Doc:
     let expectedStr = "Expected: "
     let foundStr = "Found: "
-    Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected) \
-        + Doc.hardLine() \
+    Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected)
+        + Doc.hardLine()
         + Doc.nested(foundStr.len(), Doc.str(foundStr) + found)
 
 # expected stdout:
