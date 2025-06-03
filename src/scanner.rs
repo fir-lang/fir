@@ -93,7 +93,6 @@ where
             ) {
                 new_tokens.push(newline(last_loc));
             }
-            new_tokens.push((l, t, r));
 
             // Terminate open blocks.
             // Note that because we don't generate an `INDENT` after `{`, we shouldn't generate a
@@ -102,6 +101,9 @@ where
                 indent_stack.pop();
                 new_tokens.push(dedent(l));
             }
+
+            // Finally push the '}'
+            new_tokens.push((l, t, r));
 
             // println!("Ending indented block at {}:{}", l.line + 1, l.col + 1);
             return r;
