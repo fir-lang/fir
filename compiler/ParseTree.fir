@@ -11,7 +11,7 @@ type ParseError[t]:
 
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]) Str:
-        self.toDoc().print(80)
+        self.toDoc().render(80)
 
 impl[ToStr[t]] ToStr[ParseError[t]]:
     toStr(self: ParseError[t]) Str:
@@ -49,8 +49,8 @@ ParseTree.asTerminal(self: ParseTree[t, nt]) t:
 ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](self: ParseTree[t, nt], kind_: nt) Vec[ParseTree[t, nt]]:
     match self:
         ParseTree.Terminal(_):
-            panic("ParseTree.getNonTerminal: tree is a terminal")
+            panic("ParseTree.asNonTerminal: tree is a terminal")
         ParseTree.NonTerminal(kind, nodes):
             if kind != kind_:
-                panic("ParseTree.getNonTerminal: expected `kind_`, found `kind`")
+                panic("ParseTree.asNonTerminal: expected `kind_`, found `kind`")
             nodes

@@ -14,13 +14,13 @@ main():
     let doc = makeCallSyntax(Doc.str("myFunction"), args)
 
     # Break at column 10: splits all groups into lines.
-    print(doc.print(10))
+    print(doc.render(10))
 
     # Break at column 40: splits the outer group, but keeps the inner one flat.
-    print(doc.print(40))
+    print(doc.render(40))
 
     # Break at column 100: prints the whole expression as one line.
-    print(doc.print(100))
+    print(doc.render(100))
 
     print("")
 
@@ -33,7 +33,7 @@ main():
     print(expectationFailure(
         Doc.nested(2, Doc.str("First user line") + Doc.hardLine() + Doc.str("indented 2")),
         Doc.nested(4, Doc.str("Second user line") + Doc.hardLine() + Doc.str("indented 4")),
-    ).print(80))
+    ).render(80))
 
 makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
     if args.len() == 0:

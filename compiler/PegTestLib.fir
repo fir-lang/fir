@@ -34,7 +34,7 @@ runTest(
     ) exn ():
     print(testName)
     match try({ runParser(input, parseFn, Bool.False) }):
-        Result.Ok(tree): print(tree.toDoc().print(80))
+        Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
 
@@ -44,7 +44,7 @@ runTest_(
     ) exn ():
     print(input)
     match try({ runParser(input, parseFn, Bool.False) }):
-        Result.Ok(tree): print(tree.toDoc().print(80))
+        Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
 
@@ -55,7 +55,7 @@ runTestIndent(
     print(input)
     let result = match try({ runParser(input, parseFn, Bool.True) }):
         Result.Ok(tree):
-            print(tree.toDoc().print(80))
+            print(tree.toDoc().render(80))
             Bool.True
         Result.Err(err):
             print("ERR: `err`")

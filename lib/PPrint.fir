@@ -36,16 +36,16 @@ type _State:
     width: U32
     column: U32
     output: StrBuf
-
-Doc.print(self, width: U32) Str:
+        
+Doc.render(self, width: U32) Str:
     # TODO: For now copying the initial buffer size from the original PPrint, but we should be able
     # to estimate better numbers using the `Doc` type.
     let output = StrBuf.withCapacity(512)
     let state = _State(width, column = 0, output)
-    self._print(state, 0, Bool.False)
+    self._render(state, 0, Bool.False)
     output.toStr()
 
-Doc._print(self, state: _State, indent: U32, flatten: Bool):
+Doc._render(self, state: _State, indent: U32, flatten: Bool):
     match self:
         Doc._Empty: ()
 
@@ -68,23 +68,23 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool):
 
         Doc._IfFlat(flat, notFlat):
             if flatten:
-                flat._print(state, indent, flatten)
+                flat._render(state, indent, flatten)
             else:
-                notFlat._print(state, indent, flatten)
+                notFlat._render(state, indent, flatten)
 
         Doc._Cat(req, doc1, doc2):
-            doc1._print(state, indent, flatten)
-            doc2._print(state, indent, flatten)
+            doc1._render(state, indent, flatten)
+            doc2._render(state, indent, flatten)
 
         Doc._Nest(req, indent = extraIndent, doc):
-            doc._print(state, indent + extraIndent, flatten)
+            doc._render(state, indent + extraIndent, flatten)
 
         Doc._Group(req, doc):
             if !flatten:
                 flatten = match req:
                     _SpaceReq.Infinite: Bool.True
                     _SpaceReq.Exact(req): state.column + req <= state.width
-            doc._print(state, indent, flatten)
+            doc._render(state, indent, flatten)
 
 # Space requirement.
 type _SpaceReq:
