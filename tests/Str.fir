@@ -1,4 +1,4 @@
-main()
+main():
     printStr("asdf".startsWith("a").toStr())
     printStr("asdf".startsWith("as").toStr())
     printStr("asdf".startsWith("asd").toStr())

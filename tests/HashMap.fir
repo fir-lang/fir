@@ -1,4 +1,4 @@
-main()
+main():
     let map: HashMap[Str, U32] = HashMap.withCapacity(10)
     printStr(map.insert("a", 1).toStr())
     printStr(map.insert("a", 2).toStr())

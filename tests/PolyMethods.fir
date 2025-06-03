@@ -5,10 +5,10 @@ type X:
     value: I32
 
 impl T[X]:
-    f[ToStr[q]](self: X, q: q)
+    f[ToStr[q]](self: X, q: q):
         printStr("X.f called with q = `q`")
 
-main()
+main():
     let x = X(value = 123)
     x.f("hi")
 

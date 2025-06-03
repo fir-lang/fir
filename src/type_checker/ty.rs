@@ -1101,7 +1101,7 @@ impl fmt::Display for Ty {
                         }
                     }
                 }
-                write!(f, "): ")?;
+                write!(f, ") ")?;
                 if let Some(exn) = exceptions {
                     write!(f, "{} ", exn)?;
                 }

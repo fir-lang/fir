@@ -4,7 +4,7 @@ import PegGrammar
 import Scanner
 import Token
 
-main(args: Array[Str])
+main(args: Array[Str]):
     if args.len() != 2:
         panic("Usage: Peg.fir <peg file>")
 
@@ -60,10 +60,10 @@ main(args: Array[Str])
         print(doc.render(80))
         nonTerminalDeclIdx += 1
 
-errStr(err: Error): Str
+errStr(err: Error) Str:
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
 
-capitalize(s: Str): exn Str
+capitalize(s: Str) exn Str:
     let buf = StrBuf.withCapacity(s.len())
     let chars = s.chars()
 
@@ -85,7 +85,7 @@ type Grammar:
     terminalsDecl: TerminalsDecl
     nonTerminalDecls: Vec[NonTerminalDecl]
 
-convertParseTree(tree: ParseTree[Token, NonTerminal]): Grammar
+convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     let grammar = tree.asNonTerminal(NonTerminal.Grammar)
 
     # This code is a bit hacky.. We used to have a proper AST type that we kept after bootstrapping,
@@ -144,7 +144,7 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]): Grammar
         nonTerminalDecls = converted,
     )
 
-convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): TerminalsDecl
+convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) TerminalsDecl:
     let terminals: Vec[TerminalDecl] = Vec.withCapacity(nodes.len())
 
     for node: ParseTree[Token, NonTerminal] in nodes.iter():
@@ -157,7 +157,7 @@ convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): TerminalsDecl
 
     TerminalsDecl(terminals)
 
-convertNonTerminalDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): NonTerminalDecl
+convertNonTerminalDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) NonTerminalDecl:
     let name = nodes.get(0).asTerminal().text
 
     let alts: Vec[Alt] = Vec.withCapacity(nodes.len() - 1)
@@ -168,7 +168,7 @@ convertNonTerminalDecl(nodes: Vec[ParseTree[Token, NonTerminal]]): NonTerminalDe
 
     NonTerminalDecl(name, alts)
 
-convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]): Alt
+convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]) Alt:
     let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
 
     for symbolTree: ParseTree[Token, NonTerminal] in nodes.iter():
@@ -176,7 +176,7 @@ convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]): Alt
 
     Alt(symbols)
 
-convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]): Symbol
+convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     let symbolIdx: U32 = if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, ..):
         1
     else:
@@ -198,7 +198,7 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]): Symbol
 
     symbol
 
-convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]): Symbol
+convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     if nodes.len() == 1:
         let terminal = nodes.get(0).asTerminal()
         match terminal.kind:
@@ -288,17 +288,17 @@ type Symbol:
 # --------------------------------------------------------------------------------------------------
 # Code generation
 
-generateNonTerminalType(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+generateNonTerminalType(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     let doc = Doc.str("type `typeName`:")
     for name: Str in nonTerminalNames.iter():
         doc += Doc.hardLine() + Doc.str(capitalize(name))
     doc.nest(4)
 
-generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     let doc = Doc.str("impl ToStr[`typeName`]:")
     doc += Doc.hardLine()
 
-    let fnDoc = Doc.str("toStr(self: `typeName`): Str")
+    let fnDoc = Doc.str("toStr(self: `typeName`) Str:")
     fnDoc += Doc.hardLine()
 
     let matchDoc = Doc.str("match self:")
@@ -308,11 +308,11 @@ generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]): Doc
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
-generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]): Doc
+generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     let doc = Doc.str("impl Eq[`typeName`]:")
     doc += Doc.hardLine()
 
-    let fnDoc = Doc.str("__eq(self: `typeName`, other: `typeName`): Bool")
+    let fnDoc = Doc.str("__eq(self: `typeName`, other: `typeName`) Bool:")
     fnDoc += Doc.hardLine()
 
     let matchDoc = Doc.str("match (left = self, right = other):")
@@ -323,8 +323,8 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]): Doc
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
-generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
-    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32): ParseError[`terminalType`] (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32)") \
+generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) exn Doc:
+    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) ParseError[`terminalType`] (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32):")
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
@@ -343,7 +343,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 
         let altResultMatchDoc = Doc.str("match altResult:") + Doc.hardLine()
 
-        let errAlt = \
+        let errAlt =
             Doc.nested(
                 4,
                 Doc.str("Result.Err(err):")
@@ -352,7 +352,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                     + Doc.hardLine()
                     + Doc.str("nodes.clear()"))
 
-        let okAlt = \
+        let okAlt =
             Doc.nested(
                 4,
                 Doc.str("Result.Ok(newCursor):")
@@ -363,7 +363,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 
         doc += altResultMatchDoc + Doc.hardLine()
 
-    let failDoc = \
+    let failDoc =
         Doc.nested(
             4,
             Doc.str("if cursor == tokens.len():")
@@ -371,7 +371,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                 + Doc.str("throw(ParseError.UnexpectedEof)"))
 
     failDoc += Doc.hardLine()
-    failDoc += \
+    failDoc +=
         Doc.nested(
             4,
             Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
@@ -394,23 +394,23 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 ## in a `try` block, the `cursor` won't update the non-terminal function's `cursor` variable. The
 ## use site of this function should return the value of `cursor` from the closure so that the
 ## non-terminal function's `cursor` can be updated with the new value.
-generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]): exn Doc
+generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]) exn Doc:
     match symbol:
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse({ panic("Unknown terminal: `terminal`") })
 
-            let eofCheck = \
+            let eofCheck =
                 Doc.nested(
                     4,
-                    Doc.str("if cursor == tokens.len():") \
-                        + Doc.hardLine() \
+                    Doc.str("if cursor == tokens.len():")
+                        + Doc.hardLine()
                         + Doc.str("throw(ParseError.UnexpectedEof)"))
 
             eofCheck += Doc.hardLine()
 
-            let tokenKindCheck = Doc.str("if tokens.get(cursor) is ") \
-                + tokensToCode(patToks) \
-                + Doc.char(':') \
+            let tokenKindCheck = Doc.str("if tokens.get(cursor) is ")
+                + tokensToCode(patToks)
+                + Doc.char(':')
                 + Doc.hardLine()
 
             let nested = Doc.empty()
@@ -420,7 +420,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
             tokenKindCheck = Doc.nested(4, tokenKindCheck + nested) + Doc.hardLine()
 
-            tokenKindCheck += \
+            tokenKindCheck +=
                 Doc.nested(
                     4,
                     Doc.str("else:")
@@ -430,8 +430,8 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
             eofCheck + tokenKindCheck
 
         Symbol.NonTerminal(nonTerminal):
-            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)") \
-                + Doc.hardLine() \
+            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)")
+                + Doc.hardLine()
                 + Doc.str("cursor = nonTerminalResult.newCursor")
 
             if !ignore:
@@ -485,38 +485,38 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                                       + Doc.str("cursor = newCursor"))))
 
         Symbol.OneOrMore(symbol):
-            generateSymbolParser(symbol, ignore, terminalPats) \
-                + Doc.hardLine() \
+            generateSymbolParser(symbol, ignore, terminalPats)
+                + Doc.hardLine()
                 + generateSymbolParser(Symbol.ZeroOrMore(symbol), ignore, terminalPats)
 
         Symbol.Optional(symbol):
-            Doc.str("let nodesLen0 = nodes.len()") \
-            + Doc.hardLine() \
-            + Doc.nested(
-                  4,
-                  Doc.str("let symResult = try({")
-                      + Doc.hardLine()
-                      + generateSymbolParser(symbol, ignore, terminalPats)
-                      + Doc.hardLine()
-                      + Doc.str("cursor")) \
-                  + Doc.hardLine() \
-                  + Doc.str("})") \
-                  + Doc.hardLine() \
-                  + Doc.nested(
-                        4,
-                        Doc.str("match symResult:")
-                            + Doc.hardLine()
-                            + Doc.nested(
-                                4,
-                                Doc.str("Result.Err(_):")
-                                    + Doc.hardLine()
-                                    + Doc.str("nodes.truncate(nodesLen0)"))
-                            + Doc.hardLine()
-                            + Doc.nested(
-                                    4,
-                                    Doc.str("Result.Ok(newCursor):")
-                                        + Doc.hardLine()
-                                        + Doc.str("cursor = newCursor")))
+            Doc.str("let nodesLen0 = nodes.len()")
+                + Doc.hardLine()
+                + Doc.nested(
+                      4,
+                      Doc.str("let symResult = try({")
+                          + Doc.hardLine()
+                          + generateSymbolParser(symbol, ignore, terminalPats)
+                          + Doc.hardLine()
+                          + Doc.str("cursor"))
+                 + Doc.hardLine()
+                 + Doc.str("})")
+                 + Doc.hardLine()
+                 + Doc.nested(
+                       4,
+                       Doc.str("match symResult:")
+                           + Doc.hardLine()
+                           + Doc.nested(
+                               4,
+                               Doc.str("Result.Err(_):")
+                                   + Doc.hardLine()
+                                   + Doc.str("nodes.truncate(nodesLen0)"))
+                           + Doc.hardLine()
+                           + Doc.nested(
+                                   4,
+                                   Doc.str("Result.Ok(newCursor):")
+                                       + Doc.hardLine()
+                                       + Doc.str("cursor = newCursor")))
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, Bool.True, terminalPats)
@@ -527,10 +527,10 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 4,
                 Doc.str("let symResult = try({")
                     + Doc.hardLine()
-                    + generateSymbolParser(symbol, Bool.True, terminalPats)) \
-                + Doc.hardLine() \
-                + Doc.str("})") \
-                + Doc.hardLine() \
+                    + generateSymbolParser(symbol, Bool.True, terminalPats))
+                + Doc.hardLine()
+                + Doc.str("})")
+                + Doc.hardLine()
                 + Doc.nested(
                     4,
                     Doc.str("match symResult:")
@@ -547,7 +547,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                                 + Doc.hardLine()
                                 + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")))
 
-tokensToCode(tokens: Vec[Token]): exn Doc
+tokensToCode(tokens: Vec[Token]) exn Doc:
     if tokens.len() == 0:
         panic("tokensToCode: empty tokens")
 

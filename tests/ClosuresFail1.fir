@@ -1,7 +1,7 @@
-test(f: Fn(): [Err] U32)
+test(f: Fn() [Err] U32):
     ()
 
-main()
+main():
     test({ 123i32 })
 
 # args: --typecheck --no-backtrace

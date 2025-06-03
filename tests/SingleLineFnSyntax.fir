@@ -1,4 +1,4 @@
-main(): () = sayHi()
+main() () = sayHi()
 
 sayHi() = printStr("Hi")
 

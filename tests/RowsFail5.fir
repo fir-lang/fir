@@ -1,4 +1,4 @@
-poly_fn(alts: [A(x: I32), B(y: Str), ..r])
+poly_fn(alts: [A(x: I32), B(y: Str), ..r]):
     match alts:
         ~A(x = i): printStr("A(i=`i.toStr()`)")
         ~B(y = s): printStr("B(s=`s`)")

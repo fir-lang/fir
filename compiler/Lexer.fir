@@ -1,7 +1,7 @@
 import Error
 import Token
 
-tokenize(file: Str, contents: Str): (tokens: Vec[Token], error: Option[Error])
+tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     let tokens = Vec.withCapacity(1000)
     let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0, _line = 0, _col = 0)
     loop:
@@ -18,14 +18,14 @@ type Lexer:
     _line: U32
     _col: U32
 
-Lexer._fail(self, msg: Str): Error a
+Lexer._fail(self, msg: Str) Error a:
     throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0, line = self._line, col = self._col), msg = msg))
 
 # NB. Panics if OOB.
-Lexer._nextChar(self): Char
+Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
-Lexer.next(self): Error Option[Token]
+Lexer.next(self) Error Option[Token]:
     # Skip whitespace and comments before actual tokens.
     loop:
         while self._byteIdx < self._input.len() && self._nextChar() is char && char.isAsciiWhitespace():
@@ -488,7 +488,7 @@ Lexer.next(self): Error Option[Token]
 
             panic("TODO: `c` at `byteIdx`")
 
-Lexer._intTypeSuffix(self): Error IntKind
+Lexer._intTypeSuffix(self) Error IntKind:
     let rest = self._input.substr(self._byteIdx, self._input.len())
     let typeSuffix = IntKind.U32
     match rest:
@@ -513,7 +513,7 @@ Lexer._intTypeSuffix(self): Error IntKind
     typeSuffix
 
 # NB. Initial '"' should NOT be consumed.
-Lexer._string(self): Error Token
+Lexer._string(self) Error Token:
     let startIdx = self._byteIdx
     let startLine = self._line
     let startCol = self._col
@@ -570,7 +570,7 @@ Lexer._string(self): Error Token
     self._fail("unterminated string literal")
 
 # NB. Initial '\'' should NOT be consumed.
-Lexer._char(self): Error Token
+Lexer._char(self) Error Token:
     let idx = self._byteIdx
     let line = self._line
     let col = self._col
@@ -598,7 +598,7 @@ Lexer._char(self): Error Token
     self._col += 1
     Token(kind = TokenKind.Char, text = self._input.substr(idx, self._byteIdx), byteIdx = idx, line, col)
 
-Lexer._skipSingleLineComment(self)
+Lexer._skipSingleLineComment(self):
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()
@@ -608,7 +608,7 @@ Lexer._skipSingleLineComment(self)
             return
         self._col += c.lenUtf8()         # TODO: Handle non-ascii
 
-Lexer._skipMultiLineComment(self): Error ()
+Lexer._skipMultiLineComment(self) Error ():
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()
@@ -623,10 +623,10 @@ Lexer._skipMultiLineComment(self): Error ()
 
     self._fail("unterminated multi-line comment")
 
-_isIdCont(c: Char): Bool
+_isIdCont(c: Char) Bool:
     c.isAsciiAlphanumeric() || c == '_'
 
-_isIdContStr(s: Str): Bool
+_isIdContStr(s: Str) Bool:
     match s.chars().next():
         Option.Some(c): _isIdCont(c)
         Option.None: Bool.False

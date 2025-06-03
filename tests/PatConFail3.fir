@@ -1,4 +1,4 @@
-main()
+main():
     match f():
         Foo.X: ()
 
@@ -6,7 +6,7 @@ type Foo:
     a: U32
     b: U32
 
-f(): Foo = Foo(a = 1, b = 2)
+f() Foo = Foo(a = 1, b = 2)
 
 # args: --no-backtrace
 # expected exit status: 101

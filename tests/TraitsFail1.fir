@@ -1,12 +1,12 @@
 prim type Str
 prim type I32
 
-prim printStr(s: Str): ()
+prim printStr(s: Str) ()
 
 trait ToStr[a]:
-    toStr(self: a): Str
+    toStr(self: a) Str
 
-f(a: a)
+f(a: a):
     printStr(a.toStr())
 
 # args: --typecheck --no-prelude --no-backtrace

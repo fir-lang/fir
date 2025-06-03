@@ -1,7 +1,7 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-testMain(): [] ()
+testMain() [] ():
     main("0")
     main("succ(0)")
     main("succ(succ(0))")
@@ -34,7 +34,7 @@ type Value:
     Bool(Bool)
     Num(I32)
 
-eval(term: Term): Value
+eval(term: Term) Value:
     match term:
         Term.True: Value.Bool(Bool.True)
 
@@ -69,24 +69,24 @@ eval(term: Term): Value
                 Value.Num(value): Value.Bool(value == 0)
 
 impl ToStr[Value]:
-    toStr(self: Value): Str
+    toStr(self: Value) Str:
         match self:
             Value.Bool(value): value.toStr()
             Value.Num(value): value.toStr()
 
-parse(pgm: Str): Term
+parse(pgm: Str) Term:
     let (term = term, rest = rest) = parseWithRest(pgm)
     if !rest.isEmpty():
         panic("Leftover code after parsing the program: \"`rest`\"")
     term
 
-skipWhitespace(pgm: Str): Str
+skipWhitespace(pgm: Str) Str:
     while pgm.len() > 0 && pgm.startsWith(" "):
         pgm = pgm.substr(1, pgm.len())
     pgm
 
 ## Parse the program, return the parsed term and the unparsed part of the program.
-parseWithRest(pgm: Str): (term: Term, rest: Str)
+parseWithRest(pgm: Str) (term: Term, rest: Str):
     match skipWhitespace(pgm):
         "0" rest:
             (term = Term.Zero, rest = rest)
@@ -113,7 +113,7 @@ parseWithRest(pgm: Str): (term: Term, rest: Str)
         _:
             panic("Invalid syntax: \"`pgm`\"")
 
-parseArg(pgm: Str): (arg: Term, rest: Str)
+parseArg(pgm: Str) (arg: Term, rest: Str):
     # Skip "("
     if pgm.isEmpty():
         panic("Unexpected end of program while parsing arguments")
@@ -137,7 +137,7 @@ parseArg(pgm: Str): (arg: Term, rest: Str)
 
     (arg = arg, rest = rest)
 
-expectKeyword(pgm: Str, kw: Str): Str
+expectKeyword(pgm: Str, kw: Str) Str:
     let pgm = skipWhitespace(pgm)
     if !pgm.startsWith(kw.toStr()):
         panic("Expected \"`kw`\", found \"`pgm`\"")

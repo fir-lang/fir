@@ -1,4 +1,4 @@
-main()
+main():
     # Nested function calls, indented differently based on requested string width.
     let args: Vec[Doc] = Vec.withCapacity(10)
     args.push(Doc.str("longArgument1"))
@@ -35,7 +35,7 @@ main()
         Doc.nested(4, Doc.str("Second user line") + Doc.hardLine() + Doc.str("indented 4")),
     ).render(80))
 
-makeCallSyntax(fun: Doc, args: Vec[Doc]): Doc
+makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
     if args.len() == 0:
         return fun + Doc.str("()")
 
@@ -56,11 +56,11 @@ makeCallSyntax(fun: Doc, args: Vec[Doc]): Doc
 
     (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
 
-expectationFailure(expected: Doc, found: Doc): Doc
+expectationFailure(expected: Doc, found: Doc) Doc:
     let expectedStr = "Expected: "
     let foundStr = "Found: "
-    Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected) \
-        + Doc.hardLine() \
+    Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected)
+        + Doc.hardLine()
         + Doc.nested(foundStr.len(), Doc.str(foundStr) + found)
 
 # expected stdout:

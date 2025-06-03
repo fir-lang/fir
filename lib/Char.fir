@@ -3,23 +3,23 @@ type Char:
     _codePoint: U32
 
 impl Eq[Char]:
-    __eq(self: Char, other: Char): Bool
+    __eq(self: Char, other: Char) Bool:
         self._codePoint == other._codePoint
 
 impl Ord[Char]:
-    cmp(self: Char, other: Char): Ordering
+    cmp(self: Char, other: Char) Ordering:
         self._codePoint.cmp(other._codePoint)
 
-Char.fromU32(codePoint: U32): Option[Char]
+Char.fromU32(codePoint: U32) Option[Char]:
     if codePoint >= 0x110000 || (codePoint >= 0xD800 && codePoint <= 0xDFFF):
         return Option.None
 
     Option.Some(Char(_codePoint = codePoint))
 
-Char.asU32(self): U32
+Char.asU32(self) U32:
     self._codePoint
 
-Char.lenUtf8(self): U32
+Char.lenUtf8(self) U32:
     if self._codePoint < 0x80:
         1
     elif self._codePoint < 0x800:
@@ -29,41 +29,41 @@ Char.lenUtf8(self): U32
     else:
         4
 
-Char.isAsciiWhitespace(self): Bool
+Char.isAsciiWhitespace(self) Bool:
     self == ' ' || self == '\t' || self == '\n' || self == '\r'
         # TODO:
         # || self == '\x0C'
 
-Char.isAsciiUppercase(self): Bool
+Char.isAsciiUppercase(self) Bool:
     self._codePoint >= 'A'._codePoint && self._codePoint <= 'Z'._codePoint
 
-Char.isAsciiLowercase(self): Bool
+Char.isAsciiLowercase(self) Bool:
     self._codePoint >= 'a'._codePoint && self._codePoint <= 'z'._codePoint
 
-Char.isAsciiDigit(self): Bool
+Char.isAsciiDigit(self) Bool:
     self._codePoint >= '0'._codePoint && self._codePoint <= '9'._codePoint
 
-Char.isAsciiAlphanumeric(self): Bool
+Char.isAsciiAlphanumeric(self) Bool:
     self.isAsciiUppercase() || self.isAsciiLowercase() || self.isAsciiDigit()
 
-Char.isAsciiHexDigit(self): Bool
+Char.isAsciiHexDigit(self) Bool:
     self.isAsciiDigit() || (self._codePoint >= 'a'._codePoint && self._codePoint <= 'f'._codePoint && self._codePoint >= 'A'._codePoint && self._codePoint <= 'F'._codePoint)
 
-Char.isAsciiBinDigit(self): Bool
+Char.isAsciiBinDigit(self) Bool:
     self == '0' || self == '1'
 
-Char.toAsciiUppercase(self): Char
+Char.toAsciiUppercase(self) Char:
     if self.isAsciiLowercase():
         return Char(_codePoint = self._codePoint - 32)
     return self
 
-Char.toAsciiLowercase(self): Char
+Char.toAsciiLowercase(self) Char:
     if self.isAsciiUppercase():
         return Char(_codePoint = self._codePoint + 32)
     return self
 
 impl ToStr[Char]:
-    toStr(self: Char): Str
+    toStr(self: Char) Str:
         let strBuf = StrBuf.withCapacity(self.lenUtf8() + 2)
         strBuf.push('\'')
         strBuf.push(self)

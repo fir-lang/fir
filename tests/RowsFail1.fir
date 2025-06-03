@@ -1,8 +1,8 @@
-test(r: (x: I32, y: I32, ..r))
+test(r: (x: I32, y: I32, ..r)):
     printStr(r.x.toStr())
     printStr(r.y.toStr())
 
-main()
+main():
     test((x = 123))
 
 # args: --typecheck --no-backtrace

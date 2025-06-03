@@ -1,7 +1,7 @@
-test(f: Fn(): [Err] U32)
+test(f: Fn() [Err] U32):
     ()
 
-main()
+main():
     test(fn() { throw(~Foo) })
 
 # args: --typecheck --no-backtrace

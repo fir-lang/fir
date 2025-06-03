@@ -1,4 +1,4 @@
-main()
+main():
     let x: Option[U32] = Option.Some(123)
 
     if x is Option.Some(x):

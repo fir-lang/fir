@@ -1,4 +1,4 @@
-main()
+main():
     let buf = StrBuf.withCapacity(10)
     buf.push('\'')
     buf.push('\n')

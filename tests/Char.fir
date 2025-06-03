@@ -1,4 +1,4 @@
-main()
+main():
     printStr(('a' == 'a').toStr())
     printStr(('a' == 'b').toStr())
     match 'a':
@@ -31,16 +31,16 @@ main()
     testIsAsciiAlphanumeric('[')
     testIsAsciiAlphanumeric('a')
 
-testIsAsciiUppercase(c: Char)
+testIsAsciiUppercase(c: Char):
     printStr("`c`.isAsciiUppercase() = `c.isAsciiUppercase()`")
 
-testIsAsciiLowercase(c: Char)
+testIsAsciiLowercase(c: Char):
     printStr("`c`.isAsciiLowercase() = `c.isAsciiLowercase()`")
 
-testIsAsciiDigit(c: Char)
+testIsAsciiDigit(c: Char):
     printStr("`c`.isAsciiDigit() = `c.isAsciiDigit()`")
 
-testIsAsciiAlphanumeric(c: Char)
+testIsAsciiAlphanumeric(c: Char):
     printStr("`c`.isAsciiAlphanumeric() = `c.isAsciiAlphanumeric()`")
 
 # expected stdout:

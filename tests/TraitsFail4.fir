@@ -4,7 +4,7 @@ trait Test[a, b]:
     method(self: a, other: b)
 
 impl Test[U32]:
-    method(self: U32, other: b)
+    method(self: U32, other: b):
         ()
 
 # args: --no-prelude --typecheck --no-backtrace
