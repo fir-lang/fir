@@ -4,7 +4,7 @@ main():
         a += 1
     })
     match x:
-        Result.Err(err) print(err)
-        Result.Ok(()) print(a)
+        Result.Err(err): print(err)
+        Result.Ok(()): print(a)
 
 # expected stdout: 0

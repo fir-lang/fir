@@ -9,7 +9,7 @@ foo() Option[t]:
 type T[a]:
     x: ()
 
-T.f(self: T[a]) Option[t]
+T.f(self: T[a]) Option[t]:
     Option.None[t]
 
 # expected stdout:

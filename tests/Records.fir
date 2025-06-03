@@ -12,7 +12,7 @@ main():
     printStr(a.toStr())
     printStr(b.toStr())
     match c:
-        Option.Some(c) printStr(c)
+        Option.Some(c): printStr(c)
         Option.None: ()
 
 # expected stdout:

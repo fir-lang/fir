@@ -5,7 +5,7 @@ trait T[a]:
     toStr(self: a) Str
 
 impl T[Str]:
-    toStr(self: Str) I32
+    toStr(self: Str) I32:
         123
 
 # args: --typecheck --no-prelude --no-backtrace

@@ -29,7 +29,7 @@ main():
 
     match f("Hi"):
         Option.None: panic("")
-        Option.Some(msg) printStr(msg)
+        Option.Some(msg): printStr(msg)
 
 # expected stdout:
 # T(i = 123)

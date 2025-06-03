@@ -19,21 +19,21 @@ throwOnOdd(i: U32) [OddNumberError(i: U32), ..r] ():
 forEachWithControlFlow(vec: Vec[t], f: Fn(t) [Break, ..r] ()) [..r] Result[[..r], ()]:
     for t in vec.iter():
         match try(fn() [Break, ..r] () { f(t) }):
-            Result.Err(~Break) break
-            Result.Err(other) return Result.Err(other)
-            Result.Ok(()) ()
+            Result.Err(~Break): break
+            Result.Err(other): return Result.Err(other)
+            Result.Ok(()): ()
 
     Result.Ok(())
 
 main():
     match try(f1):
-        Result.Err(~E1) printStr("OK")
-        Result.Ok(()) panic("")
+        Result.Err(~E1): printStr("OK")
+        Result.Ok(()): panic("")
 
     match try(f3):
-        Result.Err(~E1) printStr("OK")
-        Result.Err(~E2) panic("1")
-        Result.Ok(()) panic("2")
+        Result.Err(~E1): printStr("OK")
+        Result.Err(~E2): panic("1")
+        Result.Ok(()): panic("2")
 
     let vec: Vec[U32] = Vec.withCapacity(3)
     vec.push(1)
@@ -41,8 +41,8 @@ main():
     vec.push(3)
 
     match try(fn() [OddNumberError(i: U32)] () { forEach(vec, throwOnOdd) }):
-        Result.Err(~OddNumberError(i = i)) printStr("Odd number: `i.toStr()`")
-        Result.Ok(()) ()
+        Result.Err(~OddNumberError(i = i)): printStr("Odd number: `i.toStr()`")
+        Result.Ok(()): ()
 
     printStr("---")
 

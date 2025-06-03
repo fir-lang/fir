@@ -1,4 +1,4 @@
-main()
+main():
     let (z, x, y) = f()
     print("x = `x`, y = `y`, z = `z`")
 

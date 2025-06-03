@@ -1,7 +1,7 @@
-test() U32 Str
+test() U32 Str:
     throw(123u32)
 
-main()
+main():
     printStr(try(test).toStr())
 
     let x: Result[U32, U32] = try({ throw(456u32) })

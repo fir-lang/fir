@@ -6,9 +6,9 @@ f1() [E1, ..r] ():
 
 main():
     match try({ a(f1) }):
-        Result.Ok(()) ()
-        Result.Err(~E1) printStr("E1 caught")
-        Result.Err(~E2) printStr("E2 caught")
+        Result.Ok(()): ()
+        Result.Err(~E1): printStr("E1 caught")
+        Result.Err(~E2): printStr("E2 caught")
 
 # expected stdout: E1 caught
 
