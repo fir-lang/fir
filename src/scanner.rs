@@ -244,7 +244,7 @@ where
                 }
                 NonIndentedDelimKind::Bracket => {
                     panic!(
-                        "{}:{}:{}: ']' without matching '['",
+                        "{}:{}:{}: ')' without matching '('",
                         module,
                         l.line + 1,
                         l.col + 1
@@ -268,12 +268,12 @@ where
                 }
             },
 
-            TokenKind::LParen => {
+            TokenKind::LParen | TokenKind::LParenRow => {
                 new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket => {
+            TokenKind::LBracket | TokenKind::LBracketRow => {
                 new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
