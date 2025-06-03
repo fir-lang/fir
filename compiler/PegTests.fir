@@ -8,7 +8,7 @@ import Lexer
 import PegTestLib
 import TestGrammar
 
-main()
+main():
     runTest("'a' as terminalA", "a", terminalA)
     runTest("'b' as terminalA (should fail)", "b", terminalA)
     runTest("'a b' as terminalA (should fail)", "a b", terminalA)

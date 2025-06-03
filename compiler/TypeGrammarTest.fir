@@ -3,7 +3,7 @@ import Lexer
 import PegTestLib
 import TypeGrammar
 
-main(args: Array[Str])
+main(args: Array[Str]):
     if args.len() > 2:
         print("USAGE: One argument to parse argument as type decl")
         print("       No arguments to run unit tests")
