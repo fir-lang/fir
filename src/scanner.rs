@@ -41,7 +41,8 @@ pub fn scan_indented<I>(
     new_tokens: &mut Vec<(Loc, Token, Loc)>,
     ldelim_loc: Loc,
     delim_kind: IndentedDelimKind,
-) where
+) -> Loc
+where
     I: Iterator<Item = (Loc, Token, Loc)>,
 {
     // println!(
@@ -52,7 +53,13 @@ pub fn scan_indented<I>(
 
     if tokens.peek().is_none() {
         match delim_kind {
-            IndentedDelimKind::File => return,
+            IndentedDelimKind::File => {
+                return Loc {
+                    line: 0,
+                    col: 0,
+                    byte_idx: 0,
+                }
+            }
             IndentedDelimKind::Brace => {
                 panic!(
                     "{}:{}:{}: Unterminated '{{'",
@@ -97,7 +104,7 @@ pub fn scan_indented<I>(
             }
 
             // println!("Ending indented block at {}:{}", l.line + 1, l.col + 1);
-            return;
+            return r;
         }
 
         if l.line != last_loc.line {
@@ -185,10 +192,12 @@ pub fn scan_indented<I>(
 
     // When scanning a file we won't see a token that termintes the block, the loop will terminate
     // instead to indicate "EOF". Generate DEDENTs as usual.
+    new_tokens.push(newline(last_loc));
     while indent_stack.len() > 1 {
         indent_stack.pop();
         new_tokens.push(dedent(last_loc));
     }
+    last_loc
 }
 
 pub enum NonIndentedDelimKind {
@@ -201,9 +210,10 @@ pub fn scan_non_indented<I>(
     tokens: &mut Peekable<I>,
     module: &str,
     new_tokens: &mut Vec<(Loc, Token, Loc)>,
-    _ldelim_loc: Loc,
+    ldelim_loc: Loc,
     delim_kind: NonIndentedDelimKind,
-) where
+) -> Loc
+where
     I: Iterator<Item = (Loc, Token, Loc)>,
 {
     // println!(
@@ -212,13 +222,17 @@ pub fn scan_non_indented<I>(
     //     ldelim_loc.col + 1
     // );
 
+    let mut last_loc = ldelim_loc;
+
     while let Some((l, t, r)) = tokens.next() {
+        last_loc = r;
+
         match t.kind {
             TokenKind::RParen => match delim_kind {
                 NonIndentedDelimKind::Paren => {
                     new_tokens.push((l, t, r));
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
-                    return;
+                    return last_loc;
                 }
                 NonIndentedDelimKind::Bracket => {
                     panic!(
@@ -234,7 +248,7 @@ pub fn scan_non_indented<I>(
                 NonIndentedDelimKind::Bracket => {
                     new_tokens.push((l, t, r));
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
-                    return;
+                    return last_loc;
                 }
                 NonIndentedDelimKind::Paren => {
                     panic!(
@@ -249,6 +263,10 @@ pub fn scan_non_indented<I>(
             TokenKind::LParen => {
                 new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
+            }
+            
+            TokenKind::LBracket => {
+                scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 
             TokenKind::LBrace => {
@@ -270,6 +288,8 @@ pub fn scan_non_indented<I>(
             }
         }
     }
+
+    last_loc
 }
 
 fn newline(loc: Loc) -> (Loc, Token, Loc) {
