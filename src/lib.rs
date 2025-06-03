@@ -44,7 +44,10 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
 }
 
 fn parse_module(module: &SmolStr, contents: &str, print_tokens: bool) -> ast::Module {
-    let tokens = combine_uppercase_lbrackets(scanner::scan(lexer::lex(contents, module), module));
+    let tokens = combine_uppercase_lbrackets(scanner::scan(
+        lexer::lex(contents, module).into_iter(),
+        module,
+    ));
     // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
 
     if print_tokens {
@@ -379,7 +382,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::LExprParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -392,7 +395,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::LStmtParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -407,7 +410,7 @@ mod tests {
                     A.X: 1
                 q
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -421,7 +424,7 @@ mod tests {
                     2
                 q
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
