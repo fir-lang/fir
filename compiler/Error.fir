@@ -10,7 +10,7 @@ type Loc:
     col: U32
 
 # TODO: Debug assert that `self.file == other.file`
-Loc.combine(self, other: Loc): Loc
+Loc.combine(self, other: Loc) Loc:
     Loc(file = self.file,
         byteIdx = self.byteIdx,
         byteLen = other.byteIdx + other.byteLen - self.byteIdx,

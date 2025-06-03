@@ -494,13 +494,10 @@ mod tests {
                 LParen,
                 RParen,
                 LBrace,
-                Newline,
-                Indent,
                     LowerId, // a
                     Newline,
                     LowerId, // b
                     Newline,
-                Dedent,
                 RBrace,
                 Newline,
             ]

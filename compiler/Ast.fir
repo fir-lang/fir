@@ -528,7 +528,7 @@ type UnOp:
 # --------------------------------------------------------------------------------------------------
 
 impl ToStr[BinOp]:
-    toStr(self: BinOp): Str
+    toStr(self: BinOp) Str:
         match self:
             BinOp.Add: "Add"
             BinOp.And: "And"
@@ -548,7 +548,7 @@ impl ToStr[BinOp]:
             BinOp.Subtract: "Subtract"
 
 impl Eq[BinOp]:
-    __eq(self: BinOp, other: BinOp): Bool
+    __eq(self: BinOp, other: BinOp) Bool:
         match (left = self, right = other):
             (left = BinOp.Add, right = BinOp.Add): Bool.True
             (left = BinOp.And, right = BinOp.And): Bool.True

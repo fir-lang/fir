@@ -101,7 +101,7 @@ type IntKind:
     U32
 
 impl ToStr[Token]:
-    toStr(self: Token): Str
+    toStr(self: Token) Str:
         let text = if self.kind is TokenKind.Str | TokenKind.Newline | TokenKind.Indent:
             _escape(self.text)
         else:
@@ -109,7 +109,7 @@ impl ToStr[Token]:
 
         "`self.kind`(`self.line + 1`:`self.col + 1`:\"`text`\")"
 
-_escape(s: Str): Str
+_escape(s: Str) Str:
     let buf = StrBuf.withCapacity(s.len() + 10)
 
     for char: Char in s.chars():
@@ -134,7 +134,7 @@ _escape(s: Str): Str
     buf.toStr()
 
 impl ToStr[TokenKind]:
-    toStr(self: TokenKind): Str
+    toStr(self: TokenKind) Str:
         match self:
             TokenKind.Amp: "Amp"
             TokenKind.AmpAmp: "AmpAmp"
@@ -207,7 +207,7 @@ impl ToStr[TokenKind]:
             TokenKind.Question: "Question"
 
 impl ToStr[IntKind]:
-    toStr(self: IntKind): Str
+    toStr(self: IntKind) Str:
         match self:
             IntKind.I8: "I8"
             IntKind.U8: "U8"
@@ -215,7 +215,7 @@ impl ToStr[IntKind]:
             IntKind.U32: "U32"
 
 impl Eq[TokenKind]:
-    __eq(self: TokenKind, other: TokenKind): Bool
+    __eq(self: TokenKind, other: TokenKind) Bool:
         match (left = self, right = other):
             (left = TokenKind.UpperId, right = TokenKind.UpperId): Bool.True
             (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId): Bool.True
@@ -289,7 +289,7 @@ impl Eq[TokenKind]:
             _: Bool.False
 
 impl Eq[IntKind]:
-    __eq(self: IntKind, other: IntKind): Bool
+    __eq(self: IntKind, other: IntKind) Bool:
         match (left = self, right = other):
             (left = IntKind.I8, right = IntKind.I8): Bool.True
             (left = IntKind.U8, right = IntKind.U8): Bool.True
