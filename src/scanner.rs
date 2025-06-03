@@ -109,27 +109,33 @@ where
 
         if l.line != last_loc.line {
             // Generate indentation tokens.
-            loop {
-                let last_indent = *indent_stack.last().unwrap();
-                match l.col.cmp(&last_indent) {
-                    Ordering::Greater => {
-                        if generate_indent {
-                            indent_stack.push(l.col);
-                            new_tokens.push(newline(l));
-                            new_tokens.push(indent(l));
-                        }
-                        break;
+            let last_indent = *indent_stack.last().unwrap();
+            match l.col.cmp(&last_indent) {
+                Ordering::Greater => {
+                    if generate_indent {
+                        indent_stack.push(l.col);
+                        new_tokens.push(newline(l));
+                        new_tokens.push(indent(l));
                     }
+                }
 
-                    Ordering::Equal => {
-                        // Generate a newline at the last line.
-                        new_tokens.push(newline(last_loc));
-                        break;
-                    }
+                Ordering::Equal => {
+                    // Generate a newline at the last line.
+                    new_tokens.push(newline(last_loc));
+                }
 
-                    Ordering::Less => {
+                Ordering::Less => {
+                    new_tokens.push(newline(last_loc));
+                    loop {
                         indent_stack.pop();
                         new_tokens.push(dedent(last_loc));
+                        if let Some(next) = indent_stack.last() {
+                            if l.col >= *next {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
                     }
                 }
             }
@@ -264,8 +270,9 @@ where
                 new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
-            
+
             TokenKind::LBracket => {
+                new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 

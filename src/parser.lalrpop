@@ -971,7 +971,7 @@ InlineExpr: Expr = {
         Expr::Return(Box::new(expr)),
 
     "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+         <ret:ReturnType> "{" <body:LStmts> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1000,7 +1000,7 @@ InlineExpr: Expr = {
             inferred_ty: None,
         }),
 
-    "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+    "{" <body:LStmts> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
