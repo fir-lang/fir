@@ -1,4 +1,4 @@
-main
+main():
     let x: Option[U32] = Option.Some(0)
     while x is Option.Some(x1):
         print(x1)

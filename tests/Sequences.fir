@@ -1,4 +1,4 @@
-main
+main():
     let iter = [1u32, 2u32]
     for x: U32 in iter:
         print(x)

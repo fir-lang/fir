@@ -1,4 +1,4 @@
-main
+main():
     let s = " αあ💩"
     printStr("|`s`")
     for charIdx: (char: Char, idx: U32) in s.charIndices():

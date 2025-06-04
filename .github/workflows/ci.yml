@@ -18,40 +18,6 @@ jobs:
       - name: Build
         run: cargo build --verbose
 
-  run_unit_tests:
-    name: Run unit tests
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
-      - name: Test
-        run: cargo test
-
-  run_compiler_tests:
-    name: Run compiler tests
-    needs: [build]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Get stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            override: true
-
-      - name: Test
-        run: |
-            export FIR_ROOT=$(pwd)
-            bash compiler/test_lexer.sh
-
   check_formatting:
     name: Check formatting
     runs-on: ubuntu-latest
@@ -83,23 +49,118 @@ jobs:
       - name: Check lints
         run: cargo clippy --all-targets --all -- -Dwarnings
 
-  run_golden_tests:
-    name: 'Run golden tests'
+  run_compiler_unit_tests:
+    name: Compiler unit tests
     needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get Rust stable toolchain
+      - name: Get stable toolchain
         uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Test
+        run: just compiler_unit_test
+
+  run_compiler_golden_tests:
+    name: Compiler golden tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: Install goldentests
         run: cargo install --git https://github.com/osa1/golden-tests --features=binary
 
-      - name: Run tests
+      - name: Build interpreter
+        run: cargo build --verbose
+
+      - name: Test
+        run: just compiler_golden_test
+
+  run_interpreter_unit_tests:
+    name: Interpreter unit tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Test
+        run: just interpreter_unit_test
+
+  run_interpreter_golden_tests:
+    name: Interpreter golden tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Install goldentests
+        run: cargo install --git https://github.com/osa1/golden-tests --features=binary
+
+      - name: Build interpreter
+        run: cargo build --verbose
+
+      - name: Test
+        run: just interpreter_golden_test
+
+  check_generated_files:
+    name: Check that generated files are up-to-date
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Install lalrpop
+        run: cargo install lalrpop
+
+      - name: Build interpreter
+        run: cargo build --verbose
+
+      - name: Check
         run: |
-          cargo build
-          FIR_ROOT=${{ github.workspace }} goldentests target/debug/fir tests '# '
+            just update_generated_files
+            git -P diff
+            ! git status --porcelain | grep -q '^ M'

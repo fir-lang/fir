@@ -6,16 +6,16 @@ type Void
 type Empty:
     Empty
 
-returnsEmpty(): Empty
+returnsEmpty() Empty:
     Empty.Empty
 
-diverges(): Void
+diverges() Void:
      diverges()
 
-expectsEmpty(value: Empty): ()
+expectsEmpty(value: Empty) ():
     ()
 
-test()
+test():
     expectsEmpty(diverges())
 
 # args: --typecheck --no-prelude

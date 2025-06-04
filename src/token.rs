@@ -89,7 +89,6 @@ pub enum TokenKind {
     Caret,
     CaretEq,
     DotDot,
-    DotDotEq,
     Eq,
     EqEq,
     Exclamation,

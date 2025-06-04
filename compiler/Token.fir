@@ -60,7 +60,6 @@ type TokenKind:
     Amp
     AmpAmp
     DotDot
-    DotDotEq
     DoubleLAngle
     DoubleRAngle
     Eq
@@ -81,6 +80,7 @@ type TokenKind:
     Star
     StarEq
     Tilde
+    Question
 
     # Literals
     Str
@@ -101,11 +101,40 @@ type IntKind:
     U32
 
 impl ToStr[Token]:
-    toStr(self: Token): Str
-        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`self.text`\")"
+    toStr(self: Token) Str:
+        let text = if self.kind is TokenKind.Str | TokenKind.Newline | TokenKind.Indent:
+            _escape(self.text)
+        else:
+            self.text
+
+        "`self.kind`(`self.line + 1`:`self.col + 1`:\"`text`\")"
+
+_escape(s: Str) Str:
+    let buf = StrBuf.withCapacity(s.len() + 10)
+
+    for char: Char in s.chars():
+        match char:
+            '"':
+                buf.push('\\')
+                buf.push('"')
+            '\n':
+                buf.push('\\')
+                buf.push('n')
+            '\t':
+                buf.push('\\')
+                buf.push('t')
+            '\r':
+                buf.push('\\')
+                buf.push('r')
+            '\\':
+                buf.push('\\')
+                buf.push('\\')
+            other:
+                buf.push(other)
+    buf.toStr()
 
 impl ToStr[TokenKind]:
-    toStr(self: TokenKind): Str
+    toStr(self: TokenKind) Str:
         match self:
             TokenKind.Amp: "Amp"
             TokenKind.AmpAmp: "AmpAmp"
@@ -119,7 +148,6 @@ impl ToStr[TokenKind]:
             TokenKind.Continue: "Continue"
             TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
-            TokenKind.DotDotEq: "DotDotEq"
             TokenKind.DoubleLAngle: "DoubleLAngle"
             TokenKind.DoubleRAngle: "DoubleRAngle"
             TokenKind.Elif: "Elif"
@@ -176,9 +204,10 @@ impl ToStr[TokenKind]:
             TokenKind.Newline: "Newline"
             TokenKind.Indent: "Indent"
             TokenKind.Dedent: "Dedent"
+            TokenKind.Question: "Question"
 
 impl ToStr[IntKind]:
-    toStr(self: IntKind): Str
+    toStr(self: IntKind) Str:
         match self:
             IntKind.I8: "I8"
             IntKind.U8: "U8"
@@ -186,7 +215,7 @@ impl ToStr[IntKind]:
             IntKind.U32: "U32"
 
 impl Eq[TokenKind]:
-    __eq(self: TokenKind, other: TokenKind): Bool
+    __eq(self: TokenKind, other: TokenKind) Bool:
         match (left = self, right = other):
             (left = TokenKind.UpperId, right = TokenKind.UpperId): Bool.True
             (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId): Bool.True
@@ -229,7 +258,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.Amp, right = TokenKind.Amp): Bool.True
             (left = TokenKind.AmpAmp, right = TokenKind.AmpAmp): Bool.True
             (left = TokenKind.DotDot, right = TokenKind.DotDot): Bool.True
-            (left = TokenKind.DotDotEq, right = TokenKind.DotDotEq): Bool.True
             (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle): Bool.True
             (left = TokenKind.DoubleRAngle, right = TokenKind.DoubleRAngle): Bool.True
             (left = TokenKind.Eq, right = TokenKind.Eq): Bool.True
@@ -261,7 +289,7 @@ impl Eq[TokenKind]:
             _: Bool.False
 
 impl Eq[IntKind]:
-    __eq(self: IntKind, other: IntKind): Bool
+    __eq(self: IntKind, other: IntKind) Bool:
         match (left = self, right = other):
             (left = IntKind.I8, right = IntKind.I8): Bool.True
             (left = IntKind.U8, right = IntKind.U8): Bool.True

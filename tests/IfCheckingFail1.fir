@@ -1,4 +1,4 @@
-main
+main():
     let x = if Bool.True:
         1u32
     else:

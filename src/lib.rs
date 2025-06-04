@@ -36,6 +36,7 @@ pub struct CompilerOpts {
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
     pub main: String,
+    pub import_paths: collections::Map<String, String>,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -43,7 +44,11 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
 }
 
 fn parse_module(module: &SmolStr, contents: &str, print_tokens: bool) -> ast::Module {
-    let tokens = combine_uppercase_lbrackets(scanner::scan(lexer::lex(contents, module), module));
+    let tokens = combine_uppercase_lbrackets(scanner::scan(
+        lexer::lex(contents, module).into_iter(),
+        module,
+    ));
+    // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
 
     if print_tokens {
         for (l, t, _) in &tokens {
@@ -115,15 +120,30 @@ mod native {
     use smol_str::SmolStr;
     use std::path::Path;
 
-    pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
+    pub fn main(mut opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         let fir_root = match std::env::var("FIR_ROOT") {
-            Ok(s) => s,
+            Ok(fir_root) => {
+                let mut path = std::path::PathBuf::new();
+                path.push(fir_root);
+                path.push("lib");
+                path.to_string_lossy().to_string()
+            }
             Err(_) => {
                 eprintln!("Fir uses FIR_ROOT environment variable to find standard libraries.");
                 eprintln!("Please set FIR_ROOT to Fir git repo root.");
                 std::process::exit(1);
             }
         };
+
+        let old_fir_root = opts
+            .import_paths
+            .insert("Fir".to_string(), fir_root.clone());
+        if old_fir_root.is_some() {
+            eprintln!(
+                "WARNING: Fir root specified multiple times. Using {} as root.",
+                fir_root
+            );
+        }
 
         if opts.no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
@@ -147,7 +167,7 @@ mod native {
             opts.print_tokens,
         );
         let mut module = import_resolver::resolve_imports(
-            &fir_root,
+            &opts.import_paths,
             root_path.to_str().unwrap(),
             module,
             !opts.no_prelude, // import_prelude
@@ -201,6 +221,11 @@ mod native {
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
         parse_module(&module_path, &contents, print_tokens)
     }
+
+    /// The `readFileUtf8` primitive.
+    pub fn read_file_utf8(path: &str) -> String {
+        std::fs::read_to_string(path).unwrap()
+    }
 }
 
 use token::{Token, TokenKind};
@@ -249,7 +274,7 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{main, parse_file};
+pub use native::{main, parse_file, read_file_utf8};
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
@@ -260,7 +285,6 @@ mod wasm {
 
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
-    use web_sys::XmlHttpRequest;
 
     pub fn parse_file<P: AsRef<Path> + Clone>(
         path: P,
@@ -268,22 +292,8 @@ mod wasm {
         _print_tokens: bool,
     ) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
-        let contents = fetch_sync(&path).unwrap_or_else(|| panic!("Unable to fetch {}", path));
+        let contents = read_file_utf8(&path);
         parse_module(&module, &contents, false)
-    }
-
-    fn fetch_sync(url: &str) -> Option<String> {
-        let xhr = XmlHttpRequest::new().unwrap();
-        xhr.open_with_async("GET", url, false).unwrap(); // false makes it synchronous
-
-        xhr.send().unwrap();
-
-        if xhr.status() == Ok(200) {
-            let response_text = xhr.response_text().unwrap().unwrap();
-            Some(response_text)
-        } else {
-            None
-        }
     }
 
     #[wasm_bindgen]
@@ -302,6 +312,9 @@ mod wasm {
 
         #[wasm_bindgen(js_name = "clearProgramOutput")]
         fn clear_program_output();
+
+        #[wasm_bindgen(js_name = "readFileUtf8")]
+        pub fn read_file_utf8(path: &str) -> String;
     }
 
     #[wasm_bindgen(js_name = "setupPanicHook")]
@@ -320,9 +333,8 @@ mod wasm {
     }
 
     #[wasm_bindgen(js_name = "run")]
-    pub fn run_wasm(pgm: &str, input: &str) {
-        clear_interpreter_output();
-        clear_program_output();
+    pub fn run_wasm(pgm: &str, mut args: Vec<String>) {
+        args.insert(0, pgm.to_string());
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm, false);
@@ -334,7 +346,7 @@ mod wasm {
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
-        interpreter::run_with_input(&mut w, lowered_pgm, "main", input.trim());
+        interpreter::run_with_args(&mut w, lowered_pgm, "main", &args);
     }
 
     #[wasm_bindgen(js_name = "version")]
@@ -357,7 +369,7 @@ mod wasm {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::parse_file;
+pub use wasm::{parse_file, read_file_utf8};
 
 #[cfg(test)]
 mod tests {
@@ -370,7 +382,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::LExprParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -383,7 +395,7 @@ mod tests {
             match t():
                 X: 1
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::LStmtParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
@@ -393,26 +405,26 @@ mod tests {
     #[test]
     fn parse_fn_1() {
         let pgm = indoc::indoc! {"
-            asdf()
+            asdf():
                 let q = match t():
                     A.X: 1
                 q
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();
         dbg!(ast);
 
         let pgm = indoc::indoc! {"
-            asdf()
+            asdf():
                 let q = if A:
                     1
                 else:
                     2
                 q
         "};
-        let tokens = scan(lex(pgm, "test"), "test");
+        let tokens = scan(lex(pgm, "test").into_iter(), "test");
         let ast = crate::parser::TopDeclsParser::new()
             .parse(&"".into(), tokens)
             .unwrap();

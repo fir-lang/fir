@@ -1,0 +1,53 @@
+# PEG parsers in this file are used to test the PEG parser generator.
+
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+Terminals:
+    "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
+    "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
+    "c" = Token(kind = TokenKind.LowerId, text = "c", ..)
+
+terminalA:
+    "a"
+
+terminalB:
+    "b"
+
+terminalAOrB:
+    "a"
+    "b"
+
+terminalAThenB:
+    "a" "b"
+
+zeroOrMoreAThenB:
+    "a"* "b"
+
+oneOrMoreAThenB:
+    "a"+ "b"
+
+zeroOrOneAThenB:
+    "a"? "b"
+
+ignoreAThenB:
+    _"a" "b"
+
+ignoreAThenIgnoreB:
+    _"a" _"b"
+
+ignoreGroupAThenB:
+    _("a" "b")
+
+nonTerminals:
+    terminalAOrB terminalAOrB
+
+nonTerminalsBacktrack:
+    terminalAOrB terminalAOrB
+    "c" "a"
+
+negLookahead:
+    -"a" terminalAOrB

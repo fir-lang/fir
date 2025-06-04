@@ -1,4 +1,4 @@
-main
+main():
     'outer: for i: I32 in range(0, 4):
         'inner: for j: I32 in range(0, 4):
             if j & 0b1 == 0b1:

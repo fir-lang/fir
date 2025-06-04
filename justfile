@@ -15,22 +15,27 @@ check:
 watch:
     echo src/parser.lalrpop | entr -r lalrpop src/parser.lalrpop & cargo watch
 
-test: build
+test: build interpreter_unit_test interpreter_golden_test compiler_unit_test compiler_golden_test
+
+interpreter_unit_test:
     cargo test
+
+interpreter_golden_test:
     goldentests target/debug/fir tests '# '
+
+interpreter_update_goldens: build
+    goldentests target/debug/fir tests '# ' --overwrite
+
+compiler_unit_test:
     cargo run -- compiler/Main.fir
 
-# Only run type checking tests.
-test_tc: build
-    cargo test
-    grep -rl -- "--typecheck" tests | xargs -d '\n' -I {} goldentests target/debug/fir {} '# '
+compiler_golden_test:
+    goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
 
-update_tc_tests: build
-    cargo test
-    grep -rl -- "--typecheck" tests | xargs -d '\n' -I {} goldentests target/debug/fir {} '# ' --overwrite
-
-update_tests: build
-    goldentests target/debug/fir tests '# ' --overwrite
+compiler_update_goldens:
+    goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
 
 build: generate_parser
     cargo build
@@ -38,6 +43,19 @@ build: generate_parser
 generate_parser:
     lalrpop src/parser.lalrpop
     cargo fmt -- src/parser.rs
+
+update_generated_files:
+    #!/usr/bin/env bash
+    lalrpop src/parser.lalrpop
+    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+    output=$(cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- tools/peg/PegGrammar.peg)
+    if [ $? -eq 0 ]; then
+        echo "$output" > tools/peg/PegGrammar.fir
+    else
+        echo "cargo run failed"
+        exit 1
+    fi
 
 # build_site tested with:
 #

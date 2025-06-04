@@ -1,7 +1,7 @@
 type Test[recRowRec]:
     record: (..recRowRec)
 
-main
+main():
     let x: Test[(a: U32)] = Test(record = (a = 123u32))
 
 # args: --typecheck --no-backtrace

@@ -1,4 +1,4 @@
-main
+main():
     match f():
         Foo.A: ()
         Foo.B: ()
@@ -7,7 +7,7 @@ type Foo:
     X
     Y
 
-f(): Option[U32] = Option.None
+f() Option[U32] = Option.None
 
 # args: --no-backtrace
 # expected exit status: 101

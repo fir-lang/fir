@@ -2,7 +2,7 @@ type Test[varRowVar, recRowRec]:
     variant: [..varRowVar]
     record: (..recRowRec)
 
-main
+main():
     let x: Test[row[Foo], row(a: U32)] = Test(variant = ~Foo, record = (a = 123u32))
 
     match x.variant:

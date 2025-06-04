@@ -40,7 +40,6 @@ extern {
         "." => Token { kind: TokenKind::Dot, .. },
         "=" => Token { kind: TokenKind::Eq, .. },
         ".." => Token { kind: TokenKind::DotDot, .. },
-        "..=" => Token { kind: TokenKind::DotDotEq, .. },
         "_" => Token { kind: TokenKind::Underscore, .. },
         "==" => Token { kind: TokenKind::EqEq, .. },
         "+" => Token { kind: TokenKind::Plus, .. },
@@ -270,8 +269,14 @@ TypeNoFn: Type = {
     <var:LowerId> =>
         Type::Var(var.smol_str()),
 
-    "(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
-        Type::Record { fields, extension, is_row: false },
+    "(" <mut fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" => {
+        if fields.len() == 1 && extension.is_none() {
+            if fields[0].name.is_none() {
+                return fields.pop().unwrap().node;
+            }
+        }
+        Type::Record { fields, extension, is_row: false }
+    },
 
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
@@ -335,7 +340,7 @@ FunDecl: L<FunDecl> = {
 
     // TODO: comma parsing after `self` is not right.
 
-    <l:@L> <sig:FunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
+    <l:@L> <sig:FunSig> ":" NEWLINE INDENT <body:LStmts> DEDENT <r:@R> =>
         L::new(module, l, r, FunDecl {
             parent_ty: None,
             name: sig.0,
@@ -377,21 +382,10 @@ FunSig: (L<Id>, FunSig) = {
                 return_ty: ret.1,
             })
     },
-
-    <name:LLowerId> <context:Context> <ret:ReturnType> => {
-        (name,
-            FunSig {
-                context,
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: ret.0,
-                return_ty: ret.1,
-            })
-    },
 }
 
 TopFunDecl: L<FunDecl> = {
-    <l:@L> <sig:TopFunSig> NEWLINE INDENT <body:LStmts> DEDENT <r:@R> => {
+    <l:@L> <sig:TopFunSig> ":" NEWLINE INDENT <body:LStmts> DEDENT <r:@R> => {
         let (parent_ty, name, sig): (Option<L<Id>>, L<Id>, FunSig) = sig;
         L::new(module, l, r, FunDecl {
             parent_ty,
@@ -441,20 +435,6 @@ TopFunSig: (Option<L<Id>>, L<Id>, FunSig) = {
             }
         )
     },
-
-    <parent_ty:ParentTy?> <name:LLowerId> <context:Context> <ret:ReturnType> => {
-        (
-            parent_ty,
-            name,
-            FunSig {
-                context,
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: ret.0,
-                return_ty: ret.1,
-            }
-        )
-    },
 }
 
 ParamList: (SelfParam, Vec<(Id, Option<L<Type>>)>) = {
@@ -469,10 +449,12 @@ Param: (SmolStr, Option<L<Type>>) = {
     },
 }
 
+// NB. This parses function types between parenthesis, as singleton records.
 ReturnType: (Option<L<Type>>, Option<L<Type>>) = {
     => (None, None),
-
-    ":" <ty1:LTypeNoFn?> <ty2:LType> => (ty1, Some(ty2)),
+    <ret:LTypeNoFn> => (None, Some(ret)),
+    <ret:LTypeNoFn> "/" <exn:LTypeNoFn> => (Some(exn), Some(ret)),
+    "/" <exn:LTypeNoFn> => (Some(exn), None),
 }
 
 ParentTy: L<Id> = {
@@ -1000,7 +982,7 @@ InlineExpr: Expr = {
         Expr::Return(Box::new(expr)),
 
     "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+         <ret:ReturnType> "{" <body:LStmts> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1029,7 +1011,7 @@ InlineExpr: Expr = {
             inferred_ty: None,
         }),
 
-    "{" NEWLINE INDENT <body:LStmts> DEDENT "}" =>
+    "{" <body:LStmts> "}" =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1222,6 +1204,11 @@ PatternField: (Option<Id>, L<Pat>) = {
 ImportDecl: L<ImportDecl> = {
     <l:@L> "import" <path:Sep<UpperId, ".">> NEWLINE <r:@R> =>
         L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
+
+    <l:@L> "import" <path:UpperIdPath> NEWLINE <r:@R> => {
+        let path = path.text.split(".").map(|part| SmolStr::new(part)).collect();
+        L::new(module, l, r, ImportDecl { path })
+    },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
