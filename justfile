@@ -47,11 +47,11 @@ generate_parser:
 update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
-    cargo run -- compiler/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-    cargo run -- compiler/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
-    output=$(cargo run -- compiler/Peg.fir -- compiler/PegGrammar.peg)
+    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+    output=$(cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- tools/peg/PegGrammar.peg)
     if [ $? -eq 0 ]; then
-        echo "$output" > compiler/PegGrammar.fir
+        echo "$output" > tools/peg/PegGrammar.fir
     else
         echo "cargo run failed"
         exit 1

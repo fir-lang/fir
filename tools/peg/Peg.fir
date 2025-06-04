@@ -1,8 +1,8 @@
-import Lexer
-import ParseTree
+import Compiler.Lexer
+import Compiler.ParseTree
+import Compiler.Scanner
+import Compiler.Token
 import PegGrammar
-import Scanner
-import Token
 
 main(args: Array[Str]):
     if args.len() != 2:
