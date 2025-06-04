@@ -25,7 +25,9 @@ pub fn resolve_imports(
     let mut new_module: Vec<ast::L<ast::TopDecl>> = vec![];
     let mut imported_modules: Set<Vec<Id>> = Default::default();
 
-    let fir_root = import_paths.get("Fir").unwrap();
+    let fir_root = import_paths
+        .get("Fir")
+        .unwrap_or_else(|| panic!("Fir package path is not in import paths"));
 
     resolve_imports_(
         import_paths,
