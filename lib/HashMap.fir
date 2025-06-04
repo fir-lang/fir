@@ -6,20 +6,20 @@ type Elem[k, v]:
     value: v
     next: Option[Elem[k, v]]
 
-HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter): exn HashMap[k, v]
+HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item: (key: k, value: v) in iter:
         map.insert(item.key, item.value)
     map
 
-HashMap.withCapacity(cap: U32): HashMap[k, v]
+HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
     for i: U32 in range(0u32, cap):
         elems.push(Option.None)
     HashMap(_elems = elems)
 
 # Insert new value, return old value.
-HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v): Option[v]
+HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
     let hash = key.hash()
     let index = hash.mod(self._elems.len())
     match self._elems.get(index):
@@ -42,7 +42,7 @@ HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v): Option[v]
 
     panic("unreachable")
 
-HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k): Option[v]
+HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
     let hash = key.hash()
     let index = hash.mod(self._elems.len())
     let elem = self._elems.get(index)
@@ -58,7 +58,7 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k): Option[v]
     panic("unreachable")
 
 impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
-    toStr(self: HashMap[k, v]): Str
+    toStr(self: HashMap[k, v]) Str:
         let buf = StrBuf.withCapacity(100)
         buf.push('{')
         let printed = 0

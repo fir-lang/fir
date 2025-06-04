@@ -1,10 +1,10 @@
 type Foo:
     x: U32
 
-Fo.f(self: Foo)
+Fo.f(self: Foo):
     print("Foo.f")
 
-main()
+main():
     let a = Foo(x = 123u32)
     a.f()
 

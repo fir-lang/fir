@@ -23,7 +23,7 @@ type NonTerminal:
     UnnamedFields
 
 impl ToStr[NonTerminal]:
-    toStr(self: NonTerminal): Str
+    toStr(self: NonTerminal) Str:
         match self:
             NonTerminal.Type_: "Type_"
             NonTerminal.RecordType: "RecordType"
@@ -44,7 +44,7 @@ impl ToStr[NonTerminal]:
             NonTerminal.UnnamedFields: "UnnamedFields"
 
 impl Eq[NonTerminal]:
-    __eq(self: NonTerminal, other: NonTerminal): Bool
+    __eq(self: NonTerminal, other: NonTerminal) Bool:
         match (left = self, right = other):
             (left = NonTerminal.Type_, right = NonTerminal.Type_): Bool.True
             (left = NonTerminal.RecordType, right = NonTerminal.RecordType): Bool.True
@@ -65,7 +65,7 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.UnnamedFields, right = NonTerminal.UnnamedFields): Bool.True
             _: Bool.False
 
-type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -137,7 +137,7 @@ type_(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-recordType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+recordType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -190,7 +190,7 @@ recordType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-variantType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+variantType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -341,7 +341,7 @@ variantType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-fnType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+fnType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -400,7 +400,7 @@ fnType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Toke
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+namedType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -490,7 +490,7 @@ namedType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[T
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -596,7 +596,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Pars
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-recordTypeField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+recordTypeField(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -641,7 +641,7 @@ recordTypeField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: Parse
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-variantAlt(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+variantAlt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -696,7 +696,7 @@ variantAlt(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-fnArgs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+fnArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -752,7 +752,7 @@ fnArgs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Toke
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-returnType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+returnType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -790,7 +790,7 @@ returnType(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-typeDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+typeDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -982,7 +982,7 @@ typeDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[To
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-typeParams(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+typeParams(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -1062,7 +1062,7 @@ typeParams(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-typeDeclRhs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+typeDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -1122,7 +1122,7 @@ typeDeclRhs(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-conDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+conDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -1241,7 +1241,7 @@ conDecl(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Tok
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-namedFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+namedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -1275,7 +1275,7 @@ namedFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-namedField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+namedField(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({
@@ -1314,7 +1314,7 @@ namedField(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[
     else:
         throw(ParseError.UnexpectedToken(tokens.get(cursor)))
 
-unnamedFields(tokens: Vec[Token], cursor: U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32)
+unnamedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.withCapacity(0)
     let altResult = try({

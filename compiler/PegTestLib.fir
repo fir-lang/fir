@@ -5,16 +5,16 @@ type TestError:
     Other(Str)
 
 impl ToStr[TestError]:
-    toStr(self: TestError): Str
+    toStr(self: TestError) Str:
         match self:
             TestError.ParseError(parseError): parseError.toStr()
             TestError.Other(msg): msg
 
 runParser(
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
         runScan: Bool,
-    ): TestError ParseTree[Token, NonTerminal]
+    ) ParseTree[Token, NonTerminal] / TestError :
     let (tokens, error) = tokenize("<test input>", input)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
@@ -30,32 +30,32 @@ runParser(
 runTest(
         testName: Str,
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
-    ): exn ()
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token] ,
+    ) / exn:
     print(testName)
     match try({ runParser(input, parseFn, Bool.False) }):
-        Result.Ok(tree): print(tree.toDoc().print(80))
+        Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
 
 runTest_(
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
-    ): exn ()
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
+    ) / exn:
     print(input)
     match try({ runParser(input, parseFn, Bool.False) }):
-        Result.Ok(tree): print(tree.toDoc().print(80))
+        Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
 
 runTestIndent(
         input: Str,
-        parseFn: Fn(Vec[Token], U32): ParseError[Token] (tree: ParseTree[Token, NonTerminal], newCursor: U32),
-    ): exn Bool
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
+    ) Bool / exn:
     print(input)
     let result = match try({ runParser(input, parseFn, Bool.True) }):
         Result.Ok(tree):
-            print(tree.toDoc().print(80))
+            print(tree.toDoc().render(80))
             Bool.True
         Result.Err(err):
             print("ERR: `err`")
@@ -63,5 +63,5 @@ runTestIndent(
     print("")
     result
 
-lexerErrorStr(err: Error): Str
+lexerErrorStr(err: Error) Str:
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

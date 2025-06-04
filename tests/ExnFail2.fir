@@ -1,7 +1,7 @@
-f1(): [A] a
+f1() a / [A]:
     throw(~A)
 
-f2(): [A] a
+f2() a / [A]:
     throw(~B)
 
 # args: --typecheck --no-backtrace

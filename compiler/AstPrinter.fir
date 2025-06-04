@@ -1,4 +1,4 @@
-Expr.pprint(self): Doc
+Expr.pprint(self) Doc:
     match self:
         Expr.Var(VarExpr(id, tyArgs)):
             Doc.str(id.name) + _ppTyArgs(tyArgs)
@@ -56,10 +56,10 @@ Expr.pprint(self): Doc
         Expr.BinOp(BinOpExpr(left, right, op)):
             # TODO: Precedence and parens
             # TODO: Operator string
-            parens(left.node.pprint()) \
-                + Doc.blank(1) \
-                + Doc.str(op.toStr()) \
-                + Doc.blank(1) \
+            parens(left.node.pprint())
+                + Doc.blank(1)
+                + Doc.str(op.toStr())
+                + Doc.blank(1)
                 + parens(right.node.pprint())
 
         Expr.UnOp(UnOpExpr(op, expr)):
@@ -78,8 +78,8 @@ Expr.pprint(self): Doc
             Doc.str("return ") + expr.node.pprint()
 
         Expr.Match(MatchExpr(scrutinee, alts)):
-            Doc.str("match ") + scrutinee.node.pprint() + Doc.char(':') + Doc.hardLine() \
-                + join(alts.iter().map(_ppAlt), Doc.hardLine()) \
+            Doc.str("match ") + scrutinee.node.pprint() + Doc.char(':') + Doc.hardLine()
+                + join(alts.iter().map(_ppAlt), Doc.hardLine())
                 + Doc.hardLine()
 
         Expr.If(IfExpr(branches, else_branch)):
@@ -97,7 +97,7 @@ Expr.pprint(self): Doc
         Expr.Is(IsExpr(expr, pat)):
             expr.node.pprint() + Doc.str(" is ") + pat.node.pprint()
 
-Type.pprint(self): Doc
+Type.pprint(self) Doc:
     match self:
         Type.Named(NamedType(name, args)):
             Doc.str(name.name) + _ppTyArgs(args)
@@ -125,13 +125,13 @@ Type.pprint(self): Doc
 
         Type.Fn_(fnType): panic("")
 
-CallArg.pprint(self): Doc
+CallArg.pprint(self) Doc:
     let doc = match self.name:
         Option.Some(name): Doc.str(name.name) + Doc.str(" = ")
         Option.None: Doc.empty()
     doc + self.expr.node.pprint()
 
-Stmt.pprint(self): Doc
+Stmt.pprint(self) Doc:
     match self:
         Stmt.Let(LetStmt(lhs, ty, rhs)):
             let doc = Doc.str("let ") + lhs.node.pprint()
@@ -182,7 +182,7 @@ Stmt.pprint(self): Doc
                 doc += Doc.blank(1) + Doc.str(label.name)
             doc
 
-Pat.pprint(self): Doc
+Pat.pprint(self) Doc:
     match self:
         Pat.Var(VarPat(var_, ty)):
             Doc.str(var_.name)
@@ -213,7 +213,7 @@ Pat.pprint(self): Doc
         Pat.Or(pat1, pat2):
             parens(pat1.node.pprint() + Doc.str(" | ") + pat2.node.pprint())
 
-AssignOp.pprint(self): Doc
+AssignOp.pprint(self) Doc:
     match self:
         AssignOp.Eq: Doc.str("=")
         AssignOp.PlusEq: Doc.str("+=")
@@ -221,7 +221,7 @@ AssignOp.pprint(self): Doc
         AssignOp.StarEq: Doc.str("*=")
         AssignOp.CaretEq: Doc.str("^=")
 
-FunSig.pprint(self): Doc
+FunSig.pprint(self) Doc:
     let doc = Doc.empty()
     if self.context.preds.len() != 0:
         doc += brackets(
@@ -251,24 +251,24 @@ FunSig.pprint(self): Doc
 
     doc
 
-Constructor.pprint(self): Doc
+Constructor.pprint(self) Doc:
     let doc = Doc.str(self.ty.name)
     if self.constr is Option.Some(constr):
         doc += Doc.char('.') + Doc.str(constr.name)
     doc + _ppTyArgs(self.tyArgs)
 
-_ppTyArgs(args: Vec[L[Type]]): Doc
+_ppTyArgs(args: Vec[L[Type]]) Doc:
     if args.len() == 0:
         return Doc.empty()
 
     brackets(commaSep(
-        args.iter().map(fn(l: L[Type]): Doc { l.node.pprint() })))
+        args.iter().map(fn(l: L[Type]) Doc { l.node.pprint() })))
 
-_ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a): exn Doc): exn Doc
+_ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a) Doc / exn) Doc / exn:
     parens(commaSep(
-        namedList.iter().map(fn(a: Named[L[a]]): Doc { _ppNamed(a, ppItem) })))
+        namedList.iter().map(fn(a: Named[L[a]]) Doc { _ppNamed(a, ppItem) })))
 
-_ppNamed(named: Named[L[a]], ppItem: Fn(a): exn Doc): exn Doc
+_ppNamed(named: Named[L[a]], ppItem: Fn(a) Doc / exn) Doc / exn:
     let doc = match named.name:
         Option.Some(name):
             Doc.str(name.name) + Doc.str(" = ")
@@ -276,23 +276,23 @@ _ppNamed(named: Named[L[a]], ppItem: Fn(a): exn Doc): exn Doc
             Doc.empty()
     doc + ppItem(named.node.node)
 
-_ppAlt(alt: Alt): Doc
+_ppAlt(alt: Alt) Doc:
     let doc = alt.pattern.node.pprint()
     if alt.guard is Option.Some(guard):
         panic("TODO")
     doc += Doc.char(':') + Doc.hardLine() + _ppStmts(alt.rhs)
     doc.nest(4)
 
-_ppStmts(stmts: Vec[L[Stmt]]): Doc
+_ppStmts(stmts: Vec[L[Stmt]]) Doc:
     joinTrailing(
-        stmts.iter().map(fn(stmt: L[Stmt]): Doc { stmt.node.pprint() }),
+        stmts.iter().map(fn(stmt: L[Stmt]) Doc { stmt.node.pprint() }),
         Doc.hardLine())
 
-_ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
-    let doc = Doc.str(prefix) \
-        + Doc.break_(1) \
-        + guard.node.pprint() \
-        + Doc.char(':') \
+_ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]) Doc:
+    let doc = Doc.str(prefix)
+        + Doc.break_(1)
+        + guard.node.pprint()
+        + Doc.char(':')
         + Doc.hardLine()
 
     for stmt: L[Stmt] in body.iter():
@@ -300,20 +300,20 @@ _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]): Doc
 
     doc
 
-_ppVariantAlt(alt: VariantAlt): Doc
+_ppVariantAlt(alt: VariantAlt) Doc:
     let doc = Doc.str(alt.con.name)
     if alt.fields.len() != 0:
         doc += _ppNamedList(alt.fields, Type.pprint)
     doc
 
-_needsParens(expr: Expr): Bool
-    expr is Expr.BinOp(_) | Expr.UnOp(_) | Expr.Return(_) | Expr.Match(_) | \
+_needsParens(expr: Expr) Bool:
+    expr is Expr.BinOp(_) | Expr.UnOp(_) | Expr.Return(_) | Expr.Match(_) |
                 Expr.If(_) | Expr.Fn_(_)
 
-commaSep[Iterator[iter, Doc, exn]](iter: iter): exn Doc
+commaSep[Iterator[iter, Doc, exn]](iter: iter) Doc / exn:
     join(iter, Doc.str(", "))
 
-join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
+join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
     let doc: Doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc
@@ -323,11 +323,11 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
 
     doc
 
-joinTrailing[Iterator[iter, Doc, exn]](iter: iter, sep: Doc): exn Doc
+joinTrailing[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
     join(iter, sep) + sep
 
-parens(doc: Doc): Doc
+parens(doc: Doc) Doc:
     Doc.char('(') + doc + Doc.char(')')
 
-brackets(doc: Doc): Doc
+brackets(doc: Doc) Doc:
     Doc.char('[') + doc + Doc.char(']')

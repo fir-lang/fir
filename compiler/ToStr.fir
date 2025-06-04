@@ -3,7 +3,7 @@ import PegTestLib
 import Scanner
 import TypeGrammar
 
-main(args: Array[Str])
+main(args: Array[Str]):
     if args.len() < 2:
         panic("") # TODO: print usage
 
@@ -13,7 +13,7 @@ main(args: Array[Str])
         "--item": generate(args.get(2))
         "--file": generate(readFileUtf8(args.get(2)))
 
-generate(item: Str)
+generate(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
@@ -25,8 +25,8 @@ generate(item: Str)
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
     generateTree(result.tree)
 
-generateTree(parseTree: ParseTree[Token, NonTerminal])
-    print(parseTree.toDoc().print(80))
+generateTree(parseTree: ParseTree[Token, NonTerminal]):
+    print(parseTree.toDoc().render(80))
 
     let nodes = parseTree.asNonTerminal(NonTerminal.TypeDecl)
 
@@ -52,13 +52,13 @@ generateTree(parseTree: ParseTree[Token, NonTerminal])
 
     ()
 
-generateConDecls(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]): Doc
+generateConDecls(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
     for conDecl: ParseTree[Token, NonTerminal] in decls.iter():
         doc += generateConDecl(typeName, conDecl.asNonTerminal(NonTerminal.ConDecl))
     doc
 
-generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]): Doc
+generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let conName = nodes.get(0).asTerminal().text
 
     if nodes.len() == 1:
@@ -75,33 +75,33 @@ generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]): Doc
 
     panic("TODO")
 
-generateNamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]): Doc
+generateNamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldName = fieldNodes.get(0).asTerminal().text
     let fieldType = fieldNodes.get(1)
     Doc.empty()
 
-generateUnnamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]): Doc
+generateUnnamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     Doc.empty()
 
-generateType(nodes: Vec[ParseTree[Token, NonTerminal]]): Doc
+generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     Doc.str("TODO")
 
 type MatchBuilder:
     scrut: Doc
     alts: Vec[(pat: Doc, body: Doc)]
 
-MatchBuilder.withScrut(scrut: Doc): MatchBuilder
+MatchBuilder.withScrut(scrut: Doc) MatchBuilder:
     MatchBuilder(scrut, alts = Vec.withCapacity(5))
 
-MatchBuilder.alt(self, pat: Doc, body: Doc): MatchBuilder
+MatchBuilder.alt(self, pat: Doc, body: Doc) MatchBuilder:
     self.alts.push((pat = pat, body = body))
     self
 
-MatchBuilder.render(self): Doc
+MatchBuilder.render(self) Doc:
     let alts = Doc.empty()
     for alt: (pat: Doc, body: Doc) in self.alts.iter():
         alts += Doc.nested(4, alt.pat + Doc.char(':') + Doc.break_(1) + alt.body).group()
     Doc.nested(4, Doc.str("match ") + self.scrut + Doc.char(':') + Doc.hardLine() + alts)
 
-test()
+test():
     print("Running ToStr derive tests...")

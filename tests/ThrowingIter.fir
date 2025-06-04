@@ -1,30 +1,30 @@
 # Code for the blog post: https://osa1.net/posts/2025-04-17-throwing-iterators-fir.html
 
-sum(nums: Vec[U32]): U32
+sum(nums: Vec[U32]) U32:
     let result: U32 = 0
     for i: U32 in nums.iter():
         result += i
     result
 
-parseSum(nums: Vec[Str]): U32
+parseSum(nums: Vec[Str]) U32:
     let result: U32 = 0
     for i: U32 in nums.iter().map(parseU32):
         result += i
     result
 
-parseSumPropagateErrors(nums: Vec[Str]): [Overflow, EmptyInput, InvalidDigit, ..errs] U32
+parseSumPropagateErrors(nums: Vec[Str]) U32 / [Overflow, EmptyInput, InvalidDigit, ..errs]:
     let result: U32 = 0
     for i: U32 in nums.iter().map(parseU32Exn):
         result += i
     result
 
-parseSumHandleInvalidDigits(nums: Vec[Str]): [Overflow, EmptyInput, ..errs] U32
+parseSumHandleInvalidDigits(nums: Vec[Str]) U32 / [Overflow, EmptyInput, ..errs]:
     let result: U32 = 0
     for i: U32 in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
         result += i
     result
 
-parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
+parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]) U32:
     let result: U32 = 0
     for i: Result[[Overflow, EmptyInput], U32] in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match i:
@@ -33,7 +33,7 @@ parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]): U32
             Result.Ok(i): result += i
     result
 
-main()
+main():
     let nums: Vec[U32] = Vec.withCapacity(10)
     nums.push(1)
     nums.push(2)
@@ -70,13 +70,13 @@ main()
 #
 ####################################################################################################
 
-handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]): [..errs] Option[U32]
+handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) Option[U32] / [..errs]:
     match parseResult:
         Result.Ok(result): result
         Result.Err(~InvalidDigit): Option.Some(0u32)
         Result.Err(other): throw(other)
 
-parseU32(s: Str): U32
+parseU32(s: Str) U32:
     if s.len() == 0:
         panic("Empty input")
 
@@ -93,7 +93,7 @@ parseU32(s: Str): U32
 
     result
 
-parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
+parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     if s.len() == 0:
         throw(~EmptyInput)
 
@@ -115,13 +115,13 @@ parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
 
     result
 
-checkedAdd(i1: U32, i2: U32): Option[U32]
+checkedAdd(i1: U32, i2: U32) Option[U32]:
     if i1 > 4294967295u32 - i2:
         return Option.None
 
     Option.Some(i1 + i2)
 
-checkedMul(i1: U32, i2: U32): Option[U32]
+checkedMul(i1: U32, i2: U32) Option[U32]:
     let result = i1 * i2
 
     if i1 != 0 && result / i1 != i2:

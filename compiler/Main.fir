@@ -3,7 +3,7 @@ import AstPrinter
 import Lexer
 import Scanner
 
-main(args: Array[Str])
+main(args: Array[Str]):
     if args.len() >= 2:
         let filePath = args.get(1)
         let fileContents = readFileUtf8(filePath)
@@ -19,6 +19,6 @@ main(args: Array[Str])
     print("")
     scannerTests()
 
-assertEq[Eq[t], ToStr[t]](expected: t, found: t): [AssertionError(msg: Str), ..r] ()
+assertEq[Eq[t], ToStr[t]](expected: t, found: t) () / [AssertionError(msg: Str), ..r]:
     if expected != found:
         throw(~AssertionError(msg = "Expected `expected`, found `found`"))

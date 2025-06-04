@@ -1,4 +1,4 @@
-main()
+main():
     let a = Vec.withCapacity(10u32)
     let b = a.withCapacity
 

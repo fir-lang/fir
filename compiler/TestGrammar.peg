@@ -1,5 +1,11 @@
 # PEG parsers in this file are used to test the PEG parser generator.
 
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
 Terminals:
     "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
     "b" = Token(kind = TokenKind.LowerId, text = "b", ..)

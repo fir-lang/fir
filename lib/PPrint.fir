@@ -37,15 +37,15 @@ type _State:
     column: U32
     output: StrBuf
         
-Doc.print(self, width: U32): Str
+Doc.render(self, width: U32) Str:
     # TODO: For now copying the initial buffer size from the original PPrint, but we should be able
     # to estimate better numbers using the `Doc` type.
     let output = StrBuf.withCapacity(512)
     let state = _State(width, column = 0, output)
-    self._print(state, 0, Bool.False)
+    self._render(state, 0, Bool.False)
     output.toStr()
 
-Doc._print(self, state: _State, indent: U32, flatten: Bool)
+Doc._render(self, state: _State, indent: U32, flatten: Bool):
     match self:
         Doc._Empty: ()
 
@@ -68,23 +68,23 @@ Doc._print(self, state: _State, indent: U32, flatten: Bool)
 
         Doc._IfFlat(flat, notFlat):
             if flatten:
-                flat._print(state, indent, flatten)
+                flat._render(state, indent, flatten)
             else:
-                notFlat._print(state, indent, flatten)
+                notFlat._render(state, indent, flatten)
 
         Doc._Cat(req, doc1, doc2):
-            doc1._print(state, indent, flatten)
-            doc2._print(state, indent, flatten)
+            doc1._render(state, indent, flatten)
+            doc2._render(state, indent, flatten)
 
         Doc._Nest(req, indent = extraIndent, doc):
-            doc._print(state, indent + extraIndent, flatten)
+            doc._render(state, indent + extraIndent, flatten)
 
         Doc._Group(req, doc):
             if !flatten:
                 flatten = match req:
                     _SpaceReq.Infinite: Bool.True
                     _SpaceReq.Exact(req): state.column + req <= state.width
-            doc._print(state, indent, flatten)
+            doc._render(state, indent, flatten)
 
 # Space requirement.
 type _SpaceReq:
@@ -92,12 +92,12 @@ type _SpaceReq:
     Infinite
 
 impl Add[_SpaceReq]:
-    __add(self: _SpaceReq, other: _SpaceReq): _SpaceReq
+    __add(self: _SpaceReq, other: _SpaceReq) _SpaceReq:
         if self is _SpaceReq.Exact(req1) && other is _SpaceReq.Exact(req2):
             return _SpaceReq.Exact(req1 + req2)
         _SpaceReq.Infinite
 
-Doc._req(self): _SpaceReq
+Doc._req(self) _SpaceReq:
     match self:
         Doc._Empty: _SpaceReq.Exact(0)
         Doc._Str(lenChars, ..): _SpaceReq.Exact(lenChars)
@@ -106,56 +106,56 @@ Doc._req(self): _SpaceReq
         Doc._HardLine: _SpaceReq.Infinite
         Doc._Cat(req, ..) | Doc._Nest(req, ..) | Doc._Group(req, ..): req
 
-_countChars(s: Str): U32
+_countChars(s: Str) U32:
     let i = 0u32
     for x: Char in s.chars():
         i += 1
     i
 
-Doc.empty(): Doc = Doc._Empty
+Doc.empty() Doc = Doc._Empty
 
-Doc.str(str: Str): Doc = Doc._Str(str, lenChars = _countChars(str))
+Doc.str(str: Str) Doc = Doc._Str(str, lenChars = _countChars(str))
 
-Doc.char(c: Char): Doc
+Doc.char(c: Char) Doc:
     # TODO: Implement a shorthand char to string
     let buf = StrBuf.withCapacity(1)
     buf.push(c)
     Doc.str(buf.toStr())
 
-Doc.space(): Doc = Doc._Str(str = " ", lenChars = 1)
+Doc.space() Doc = Doc._Str(str = " ", lenChars = 1)
 
-Doc.hardLine(): Doc = Doc._HardLine
+Doc.hardLine() Doc = Doc._HardLine
 
-Doc.blank(spaces: U32): Doc = Doc._Blank(spaces)
+Doc.blank(spaces: U32) Doc = Doc._Blank(spaces)
 
-Doc.ifFlat(doc1: Doc, doc2: Doc): Doc
+Doc.ifFlat(doc1: Doc, doc2: Doc) Doc:
     match doc1:
         Doc._IfFlat(flat = doc1, ..) | doc1:
             Doc._IfFlat(flat = doc1, notFlat = doc2)
 
-Doc.whenFlat(doc: Doc): Doc
+Doc.whenFlat(doc: Doc) Doc:
     Doc.ifFlat(doc, Doc.empty())
 
-Doc.whenNotFlat(doc: Doc): Doc
+Doc.whenNotFlat(doc: Doc) Doc:
     Doc.ifFlat(Doc.empty(), doc)
 
-Doc.break_(i: U32): Doc
+Doc.break_(i: U32) Doc:
     Doc.ifFlat(Doc.blank(i), Doc.hardLine())
 
-Doc.nest(self, indent: U32): Doc
+Doc.nest(self, indent: U32) Doc:
     Doc._Nest(req = self._req(), indent, doc = self)
 
-Doc.nested(indent: U32, doc: Doc): Doc
+Doc.nested(indent: U32, doc: Doc) Doc:
     doc.nest(indent)
 
-Doc.group(self): Doc
+Doc.group(self) Doc:
     let req = self._req()
     if req is _SpaceReq.Infinite:
         self
     else:
         Doc._Group(req, doc = self)
 
-Doc.cat(self, doc2: Doc): Doc
+Doc.cat(self, doc2: Doc) Doc:
     if self is Doc._Empty:
         return doc2
 
@@ -165,4 +165,4 @@ Doc.cat(self, doc2: Doc): Doc
     Doc._Cat(req = self._req() + doc2._req(), doc1 = self, doc2)
 
 impl Add[Doc]:
-    __add(self: Doc, other: Doc): Doc = self.cat(other)
+    __add(self: Doc, other: Doc) Doc = self.cat(other)

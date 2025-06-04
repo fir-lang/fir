@@ -1,4 +1,4 @@
-main()
+main():
     if Bool.False:
         1u32
 
@@ -52,11 +52,11 @@ main()
 type StrBuilder:
     _buf: StrBuf
 
-StrBuilder.str(self, s: Str): StrBuilder
+StrBuilder.str(self, s: Str) StrBuilder:
     self._buf.pushStr(s)
     self
 
-StrBuilder.char(self, c: Char): StrBuilder
+StrBuilder.char(self, c: Char) StrBuilder:
     self._buf.push(c)
     self
 

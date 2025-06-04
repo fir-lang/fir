@@ -1,7 +1,7 @@
-foo(f: Fn(): exn1 ()): exn1 ()
+foo(f: Fn() () / exn1) () / exn1:
     f()
 
-main()
+main():
     foo(fn() { print("Hi") })
     foo(fn() { throw("Hi") })
 

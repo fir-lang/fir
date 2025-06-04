@@ -3,16 +3,16 @@ type ParseError:
     UnexpectedToken
 
 impl ToStr[ParseError]:
-    toStr(self: ParseError): Str
+    toStr(self: ParseError) Str:
         match self:
             ParseError.EndOfInput: "end of input"
             ParseError.UnexpectedToken: "unexpected token"
 
 type Parser[input, output]:
-    f: Fn(Vec[input], U32): ParseError (output: output, nextPos: U32)
+    f: Fn(Vec[input], U32) (output: output, nextPos: U32) / ParseError
 
 ## Match a single token in the input.
-Parser.match_(f: Fn(input): ParseError Option[output]): Parser[input, output]
+Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
     Parser(f = fn(input, pos) {
         if pos >= input.len():
             throw(ParseError.EndOfInput)
@@ -24,7 +24,7 @@ Parser.match_(f: Fn(input): ParseError Option[output]): Parser[input, output]
     })
 
 ## Match a character in the input.
-Parser.char(c: Char): Parser[Char, ()]
+Parser.char(c: Char) Parser[Char, ()]:
     Parser.match_(fn(input) {
         if input == c:
             Option.Some(())
@@ -33,7 +33,7 @@ Parser.char(c: Char): Parser[Char, ()]
     })
 
 ## Make the parser optional.
-Parser.opt(self: Parser[input, output]): Parser[input, Option[output]]
+Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
     Parser(f = fn(input, pos) {
         match try({ self.f(input, pos) }):
             Result.Ok((output, nextPos)):
@@ -44,7 +44,7 @@ Parser.opt(self: Parser[input, output]): Parser[input, Option[output]]
 
 
 ## Parse `p2` after `self`, return outputs of both.
-Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]): Parser[input, (first: output1, second: output2)]
+Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]) Parser[input, (first: output1, second: output2)]:
     Parser(f = fn(input, pos) {
         let res1 = self.f(input, pos)
         let res2 = p2.f(input, res1.nextPos)
@@ -52,23 +52,23 @@ Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]): Parser[inp
     })
 
 ## Parse `self`, if fails, parse `p2`.
-Parser.alt(self: Parser[input, output], p2: Parser[input, output]): Parser[input, output]
+Parser.alt(self: Parser[input, output], p2: Parser[input, output]) Parser[input, output]:
     Parser(f = fn(input, pos) {
         match try({ self.f(input, pos) }):
             Result.Ok(res): res
             Result.Err(_): p2.f(input, pos)
     })
 
-Parser.parse(self: Parser[input, output], input: Vec[input]): ParseError (output: output, nextPos: U32)
+Parser.parse(self: Parser[input, output], input: Vec[input]) (output: output, nextPos: U32) / ParseError:
     self.f(input, 0)
 
-strToVec(s: Str): Vec[Char]
+strToVec(s: Str) Vec[Char]:
     let chars: Vec[Char] = Vec.withCapacity(s.len())
     for c: Char in s.chars():
         chars.push(c)
     chars
 
-main()
+main():
     let a = Parser.char('a')
     print(try({ a.parse(strToVec("a")).output }))
     print(try({ a.parse(strToVec("b")).output }))

@@ -1,4 +1,4 @@
-main()
+main():
     let v: Vec[(x: U32, y: U32)] = Vec.withCapacity(10)
     v.push((x = 1, y = 2))
     v.push((x = 3, y = 4))

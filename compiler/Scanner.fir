@@ -1,7 +1,7 @@
 import Token
 import Lexer
 
-scan(tokens: Vec[Token]): Vec[Token]
+scan(tokens: Vec[Token]) Vec[Token]:
     if tokens.len() == 0:
         return tokens
 
@@ -28,8 +28,8 @@ scan(tokens: Vec[Token]): Vec[Token]
             skipIndent = Bool.True
             continue
 
-        if delimiterStack.last() is Option.None | Option.Some(Delimiter.Brace) \
-                && token.line != lastLine \
+        if delimiterStack.last() is Option.None | Option.Some(Delimiter.Brace)
+                && token.line != lastLine
                 && !skipIndent:
             # Generate a newline at the last line.
             newTokens.push(Token(
@@ -131,7 +131,7 @@ type Delimiter:
 
 # --------------------------------------------------------------------------------------------------
 
-scannerTests(): [] ()
+scannerTests() () / []:
     let expected: Vec[TokenKind] = Vec.withCapacity(10)
     expected.push(TokenKind.LowerId) # a
     expected.push(TokenKind.Newline)
@@ -266,7 +266,7 @@ symbolNonRec:
     a  # foo
     b  # bar", expected)
 
-_scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
+_scanTest(testName: Str, input: Str, expected: Vec[TokenKind]):
     printNoNl(testName)
 
     let (tokens, error) = tokenize("Test.fir", input)
@@ -292,7 +292,7 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind])
 
     print("\t\tOK")
 
-_scan(input: Str): [AssertionError(msg: Str), ..r] Vec[TokenKind]
+_scan(input: Str) Vec[TokenKind] / [AssertionError(msg: Str), ..r]:
     let (tokens, error) = tokenize("Test", input)
     if error is Option.Some(error):
         throw(~AssertionError(msg = "Lexer failed: `error.msg`"))

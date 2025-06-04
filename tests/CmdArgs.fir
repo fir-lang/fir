@@ -1,4 +1,4 @@
-main(args: Array[Str])
+main(args: Array[Str]):
     printStr(args.toStr())
 
 # args after: -- a b c

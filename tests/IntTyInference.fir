@@ -6,7 +6,7 @@ expectI32(i: I32) = ()
 
 expectU32(i: U32) = ()
 
-main()
+main():
     expectI8(123)
     expectU8(123)
     expectI32(123)

@@ -1,3 +1,9 @@
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
