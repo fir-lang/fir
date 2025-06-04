@@ -1,7 +1,7 @@
 # An implementation of the "Untyped Arithmetic Expressions" language described in Types and
 # Programming Languages section 3.
 
-testMain() [] ():
+testMain() () / []:
     main("0")
     main("succ(0)")
     main("succ(succ(0))")

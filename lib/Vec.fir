@@ -5,7 +5,7 @@ type Vec[t]:
 Vec.withCapacity(cap: U32) Vec[t]:
     Vec(_data = Array.new(cap), _len = 0)
 
-Vec.fromIter[Iterator[iter, item, exn]](iter: iter) exn Vec[item]:
+Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
     let size = iter.size[iter, item, exn, exn]().unwrapOr(10)
     let vec = Vec.withCapacity(size)
     for item: item in iter:
@@ -134,7 +134,7 @@ type VecIter[t]:
     _idx: U32
 
 impl Iterator[VecIter[t], t, exn]:
-    next(self: VecIter[t]) exn Option[t]:
+    next(self: VecIter[t]) Option[t] / exn:
         if self._idx >= self._vec.len():
             return Option.None
 

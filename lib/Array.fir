@@ -5,7 +5,7 @@ prim Array.len(self: Array[t]) U32
 prim Array.get(self: Array[t], idx: U32) t
 prim Array.set(self: Array[t], idx: U32, elem: t)
 
-Array.fromIter[Iterator[iter, item, exn]](iter: iter) exn Array[item]:
+Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
     let size = match iter.size[iter, item, exn, exn]():
         Option.Some(size): size
         Option.None: panic("Array.fromIter iterator size unknown")

@@ -1,4 +1,4 @@
-test() U32 Str:
+test() Str / U32:
     throw(123u32)
 
 main():

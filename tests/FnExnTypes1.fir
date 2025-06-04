@@ -1,4 +1,4 @@
-foo(f: Fn() exn1 ()) exn2 ():
+foo(f: Fn() () / exn1) () / exn2:
     f()
 
 main():

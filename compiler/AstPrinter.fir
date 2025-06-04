@@ -264,11 +264,11 @@ _ppTyArgs(args: Vec[L[Type]]) Doc:
     brackets(commaSep(
         args.iter().map(fn(l: L[Type]) Doc { l.node.pprint() })))
 
-_ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a) exn Doc) exn Doc:
+_ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a) Doc / exn) Doc / exn:
     parens(commaSep(
         namedList.iter().map(fn(a: Named[L[a]]) Doc { _ppNamed(a, ppItem) })))
 
-_ppNamed(named: Named[L[a]], ppItem: Fn(a) exn Doc) exn Doc:
+_ppNamed(named: Named[L[a]], ppItem: Fn(a) Doc / exn) Doc / exn:
     let doc = match named.name:
         Option.Some(name):
             Doc.str(name.name) + Doc.str(" = ")
@@ -310,10 +310,10 @@ _needsParens(expr: Expr) Bool:
     expr is Expr.BinOp(_) | Expr.UnOp(_) | Expr.Return(_) | Expr.Match(_) |
                 Expr.If(_) | Expr.Fn_(_)
 
-commaSep[Iterator[iter, Doc, exn]](iter: iter) exn Doc:
+commaSep[Iterator[iter, Doc, exn]](iter: iter) Doc / exn:
     join(iter, Doc.str(", "))
 
-join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) exn Doc:
+join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
     let doc: Doc = match iter.next():
         Option.None: return Doc.empty()
         Option.Some(doc): doc
@@ -323,7 +323,7 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) exn Doc:
 
     doc
 
-joinTrailing[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) exn Doc:
+joinTrailing[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
     join(iter, sep) + sep
 
 parens(doc: Doc) Doc:

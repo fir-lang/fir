@@ -9,10 +9,10 @@ impl ToStr[ParseError]:
             ParseError.UnexpectedToken: "unexpected token"
 
 type Parser[input, output]:
-    f: Fn(Vec[input], U32) ParseError (output: output, nextPos: U32)
+    f: Fn(Vec[input], U32) (output: output, nextPos: U32) / ParseError
 
 ## Match a single token in the input.
-Parser.match_(f: Fn(input) ParseError Option[output]) Parser[input, output]:
+Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
     Parser(f = fn(input, pos) {
         if pos >= input.len():
             throw(ParseError.EndOfInput)
@@ -59,7 +59,7 @@ Parser.alt(self: Parser[input, output], p2: Parser[input, output]) Parser[input,
             Result.Err(_): p2.f(input, pos)
     })
 
-Parser.parse(self: Parser[input, output], input: Vec[input]) ParseError (output: output, nextPos: U32):
+Parser.parse(self: Parser[input, output], input: Vec[input]) (output: output, nextPos: U32) / ParseError:
     self.f(input, 0)
 
 strToVec(s: Str) Vec[Char]:

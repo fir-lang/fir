@@ -6,7 +6,7 @@ type Elem[k, v]:
     value: v
     next: Option[Elem[k, v]]
 
-HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) exn HashMap[k, v]:
+HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item: (key: k, value: v) in iter:
         map.insert(item.key, item.value)

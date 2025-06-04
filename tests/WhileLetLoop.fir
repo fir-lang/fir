@@ -5,7 +5,7 @@ main():
     v.push(789u32)
 
     let iter = v.iter()
-    let next: Fn() [] Option[U32] = iter.next
+    let next: Fn() Option[U32] / [] = iter.next
     while next() is Option.Some(next):
         printStr(next.toStr())
 

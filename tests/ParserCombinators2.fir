@@ -9,13 +9,13 @@ impl ToStr[ParseError]:
             ParseError.UnexpectedToken: "unexpected token"
 
 type Parser[input, output]:
-    f: Fn(ParserState[input]) ParseError output
+    f: Fn(ParserState[input]) output / ParseError
 
 type ParserState[input]:
     input: Vec[input]
     pos: U32
 
-Parser.match_(f: Fn(input) ParseError output) Parser[input, output]:
+Parser.match_(f: Fn(input) output / ParseError) Parser[input, output]:
     Parser(f = fn(state) {
         if state.pos >= state.input.len():
             throw(ParseError.EndOfInput)
@@ -30,7 +30,7 @@ Parser.char(c: Char) Parser[Char, ()]:
             throw(ParseError.UnexpectedToken)
     })
 
-Parser.seq(self: Parser[input, output], cont: Fn(output) ParseError Parser[input, output]) Parser[input, output]:
+Parser.seq(self: Parser[input, output], cont: Fn(output) Parser[input, output] / ParseError) Parser[input, output]:
     Parser(f = fn(state) { cont(self.f(state)).f(state) })
 
 Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
@@ -55,7 +55,7 @@ Parser.alt(self: Parser[input, output], p2: Parser[input, output]) Parser[input,
                 p2.f(state)
     })
 
-Parser.parse(self: Parser[input, output], input: Vec[input]) ParseError output:
+Parser.parse(self: Parser[input, output], input: Vec[input]) output / ParseError:
     let state = ParserState(input, pos = 0)
     self.f(state)
 

@@ -63,7 +63,7 @@ main(args: Array[Str]):
 errStr(err: Error) Str:
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
 
-capitalize(s: Str) exn Str:
+capitalize(s: Str) Str / exn:
     let buf = StrBuf.withCapacity(s.len())
     let chars = s.chars()
 
@@ -323,8 +323,8 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
 
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
-generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) exn Doc:
-    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) ParseError[`terminalType`] (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32):")
+generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
+    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32) / ParseError[`terminalType`]:")
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
@@ -394,7 +394,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 ## in a `try` block, the `cursor` won't update the non-terminal function's `cursor` variable. The
 ## use site of this function should return the value of `cursor` from the closure so that the
 ## non-terminal function's `cursor` can be updated with the new value.
-generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]) exn Doc:
+generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
     match symbol:
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse({ panic("Unknown terminal: `terminal`") })
@@ -547,7 +547,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                                 + Doc.hardLine()
                                 + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")))
 
-tokensToCode(tokens: Vec[Token]) exn Doc:
+tokensToCode(tokens: Vec[Token]) Doc / exn:
     if tokens.len() == 0:
         panic("tokensToCode: empty tokens")
 

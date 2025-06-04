@@ -37,7 +37,7 @@ f5Complex() Result[[E2, E3], ()]:
         Result.Err(other):
             Result.Err(other)
 
-f6[VarRow[errs]](f: Fn() exn Result[[E1, ..errs], ()]) exn Result[[..errs], ()]:
+f6[VarRow[errs]](f: Fn() Result[[E1, ..errs], ()] / exn) Result[[..errs], ()] / exn:
     match f():
         Result.Err(~E1) | Result.Ok(()):
             Result.Ok(())
@@ -64,7 +64,7 @@ f6[VarRow[errs]](f: Fn() exn Result[[E1, ..errs], ()]) exn Result[[..errs], ()]:
 #         Result.Ok(()):
 #             Result.Err(~E1)
 
-f7_2[VarRow[errs]](f: Fn() exn Result[[E1, ..errs], ()]) exn Result[[E1, ..errs], ()]:
+f7_2[VarRow[errs]](f: Fn() Result[[E1, ..errs], ()] / exn) Result[[E1, ..errs], ()] / exn:
     match f():
         Result.Err(err):
             Result.Err(err)
@@ -78,11 +78,11 @@ f7_arg_1() Result[[E1, E2], ()]:
 f7_arg_2[VarRow[errs]]() Result[[E2, ..errs], ()]:
     Result.Err(~E2)
 
-f8(f: Fn() exn1 [E1, E2]) = ()
+f8(f: Fn() [E1, E2] / exn1) = ()
 
 f9[VarRow[r]]() [E1, ..r] = ~E1
 
-f10[VarRow[r]](f: Fn([E1, E2, ..r]) exn1 ()) = ()
+f10[VarRow[r]](f: Fn([E1, E2, ..r]) () / exn1) = ()
 
 f11(x: [E1, E2, E3]) = ()
 

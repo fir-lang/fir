@@ -18,14 +18,14 @@ type Lexer:
     _line: U32
     _col: U32
 
-Lexer._fail(self, msg: Str) Error a:
+Lexer._fail(self, msg: Str) a / Error:
     throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0, line = self._line, col = self._col), msg = msg))
 
 # NB. Panics if OOB.
 Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
-Lexer.next(self) Error Option[Token]:
+Lexer.next(self) Option[Token] / Error:
     # Skip whitespace and comments before actual tokens.
     loop:
         while self._byteIdx < self._input.len() && self._nextChar() is char && char.isAsciiWhitespace():
@@ -488,7 +488,7 @@ Lexer.next(self) Error Option[Token]:
 
             panic("TODO: `c` at `byteIdx`")
 
-Lexer._intTypeSuffix(self) Error IntKind:
+Lexer._intTypeSuffix(self) IntKind / Error:
     let rest = self._input.substr(self._byteIdx, self._input.len())
     let typeSuffix = IntKind.U32
     match rest:
@@ -513,7 +513,7 @@ Lexer._intTypeSuffix(self) Error IntKind:
     typeSuffix
 
 # NB. Initial '"' should NOT be consumed.
-Lexer._string(self) Error Token:
+Lexer._string(self) Token / Error:
     let startIdx = self._byteIdx
     let startLine = self._line
     let startCol = self._col
@@ -570,7 +570,7 @@ Lexer._string(self) Error Token:
     self._fail("unterminated string literal")
 
 # NB. Initial '\'' should NOT be consumed.
-Lexer._char(self) Error Token:
+Lexer._char(self) Token / Error:
     let idx = self._byteIdx
     let line = self._line
     let col = self._col
@@ -608,7 +608,7 @@ Lexer._skipSingleLineComment(self):
             return
         self._col += c.lenUtf8()         # TODO: Handle non-ascii
 
-Lexer._skipMultiLineComment(self) Error ():
+Lexer._skipMultiLineComment(self) () / Error:
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()

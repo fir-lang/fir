@@ -131,7 +131,7 @@ type Delimiter:
 
 # --------------------------------------------------------------------------------------------------
 
-scannerTests() [] ():
+scannerTests() () / []:
     let expected: Vec[TokenKind] = Vec.withCapacity(10)
     expected.push(TokenKind.LowerId) # a
     expected.push(TokenKind.Newline)
@@ -292,7 +292,7 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind]):
 
     print("\t\tOK")
 
-_scan(input: Str) [AssertionError(msg: Str), ..r] Vec[TokenKind]:
+_scan(input: Str) Vec[TokenKind] / [AssertionError(msg: Str), ..r]:
     let (tokens, error) = tokenize("Test", input)
     if error is Option.Some(error):
         throw(~AssertionError(msg = "Lexer failed: `error.msg`"))

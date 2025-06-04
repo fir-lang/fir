@@ -1,4 +1,4 @@
-f1() [..r] a:
+f1() a / [..r]:
     throw(~A)
 
 # args: --typecheck --no-backtrace

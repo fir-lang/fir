@@ -8,12 +8,12 @@ impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
             Result.Err(e): "Result.Err(`e`)"
             Result.Ok(t): "Result.Ok(`t`)"
 
-Result.map(self: Result[e, t], f: Fn(t) exn t2) exn Result[e, t2]:
+Result.map(self: Result[e, t], f: Fn(t) t2 / exn) Result[e, t2] / exn:
     match self:
         Result.Ok(val): Result.Ok(f(val))
         Result.Err(err): Result.Err(err)
 
-Result.mapErr(self: Result[e, t], f: Fn(e) exn e2) exn Result[e2, t]:
+Result.mapErr(self: Result[e, t], f: Fn(e) e2 / exn) Result[e2, t] / exn:
     match self:
         Result.Ok(val): Result.Ok(val)
         Result.Err(err): Result.Err(f(err))
@@ -28,7 +28,7 @@ Result.unwrapOr(self: Result[e, t], default: t) t:
         Result.Ok(val): val
         Result.Err(_): default
 
-Result.unwrapOrElse(self: Result[e, t], f: Fn(e) exn t) exn t:
+Result.unwrapOrElse(self: Result[e, t], f: Fn(e) t / exn) t / exn:
     match self:
         Result.Ok(val): val
         Result.Err(err): f(err)
