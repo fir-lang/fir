@@ -311,21 +311,23 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #     TypeDeclRhs(
 #         ConDecl(
 #             UpperId(2:5:"Variant"),
-#             NamedField(
-#                 LowerId(3:9:"alts"),
-#                 Type_(
-#                     NamedType(
-#                         UpperId(3:15:"Vec"),
-#                         Type_(NamedType(UpperId(3:19:"VariantAlt"))),
+#             NamedFields(
+#                 NamedField(
+#                     LowerId(3:9:"alts"),
+#                     Type_(
+#                         NamedType(
+#                             UpperId(3:15:"Vec"),
+#                             Type_(NamedType(UpperId(3:19:"VariantAlt"))),
+#                         ),
 #                     ),
 #                 ),
-#             ),
-#             NamedField(
-#                 LowerId(4:9:"extension"),
-#                 Type_(
-#                     NamedType(
-#                         UpperId(4:20:"Option"),
-#                         Type_(NamedType(UpperId(4:27:"Id"))),
+#                 NamedField(
+#                     LowerId(4:9:"extension"),
+#                     Type_(
+#                         NamedType(
+#                             UpperId(4:20:"Option"),
+#                             Type_(NamedType(UpperId(4:27:"Id"))),
+#                         ),
 #                     ),
 #                 ),
 #             ),
@@ -381,3 +383,4 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 
 # expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
+
