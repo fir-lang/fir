@@ -1467,21 +1467,17 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
                 }
             }
 
-            if !labels2_map.is_empty() && extension.is_none() {
-                return false;
-            }
+            let ext_var = match extension {
+                Some(ext_var) => ext_var,
+                None => return labels2_map.is_empty(),
+            };
 
-            if !labels2_map.is_empty() {
-                let mut alts: Vec<mono::VariantAlt> = labels2_map
-                    .into_iter()
-                    .map(|(label, fields)| mono::VariantAlt { con: label, fields })
-                    .collect();
-                alts.sort_by_key(|alt| alt.con.clone());
-                substs.insert(
-                    extension.as_ref().unwrap().clone(),
-                    mono::Type::Variant { alts },
-                );
-            }
+            let mut alts: Vec<mono::VariantAlt> = labels2_map
+                .into_iter()
+                .map(|(label, fields)| mono::VariantAlt { con: label, fields })
+                .collect();
+            alts.sort_by_key(|alt| alt.con.clone());
+            substs.insert(ext_var.clone(), mono::Type::Variant { alts });
 
             true
         }
@@ -1629,13 +1625,18 @@ fn mono_tc_ty(
                 let mut all_alts: Vec<mono::VariantAlt> = vec![];
 
                 for (con, field) in labels {
-                    let field_record_ty = mono_tc_ty(&field, ty_map, poly_pgm, mono_pgm);
+                    let con_fields = match mono_tc_ty(&field, ty_map, poly_pgm, mono_pgm) {
+                        mono::Type::Record { fields } => fields,
+                        other => panic!(
+                            "Variant label field did not monomorphise to a record:\n\
+                            Variant: {:?}\n\
+                            Mono field: {:?}",
+                            ty, other
+                        ),
+                    };
                     all_alts.push(mono::VariantAlt {
                         con,
-                        fields: vec![ast::Named {
-                            name: None,
-                            node: field_record_ty,
-                        }],
+                        fields: con_fields,
                     })
                 }
 
@@ -1760,7 +1761,12 @@ fn mono_ast_ty(
                     Some(mono::Type::Variant { alts: extra_alts }) => {
                         alts.extend(extra_alts.iter().cloned());
                     }
-                    other => panic!("Variant extension is not a variant: {:?}", other),
+                    Some(other) => panic!("Variant extension is not a variant: {:?}", other),
+                    None => panic!(
+                        "Variant extension is not in ty map: {}\n\
+                        Ty map = {:#?}",
+                        extension, ty_map
+                    ),
                 }
             }
 

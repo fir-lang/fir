@@ -338,7 +338,9 @@ mod wasm {
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm, false);
-        let mut module = import_resolver::resolve_imports("fir", "", module, true, false);
+        let mut import_path: crate::collections::Map<String, String> = Default::default();
+        import_path.insert("Fir".to_string(), "fir/lib".to_string());
+        let mut module = import_resolver::resolve_imports(&import_path, "", module, true, false);
 
         type_checker::check_module(&mut module);
 
