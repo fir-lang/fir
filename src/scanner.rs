@@ -155,7 +155,7 @@ where
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow => {
+            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 
@@ -273,7 +273,7 @@ where
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow => {
+            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
                 new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }

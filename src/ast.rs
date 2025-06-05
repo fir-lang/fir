@@ -545,8 +545,11 @@ pub enum Expr {
 
     Is(IsExpr),
 
-    /// A sequence: `[a, b, c]` or `[a = b, c = d]`. Can be empty.
-    Seq(Vec<(Option<L<Expr>>, L<Expr>)>),
+    /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    Seq {
+        ty: Option<Id>,
+        elems: Vec<(Option<L<Expr>>, L<Expr>)>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -1122,7 +1125,7 @@ impl Expr {
                 expr.node.subst_ty_ids(substs);
             }
 
-            Expr::Seq(elems) => {
+            Expr::Seq { ty: _, elems } => {
                 for (k, v) in elems {
                     if let Some(k) = k {
                         k.node.subst_ty_ids(substs);

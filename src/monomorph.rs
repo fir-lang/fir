@@ -900,7 +900,7 @@ fn mono_expr(
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
 
-        ast::Expr::Seq(_) => panic!("Seq expr should've been desugared"),
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 

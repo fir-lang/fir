@@ -26,6 +26,11 @@ pub enum TokenKind {
     /// An identifier starting with an uppercase letter, followed by a '['.
     UpperIdLBracket,
 
+    /// An identifier starting with an uppercase letter, followed by a '.['.
+    ///
+    /// This starts an iterator syntax.
+    UpperIdDotLBracket,
+
     /// An identifier starting with a '~' followed by uppercase letter.
     TildeUpperId,
 

@@ -1207,116 +1207,149 @@ pub(super) fn check_expr(
             (Ty::bool(), pat_binders)
         }
 
-        ast::Expr::Seq(elems) => {
-            if elems.is_empty() {
-                let desugared = ast::Expr::Call(ast::CallExpr {
-                    fun: Box::new(ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::Var(ast::VarExpr {
-                            id: SmolStr::new("empty"),
-                            user_ty_args: vec![],
-                            ty_args: vec![],
-                        }),
-                    }),
-                    args: vec![],
-                });
-                expr.node = desugared;
-                return check_expr(tc_state, expr, expected_ty, level, loop_stack);
-            }
+        ast::Expr::Seq { ty, elems } => {
+            let iter_ty = ty.clone();
 
-            let mut pairs = false;
-            let mut singles = false;
-
-            for (k, _) in elems.iter() {
-                match k {
-                    Some(_) => pairs = true,
-                    None => singles = true,
-                }
-            }
-
-            if pairs && singles {
-                panic!(
-                    "{}: Sequence has both key-value pair and single element",
-                    loc_display(&expr.loc)
-                );
-            }
-
-            let mut elem_iters: Vec<ast::L<ast::Expr>> = Vec::with_capacity(elems.len());
-            for (k, v) in elems.iter() {
-                let elem = match k {
-                    Some(k) => ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::Record(vec![
-                            ast::Named {
-                                name: Some(SmolStr::new("key")),
-                                node: k.clone(),
-                            },
-                            ast::Named {
-                                name: Some(SmolStr::new("value")),
-                                node: v.clone(),
-                            },
-                        ]),
-                    },
-                    None => v.clone(),
-                };
-                elem_iters.push(ast::L {
+            let iter_expr = if elems.is_empty() {
+                ast::L {
                     loc: ast::Loc::dummy(),
                     node: ast::Expr::Call(ast::CallExpr {
                         fun: Box::new(ast::L {
                             loc: ast::Loc::dummy(),
                             node: ast::Expr::Var(ast::VarExpr {
-                                id: SmolStr::new_static("onceWith"),
+                                id: SmolStr::new("empty"),
                                 user_ty_args: vec![],
                                 ty_args: vec![],
                             }),
                         }),
+                        args: vec![],
+                    }),
+                }
+            } else {
+                let mut pairs = false;
+                let mut singles = false;
+
+                for (k, _) in elems.iter() {
+                    match k {
+                        Some(_) => pairs = true,
+                        None => singles = true,
+                    }
+                }
+
+                if pairs && singles {
+                    panic!(
+                        "{}: Sequence has both key-value pair and single element",
+                        loc_display(&expr.loc)
+                    );
+                }
+
+                let mut elem_iters: Vec<ast::L<ast::Expr>> = Vec::with_capacity(elems.len());
+                for (k, v) in elems.iter() {
+                    let elem = match k {
+                        Some(k) => ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::Record(vec![
+                                ast::Named {
+                                    name: Some(SmolStr::new("key")),
+                                    node: k.clone(),
+                                },
+                                ast::Named {
+                                    name: Some(SmolStr::new("value")),
+                                    node: v.clone(),
+                                },
+                            ]),
+                        },
+                        None => v.clone(),
+                    };
+                    elem_iters.push(ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: ast::Loc::dummy(),
+                                node: ast::Expr::Var(ast::VarExpr {
+                                    id: SmolStr::new_static("onceWith"),
+                                    user_ty_args: vec![],
+                                    ty_args: vec![],
+                                }),
+                            }),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: ast::Expr::Fn(ast::FnExpr {
+                                        sig: ast::FunSig {
+                                            context: ast::Context {
+                                                type_params: vec![],
+                                                preds: vec![],
+                                            },
+                                            self_: ast::SelfParam::No,
+                                            params: vec![],
+                                            return_ty: None,
+                                            exceptions: None,
+                                        },
+                                        idx: 0,
+                                        inferred_ty: None,
+                                        body: vec![ast::L {
+                                            loc: elem.loc.clone(),
+                                            node: ast::Stmt::Expr(elem),
+                                        }],
+                                    }),
+                                },
+                            }],
+                        }),
+                    });
+                }
+
+                let mut iter = elem_iters.into_iter();
+                let init = iter.next().unwrap();
+                iter.fold(init, |elem, next| ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                object: Box::new(elem),
+                                field: SmolStr::new_static("chain"),
+                                user_ty_args: vec![],
+                            }),
+                        }),
                         args: vec![ast::CallArg {
                             name: None,
-                            expr: ast::L {
-                                loc: ast::Loc::dummy(),
-                                node: ast::Expr::Fn(ast::FnExpr {
-                                    sig: ast::FunSig {
-                                        context: ast::Context {
-                                            type_params: vec![],
-                                            preds: vec![],
-                                        },
-                                        self_: ast::SelfParam::No,
-                                        params: vec![],
-                                        return_ty: None,
-                                        exceptions: None,
-                                    },
-                                    idx: 0,
-                                    inferred_ty: None,
-                                    body: vec![ast::L {
-                                        loc: elem.loc.clone(),
-                                        node: ast::Stmt::Expr(elem),
-                                    }],
-                                }),
-                            },
+                            expr: next,
                         }],
                     }),
-                });
-            }
+                })
+            };
 
-            let mut iter = elem_iters.into_iter();
-            let init = iter.next().unwrap();
-            *expr = iter.fold(init, |elem, next| ast::L {
-                loc: ast::Loc::dummy(),
-                node: ast::Expr::Call(ast::CallExpr {
-                    fun: Box::new(ast::L {
+            let desugared = match iter_ty {
+                Some(iter_ty) => {
+                    let field_select_expr = ast::L {
                         loc: ast::Loc::dummy(),
-                        node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                            object: Box::new(elem),
-                            field: SmolStr::new_static("chain"),
+                        node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                            ty: iter_ty,
+                            member: SmolStr::new_static("fromIter"),
                             user_ty_args: vec![],
+                            ty_args: vec![],
                         }),
-                    }),
-                    args: vec![ast::CallArg {
-                        name: None,
-                        expr: next,
-                    }],
-                }),
-            });
+                    };
+
+                    ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(field_select_expr),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: iter_expr,
+                            }],
+                        }),
+                    }
+                }
+
+                None => iter_expr,
+            };
+
+            *expr = desugared;
+
             check_expr(tc_state, expr, expected_ty, level, loop_stack)
         }
     }

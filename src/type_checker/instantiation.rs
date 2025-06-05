@@ -174,7 +174,7 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_pat(&mut pat.node, cons);
         }
 
-        ast::Expr::Seq(_) => panic!("Seq expr should've been desugared"),
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 

@@ -7,8 +7,16 @@ main():
     for x: (key: Str, value: U32) in iter:
         print("`x.key` = `x.value`")
 
+    let x: Vec[U32] = Vec.[]
+    print(x)
+
+    let x: Vec[Str] = Vec.["hi", "bye"]
+    print(x)
+
 # expected stdout:
 # 1
 # 2
 # a = 1
 # b = 2
+# []
+# [hi,bye]

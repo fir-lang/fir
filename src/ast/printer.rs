@@ -819,7 +819,11 @@ impl Expr {
                 buffer.push(')');
             }
 
-            Expr::Seq(elems) => {
+            Expr::Seq { ty, elems } => {
+                if let Some(ty) = ty {
+                    buffer.push_str(ty);
+                    buffer.push('.');
+                }
                 buffer.push('[');
                 for (i, (k, v)) in elems.iter().enumerate() {
                     if i != 0 {
