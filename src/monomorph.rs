@@ -1465,21 +1465,17 @@ fn match_(trait_ty: &ast::Type, arg_ty: &mono::Type, substs: &mut Map<Id, mono::
                 }
             }
 
-            if !labels2_map.is_empty() && extension.is_none() {
-                return false;
-            }
+            let ext_var = match extension {
+                Some(ext_var) => ext_var,
+                None => return labels2_map.is_empty(),
+            };
 
-            if !labels2_map.is_empty() {
-                let mut alts: Vec<mono::VariantAlt> = labels2_map
-                    .into_iter()
-                    .map(|(label, fields)| mono::VariantAlt { con: label, fields })
-                    .collect();
-                alts.sort_by_key(|alt| alt.con.clone());
-                substs.insert(
-                    extension.as_ref().unwrap().clone(),
-                    mono::Type::Variant { alts },
-                );
-            }
+            let mut alts: Vec<mono::VariantAlt> = labels2_map
+                .into_iter()
+                .map(|(label, fields)| mono::VariantAlt { con: label, fields })
+                .collect();
+            alts.sort_by_key(|alt| alt.con.clone());
+            substs.insert(ext_var.clone(), mono::Type::Variant { alts });
 
             true
         }
@@ -1763,7 +1759,12 @@ fn mono_ast_ty(
                     Some(mono::Type::Variant { alts: extra_alts }) => {
                         alts.extend(extra_alts.iter().cloned());
                     }
-                    other => panic!("Variant extension is not a variant: {:?}", other),
+                    Some(other) => panic!("Variant extension is not a variant: {:?}", other),
+                    None => panic!(
+                        "Variant extension is not in ty map: {}\n\
+                        Ty map = {:#?}",
+                        extension, ty_map
+                    ),
                 }
             }
 
