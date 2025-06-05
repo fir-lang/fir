@@ -1627,13 +1627,18 @@ fn mono_tc_ty(
                 let mut all_alts: Vec<mono::VariantAlt> = vec![];
 
                 for (con, field) in labels {
-                    let field_record_ty = mono_tc_ty(&field, ty_map, poly_pgm, mono_pgm);
+                    let con_fields = match mono_tc_ty(&field, ty_map, poly_pgm, mono_pgm) {
+                        mono::Type::Record { fields } => fields,
+                        other => panic!(
+                            "Variant label field did not monomorphise to a record:\n\
+                            Variant: {:?}\n\
+                            Mono field: {:?}",
+                            ty, other
+                        ),
+                    };
                     all_alts.push(mono::VariantAlt {
                         con,
-                        fields: vec![ast::Named {
-                            name: None,
-                            node: field_record_ty,
-                        }],
+                        fields: con_fields,
                     })
                 }
 
