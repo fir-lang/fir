@@ -310,7 +310,7 @@ Lexer.next(self) Option[Token] / Error:
         "|" _:
             self._byteIdx += 1
             self._col += 1
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "|", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Pipe, text = "|", byteIdx, line, col))
 
         "<<" _:
             self._byteIdx += 2
