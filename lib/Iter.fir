@@ -53,6 +53,8 @@ trait Iterator[iter, item, exn]:
     ##
     ## If an iterator returns a `Option.Some(n)`, it should always yield `n` elements. It's a bug if
     ## the iterator yields less or more.
+    ##
+    ## Order of type arguments: iter, item, exn (from `Iterator`), the function's exn.
     size(self: iter) Option[U32]:
         Option.None
 
@@ -111,7 +113,7 @@ impl[Iterator[iter1, a1, exn1]] Iterator[Map[iter1, a1, b1, exn1], b1, exn1]:
             Option.Some(a): Option.Some(self.f(a))
 
     size(self: Map[iter1, a1, b1, exn1]) Option[U32] / exn2:
-        self.iter.size[iter1, a1, b1, exn2]()
+        self.iter.size[iter1, a1, exn1, exn2]()
 
 # --------------------------------------------------------------------------------------------------
 
