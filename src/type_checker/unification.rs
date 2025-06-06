@@ -412,6 +412,18 @@ pub(super) fn try_unify_one_way(
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
+        (Ty::Var(var1), Ty::Var(var2)) => {
+            if var1 == var2 {
+                return true;
+            }
+            if var1.level() > var2.level() {
+                var1.set_link(ty2);
+            } else {
+                var2.set_link(ty1);
+            }
+            true
+        }
+
         (Ty::Var(var), ty2) => {
             link_var(var, ty2);
             true

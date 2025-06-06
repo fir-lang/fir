@@ -13,6 +13,15 @@ main():
     let x: Vec[Str] = Vec.["hi", "bye"]
     print(x)
 
+    let x: Vec[Vec[Str]] = Vec.[Vec.["hi"], Vec.["bye"]]
+    print(x)
+
+    let x: Vec[Vec[U32]] = Vec.[
+        Vec.[1u32, 2u32, 3u32],
+        Vec.[4u32, 5u32, 6u32],
+    ]
+    print(x)
+
 # expected stdout:
 # 1
 # 2
@@ -20,3 +29,5 @@ main():
 # b = 2
 # []
 # [hi,bye]
+# [[hi],[bye]]
+# [[1,2,3],[4,5,6]]
