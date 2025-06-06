@@ -7,5 +7,5 @@ main():
 # expected exit status: 101
 # expected stderr:
 # Unable to resolve predicates:
-# tests/Issue74.fir:3:5: Step[Bool]
 # tests/Issue74.fir:3:5: Ord[Bool]
+# tests/Issue74.fir:3:5: Step[Bool]

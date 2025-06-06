@@ -1432,6 +1432,7 @@ fn resolve_preds(
     }
 
     if !goals.is_empty() {
+        goals.sort();
         use std::fmt::Write;
         let mut msg = String::new();
         writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
