@@ -1211,6 +1211,14 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::Seq { ty, elems } => {
+            /*
+            Functions used in the desugaring:
+
+            - empty:    [?exn] Fn() Empty / ?exn
+            - onceWith: [exn, t, ?exn] Fn(Fn() : t / exn) OnceWith[t, exn] / ?exn
+            - chain:    [iter, item, exn, other, ?exn] [Iterator[iter, item, exn]] Fn(iter, other) Chain[iter, other, item, exn] / ?exn
+            */
+
             let iter_ty = ty.clone();
 
             let iter_expr = if elems.is_empty() {
