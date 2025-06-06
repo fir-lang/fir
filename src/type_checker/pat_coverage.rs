@@ -137,7 +137,7 @@ impl PatCoverage {
             Ty::Con(ty_con, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -151,7 +151,7 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -171,7 +171,7 @@ impl PatCoverage {
             Ty::App(ty_con, ty_args, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -185,7 +185,8 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                        let con_fn_ty =
+                            con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,

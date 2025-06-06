@@ -305,13 +305,35 @@ impl Scheme {
         (self.ty.subst_qvars(&var_map), instantiations)
     }
 
-    pub(super) fn instantiate_with_tys(&self, arg_tys: &[Ty]) -> Ty {
+    pub(super) fn instantiate_with_tys(
+        &self,
+        arg_tys: &[Ty],
+        preds: &mut Set<Pred>,
+        loc: &ast::Loc,
+    ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
+
         let mut var_map: Map<Id, Ty> =
             Map::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
+
         for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
             var_map.insert(qvar.clone(), arg.clone());
         }
+
+        // Generate predicates.
+        for pred in &self.preds {
+            let pred = Pred {
+                trait_: pred.trait_.clone(),
+                params: pred
+                    .params
+                    .iter()
+                    .map(|param| param.subst_qvars(&var_map))
+                    .collect(),
+                loc: loc.clone(),
+            };
+            preds.insert(pred);
+        }
+
         self.ty.subst_qvars(&var_map)
     }
 

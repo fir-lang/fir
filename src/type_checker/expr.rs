@@ -86,7 +86,8 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
@@ -298,7 +299,8 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let con_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let con_ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
                     ty: ty.clone(),
@@ -383,7 +385,8 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let method_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let method_ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                     ty: ty.clone(),
@@ -1286,7 +1289,7 @@ fn check_field_select(
             .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
             .collect();
 
-        let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+        let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
         (ty, user_ty_args_converted)
     };
@@ -1356,7 +1359,7 @@ pub(super) fn select_field(
         TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
             let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
             let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
-            let con_ty = con_scheme.instantiate_with_tys(ty_args);
+            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
 
             match con_ty {
                 Ty::Fun {

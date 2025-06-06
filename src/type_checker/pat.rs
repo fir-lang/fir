@@ -399,12 +399,12 @@ pub(super) fn refine_pat_binders(
                     assert!(con_scheme.quantified_vars.is_empty());
 
                     // or just `con_scheme.ty`.
-                    con_scheme.instantiate_with_tys(&[])
+                    con_scheme.instantiate_with_tys(&[], tc_state.preds, &pat.loc)
                 }
 
                 Ty::App(con_id, ty_args, _) => {
                     assert_eq!(&con_id, type_);
-                    con_scheme.instantiate_with_tys(&ty_args)
+                    con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, &pat.loc)
                 }
 
                 Ty::Var(_) | Ty::QVar(_, _) | Ty::Fun { .. } | Ty::Anonymous { .. } => return,
