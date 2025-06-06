@@ -1215,6 +1215,7 @@ pub(super) fn check_expr(
             Functions used in the desugaring:
 
             - empty:    [?exn] Fn() Empty / ?exn
+            - once:     [t, ?exn] Fn(t) Once[t] / ?exn
             - onceWith: [exn, t, ?exn] Fn(Fn() : t / exn) OnceWith[t, exn] / ?exn
             - chain:    [iter, item, exn, other, ?exn] [Iterator[iter, item, exn]] Fn(iter, other) Chain[iter, other, item, exn] / ?exn
             */
@@ -1278,34 +1279,14 @@ pub(super) fn check_expr(
                             fun: Box::new(ast::L {
                                 loc: ast::Loc::dummy(),
                                 node: ast::Expr::Var(ast::VarExpr {
-                                    id: SmolStr::new_static("onceWith"),
+                                    id: SmolStr::new_static("once"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],
                                 }),
                             }),
                             args: vec![ast::CallArg {
                                 name: None,
-                                expr: ast::L {
-                                    loc: ast::Loc::dummy(),
-                                    node: ast::Expr::Fn(ast::FnExpr {
-                                        sig: ast::FunSig {
-                                            context: ast::Context {
-                                                type_params: vec![],
-                                                preds: vec![],
-                                            },
-                                            self_: ast::SelfParam::No,
-                                            params: vec![],
-                                            return_ty: None,
-                                            exceptions: None,
-                                        },
-                                        idx: 0,
-                                        inferred_ty: None,
-                                        body: vec![ast::L {
-                                            loc: elem.loc.clone(),
-                                            node: ast::Stmt::Expr(elem),
-                                        }],
-                                    }),
-                                },
+                                expr: elem,
                             }],
                         }),
                     });
