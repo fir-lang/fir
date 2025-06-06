@@ -1337,7 +1337,37 @@ pub(super) fn check_expr(
                     }
                 }
 
-                None => iter_expr,
+                None => match expected_ty {
+                    Some(expected_ty) => {
+                        let expected_ty = expected_ty.normalize(tc_state.tys.tys.cons());
+                        match expected_ty.con(tc_state.tys.tys.cons()) {
+                            Some((con, _)) => {
+                                let field_select_expr = ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                                        ty: con,
+                                        member: SmolStr::new_static("fromIter"),
+                                        user_ty_args: vec![],
+                                        ty_args: vec![],
+                                    }),
+                                };
+
+                                ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: ast::Expr::Call(ast::CallExpr {
+                                        fun: Box::new(field_select_expr),
+                                        args: vec![ast::CallArg {
+                                            name: None,
+                                            expr: iter_expr,
+                                        }],
+                                    }),
+                                }
+                            }
+                            None => iter_expr,
+                        }
+                    }
+                    None => iter_expr,
+                },
             };
 
             *expr = desugared;
