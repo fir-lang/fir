@@ -956,12 +956,6 @@ impl TyVarRef {
     }
 
     pub(super) fn set_link(&self, ty: Ty) {
-        if let Ty::Var(var_ref) = &ty {
-            if var_ref == self {
-                panic!("Linking unification variable to itself");
-            }
-        }
-
         *self.0.link.borrow_mut() = Some(ty);
     }
 
