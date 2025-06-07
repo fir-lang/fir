@@ -27,6 +27,12 @@ main():
     ]
     print(x)
 
+    let x: HashMap[Str, U32] = HashMap.[
+        "a" = 1u32,
+        "b" = 2u32,
+    ]
+    print(x)
+
     # --------------------------------------------------------------------------
     # Without type prefix at the outer levels
 
@@ -47,6 +53,12 @@ main():
     ]
     print(x)
 
+    let x: HashMap[Str, U32] = [
+        "a" = 1u32,
+        "b" = 2u32,
+    ]
+    print(x)
+
 # expected stdout:
 # 1
 # 2
@@ -57,8 +69,10 @@ main():
 # [hi,bye]
 # [[hi],[bye]]
 # [[1,2,3],[4,5,6]]
+# {b: 2, a: 1}
 # 
 # []
 # [hi,bye]
 # [[hi],[bye]]
 # [[1,2,3],[4,5,6]]
+# {b: 2, a: 1}
