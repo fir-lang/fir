@@ -108,6 +108,8 @@ lexgen::lexer! {
 
         '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
 
+        $upper_id ".[" = TokenKind::UpperIdDotLBracket,
+
         // Literals
         '"' => |lexer| {
             lexer.switch(LexerRule::String)

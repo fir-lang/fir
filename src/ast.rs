@@ -544,6 +544,12 @@ pub enum Expr {
     Fn(FnExpr),
 
     Is(IsExpr),
+
+    /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    Seq {
+        ty: Option<Id>,
+        elems: Vec<(Option<L<Expr>>, L<Expr>)>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -1117,6 +1123,15 @@ impl Expr {
 
             Expr::Is(IsExpr { expr, pat: _ }) => {
                 expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Seq { ty: _, elems } => {
+                for (k, v) in elems {
+                    if let Some(k) = k {
+                        k.node.subst_ty_ids(substs);
+                    }
+                    v.node.subst_ty_ids(substs);
+                }
             }
         }
     }
