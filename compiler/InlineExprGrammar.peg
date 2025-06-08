@@ -1,0 +1,55 @@
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+Terminals:
+    "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "type" = Token(kind = TokenKind.Type, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "Int" = Token(kind = TokenKind.Int(_))
+    "HexInt" = Token(kind = TokenKind.HexInt(_))
+    "BinInt" = Token(kind = TokenKind.BinInt(_))
+    "Str" = Token(kind = TokenKind.Str(_))
+    "Char" = Token(kind = TokenKind.Char(_))
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+
+inlineExpr:
+    
+simpleInlineExpr:
+    # Variables
+    "LowerId" tyArgs?
+
+    # Constructor selection
+    upperIdPath tyArgs?
+
+    # Records: `(a, b)`, `(a = 1, b = 2)`
+    "(" (parenExpr ("," parenExpr)* ","?)? ")"
+
+    "Int"
+    "HexInt"
+    "BinInt"
+    "Str"
+    "Char"
+
+upperIdPath:
+    "UpperId" ("." UpperId)*
+
+tyArgs:
+    "[" Type ("," Type)* ","? "]"
+
+parenExpr:
+    "LowerId" "=" 
+    inlineExpr
