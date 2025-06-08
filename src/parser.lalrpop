@@ -821,13 +821,7 @@ InlineExpr: Expr = {
         },
 
     "[" <elems:Sep<SeqElem, ",">> "]" =>
-        Expr::Seq { ty: None, elems },
-
-    <ty:UpperIdDotLBracket> <elems:Sep<SeqElem, ",">> "]" => {
-        let ty_str = ty.smol_str();
-        let ty_str = SmolStr::new(&ty_str[0..ty_str.len() - 2]);
-        Expr::Seq { ty: Some(ty_str), elems }
-    },
+        Expr::Array { elems, desugared: false },
 
     #[precedence(level = "2")]
     "!" <l:@L> <expr:InlineExpr> <r:@R> =>

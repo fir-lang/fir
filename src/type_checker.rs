@@ -69,6 +69,7 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
+    dbg!(&tys);
     let trait_env = collect_trait_env(module, &mut tys.tys);
     for decl in module {
         match &mut decl.node {

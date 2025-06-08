@@ -12,6 +12,9 @@ Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
         vec.push(item)
     vec
 
+Vec.fromArray(array: Array[item]) Vec[item] / exn:
+    Vec.fromIter(array)
+
 Vec.reserve(self: Vec[t], cap: U32):
     let len = self._len
     let newCap = self._data.len()

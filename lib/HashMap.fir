@@ -12,6 +12,9 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: 
         map.insert(item.key, item.value)
     map
 
+HashMap.fromArray(array: Array[(key: k, value: v)]) HashMap[k, v] / exn:
+    HashMap.fromIter(array.iter())
+
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
     for i: U32 in range(0u32, cap):

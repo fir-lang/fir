@@ -1210,169 +1210,221 @@ pub(super) fn check_expr(
             (Ty::bool(), pat_binders)
         }
 
-        ast::Expr::Seq { ty, elems } => {
+        ast::Expr::Array { elems, desugared } => {
             /*
-            Functions used in the desugaring:
+            Array syntax is used for collection literals. If the expected type is not an `Array` and
+            has an `fromArray` method, we'll implicitly call it.
 
-            - empty:    [?exn] Fn() Empty / ?exn
-            - once:     [t, ?exn] Fn(t) Once[t] / ?exn
-            - onceWith: [exn, t, ?exn] Fn(Fn() : t / exn) OnceWith[t, exn] / ?exn
-            - chain:    [iter, item, exn, other, ?exn] [Iterator[iter, item, exn]] Fn(iter, other) Chain[iter, other, item, exn] / ?exn
+            - Vec.fromArray:     [item, exn] Fn(Array[item])               Vec[item]     / exn
+            - HashMap.fromArray: [k, v, exn] Fn(Array[(key: k, value: v)]) HashMap[k, v] / exn
             */
 
-            let iter_ty = ty.clone();
-
-            let iter_expr = if elems.is_empty() {
-                ast::L {
-                    loc: ast::Loc::dummy(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: ast::Expr::Var(ast::VarExpr {
-                                id: SmolStr::new("empty"),
-                                user_ty_args: vec![],
-                                ty_args: vec![],
-                            }),
-                        }),
-                        args: vec![],
-                    }),
-                }
-            } else {
-                let mut pairs = false;
-                let mut singles = false;
-
-                for (k, _) in elems.iter() {
-                    match k {
-                        Some(_) => pairs = true,
-                        None => singles = true,
+            if *desugared {
+                let mut expected_item_ty: Option<Ty> = None;
+                if let Some(expected_ty_) = expected_ty {
+                    if let Some((con, args)) = expected_ty_.con(tc_state.tys.tys.cons()) {
+                        if con == "Array" {
+                            assert_eq!(args.len(), 1);
+                            expected_item_ty = Some(args[0].clone());
+                        }
                     }
                 }
 
-                if pairs && singles {
+                let mut found_pair = false;
+                let mut found_item = false;
+                for (key, _) in elems.iter() {
+                    match key {
+                        Some(_) => found_pair = true,
+                        None => found_item = true,
+                    }
+                }
+
+                if found_pair && found_item {
                     panic!(
-                        "{}: Sequence has both key-value pair and single element",
+                        "{}: Collection literal has both `key = value` and single elements",
                         loc_display(&expr.loc)
                     );
                 }
 
-                let mut elem_iters: Vec<ast::L<ast::Expr>> = Vec::with_capacity(elems.len());
-                for (k, v) in elems.iter() {
-                    let elem = match k {
-                        Some(k) => ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: ast::Expr::Record(vec![
-                                ast::Named {
-                                    name: Some(SmolStr::new("key")),
-                                    node: k.clone(),
-                                },
-                                ast::Named {
-                                    name: Some(SmolStr::new("value")),
-                                    node: v.clone(),
-                                },
-                            ]),
-                        },
-                        None => v.clone(),
+                if found_pair {
+                    let (expected_key_type, expected_value_type) = match &expected_item_ty {
+                        Some(Ty::Anonymous {
+                            labels,
+                            kind: RecordOrVariant::Record,
+                            is_row,
+                            ..
+                        }) => {
+                            assert!(!is_row);
+                            (
+                                labels.get("key").cloned().unwrap_or_else(|| {
+                                    Ty::Var(tc_state.var_gen.new_var(
+                                        level,
+                                        Kind::Star,
+                                        expr.loc.clone(),
+                                    ))
+                                }),
+                                labels.get("value").cloned().unwrap_or_else(|| {
+                                    Ty::Var(tc_state.var_gen.new_var(
+                                        level,
+                                        Kind::Star,
+                                        expr.loc.clone(),
+                                    ))
+                                }),
+                            )
+                        }
+
+                        _ => (
+                            Ty::Var(
+                                tc_state
+                                    .var_gen
+                                    .new_var(level, Kind::Star, expr.loc.clone()),
+                            ),
+                            Ty::Var(
+                                tc_state
+                                    .var_gen
+                                    .new_var(level, Kind::Star, expr.loc.clone()),
+                            ),
+                        ),
                     };
-                    elem_iters.push(ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(ast::L {
+
+                    let expected_item_ty = match expected_item_ty {
+                        Some(expected_item_ty) => {
+                            unify(
+                                &expected_item_ty,
+                                &Ty::Anonymous {
+                                    labels: [
+                                        (SmolStr::new_static("key"), expected_key_type.clone()),
+                                        (SmolStr::new_static("value"), expected_value_type.clone()),
+                                    ]
+                                    .into_iter()
+                                    .collect(),
+                                    extension: None,
+                                    kind: RecordOrVariant::Record,
+                                    is_row: false,
+                                },
+                                tc_state.tys.tys.cons(),
+                                tc_state.var_gen,
+                                level,
+                                &expr.loc,
+                            );
+                            expected_item_ty
+                        }
+                        None => Ty::Anonymous {
+                            labels: [
+                                (SmolStr::new_static("key"), expected_key_type.clone()),
+                                (SmolStr::new_static("value"), expected_value_type.clone()),
+                            ]
+                            .into_iter()
+                            .collect(),
+                            extension: None,
+                            kind: RecordOrVariant::Record,
+                            is_row: false,
+                        },
+                    };
+
+                    for (key, value) in elems {
+                        let key = key.as_mut().unwrap();
+                        check_expr(tc_state, key, Some(&expected_key_type), level, loop_stack);
+                        check_expr(
+                            tc_state,
+                            value,
+                            Some(&expected_value_type),
+                            level,
+                            loop_stack,
+                        );
+                    }
+
+                    (
+                        unify_expected_ty(
+                            Ty::App(
+                                SmolStr::new_static("Array"),
+                                vec![expected_item_ty],
+                                Kind::Star,
+                            ),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
+                    )
+                } else {
+                    let expected_item_ty = expected_item_ty.unwrap_or_else(|| {
+                        Ty::Var(
+                            tc_state
+                                .var_gen
+                                .new_var(level, Kind::Star, expr.loc.clone()),
+                        )
+                    });
+
+                    for (key, value) in elems {
+                        assert!(key.is_none());
+                        check_expr(tc_state, value, Some(&expected_item_ty), level, loop_stack);
+                    }
+
+                    (
+                        unify_expected_ty(
+                            Ty::App(
+                                SmolStr::new_static("Array"),
+                                vec![expected_item_ty],
+                                Kind::Star,
+                            ),
+                            expected_ty,
+                            tc_state.tys.tys.cons(),
+                            tc_state.var_gen,
+                            level,
+                            &expr.loc,
+                        ),
+                        Default::default(),
+                    )
+                }
+            } else {
+                if let Some(expected_ty_) = expected_ty {
+                    let expected_ty_ = expected_ty_.normalize(tc_state.tys.tys.cons());
+                    if let Some((con, _)) = expected_ty_.con(tc_state.tys.tys.cons()) {
+                        if con != "Array"
+                            && tc_state
+                                .tys
+                                .associated_fn_schemes
+                                .get(&con)
+                                .and_then(|con_methods| con_methods.get("fromArray"))
+                                .is_some()
+                        {
+                            let field_select_expr = ast::L {
                                 loc: ast::Loc::dummy(),
-                                node: ast::Expr::Var(ast::VarExpr {
-                                    id: SmolStr::new_static("once"),
+                                node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                                    ty: con,
+                                    member: SmolStr::new_static("fromArray"),
                                     user_ty_args: vec![],
                                     ty_args: vec![],
                                 }),
-                            }),
-                            args: vec![ast::CallArg {
-                                name: None,
-                                expr: elem,
-                            }],
-                        }),
-                    });
-                }
+                            };
 
-                let mut iter = elem_iters.into_iter();
-                let init = iter.next().unwrap();
-                iter.fold(init, |elem, next| ast::L {
-                    loc: ast::Loc::dummy(),
-                    node: ast::Expr::Call(ast::CallExpr {
-                        fun: Box::new(ast::L {
-                            loc: ast::Loc::dummy(),
-                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
-                                object: Box::new(elem),
-                                field: SmolStr::new_static("chain"),
-                                user_ty_args: vec![],
-                            }),
-                        }),
-                        args: vec![ast::CallArg {
-                            name: None,
-                            expr: next,
-                        }],
-                    }),
-                })
-            };
+                            let call_expr = ast::Expr::Call(ast::CallExpr {
+                                fun: Box::new(field_select_expr),
+                                args: vec![ast::CallArg {
+                                    name: None,
+                                    expr: ast::L {
+                                        loc: expr.loc.clone(),
+                                        node: ast::Expr::Array {
+                                            elems: elems.clone(),
+                                            desugared: true,
+                                        },
+                                    },
+                                }],
+                            });
 
-            let desugared = match iter_ty {
-                Some(iter_ty) => {
-                    let field_select_expr = ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                            ty: iter_ty,
-                            member: SmolStr::new_static("fromIter"),
-                            user_ty_args: vec![],
-                            ty_args: vec![],
-                        }),
-                    };
+                            expr.node = call_expr;
 
-                    ast::L {
-                        loc: ast::Loc::dummy(),
-                        node: ast::Expr::Call(ast::CallExpr {
-                            fun: Box::new(field_select_expr),
-                            args: vec![ast::CallArg {
-                                name: None,
-                                expr: iter_expr,
-                            }],
-                        }),
-                    }
-                }
-
-                None => match expected_ty {
-                    Some(expected_ty) => {
-                        let expected_ty = expected_ty.normalize(tc_state.tys.tys.cons());
-                        match expected_ty.con(tc_state.tys.tys.cons()) {
-                            Some((con, _)) => {
-                                let field_select_expr = ast::L {
-                                    loc: ast::Loc::dummy(),
-                                    node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
-                                        ty: con,
-                                        member: SmolStr::new_static("fromIter"),
-                                        user_ty_args: vec![],
-                                        ty_args: vec![],
-                                    }),
-                                };
-
-                                ast::L {
-                                    loc: ast::Loc::dummy(),
-                                    node: ast::Expr::Call(ast::CallExpr {
-                                        fun: Box::new(field_select_expr),
-                                        args: vec![ast::CallArg {
-                                            name: None,
-                                            expr: iter_expr,
-                                        }],
-                                    }),
-                                }
-                            }
-                            None => iter_expr,
+                            return check_expr(tc_state, expr, expected_ty, level, loop_stack);
                         }
                     }
-                    None => iter_expr,
-                },
-            };
+                }
 
-            *expr = desugared;
-
-            check_expr(tc_state, expr, expected_ty, level, loop_stack)
+                *desugared = true;
+                check_expr(tc_state, expr, expected_ty, level, loop_stack)
+            }
         }
     }
 }
