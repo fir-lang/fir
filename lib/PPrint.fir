@@ -93,7 +93,7 @@ type _SpaceReq:
 
 impl Add[_SpaceReq]:
     __add(self: _SpaceReq, other: _SpaceReq) _SpaceReq:
-        if self is _SpaceReq.Exact(req1) && other is _SpaceReq.Exact(req2):
+        if self is _SpaceReq.Exact(req1) and other is _SpaceReq.Exact(req2):
             return _SpaceReq.Exact(req1 + req2)
         _SpaceReq.Infinite
 

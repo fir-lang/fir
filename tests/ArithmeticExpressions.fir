@@ -81,7 +81,7 @@ parse(pgm: Str) Term:
     term
 
 skipWhitespace(pgm: Str) Str:
-    while pgm.len() > 0 && pgm.startsWith(" "):
+    while pgm.len() > 0 and pgm.startsWith(" "):
         pgm = pgm.substr(1, pgm.len())
     pgm
 

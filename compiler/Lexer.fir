@@ -28,7 +28,7 @@ Lexer._nextChar(self) Char:
 Lexer.next(self) Option[Token] / Error:
     # Skip whitespace and comments before actual tokens.
     loop:
-        while self._byteIdx < self._input.len() && self._nextChar() is char && char.isAsciiWhitespace():
+        while self._byteIdx < self._input.len() and self._nextChar() is char and char.isAsciiWhitespace():
             self._byteIdx += 1
             if char == '\n':
                 self._line += 1
@@ -43,7 +43,7 @@ Lexer.next(self) Option[Token] / Error:
             self._byteIdx += 1
             self._col += 1
 
-            if self._byteIdx < self._input.len() && self._nextChar() == '|':
+            if self._byteIdx < self._input.len() and self._nextChar() == '|':
                 self._byteIdx += 1
                 self._col += 1
                 self._skipMultiLineComment()
@@ -292,20 +292,20 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Exclamation, text = "!", byteIdx, line, col))
 
-        "&&" _:
+        "and" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "and", byteIdx, line, col))
 
         "&" _:
             self._byteIdx += 1
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Amp, text = "&", byteIdx, line, col))
 
-        "||" _:
+        "or" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.PipePipe, text = "or", byteIdx, line, col))
 
         "|" _:
             self._byteIdx += 1
@@ -373,7 +373,7 @@ Lexer.next(self) Option[Token] / Error:
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
-                if c != '_' && !c.isAsciiBinDigit():
+                if c != '_' and !c.isAsciiBinDigit():
                     break
                 self._byteIdx += 1
                 self._col += 1
@@ -394,7 +394,7 @@ Lexer.next(self) Option[Token] / Error:
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
-                if c != '_' || !c.isAsciiHexDigit():
+                if c != '_' or !c.isAsciiHexDigit():
                     break
                 self._byteIdx += 1
                 self._col += 1
@@ -412,9 +412,9 @@ Lexer.next(self) Option[Token] / Error:
             let idStart = self._byteIdx
             self._byteIdx += 1
             self._col += 1
-            if self._byteIdx < self._input.len() && self._nextChar().isAsciiUppercase():
+            if self._byteIdx < self._input.len() and self._nextChar().isAsciiUppercase():
                 self._byteIdx += 1
-                while self._byteIdx < self._input.len() && _isIdCont(self._nextChar()):
+                while self._byteIdx < self._input.len() and _isIdCont(self._nextChar()):
                     self._byteIdx += 1
                 return Option.Some(Token(
                     kind = TokenKind.TildeUpperId,
@@ -442,7 +442,7 @@ Lexer.next(self) Option[Token] / Error:
 
                 while self._byteIdx < self._input.len():
                     let c = self._nextChar()
-                    if c != '_' && !c.isAsciiDigit():
+                    if c != '_' and !c.isAsciiDigit():
                         break
                     self._byteIdx += 1
                     self._col += 1
@@ -466,10 +466,10 @@ Lexer.next(self) Option[Token] / Error:
             let uppercaseId = self._input.charAt(caseCheckIdx).isAsciiUppercase()
             let lowercaseId = self._input.charAt(caseCheckIdx).isAsciiLowercase()
 
-            if uppercaseId || lowercaseId:
+            if uppercaseId or lowercaseId:
                 let endIdx = self._byteIdx + 1
                 self._col += 1
-                while self._input.len() > endIdx && _isIdCont(self._input.charAt(endIdx)):
+                while self._input.len() > endIdx and _isIdCont(self._input.charAt(endIdx)):
                     endIdx += 1
                     self._col += 1
                 let id = self._input.substr(self._byteIdx, endIdx)
@@ -624,7 +624,7 @@ Lexer._skipMultiLineComment(self) () / Error:
     self._fail("unterminated multi-line comment")
 
 _isIdCont(c: Char) Bool:
-    c.isAsciiAlphanumeric() || c == '_'
+    c.isAsciiAlphanumeric() or c == '_'
 
 _isIdContStr(s: Str) Bool:
     match s.chars().next():

@@ -26,6 +26,7 @@ lexgen::lexer! {
         },
 
         // Keywords
+        "and" = TokenKind::And,
         "as" = TokenKind::As,
         "break" = TokenKind::Break,
         "continue" = TokenKind::Continue,
@@ -44,6 +45,7 @@ lexgen::lexer! {
         "let" = TokenKind::Let,
         "loop" = TokenKind::Loop,
         "match" = TokenKind::Match,
+        "or" = TokenKind::Or,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
         "trait" = TokenKind::Trait,

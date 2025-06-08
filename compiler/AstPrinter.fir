@@ -240,7 +240,7 @@ FunSig.pprint(self) Doc:
 
     doc += parens(argList)
 
-    if self.exceptions is Option.Some(_) || self.returnTy is Option.Some(_):
+    if self.exceptions is Option.Some(_) or self.returnTy is Option.Some(_):
         doc += Doc.str(":")
 
     if self.exceptions is Option.Some(ty):
