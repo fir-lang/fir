@@ -13,7 +13,7 @@ Vec.fromIter[Iterator[iter, item, exn]](iter: iter) Vec[item] / exn:
     vec
 
 Vec.fromArray(array: Array[item]) Vec[item] / exn:
-    Vec.fromIter(array)
+    Vec.fromIter(array.iter())
 
 Vec.reserve(self: Vec[t], cap: U32):
     let len = self._len

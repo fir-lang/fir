@@ -174,7 +174,17 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_pat(&mut pat.node, cons);
         }
 
-        ast::Expr::Array { .. } => panic!("Seq expr should've been desugared"),
+        ast::Expr::Array {
+            elems,
+            desugared: _,
+        } => {
+            for (k, v) in elems {
+                if let Some(k) = k {
+                    normalize_expr(&mut k.node, cons);
+                }
+                normalize_expr(&mut v.node, cons);
+            }
+        }
     }
 }
 
