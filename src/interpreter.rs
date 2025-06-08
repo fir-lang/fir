@@ -890,6 +890,8 @@ fn eval<W: Write>(
                 pgm.false_alloc
             })
         }
+
+        Expr::Block(stmts) => exec(w, pgm, heap, locals, stmts),
     }
 }
 

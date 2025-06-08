@@ -899,6 +899,10 @@ fn mono_expr(
             expr: Box::new(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
+
+        ast::Expr::Block(stmts) => {
+            mono::Expr::Block(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals))
+        }
     }
 }
 

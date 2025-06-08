@@ -722,6 +722,16 @@ impl Expr {
                 pat.node.print(buffer);
                 buffer.push(')');
             }
+
+            Expr::Block(stmts) => {
+                buffer.push('{');
+                for stmt in stmts.iter() {
+                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
+                }
+                buffer.push('}');
+            }
         }
     }
 }

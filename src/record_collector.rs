@@ -374,5 +374,11 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>, variants: &mut 
             visit_expr(&expr.node, records, variants);
             visit_pat(&pat.node, records, variants);
         }
+
+        mono::Expr::Block(stmts) => {
+            for stmt in stmts {
+                visit_stmt(&stmt.node, records, variants);
+            }
+        }
     }
 }

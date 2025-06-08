@@ -231,6 +231,7 @@ pub enum Expr {
     If(IfExpr),
     Fn(FnExpr),
     Is(IsExpr),
+    Block(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]

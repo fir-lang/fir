@@ -980,8 +980,8 @@ InlineExpr: Expr = {
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LStmts> "}" =>
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> "{" <body:LStmts> "}" => {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -993,10 +993,11 @@ InlineExpr: Expr = {
             body,
             idx: 0,
             inferred_ty: None,
-        }),
+        })
+    },
 
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> "{" <body:LInlineExpr> "}" => {
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1008,35 +1009,26 @@ InlineExpr: Expr = {
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
             inferred_ty: None,
-        }),
+        })
+    },
+
+    "||" <body:LInlineExpr> => {
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
+                params: vec![],
+                exceptions: None,
+                return_ty: None,
+            },
+            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
+            idx: 0,
+            inferred_ty: None,
+        })
+    },
 
     "{" <body:LStmts> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: None,
-                return_ty: None,
-            },
-            body,
-            idx: 0,
-            inferred_ty: None,
-        }),
-
-    "{" <body:LInlineExpr> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: None,
-                return_ty: None,
-            },
-            body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
-            idx: 0,
-            inferred_ty: None,
-        }),
+        Expr::Block(body),
 }
 
 ParenExpr: (Option<Id>, L<Expr>) = {
