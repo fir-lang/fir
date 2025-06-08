@@ -13,7 +13,7 @@ type Parser[input, output]:
 
 ## Match a single token in the input.
 Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
-    Parser(f = fn(input, pos) {
+    Parser(f = |input, pos| {
         if pos >= input.len():
             throw(ParseError.EndOfInput)
         match f(input.get(pos)):
@@ -25,7 +25,7 @@ Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:
 
 ## Match a character in the input.
 Parser.char(c: Char) Parser[Char, ()]:
-    Parser.match_(fn(input) {
+    Parser.match_(|input| {
         if input == c:
             Option.Some(())
         else:
@@ -34,7 +34,7 @@ Parser.char(c: Char) Parser[Char, ()]:
 
 ## Make the parser optional.
 Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
-    Parser(f = fn(input, pos) {
+    Parser(f = |input, pos| {
         match try({ self.f(input, pos) }):
             Result.Ok((output, nextPos)):
                 (output = Option.Some(output), nextPos = nextPos)
@@ -45,7 +45,7 @@ Parser.opt(self: Parser[input, output]) Parser[input, Option[output]]:
 
 ## Parse `p2` after `self`, return outputs of both.
 Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]) Parser[input, (first: output1, second: output2)]:
-    Parser(f = fn(input, pos) {
+    Parser(f = |input, pos| {
         let res1 = self.f(input, pos)
         let res2 = p2.f(input, res1.nextPos)
         (output = (first = res1.output, second = res2.output), nextPos = res2.nextPos)
@@ -53,7 +53,7 @@ Parser.seq(self: Parser[input, output1], p2: Parser[input, output2]) Parser[inpu
 
 ## Parse `self`, if fails, parse `p2`.
 Parser.alt(self: Parser[input, output], p2: Parser[input, output]) Parser[input, output]:
-    Parser(f = fn(input, pos) {
+    Parser(f = |input, pos| {
         match try({ self.f(input, pos) }):
             Result.Ok(res): res
             Result.Err(_): p2.f(input, pos)
