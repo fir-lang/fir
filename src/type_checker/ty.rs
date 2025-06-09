@@ -410,6 +410,28 @@ impl Scheme {
             other.quantified_vars,
         );
 
+        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        left_preds.sort();
+
+        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        right_preds.sort();
+
+        if left_preds.len() != right_preds.len() {
+            return false;
+        }
+
+        for (left_pred, right_pred) in left_preds.iter().zip(right_preds.iter()) {
+            assert_eq!(left_pred.params.len(), right_pred.params.len());
+            if left_pred.trait_ != right_pred.trait_ {
+                return false;
+            }
+            for (left_ty, right_ty) in left_pred.params.iter().zip(right_pred.params.iter()) {
+                if !ty_eq_modulo_alpha(cons, left_ty, right_ty, &left_vars, &right_vars, loc) {
+                    return false;
+                }
+            }
+        }
+
         ty_eq_modulo_alpha(cons, &self.ty, &other.ty, &left_vars, &right_vars, loc)
     }
 
@@ -1142,6 +1164,16 @@ impl fmt::Display for Scheme {
                     write!(f, ", ")?;
                 }
                 write!(f, "{}: {}", qvar, kind)?;
+            }
+            write!(f, "] ")?;
+        }
+        if !self.preds.is_empty() {
+            write!(f, "[")?;
+            for (i, pred) in self.preds.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                pred.fmt(f)?;
             }
             write!(f, "] ")?;
         }
