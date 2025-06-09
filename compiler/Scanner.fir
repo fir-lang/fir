@@ -29,8 +29,8 @@ scan(tokens: Vec[Token]) Vec[Token]:
             continue
 
         if delimiterStack.last() is Option.None | Option.Some(Delimiter.Brace)
-                && token.line != lastLine
-                && !skipIndent:
+                and token.line != lastLine
+                and not skipIndent:
             # Generate a newline at the last line.
             newTokens.push(Token(
                 kind = TokenKind.Newline,
@@ -79,15 +79,15 @@ scan(tokens: Vec[Token]) Vec[Token]:
             TokenKind.LBrace: delimiterStack.push(Delimiter.Brace)
 
             TokenKind.RParen:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Paren)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Paren)):
                     panic("")
 
             TokenKind.RBracket:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Bracket)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Bracket)):
                     panic("")
 
             TokenKind.RBrace:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Brace)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Brace)):
                     panic("")
 
             _: ()

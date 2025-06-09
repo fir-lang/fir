@@ -414,7 +414,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + Doc.hardLine()
 
             let nested = Doc.empty()
-            if !ignore:
+            if not ignore:
                 nested += Doc.str("nodes.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
             nested += Doc.str("cursor += 1")
 
@@ -434,7 +434,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + Doc.hardLine()
                 + Doc.str("cursor = nonTerminalResult.newCursor")
 
-            if !ignore:
+            if not ignore:
                 doc += Doc.hardLine() + Doc.str("nodes.push(nonTerminalResult.tree)")
 
             doc

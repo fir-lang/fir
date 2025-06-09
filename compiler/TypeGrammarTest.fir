@@ -11,7 +11,7 @@ main(args: Array[Str]):
 
     if args.len() == 2:
         let result = runTestIndent(args.get(1), typeDecl)
-        if !result:
+        if not result:
             print("FAIL")
         return
 

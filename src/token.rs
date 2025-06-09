@@ -39,6 +39,7 @@ pub enum TokenKind {
     Label,
 
     // Keywords
+    And,
     As,
     Break,
     Continue,
@@ -56,6 +57,8 @@ pub enum TokenKind {
     Let,
     Loop,
     Match,
+    Not,
+    Or,
     Prim,
     Return,
     Trait,

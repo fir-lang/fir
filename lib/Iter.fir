@@ -24,7 +24,7 @@ trait Iterator[iter, item, exn]:
 
     all(self: iter, f: Fn(item) Bool / exn) Bool / exn:
         for item: item in self:
-            if !f(item):
+            if not f(item):
                 return Bool.False
         Bool.True
 

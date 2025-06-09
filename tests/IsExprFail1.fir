@@ -1,6 +1,6 @@
 main():
     let x: Option[U32] = Option.None
-    if x is Option.Some(a) || a == 0:
+    if x is Option.Some(a) or a == 0:
         ()
 
 # args: --no-backtrace

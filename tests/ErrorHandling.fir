@@ -9,7 +9,7 @@ parseU32(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
+        if c < '0' or c > '9':
             return Result.Err(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
@@ -33,7 +33,7 @@ checkedAdd(i1: U32, i2: U32) Option[U32]:
 checkedMul(i1: U32, i2: U32) Option[U32]:
     let result = i1 * i2
 
-    if i1 != 0 && result / i1 != i2:
+    if i1 != 0 and result / i1 != i2:
         return Option.None
 
     Option.Some(result)
@@ -98,7 +98,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
+        if c < '0' or c > '9':
             throw(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()

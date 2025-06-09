@@ -18,7 +18,7 @@ use smol_str::SmolStr;
 ///
 /// - `<expr> is <pat>` binds the variables that `<pat>` binds.
 ///
-/// - `<expr1> && <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
+/// - `<expr1> and <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
 ///   `<expr1>` and `<expr2>` need to bind disjoint set of variables.
 ///
 /// Other expressions don't bind any variables.
@@ -754,7 +754,7 @@ pub(super) fn check_expr(
                             .map(|id| (**id).clone())
                             .collect();
                         panic!(
-                            "{}: Left and right exprs in `&&` bind same variables: {}",
+                            "{}: Left and right exprs in `and` bind same variables: {}",
                             loc_display(&expr.loc),
                             intersection.join(", "),
                         );
