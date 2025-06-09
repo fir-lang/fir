@@ -49,6 +49,7 @@ update_generated_files:
     lalrpop src/parser.lalrpop
     cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
     cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/InlineExprGrammar.peg > compiler/InlineExprGrammar.fir
     output=$(cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- tools/peg/PegGrammar.peg)
     if [ $? -eq 0 ]; then
         echo "$output" > tools/peg/PegGrammar.fir

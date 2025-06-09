@@ -1,8 +1,9 @@
 import ParseTree
 import Token
+import TypeGrammar
 
 type Terminal = Token
-type NonTerminal = NonTerminal
+type NonTerminal = InlineExprKind
 
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
@@ -17,6 +18,8 @@ Terminals:
     ":" = Token(kind = TokenKind.Colon, ..)
     "," = Token(kind = TokenKind.Comma, ..)
     ".." = Token(kind = TokenKind.DotDot, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
     "Int" = Token(kind = TokenKind.Int(_))
     "HexInt" = Token(kind = TokenKind.HexInt(_))
     "BinInt" = Token(kind = TokenKind.BinInt(_))
@@ -25,9 +28,11 @@ Terminals:
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
 
 inlineExpr:
-    
+    (exprPrefix? simpleInlineExpr exprSuffix?)+
+
 simpleInlineExpr:
     # Variables
     "LowerId" tyArgs?
@@ -38,6 +43,8 @@ simpleInlineExpr:
     # Records: `(a, b)`, `(a = 1, b = 2)`
     "(" (parenExpr ("," parenExpr)* ","?)? ")"
 
+    "return" inlineExpr
+
     "Int"
     "HexInt"
     "BinInt"
@@ -45,11 +52,11 @@ simpleInlineExpr:
     "Char"
 
 upperIdPath:
-    "UpperId" ("." UpperId)*
+    "UpperId" ("." "UpperId")*
 
 tyArgs:
-    "[" Type ("," Type)* ","? "]"
+    "[" type_ ("," type_)* ","? "]"
 
 parenExpr:
-    "LowerId" "=" 
+    "LowerId" "=" inlineExpr
     inlineExpr
