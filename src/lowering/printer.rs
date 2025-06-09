@@ -128,6 +128,7 @@ impl LoweredPgm {
                 fvs,
                 params,
                 body,
+                loc: _,
             },
         ) in self.closures.iter().enumerate()
         {

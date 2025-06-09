@@ -145,7 +145,7 @@ pub enum Fun {
     Source(SourceFunDecl),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BuiltinFunDecl {
     Panic,
     PrintStrNoNl,
@@ -532,6 +532,7 @@ pub struct Closure {
     pub fvs: Vec<ClosureFv>,
     pub params: Vec<Ty>,
     pub body: Vec<L<Stmt>>,
+    pub loc: Loc,
 }
 
 /// A free variable in a closure.
@@ -1917,6 +1918,7 @@ fn lower_expr(
                     .map(|(_, ty)| Ty::from_mono_ty(&ty.node))
                     .collect(),
                 body,
+                loc: loc.clone(),
             });
 
             Expr::ClosureAlloc(closure_idx)
