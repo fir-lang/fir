@@ -20,6 +20,9 @@ type AppendAfter[s1, s2]:
     seq2: s2
     amt: U32
 
+type AppendAfterStop:
+    AppendAfterStop
+
 impl[Sequence[s1, t, [AppendAfterStop, ..exn]], Sequence[s2, t, [AppendAfterStop, ..exn]]]
         Sequence[AppendAfter[s1, s2], t, [AppendAfterStop, ..exn]]:
     forEach(
@@ -29,12 +32,12 @@ impl[Sequence[s1, t, [AppendAfterStop, ..exn]], Sequence[s2, t, [AppendAfterStop
         match try({
             self.seq1.forEach(fn(i: t) / [AppendAfterStop, ..exn] {
                 if self.amt == 0:
-                    throw(~AppendAfterStop)
+                    throw(~AppendAfterStop.AppendAfterStop)
                 self.amt -= 1
                 consumer(i)
             })
         }):
-            Result.Ok(()) | Result.Err(~AppendAfterStop):
+            Result.Ok(()) | Result.Err(~AppendAfterStop.AppendAfterStop):
                 self.seq2.forEach(consumer)
 
 # ------------------------------------------------------------------------------
@@ -71,4 +74,5 @@ main():
 # 3
 # 4
 
-# expected stderr: tests/Issue137_4.fir:29:9: Unexhaustive pattern match
+# expected stderr: tests/Issue137_4.fir:32:9: Unexhaustive pattern match
+

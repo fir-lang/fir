@@ -2,6 +2,9 @@ type Error:
     loc: Loc
     msg: Str
 
+type AssertionError:
+    msg: Str
+
 type Loc:
     file: Str
     byteIdx: U32

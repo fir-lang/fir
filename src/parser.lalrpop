@@ -23,8 +23,12 @@ extern {
         UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
+
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
+        TildeUpperIdLBracket => Token { kind: TokenKind::TildeUpperIdLBracket, .. },
+        TildeUpperIdPathLBracket => Token { kind: TokenKind::TildeUpperIdPathLBracket, .. },
+
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
@@ -259,10 +263,10 @@ Type: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -284,10 +288,10 @@ TypeNoFn: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -301,6 +305,14 @@ TypeNamed: Type = {
 
     <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
+}
+
+NamedType: NamedType = {
+    <name:UpperId> =>
+        NamedType { name: name.smol_str(), args: vec![] },
+
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        NamedType { name: name.smol_str(), args },
 }
 
 RowExtension: Option<Id> = {
@@ -322,13 +334,6 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
 RecordTypeField: Named<Type> = {
     <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
     <ty:Type> => Named { name: None, node: ty },
-}
-
-VariantAlt: VariantAlt = {
-    <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        VariantAlt { con: name.smol_str(), fields },
-    <name:UpperId> =>
-        VariantAlt { con: name.smol_str(), fields: vec![] },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -532,6 +537,7 @@ Stmt: Stmt = {
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
+                variant: false,
                 ty: SmolStr::new_static("Bool"),
                 constr: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
@@ -645,23 +651,43 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+
+    <id:TildeUpperId> =>
+        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+
+    <id:TildeUpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
+        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+    },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+    },
+
+    <path:TildeUpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -812,7 +838,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
+            Expr::ConstrSelect(Constructor { variant: false, ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), user_ty_args, ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
@@ -828,16 +854,6 @@ InlineExpr: Expr = {
 
     "-" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
-
-    #[precedence(level = "3")]
-    <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
-        Expr::Variant(VariantExpr {
-            id: id.text.as_str()[1..].into(),
-            args: match args {
-                Some(args) => args.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect(),
-                None => vec![],
-            },
-        }),
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
@@ -1083,8 +1099,6 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
-    <var:VariantPattern> => Pat::Variant(var),
-
     "(" <fields:Sep<PatternField, ",">> ")" =>
         Pat::Record(RecordPattern {
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
@@ -1126,14 +1140,24 @@ StrPfxBinder: Option<Id> = {
 
 Constructor: Constructor = {
     <ty:UpperId> =>
-        Constructor { ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+        Constructor { variant: false, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
-    }
+        Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+    },
+
+    <ty:TildeUpperId> =>
+        Constructor { variant: true, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+    },
 }
 
 ConstrPattern: ConstrPattern = {
@@ -1159,20 +1183,6 @@ ConstrPattern: ConstrPattern = {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ignore_rest: true,
-        },
-}
-
-VariantPattern: VariantPattern = {
-    <constr:TildeUpperId> =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: vec![],
-        },
-
-    <constr:TildeUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
         },
 }
 

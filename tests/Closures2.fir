@@ -1,3 +1,6 @@
+type Err:
+    Err
+
 test(f: Fn() U32 / [Err]):
     ()
 

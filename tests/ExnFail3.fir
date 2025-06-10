@@ -1,7 +1,11 @@
+type A:
+    A
+
 f1() a / [..r]:
-    throw(~A)
+    throw(~A.A)
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101
 # expected stderr:
-# tests/ExnFail3.fir:2:5: Unable to unify variant with constructors {"A"} with variant with constructors {}
+# tests/ExnFail3.fir:5:5: Unable to unify variant with constructors {"A"} with variant with constructors {}
+

@@ -443,8 +443,14 @@ pub(super) fn try_unify_one_way(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2);
+            // This is not a bug, but type error: we can try to unify a record with a variant (e.g.
+            // pass a record when a variant is expected), and fail.
+            if kind1 != kind2 {
+                return false;
+            }
+
+            // If we checked the kinds in type applications property, we should only try to unify
+            // rows with rows and stars with stars.
             assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
