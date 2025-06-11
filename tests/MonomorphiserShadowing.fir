@@ -19,4 +19,3 @@ main():
 # expected stdout: E1 caught
 
 # expected stderr: tests/MonomorphiserShadowing.fir:14:5: Unexhaustive pattern match
-

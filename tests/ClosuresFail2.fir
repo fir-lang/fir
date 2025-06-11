@@ -14,4 +14,3 @@ main():
 # expected exit status: 101
 # expected stderr:
 # tests/ClosuresFail2.fir:11:17: Unable to unify variant with constructors {"Foo"} with variant with constructors {"Err"}
-

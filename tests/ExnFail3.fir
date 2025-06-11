@@ -8,4 +8,3 @@ f1() a / [..r]:
 # expected exit status: 101
 # expected stderr:
 # tests/ExnFail3.fir:5:5: Unable to unify variant with constructors {"A"} with variant with constructors {}
-

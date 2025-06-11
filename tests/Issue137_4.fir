@@ -75,4 +75,3 @@ main():
 # 4
 
 # expected stderr: tests/Issue137_4.fir:32:9: Unexhaustive pattern match
-

@@ -15,4 +15,3 @@ main() = poly_fn(~B(y = Bool.False))
 # args: --typecheck --no-backtrace
 # expected exit status: 101
 # expected stderr: tests/RowsFail5.fir:13:25: Unable to unify types Bool and Str
-
