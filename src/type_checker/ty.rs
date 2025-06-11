@@ -1219,3 +1219,12 @@ impl fmt::Debug for TyVar {
             .finish()
     }
 }
+
+impl fmt::Display for RecordOrVariant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordOrVariant::Record => write!(f, "record"),
+            RecordOrVariant::Variant => write!(f, "variant"),
+        }
+    }
+}
