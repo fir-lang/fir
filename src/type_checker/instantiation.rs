@@ -60,10 +60,6 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
 
-        ast::Expr::Variant(ast::VariantExpr { args, .. }) => args
-            .iter_mut()
-            .for_each(|arg| normalize_expr(&mut arg.node.node, cons)),
-
         ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
 
         ast::Expr::String(parts) => parts.iter_mut().for_each(|part| match part {
@@ -206,12 +202,6 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
                 .iter_mut()
                 .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
             *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
-        }
-
-        ast::Pat::Variant(ast::VariantPattern { constr: _, fields }) => {
-            for field in fields.iter_mut() {
-                normalize_pat(&mut field.node.node, cons);
-            }
         }
 
         ast::Pat::Or(pat1, pat2) => {

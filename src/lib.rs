@@ -235,7 +235,11 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
 
     let mut iter = tokens.into_iter().peekable();
     while let Some((l, t, r)) = iter.next() {
-        if let TokenKind::UpperId | TokenKind::UpperIdPath = t.kind {
+        if let TokenKind::UpperId
+        | TokenKind::UpperIdPath
+        | TokenKind::TildeUpperId
+        | TokenKind::TildeUpperIdPath = t.kind
+        {
             if let Some((
                 l_next,
                 Token {
@@ -253,10 +257,12 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
                     new_tokens.push((
                         l,
                         Token {
-                            kind: if t.kind == TokenKind::UpperId {
-                                TokenKind::UpperIdLBracket
-                            } else {
-                                TokenKind::UpperIdPathLBracket
+                            kind: match t.kind {
+                                TokenKind::UpperId => TokenKind::UpperIdLBracket,
+                                TokenKind::UpperIdPath => TokenKind::UpperIdPathLBracket,
+                                TokenKind::TildeUpperId => TokenKind::TildeUpperIdLBracket,
+                                TokenKind::TildeUpperIdPath => TokenKind::TildeUpperIdPathLBracket,
+                                _ => panic!(),
                             },
                             text: t.text, // NB. Does not include the lbracket in text as parser needs the id text
                         },

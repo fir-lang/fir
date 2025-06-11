@@ -4,6 +4,7 @@
 # Without vector literals it's painful to compare parse trees with expected trees, so for now, this
 # prints parse trees, which we then compare with expected output using `goldentests`.
 
+import Error
 import Lexer
 import PegTestLib
 import TestGrammar
