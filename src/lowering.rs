@@ -1882,12 +1882,17 @@ fn lower_expr(
             pat: lower_l_pat(pat, indices, scope, &mut Default::default()),
         }),
 
-        mono::Expr::Do(stmts) => Expr::Do(
-            stmts
-                .iter()
-                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
-                .collect(),
-        ),
+        mono::Expr::Do(stmts) => {
+            scope.bounds.enter();
+            let expr = Expr::Do(
+                stmts
+                    .iter()
+                    .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
+                    .collect(),
+            );
+            scope.bounds.exit();
+            expr
+        }
     }
 }
 

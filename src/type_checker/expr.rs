@@ -1173,10 +1173,12 @@ pub(super) fn check_expr(
             (Ty::bool(), pat_binders)
         }
 
-        ast::Expr::Do(stmts) => (
-            check_stmts(tc_state, stmts, expected_ty, level, loop_stack),
-            Default::default(),
-        ),
+        ast::Expr::Do(stmts) => {
+            tc_state.env.enter();
+            let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
+            tc_state.env.exit();
+            (ty, Default::default())
+        }
     }
 }
 
