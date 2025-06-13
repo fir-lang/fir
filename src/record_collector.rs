@@ -333,5 +333,11 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>) {
             visit_expr(&expr.node, records);
             visit_pat(&pat.node, records);
         }
+
+        mono::Expr::Do(stmts) => {
+            for stmt in stmts {
+                visit_stmt(&stmt.node, records);
+            }
+        }
     }
 }

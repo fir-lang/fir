@@ -412,6 +412,7 @@ pub enum Expr {
     If(IfExpr),
     ClosureAlloc(ClosureIdx),
     Is(IsExpr),
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -1880,6 +1881,13 @@ fn lower_expr(
             expr: Box::new(lower_l_expr(expr, closures, indices, scope)),
             pat: lower_l_pat(pat, indices, scope, &mut Default::default()),
         }),
+
+        mono::Expr::Do(stmts) => Expr::Do(
+            stmts
+                .iter()
+                .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
+                .collect(),
+        ),
     }
 }
 

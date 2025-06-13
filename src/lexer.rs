@@ -30,6 +30,7 @@ lexgen::lexer! {
         "as" = TokenKind::As,
         "break" = TokenKind::Break,
         "continue" = TokenKind::Continue,
+        "do" = TokenKind::Do,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
         "export" = TokenKind::Export,

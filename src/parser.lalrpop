@@ -74,6 +74,7 @@ extern {
         "as" => Token { kind: TokenKind::As, .. },
         "break" => Token { kind: TokenKind::Break, .. },
         "continue" => Token { kind: TokenKind::Continue, .. },
+        "do" => Token { kind: TokenKind::Do, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "else" => Token { kind: TokenKind::Else, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
@@ -629,6 +630,10 @@ BlockExpr: Expr = {
             branches,
             else_branch,
         })
+    },
+
+    "do" ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
+        Expr::Do(stmts)
     },
 }
 

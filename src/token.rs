@@ -59,6 +59,7 @@ pub enum TokenKind {
     As,
     Break,
     Continue,
+    Do,
     Elif,
     Else,
     Export,

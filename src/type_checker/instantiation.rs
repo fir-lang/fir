@@ -169,6 +169,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             normalize_expr(&mut expr.node, cons);
             normalize_pat(&mut pat.node, cons);
         }
+
+        ast::Expr::Do(stmts) => {
+            for stmt in stmts {
+                normalize_instantiation_types(&mut stmt.node, cons);
+            }
+        }
     }
 }
 

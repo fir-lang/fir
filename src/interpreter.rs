@@ -983,6 +983,8 @@ fn eval<W: Write>(
                 pgm.false_alloc
             })
         }
+
+        Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
     }
 }
 

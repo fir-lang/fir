@@ -524,6 +524,8 @@ pub enum Expr {
     Fn(FnExpr),
 
     Is(IsExpr),
+
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -1085,6 +1087,12 @@ impl Expr {
 
             Expr::Is(IsExpr { expr, pat: _ }) => {
                 expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Do(stmts) => {
+                for stmt in stmts {
+                    stmt.node.subst_ty_ids(substs);
+                }
             }
         }
     }

@@ -775,6 +775,10 @@ fn mono_expr(
             expr: Box::new(mono_l_expr(expr, ty_map, poly_pgm, mono_pgm, locals)),
             pat: mono_l_pat(pat, ty_map, poly_pgm, mono_pgm, locals),
         }),
+
+        ast::Expr::Do(stmts) => {
+            mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals))
+        }
     }
 }
 

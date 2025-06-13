@@ -5,6 +5,7 @@ syntax keyword firKeyword
     \ as
     \ break
     \ continue
+    \ do
     \ elif
     \ else
     \ export
