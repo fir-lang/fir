@@ -7,32 +7,7 @@ use crate::type_checker::ty_map::TyMap;
 /// Convert an AST type to type checking type.
 pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) -> Ty {
     match ast_ty {
-        ast::Type::Named(ast::NamedType { name, args }) => {
-            let ty_con = tys
-                .get_con(name)
-                .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
-
-            if ty_con.arity() as usize != args.len() {
-                panic!(
-                    "{}: Incorrect number of type arguments to {}, expected {}, found {}",
-                    loc_display(loc),
-                    name,
-                    ty_con.arity(),
-                    args.len()
-                )
-            }
-
-            if args.is_empty() {
-                return Ty::Con(ty_con.id.clone(), Kind::Star);
-            }
-
-            let converted_args: Vec<Ty> = args
-                .iter()
-                .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
-                .collect();
-
-            Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
-        }
+        ast::Type::Named(named_ty) => convert_named_ty(tys, named_ty, loc),
 
         ast::Type::Var(var) => tys
             .get_var(var)
@@ -82,32 +57,14 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
         } => {
             let mut ty_alts: TreeMap<Id, Ty> = TreeMap::new();
 
-            for ast::VariantAlt { con, fields } in alts {
-                let mut record_labels: TreeMap<Id, Ty> = TreeMap::new();
-
-                for ast::Named { name, node } in fields {
-                    let name = name.as_ref().unwrap_or_else(|| {
-                        panic!(
-                            "{}: Variants with unnamed fields not supported yet",
-                            loc_display(loc)
-                        )
-                    });
-                    let ty = convert_ast_ty(tys, node, loc);
-                    record_labels.insert(name.clone(), ty);
-                }
-                let record_ty = Ty::Anonymous {
-                    labels: record_labels,
-                    extension: None,
-                    kind: RecordOrVariant::Record,
-                    is_row: false,
-                };
-
-                let old = ty_alts.insert(con.clone(), record_ty);
+            for alt in alts {
+                let ty = convert_named_ty(tys, alt, loc);
+                let old = ty_alts.insert(alt.name.clone(), ty);
                 if old.is_some() {
                     panic!(
-                        "{}: Constructor {} defined multiple times in variant",
+                        "{}: Type {} used multiple times in variant type",
                         loc_display(loc),
-                        con
+                        alt.name
                     );
                 }
             }
@@ -152,6 +109,35 @@ pub(super) fn convert_ast_ty(tys: &TyMap, ast_ty: &ast::Type, loc: &ast::Loc) ->
             }
         }
     }
+}
+
+fn convert_named_ty(tys: &TyMap, named_ty: &ast::NamedType, loc: &ast::Loc) -> Ty {
+    let ast::NamedType { name, args } = named_ty;
+
+    let ty_con = tys
+        .get_con(name)
+        .unwrap_or_else(|| panic!("{}: Unknown type {}", loc_display(loc), name));
+
+    if ty_con.arity() as usize != args.len() {
+        panic!(
+            "{}: Incorrect number of type arguments to {}, expected {}, found {}",
+            loc_display(loc),
+            name,
+            ty_con.arity(),
+            args.len()
+        )
+    }
+
+    if args.is_empty() {
+        return Ty::Con(ty_con.id.clone(), Kind::Star);
+    }
+
+    let converted_args: Vec<Ty> = args
+        .iter()
+        .map(|arg| convert_ast_ty(tys, &arg.node, &arg.loc))
+        .collect();
+
+    Ty::App(ty_con.id.clone(), converted_args, Kind::Star)
 }
 
 pub(super) fn convert_fields(

@@ -1,6 +1,6 @@
 main():
     let x: Option[U32] = Option.None
-    if x is Option.Some(a) || Bool.True:
+    if x is Option.Some(a) or Bool.True:
         print(a)
 
 # args: --no-backtrace

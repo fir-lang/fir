@@ -14,15 +14,15 @@ main():
 
     print("---")
 
-    let iter = onceWith(fn() {
+    let iter = onceWith(||:
             print("OnceWith 1")
             'a'
-        })
+        )
         .chain(empty())
-        .chain(onceWith(fn() {
+        .chain(onceWith(||:
             print("OnceWith 2")
             'b'
-        }))
+        ))
         .chain(empty())
 
     for i: Char in iter:

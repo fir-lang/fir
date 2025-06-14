@@ -205,7 +205,7 @@ impl Iterator[SplitWhitespace, Str, exn]:
             let next: Option[(char: Char, idx: U32)] = charIdxIter.next()
             match next:
                 Option.Some((char = char, idx = idx)):
-                    if !char.isAsciiWhitespace():
+                    if not char.isAsciiWhitespace():
                         wordStart = self._idx + idx
                         wordEnd = wordStart
                         break

@@ -18,7 +18,7 @@ main(args: Array[Str]):
     if tokens.len() == 0:
         panic("Empty file")
 
-    let grammar = match try({ grammar(tokens, 0) }):
+    let grammar = match try(||: grammar(tokens, 0)):
         Result.Err(err):
             panic(err.toStr())
         Result.Ok(result):
@@ -333,12 +333,12 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
     doc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.withCapacity(0)") + Doc.hardLine()
 
     for alt: Alt in decl.alts.iter():
-        let altResultDoc = Doc.str("let altResult = try({") + Doc.hardLine()
+        let altResultDoc = Doc.str("let altResult = try(||:") + Doc.hardLine()
         for symbol: Symbol in alt.symbols.iter():
             altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats) + Doc.hardLine()
         altResultDoc += Doc.str("cursor")
         altResultDoc = altResultDoc.nest(4)
-        altResultDoc += Doc.hardLine() + Doc.str("})") + Doc.hardLine()
+        altResultDoc += Doc.hardLine() + Doc.str(")") + Doc.hardLine()
         doc += altResultDoc
 
         let altResultMatchDoc = Doc.str("match altResult:") + Doc.hardLine()
@@ -397,7 +397,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
     match symbol:
         Symbol.Terminal(terminal):
-            let patToks = terminalPats.get(terminal).unwrapOrElse({ panic("Unknown terminal: `terminal`") })
+            let patToks = terminalPats.get(terminal).unwrapOrElse(||: panic("Unknown terminal: `terminal`"))
 
             let eofCheck =
                 Doc.nested(
@@ -414,7 +414,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + Doc.hardLine()
 
             let nested = Doc.empty()
-            if !ignore:
+            if not ignore:
                 nested += Doc.str("nodes.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
             nested += Doc.str("cursor += 1")
 
@@ -434,7 +434,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + Doc.hardLine()
                 + Doc.str("cursor = nonTerminalResult.newCursor")
 
-            if !ignore:
+            if not ignore:
                 doc += Doc.hardLine() + Doc.str("nodes.push(nonTerminalResult.tree)")
 
             doc
@@ -458,13 +458,13 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     + Doc.hardLine()
                     + Doc.nested(
                         4,
-                        Doc.str("let symResult = try({")
+                        Doc.str("let symResult = try(||:")
                             + Doc.hardLine()
                             + generateSymbolParser(symbol, ignore, terminalPats)
                             + Doc.hardLine()
                             + Doc.str("cursor"))
                     + Doc.hardLine()
-                    + Doc.str("})")
+                    + Doc.str(")")
                     + Doc.hardLine()
                     + Doc.nested(
                           4,
@@ -494,13 +494,13 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                 + Doc.hardLine()
                 + Doc.nested(
                       4,
-                      Doc.str("let symResult = try({")
+                      Doc.str("let symResult = try(||:")
                           + Doc.hardLine()
                           + generateSymbolParser(symbol, ignore, terminalPats)
                           + Doc.hardLine()
                           + Doc.str("cursor"))
                  + Doc.hardLine()
-                 + Doc.str("})")
+                 + Doc.str(")")
                  + Doc.hardLine()
                  + Doc.nested(
                        4,
@@ -525,11 +525,11 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
             let doc = Doc.str("let tokensLen0 = tokens.len()") + Doc.hardLine()
             doc + Doc.nested(
                 4,
-                Doc.str("let symResult = try({")
+                Doc.str("let symResult = try(||:")
                     + Doc.hardLine()
                     + generateSymbolParser(symbol, Bool.True, terminalPats))
                 + Doc.hardLine()
-                + Doc.str("})")
+                + Doc.str(")")
                 + Doc.hardLine()
                 + Doc.nested(
                     4,

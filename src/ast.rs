@@ -188,19 +188,13 @@ pub enum Type {
 
     /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
-        alts: Vec<VariantAlt>,
+        alts: Vec<NamedType>,
         extension: Option<Id>,
         is_row: bool,
     },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
@@ -360,9 +354,6 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
-    /// Matches a variant.
-    Variant(VariantPattern),
-
     Record(RecordPattern),
 
     /// Underscore, aka. wildcard.
@@ -408,6 +399,7 @@ pub struct RecordPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
+    pub variant: bool,
     pub ty: Id,
     pub constr: Option<Id>,
 
@@ -419,12 +411,6 @@ pub struct Constructor {
 
     /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -529,12 +515,6 @@ pub enum Expr {
     /// A record: `(1, 2)`, `(x = 123, msg = "hi")`.
     Record(Vec<Named<L<Expr>>>),
 
-    /// A variant: "~A" (nullary), "~ParseError(...)".
-    ///
-    /// Because "~A" is type checked differently from "~A(1)", we parse variant applications as
-    /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr),
-
     Return(Box<L<Expr>>),
 
     Match(MatchExpr),
@@ -544,6 +524,8 @@ pub enum Expr {
     Fn(FnExpr),
 
     Is(IsExpr),
+
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -556,12 +538,6 @@ pub struct VarExpr {
 
     /// Inferred type arguments of the variable. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -876,14 +852,14 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut alts: Vec<VariantAlt> = alts
+                let mut alts: Vec<NamedType> = alts
                     .iter()
-                    .map(|VariantAlt { con, fields }| VariantAlt {
-                        con: con.clone(),
-                        fields: fields
+                    .map(|NamedType { name, args }| NamedType {
+                        name: name.clone(),
+                        args: args
                             .iter()
-                            .map(|Named { name, node }| Named {
-                                name: name.clone(),
+                            .map(|L { loc, node }| L {
+                                loc: loc.clone(),
                                 node: node.subst_ids(substs),
                             })
                             .collect(),
@@ -1061,12 +1037,6 @@ impl Expr {
                 }
             }
 
-            Expr::Variant(VariantExpr { id: _, args }) => {
-                for field in args {
-                    field.node.node.subst_ty_ids(substs);
-                }
-            }
-
             Expr::Return(expr) => expr.node.subst_ty_ids(substs),
 
             Expr::Match(MatchExpr { scrutinee, alts }) => {
@@ -1117,6 +1087,12 @@ impl Expr {
 
             Expr::Is(IsExpr { expr, pat: _ }) => {
                 expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Do(stmts) => {
+                for stmt in stmts {
+                    stmt.node.subst_ty_ids(substs);
+                }
             }
         }
     }

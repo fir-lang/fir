@@ -1,9 +1,11 @@
 syntax case match
 
 syntax keyword firKeyword
+    \ and
     \ as
     \ break
     \ continue
+    \ do
     \ elif
     \ else
     \ export
@@ -19,6 +21,8 @@ syntax keyword firKeyword
     \ let
     \ loop
     \ match
+    \ not
+    \ or
     \ prim
     \ return
     \ trait

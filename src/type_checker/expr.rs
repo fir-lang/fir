@@ -18,7 +18,7 @@ use smol_str::SmolStr;
 ///
 /// - `<expr> is <pat>` binds the variables that `<pat>` binds.
 ///
-/// - `<expr1> && <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
+/// - `<expr1> and <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
 ///   `<expr1>` and `<expr2>` need to bind disjoint set of variables.
 ///
 /// Other expressions don't bind any variables.
@@ -31,6 +31,8 @@ pub(super) fn check_expr(
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> (Ty, Map<Id, Ty>) {
+    let loc = expr.loc.clone();
+
     match &mut expr.node {
         ast::Expr::Var(ast::VarExpr {
             id: var,
@@ -96,58 +98,6 @@ pub(super) fn check_expr(
                 });
 
                 ty
-            };
-
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, ref mut node } in args.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant expression with unnamed args not supported yet",
-                        loc_display(&expr.loc)
-                    ),
-                };
-                let (ty, _) = check_expr(tc_state, node, None, level, loop_stack);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant expression with dupliate fields",
-                        loc_display(&expr.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            let ty = Ty::Anonymous {
-                labels: [(id.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Variant),
-                    expr.loc.clone(),
-                )))),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
             };
 
             (
@@ -236,6 +186,7 @@ pub(super) fn check_expr(
         ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
 
         ast::Expr::ConstrSelect(ast::Constructor {
+            variant,
             ty,
             constr,
             user_ty_args,
@@ -269,18 +220,25 @@ pub(super) fn check_expr(
                 }),
             };
 
+            let variant = *variant;
+
             let con_ty = if user_ty_args.is_empty() {
                 let (con_ty, con_ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
                 });
 
-                con_ty
+                if variant {
+                    make_variant(tc_state, con_ty, level, &loc)
+                } else {
+                    con_ty
+                }
             } else {
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
@@ -303,13 +261,18 @@ pub(super) fn check_expr(
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                 });
 
-                con_ty
+                if variant {
+                    make_variant(tc_state, con_ty, level, &loc)
+                } else {
+                    con_ty
+                }
             };
 
             (
@@ -754,7 +717,7 @@ pub(super) fn check_expr(
                             .map(|id| (**id).clone())
                             .collect();
                         panic!(
-                            "{}: Left and right exprs in `&&` bind same variables: {}",
+                            "{}: Left and right exprs in `and` bind same variables: {}",
                             loc_display(&expr.loc),
                             intersection.join(", "),
                         );
@@ -1209,6 +1172,13 @@ pub(super) fn check_expr(
             );
             (Ty::bool(), pat_binders)
         }
+
+        ast::Expr::Do(stmts) => {
+            tc_state.env.enter();
+            let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
+            tc_state.env.exit();
+            (ty, Default::default())
+        }
     }
 }
 
@@ -1448,4 +1418,40 @@ fn select_method(
     }
 
     candidates.pop()
+}
+
+// ty -> [labelOf(ty): ty, ..r] (r is fresh)
+//
+// Somewhat hackily, we also convert function types that return named types to function types that
+// return variants instead, to allow type checking `~Foo(args)` by first converting `~Foo`'s type to
+// a function type, and then applying.
+pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
+    let con = match ty.normalize(tc_state.tys.tys.cons()) {
+        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => {
+            let ret = make_variant(tc_state, *ret, level, loc);
+            return Ty::Fun {
+                args,
+                ret: Box::new(ret),
+                exceptions,
+            };
+        }
+
+        ty => panic!("Type in variant is not a constructor: {}", ty),
+    };
+
+    let row_ext = tc_state
+        .var_gen
+        .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+    Ty::Anonymous {
+        labels: [(con, ty)].into_iter().collect(),
+        extension: Some(Box::new(Ty::Var(row_ext))),
+        kind: RecordOrVariant::Variant,
+        is_row: false,
+    }
 }

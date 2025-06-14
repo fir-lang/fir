@@ -46,7 +46,7 @@ trait Eq[t]:
     __eq(self: t, other: t) Bool
 
     __neq(self: t, other: t) Bool:
-        !self.__eq(other)
+        not self.__eq(other)
 
 # The `|` operator.
 trait BitOr[t]:

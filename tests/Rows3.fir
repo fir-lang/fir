@@ -1,17 +1,26 @@
+type E1:
+    E1
+
+type E2:
+    E2
+
+type E3:
+    E3
+
 f1[VarRow[r]]() Result[[E1, ..r], ()]:
-    Result.Err(~E1)
+    Result.Err(~E1.E1)
 
 f2[VarRow[r]]() Result[[E1, E2, ..r], ()]:
     if Bool.True:
-        Result.Err(~E1)
+        Result.Err(~E1.E1)
     else:
-        Result.Err(~E2)
+        Result.Err(~E2.E2)
 
 f3[VarRow[r]]() Result[[E1, E2, ..r], ()]:
     let err = if Bool.True:
-        ~E1
+        ~E1.E1
     else:
-        ~E2
+        ~E2.E2
     Result.Err(err)
 
 f4() Result[[E1, E2, E3], ()]:
@@ -23,7 +32,7 @@ f5Simple() Result[[E2, E3], ()]:
     match f4():
         Result.Err(errs):
             match errs:
-                ~E1: Result.Ok(())
+                ~E1.E1: Result.Ok(())
                 other: Result.Err(other)
 
         Result.Ok(()):
@@ -31,7 +40,7 @@ f5Simple() Result[[E2, E3], ()]:
 
 f5Complex() Result[[E2, E3], ()]:
     match f4():
-        Result.Err(~E1) | Result.Ok(()):
+        Result.Err(~E1.E1) | Result.Ok(()):
             Result.Ok(())
 
         Result.Err(other):
@@ -39,7 +48,7 @@ f5Complex() Result[[E2, E3], ()]:
 
 f6[VarRow[errs]](f: Fn() Result[[E1, ..errs], ()] / exn) Result[[..errs], ()] / exn:
     match f():
-        Result.Err(~E1) | Result.Ok(()):
+        Result.Err(~E1.E1) | Result.Ok(()):
             Result.Ok(())
 
         Result.Err(other):
@@ -70,21 +79,30 @@ f7_2[VarRow[errs]](f: Fn() Result[[E1, ..errs], ()] / exn) Result[[E1, ..errs], 
             Result.Err(err)
 
         Result.Ok(()):
-            Result.Err(~E1)
+            Result.Err(~E1.E1)
 
 f7_arg_1() Result[[E1, E2], ()]:
-    Result.Err(~E1)
+    Result.Err(~E1.E1)
 
 f7_arg_2[VarRow[errs]]() Result[[E2, ..errs], ()]:
-    Result.Err(~E2)
+    Result.Err(~E2.E2)
 
 f8(f: Fn() [E1, E2] / exn1) = ()
 
-f9[VarRow[r]]() [E1, ..r] = ~E1
+f9[VarRow[r]]() [E1, ..r] = ~E1.E1
 
 f10[VarRow[r]](f: Fn([E1, E2, ..r]) () / exn1) = ()
 
 f11(x: [E1, E2, E3]) = ()
+
+type A:
+    A
+
+type B:
+    B
+
+type C:
+    C
 
 type SimpleError:
     Error([A, B, C])
@@ -92,7 +110,7 @@ type SimpleError:
 
 f12(a: SimpleError) Result[[C], I32]:
     match a:
-        SimpleError.Error(~A | ~B): Result.Err(~C)
+        SimpleError.Error(~A.A | ~B.B): Result.Err(~C.C)
         SimpleError.Error(other): Result.Err(other)
         SimpleError.NotError(i): Result.Ok(i)
 

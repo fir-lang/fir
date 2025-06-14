@@ -20,7 +20,7 @@ runParser(
         panic(lexerErrorStr(error))
     if runScan:
         tokens = scan(tokens)
-    let result = match try({ parseFn(tokens, 0) }):
+    let result = match try(||: parseFn(tokens, 0)):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
     if result.newCursor != tokens.len():
@@ -33,7 +33,7 @@ runTest(
         parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token] ,
     ) / exn:
     print(testName)
-    match try({ runParser(input, parseFn, Bool.False) }):
+    match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -43,7 +43,7 @@ runTest_(
         parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
     ) / exn:
     print(input)
-    match try({ runParser(input, parseFn, Bool.False) }):
+    match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
@@ -53,7 +53,7 @@ runTestIndent(
         parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
     ) Bool / exn:
     print(input)
-    let result = match try({ runParser(input, parseFn, Bool.True) }):
+    let result = match try(||: runParser(input, parseFn, Bool.True)):
         Result.Ok(tree):
             print(tree.toDoc().render(80))
             Bool.True

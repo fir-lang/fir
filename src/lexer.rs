@@ -26,9 +26,11 @@ lexgen::lexer! {
         },
 
         // Keywords
+        "and" = TokenKind::And,
         "as" = TokenKind::As,
         "break" = TokenKind::Break,
         "continue" = TokenKind::Continue,
+        "do" = TokenKind::Do,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
         "export" = TokenKind::Export,
@@ -44,6 +46,8 @@ lexgen::lexer! {
         "let" = TokenKind::Let,
         "loop" = TokenKind::Loop,
         "match" = TokenKind::Match,
+        "not" = TokenKind::Not,
+        "or" = TokenKind::Or,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
         "trait" = TokenKind::Trait,
@@ -99,8 +103,10 @@ lexgen::lexer! {
         "^" = TokenKind::Caret,
 
         let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
-        '~' $upper_id = TokenKind::TildeUpperId,
+
         $upper_id = TokenKind::UpperId,
+        '~' $upper_id = TokenKind::TildeUpperId,
+
         $upper_id '.' $upper_id = TokenKind::UpperIdPath,
         '~' $upper_id '.' $upper_id = TokenKind::TildeUpperIdPath,
 

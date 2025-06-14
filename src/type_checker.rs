@@ -926,7 +926,7 @@ fn collect_schemes(
             ast::TopDecl::Impl(impl_decl) => {
                 // Default methods are already copied to impls. Check that impl method signatures
                 // match the trait method signatures.
-                let impl_assumps = convert_and_bind_context(
+                let _impl_assumps = convert_and_bind_context(
                     tys,
                     &impl_decl.node.context,
                     TyVarConversion::ToQVar,
@@ -982,11 +982,7 @@ fn collect_schemes(
 
                     let impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
-                        preds: impl_assumps
-                            .iter()
-                            .cloned()
-                            .chain(fun_assumps.iter().cloned())
-                            .collect(),
+                        preds: fun_assumps.iter().cloned().collect(),
                         ty: fun_ty,
                         loc: fun.loc.clone(),
                     };

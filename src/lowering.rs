@@ -5,7 +5,7 @@ pub mod printer;
 
 use crate::collections::*;
 use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Loc, Named, UnOp, L};
-use crate::record_collector::{collect_records, RecordShape, VariantShape};
+use crate::record_collector::{collect_records, RecordShape};
 
 use smol_str::SmolStr;
 
@@ -145,7 +145,7 @@ pub enum Fun {
     Source(SourceFunDecl),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BuiltinFunDecl {
     Panic,
     PrintStrNoNl,
@@ -258,7 +258,6 @@ pub enum HeapObj {
     Builtin(BuiltinConDecl),
     Source(SourceConDecl),
     Record(RecordShape),
-    Variant(VariantShape),
 }
 
 impl HeapObj {
@@ -272,13 +271,6 @@ impl HeapObj {
     pub fn as_record(&self) -> &RecordShape {
         match self {
             HeapObj::Record(record) => record,
-            _ => panic!(),
-        }
-    }
-
-    pub fn as_variant(&self) -> &VariantShape {
-        match self {
-            HeapObj::Variant(variant) => variant,
             _ => panic!(),
         }
     }
@@ -415,12 +407,12 @@ pub enum Expr {
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
     Record(RecordExpr),
-    Variant(VariantExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
     ClosureAlloc(ClosureIdx),
     Is(IsExpr),
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
@@ -449,13 +441,6 @@ pub struct CallArg {
 
 #[derive(Debug, Clone)]
 pub struct RecordExpr {
-    pub fields: Vec<Named<L<Expr>>>,
-    pub idx: HeapObjIdx,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
     pub fields: Vec<Named<L<Expr>>>,
     pub idx: HeapObjIdx,
 }
@@ -496,7 +481,6 @@ pub enum Pat {
     Var(LocalIdx),
     Constr(ConstrPattern),
     Record(RecordPattern),
-    Variant(VariantPattern),
     Ignore,
     Str(String),
     Char(char),
@@ -518,13 +502,6 @@ pub struct RecordPattern {
     pub idx: HeapObjIdx,
 }
 
-#[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
-    pub idx: HeapObjIdx,
-}
-
 #[derive(Debug)]
 pub struct Closure {
     pub idx: ClosureIdx, // for debugging
@@ -532,6 +509,7 @@ pub struct Closure {
     pub fvs: Vec<ClosureFv>,
     pub params: Vec<Ty>,
     pub body: Vec<L<Stmt>>,
+    pub loc: Loc,
 }
 
 /// A free variable in a closure.
@@ -556,7 +534,6 @@ struct Indices {
     funs: Map<Id, Map<Vec<mono::Type>, FunIdx>>,
     assoc_funs: Map<Id, Map<Id, Map<Vec<mono::Type>, FunIdx>>>,
     records: Map<RecordShape, HeapObjIdx>,
-    variants: Map<VariantShape, HeapObjIdx>,
 }
 
 #[derive(Debug, Default)]
@@ -905,8 +882,8 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         }
     }
 
-    // Assign indices to record and variant shapes.
-    let (mut record_shapes, variant_shapes) = collect_records(mono_pgm);
+    // Assign indices to record shapes.
+    let mut record_shapes = collect_records(mono_pgm);
 
     // Always define unit.
     // TODO: Unit should be defined already as it's the return type of `main`?
@@ -920,14 +897,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         lowered_pgm.heap_objs.push(HeapObj::Record(record_shape));
     }
 
-    let mut variant_indices: Map<VariantShape, HeapObjIdx> = Default::default();
-    for variant_shape in variant_shapes {
-        let idx = next_con_idx;
-        next_con_idx = HeapObjIdx(next_con_idx.0 + 1);
-        variant_indices.insert(variant_shape.clone(), idx);
-        lowered_pgm.heap_objs.push(HeapObj::Variant(variant_shape));
-    }
-
     lowered_pgm.unit_con_idx = *record_indices
         .get(&RecordShape::UnnamedFields { arity: 0 })
         .unwrap_or_else(|| panic!("Unit record not defined {:#?}", record_indices));
@@ -938,7 +907,6 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
         funs: fun_nums,
         assoc_funs: assoc_fun_nums,
         records: record_indices,
-        variants: variant_indices,
     };
 
     // Lower top-level functions.
@@ -1666,6 +1634,7 @@ fn lower_expr(
         }
 
         mono::Expr::ConstrSelect(mono::Constructor {
+            variant: _,
             ty,
             constr,
             ty_args,
@@ -1792,21 +1761,6 @@ fn lower_expr(
             })
         }
 
-        mono::Expr::Variant(mono::VariantExpr { id, args }) => {
-            let idx = *indices
-                .variants
-                .get(&VariantShape::from_con_and_fields(id, args))
-                .unwrap();
-            Expr::Variant(VariantExpr {
-                id: id.clone(),
-                fields: args
-                    .iter()
-                    .map(|arg| lower_nl_expr(arg, closures, indices, scope))
-                    .collect(),
-                idx,
-            })
-        }
-
         mono::Expr::Return(expr) => Expr::Return(lower_bl_expr(expr, closures, indices, scope)),
 
         mono::Expr::Match(mono::MatchExpr { scrutinee, alts }) => Expr::Match(MatchExpr {
@@ -1917,6 +1871,7 @@ fn lower_expr(
                     .map(|(_, ty)| Ty::from_mono_ty(&ty.node))
                     .collect(),
                 body,
+                loc: loc.clone(),
             });
 
             Expr::ClosureAlloc(closure_idx)
@@ -1926,6 +1881,18 @@ fn lower_expr(
             expr: Box::new(lower_l_expr(expr, closures, indices, scope)),
             pat: lower_l_pat(pat, indices, scope, &mut Default::default()),
         }),
+
+        mono::Expr::Do(stmts) => {
+            scope.bounds.enter();
+            let expr = Expr::Do(
+                stmts
+                    .iter()
+                    .map(|stmt| lower_l_stmt(stmt, closures, indices, scope))
+                    .collect(),
+            );
+            scope.bounds.exit();
+            expr
+        }
     }
 }
 
@@ -1985,6 +1952,7 @@ fn lower_pat(
         mono::Pat::Constr(mono::ConstrPattern {
             constr:
                 mono::Constructor {
+                    variant: _,
                     ty,
                     constr,
                     ty_args,
@@ -2023,21 +1991,6 @@ fn lower_pat(
                 .get(&RecordShape::from_named_things(record_ty_fields))
                 .unwrap();
             Pat::Record(RecordPattern {
-                fields: fields
-                    .iter()
-                    .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))
-                    .collect(),
-                idx,
-            })
-        }
-
-        mono::Pat::Variant(mono::VariantPattern { constr, fields }) => {
-            let idx = *indices
-                .variants
-                .get(&VariantShape::from_con_and_fields(constr, fields))
-                .unwrap();
-            Pat::Variant(VariantPattern {
-                constr: constr.clone(),
                 fields: fields
                     .iter()
                     .map(|field| lower_nl_pat(field, indices, scope, mapped_binders))
