@@ -888,54 +888,15 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
-
-            let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
-
-            let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
-
-            for ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                tc_state.env.enter();
-
-                let pat_ty = check_pat(tc_state, pattern, level);
-                unify(
-                    &pat_ty,
-                    &scrut_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &pattern.loc,
-                );
-
-                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
-
-                if let Some(guard) = guard {
-                    let (_, guard_binders) =
-                        check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
-                    guard_binders.into_iter().for_each(|(k, v)| {
-                        tc_state.env.insert(k, v);
-                    });
-                }
-
-                rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
-
-                tc_state.env.exit();
-
-                if guard.is_none() {
-                    covered_pats.add(&pattern.node);
-                }
-            }
-
-            let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
-            if !exhaustive {
-                eprintln!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
-            }
+        ast::Expr::Match(match_expr) => {
+            let mut rhs_tys = check_match_expr(
+                tc_state,
+                match_expr,
+                &expr.loc,
+                expected_ty,
+                level,
+                loop_stack,
+            );
 
             // Unify RHS types. When the `expected_ty` is available this doesn't do anything.
             // Otherwise this checks that all branches return the same type.
@@ -966,42 +927,9 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::If(ast::IfExpr {
-            branches,
-            else_branch,
-        }) => {
-            let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
-
-            for (cond, body) in branches {
-                let (cond_ty, cond_binders) =
-                    check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
-                unify(
-                    &cond_ty,
-                    &Ty::bool(),
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &cond.loc,
-                );
-                tc_state.env.enter();
-                cond_binders.into_iter().for_each(|(k, v)| {
-                    tc_state.env.insert(k, v);
-                });
-                let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
-                tc_state.env.exit();
-                branch_tys.push(body_ty);
-            }
-
-            match else_branch {
-                Some(else_body) => {
-                    let body_ty = check_stmts(tc_state, else_body, expected_ty, level, loop_stack);
-                    branch_tys.push(body_ty);
-                }
-                None => {
-                    // A bit hacky: ensure that without an else branch the expression returns unit.
-                    branch_tys.push(Ty::unit());
-                }
-            }
+        ast::Expr::If(if_expr) => {
+            let mut branch_tys: Vec<Ty> =
+                check_if_expr(tc_state, if_expr, expected_ty, level, loop_stack);
 
             // When expected type is available, unify with it for better errors.
             match expected_ty {
@@ -1180,6 +1108,115 @@ pub(super) fn check_expr(
             (ty, Default::default())
         }
     }
+}
+
+pub(super) fn check_match_expr(
+    tc_state: &mut TcFunState,
+    expr: &mut ast::MatchExpr,
+    loc: &ast::Loc,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    loop_stack: &mut Vec<Option<Id>>,
+) -> Vec<Ty> {
+    let ast::MatchExpr { scrutinee, alts } = expr;
+
+    let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
+
+    let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
+
+    let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
+
+    for ast::Alt {
+        pattern,
+        guard,
+        rhs,
+    } in alts
+    {
+        tc_state.env.enter();
+
+        let pat_ty = check_pat(tc_state, pattern, level);
+        unify(
+            &pat_ty,
+            &scrut_ty,
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            level,
+            &pattern.loc,
+        );
+
+        refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
+
+        if let Some(guard) = guard {
+            let (_, guard_binders) =
+                check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
+            guard_binders.into_iter().for_each(|(k, v)| {
+                tc_state.env.insert(k, v);
+            });
+        }
+
+        rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
+
+        tc_state.env.exit();
+
+        if guard.is_none() {
+            covered_pats.add(&pattern.node);
+        }
+    }
+
+    let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, loc);
+    if !exhaustive {
+        eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
+    }
+
+    rhs_tys
+}
+
+pub(super) fn check_if_expr(
+    tc_state: &mut TcFunState,
+    expr: &mut ast::IfExpr,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    loop_stack: &mut Vec<Option<Id>>,
+) -> Vec<Ty> {
+    let ast::IfExpr {
+        branches,
+        else_branch,
+    } = expr;
+
+    let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
+
+    for (cond, body) in branches {
+        let (cond_ty, cond_binders) =
+            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+        unify(
+            &cond_ty,
+            &Ty::bool(),
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            level,
+            &cond.loc,
+        );
+        tc_state.env.enter();
+        cond_binders.into_iter().for_each(|(k, v)| {
+            tc_state.env.insert(k, v);
+        });
+        let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
+        tc_state.env.exit();
+        branch_tys.push(body_ty);
+    }
+
+    match else_branch {
+        Some(else_body) => {
+            let body_ty = check_stmts(tc_state, else_body, expected_ty, level, loop_stack);
+            branch_tys.push(body_ty);
+        }
+        None => {
+            // A bit hacky: ensure that without an else branch the expression returns unit.
+            branch_tys.push(Ty::unit());
+        }
+    }
+
+    branch_tys
 }
 
 /// Check a `FieldSelect` expr.
