@@ -26,6 +26,10 @@ interpreter_golden_test:
 interpreter_update_goldens: build
     goldentests target/debug/fir tests '# ' --overwrite
 
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+
 compiler_unit_test:
     cargo run -- compiler/Main.fir
 

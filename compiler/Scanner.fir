@@ -42,7 +42,7 @@ scan(tokens: Vec[Token]) Vec[Token]:
 
             # Generate indentation tokens.
             loop:
-                let lastIndent = indentStack.last().unwrapOrElse({ panic("Indent stack is empty") })
+                let lastIndent = indentStack.last().unwrapOrElse(||: panic("Indent stack is empty"))
                 match token.col.cmp(lastIndent):
                     Ordering.Greater:
                         indentStack.push(token.col)

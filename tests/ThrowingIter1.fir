@@ -50,10 +50,9 @@ main():
     strings.push("3")
     strings.push("4b")
 
-    let ret = try(fn() () / [EmptyInput, InvalidDigit, Overflow] {
+    let ret = try(|| () / [EmptyInput, InvalidDigit, Overflow]:
         for x: U32 in strings.iter().map(parseU32Exn):
-            printStr(x.toStr())
-    })
+            printStr(x.toStr()))
 
     match ret:
         Result.Ok(()) | Result.Err(~EmptyInput.EmptyInput) | Result.Err(~Overflow.Overflow): printStr("WAT")

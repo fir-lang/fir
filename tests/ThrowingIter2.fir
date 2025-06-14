@@ -57,10 +57,9 @@ main():
     strings.push("4b")
     strings.push("")
 
-    let ret = try(fn() () / [EmptyInput, Overflow] {
+    let ret = try(|| () / [EmptyInput, Overflow]:
         for x: U32 in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
-            printStr(x.toStr())
-    })
+            printStr(x.toStr()))
 
     match ret:
         Result.Err(~EmptyInput.EmptyInput): printStr("EmptyInput")

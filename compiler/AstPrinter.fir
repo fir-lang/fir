@@ -225,7 +225,7 @@ FunSig.pprint(self) Doc:
     let doc = Doc.empty()
     if self.context.preds.len() != 0:
         doc += brackets(
-            commaSep(self.context.preds.iter().map(fn(ty: L[Type]) { ty.node.pprint() })))
+            commaSep(self.context.preds.iter().map(|ty: L[Type]|: ty.node.pprint())))
 
     let argList = Doc.empty()
     let firstArg = Bool.True
@@ -262,11 +262,11 @@ _ppTyArgs(args: Vec[L[Type]]) Doc:
         return Doc.empty()
 
     brackets(commaSep(
-        args.iter().map(fn(l: L[Type]) Doc { l.node.pprint() })))
+        args.iter().map(|l: L[Type]| Doc: l.node.pprint())))
 
 _ppNamedList(namedList: Vec[Named[L[a]]], ppItem: Fn(a) Doc / exn) Doc / exn:
     parens(commaSep(
-        namedList.iter().map(fn(a: Named[L[a]]) Doc { _ppNamed(a, ppItem) })))
+        namedList.iter().map(|a: Named[L[a]]| Doc: _ppNamed(a, ppItem))))
 
 _ppNamed(named: Named[L[a]], ppItem: Fn(a) Doc / exn) Doc / exn:
     let doc = match named.name:
@@ -285,7 +285,7 @@ _ppAlt(alt: Alt) Doc:
 
 _ppStmts(stmts: Vec[L[Stmt]]) Doc:
     joinTrailing(
-        stmts.iter().map(fn(stmt: L[Stmt]) Doc { stmt.node.pprint() }),
+        stmts.iter().map(|stmt: L[Stmt]| Doc: stmt.node.pprint()),
         Doc.hardLine())
 
 _ppIfBranch(prefix: Str, guard: L[Expr], body: Vec[L[Stmt]]) Doc:

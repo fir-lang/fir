@@ -3,19 +3,10 @@ main():
     vec.push(1)
 
     let doc = vec.iter().map(
-        fn(alt: U32) Doc {
-            Doc.str("hi")
-        })
+        |alt: U32| Doc: Doc.str("hi"))
 
-    let doc = vec.iter().map(
-        fn(alt: U32) Doc {
-            Doc.str("hi")
-        }
-    )
+    let doc = vec.iter().map(|alt: U32| Doc: Doc.str("hi"))
 
-    let doc = vec.iter().map(
-        fn(alt: U32) Doc {
-            Doc.str("hi")
-    })
+    let doc = vec.iter().map(|alt: U32| Doc: Doc.str("hi"))
 
     ()

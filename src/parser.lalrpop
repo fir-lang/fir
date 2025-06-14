@@ -37,8 +37,6 @@ extern {
         "[" => Token { kind: TokenKind::LBracket, .. },
         "row[" => Token { kind: TokenKind::LBracketRow, .. },
         "]" => Token { kind: TokenKind::RBracket, .. },
-        "{" => Token { kind: TokenKind::LBrace, .. },
-        "}" => Token { kind: TokenKind::RBrace, .. },
         ":" => Token { kind: TokenKind::Colon, .. },
         "," => Token { kind: TokenKind::Comma, .. },
         "." => Token { kind: TokenKind::Dot, .. },
@@ -635,6 +633,35 @@ BlockExpr: Expr = {
     "do" ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
         Expr::Do(stmts)
     },
+
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+            idx: 0,
+            inferred_ty: None,
+        }),
+
+    "||" <ret:ReturnType> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
+                params: vec![],
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+            idx: 0,
+            inferred_ty: None,
+        }),
 }
 
 LInlineExpr: L<Expr> = {
@@ -1002,23 +1029,8 @@ InlineExpr: Expr = {
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LStmts> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-                exceptions: ret.0,
-                return_ty: ret.1,
-            },
-            body,
-            idx: 0,
-            inferred_ty: None,
-        }),
-
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> ":" <body:LInlineExpr> =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1032,28 +1044,14 @@ InlineExpr: Expr = {
             inferred_ty: None,
         }),
 
-    "{" <body:LStmts> "}" =>
+    "||" <ret:ReturnType> ":" <body:LInlineExpr> =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: vec![],
-                exceptions: None,
-                return_ty: None,
-            },
-            body,
-            idx: 0,
-            inferred_ty: None,
-        }),
-
-    "{" <body:LInlineExpr> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: None,
-                return_ty: None,
+                exceptions: ret.0,
+                return_ty: ret.1,
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,

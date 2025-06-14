@@ -29,14 +29,12 @@ impl[Sequence[s1, t, [AppendAfterStop, ..exn]], Sequence[s2, t, [AppendAfterStop
             self: AppendAfter[s1, s2],
             consumer: Fn(t) / [AppendAfterStop, ..exn]
         ) / [AppendAfterStop, ..exn]:
-        match try({
-            self.seq1.forEach(fn(i: t) / [AppendAfterStop, ..exn] {
+        match try(||:
+            self.seq1.forEach(|i: t| / [AppendAfterStop, ..exn]:
                 if self.amt == 0:
                     throw(~AppendAfterStop.AppendAfterStop)
                 self.amt -= 1
-                consumer(i)
-            })
-        }):
+                consumer(i))):
             Result.Ok(()) | Result.Err(~AppendAfterStop.AppendAfterStop):
                 self.seq2.forEach(consumer)
 
@@ -59,11 +57,8 @@ main():
             amt = 5,
         )
 
-    try[[AppendAfterStop], (), []]({
-        seq.forEach(fn(i: U32) {
-            print(i)
-        })
-    })
+    try[[AppendAfterStop], (), []](
+        ||: seq.forEach(|i: U32|: print(i)))
 
     ()
 
