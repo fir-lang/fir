@@ -1,6 +1,5 @@
 import ParseTree
 import Token
-import TypeGrammar
 
 type Terminal = Token
 type NonTerminal = InlineExprKind
@@ -37,10 +36,16 @@ Terminals:
     "return" = Token(kind = TokenKind.Return, ..)
 
 inlineExpr:
-    prefixExpr (binOp inlineExpr)*
+    prefixExpr (binOp prefixExpr)*
 
 prefixExpr:
-    exprPrefix? simpleExpr
+    exprPrefix? simpleExpr fields? args?
+
+fields:
+    (_"." "LowerId")+
+
+args:
+    "(" (inlineExpr ("," inlineExpr)* ","?)? ")"
 
 simpleExpr:
     # Variables
@@ -64,7 +69,7 @@ upperIdPath:
     "UpperId" ("." "UpperId")*
 
 tyArgs:
-    "[" type_ ("," type_)* ","? "]"
+    "[" "]"
 
 parenExpr:
     "LowerId" "=" inlineExpr

@@ -3,16 +3,10 @@ import Lexer
 import PegTestLib
 
 main(args: Array[Str]):
-    if args.len() > 2:
-        print("USAGE: One argument to parse argument as type decl")
-        print("       No arguments to run unit tests")
-        print("       You passed: `args.len() - 1` arguments.")
-        panic("")
-
-    if args.len() == 2:
-        let result = runTestIndent(args.get(1), typeDecl)
-        if not result:
-            print("FAIL")
-        return
-
+    runTest_("1", inlineExpr)
+    runTest_("1 + 2", inlineExpr)
+    runTest_("1 + 2 - 3", inlineExpr)
+    runTest_("Doc.str", inlineExpr)
+    runTest_("Doc.str(\"hi\")", inlineExpr)
+    runTest_("Doc.str(\"a\") + Doc.str(\"b\")", inlineExpr)
     ()

@@ -12,9 +12,9 @@ impl ToStr[TestError]:
 
 runParser(
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
         runScan: Bool,
-    ) ParseTree[Token, NonTerminal] / TestError :
+    ) ParseTree[Token, nt] / TestError:
     let (tokens, error) = tokenize("<test input>", input)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
@@ -27,10 +27,10 @@ runParser(
         throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
     result.tree
 
-runTest(
+runTest[ToStr[nt]](
         testName: Str,
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token] ,
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
     ) / exn:
     print(testName)
     match try(||: runParser(input, parseFn, Bool.False)):
@@ -38,9 +38,9 @@ runTest(
         Result.Err(err): print("ERR: `err`")
     print("")
 
-runTest_(
+runTest_[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
     ) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.False)):
@@ -48,9 +48,9 @@ runTest_(
         Result.Err(err): print("ERR: `err`")
     print("")
 
-runTestIndent(
+runTestIndent[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
     ) Bool / exn:
     print(input)
     let result = match try(||: runParser(input, parseFn, Bool.True)):
