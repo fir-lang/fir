@@ -195,6 +195,7 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
         match nodes.get(0).asTerminal().text:
             "-": symbol = Symbol.NegLookahead(symbol)
             "_": symbol = Symbol.Ignore(symbol)
+            _: panic("")
 
     symbol
 

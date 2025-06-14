@@ -20,20 +20,29 @@ Terminals:
     ".." = Token(kind = TokenKind.DotDot, ..)
     "." = Token(kind = TokenKind.Dot, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
-    "Int" = Token(kind = TokenKind.Int(_))
-    "HexInt" = Token(kind = TokenKind.HexInt(_))
-    "BinInt" = Token(kind = TokenKind.BinInt(_))
-    "Str" = Token(kind = TokenKind.Str(_))
-    "Char" = Token(kind = TokenKind.Char(_))
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "~" = Token(kind = TokenKind.Tilde, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "Int" = Token(kind = TokenKind.Int(_), ..)
+    "HexInt" = Token(kind = TokenKind.HexInt(_), ..)
+    "BinInt" = Token(kind = TokenKind.BinInt(_), ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "Char" = Token(kind = TokenKind.Char, ..)
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
     "return" = Token(kind = TokenKind.Return, ..)
 
 inlineExpr:
-    (exprPrefix? simpleInlineExpr exprSuffix?)+
+    prefixExpr (binOp inlineExpr)*
 
-simpleInlineExpr:
+prefixExpr:
+    exprPrefix? simpleExpr
+
+simpleExpr:
     # Variables
     "LowerId" tyArgs?
 
@@ -60,3 +69,13 @@ tyArgs:
 parenExpr:
     "LowerId" "=" inlineExpr
     inlineExpr
+
+exprPrefix:
+    "~"
+    "-"
+
+binOp:
+    "+"
+    "-"
+    "*"
+    "/"
