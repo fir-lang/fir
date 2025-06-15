@@ -27,6 +27,7 @@ syntax keyword firKeyword
     \ return
     \ trait
     \ type
+    \ value
     \ var
     \ while
 
