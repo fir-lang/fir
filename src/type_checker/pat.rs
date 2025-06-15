@@ -43,7 +43,11 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
             // Check that `con` exists and field shapes match.
             let con_scheme = match &ty_con.details {
-                TyConDetails::Type(TypeDetails { cons, sum }) => match pat_con_name {
+                TyConDetails::Type(TypeDetails {
+                    cons,
+                    sum,
+                    value: _,
+                }) => match pat_con_name {
                     Some(pat_con_name) => {
                         if !*sum {
                             panic!(

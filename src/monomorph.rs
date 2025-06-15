@@ -1661,6 +1661,7 @@ fn mono_ty_decl(
     mono_pgm.ty.entry(ty_decl.name.clone()).or_default().insert(
         args.to_vec(),
         mono::TypeDecl {
+            value: ty_decl.value,
             name: mono_ty_id.clone(),
             rhs: None,
         },
@@ -1690,6 +1691,7 @@ fn mono_ty_decl(
     mono_pgm.ty.get_mut(&ty_decl.name).unwrap().insert(
         args.to_vec(),
         mono::TypeDecl {
+            value: ty_decl.value,
             name: mono_ty_id.clone(),
             rhs,
         },

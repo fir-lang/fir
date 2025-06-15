@@ -2,14 +2,14 @@ trait T[a]:
     f[ToStr[b]](self: a, b: b)
 
 type X:
-    value: I32
+    val: I32
 
 impl T[X]:
     f[ToStr[q]](self: X, q: q):
         printStr("X.f called with q = `q`")
 
 main():
-    let x = X(value = 123)
+    let x = X(val = 123)
     x.f("hi")
 
     let y = x.f
