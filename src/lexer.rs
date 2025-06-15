@@ -52,6 +52,7 @@ lexgen::lexer! {
         "return" = TokenKind::Return, // maybe shorten as "ret"?
         "trait" = TokenKind::Trait,
         "type" = TokenKind::Type,
+        "value" = TokenKind::Value,
         "var" = TokenKind::Var,
         "while" = TokenKind::While,
 

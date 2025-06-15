@@ -61,7 +61,7 @@ main():
         match x:
             Result.Err(~Overflow.Overflow): printStr("Overflow")
             Result.Err(~EmptyInput.EmptyInput): printStr("EmptyInput")
-            Result.Ok(value): printStr(value.toStr())
+            Result.Ok(val): printStr(val.toStr())
 
 parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]) U32:
     let result: U32 = 0
