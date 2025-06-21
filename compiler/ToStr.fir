@@ -12,13 +12,14 @@ main(args: Array[Str]):
         "--test": test()
         "--item": generate(args.get(2))
         "--file": generate(readFileUtf8(args.get(2)))
+        other: print("Unknown mode: `other`")
 
 generate(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
     tokens = scan(tokens)
-    let result = match try({ typeDecl(tokens, 0) }):
+    let result = match try(||: typeDecl(tokens, 0)):
         Result.Err(err): panic("Unable to parse item as type decl: `err`")
         Result.Ok(result): result
     if result.newCursor != tokens.len():
