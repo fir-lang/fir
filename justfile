@@ -41,6 +41,7 @@ compiler_golden_test:
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
 
 build: generate_parser
     cargo build

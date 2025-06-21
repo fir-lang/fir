@@ -208,3 +208,31 @@ type Token:
     col: U32")
 
 # args after: -- --test
+# expected stdout:
+# impl[Eq[t]] Eq[Option[t]]:
+#     __eq(self: Option, other: Option) Bool:
+#         (l = Option.None, r = Option.None):
+#             Bool.True
+#         (l = Option.Some(l0), r = Option.Some(r0)):
+#             l0 == r0
+# 
+# impl[Eq[e], Eq[r]] Eq[Result[e, r]]:
+#     __eq(self: Result, other: Result) Bool:
+#         (l = Result.Ok(l0), r = Result.Ok(r0)):
+#             l0 == r0
+#         (l = Result.Err(l0), r = Result.Err(r0)):
+#             l0 == r0
+# 
+# impl Eq[Char]:
+#     __eq(self: Char, other: Char) Bool:
+#         self._codePoint == other._codePoint
+# 
+# impl Eq[Token]:
+#     __eq(self: Token, other: Token) Bool:
+#         self.kind == other.kind
+#             && self.text == other.text
+#             && self.byteIdx == other.byteIdx
+#             && self.line == other.line
+#             && self.col == other.col
+
+# expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
