@@ -51,8 +51,6 @@ impl LoweredPgm {
                 }
 
                 HeapObj::Record(record) => write!(buffer, "{:?}", record).unwrap(),
-
-                HeapObj::Variant(variant) => write!(buffer, "{:?}", variant).unwrap(),
             }
             buffer.push('\n');
         }
@@ -128,6 +126,7 @@ impl LoweredPgm {
                 fvs,
                 params,
                 body,
+                loc: _,
             },
         ) in self.closures.iter().enumerate()
         {
@@ -354,24 +353,6 @@ impl Expr {
                 buffer.push(')');
             }
 
-            Expr::Variant(VariantExpr { id, fields, idx }) => {
-                write!(buffer, "~{}{}", id, idx.0).unwrap();
-                if !fields.is_empty() {
-                    buffer.push('(');
-                    for (i, arg) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &arg.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.node.print(buffer, indent);
-                    }
-                    buffer.push(')');
-                }
-            }
-
             Expr::Return(expr) => {
                 buffer.push_str("return ");
                 expr.node.print(buffer, indent);
@@ -449,6 +430,15 @@ impl Expr {
                 pat.node.print(buffer);
                 buffer.push(')');
             }
+
+            Expr::Do(body) => {
+                buffer.push_str("do:\n");
+                for stmt in body.iter() {
+                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
+                }
+            }
         }
     }
 }
@@ -474,24 +464,6 @@ impl Pat {
 
             Pat::Record(RecordPattern { fields, idx }) => {
                 write!(buffer, "rec{}(", idx.0).unwrap();
-                for (i, field) in fields.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push_str(", ");
-                    }
-                    if let Some(name) = &field.name {
-                        write!(buffer, "{}: ", name).unwrap();
-                    }
-                    field.node.node.print(buffer);
-                }
-                buffer.push(')');
-            }
-
-            Pat::Variant(VariantPattern {
-                constr,
-                fields,
-                idx,
-            }) => {
-                write!(buffer, "~{}{}(", constr, idx.0).unwrap();
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");

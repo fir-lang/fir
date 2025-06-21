@@ -235,7 +235,11 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
 
     let mut iter = tokens.into_iter().peekable();
     while let Some((l, t, r)) = iter.next() {
-        if let TokenKind::UpperId | TokenKind::UpperIdPath = t.kind {
+        if let TokenKind::UpperId
+        | TokenKind::UpperIdPath
+        | TokenKind::TildeUpperId
+        | TokenKind::TildeUpperIdPath = t.kind
+        {
             if let Some((
                 l_next,
                 Token {
@@ -253,10 +257,12 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
                     new_tokens.push((
                         l,
                         Token {
-                            kind: if t.kind == TokenKind::UpperId {
-                                TokenKind::UpperIdLBracket
-                            } else {
-                                TokenKind::UpperIdPathLBracket
+                            kind: match t.kind {
+                                TokenKind::UpperId => TokenKind::UpperIdLBracket,
+                                TokenKind::UpperIdPath => TokenKind::UpperIdPathLBracket,
+                                TokenKind::TildeUpperId => TokenKind::TildeUpperIdLBracket,
+                                TokenKind::TildeUpperIdPath => TokenKind::TildeUpperIdPathLBracket,
+                                _ => panic!(),
                             },
                             text: t.text, // NB. Does not include the lbracket in text as parser needs the id text
                         },
@@ -338,7 +344,9 @@ mod wasm {
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm, false);
-        let mut module = import_resolver::resolve_imports("fir", "", module, true, false);
+        let mut import_path: crate::collections::Map<String, String> = Default::default();
+        import_path.insert("Fir".to_string(), "fir/lib".to_string());
+        let mut module = import_resolver::resolve_imports(&import_path, "", module, true, false);
 
         type_checker::check_module(&mut module);
 

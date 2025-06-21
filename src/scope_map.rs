@@ -36,6 +36,10 @@ impl<K, V> ScopeMap<K, V> {
     pub fn enter(&mut self) {
         self.0.push(Default::default());
     }
+
+    pub fn push_scope(&mut self, scope: Map<K, V>) {
+        self.0.push(scope)
+    }
 }
 
 impl<K: Hash + Eq, V> ScopeMap<K, V> {

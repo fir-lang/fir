@@ -80,7 +80,7 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
             doc._render(state, indent + extraIndent, flatten)
 
         Doc._Group(req, doc):
-            if !flatten:
+            if not flatten:
                 flatten = match req:
                     _SpaceReq.Infinite: Bool.True
                     _SpaceReq.Exact(req): state.column + req <= state.width
@@ -93,7 +93,7 @@ type _SpaceReq:
 
 impl Add[_SpaceReq]:
     __add(self: _SpaceReq, other: _SpaceReq) _SpaceReq:
-        if self is _SpaceReq.Exact(req1) && other is _SpaceReq.Exact(req2):
+        if self is _SpaceReq.Exact(req1) and other is _SpaceReq.Exact(req2):
             return _SpaceReq.Exact(req1 + req2)
         _SpaceReq.Infinite
 

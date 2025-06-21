@@ -17,6 +17,12 @@ Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
 
     array
 
+Array.iter(self: Array[t]) ArrayIter[t]:
+    ArrayIter(
+        _array = self,
+        _idx = 0,
+    )
+
 impl[ToStr[t]] ToStr[Array[t]]:
     toStr(self: Array[t]) Str:
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
@@ -27,3 +33,16 @@ impl[ToStr[t]] ToStr[Array[t]]:
             buf.pushStr(self.get(i).toStr())
         buf.push(']')
         buf.toStr()
+
+type ArrayIter[t]:
+    _array: Array[t]
+    _idx: U32
+
+impl Iterator[ArrayIter[t], t, exn]:
+    next(self: ArrayIter[t]) Option[t] / exn:
+        if self._idx >= self._array.len():
+            return Option.None
+
+        let val = self._array.get(self._idx)
+        self._idx += 1
+        Option.Some(val)

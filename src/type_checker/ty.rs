@@ -305,13 +305,35 @@ impl Scheme {
         (self.ty.subst_qvars(&var_map), instantiations)
     }
 
-    pub(super) fn instantiate_with_tys(&self, arg_tys: &[Ty]) -> Ty {
+    pub(super) fn instantiate_with_tys(
+        &self,
+        arg_tys: &[Ty],
+        preds: &mut Set<Pred>,
+        loc: &ast::Loc,
+    ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
+
         let mut var_map: Map<Id, Ty> =
             Map::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
+
         for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
             var_map.insert(qvar.clone(), arg.clone());
         }
+
+        // Generate predicates.
+        for pred in &self.preds {
+            let pred = Pred {
+                trait_: pred.trait_.clone(),
+                params: pred
+                    .params
+                    .iter()
+                    .map(|param| param.subst_qvars(&var_map))
+                    .collect(),
+                loc: loc.clone(),
+            };
+            preds.insert(pred);
+        }
+
         self.ty.subst_qvars(&var_map)
     }
 
@@ -387,6 +409,28 @@ impl Scheme {
             loc_display(loc),
             other.quantified_vars,
         );
+
+        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        left_preds.sort();
+
+        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        right_preds.sort();
+
+        if left_preds.len() != right_preds.len() {
+            return false;
+        }
+
+        for (left_pred, right_pred) in left_preds.iter().zip(right_preds.iter()) {
+            assert_eq!(left_pred.params.len(), right_pred.params.len());
+            if left_pred.trait_ != right_pred.trait_ {
+                return false;
+            }
+            for (left_ty, right_ty) in left_pred.params.iter().zip(right_pred.params.iter()) {
+                if !ty_eq_modulo_alpha(cons, left_ty, right_ty, &left_vars, &right_vars, loc) {
+                    return false;
+                }
+            }
+        }
 
         ty_eq_modulo_alpha(cons, &self.ty, &other.ty, &left_vars, &right_vars, loc)
     }
@@ -1123,6 +1167,16 @@ impl fmt::Display for Scheme {
             }
             write!(f, "] ")?;
         }
+        if !self.preds.is_empty() {
+            write!(f, "[")?;
+            for (i, pred) in self.preds.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                pred.fmt(f)?;
+            }
+            write!(f, "] ")?;
+        }
         write!(f, "{}", self.ty)
     }
 }
@@ -1163,5 +1217,14 @@ impl fmt::Debug for TyVar {
             .field("link", &self.link.try_borrow().unwrap()) // don't show `RefCell` part
             .field("loc", &self.loc)
             .finish()
+    }
+}
+
+impl fmt::Display for RecordOrVariant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordOrVariant::Record => write!(f, "record"),
+            RecordOrVariant::Variant => write!(f, "variant"),
+        }
     }
 }

@@ -164,3 +164,28 @@ jobs:
             just update_generated_files
             git -P diff
             ! git status --porcelain | grep -q '^ M'
+
+  check_web_build:
+    name: Check web build
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Make web build
+        run: |
+            wasm-pack build \
+                --target web \
+                --release \
+                --out-dir target/wasm-pack \
+                --no-pack \
+                --no-typescript

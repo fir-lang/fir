@@ -18,7 +18,7 @@ use smol_str::SmolStr;
 ///
 /// - `<expr> is <pat>` binds the variables that `<pat>` binds.
 ///
-/// - `<expr1> && <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
+/// - `<expr1> and <expr2>` binds the variables that `<expr1>` and `<expr2>` bind.
 ///   `<expr1>` and `<expr2>` need to bind disjoint set of variables.
 ///
 /// Other expressions don't bind any variables.
@@ -31,6 +31,8 @@ pub(super) fn check_expr(
     level: u32,
     loop_stack: &mut Vec<Option<Id>>,
 ) -> (Ty, Map<Id, Ty>) {
+    let loc = expr.loc.clone();
+
     match &mut expr.node {
         ast::Expr::Var(ast::VarExpr {
             id: var,
@@ -86,7 +88,8 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::Var(ast::VarExpr {
                     id: var.clone(),
@@ -95,58 +98,6 @@ pub(super) fn check_expr(
                 });
 
                 ty
-            };
-
-            (
-                unify_expected_ty(
-                    ty,
-                    expected_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &expr.loc,
-                ),
-                Default::default(),
-            )
-        }
-
-        ast::Expr::Variant(ast::VariantExpr { id, args }) => {
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, ref mut node } in args.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant expression with unnamed args not supported yet",
-                        loc_display(&expr.loc)
-                    ),
-                };
-                let (ty, _) = check_expr(tc_state, node, None, level, loop_stack);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant expression with dupliate fields",
-                        loc_display(&expr.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            let ty = Ty::Anonymous {
-                labels: [(id.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(Ty::Var(tc_state.var_gen.new_var(
-                    level,
-                    Kind::Row(RecordOrVariant::Variant),
-                    expr.loc.clone(),
-                )))),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
             };
 
             (
@@ -235,6 +186,7 @@ pub(super) fn check_expr(
         ast::Expr::MethodSelect(_) => panic!("MethodSelect in type checker"),
 
         ast::Expr::ConstrSelect(ast::Constructor {
+            variant,
             ty,
             constr,
             user_ty_args,
@@ -268,18 +220,25 @@ pub(super) fn check_expr(
                 }),
             };
 
+            let variant = *variant;
+
             let con_ty = if user_ty_args.is_empty() {
                 let (con_ty, con_ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: con_ty_args.into_iter().map(Ty::Var).collect(),
                 });
 
-                con_ty
+                if variant {
+                    make_variant(tc_state, con_ty, level, &loc)
+                } else {
+                    con_ty
+                }
             } else {
                 if scheme.quantified_vars.len() != user_ty_args.len() {
                     panic!(
@@ -298,16 +257,22 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let con_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let con_ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::ConstrSelect(ast::Constructor {
+                    variant,
                     ty: ty.clone(),
                     constr: constr.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
                 });
 
-                con_ty
+                if variant {
+                    make_variant(tc_state, con_ty, level, &loc)
+                } else {
+                    con_ty
+                }
             };
 
             (
@@ -383,7 +348,8 @@ pub(super) fn check_expr(
                     .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
                     .collect();
 
-                let method_ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+                let method_ty =
+                    scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                     ty: ty.clone(),
@@ -751,7 +717,7 @@ pub(super) fn check_expr(
                             .map(|id| (**id).clone())
                             .collect();
                         panic!(
-                            "{}: Left and right exprs in `&&` bind same variables: {}",
+                            "{}: Left and right exprs in `and` bind same variables: {}",
                             loc_display(&expr.loc),
                             intersection.join(", "),
                         );
@@ -922,54 +888,15 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::Match(ast::MatchExpr { scrutinee, alts }) => {
-            let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
-
-            let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
-
-            let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
-
-            for ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                tc_state.env.enter();
-
-                let pat_ty = check_pat(tc_state, pattern, level);
-                unify(
-                    &pat_ty,
-                    &scrut_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &pattern.loc,
-                );
-
-                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
-
-                if let Some(guard) = guard {
-                    let (_, guard_binders) =
-                        check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
-                    guard_binders.into_iter().for_each(|(k, v)| {
-                        tc_state.env.insert(k, v);
-                    });
-                }
-
-                rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
-
-                tc_state.env.exit();
-
-                if guard.is_none() {
-                    covered_pats.add(&pattern.node);
-                }
-            }
-
-            let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, &expr.loc);
-            if !exhaustive {
-                eprintln!("{}: Unexhaustive pattern match", loc_display(&expr.loc));
-            }
+        ast::Expr::Match(match_expr) => {
+            let mut rhs_tys = check_match_expr(
+                tc_state,
+                match_expr,
+                &expr.loc,
+                expected_ty,
+                level,
+                loop_stack,
+            );
 
             // Unify RHS types. When the `expected_ty` is available this doesn't do anything.
             // Otherwise this checks that all branches return the same type.
@@ -1000,42 +927,9 @@ pub(super) fn check_expr(
             )
         }
 
-        ast::Expr::If(ast::IfExpr {
-            branches,
-            else_branch,
-        }) => {
-            let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
-
-            for (cond, body) in branches {
-                let (cond_ty, cond_binders) =
-                    check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
-                unify(
-                    &cond_ty,
-                    &Ty::bool(),
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &cond.loc,
-                );
-                tc_state.env.enter();
-                cond_binders.into_iter().for_each(|(k, v)| {
-                    tc_state.env.insert(k, v);
-                });
-                let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
-                tc_state.env.exit();
-                branch_tys.push(body_ty);
-            }
-
-            match else_branch {
-                Some(else_body) => {
-                    let body_ty = check_stmts(tc_state, else_body, expected_ty, level, loop_stack);
-                    branch_tys.push(body_ty);
-                }
-                None => {
-                    // A bit hacky: ensure that without an else branch the expression returns unit.
-                    branch_tys.push(Ty::unit());
-                }
-            }
+        ast::Expr::If(if_expr) => {
+            let mut branch_tys: Vec<Ty> =
+                check_if_expr(tc_state, if_expr, expected_ty, level, loop_stack);
 
             // When expected type is available, unify with it for better errors.
             match expected_ty {
@@ -1206,7 +1100,123 @@ pub(super) fn check_expr(
             );
             (Ty::bool(), pat_binders)
         }
+
+        ast::Expr::Do(stmts) => {
+            tc_state.env.enter();
+            let ty = check_stmts(tc_state, stmts, expected_ty, level, loop_stack);
+            tc_state.env.exit();
+            (ty, Default::default())
+        }
     }
+}
+
+pub(super) fn check_match_expr(
+    tc_state: &mut TcFunState,
+    expr: &mut ast::MatchExpr,
+    loc: &ast::Loc,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    loop_stack: &mut Vec<Option<Id>>,
+) -> Vec<Ty> {
+    let ast::MatchExpr { scrutinee, alts } = expr;
+
+    let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
+
+    let mut rhs_tys: Vec<Ty> = Vec::with_capacity(alts.len());
+
+    let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
+
+    for ast::Alt {
+        pattern,
+        guard,
+        rhs,
+    } in alts
+    {
+        tc_state.env.enter();
+
+        let pat_ty = check_pat(tc_state, pattern, level);
+        unify(
+            &pat_ty,
+            &scrut_ty,
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            level,
+            &pattern.loc,
+        );
+
+        refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
+
+        if let Some(guard) = guard {
+            let (_, guard_binders) =
+                check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
+            guard_binders.into_iter().for_each(|(k, v)| {
+                tc_state.env.insert(k, v);
+            });
+        }
+
+        rhs_tys.push(check_stmts(tc_state, rhs, expected_ty, level, loop_stack));
+
+        tc_state.env.exit();
+
+        if guard.is_none() {
+            covered_pats.add(&pattern.node);
+        }
+    }
+
+    let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, loc);
+    if !exhaustive {
+        eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
+    }
+
+    rhs_tys
+}
+
+pub(super) fn check_if_expr(
+    tc_state: &mut TcFunState,
+    expr: &mut ast::IfExpr,
+    expected_ty: Option<&Ty>,
+    level: u32,
+    loop_stack: &mut Vec<Option<Id>>,
+) -> Vec<Ty> {
+    let ast::IfExpr {
+        branches,
+        else_branch,
+    } = expr;
+
+    let mut branch_tys: Vec<Ty> = Vec::with_capacity(branches.len() + 1);
+
+    for (cond, body) in branches {
+        let (cond_ty, cond_binders) =
+            check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
+        unify(
+            &cond_ty,
+            &Ty::bool(),
+            tc_state.tys.tys.cons(),
+            tc_state.var_gen,
+            level,
+            &cond.loc,
+        );
+        tc_state.env.enter();
+        cond_binders.into_iter().for_each(|(k, v)| {
+            tc_state.env.insert(k, v);
+        });
+        let body_ty = check_stmts(tc_state, body, expected_ty, level, loop_stack);
+        tc_state.env.exit();
+        branch_tys.push(body_ty);
+    }
+
+    match else_branch {
+        Some(else_body) => {
+            let body_ty = check_stmts(tc_state, else_body, expected_ty, level, loop_stack);
+            branch_tys.push(body_ty);
+        }
+        None => {
+            // A bit hacky: ensure that without an else branch the expression returns unit.
+            branch_tys.push(Ty::unit());
+        }
+    }
+
+    branch_tys
 }
 
 /// Check a `FieldSelect` expr.
@@ -1286,7 +1296,7 @@ fn check_field_select(
             .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
             .collect();
 
-        let ty = scheme.instantiate_with_tys(&user_ty_args_converted);
+        let ty = scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, loc);
 
         (ty, user_ty_args_converted)
     };
@@ -1356,7 +1366,7 @@ pub(super) fn select_field(
         TyConDetails::Type(TypeDetails { cons, sum }) if !sum => {
             let con_name = cons[0].name.as_ref().unwrap_or(&ty_con.id);
             let con_scheme = tc_state.tys.top_schemes.get(con_name)?;
-            let con_ty = con_scheme.instantiate_with_tys(ty_args);
+            let con_ty = con_scheme.instantiate_with_tys(ty_args, tc_state.preds, loc);
 
             match con_ty {
                 Ty::Fun {
@@ -1445,4 +1455,40 @@ fn select_method(
     }
 
     candidates.pop()
+}
+
+// ty -> [labelOf(ty): ty, ..r] (r is fresh)
+//
+// Somewhat hackily, we also convert function types that return named types to function types that
+// return variants instead, to allow type checking `~Foo(args)` by first converting `~Foo`'s type to
+// a function type, and then applying.
+pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &ast::Loc) -> Ty {
+    let con = match ty.normalize(tc_state.tys.tys.cons()) {
+        Ty::Con(con, _) | Ty::App(con, _, _) => con,
+
+        Ty::Fun {
+            args,
+            ret,
+            exceptions,
+        } => {
+            let ret = make_variant(tc_state, *ret, level, loc);
+            return Ty::Fun {
+                args,
+                ret: Box::new(ret),
+                exceptions,
+            };
+        }
+
+        ty => panic!("Type in variant is not a constructor: {}", ty),
+    };
+
+    let row_ext = tc_state
+        .var_gen
+        .new_var(level, Kind::Row(RecordOrVariant::Variant), loc.clone());
+    Ty::Anonymous {
+        labels: [(con, ty)].into_iter().collect(),
+        extension: Some(Box::new(Ty::Var(row_ext))),
+        kind: RecordOrVariant::Variant,
+        is_row: false,
+    }
 }

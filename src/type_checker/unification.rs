@@ -188,17 +188,22 @@ pub(super) fn unify(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2, "{}", loc_display(loc));
-
-            if is_row_1 != is_row_2 {
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
                 panic!(
-                    "{}: Unable to unify row type with *: {} ~ {}",
+                    "{}: Unable to unify {} {} with {} {}",
                     loc_display(loc),
+                    kind1,
                     ty1,
-                    ty2
+                    kind2,
+                    ty2,
                 );
             }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
+            assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
                 collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
@@ -412,6 +417,18 @@ pub(super) fn try_unify_one_way(
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
+        (Ty::Var(var1), Ty::Var(var2)) => {
+            if var1 == var2 {
+                return true;
+            }
+            if var1.level() > var2.level() {
+                var1.set_link(ty2);
+            } else {
+                var2.set_link(ty1);
+            }
+            true
+        }
+
         (Ty::Var(var), ty2) => {
             link_var(var, ty2);
             true
@@ -431,8 +448,14 @@ pub(super) fn try_unify_one_way(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2);
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
+                return false;
+            }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
             assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =

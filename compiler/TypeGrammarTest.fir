@@ -11,7 +11,7 @@ main(args: Array[Str]):
 
     if args.len() == 2:
         let result = runTestIndent(args.get(1), typeDecl)
-        if !result:
+        if not result:
             print("FAIL")
         return
 
@@ -36,6 +36,10 @@ main(args: Array[Str]):
     runTest_("Fn(self)", type_)
     runTest_("Fn(self, a: U32): [] Foo", type_)
     runTest_("Map[Foo, Bar]", type_)
+    runTest_("[]", type_)
+    runTest_("[Foo, Bar]", type_)
+    runTest_("[Foo, Bar,]", type_)
+    runTest_("[Foo(x: Str), ..x]", type_)
 
     runTestIndent("\
 type Foo:
@@ -234,6 +238,35 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #         UpperId(1:1:"Map"),
 #         Type_(NamedType(UpperId(1:5:"Foo"))),
 #         Type_(NamedType(UpperId(1:10:"Bar"))),
+#     ),
+# )
+# 
+# []
+# Type_(VariantType)
+# 
+# [Foo, Bar]
+# Type_(
+#     VariantType(VariantAlt(UpperId(1:2:"Foo")), VariantAlt(UpperId(1:7:"Bar"))),
+# )
+# 
+# [Foo, Bar,]
+# Type_(
+#     VariantType(VariantAlt(UpperId(1:2:"Foo")), VariantAlt(UpperId(1:7:"Bar"))),
+# )
+# 
+# [Foo(x: Str), ..x]
+# Type_(
+#     VariantType(
+#         VariantAlt(
+#             UpperId(1:2:"Foo"),
+#             RecordTypeFields(
+#                 RecordTypeField(
+#                     LowerId(1:6:"x"),
+#                     Type_(NamedType(UpperId(1:9:"Str"))),
+#                 ),
+#             ),
+#         ),
+#         LowerId(1:17:"x"),
 #     ),
 # )
 # 

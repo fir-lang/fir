@@ -1,7 +1,7 @@
 use crate::ast::{self, AssignOp, Id};
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::expr::{check_expr, select_field};
-use crate::type_checker::pat::{check_pat, refine_pat_binders};
+use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
 use crate::type_checker::{loc_display, TcFunState};
@@ -291,83 +291,20 @@ fn check_stmt(
         }
 
         ast::Stmt::Expr(ast::L {
-            node: ast::Expr::Match(ast::MatchExpr { scrutinee, alts }),
+            node: ast::Expr::Match(match_expr),
             loc,
         }) if expected_ty.is_none() => {
-            let (scrut_ty, _) = check_expr(tc_state, scrutinee, None, level, loop_stack);
-
-            let mut covered_pats = crate::type_checker::pat_coverage::PatCoverage::new();
-
-            for ast::Alt {
-                pattern,
-                guard,
-                rhs,
-            } in alts
-            {
-                tc_state.env.enter();
-
-                let pat_ty = check_pat(tc_state, pattern, level);
-                unify(
-                    &pat_ty,
-                    &scrut_ty,
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &pattern.loc,
-                );
-
-                refine_pat_binders(tc_state, &scrut_ty, pattern, &covered_pats);
-
-                if let Some(guard) = guard {
-                    check_expr(tc_state, guard, Some(&Ty::bool()), level, loop_stack);
-                }
-
-                check_stmts(tc_state, rhs, None, level, loop_stack);
-
-                tc_state.env.exit();
-
-                if guard.is_none() {
-                    covered_pats.add(&pattern.node);
-                }
-            }
-
-            let exhaustive = covered_pats.is_exhaustive(&scrut_ty, tc_state, loc);
-            if !exhaustive {
-                eprintln!("{}: Unexhaustive pattern match", loc_display(loc));
-            }
-
+            crate::type_checker::expr::check_match_expr(
+                tc_state, match_expr, loc, None, level, loop_stack,
+            );
             Ty::unit()
         }
 
         ast::Stmt::Expr(ast::L {
-            node:
-                ast::Expr::If(ast::IfExpr {
-                    branches,
-                    else_branch,
-                }),
+            node: ast::Expr::If(if_expr),
             loc: _,
         }) if expected_ty.is_none() => {
-            for (cond, body) in branches {
-                let (cond_ty, cond_binders) =
-                    check_expr(tc_state, cond, Some(&Ty::bool()), level, loop_stack);
-                unify(
-                    &cond_ty,
-                    &Ty::bool(),
-                    tc_state.tys.tys.cons(),
-                    tc_state.var_gen,
-                    level,
-                    &cond.loc,
-                );
-                tc_state.env.enter();
-                cond_binders.into_iter().for_each(|(k, v)| {
-                    tc_state.env.insert(k, v);
-                });
-                check_stmts(tc_state, body, None, level, loop_stack);
-                tc_state.env.exit();
-            }
-            if let Some(else_body) = else_branch {
-                check_stmts(tc_state, else_body, None, level, loop_stack);
-            }
+            crate::type_checker::expr::check_if_expr(tc_state, if_expr, None, level, loop_stack);
             Ty::unit()
         }
 

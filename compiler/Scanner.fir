@@ -29,8 +29,8 @@ scan(tokens: Vec[Token]) Vec[Token]:
             continue
 
         if delimiterStack.last() is Option.None | Option.Some(Delimiter.Brace)
-                && token.line != lastLine
-                && !skipIndent:
+                and token.line != lastLine
+                and not skipIndent:
             # Generate a newline at the last line.
             newTokens.push(Token(
                 kind = TokenKind.Newline,
@@ -42,7 +42,7 @@ scan(tokens: Vec[Token]) Vec[Token]:
 
             # Generate indentation tokens.
             loop:
-                let lastIndent = indentStack.last().unwrapOrElse({ panic("Indent stack is empty") })
+                let lastIndent = indentStack.last().unwrapOrElse(||: panic("Indent stack is empty"))
                 match token.col.cmp(lastIndent):
                     Ordering.Greater:
                         indentStack.push(token.col)
@@ -79,15 +79,15 @@ scan(tokens: Vec[Token]) Vec[Token]:
             TokenKind.LBrace: delimiterStack.push(Delimiter.Brace)
 
             TokenKind.RParen:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Paren)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Paren)):
                     panic("")
 
             TokenKind.RBracket:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Bracket)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Bracket)):
                     panic("")
 
             TokenKind.RBrace:
-                if !(delimiterStack.pop() is Option.Some(Delimiter.Brace)):
+                if not (delimiterStack.pop() is Option.Some(Delimiter.Brace)):
                     panic("")
 
             _: ()
@@ -292,7 +292,7 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind]):
 
     print("\t\tOK")
 
-_scan(input: Str) Vec[TokenKind] / [AssertionError(msg: Str), ..r]:
+_scan(input: Str) Vec[TokenKind] / [AssertionError, ..r]:
     let (tokens, error) = tokenize("Test", input)
     if error is Option.Some(error):
         throw(~AssertionError(msg = "Lexer failed: `error.msg`"))

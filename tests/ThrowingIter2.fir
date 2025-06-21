@@ -1,3 +1,12 @@
+type EmptyInput:
+    EmptyInput
+
+type InvalidDigit:
+    InvalidDigit
+
+type Overflow:
+    Overflow
+
 checkedAdd(i1: U32, i2: U32) Option[U32]:
     if i1 > 4294967295u32 - i2:
         return Option.None
@@ -7,29 +16,29 @@ checkedAdd(i1: U32, i2: U32) Option[U32]:
 checkedMul(i1: U32, i2: U32) Option[U32]:
     let result = i1 * i2
 
-    if i1 != 0 && result / i1 != i2:
+    if i1 != 0 and result / i1 != i2:
         return Option.None
 
     return Option.Some(result)
 
 parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     if s.len() == 0:
-        throw(~EmptyInput)
+        throw(~EmptyInput.EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
-            throw(~InvalidDigit)
+        if c < '0' or c > '9':
+            throw(~InvalidDigit.InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
     result
@@ -37,7 +46,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
 handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) Option[U32] / [..errs]:
     match parseResult:
         Result.Ok(result): result
-        Result.Err(~InvalidDigit): Option.Some(0u32)
+        Result.Err(~InvalidDigit.InvalidDigit): Option.Some(0u32)
         Result.Err(other): throw(other)
 
 main():
@@ -48,14 +57,13 @@ main():
     strings.push("4b")
     strings.push("")
 
-    let ret = try(fn() () / [EmptyInput, Overflow] {
+    let ret = try(|| () / [EmptyInput, Overflow]:
         for x: U32 in strings.iter().map(parseU32Exn).mapResult(handleInvalidDigit):
-            printStr(x.toStr())
-    })
+            printStr(x.toStr()))
 
     match ret:
-        Result.Err(~EmptyInput): printStr("EmptyInput")
-        Result.Err(~Overflow): printStr("Overflow")
+        Result.Err(~EmptyInput.EmptyInput): printStr("EmptyInput")
+        Result.Err(~Overflow.Overflow): printStr("Overflow")
         Result.Ok(()): printStr("OK")
 
 # expected stdout:

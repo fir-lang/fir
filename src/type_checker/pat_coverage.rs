@@ -8,7 +8,6 @@ use super::RecordOrVariant;
 pub struct PatCoverage {
     cons: Map<Con, Fields>,
     records: Fields,
-    variants: Map<Id, Fields>,
     matches_all: bool,
 }
 
@@ -68,11 +67,6 @@ impl PatCoverage {
                 }
             }
 
-            ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-                let variant_pats = self.variants.entry(constr.clone()).or_default();
-                variant_pats.add(fields);
-            }
-
             ast::Pat::Record(ast::RecordPattern {
                 fields,
                 ignore_rest: _,
@@ -95,10 +89,6 @@ impl PatCoverage {
             ty: ty.clone(),
             con: con.cloned(),
         })
-    }
-
-    pub fn get_variant_fields(&self, con: &Id) -> Option<&Fields> {
-        self.variants.get(con)
     }
 
     pub fn get_record_field(&self, field: &Id) -> Option<&PatCoverage> {
@@ -137,7 +127,7 @@ impl PatCoverage {
             Ty::Con(ty_con, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -151,7 +141,7 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -171,7 +161,7 @@ impl PatCoverage {
             Ty::App(ty_con, ty_args, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -185,7 +175,8 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                        let con_fn_ty =
+                            con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -222,37 +213,11 @@ impl PatCoverage {
                     return false;
                 }
 
-                for (label, label_ty) in labels {
-                    // label_ty will be a rigid record type
-                    let label_fields = match &label_ty {
-                        Ty::Anonymous {
-                            labels,
-                            extension,
-                            kind,
-                            is_row,
-                        } => {
-                            assert!(extension.is_none());
-                            assert_eq!(*kind, RecordOrVariant::Record);
-                            assert!(!is_row);
-                            labels
-                        }
-                        _ => panic!(),
-                    };
-
-                    let field_pats: &Fields = match self.variants.get(&label) {
-                        Some(label_pat) => label_pat,
-                        None => return false,
-                    };
-
-                    for (field, field_ty) in label_fields {
-                        match field_pats.named.get(field) {
-                            Some(field_pat) => {
-                                if !field_pat.is_exhaustive(field_ty, tc_state, loc) {
-                                    return false;
-                                }
-                            }
-                            None => return false,
-                        }
+                for label_ty in labels.values() {
+                    // `label` is a fully qualified name of a type, and `label_ty` is a value
+                    // of the type.
+                    if !self.is_exhaustive(label_ty, tc_state, loc) {
+                        return false;
                     }
                 }
 
