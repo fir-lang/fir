@@ -47,7 +47,7 @@ generateTree(parseTree: ParseTree[Token, NonTerminal]):
     # NamedFields in products, or ConDecls in sums.
     let rhs = nodes.get(rhsIdx).asNonTerminal(NonTerminal.TypeDeclRhs)
     let methodBody = if rhs.get(0) is ParseTree.NonTerminal(kind = NonTerminal.NamedField, ..):
-        generateNamedFields(rhs)
+        panic("TODO")
     else:
         generateConDecls(typeName, rhs)
 
@@ -60,29 +60,51 @@ generateConDecls(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     doc
 
 generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    let conName = nodes.get(0).asTerminal().text
+    print("Generating con decl for type `typeName`")
+    let nodesStr = _interleave(nodes, |node|: node.toDoc(), Doc.str(", "))
+    print("Nodes = `nodesStr.render(80)`")
+
+    let conName = Doc.str(nodes.get(0).asTerminal().text)
 
     if nodes.len() == 1:
+        # No fields
         return Doc.nested(
             4,
-            Doc.str(typeName) + Doc.char('.') + Doc.str(conName) + Doc.char(':')
+            Doc.str(typeName) + Doc.char('.') + conName + Doc.char(':')
                 + Doc.break_(1)
-                + Doc.char('"') + Doc.str(conName) + Doc.char('"'))
+                + Doc.char('"') + conName + Doc.char('"'))
 
-    let fieldsDoc = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
-        generateNamedFields(nodes)
+    let fieldPats = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
+        generateNamedFieldPats(nodes)
     else:
-        generateUnnamedFields(nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
+        generateUnnamedFieldPats(nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
 
+    let pat = conName + Doc.char('(') + fieldPats + Doc.str("):")
+
+    print("pat = `pat.render(80)`")
     panic("TODO")
 
-generateNamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+generateNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldName = fieldNodes.get(0).asTerminal().text
     let fieldType = fieldNodes.get(1)
     Doc.empty()
 
-generateUnnamedFields(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    Doc.empty()
+generateUnnamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+    let doc = Doc.empty()
+    let i = 0u32
+    for fieldNode: ParseTree[Token, NonTerminal] in fieldNodes.iter():
+        if i != 0:
+            doc += Doc.str(", ")
+        doc += generateType(fieldNode.asNonTerminal(NonTerminal.Type_))
+    doc
+
+generateUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
+    let doc = conName + Doc.char('(')
+    for i: U32 in range(0u32, numFields):
+        if i != 0:
+            doc += Doc.str(", ")
+        doc += Doc.char('x') + Doc.str(i.toStr())
+    doc + Doc.char(')')
 
 generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     Doc.str("TODO")
@@ -106,3 +128,15 @@ MatchBuilder.render(self) Doc:
 
 test():
     print("Running ToStr derive tests...")
+
+# --------------------------------------------------------------------------------------------------
+
+_interleave(things: Vec[a], toDoc: Fn(a) Doc / exn, sep: Doc) Doc / exn:
+    let ret = Doc.empty()
+    let i = 0u32
+    for thing: a in things.iter():
+        if i != 0:
+            ret += sep
+        ret += toDoc(thing)
+        i += 1
+    ret
