@@ -49,20 +49,28 @@ generateTree(parseTree: ParseTree[Token, NonTerminal]):
     let methodBody = if rhs.get(0) is ParseTree.NonTerminal(kind = NonTerminal.NamedField, ..):
         panic("TODO")
     else:
-        generateConDecls(typeName, rhs)
+        genConAlts(typeName, rhs)
+
+    print(methodBody.render(80))
 
     ()
 
-generateConDecls(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
+genConAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
     for conDecl: ParseTree[Token, NonTerminal] in decls.iter():
-        doc += generateConDecl(typeName, conDecl.asNonTerminal(NonTerminal.ConDecl))
+        let ts = conDecl.asNonTerminal(NonTerminal.ConDecl)
+        let l = genConPat('l', typeName, ts)
+        let r = genConPat('r', typeName, ts)
+        let pat = makeLRRecord(l, r)
+        doc += Doc.nested(
+                4,
+                pat + Doc.char(':') + Doc.hardLine()
+                    + genRhs(typeName, ts))
+            + Doc.hardLine()
     doc
 
-generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    print("Generating con decl for type `typeName`")
+genConPat(varPrefix: Char, typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let nodesStr = _interleave(nodes, |node|: node.toDoc(), Doc.str(", "))
-    print("Nodes = `nodesStr.render(80)`")
 
     let conName = Doc.str(nodes.get(0).asTerminal().text)
 
@@ -77,25 +85,24 @@ generateConDecl(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldPats = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
         generateNamedFieldPats(nodes)
     else:
-        generateUnnamedFieldPats(nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
+        generateUnnamedFieldPats(varPrefix, nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
 
-    let pat = conName + Doc.char('(') + fieldPats + Doc.str("):")
+    let pat = conName + Doc.char('(') + fieldPats + Doc.char(')')
 
-    print("pat = `pat.render(80)`")
-    panic("TODO")
+    pat
 
 generateNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldName = fieldNodes.get(0).asTerminal().text
     let fieldType = fieldNodes.get(1)
     Doc.empty()
 
-generateUnnamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+generateUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
     let i = 0u32
     for fieldNode: ParseTree[Token, NonTerminal] in fieldNodes.iter():
         if i != 0:
             doc += Doc.str(", ")
-        doc += generateType(fieldNode.asNonTerminal(NonTerminal.Type_))
+        doc += Doc.char(varPrefix) + Doc.str(i.toStr())
     doc
 
 generateUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
@@ -108,6 +115,12 @@ generateUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
 
 generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     Doc.str("TODO")
+
+genRhs(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+    Doc.str("TODO")
+
+makeLRRecord(l: Doc, r: Doc) Doc:
+    Doc.str("(l = ") + l + Doc.str(", r = ") + r + Doc.char(')')
 
 type MatchBuilder:
     scrut: Doc
