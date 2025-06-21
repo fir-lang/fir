@@ -24,9 +24,9 @@ generate(item: Str):
         Result.Ok(result): result
     if result.newCursor != tokens.len():
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
-    generateTree(result.tree)
+    print(generateTree(result.tree).render(80))
 
-generateTree(parseTree: ParseTree[Token, NonTerminal]):
+generateTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
     print(parseTree.toDoc().render(80))
 
     let nodes = parseTree.asNonTerminal(NonTerminal.TypeDecl)
@@ -53,7 +53,14 @@ generateTree(parseTree: ParseTree[Token, NonTerminal]):
 
     print(methodBody.render(80))
 
-    ()
+    let typeName = Doc.str(typeName)
+    Doc.nested(
+        4,
+        Doc.str("impl Eq[") + typeName + Doc.str("]:") + Doc.hardLine()
+            + Doc.nested(
+                4,
+                Doc.str("__eq(self: ") + typeName + Doc.str(", other: ") + typeName + Doc.str(") Bool:") + Doc.hardLine()
+                    + methodBody))
 
 genConAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
@@ -70,26 +77,18 @@ genConAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     doc
 
 genConPat(varPrefix: Char, typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    let nodesStr = _interleave(nodes, |node|: node.toDoc(), Doc.str(", "))
-
     let conName = Doc.str(nodes.get(0).asTerminal().text)
 
     if nodes.len() == 1:
         # No fields
-        return Doc.nested(
-            4,
-            Doc.str(typeName) + Doc.char('.') + conName + Doc.char(':')
-                + Doc.break_(1)
-                + Doc.char('"') + conName + Doc.char('"'))
+        return Doc.str(typeName) + Doc.char('.') + conName
 
     let fieldPats = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
         generateNamedFieldPats(nodes)
     else:
         generateUnnamedFieldPats(varPrefix, nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
 
-    let pat = conName + Doc.char('(') + fieldPats + Doc.char(')')
-
-    pat
+    Doc.str(typeName) + Doc.char('.') + conName + Doc.char('(') + fieldPats + Doc.char(')')
 
 generateNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldName = fieldNodes.get(0).asTerminal().text
@@ -113,11 +112,25 @@ generateUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
         doc += Doc.char('x') + Doc.str(i.toStr())
     doc + Doc.char(')')
 
-generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    Doc.str("TODO")
-
 genRhs(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
-    Doc.str("TODO")
+    let conName = Doc.str(nodes.get(0).asTerminal().text)
+
+    if nodes.len() == 1:
+        # No fields
+        return Doc.str("Bool.True")
+
+    let numFields = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
+        nodes.len()
+    else:
+        nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields).len()
+
+    let rhs = Doc.empty()
+    for i: U32 in range(0u32, numFields):
+        if i != 0:
+            rhs += Doc.str(" && ")
+        rhs += Doc.char('l') + Doc.str(i.toStr()) + Doc.str(" == ")
+            + Doc.char('r') + Doc.str(i.toStr())
+    rhs
 
 makeLRRecord(l: Doc, r: Doc) Doc:
     Doc.str("(l = ") + l + Doc.str(", r = ") + r + Doc.char(')')
