@@ -82,7 +82,7 @@ main():
 handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) Option[U32] / [..errs]:
     match parseResult:
         Result.Ok(result): result
-        Result.Err(~InvalidDigit.InvalidDigit): Option.Some(0u32)
+        Result.Err(~InvalidDigit.InvalidDigit): Option.Some(u32(0))
         Result.Err(other): throw(other)
 
 parseU32(s: Str) U32:
@@ -125,7 +125,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     result
 
 checkedAdd(i1: U32, i2: U32) Option[U32]:
-    if i1 > 4294967295u32 - i2:
+    if i1 > u32(4294967295) - i2:
         return Option.None
 
     Option.Some(i1 + i2)

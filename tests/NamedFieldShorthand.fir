@@ -10,9 +10,9 @@ type A:
         z: U32
 
 main():
-    let x = 1u32
-    let y = 2u32
-    let z = 3u32
+    let x = u32(1)
+    let y = u32(2)
+    let z = u32(3)
     let t = T(z, x, y)
     print("x = `t.x`, y = `t.y`, z = `t.z`")
     let a = A.A(z, x, y)

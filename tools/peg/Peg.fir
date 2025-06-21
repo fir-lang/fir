@@ -97,7 +97,7 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     for importDecl: ParseTree[Token, NonTerminal] in importDecls.iter():
         let importDeclNodes = importDecl.asNonTerminal(NonTerminal.ImportDecl)
         importStr.clear()
-        for i: U32 in range(0u32, importDeclNodes.len()):
+        for i: U32 in range(u32(0), importDeclNodes.len()):
             if i != 0:
                 importStr.push('.')
             importStr.pushStr(importDeclNodes.get(i).asTerminal().text)

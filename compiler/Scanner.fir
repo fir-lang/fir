@@ -285,7 +285,7 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind]):
         print("\t\tExpected tokens:  `expected`")
         print("\t\tGenerated tokens: `tokenKinds`")
 
-    for i: U32 in range(0u32, tokens.len()):
+    for i: U32 in range(u32(0), tokens.len()):
         if tokenKinds.get(i) != expected.get(i):
             print("\t\tToken `i` expected `expected.get(i)`, found `tokenKinds.get(i)`")
             return

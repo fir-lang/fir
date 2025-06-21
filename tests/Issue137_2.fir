@@ -9,6 +9,6 @@ impl Test[U32, [FooError, ..exn1]]:
         print(self)
 
 main():
-    123u32.test(~FooError.FooError)
+    u32(123).test(~FooError.FooError)
 
 # expected stdout: 123

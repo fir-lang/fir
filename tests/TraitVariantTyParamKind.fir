@@ -5,6 +5,6 @@ impl Foo[U32, errs2]:
     foo(self: U32) () / [..errs2]:
         printStr("Hi")
 
-main() = 123u32.foo()
+main() = u32(123).foo()
 
 # expected stdout: Hi

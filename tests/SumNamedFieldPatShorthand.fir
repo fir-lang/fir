@@ -5,7 +5,7 @@ type T:
         z: U32
 
 main():
-    let val = T.A(x = 123u32, y = 456u32, z = 789u32)
+    let val = T.A(x = u32(123), y = u32(456), z = u32(789))
 
     match val:
         T.A(x, y, z):

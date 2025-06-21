@@ -14,7 +14,7 @@ HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: 
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
-    for i: U32 in range(0u32, cap):
+    for i: U32 in range(u32(0), cap):
         elems.push(Option.None)
     HashMap(_elems = elems)
 
@@ -62,7 +62,7 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
         let buf = StrBuf.withCapacity(100)
         buf.push('{')
         let printed = 0
-        for i: U32 in range(0u32, self._elems.len()):
+        for i: U32 in range(u32(0), self._elems.len()):
             let elem = self._elems.get(i)
             while elem is Option.Some(elem_):
                 if printed != 0:

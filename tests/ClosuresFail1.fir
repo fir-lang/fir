@@ -5,7 +5,7 @@ test(f: Fn() U32 / [Err]):
     ()
 
 main():
-    test(||: 123i32)
+    test(||: i32(123))
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101

@@ -5,7 +5,7 @@ Fo.f(self: Foo):
     print("Foo.f")
 
 main():
-    let a = Foo(x = 123u32)
+    let a = Foo(x = u32(123))
     a.f()
 
 # args: --no-backtrace

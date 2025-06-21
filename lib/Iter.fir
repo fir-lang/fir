@@ -1,3 +1,4 @@
+
 trait Iterator[iter, item, exn]:
     next(self: iter) Option[item] / exn
 
@@ -39,7 +40,7 @@ trait Iterator[iter, item, exn]:
     ## See also `size` for a version of this that returns the number of elements without consuming
     ## the iterator.
     count(self: iter) U32 / exn:
-        let n = 0u32
+        let n = u32(0)
         for _: item in self:
             n += 1
         n

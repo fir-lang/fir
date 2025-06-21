@@ -42,7 +42,7 @@ makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
     let doc = fun + Doc.char('(') + Doc.break_(0)
 
     let numArgs = args.len()
-    let argIdx = 0u32
+    let argIdx = u32(0)
     for arg: Doc in args.iter():
         doc += arg
         if argIdx != numArgs - 1:

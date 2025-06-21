@@ -1,12 +1,12 @@
 main():
-    let x: Option[U32] = Option.Some(123u32)
+    let x: Option[U32] = Option.Some(u32(123))
     print(x.map(|i|: i + 10))
     print(x.map(|i|: i.toStr()))
     print(x.map(|i|: i.toStr()).unwrapOr("wat"))
     print(try(||:
         x.map(|i|:
             if Bool.False:
-                return 123u32
+                return u32(123)
             throw("Hi"))))
     print(x.guard(|i|: i != 0))
 
