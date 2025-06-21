@@ -36,6 +36,7 @@ compiler_unit_test:
 compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
+    goldentests target/debug/fir compiler/DeriveEq.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite

@@ -5,16 +5,17 @@ import TypeGrammar
 
 main(args: Array[Str]):
     if args.len() < 2:
-        panic("") # TODO: print usage
+        # TODO: print usage
+        panic("Incorrect invocation of DeriveEq")
 
     let mode = args.get(1)
     match mode:
         "--test": test()
-        "--item": generate(args.get(2))
-        "--file": generate(readFileUtf8(args.get(2)))
+        "--item": gen(args.get(2))
+        "--file": gen(readFileUtf8(args.get(2)))
         other: print("Unknown mode: `other`")
 
-generate(item: Str):
+gen(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
@@ -24,11 +25,9 @@ generate(item: Str):
         Result.Ok(result): result
     if result.newCursor != tokens.len():
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
-    print(generateTree(result.tree).render(80))
+    print(genTree(result.tree).render(80))
 
-generateTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
-    print(parseTree.toDoc().render(80))
-
+genTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
     let nodes = parseTree.asNonTerminal(NonTerminal.TypeDecl)
 
     let typeName = nodes.get(0).asTerminal().text
@@ -47,11 +46,9 @@ generateTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
     # NamedFields in products, or ConDecls in sums.
     let rhs = nodes.get(rhsIdx).asNonTerminal(NonTerminal.TypeDeclRhs)
     let methodBody = if rhs.get(0) is ParseTree.NonTerminal(kind = NonTerminal.NamedField, ..):
-        panic("TODO")
+        genProduct(typeName, rhs)
     else:
-        genConAlts(typeName, rhs)
-
-    print(methodBody.render(80))
+        genSumAlts(typeName, rhs)
 
     let typeName = Doc.str(typeName)
     Doc.nested(
@@ -62,9 +59,13 @@ generateTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
                 Doc.str("__eq(self: ") + typeName + Doc.str(", other: ") + typeName + Doc.str(") Bool:") + Doc.hardLine()
                     + methodBody))
 
-genConAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
+genSumAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
+    let i = 0u32
     for conDecl: ParseTree[Token, NonTerminal] in decls.iter():
+        if i != 0:
+            doc += Doc.hardLine()
+        i += 1
         let ts = conDecl.asNonTerminal(NonTerminal.ConDecl)
         let l = genConPat('l', typeName, ts)
         let r = genConPat('r', typeName, ts)
@@ -73,7 +74,6 @@ genConAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
                 4,
                 pat + Doc.char(':') + Doc.hardLine()
                     + genRhs(typeName, ts))
-            + Doc.hardLine()
     doc
 
 genConPat(varPrefix: Char, typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
@@ -84,18 +84,18 @@ genConPat(varPrefix: Char, typeName: Str, nodes: Vec[ParseTree[Token, NonTermina
         return Doc.str(typeName) + Doc.char('.') + conName
 
     let fieldPats = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
-        generateNamedFieldPats(nodes)
+        genNamedFieldPats(nodes)
     else:
-        generateUnnamedFieldPats(varPrefix, nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
+        genUnnamedFieldPats(varPrefix, nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields))
 
     Doc.str(typeName) + Doc.char('.') + conName + Doc.char('(') + fieldPats + Doc.char(')')
 
-generateNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+genNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let fieldName = fieldNodes.get(0).asTerminal().text
     let fieldType = fieldNodes.get(1)
     Doc.empty()
 
-generateUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+genUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
     let i = 0u32
     for fieldNode: ParseTree[Token, NonTerminal] in fieldNodes.iter():
@@ -104,7 +104,7 @@ generateUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTe
         doc += Doc.char(varPrefix) + Doc.str(i.toStr())
     doc
 
-generateUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
+genUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
     let doc = conName + Doc.char('(')
     for i: U32 in range(0u32, numFields):
         if i != 0:
@@ -130,30 +130,22 @@ genRhs(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
             rhs += Doc.str(" && ")
         rhs += Doc.char('l') + Doc.str(i.toStr()) + Doc.str(" == ")
             + Doc.char('r') + Doc.str(i.toStr())
+        i += 1
     rhs
+
+genProduct(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
+    let doc = Doc.empty()
+    let i = 0u32
+    for field: ParseTree[Token, NonTerminal] in decls.iter():
+        if i != 0:
+            doc += Doc.break_(1) + Doc.str("&& ")
+        let fieldName = Doc.str(field.asNonTerminal(NonTerminal.NamedField).get(0).asTerminal().text)
+        doc += Doc.str("self.") + fieldName + Doc.str(" == other.") + fieldName
+        i += 1
+    doc.nest(4)
 
 makeLRRecord(l: Doc, r: Doc) Doc:
     Doc.str("(l = ") + l + Doc.str(", r = ") + r + Doc.char(')')
-
-type MatchBuilder:
-    scrut: Doc
-    alts: Vec[(pat: Doc, body: Doc)]
-
-MatchBuilder.withScrut(scrut: Doc) MatchBuilder:
-    MatchBuilder(scrut, alts = Vec.withCapacity(5))
-
-MatchBuilder.alt(self, pat: Doc, body: Doc) MatchBuilder:
-    self.alts.push((pat = pat, body = body))
-    self
-
-MatchBuilder.render(self) Doc:
-    let alts = Doc.empty()
-    for alt: (pat: Doc, body: Doc) in self.alts.iter():
-        alts += Doc.nested(4, alt.pat + Doc.char(':') + Doc.break_(1) + alt.body).group()
-    Doc.nested(4, Doc.str("match ") + self.scrut + Doc.char(':') + Doc.hardLine() + alts)
-
-test():
-    print("Running ToStr derive tests...")
 
 # --------------------------------------------------------------------------------------------------
 
@@ -166,3 +158,36 @@ _interleave(things: Vec[a], toDoc: Fn(a) Doc / exn, sep: Doc) Doc / exn:
         ret += toDoc(thing)
         i += 1
     ret
+
+# --------------------------------------------------------------------------------------------------
+
+test():
+    gen("\
+type Option[t]:
+    None
+    Some(t)")
+
+    print("")
+
+    gen("\
+type Result[e, r]:
+    Ok(r)
+    Err(e)")
+
+    print("")
+
+    gen("\
+type Char:
+    _codePoint: U32")
+
+    print("")
+
+    gen("\
+type Token:
+    kind: TokenKind
+    text: Str
+    byteIdx: U32
+    line: U32
+    col: U32")
+
+# args after: -- --test
