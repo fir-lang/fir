@@ -1,3 +1,12 @@
-type Result[e, r]:
-    Err(e)
-    Ok(r)
+type TypeDecl:
+    ## The type name. `Vec` in the example.
+    name: Id
+
+    ## Type parameters of the type. `[t]` in the example.
+    typeParams: Vec[Id]
+
+    ## Kinds of `type_params`. Filled in by kind inference.
+    typeParamKinds: Vec[Kind]
+
+    ## Constructors of the type.
+    rhs: Option[TypeDeclRhs]

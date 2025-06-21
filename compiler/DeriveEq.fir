@@ -28,6 +28,8 @@ gen(item: Str):
     print(genTree(result.tree).render(80))
 
 genTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
+    # print(parseTree.toDoc().render(80))
+
     let nodes = parseTree.asNonTerminal(NonTerminal.TypeDecl)
 
     let typeName = nodes.get(0).asTerminal().text
@@ -51,9 +53,22 @@ genTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
         genSumAlts(typeName, rhs)
 
     let typeName = Doc.str(typeName)
+
+    let preds = Doc.empty()
+    if typeParams.len() != 0:
+        preds = _brackets(_interleave(
+            typeParams,
+            |param|: Doc.str("Eq[") + Doc.str(param) + Doc.char(']'),
+            Doc.str(", ")
+        ))
+
+    let typeParamsDoc = Doc.empty()
+    if typeParams.len() != 0:
+        typeParamsDoc = _brackets(_interleave(typeParams, Doc.str, Doc.str(", ")))
+
     Doc.nested(
         4,
-        Doc.str("impl Eq[") + typeName + Doc.str("]:") + Doc.hardLine()
+        Doc.str("impl") + preds + Doc.str(" Eq[") + typeName + typeParamsDoc + Doc.str("]:") + Doc.hardLine()
             + Doc.nested(
                 4,
                 Doc.str("__eq(self: ") + typeName + Doc.str(", other: ") + typeName + Doc.str(") Bool:") + Doc.hardLine()
@@ -97,8 +112,7 @@ genNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
 
 genUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
-    let i = 0u32
-    for fieldNode: ParseTree[Token, NonTerminal] in fieldNodes.iter():
+    for i: U32 in range(0u32, fieldNodes.len()):
         if i != 0:
             doc += Doc.str(", ")
         doc += Doc.char(varPrefix) + Doc.str(i.toStr())
@@ -158,6 +172,9 @@ _interleave(things: Vec[a], toDoc: Fn(a) Doc / exn, sep: Doc) Doc / exn:
         ret += toDoc(thing)
         i += 1
     ret
+
+_brackets(doc: Doc) Doc:
+    Doc.char('[') + doc + Doc.char(']')
 
 # --------------------------------------------------------------------------------------------------
 
