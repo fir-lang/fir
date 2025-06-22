@@ -363,7 +363,7 @@ FunDecl: L<FunDecl> = {
             body: None,
         }),
 
-    <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+    <l:@L> <sig:FunSig> ":" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
             parent_ty: None,

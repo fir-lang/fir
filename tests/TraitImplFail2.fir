@@ -4,8 +4,8 @@ trait T[a]:
     a(self: a)
 
 impl T[I32]:
-    a(self: a) = ()
-    b(self: a) = ()
+    a(self: a): ()
+    b(self: a): ()
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected exit status: 101

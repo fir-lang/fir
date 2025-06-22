@@ -5,7 +5,7 @@ trait T[a]:
     b(self: a)
 
 impl T[I32]:
-    a(self: I32) = ()
+    a(self: I32): ()
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected stderr: tests/TraitImplFail1.fir:7:1: Trait methods missing: ["b"]

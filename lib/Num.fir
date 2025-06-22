@@ -41,7 +41,7 @@ impl ToStr[I32]:
     prim toStr(self: I32) Str
 
 impl Step[I32]:
-    step(self: I32) I32 = self + 1
+    step(self: I32) I32: self + 1
 
 prim type U32
 
@@ -84,7 +84,7 @@ impl ToStr[U32]:
     prim toStr(self: U32) Str
 
 impl Step[U32]:
-    step(self: U32) U32 = self + 1
+    step(self: U32) U32: self + 1
 
 prim U32.mod(self: U32, rhs: U32) U32
 
@@ -127,7 +127,7 @@ impl ToStr[I8]:
     prim toStr(self: I8) Str
 
 impl Step[I8]:
-    step(self: I8) I8 = self + 1
+    step(self: I8) I8: self + 1
 
 prim type U8
 
@@ -165,7 +165,7 @@ impl ToStr[U8]:
     prim toStr(self: U8) Str
 
 impl Step[U8]:
-    step(self: U8) U8 = self + 1
+    step(self: U8) U8: self + 1
 
 # ------------------------------------------------------------------------------
 # Conversions

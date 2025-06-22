@@ -2,7 +2,7 @@ type T:
     i: I32
 
 impl I32[T]:
-    test(self: T) = ()
+    test(self: T): ()
 
 prim type I32
 
