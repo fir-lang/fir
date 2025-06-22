@@ -178,7 +178,7 @@ mod native {
             ast::printer::print_module(&module);
         }
 
-        type_checker::check_module(&mut module);
+        type_checker::check_module(&mut module, &fir_root);
 
         if opts.print_checked_ast {
             ast::printer::print_module(&module);
@@ -348,7 +348,7 @@ mod wasm {
         import_path.insert("Fir".to_string(), "fir/lib".to_string());
         let mut module = import_resolver::resolve_imports(&import_path, "", module, true, false);
 
-        type_checker::check_module(&mut module);
+        type_checker::check_module(&mut module, "fir/lib".to_string());
 
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);

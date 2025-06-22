@@ -2,7 +2,7 @@
 
 const INITIAL_HEAP_SIZE_WORDS: usize = (1024 * 1024 * 1024) / 8; // 1 GiB
 
-mod heap;
+pub(crate) mod heap;
 
 use heap::Heap;
 
@@ -19,7 +19,7 @@ use std::io::Write;
 use bytemuck::{cast_slice, cast_slice_mut};
 
 // Just lowered program with some extra cached stuff for easy access.
-struct Pgm {
+pub(crate) struct Pgm {
     heap_objs: Vec<HeapObj>,
     funs: Vec<Fun>,
     closures: Vec<Closure>,
@@ -57,7 +57,7 @@ enum FrameKind {
 }
 
 impl Pgm {
-    fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
+    pub(crate) fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
         let LoweredPgm {
             mut heap_objs,
             funs,
@@ -129,7 +129,16 @@ impl Pgm {
 pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
     let mut heap = Heap::new();
     let pgm = Pgm::init(pgm, &mut heap);
+    run_with_args_(w, &pgm, &mut heap, main, args)
+}
 
+pub(crate) fn run_with_args_<W: Write>(
+    w: &mut W,
+    pgm: &Pgm,
+    heap: &mut Heap,
+    main: &str,
+    args: &[String],
+) {
     let main_fun: &SourceFunDecl = pgm
         .funs
         .iter()
@@ -192,15 +201,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         call_site: Loc::dummy(),
     }];
 
-    call_ast_fun(
-        w,
-        &pgm,
-        &mut heap,
-        main_fun,
-        arg_vec,
-        &call_loc,
-        &mut call_stack,
-    );
+    call_ast_fun(w, pgm, heap, main_fun, arg_vec, &call_loc, &mut call_stack);
 }
 
 /// Control flow within a function.

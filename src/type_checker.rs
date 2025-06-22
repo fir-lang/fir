@@ -2,6 +2,7 @@
 
 mod apply;
 mod convert;
+mod deriving;
 mod expr;
 mod instantiation;
 pub(crate) mod kind_inference;
@@ -65,8 +66,9 @@ pub struct PgmTypes {
 ///
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
-pub fn check_module(module: &mut ast::Module) -> PgmTypes {
-    /*
+pub fn check_module(module: &mut ast::Module, fir_root: &str) -> PgmTypes {
+    let mut macro_runner = deriving::DeriveMacroRunner::new(fir_root.to_string());
+
     for item in module.iter() {
         let item_loc = item.loc.clone();
         let ty_decl = if let ast::TopDecl::Type(ty_decl) = &item.node {
@@ -86,8 +88,26 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
             crate::utils::span_display(&item_loc),
             crate::utils::span_display(&ty_decl_loc)
         );
+
+        let file_contents =
+            std::fs::read_to_string(std::path::Path::new(&*item_loc.module)).unwrap();
+        let def = &file_contents
+            [ty_decl_loc.byte_offset_start as usize..ty_decl_loc.byte_offset_end as usize];
+        println!("---------------------------------");
+        println!("{}", def);
+        println!("Generated code:");
+        let macro_pgm = macro_runner.get_macro_runner(&pragma.args[0]);
+        let mut output = Vec::new();
+        crate::interpreter::run_with_args_(
+            &mut output,
+            &macro_pgm.pgm,
+            &mut macro_pgm.heap,
+            "main",
+            &["".to_string(), "--item".to_string(), def.to_string()],
+        );
+        println!("{}", String::from_utf8_lossy(&output).into_owned());
+        println!("---------------------------------");
     }
-    */
 
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
