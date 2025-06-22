@@ -116,7 +116,7 @@ impl Hash[Str]:
         hash
 
 impl ToStr[Str]:
-    toStr(self: Str) Str = self
+    toStr(self: Str) Str: self
 
 type CharIter:
     # UTF-8 encoding of the string.

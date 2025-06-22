@@ -165,4 +165,4 @@ Doc.cat(self, doc2: Doc) Doc:
     Doc._Cat(req = self._req() + doc2._req(), doc1 = self, doc2)
 
 impl Add[Doc]:
-    __add(self: Doc, other: Doc) Doc = self.cat(other)
+    __add(self: Doc, other: Doc) Doc: self.cat(other)
