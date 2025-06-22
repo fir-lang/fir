@@ -76,7 +76,7 @@ genTree(parseTree: ParseTree[Token, NonTerminal]) Doc:
 
 genSumAlts(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
-    let i = 0u32
+    let i = u32(0)
     for conDecl: ParseTree[Token, NonTerminal] in decls.iter():
         if i != 0:
             doc += Doc.hardLine()
@@ -112,7 +112,7 @@ genNamedFieldPats(fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
 
 genUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
-    for i: U32 in range(0u32, fieldNodes.len()):
+    for i: U32 in range(u32(0), fieldNodes.len()):
         if i != 0:
             doc += Doc.str(", ")
         doc += Doc.char(varPrefix) + Doc.str(i.toStr())
@@ -120,7 +120,7 @@ genUnnamedFieldPats(varPrefix: Char, fieldNodes: Vec[ParseTree[Token, NonTermina
 
 genUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
     let doc = conName + Doc.char('(')
-    for i: U32 in range(0u32, numFields):
+    for i: U32 in range(u32(0), numFields):
         if i != 0:
             doc += Doc.str(", ")
         doc += Doc.char('x') + Doc.str(i.toStr())
@@ -139,7 +139,7 @@ genRhs(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
         nodes.get(1).asNonTerminal(NonTerminal.UnnamedFields).len()
 
     let rhs = Doc.empty()
-    for i: U32 in range(0u32, numFields):
+    for i: U32 in range(u32(0), numFields):
         if i != 0:
             rhs += Doc.str(" && ")
         rhs += Doc.char('l') + Doc.str(i.toStr()) + Doc.str(" == ")
@@ -149,7 +149,7 @@ genRhs(typeName: Str, nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
 
 genProduct(typeName: Str, decls: Vec[ParseTree[Token, NonTerminal]]) Doc:
     let doc = Doc.empty()
-    let i = 0u32
+    let i = u32(0)
     for field: ParseTree[Token, NonTerminal] in decls.iter():
         if i != 0:
             doc += Doc.break_(1) + Doc.str("&& ")
@@ -165,7 +165,7 @@ makeLRRecord(l: Doc, r: Doc) Doc:
 
 _interleave(things: Vec[a], toDoc: Fn(a) Doc / exn, sep: Doc) Doc / exn:
     let ret = Doc.empty()
-    let i = 0u32
+    let i = u32(0)
     for thing: a in things.iter():
         if i != 0:
             ret += sep

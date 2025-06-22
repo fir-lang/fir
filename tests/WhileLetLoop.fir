@@ -1,8 +1,8 @@
 main():
     let v: Vec[U32] = Vec.withCapacity(10)
-    v.push(123u32)
-    v.push(456u32)
-    v.push(789u32)
+    v.push(u32(123))
+    v.push(u32(456))
+    v.push(u32(789))
 
     let iter = v.iter()
     let next: Fn() Option[U32] / [] = iter.next

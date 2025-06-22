@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: a93d30c9285d99d693798f310f68339fc0f3df5e7b51a8829d4c59d9e7f9006d
+// sha3: 7eaf64eb145a723d8a70251030fdd56e21534a44e699cff53b92b4ac51c629cd
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -46106,29 +46106,11 @@ fn __action106<'a>(
 )]
 fn __action107<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     {
-        let kind = match int.kind {
-            TokenKind::Int(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         let token_str = &int.text;
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
-
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -46140,7 +46122,7 @@ fn __action107<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 10,
             parsed: 0,
         })
@@ -46155,30 +46137,12 @@ fn __action107<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 )]
 fn __action108<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     {
-        let kind = match int.kind {
-            TokenKind::HexInt(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         debug_assert!(int.text.starts_with("0x"));
         let token_str = &int.text["0x".len()..];
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
-
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -46190,7 +46154,7 @@ fn __action108<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 16,
             parsed: 0,
         })
@@ -46205,30 +46169,12 @@ fn __action108<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 )]
 fn __action109<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     {
-        let kind = match int.kind {
-            TokenKind::BinInt(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         debug_assert!(int.text.starts_with("0b"));
         let token_str = &int.text["0x".len()..];
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
-
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -46240,7 +46186,7 @@ fn __action109<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 2,
             parsed: 0,
         })

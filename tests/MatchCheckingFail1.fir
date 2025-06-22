@@ -1,6 +1,6 @@
 main():
     let x = match Bool.True:
-        Bool.True: 1u32
+        Bool.True: u32(1)
         Bool.False: "Hi"
 
 # args: --no-backtrace

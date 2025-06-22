@@ -2,7 +2,7 @@ main():
     do:
         print("Hi")
 
-    let x = (a = 1u32, b = do:
+    let x = (a = u32(1), b = do:
         print("In record expr")
         'a', c = "Bye")
 
