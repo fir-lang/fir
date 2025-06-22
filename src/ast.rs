@@ -132,6 +132,8 @@ pub enum TopDecl {
 /// A type declaration: `type Vec[t]: ...`.
 #[derive(Debug, Clone)]
 pub struct TypeDecl {
+    pub pragma: Option<Pragma>,
+
     /// The type name. `Vec` in the example.
     pub name: Id,
 
@@ -143,6 +145,16 @@ pub struct TypeDecl {
 
     /// Constructors of the type.
     pub rhs: Option<TypeDeclRhs>,
+}
+
+/// E.g. `#[derive(Eq)]`.
+#[derive(Debug, Clone)]
+pub struct Pragma {
+    /// Name of the pragma, `derive` in the example.
+    pub name: Id,
+
+    /// Arguments of the pragma, `Eq` in the example.
+    pub args: Vec<Id>,
 }
 
 /// Constructors of a type declaration.

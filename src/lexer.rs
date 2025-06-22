@@ -25,6 +25,8 @@ lexgen::lexer! {
             lexer.switch(LexerRule::Comment)
         },
 
+        "#[" = TokenKind::HashLBracket,
+
         // Keywords
         "and" = TokenKind::And,
         "as" = TokenKind::As,

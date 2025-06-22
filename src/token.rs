@@ -48,6 +48,9 @@ pub enum TokenKind {
 
     TildeUpperIdLBracket,
 
+    /// '#['
+    HashLBracket,
+
     /// An identifier starting with a lowercase letter.
     LowerId,
 
