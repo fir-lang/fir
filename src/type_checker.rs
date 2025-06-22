@@ -66,6 +66,29 @@ pub struct PgmTypes {
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
 pub fn check_module(module: &mut ast::Module) -> PgmTypes {
+    /*
+    for item in module.iter() {
+        let item_loc = item.loc.clone();
+        let ty_decl = if let ast::TopDecl::Type(ty_decl) = &item.node {
+            ty_decl
+        } else {
+            continue;
+        };
+        let ty_decl_loc = ty_decl.loc.clone();
+        let pragma = if let Some(pragma) = &ty_decl.node.pragma {
+            pragma
+        } else {
+            continue;
+        };
+
+        println!(
+            "Item span = {}, ty span = {}",
+            crate::utils::span_display(&item_loc),
+            crate::utils::span_display(&ty_decl_loc)
+        );
+    }
+    */
+
     add_exception_types(module);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
