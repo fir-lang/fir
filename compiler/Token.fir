@@ -193,6 +193,7 @@ impl ToStr[TokenKind]:
             TokenKind.Star: "Star"
             TokenKind.StarEq: "StarEq"
             TokenKind.Str: "Str"
+            TokenKind.Tilde: "Tilde"
             TokenKind.TildeUpperId: "TildeUpperId"
             TokenKind.Trait: "Trait"
             TokenKind.Type: "Type"
