@@ -36,7 +36,7 @@ type _State:
     width: U32
     column: U32
     output: StrBuf
-        
+
 Doc.render(self, width: U32) Str:
     # TODO: For now copying the initial buffer size from the original PPrint, but we should be able
     # to estimate better numbers using the `Doc` type.
@@ -54,7 +54,7 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
             state.column += lenChars
 
         Doc._Blank(spaces):
-            for _: U32 in range(0u32, spaces):
+            for _: U32 in range(u32(0), spaces):
                 state.output.push(' ')
             state.column += spaces
 
@@ -62,7 +62,7 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
             if flatten:
                 panic("")
             state.output.push('\n')
-            for _: U32 in range(0u32, indent):
+            for _: U32 in range(u32(0), indent):
                 state.output.push(' ')
             state.column = indent
 
@@ -107,7 +107,7 @@ Doc._req(self) _SpaceReq:
         Doc._Cat(req, ..) | Doc._Nest(req, ..) | Doc._Group(req, ..): req
 
 _countChars(s: Str) U32:
-    let i = 0u32
+    let i = u32(0)
     for x: Char in s.chars():
         i += 1
     i
@@ -165,4 +165,4 @@ Doc.cat(self, doc2: Doc) Doc:
     Doc._Cat(req = self._req() + doc2._req(), doc1 = self, doc2)
 
 impl Add[Doc]:
-    __add(self: Doc, other: Doc) Doc = self.cat(other)
+    __add(self: Doc, other: Doc) Doc: self.cat(other)

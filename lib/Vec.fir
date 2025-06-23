@@ -20,7 +20,7 @@ Vec.reserve(self: Vec[t], cap: U32):
 
     if newCap != self._data.len():
         let newData = Array.new(newCap)
-        for i: U32 in range(0u32, self._data.len()):
+        for i: U32 in range(u32(0), self._data.len()):
             newData.set(i, self._data.get(i))
         self._data = newData
 
@@ -43,7 +43,7 @@ Vec.push(self: Vec[t], elem: t):
 
     if self._len == cap:
         let newData = Array.new((cap * 2) | 3)
-        for i: U32 in range(0u32, cap):
+        for i: U32 in range(u32(0), cap):
             newData.set(i, self._data.get(i))
         self._data = newData
 
@@ -122,7 +122,7 @@ impl[ToStr[t]] ToStr[Vec[t]]:
     toStr(self: Vec[t]) Str:
         let buf = StrBuf.withCapacity(self.len() * 5 + 2)
         buf.push('[')
-        for i: U32 in range(0u32, self.len()):
+        for i: U32 in range(u32(0), self.len()):
             if i != 0:
                 buf.push(',')
             buf.pushStr(self.get(i).toStr())

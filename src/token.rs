@@ -134,9 +134,9 @@ pub enum TokenKind {
 
     // Literals
     String,
-    Int(Option<IntKind>),
-    HexInt(Option<IntKind>),
-    BinInt(Option<IntKind>),
+    Int,
+    HexInt,
+    BinInt,
     Char,
 
     // Virtual tokens, used to handle layout. Generatd by the scanner.

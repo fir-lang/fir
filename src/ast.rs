@@ -655,8 +655,7 @@ pub struct IntExpr {
     /// parsing will be done based on the inferred type of the integer.
     pub text: String,
 
-    /// Suffix of the integer. Initially as parsed. If not available, the type checker updates
-    /// this based on the inferred type of the integer.
+    /// The type checker updates this based on the inferred type of the integer.
     pub suffix: Option<IntKind>,
 
     pub radix: u32,

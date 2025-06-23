@@ -9,7 +9,7 @@ main():
     printStr('👍'._codePoint.toStr())
 
     # We can't convert or push a Char to a Str, for now check the code point.
-    printStr(Char.fromU32(128077u32).unwrap()._codePoint.toStr())
+    printStr(Char.fromU32(u32(128077)).unwrap()._codePoint.toStr())
 
     printStr('a'.lenUtf8().toStr())
     printStr('é'.lenUtf8().toStr())

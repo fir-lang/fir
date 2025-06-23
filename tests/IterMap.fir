@@ -1,5 +1,5 @@
 main():
-    let sum = 0u32
+    let sum = u32(0)
     for x: U32 in "1 2 3".splitWhitespace().map(parseU32):
         sum += x
     printStr(sum.toStr())

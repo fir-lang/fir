@@ -8,7 +8,7 @@ type Overflow:
     Overflow
 
 checkedAdd(i1: U32, i2: U32) Option[U32]:
-    if i1 > 4294967295u32 - i2:
+    if i1 > u32(4294967295) - i2:
         return Option.None
 
     return Option.Some(i1 + i2)
