@@ -415,5 +415,3 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #     ),
 # )
 
-# expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
-
