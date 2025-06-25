@@ -235,4 +235,3 @@ type Token:
 #             && self.line == other.line
 #             && self.col == other.col
 
-# expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
