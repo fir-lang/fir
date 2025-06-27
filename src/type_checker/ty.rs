@@ -802,7 +802,7 @@ impl Ty {
             Ty::QVar(id, _) => vars
                 .get(id)
                 .cloned()
-                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
+                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {id}")),
 
             Ty::Fun {
                 args,
@@ -1077,17 +1077,17 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) => write!(f, "{}", id),
+            Ty::Con(id, _) => write!(f, "{id}"),
 
             Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
 
             Ty::App(id, args, _) => {
-                write!(f, "{}[", id)?;
+                write!(f, "{id}[")?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", ty)?;
+                    write!(f, "{ty}")?;
                 }
                 write!(f, "]")
             }
@@ -1107,23 +1107,23 @@ impl fmt::Display for Ty {
                     write!(f, "row")?;
                 }
 
-                write!(f, "{}", left_delim)?;
+                write!(f, "{left_delim}")?;
                 for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", label_id, label_ty)?;
+                    write!(f, "{label_id}: {label_ty}")?;
                 }
                 if let Some(ext) = extension {
                     if !labels.is_empty() {
                         write!(f, ", ")?;
                     }
-                    write!(f, "..{}", ext)?;
+                    write!(f, "..{ext}")?;
                 }
-                write!(f, "{}", right_delim)
+                write!(f, "{right_delim}")
             }
 
-            Ty::QVar(id, _) => write!(f, "{}", id),
+            Ty::QVar(id, _) => write!(f, "{id}"),
 
             Ty::Fun {
                 args,
@@ -1137,7 +1137,7 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}", arg)?;
+                            write!(f, "{arg}")?;
                         }
                     }
                     FunArgs::Named(args) => {
@@ -1145,15 +1145,15 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}: {}", name, ty)?;
+                            write!(f, "{name}: {ty}")?;
                         }
                     }
                 }
                 write!(f, ") ")?;
                 if let Some(exn) = exceptions {
-                    write!(f, "{} ", exn)?;
+                    write!(f, "{exn} ")?;
                 }
-                write!(f, "{}", ret)
+                write!(f, "{ret}")
             }
         }
     }
@@ -1167,7 +1167,7 @@ impl fmt::Display for Scheme {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}: {}", qvar, kind)?;
+                write!(f, "{qvar}: {kind}")?;
             }
             write!(f, "] ")?;
         }
@@ -1206,7 +1206,7 @@ impl fmt::Display for Pred {
             if i > 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}", ty)?;
+            write!(f, "{ty}")?;
         }
         write!(f, "]")
     }

@@ -6,7 +6,7 @@ use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 use std::mem::{replace, take};
 
@@ -1448,7 +1448,7 @@ fn select_method(
 
         let candidates_str: Vec<String> = candidates
             .iter()
-            .map(|(ty_id, _)| format!("{}.{}", ty_id, method))
+            .map(|(ty_id, _)| format!("{ty_id}.{method}"))
             .collect();
 
         panic!(
@@ -1483,7 +1483,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
             };
         }
 
-        ty => panic!("Type in variant is not a constructor: {}", ty),
+        ty => panic!("Type in variant is not a constructor: {ty}"),
     };
 
     let row_ext = tc_state

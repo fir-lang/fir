@@ -111,24 +111,24 @@ impl<K> ScopeSet<K> {
     }
 
     pub fn len_scopes(&self) -> usize {
-        self.0 .0.len()
+        self.0.0.len()
     }
 
     /// Exit the current scope. Panics if we're not in a scope.
     pub fn exit(&mut self) {
-        self.0 .0.pop().unwrap();
+        self.0.0.pop().unwrap();
     }
 
     /// Enter a new scope.
     pub fn enter(&mut self) {
-        self.0 .0.push(Default::default());
+        self.0.0.push(Default::default());
     }
 }
 
 impl<K: Hash + Eq> ScopeSet<K> {
     /// Bind at the current scope.
     pub fn insert(&mut self, k: K) {
-        self.0 .0.last_mut().unwrap().insert(k, ());
+        self.0.0.last_mut().unwrap().insert(k, ());
     }
 
     /// Get the value of the key, from the outer-most scope that has the key.
@@ -137,7 +137,7 @@ impl<K: Hash + Eq> ScopeSet<K> {
         K: Borrow<Q>,
         Q: ?Sized + Hash + Eq,
     {
-        for map in self.0 .0.iter().rev() {
+        for map in self.0.0.iter().rev() {
             if map.contains_key(k) {
                 return true;
             }

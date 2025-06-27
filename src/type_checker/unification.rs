@@ -44,7 +44,11 @@ pub(super) fn unify(
                 )
             }
             if args1.len() != args2.len() {
-                panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
+                panic!(
+                    "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
+                    loc_display(loc),
+                    con1
+                )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                 unify(arg1, arg2, cons, var_gen, level, loc);

@@ -4,7 +4,7 @@ use crate::type_checker::expr::{check_expr, select_field};
 use crate::type_checker::pat::check_pat;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{unify, unify_expected_ty};
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 use smol_str::SmolStr;
 

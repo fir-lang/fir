@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyMap};
+use crate::type_checker::{FunArgs, TcFunState, Ty, TyMap, row_utils};
 
 use super::RecordOrVariant;
 
@@ -297,11 +297,13 @@ impl PatCoverage {
 
                     FunArgs::Named(args) => {
                         // Same as above.
-                        assert!(con_field_pats
-                            .named
-                            .keys()
-                            .collect::<Set<_>>()
-                            .is_subset(&args.keys().collect::<Set<_>>()));
+                        assert!(
+                            con_field_pats
+                                .named
+                                .keys()
+                                .collect::<Set<_>>()
+                                .is_subset(&args.keys().collect::<Set<_>>())
+                        );
 
                         for (arg_name, arg_ty) in args.iter() {
                             let field_pat = match con_field_pats.named.get(arg_name) {
@@ -326,7 +328,7 @@ impl PatCoverage {
                 true
             }
 
-            other => panic!("{:?}", other),
+            other => panic!("{other:?}"),
         }
     }
 }

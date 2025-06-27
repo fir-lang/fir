@@ -6,15 +6,15 @@ use std::fmt::Write;
 pub fn print_pgm(pgm: &LoweredPgm) {
     let mut s = String::new();
     pgm.print(&mut s);
-    println!("{}", s);
+    println!("{s}");
 }
 
 impl LoweredPgm {
     pub fn print(&self, buffer: &mut String) {
         for (heap_obj_idx, heap_obj) in self.heap_objs.iter().enumerate() {
-            write!(buffer, "heap_obj{}: ", heap_obj_idx).unwrap();
+            write!(buffer, "heap_obj{heap_obj_idx}: ").unwrap();
             match heap_obj {
-                HeapObj::Builtin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
+                HeapObj::Builtin(builtin) => write!(buffer, "{builtin:?}").unwrap(),
 
                 HeapObj::Source(SourceConDecl {
                     name,
@@ -50,7 +50,7 @@ impl LoweredPgm {
                     buffer.push(')');
                 }
 
-                HeapObj::Record(record) => write!(buffer, "{:?}", record).unwrap(),
+                HeapObj::Record(record) => write!(buffer, "{record:?}").unwrap(),
             }
             buffer.push('\n');
         }
@@ -58,9 +58,9 @@ impl LoweredPgm {
         buffer.push('\n');
 
         for (fun_idx, fun) in self.funs.iter().enumerate() {
-            write!(buffer, "fun{}: ", fun_idx).unwrap();
+            write!(buffer, "fun{fun_idx}: ").unwrap();
             match fun {
-                Fun::Builtin(builtin) => write!(buffer, "{:?}", builtin).unwrap(),
+                Fun::Builtin(builtin) => write!(buffer, "{builtin:?}").unwrap(),
 
                 Fun::Source(SourceFunDecl {
                     parent_ty,
@@ -131,7 +131,7 @@ impl LoweredPgm {
         ) in self.closures.iter().enumerate()
         {
             assert_eq!(idx.0 as usize, closure_idx);
-            writeln!(buffer, "closure{}:", closure_idx).unwrap();
+            writeln!(buffer, "closure{closure_idx}:").unwrap();
 
             buffer.push_str("  locals: ");
             for (i, LocalInfo { name, ty }) in locals.iter().enumerate() {
@@ -234,7 +234,7 @@ impl Stmt {
 
             Stmt::While(WhileStmt { label, cond, body }) => {
                 if let Some(label) = label {
-                    write!(buffer, "{}: ", label).unwrap();
+                    write!(buffer, "{label}: ").unwrap();
                 }
                 buffer.push_str("while ");
                 cond.node.print(buffer, indent);
@@ -246,12 +246,12 @@ impl Stmt {
             }
 
             Stmt::Break { label, level: _ } => match label {
-                Some(label) => write!(buffer, "break {}", label).unwrap(),
+                Some(label) => write!(buffer, "break {label}").unwrap(),
                 None => buffer.push_str("break"),
             },
 
             Stmt::Continue { label, level: _ } => match label {
-                Some(label) => write!(buffer, "continue {}", label).unwrap(),
+                Some(label) => write!(buffer, "continue {label}").unwrap(),
                 None => buffer.push_str("continue"),
             },
         }
@@ -455,7 +455,7 @@ impl Pat {
                         buffer.push_str(", ");
                     }
                     if let Some(name) = &field.name {
-                        write!(buffer, "{}: ", name).unwrap();
+                        write!(buffer, "{name}: ").unwrap();
                     }
                     field.node.node.print(buffer);
                 }
@@ -469,7 +469,7 @@ impl Pat {
                         buffer.push_str(", ");
                     }
                     if let Some(name) = &field.name {
-                        write!(buffer, "{}: ", name).unwrap();
+                        write!(buffer, "{name}: ").unwrap();
                     }
                     field.node.node.print(buffer);
                 }

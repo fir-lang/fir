@@ -111,9 +111,8 @@ fn resolve_imports_(
                             .find(|(_pkg_name, pkg_path)| *pkg_path == module_root)
                             .unwrap_or_else(|| {
                                 panic!(
-                                    "Can't find package name for modules at {}. \
-                                     Specify the path's package name with `-i<package name>={}",
-                                    module_root, module_root
+                                    "Can't find package name for modules at {module_root}. \
+                                     Specify the path's package name with `-i<package name>={module_root}"
                                 )
                             })
                             .0;

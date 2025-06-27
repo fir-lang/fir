@@ -45552,9 +45552,7 @@ fn __action56<'a>(
     (_, params, _): (Loc, Vec<(SmolStr, Option<L<Type>>)>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> (SelfParam, Vec<(Id, Option<L<Type>>)>) {
-    {
-        process_param_list(params, module, &l)
-    }
+    { process_param_list(params, module, &l) }
 }
 
 #[allow(unused_variables)]
@@ -45568,9 +45566,7 @@ fn __action57<'a>(
     (_, id, _): (Loc, Token, Loc),
     (_, ty, _): (Loc, Option<L<Type>>, Loc),
 ) -> (SmolStr, Option<L<Type>>) {
-    {
-        (id.smol_str(), ty)
-    }
+    { (id.smol_str(), ty) }
 }
 
 #[allow(unused_variables)]
@@ -46165,9 +46161,7 @@ fn __action93<'a>(
     (_, stmts, _): (Loc, Vec<L<Stmt>>, Loc),
     (_, _, _): (Loc, Token, Loc),
 ) -> Expr {
-    {
-        Expr::Do(stmts)
-    }
+    { Expr::Do(stmts) }
 }
 
 #[allow(unused_variables)]

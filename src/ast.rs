@@ -834,10 +834,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for record extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
                         }
                     };
                 }
@@ -885,10 +882,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for variant extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
                         }
                     }
                 }
