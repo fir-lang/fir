@@ -9,7 +9,7 @@ pub fn print_module(module: &[L<TopDecl>]) {
             println!();
         }
         top_decl.node.print(&mut buffer, 0);
-        println!("{}", buffer);
+        println!("{buffer}");
         buffer.clear();
     }
 }
@@ -779,7 +779,7 @@ impl Expr {
                     ret_ty.node.print(buffer);
                 }
                 if let Some(inferred_ty) = inferred_ty {
-                    write!(buffer, " #| inferred type = {} |# ", inferred_ty).unwrap();
+                    write!(buffer, " #| inferred type = {inferred_ty} |# ").unwrap();
                 }
                 buffer.push_str("{\n");
                 for stmt in body.iter() {
@@ -817,7 +817,7 @@ impl Pat {
                 buffer.push_str(var);
                 if let Some(ty) = ty {
                     buffer.push_str(": ");
-                    write!(buffer, "{}", ty).unwrap();
+                    write!(buffer, "{ty}").unwrap();
                 }
             }
 
@@ -875,7 +875,7 @@ impl Pat {
                 }
                 buffer.push(')');
                 if let Some(inferred_ty) = inferred_ty {
-                    write!(buffer, " #| inferred type = {} |# ", inferred_ty).unwrap();
+                    write!(buffer, " #| inferred type = {inferred_ty} |# ").unwrap();
                 }
             }
 

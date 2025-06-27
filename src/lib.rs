@@ -108,7 +108,7 @@ fn report_parse_error(
         }
 
         lalrpop_util::ParseError::User { error } => {
-            panic!("Lexer error: {:?}", error)
+            panic!("Lexer error: {error:?}")
         }
     }
 }
@@ -139,18 +139,15 @@ mod native {
             .import_paths
             .insert("Fir".to_string(), fir_root.clone());
         if old_fir_root.is_some() {
-            eprintln!(
-                "WARNING: Fir root specified multiple times. Using {} as root.",
-                fir_root
-            );
+            eprintln!("WARNING: Fir root specified multiple times. Using {fir_root} as root.");
         }
 
         if opts.no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
                 if let Some(s) = panic_info.payload().downcast_ref::<String>() {
-                    eprintln!("{}", s);
+                    eprintln!("{s}");
                 } else if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-                    eprintln!("{}", s);
+                    eprintln!("{s}");
                 } else {
                     eprintln!("Weird panic payload in panic handler");
                 }

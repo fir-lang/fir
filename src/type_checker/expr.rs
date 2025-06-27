@@ -1444,7 +1444,7 @@ fn select_method(
 
         let candidates_str: Vec<String> = candidates
             .iter()
-            .map(|(ty_id, _)| format!("{}.{}", ty_id, method))
+            .map(|(ty_id, _)| format!("{ty_id}.{method}"))
             .collect();
 
         panic!(
@@ -1479,7 +1479,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
             };
         }
 
-        ty => panic!("Type in variant is not a constructor: {}", ty),
+        ty => panic!("Type in variant is not a constructor: {ty}"),
     };
 
     let row_ext = tc_state

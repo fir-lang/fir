@@ -326,7 +326,7 @@ impl PatCoverage {
                 true
             }
 
-            other => panic!("{:?}", other),
+            other => panic!("{other:?}"),
         }
     }
 }

@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 pub fn print_pgm(pgm: &MonoPgm) {
     let mut s = String::new();
     pgm.print(&mut s);
-    println!("{}", s);
+    println!("{s}");
 }
 
 impl MonoPgm {

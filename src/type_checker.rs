@@ -1463,5 +1463,5 @@ fn resolve_preds(
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
-    SmolStr::new(format!("{}#{}", var, uniq))
+    SmolStr::new(format!("{var}#{uniq}"))
 }

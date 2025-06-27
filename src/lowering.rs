@@ -785,7 +785,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     mono::TypeDeclRhs::Sum(cons) => {
                         for mono::ConstructorDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            let name = SmolStr::new(format!("{}.{}", con_id, name));
+                            let name = SmolStr::new(format!("{con_id}.{name}"));
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 &name,
@@ -876,7 +876,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }))
                     }
 
-                    other => panic!("Unknown built-in type: {}", other),
+                    other => panic!("Unknown built-in type: {other}"),
                 },
             }
         }
@@ -899,7 +899,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
     lowered_pgm.unit_con_idx = *record_indices
         .get(&RecordShape::UnnamedFields { arity: 0 })
-        .unwrap_or_else(|| panic!("Unit record not defined {:#?}", record_indices));
+        .unwrap_or_else(|| panic!("Unit record not defined {record_indices:#?}"));
 
     let mut indices = Indices {
         product_cons: product_con_nums,
@@ -961,10 +961,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     other => {
-                        panic!(
-                            "Unknown built-in function: {} (ty args = {:?})",
-                            other, fun_ty_args
-                        );
+                        panic!("Unknown built-in function: {other} (ty args = {fun_ty_args:?})");
                     }
                 }
             }

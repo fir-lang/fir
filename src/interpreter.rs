@@ -139,7 +139,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
             }
             _ => None,
         })
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
+        .unwrap_or_else(|| panic!("Main function `{main}` is not defined"));
 
     // `main` doesn't have a call site, called by the interpreter.
     let call_loc = Loc {
@@ -157,8 +157,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         0 => {
             if args.len() > 1 {
                 println!(
-                    "WARNING: Main function `{}` does not take command line arguments, but command line arguments are passed to the interpreter",
-                    main
+                    "WARNING: Main function `{main}` does not take command line arguments, but command line arguments are passed to the interpreter"
                 );
             }
             vec![]
@@ -180,8 +179,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         }
 
         other => panic!(
-            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
-            main, other
+            "Main function `{main}` needs to take 0 or 1 argument, but it takes {other} arguments"
         ),
     };
 
@@ -1174,7 +1172,7 @@ fn call_builtin_fun<W: Write>(
                 write!(&mut msg_str, "{}: ", loc_display(&frame.call_site)).unwrap();
                 match &frame.kind {
                     FrameKind::Builtin(builtin_fun_decl) => {
-                        writeln!(&mut msg_str, "Builtin: {:?}", builtin_fun_decl).unwrap()
+                        writeln!(&mut msg_str, "Builtin: {builtin_fun_decl:?}").unwrap()
                     }
                     FrameKind::Source(source_fun_name) => {
                         msg_str.push_str(source_fun_name);
@@ -1669,7 +1667,7 @@ fn call_builtin_fun<W: Write>(
 
             let array_len = heap[array + 1];
             if idx >= array_len {
-                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+                panic!("OOB array access (idx = {idx}, len = {array_len})");
             }
 
             match Repr::from_mono_ty(t) {

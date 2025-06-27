@@ -156,7 +156,7 @@ pub(crate) fn copy_update_escapes(s: &str) -> String {
                         }
                     }
                 }
-                other => panic!("Weird escape character: {:?}", other),
+                other => panic!("Weird escape character: {other:?}"),
             }
         } else {
             ret.push(char);

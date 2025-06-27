@@ -143,7 +143,7 @@ fn version_info_str(version_info: rustc_tools_util::VersionInfo) -> String {
 fn parse_key_val(s: &str) -> Result<(String, String), String> {
     let parts: Vec<&str> = s.splitn(2, '=').collect();
     if parts.len() != 2 {
-        return Err(format!("invalid key=value: `{}`", s));
+        return Err(format!("invalid key=value: `{s}`"));
     }
     Ok((parts[0].to_string(), parts[1].to_string()))
 }
