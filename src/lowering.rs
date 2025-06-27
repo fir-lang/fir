@@ -4,8 +4,8 @@
 pub mod printer;
 
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Loc, Named, UnOp, L};
-use crate::record_collector::{collect_records, RecordShape};
+use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, L, Loc, Named, UnOp};
+use crate::record_collector::{RecordShape, collect_records};
 
 use smol_str::SmolStr;
 
@@ -1440,7 +1440,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         ("Array", "len") => {
                             // prim Array.len(self: Array[t]): U32
                             assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                                                              // All arrays have the length in the same location, ignore `t`.
+                            // All arrays have the length in the same location, ignore `t`.
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArrayLen));

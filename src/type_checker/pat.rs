@@ -5,7 +5,7 @@ use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::row_utils::collect_rows;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 ///
@@ -119,14 +119,20 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             // If consturctor takes named arguments, fields pattern need to be named, or a variable
             // pattern, as shorthand for `foo = foo`.
             // Update shorthands to the long form to keep things simple in `apply_con_ty`.
-            if let Ty::Fun { args, .. } = &con_ty {
-                if args.is_named() {
-                    for pat_field in pat_fields.iter_mut() {
-                        if pat_field.name.is_none() {
-                            if let ast::Pat::Var(var_pat) = &pat_field.node.node {
-                                pat_field.name = Some(var_pat.var.clone());
-                            }
-                        }
+            if let Ty::Fun { args, .. } = &con_ty
+                && args.is_named()
+            {
+                for pat_field in pat_fields.iter_mut() {
+                    if let ast::Named {
+                        name: None,
+                        node:
+                            ast::L {
+                                node: ast::Pat::Var(var_pat),
+                                ..
+                            },
+                    } = pat_field
+                    {
+                        pat_field.name = Some(var_pat.var.clone());
                     }
                 }
             }

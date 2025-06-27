@@ -37,7 +37,8 @@ pub(crate) fn apply_con_ty(
                         if let Some(name) = &ty2.name {
                             panic!(
                                 "{}: Constructor takes positional arguments, but applied named argument '{}'",
-                                loc_display(loc), name
+                                loc_display(loc),
+                                name
                             );
                         }
                         unify(ty1, &ty2.node, cons, var_gen, level, loc);

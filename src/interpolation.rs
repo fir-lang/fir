@@ -87,7 +87,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
                     // Lex and parse interpolation.
                     let interpolation = &s[start_byte + 1..byte_idx];
                     let mut tokens: Vec<(Loc, Token, Loc)> = lex(interpolation, module);
-                    for (ref mut l, _, ref mut r) in &mut tokens {
+                    for (l, _, r) in &mut tokens {
                         *l = update_loc(l, &start_loc);
                         *r = update_loc(r, &start_loc);
                     }

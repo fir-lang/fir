@@ -6,7 +6,7 @@ mod heap;
 
 use heap::Heap;
 
-use crate::ast::{self, Id, Loc, L};
+use crate::ast::{self, Id, L, Loc};
 use crate::collections::Map;
 use crate::lowering::*;
 use crate::mono_ast as mono;

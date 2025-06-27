@@ -6,7 +6,7 @@ use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 use std::mem::{replace, take};
 

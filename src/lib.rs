@@ -1,7 +1,8 @@
 #![allow(
     clippy::too_many_arguments,
     clippy::type_complexity,
-    clippy::large_enum_variant
+    clippy::large_enum_variant,
+    unused_braces // lalrpop generates these
 )]
 
 mod ast;
