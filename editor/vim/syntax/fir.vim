@@ -59,6 +59,8 @@ syn region firBlockComment start="#|" end="|#"
   \ firTodo,
   \ @Spell
 
+syn region firPragma start="#\[" end="\]"
+
 syn keyword firTodo TODO FIXME BUG contained
 
 syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^\|\.\."
@@ -82,3 +84,4 @@ highlight default link firBraceStart Delimiter
 highlight default link firBraceEnd Delimiter
 highlight default link firBracketStart Delimiter
 highlight default link firBracketEnd Delimiter
+highlight default link firPragma Macro

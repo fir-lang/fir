@@ -37,6 +37,7 @@ extern {
         "[" => Token { kind: TokenKind::LBracket, .. },
         "row[" => Token { kind: TokenKind::LBracketRow, .. },
         "]" => Token { kind: TokenKind::RBracket, .. },
+        "#[" => Token { kind: TokenKind::HashLBracket, .. },
         ":" => Token { kind: TokenKind::Colon, .. },
         "," => Token { kind: TokenKind::Comma, .. },
         "." => Token { kind: TokenKind::Dot, .. },
@@ -144,37 +145,49 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+    <pragma:Pragma?> <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            pragma,
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
 
-    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <pragma:Pragma?> <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            pragma,
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],
             rhs: Some(rhs),
         }),
 
-    <l:@L> "prim"? "type" <type_name:UpperId> NEWLINE <r:@R> =>
+    <pragma:Pragma?> <l:@L> "prim"? "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            pragma,
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
             rhs: None,
         }),
 
-    <l:@L> "prim"? "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
+    <pragma:Pragma?> <l:@L> "prim"? "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
+            pragma,
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],
             rhs: None,
         }),
+}
+
+Pragma: Pragma = {
+    "#[" <pragma:LowerId> <args:("(" <Sep1<UpperId, ",">> ")")?> "]" NEWLINE+ =>
+        Pragma {
+            name: pragma.smol_str(),
+            args: args.unwrap_or(vec![]).into_iter().map(|id| id.smol_str()).collect(),
+        }
 }
 
 TypeDeclRhs: TypeDeclRhs = {
