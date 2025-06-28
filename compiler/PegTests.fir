@@ -22,7 +22,7 @@ main():
     runTest("'b' as zeroOrMOreAThenB", "b", zeroOrMoreAThenB)
     runTest("'a b' as zeroOrMoreAThenB", "a b", zeroOrMoreAThenB)
     runTest("'a a b' as zeroOrMoreAThenB", "a a b", zeroOrMoreAThenB)
-    runTest("'b' as oneOrMoreAThenB", "b", oneOrMoreAThenB)
+    runTest("'b' as oneOrMoreAThenB (should fail)", "b", oneOrMoreAThenB)
     runTest("'a b' as oneOrMoreAThenB", "a b", oneOrMoreAThenB)
     runTest("'a a b' as oneOrMoreAThenB", "a a b", oneOrMoreAThenB)
     runTest("'a a b' as zeroOrOneAThenB", "a a b", zeroOrOneAThenB)
@@ -35,13 +35,14 @@ main():
     runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
     runTest("'b' as negLookahead", "b", negLookahead)
     runTest("'a' as negLookahead (should fail)", "a", negLookahead)
+    runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
 
 # expected stdout:
 # 'a' as terminalA
 # TerminalA(LowerId(1:1:"a"))
 # 
 # 'b' as terminalA (should fail)
-# ERR: unexpected token LowerId(1:1:"b")
+# ERR: unexpected token LowerId(1:1:"b") at cursor 0
 # 
 # 'a b' as terminalA (should fail)
 # ERR: parser didn't consume all input, input len = 2, cursor after parsing = 1
@@ -56,10 +57,10 @@ main():
 # TerminalAOrB(LowerId(1:1:"b"))
 # 
 # 'c' as terminalAOrB (should fail)
-# ERR: unexpected token LowerId(1:1:"c")
+# ERR: unexpected token LowerId(1:1:"c") at cursor 0
 # 
 # 'b b' as terminalAThenB (should fail)
-# ERR: unexpected token LowerId(1:1:"b")
+# ERR: unexpected token LowerId(1:1:"b") at cursor 0
 # 
 # 'a b' as terminalAThenB
 # TerminalAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -73,8 +74,8 @@ main():
 # 'a a b' as zeroOrMoreAThenB
 # ZeroOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
 # 
-# 'b' as oneOrMoreAThenB
-# ERR: unexpected token LowerId(1:1:"b")
+# 'b' as oneOrMoreAThenB (should fail)
+# ERR: unexpected token LowerId(1:1:"b") at cursor 0
 # 
 # 'a b' as oneOrMoreAThenB
 # OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -83,7 +84,7 @@ main():
 # OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
 # 
 # 'a a b' as zeroOrOneAThenB
-# ERR: unexpected token LowerId(1:1:"a")
+# ERR: unexpected token LowerId(1:3:"a") at cursor 1
 # 
 # 'a b' as zeroOrOneAThenB
 # ZeroOrOneAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -110,5 +111,7 @@ main():
 # NegLookahead(TerminalAOrB(LowerId(1:1:"b")))
 # 
 # 'a' as negLookahead (should fail)
-# ERR: unexpected token LowerId(1:1:"a")
-
+# ERR: unexpected token LowerId(1:1:"a") at cursor 0
+# 
+# 'a a c' as oneOrMoreAThenB (should fail)
+# ERR: unexpected token LowerId(1:5:"c") at cursor 2
