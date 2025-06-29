@@ -81,6 +81,7 @@ pub enum TokenKind {
     Trait,
     Type,
     UpperFn,
+    Value,
     Var,
     While,
 

@@ -1,9 +1,9 @@
 type Result[t, e]:
     Ok:
-        value: t
+        val: t
 
     Err:
-        value: e
+        val: e
 
 prim type I32
 
@@ -17,9 +17,9 @@ impl ToStr[I32]:
 
 resultToString(result: Result[I32, I32]) Str:
     match result:
-        Result.Ok(value = v):
+        Result.Ok(val = v):
             "Ok(`v`)"
-        Result.Err(value = v):
+        Result.Err(val = v):
             "Err(`v`)"
 
 # args: --typecheck --no-prelude

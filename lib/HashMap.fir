@@ -3,13 +3,13 @@ type HashMap[k, v]:
 
 type Elem[k, v]:
     key: k
-    value: v
+    val: v
     next: Option[Elem[k, v]]
 
-HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
+HashMap.fromIter[Iterator[iter, (key: k, val: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
-    for item: (key: k, value: v) in iter:
-        map.insert(item.key, item.value)
+    for item: (key: k, val: v) in iter:
+        map.insert(item.key, item.val)
     map
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
@@ -19,25 +19,25 @@ HashMap.withCapacity(cap: U32) HashMap[k, v]:
     HashMap(_elems = elems)
 
 # Insert new value, return old value.
-HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
+HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, val: v) Option[v]:
     let hash = key.hash()
     let index = hash.mod(self._elems.len())
     match self._elems.get(index):
         Option.None:
-            self._elems.set(index, Option.Some(Elem(key = key, value = value, next = Option.None)))
+            self._elems.set(index, Option.Some(Elem(key = key, val = val, next = Option.None)))
             return Option.None
         Option.Some(elem):
             loop:
                 if elem.key == key:
-                    let old = elem.value
-                    elem.value = value
+                    let old = elem.val
+                    elem.val = val
                     return Option.Some(old)
                 else:
                     match elem.next:
                         Option.Some(next):
                             elem = next
                         Option.None:
-                            elem.next = Option.Some(Elem(key = key, value = value, next = Option.None))
+                            elem.next = Option.Some(Elem(key = key, val = val, next = Option.None))
                             return Option.None
 
     panic("unreachable")
@@ -51,7 +51,7 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
             Option.None: return Option.None
             Option.Some(elem_):
                 if elem_.key == key:
-                    return Option.Some(elem_.value)
+                    return Option.Some(elem_.val)
                 else:
                     elem = elem_.next
 
@@ -69,7 +69,7 @@ impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
                     buf.pushStr(", ")
                 buf.pushStr(elem_.key.toStr())
                 buf.pushStr(": ")
-                buf.pushStr(elem_.value.toStr())
+                buf.pushStr(elem_.val.toStr())
                 printed += 1
                 elem = elem_.next
         buf.push('}')

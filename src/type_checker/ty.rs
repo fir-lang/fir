@@ -224,6 +224,9 @@ pub(super) struct TraitMethod {
 
 #[derive(Debug, Clone)]
 pub(super) struct TypeDetails {
+    /// Whether the type is a value type.
+    pub(super) value: bool,
+
     /// Value constructors of the type.
     pub(super) cons: Vec<ConShape>,
 
@@ -1016,6 +1019,7 @@ impl TyCon {
             id,
             ty_params: vec![],
             details: TyConDetails::Type(TypeDetails {
+                value: false,
                 cons: vec![],
                 sum: true,
             }),
