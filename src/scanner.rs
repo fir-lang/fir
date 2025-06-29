@@ -335,6 +335,7 @@ where
                 if let Some((l, _, _)) = tokens.peek()
                     && l.line != last_loc.line
                 {
+                    let l = *l;
                     last_loc = scan_indented(
                         tokens,
                         module,
@@ -367,7 +368,13 @@ where
                             assert_eq!(delim_kind, NonIndentedDelimKind::Bracket);
                             break;
                         }
-                        _ => panic!(),
+                        other => panic!(
+                            "{}:{}:{}: ':' after '{:?}'",
+                            module,
+                            l.line + 1,
+                            l.col + 1,
+                            other
+                        ),
                     }
                 }
             }

@@ -234,4 +234,3 @@ type Token:
 #             && self.byteIdx == other.byteIdx
 #             && self.line == other.line
 #             && self.col == other.col
-

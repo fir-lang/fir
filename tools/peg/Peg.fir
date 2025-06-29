@@ -325,10 +325,12 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
 generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
-    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32) / ParseError[`terminalType`]:")
+    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) \
+                            (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32) / ParseError[`terminalType`]:")
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
+    doc += Doc.str("let curErr: Option[ParseError[`terminalType`]] = Option.None") + Doc.hardLine()
 
     # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
     doc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.withCapacity(0)") + Doc.hardLine()
@@ -349,6 +351,8 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                 4,
                 Doc.str("Result.Err(err):")
                     + Doc.hardLine()
+                    + makeUpdateError()
+                    + Doc.hardLine()
                     + Doc.str("cursor = cursor0")
                     + Doc.hardLine()
                     + Doc.str("nodes.clear()"))
@@ -364,20 +368,24 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 
         doc += altResultMatchDoc + Doc.hardLine()
 
-    let failDoc =
+    doc +=
         Doc.nested(
             4,
             Doc.str("if cursor == tokens.len():")
                 + Doc.hardLine()
-                + Doc.str("throw(ParseError.UnexpectedEof)"))
-
-    failDoc += Doc.hardLine()
-    failDoc +=
-        Doc.nested(
+                + makeThrowUnexpectedEof())
+        + Doc.hardLine()
+        + Doc.nested(
             4,
-            Doc.str("else:") + Doc.hardLine() + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
-
-    doc += failDoc
+            Doc.str("else:")
+                + Doc.hardLine()
+                + makeThrow(
+                    Doc.nested(
+                        4,
+                        Doc.str("curErr.unwrapOrElse(||:")
+                            + Doc.hardLine()
+                            + makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))
+                            + Doc.char(')'))))
 
     doc.nest(4)
 
@@ -405,7 +413,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     4,
                     Doc.str("if cursor == tokens.len():")
                         + Doc.hardLine()
-                        + Doc.str("throw(ParseError.UnexpectedEof)"))
+                        + makeThrowUnexpectedEof())
 
             eofCheck += Doc.hardLine()
 
@@ -426,7 +434,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
-                        + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))"))
+                        + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))))
 
             eofCheck + tokenKindCheck
 
@@ -473,7 +481,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                               + Doc.hardLine()
                               + Doc.nested(
                                   4,
-                                  Doc.str("Result.Err(_):")
+                                  Doc.str("Result.Err(err):")
+                                      + Doc.hardLine()
+                                      + makeUpdateError()
                                       + Doc.hardLine()
                                       + Doc.str("nodes.truncate(nodesLen0)")
                                       + Doc.hardLine()
@@ -509,7 +519,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                            + Doc.hardLine()
                            + Doc.nested(
                                4,
-                               Doc.str("Result.Err(_):")
+                               Doc.str("Result.Err(err):")
+                                   + Doc.hardLine()
+                                   + makeUpdateError()
                                    + Doc.hardLine()
                                    + Doc.str("nodes.truncate(nodesLen0)"))
                            + Doc.hardLine()
@@ -538,7 +550,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                         + Doc.hardLine()
                         + Doc.nested(
                             4,
-                            Doc.str("Result.Err(_):")
+                            Doc.str("Result.Err(err):")
+                                + Doc.hardLine()
+                                + makeUpdateError()
                                 + Doc.hardLine()
                                 + Doc.str("tokens.truncate(tokensLen0)"))
                         + Doc.hardLine()
@@ -546,7 +560,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                             4,
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
-                                + Doc.str("throw(ParseError.UnexpectedToken(tokens.get(cursor)))")))
+                                + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor")))))
 
 tokensToCode(tokens: Vec[Token]) Doc / exn:
     if tokens.len() == 0:
@@ -571,3 +585,43 @@ tokensToCode(tokens: Vec[Token]) Doc / exn:
         lastCol += token.text.chars().count[CharIter, Char, exn]()
 
     Doc.str(out.toStr())
+
+makeUnexpectedTokenError(token: Doc, cursor: Doc) Doc:
+    Doc.nested(
+        4,
+        Doc.str("ParseError.UnexpectedToken(")
+            + Doc.break_(0)
+            + Doc.str("token = ") + token
+            + Doc.str(",") + Doc.break_(1)
+            + Doc.str("cursor = ") + cursor)
+        + Doc.whenNotFlat(Doc.char(','))
+        + Doc.break_(0)
+        + Doc.str(")")
+
+# TODO: `break_(0)` below seems to always insert a line break.
+makeThrow(expr: Doc) Doc:
+    Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')'))
+
+makeThrowUnexpectedEof() Doc:
+    makeThrow(Doc.str("ParseError.UnexpectedEof"))
+
+# When generating code that backtracks, update the local `curErr: Option[ParseError[t]]` if the new
+# error's cursor is more advanced than the current.
+#
+# The new error value should be named `err`.
+makeUpdateError() Doc:
+    Doc.nested(
+        4,
+        Doc.str("match curErr:")
+            + Doc.hardLine()
+            + Doc.nested(
+                4,
+                Doc.str("Option.None:")
+                    + Doc.hardLine()
+                    + Doc.str("curErr = Option.Some(err)"))
+            + Doc.hardLine()
+            + Doc.nested(
+                4,
+                Doc.str("Option.Some(curErr_):")
+                    + Doc.hardLine()
+                    + Doc.str("curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))")))

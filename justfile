@@ -43,6 +43,10 @@ compiler_update_goldens:
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
     goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
 
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+
 build: generate_parser
     cargo build
 
