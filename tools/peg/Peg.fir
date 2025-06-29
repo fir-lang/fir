@@ -587,20 +587,21 @@ tokensToCode(tokens: Vec[Token]) Doc / exn:
     Doc.str(out.toStr())
 
 makeUnexpectedTokenError(token: Doc, cursor: Doc) Doc:
-    Doc.nested(
-        4,
-        Doc.str("ParseError.UnexpectedToken(")
+    Doc.group(
+        Doc.nested(
+            4,
+            Doc.group(
+                Doc.str("ParseError.UnexpectedToken(")
+                    + Doc.break_(0)
+                    + Doc.str("token = ") + token
+                    + Doc.str(",") + Doc.break_(1)
+                    + Doc.str("cursor = ") + cursor))
+            + Doc.whenNotFlat(Doc.char(','))
             + Doc.break_(0)
-            + Doc.str("token = ") + token
-            + Doc.str(",") + Doc.break_(1)
-            + Doc.str("cursor = ") + cursor)
-        + Doc.whenNotFlat(Doc.char(','))
-        + Doc.break_(0)
-        + Doc.str(")")
+            + Doc.str(")"))
 
-# TODO: `break_(0)` below seems to always insert a line break.
 makeThrow(expr: Doc) Doc:
-    Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')'))
+    Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')')).group()
 
 makeThrowUnexpectedEof() Doc:
     makeThrow(Doc.str("ParseError.UnexpectedEof"))
