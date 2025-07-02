@@ -4,7 +4,7 @@ type T:
     c: U32
 
 main():
-    let x = T(c = 1u32, b = 2u32, a = 3u32)
+    let x = T(c = u32(1), b = u32(2), a = u32(3))
     match x:
         T(a = a, b = b): ()
 

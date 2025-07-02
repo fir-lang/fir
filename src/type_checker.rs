@@ -481,7 +481,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails { ref methods }) => methods,
+            TyConDetails::Trait(TraitDetails { methods }) => methods,
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!() // checked above
             }
@@ -926,7 +926,7 @@ fn collect_schemes(
             ast::TopDecl::Impl(impl_decl) => {
                 // Default methods are already copied to impls. Check that impl method signatures
                 // match the trait method signatures.
-                let impl_assumps = convert_and_bind_context(
+                let _impl_assumps = convert_and_bind_context(
                     tys,
                     &impl_decl.node.context,
                     TyVarConversion::ToQVar,
@@ -982,11 +982,7 @@ fn collect_schemes(
 
                     let impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
-                        preds: impl_assumps
-                            .iter()
-                            .cloned()
-                            .chain(fun_assumps.iter().cloned())
-                            .collect(),
+                        preds: fun_assumps.iter().cloned().collect(),
                         ty: fun_ty,
                         loc: fun.loc.clone(),
                     };
@@ -1467,5 +1463,5 @@ fn resolve_preds(
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
-    SmolStr::new(format!("{}#{}", var, uniq))
+    SmolStr::new(format!("{var}#{uniq}"))
 }

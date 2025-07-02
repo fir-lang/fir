@@ -1,9 +1,9 @@
 main():
-    let iter = [1u32, 2u32]
+    let iter = [u32(1), u32(2)]
     for x: U32 in iter:
         print(x)
 
-    let iter = ["a" = 1u32, "b" = 2u32]
+    let iter = ["a" = u32(1), "b" = u32(2)]
     for x: (key: Str, value: U32) in iter:
         print("`x.key` = `x.value`")
 
@@ -22,14 +22,14 @@ main():
     print(x)
 
     let x: Vec[Vec[U32]] = Vec.[
-        Vec.[1u32, 2u32, 3u32],
-        Vec.[4u32, 5u32, 6u32],
+        Vec.[u32(1), u32(2), u32(3)],
+        Vec.[u32(4), u32(5), u32(6)],
     ]
     print(x)
 
     let x: HashMap[Str, U32] = HashMap.[
-        "a" = 1u32,
-        "b" = 2u32,
+        "a" = u32(1),
+        "b" = u32(2),
     ]
     print(x)
 
@@ -48,14 +48,14 @@ main():
     print(x)
 
     let x: Vec[Vec[U32]] = [
-        Vec.[1u32, 2u32, 3u32],
-        Vec.[4u32, 5u32, 6u32],
+        Vec.[u32(1), u32(2), u32(3)],
+        Vec.[u32(4), u32(5), u32(6)],
     ]
     print(x)
 
     let x: HashMap[Str, U32] = [
-        "a" = 1u32,
-        "b" = 2u32,
+        "a" = u32(1),
+        "b" = u32(2),
     ]
     print(x)
 

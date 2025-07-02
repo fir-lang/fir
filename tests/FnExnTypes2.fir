@@ -2,8 +2,8 @@ foo(f: Fn() () / exn1) () / exn1:
     f()
 
 main():
-    foo(fn() { print("Hi") })
-    foo(fn() { throw("Hi") })
+    foo(||: print("Hi"))
+    foo(||: throw("Hi"))
 
 # args: --no-backtrace
 # expected exit status: 101

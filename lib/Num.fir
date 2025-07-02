@@ -41,7 +41,7 @@ impl ToStr[I32]:
     prim toStr(self: I32) Str
 
 impl Step[I32]:
-    step(self: I32) I32 = self + 1
+    step(self: I32) I32: self + 1
 
 prim type U32
 
@@ -84,7 +84,7 @@ impl ToStr[U32]:
     prim toStr(self: U32) Str
 
 impl Step[U32]:
-    step(self: U32) U32 = self + 1
+    step(self: U32) U32: self + 1
 
 prim U32.mod(self: U32, rhs: U32) U32
 
@@ -127,7 +127,7 @@ impl ToStr[I8]:
     prim toStr(self: I8) Str
 
 impl Step[I8]:
-    step(self: I8) I8 = self + 1i8
+    step(self: I8) I8: self + 1
 
 prim type U8
 
@@ -165,13 +165,10 @@ impl ToStr[U8]:
     prim toStr(self: U8) Str
 
 impl Step[U8]:
-    step(self: U8) U8 = self + 1u8
+    step(self: U8) U8: self + 1
 
-################################################################################
-#
+# ------------------------------------------------------------------------------
 # Conversions
-#
-################################################################################
 
 prim U8.asI8(self: U8) I8
 prim U8.asI32(self: U8) I32
@@ -190,3 +187,11 @@ prim I32.asI8(self: I32) I8
 prim I32.asU8(self: I32) U8
 prim I32.asU32(self: I32) U32
 prim I32.abs(self: I32) I32
+
+# ------------------------------------------------------------------------------
+# Functions to help with type inference
+
+i8(i: I8) I8 = i
+u8(i: U8) U8 = i
+i32(i: I32) I32 = i
+u32(i: U32) U32 = i

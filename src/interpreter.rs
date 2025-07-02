@@ -6,7 +6,7 @@ mod heap;
 
 use heap::Heap;
 
-use crate::ast::{self, Id, Loc, L};
+use crate::ast::{self, Id, L, Loc};
 use crate::collections::Map;
 use crate::lowering::*;
 use crate::mono_ast as mono;
@@ -44,6 +44,18 @@ struct Pgm {
     result_err_cons: Map<Vec<mono::Type>, HeapObjIdx>,
 }
 
+/// A call stack frame.
+struct Frame {
+    call_site: Loc,
+    kind: FrameKind,
+}
+
+enum FrameKind {
+    Builtin(BuiltinFunDecl),
+    Source(Id),
+    Closure(Loc),
+}
+
 impl Pgm {
     fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
         let LoweredPgm {
@@ -68,7 +80,7 @@ impl Pgm {
         // Allocate singletons for constructors without fields.
         for heap_obj in heap_objs.iter_mut() {
             let source_con = match heap_obj {
-                HeapObj::Builtin(_) | HeapObj::Record(_) | HeapObj::Variant(_) => continue,
+                HeapObj::Builtin(_) | HeapObj::Record(_) => continue,
                 HeapObj::Source(source_con) => source_con,
             };
 
@@ -127,7 +139,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
             }
             _ => None,
         })
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
+        .unwrap_or_else(|| panic!("Main function `{main}` is not defined"));
 
     // `main` doesn't have a call site, called by the interpreter.
     let call_loc = Loc {
@@ -145,8 +157,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         0 => {
             if args.len() > 1 {
                 println!(
-                    "WARNING: Main function `{}` does not take command line arguments, but command line arguments are passed to the interpreter",
-                    main
+                    "WARNING: Main function `{main}` does not take command line arguments, but command line arguments are passed to the interpreter"
                 );
             }
             vec![]
@@ -168,12 +179,26 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         }
 
         other => panic!(
-            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
-            main, other
+            "Main function `{main}` needs to take 0 or 1 argument, but it takes {other} arguments"
         ),
     };
 
-    call_ast_fun(w, &pgm, &mut heap, main_fun, arg_vec, &call_loc);
+    // Note: normally `call_fun` adjusts the stack, but when calling `main` we don't call
+    // `call_fun`, so we add `main` here.
+    let mut call_stack = vec![Frame {
+        kind: FrameKind::Source(main_fun.name.node.clone()),
+        call_site: Loc::dummy(),
+    }];
+
+    call_ast_fun(
+        w,
+        &pgm,
+        &mut heap,
+        main_fun,
+        arg_vec,
+        &call_loc,
+        &mut call_stack,
+    );
 }
 
 /// Control flow within a function.
@@ -259,11 +284,26 @@ fn call_fun<W: Write>(
     fun: &Fun,
     args: Vec<u64>,
     loc: &Loc,
+    call_stack: &mut Vec<Frame>,
 ) -> FunRet {
-    match fun {
-        Fun::Builtin(builtin) => call_builtin_fun(w, pgm, heap, builtin, args, loc),
-        Fun::Source(source) => call_ast_fun(w, pgm, heap, source, args, loc),
-    }
+    let ret = match fun {
+        Fun::Builtin(builtin) => {
+            call_stack.push(Frame {
+                call_site: loc.clone(),
+                kind: FrameKind::Builtin(builtin.clone()),
+            });
+            call_builtin_fun(w, pgm, heap, builtin, args, loc, call_stack)
+        }
+        Fun::Source(source) => {
+            call_stack.push(Frame {
+                call_site: loc.clone(),
+                kind: FrameKind::Source(source.name.node.clone()),
+            });
+            call_ast_fun(w, pgm, heap, source, args, loc, call_stack)
+        }
+    };
+    call_stack.pop();
+    ret
 }
 
 fn call_ast_fun<W: Write>(
@@ -273,6 +313,7 @@ fn call_ast_fun<W: Write>(
     fun: &SourceFunDecl,
     args: Vec<u64>,
     loc: &Loc,
+    call_stack: &mut Vec<Frame>,
 ) -> FunRet {
     assert_eq!(
         fun.params.len(),
@@ -285,7 +326,7 @@ fn call_ast_fun<W: Write>(
     let mut locals = args;
     locals.resize(fun.locals.len(), 0);
 
-    match exec(w, pgm, heap, &mut locals, &fun.body) {
+    match exec(w, pgm, heap, &mut locals, &fun.body, call_stack) {
         ControlFlow::Val(val) | ControlFlow::Ret(val) => FunRet::Val(val),
         ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
         ControlFlow::Unwind(val) => FunRet::Unwind(val),
@@ -300,11 +341,12 @@ fn call_closure<W: Write>(
     fun: u64,
     args: &[CallArg],
     loc: &Loc,
+    call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     match HeapObjIdx(heap[fun] as u32) {
         CONSTR_CON_IDX => {
             let con_idx = HeapObjIdx(heap[fun + 1] as u32);
-            allocate_object_from_idx(w, pgm, heap, locals, con_idx, args)
+            allocate_object_from_idx(w, pgm, heap, locals, con_idx, args, call_stack)
         }
 
         FUN_CON_IDX => {
@@ -319,10 +361,11 @@ fn call_closure<W: Write>(
                     heap,
                     locals,
                     &arg.expr.node,
-                    &arg.expr.loc
+                    &arg.expr.loc,
+                    call_stack
                 )));
             }
-            call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
+            call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
         }
 
         METHOD_CON_IDX => {
@@ -338,10 +381,11 @@ fn call_closure<W: Write>(
                     heap,
                     locals,
                     &arg.expr.node,
-                    &arg.expr.loc
+                    &arg.expr.loc,
+                    call_stack
                 )));
             }
-            call_fun(w, pgm, heap, fun, arg_values, loc).into_control_flow()
+            call_fun(w, pgm, heap, fun, arg_values, loc, call_stack).into_control_flow()
         }
 
         CLOSURE_CON_IDX => {
@@ -366,16 +410,26 @@ fn call_closure<W: Write>(
                     heap,
                     locals,
                     &arg_val.expr.node,
-                    &arg_val.expr.loc
+                    &arg_val.expr.loc,
+                    call_stack
                 ));
                 closure_locals[i] = arg_val;
             }
 
-            match exec(w, pgm, heap, &mut closure_locals, &closure.body) {
+            call_stack.push(Frame {
+                call_site: loc.clone(),
+                kind: FrameKind::Closure(closure.loc.clone()),
+            });
+
+            let ret = match exec(w, pgm, heap, &mut closure_locals, &closure.body, call_stack) {
                 ControlFlow::Val(val) | ControlFlow::Ret(val) => ControlFlow::Val(val),
                 ControlFlow::Break(_) | ControlFlow::Continue(_) => panic!(),
                 ControlFlow::Unwind(val) => ControlFlow::Unwind(val),
-            }
+            };
+
+            call_stack.pop();
+
+            ret
         }
 
         _ => panic!("{}: Function evaluated to non-callable", loc_display(loc)),
@@ -390,6 +444,7 @@ fn allocate_object_from_idx<W: Write>(
     locals: &mut [u64],
     con_idx: HeapObjIdx,
     args: &[CallArg],
+    call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     let con = pgm.heap_objs[con_idx.as_usize()].as_source_con();
     let fields = &con.fields;
@@ -407,7 +462,8 @@ fn allocate_object_from_idx<W: Write>(
                     heap,
                     locals,
                     &arg.expr.node,
-                    &arg.expr.loc
+                    &arg.expr.loc,
+                    call_stack
                 )));
             }
         }
@@ -418,7 +474,15 @@ fn allocate_object_from_idx<W: Write>(
             let mut named_values: Map<Id, u64> = Default::default();
             for arg in args {
                 let name = arg.name.as_ref().unwrap().clone();
-                let value = val!(eval(w, pgm, heap, locals, &arg.expr.node, &arg.expr.loc));
+                let value = val!(eval(
+                    w,
+                    pgm,
+                    heap,
+                    locals,
+                    &arg.expr.node,
+                    &arg.expr.loc,
+                    call_stack
+                ));
                 let old = named_values.insert(name.clone(), value);
                 assert!(old.is_none());
             }
@@ -443,6 +507,7 @@ fn exec<W: Write>(
     heap: &mut Heap,
     locals: &mut [u64],
     stmts: &[L<Stmt>],
+    call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     let mut return_value: u64 = 0;
 
@@ -457,7 +522,7 @@ fn exec<W: Write>(
             }
 
             Stmt::Let(LetStmt { lhs, rhs }) => {
-                let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
+                let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
                 if !try_bind_pat(pgm, heap, lhs, locals, val) {
                     panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
                 }
@@ -473,23 +538,27 @@ fn exec<W: Write>(
                     loc_display(&stmt.loc),
                     op
                 );
-                let rhs = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc));
-                val!(assign(w, pgm, heap, locals, lhs, rhs))
+                let rhs = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
+                val!(assign(w, pgm, heap, locals, lhs, rhs, call_stack))
             }
 
-            Stmt::Expr(expr) => val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)),
+            Stmt::Expr(expr) => val!(eval(
+                w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
+            )),
 
             Stmt::While(WhileStmt {
                 label: _,
                 cond,
                 body,
             }) => loop {
-                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
+                let cond = val!(eval(
+                    w, pgm, heap, locals, &cond.node, &cond.loc, call_stack
+                ));
                 debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
                 if cond == pgm.false_alloc {
                     break 0; // FIXME: Return unit
                 }
-                match exec(w, pgm, heap, locals, body) {
+                match exec(w, pgm, heap, locals, body, call_stack) {
                     ControlFlow::Val(_val) => {}
                     ControlFlow::Ret(val) => return ControlFlow::Ret(val),
                     ControlFlow::Break(n) => {
@@ -517,7 +586,9 @@ fn exec<W: Write>(
                 next_method,
                 option_some_con,
             }) => {
-                let iter = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+                let iter = val!(eval(
+                    w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
+                ));
 
                 loop {
                     let next_item_option = match call_fun(
@@ -527,6 +598,7 @@ fn exec<W: Write>(
                         &pgm.funs[next_method.as_usize()],
                         vec![iter],
                         &expr.loc,
+                        call_stack,
                     ) {
                         FunRet::Val(val) => val,
                         FunRet::Unwind(val) => return ControlFlow::Unwind(val),
@@ -545,7 +617,7 @@ fn exec<W: Write>(
                         )
                     }
 
-                    match exec(w, pgm, heap, locals, body) {
+                    match exec(w, pgm, heap, locals, body, call_stack) {
                         ControlFlow::Val(_) => {}
                         ControlFlow::Ret(val) => {
                             return ControlFlow::Ret(val);
@@ -585,6 +657,7 @@ fn eval<W: Write>(
     locals: &mut [u64],
     expr: &Expr,
     loc: &Loc,
+    call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     match expr {
         Expr::LocalVar(local_idx) => ControlFlow::Val(locals[local_idx.as_usize()]),
@@ -602,7 +675,15 @@ fn eval<W: Write>(
         }
 
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
-            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
+            let object = val!(eval(
+                w,
+                pgm,
+                heap,
+                locals,
+                &object.node,
+                &object.loc,
+                call_stack
+            ));
             let object_tag = heap[object];
             let heap_obj = &pgm.heap_objs[object_tag as usize];
             let field_idx = match heap_obj {
@@ -626,15 +707,21 @@ fn eval<W: Write>(
                     builtin,
                     object
                 ),
-
-                HeapObj::Variant(_) => panic!(),
             };
 
             ControlFlow::Val(heap[object + 1 + (field_idx as u64)])
         }
 
         Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
-            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
+            let object = val!(eval(
+                w,
+                pgm,
+                heap,
+                locals,
+                &object.node,
+                &object.loc,
+                call_stack
+            ));
             ControlFlow::Val(heap.allocate_method(object, fun_idx.as_u64()))
         }
 
@@ -645,11 +732,21 @@ fn eval<W: Write>(
             // allocations.
             let fun: u64 = match &fun.node {
                 Expr::Constr(con_idx) => {
-                    return allocate_object_from_idx(w, pgm, heap, locals, *con_idx, args);
+                    return allocate_object_from_idx(
+                        w, pgm, heap, locals, *con_idx, args, call_stack,
+                    );
                 }
 
                 Expr::MethodSelect(MethodSelectExpr { object, fun_idx }) => {
-                    let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
+                    let object = val!(eval(
+                        w,
+                        pgm,
+                        heap,
+                        locals,
+                        &object.node,
+                        &object.loc,
+                        call_stack
+                    ));
                     let mut arg_vals: Vec<u64> = Vec::with_capacity(args.len() + 1);
                     arg_vals.push(object);
                     for arg in args {
@@ -659,11 +756,13 @@ fn eval<W: Write>(
                             heap,
                             locals,
                             &arg.expr.node,
-                            &arg.expr.loc
+                            &arg.expr.loc,
+                            call_stack
                         )));
                     }
                     let fun = &pgm.funs[fun_idx.as_usize()];
-                    return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
+                    return call_fun(w, pgm, heap, fun, arg_vals, loc, call_stack)
+                        .into_control_flow();
                 }
 
                 Expr::AssocFnSelect(fun_idx) => {
@@ -675,18 +774,20 @@ fn eval<W: Write>(
                             heap,
                             locals,
                             &arg.expr.node,
-                            &arg.expr.loc
+                            &arg.expr.loc,
+                            call_stack
                         )));
                     }
                     let fun = &pgm.funs[fun_idx.as_usize()];
-                    return call_fun(w, pgm, heap, fun, arg_vals, loc).into_control_flow();
+                    return call_fun(w, pgm, heap, fun, arg_vals, loc, call_stack)
+                        .into_control_flow();
                 }
 
-                _ => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc)),
+                _ => val!(eval(w, pgm, heap, locals, &fun.node, &fun.loc, call_stack)),
             };
 
             // Slow path calls a closure.
-            call_closure(w, pgm, heap, locals, fun, args, loc)
+            call_closure(w, pgm, heap, locals, fun, args, loc, call_stack)
         }
 
         Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
@@ -704,7 +805,9 @@ fn eval<W: Write>(
                 match part {
                     StringPart::Str(str) => bytes.extend(str.as_bytes()),
                     StringPart::Expr(expr) => {
-                        let str = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+                        let str = val!(eval(
+                            w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
+                        ));
                         debug_assert_eq!(heap[str], pgm.str_con_idx.as_u64());
                         let part_bytes = heap.str_bytes(str);
                         bytes.extend(part_bytes);
@@ -719,7 +822,7 @@ fn eval<W: Write>(
         }
 
         Expr::BoolNot(e) => {
-            let e = val!(eval(w, pgm, heap, locals, &e.node, &e.loc));
+            let e = val!(eval(w, pgm, heap, locals, &e.node, &e.loc, call_stack));
             let val = if e == pgm.true_alloc {
                 pgm.false_alloc
             } else {
@@ -730,29 +833,41 @@ fn eval<W: Write>(
         }
 
         Expr::BoolAnd(left, right) => {
-            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            let left = val!(eval(
+                w, pgm, heap, locals, &left.node, &left.loc, call_stack
+            ));
             if left == pgm.false_alloc {
                 ControlFlow::Val(pgm.false_alloc)
             } else {
-                eval(w, pgm, heap, locals, &right.node, &right.loc)
+                eval(w, pgm, heap, locals, &right.node, &right.loc, call_stack)
             }
         }
 
         Expr::BoolOr(left, right) => {
-            let left = val!(eval(w, pgm, heap, locals, &left.node, &left.loc));
+            let left = val!(eval(
+                w, pgm, heap, locals, &left.node, &left.loc, call_stack
+            ));
             if left == pgm.true_alloc {
                 ControlFlow::Val(pgm.true_alloc)
             } else {
-                eval(w, pgm, heap, locals, &right.node, &right.loc)
+                eval(w, pgm, heap, locals, &right.node, &right.loc, call_stack)
             }
         }
 
-        Expr::Return(expr) => {
-            ControlFlow::Ret(val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc)))
-        }
+        Expr::Return(expr) => ControlFlow::Ret(val!(eval(
+            w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
+        ))),
 
         Expr::Match(MatchExpr { scrutinee, alts }) => {
-            let scrut = val!(eval(w, pgm, heap, locals, &scrutinee.node, &scrutinee.loc));
+            let scrut = val!(eval(
+                w,
+                pgm,
+                heap,
+                locals,
+                &scrutinee.node,
+                &scrutinee.loc,
+                call_stack
+            ));
             for Alt {
                 pattern,
                 guard,
@@ -761,14 +876,22 @@ fn eval<W: Write>(
             {
                 if try_bind_pat(pgm, heap, pattern, locals, scrut) {
                     if let Some(guard) = guard {
-                        let guard = val!(eval(w, pgm, heap, locals, &guard.node, &guard.loc));
+                        let guard = val!(eval(
+                            w,
+                            pgm,
+                            heap,
+                            locals,
+                            &guard.node,
+                            &guard.loc,
+                            call_stack
+                        ));
                         if guard == pgm.true_alloc {
-                            return exec(w, pgm, heap, locals, rhs);
+                            return exec(w, pgm, heap, locals, rhs, call_stack);
                         } else {
                             continue;
                         }
                     }
-                    return exec(w, pgm, heap, locals, rhs);
+                    return exec(w, pgm, heap, locals, rhs, call_stack);
                 }
             }
             panic!("{}: Non-exhaustive pattern match", loc_display(loc));
@@ -779,14 +902,16 @@ fn eval<W: Write>(
             else_branch,
         }) => {
             for (cond, stmts) in branches {
-                let cond = val!(eval(w, pgm, heap, locals, &cond.node, &cond.loc));
+                let cond = val!(eval(
+                    w, pgm, heap, locals, &cond.node, &cond.loc, call_stack
+                ));
                 debug_assert!(cond == pgm.true_alloc || cond == pgm.false_alloc);
                 if cond == pgm.true_alloc {
-                    return exec(w, pgm, heap, locals, stmts);
+                    return exec(w, pgm, heap, locals, stmts, call_stack);
                 }
             }
             if let Some(else_branch) = else_branch {
-                return exec(w, pgm, heap, locals, else_branch);
+                return exec(w, pgm, heap, locals, else_branch, call_stack);
             }
             ControlFlow::Val(pgm.unit_alloc)
         }
@@ -827,7 +952,8 @@ fn eval<W: Write>(
                         heap,
                         locals,
                         &field.node.node,
-                        &field.node.loc
+                        &field.node.loc,
+                        call_stack
                     ));
                     let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
                     heap[record + 1 + (field_idx as u64)] = field_value;
@@ -835,7 +961,9 @@ fn eval<W: Write>(
             } else {
                 for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
                     debug_assert!(name.is_none());
-                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
+                    let value = val!(eval(
+                        w, pgm, heap, locals, &node.node, &node.loc, call_stack
+                    ));
                     heap[record + (idx as u64) + 1] = value;
                 }
             }
@@ -843,53 +971,18 @@ fn eval<W: Write>(
             ControlFlow::Val(record)
         }
 
-        Expr::Variant(VariantExpr { id: _, fields, idx }) => {
-            let shape = pgm.heap_objs[idx.as_usize()].as_variant();
-
-            let variant = heap.allocate(fields.len() + 1);
-            heap[variant] = idx.as_u64();
-
-            if !fields.is_empty() && fields[0].name.is_some() {
-                let name_indices: Map<Id, usize> = match &shape.payload {
-                    RecordShape::UnnamedFields { .. } => panic!(),
-                    RecordShape::NamedFields { fields } => fields
-                        .iter()
-                        .enumerate()
-                        .map(|(i, name)| (name.clone(), i))
-                        .collect(),
-                };
-
-                for field in fields {
-                    let field_value = val!(eval(
-                        w,
-                        pgm,
-                        heap,
-                        locals,
-                        &field.node.node,
-                        &field.node.loc
-                    ));
-                    let field_idx = *name_indices.get(field.name.as_ref().unwrap()).unwrap();
-                    heap[variant + 1 + (field_idx as u64)] = field_value;
-                }
-            } else {
-                for (idx, ast::Named { name, node }) in fields.iter().enumerate() {
-                    debug_assert!(name.is_none());
-                    let value = val!(eval(w, pgm, heap, locals, &node.node, &node.loc));
-                    heap[variant + (idx as u64) + 1] = value;
-                }
-            }
-
-            ControlFlow::Val(variant)
-        }
-
         Expr::Is(IsExpr { expr, pat }) => {
-            let val = val!(eval(w, pgm, heap, locals, &expr.node, &expr.loc));
+            let val = val!(eval(
+                w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
+            ));
             ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val) {
                 pgm.true_alloc
             } else {
                 pgm.false_alloc
             })
         }
+
+        Expr::Do(stmts) => exec(w, pgm, heap, locals, stmts, call_stack),
     }
 }
 
@@ -900,6 +993,7 @@ fn assign<W: Write>(
     locals: &mut [u64],
     lhs: &L<Expr>,
     val: u64,
+    call_stack: &mut Vec<Frame>,
 ) -> ControlFlow {
     match &lhs.node {
         Expr::LocalVar(local_idx) => {
@@ -907,7 +1001,15 @@ fn assign<W: Write>(
         }
 
         Expr::FieldSelect(FieldSelectExpr { object, field }) => {
-            let object = val!(eval(w, pgm, heap, locals, &object.node, &object.loc));
+            let object = val!(eval(
+                w,
+                pgm,
+                heap,
+                locals,
+                &object.node,
+                &object.loc,
+                call_stack,
+            ));
             let object_idx = heap[object];
             let object_con = pgm.heap_objs[object_idx as usize].as_source_con();
             let object_fields = &object_con.fields;
@@ -1045,55 +1147,6 @@ fn try_bind_pat(
 
             true
         }
-
-        Pat::Variant(VariantPattern {
-            constr: _,
-            fields: field_pats,
-            idx,
-        }) => {
-            let value_tag = heap[value];
-
-            if value_tag != idx.as_u64() {
-                return false;
-            }
-
-            let variant_shape = pgm.heap_objs[idx.as_usize()].as_variant();
-            let record_shape = &variant_shape.payload;
-
-            match record_shape {
-                RecordShape::NamedFields { fields } => {
-                    for (i, field_name) in fields.iter().enumerate() {
-                        let field_pat = field_pats
-                            .iter()
-                            .find_map(|pat| {
-                                if pat.name.as_ref().unwrap() == field_name {
-                                    Some(&pat.node)
-                                } else {
-                                    None
-                                }
-                            })
-                            .unwrap();
-                        let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
-                            return false;
-                        }
-                    }
-                }
-
-                RecordShape::UnnamedFields { arity } => {
-                    debug_assert_eq!(*arity as usize, field_pats.len());
-                    for (i, field_pat) in field_pats.iter().enumerate() {
-                        debug_assert!(field_pat.name.is_none());
-                        let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            true
-        }
     }
 }
 
@@ -1104,6 +1157,7 @@ fn call_builtin_fun<W: Write>(
     fun: &BuiltinFunDecl,
     args: Vec<u64>,
     loc: &Loc,
+    call_stack: &mut Vec<Frame>,
 ) -> FunRet {
     match fun {
         BuiltinFunDecl::Panic => {
@@ -1111,7 +1165,25 @@ fn call_builtin_fun<W: Write>(
             let msg = args[0];
             let bytes = heap.str_bytes(msg);
             let msg = String::from_utf8_lossy(bytes).into_owned();
-            panic!("{}: PANIC: {}", loc_display(loc), msg);
+            let mut msg_str = format!("{}: PANIC: {}\n", loc_display(loc), msg);
+            msg_str.push_str("\nFIR STACK:\n");
+            use std::fmt::Write;
+            for frame in call_stack {
+                write!(&mut msg_str, "{}: ", loc_display(&frame.call_site)).unwrap();
+                match &frame.kind {
+                    FrameKind::Builtin(builtin_fun_decl) => {
+                        writeln!(&mut msg_str, "Builtin: {builtin_fun_decl:?}").unwrap()
+                    }
+                    FrameKind::Source(source_fun_name) => {
+                        msg_str.push_str(source_fun_name);
+                        msg_str.push('\n');
+                    }
+                    FrameKind::Closure(loc) => {
+                        writeln!(&mut msg_str, "Closure at {}", loc_display(loc)).unwrap();
+                    }
+                }
+            }
+            panic!("{}", msg_str);
         }
 
         BuiltinFunDecl::PrintStrNoNl => {
@@ -1510,7 +1582,8 @@ fn call_builtin_fun<W: Write>(
 
             // NB. No need to pass locals here as locals are used to evaluate closure arguments, and
             // we don't pass any arguments.
-            let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc) {
+            let (val, con_idx) = match call_closure(w, pgm, heap, &mut [], cb, &[], loc, call_stack)
+            {
                 ControlFlow::Val(val) => (
                     val,
                     pgm.result_ok_cons
@@ -1594,7 +1667,7 @@ fn call_builtin_fun<W: Write>(
 
             let array_len = heap[array + 1];
             if idx >= array_len {
-                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
+                panic!("OOB array access (idx = {idx}, len = {array_len})");
             }
 
             match Repr::from_mono_ty(t) {

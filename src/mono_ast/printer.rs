@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 pub fn print_pgm(pgm: &MonoPgm) {
     let mut s = String::new();
     pgm.print(&mut s);
-    println!("{}", s);
+    println!("{s}");
 }
 
 impl MonoPgm {
@@ -169,25 +169,11 @@ impl Type {
 
             Type::Variant { alts } => {
                 buffer.push('[');
-                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                for (i, ty) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    buffer.push_str(con);
-                    if !fields.is_empty() {
-                        buffer.push('(');
-                        for (i, Named { name, node }) in fields.iter().enumerate() {
-                            if i != 0 {
-                                buffer.push_str(", ");
-                            }
-                            if let Some(name) = name {
-                                buffer.push_str(name);
-                                buffer.push_str(": ");
-                            }
-                            node.print(buffer);
-                        }
-                        buffer.push(')');
-                    }
+                    ty.print(buffer);
                 }
                 buffer.push(']');
             }
@@ -402,25 +388,6 @@ impl Expr {
             Expr::TopVar(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
-            }
-
-            Expr::Variant(VariantExpr { id, args }) => {
-                buffer.push('~');
-                buffer.push_str(id);
-                if !args.is_empty() {
-                    buffer.push('(');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &arg.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.node.print(buffer, 0);
-                    }
-                    buffer.push(')');
-                }
             }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
@@ -722,6 +689,15 @@ impl Expr {
                 pat.node.print(buffer);
                 buffer.push(')');
             }
+
+            Expr::Do(body) => {
+                buffer.push_str("do:\n");
+                for stmt in body.iter() {
+                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
+                }
+            }
         }
     }
 }
@@ -735,41 +711,9 @@ impl Pat {
                 ty.print(buffer);
             }
 
-            Pat::Constr(ConstrPattern {
-                constr:
-                    Constructor {
-                        ty,
-                        constr,
-                        ty_args,
-                    },
-                fields,
-            }) => {
-                buffer.push_str(ty);
-                if let Some(constr) = constr {
-                    buffer.push('.');
-                    buffer.push_str(constr);
-                }
+            Pat::Constr(ConstrPattern { constr, fields }) => {
+                constr.print(buffer);
 
-                print_ty_args(ty_args, buffer);
-
-                if !fields.is_empty() {
-                    buffer.push('(');
-                    for (i, field) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &field.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        field.node.node.print(buffer);
-                    }
-                    buffer.push(')');
-                }
-            }
-
-            Pat::Variant(VariantPattern { constr, fields }) => {
-                buffer.push_str(constr);
                 if !fields.is_empty() {
                     buffer.push('(');
                     for (i, field) in fields.iter().enumerate() {
@@ -845,6 +789,9 @@ impl Pat {
 
 impl Constructor {
     pub fn print(&self, buffer: &mut String) {
+        if self.variant {
+            buffer.push('~');
+        }
         buffer.push_str(&self.ty);
         if let Some(constr) = &self.constr {
             buffer.push('.');

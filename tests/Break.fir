@@ -1,5 +1,5 @@
 testFor(n: I32) I32:
-    let sum = 0i32
+    let sum = i32(0)
     for i: I32 in range(0, 10000):
         if sum > 100:
             break
@@ -7,8 +7,8 @@ testFor(n: I32) I32:
     sum
 
 testWhile(n: I32) I32:
-    let sum = 0i32
-    let i = 0i32
+    let sum = i32(0)
+    let i = i32(0)
     while Bool.True:
         if sum > 100:
             break

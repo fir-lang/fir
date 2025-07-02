@@ -24,7 +24,7 @@ main():
     b()
     c()
 
-    let vec = d(3u32)
+    let vec = d(u32(3))
     printStr(e(vec).toStr())
 
     match f("Hi"):

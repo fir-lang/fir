@@ -10,8 +10,8 @@ A.test[Eq[t], ToStr[t]](self: A[t]):
     printStr(self.i.toStr())
 
 main():
-    test(123i32)
-    test(456u32)
+    test(i32(123))
+    test(u32(456))
 
 # expected stdout:
 # Bool.True

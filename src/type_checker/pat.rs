@@ -5,7 +5,7 @@ use crate::type_checker::pat_coverage::PatCoverage;
 use crate::type_checker::row_utils::collect_rows;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::unify;
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 /// Infer type of the pattern, add variables bound by the pattern to `env`.
 ///
@@ -25,6 +25,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
                 ast::Constructor {
+                    variant,
                     ty: pat_ty_name,
                     constr: pat_con_name,
                     user_ty_args,
@@ -118,14 +119,20 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             // If consturctor takes named arguments, fields pattern need to be named, or a variable
             // pattern, as shorthand for `foo = foo`.
             // Update shorthands to the long form to keep things simple in `apply_con_ty`.
-            if let Ty::Fun { args, .. } = &con_ty {
-                if args.is_named() {
-                    for pat_field in pat_fields.iter_mut() {
-                        if pat_field.name.is_none() {
-                            if let ast::Pat::Var(var_pat) = &pat_field.node.node {
-                                pat_field.name = Some(var_pat.var.clone());
-                            }
-                        }
+            if let Ty::Fun { args, .. } = &con_ty
+                && args.is_named()
+            {
+                for pat_field in pat_fields.iter_mut() {
+                    if let ast::Named {
+                        name: None,
+                        node:
+                            ast::L {
+                                node: ast::Pat::Var(var_pat),
+                                ..
+                            },
+                    } = pat_field
+                    {
+                        pat_field.name = Some(var_pat.var.clone());
                     }
                 }
             }
@@ -139,7 +146,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 })
                 .collect();
 
-            apply_con_ty(
+            let mut ty = apply_con_ty(
                 &con_ty,
                 &pat_field_tys,
                 tc_state.tys.tys.cons(),
@@ -147,7 +154,13 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
                 *ignore_rest,
-            )
+            );
+
+            if *variant {
+                ty = crate::type_checker::expr::make_variant(tc_state, ty, level, &pat.loc);
+            }
+
+            ty
         }
 
         ast::Pat::Record(ast::RecordPattern {
@@ -200,48 +213,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
             };
             *inferred_ty = Some(ty.clone());
             ty
-        }
-
-        ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-            let extension_var = Ty::Var(tc_state.var_gen.new_var(
-                level,
-                Kind::Row(RecordOrVariant::Variant),
-                pat.loc.clone(),
-            ));
-
-            let mut arg_tys: TreeMap<Id, Ty> = TreeMap::new();
-
-            for ast::Named { name, node } in fields.iter_mut() {
-                let name = match name {
-                    Some(name) => name,
-                    None => panic!(
-                        "{}: Variant pattern with unnamed args not supported yet",
-                        loc_display(&pat.loc)
-                    ),
-                };
-                let ty = check_pat(tc_state, node, level);
-                let old = arg_tys.insert(name.clone(), ty);
-                if old.is_some() {
-                    panic!(
-                        "{}: Variant pattern with dupliate fields",
-                        loc_display(&pat.loc)
-                    );
-                }
-            }
-
-            let record_ty = Ty::Anonymous {
-                labels: arg_tys,
-                extension: None,
-                kind: RecordOrVariant::Record,
-                is_row: false,
-            };
-
-            Ty::Anonymous {
-                labels: [(constr.clone(), record_ty)].into_iter().collect(),
-                extension: Some(Box::new(extension_var)),
-                kind: RecordOrVariant::Variant,
-                is_row: false,
-            }
         }
 
         ast::Pat::Str(_) => Ty::str(),
@@ -301,55 +272,11 @@ pub(super) fn refine_pat_binders(
             };
 
             let num_labels = labels.len();
-
             let mut unhandled_labels: TreeMap<Id, Ty> = TreeMap::new();
 
-            'variant_label_loop: for (label, label_ty) in labels {
-                let label_field_coverage = match coverage.get_variant_fields(&label) {
-                    Some(field_coverage) => field_coverage,
-                    None => {
-                        unhandled_labels.insert(label, label_ty);
-                        continue;
-                    }
-                };
-
-                let (label_fields, label_field_extension) =
-                    match &label_ty.normalize(tc_state.tys.tys.cons()) {
-                        ty @ Ty::Anonymous {
-                            labels,
-                            extension,
-                            kind,
-                            is_row,
-                        } => {
-                            assert!(!is_row);
-                            assert_eq!(*kind, RecordOrVariant::Record);
-                            collect_rows(
-                                tc_state.tys.tys.cons(),
-                                ty,
-                                RecordOrVariant::Record,
-                                labels,
-                                extension.clone(),
-                            )
-                        }
-
-                        _ => return,
-                    };
-
-                assert!(label_field_extension.is_none());
-
-                for (field_label, field_ty) in label_fields {
-                    let field_coverage = match label_field_coverage.get_named_field(&field_label) {
-                        Some(field_coverage) => field_coverage,
-                        None => {
-                            unhandled_labels.insert(label, label_ty);
-                            continue 'variant_label_loop;
-                        }
-                    };
-
-                    if !field_coverage.is_exhaustive(&field_ty, tc_state, &pat.loc) {
-                        unhandled_labels.insert(label, label_ty);
-                        continue 'variant_label_loop;
-                    }
+            for (label, label_ty) in labels.into_iter() {
+                if !coverage.is_exhaustive(&label_ty, tc_state, &pat.loc) {
+                    unhandled_labels.insert(label, label_ty);
                 }
             }
 
@@ -369,6 +296,7 @@ pub(super) fn refine_pat_binders(
         ast::Pat::Constr(ast::ConstrPattern {
             constr:
                 ast::Constructor {
+                    variant: _,
                     ty: type_,
                     constr,
                     user_ty_args: _,
@@ -450,64 +378,6 @@ pub(super) fn refine_pat_binders(
                 refine_pat_binders(tc_state, &field_ty, &mut field_pat.node, field_pat_coverage);
             } // field loop
         } // constr pattern
-
-        ast::Pat::Variant(ast::VariantPattern {
-            constr,
-            fields: field_pats,
-        }) => {
-            let variant_field_coverage = match coverage.get_variant_fields(constr) {
-                Some(coverage) => coverage,
-                None => return,
-            };
-
-            let (variant_ty_labels, _) = match ty {
-                Ty::Anonymous {
-                    labels,
-                    extension,
-                    kind: RecordOrVariant::Variant,
-                    is_row,
-                } => {
-                    assert!(!*is_row);
-                    collect_rows(
-                        tc_state.tys.tys.cons(),
-                        ty,
-                        RecordOrVariant::Variant,
-                        labels,
-                        extension.clone(),
-                    )
-                }
-
-                _ => return,
-            };
-
-            let (variant_field_tys, _) = match variant_ty_labels.get(constr).unwrap() {
-                Ty::Anonymous {
-                    labels,
-                    extension,
-                    kind: RecordOrVariant::Record,
-                    is_row,
-                } => {
-                    assert!(!*is_row);
-                    collect_rows(
-                        tc_state.tys.tys.cons(),
-                        ty,
-                        RecordOrVariant::Variant,
-                        labels,
-                        extension.clone(),
-                    )
-                }
-
-                _ => return,
-            };
-
-            for field_pat in field_pats {
-                let field_name = field_pat.name.clone().unwrap(); // variant fields need to be named
-                let field_pat_coverage =
-                    variant_field_coverage.get_named_field(&field_name).unwrap();
-                let field_ty = variant_field_tys.get(&field_name).unwrap();
-                refine_pat_binders(tc_state, field_ty, &mut field_pat.node, field_pat_coverage);
-            } // field loop
-        } // variant
 
         ast::Pat::Record(ast::RecordPattern {
             fields,

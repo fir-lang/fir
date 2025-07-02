@@ -410,6 +410,28 @@ impl Scheme {
             other.quantified_vars,
         );
 
+        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        left_preds.sort();
+
+        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        right_preds.sort();
+
+        if left_preds.len() != right_preds.len() {
+            return false;
+        }
+
+        for (left_pred, right_pred) in left_preds.iter().zip(right_preds.iter()) {
+            assert_eq!(left_pred.params.len(), right_pred.params.len());
+            if left_pred.trait_ != right_pred.trait_ {
+                return false;
+            }
+            for (left_ty, right_ty) in left_pred.params.iter().zip(right_pred.params.iter()) {
+                if !ty_eq_modulo_alpha(cons, left_ty, right_ty, &left_vars, &right_vars, loc) {
+                    return false;
+                }
+            }
+        }
+
         ty_eq_modulo_alpha(cons, &self.ty, &other.ty, &left_vars, &right_vars, loc)
     }
 
@@ -777,7 +799,7 @@ impl Ty {
             Ty::QVar(id, _) => vars
                 .get(id)
                 .cloned()
-                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
+                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {id}")),
 
             Ty::Fun {
                 args,
@@ -1051,17 +1073,17 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id, _) => write!(f, "{}", id),
+            Ty::Con(id, _) => write!(f, "{id}"),
 
             Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
 
             Ty::App(id, args, _) => {
-                write!(f, "{}[", id)?;
+                write!(f, "{id}[")?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", ty)?;
+                    write!(f, "{ty}")?;
                 }
                 write!(f, "]")
             }
@@ -1081,23 +1103,23 @@ impl fmt::Display for Ty {
                     write!(f, "row")?;
                 }
 
-                write!(f, "{}", left_delim)?;
+                write!(f, "{left_delim}")?;
                 for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", label_id, label_ty)?;
+                    write!(f, "{label_id}: {label_ty}")?;
                 }
                 if let Some(ext) = extension {
                     if !labels.is_empty() {
                         write!(f, ", ")?;
                     }
-                    write!(f, "..{}", ext)?;
+                    write!(f, "..{ext}")?;
                 }
-                write!(f, "{}", right_delim)
+                write!(f, "{right_delim}")
             }
 
-            Ty::QVar(id, _) => write!(f, "{}", id),
+            Ty::QVar(id, _) => write!(f, "{id}"),
 
             Ty::Fun {
                 args,
@@ -1111,7 +1133,7 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}", arg)?;
+                            write!(f, "{arg}")?;
                         }
                     }
                     FunArgs::Named(args) => {
@@ -1119,15 +1141,15 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}: {}", name, ty)?;
+                            write!(f, "{name}: {ty}")?;
                         }
                     }
                 }
                 write!(f, ") ")?;
                 if let Some(exn) = exceptions {
-                    write!(f, "{} ", exn)?;
+                    write!(f, "{exn} ")?;
                 }
-                write!(f, "{}", ret)
+                write!(f, "{ret}")
             }
         }
     }
@@ -1141,7 +1163,17 @@ impl fmt::Display for Scheme {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}: {}", qvar, kind)?;
+                write!(f, "{qvar}: {kind}")?;
+            }
+            write!(f, "] ")?;
+        }
+        if !self.preds.is_empty() {
+            write!(f, "[")?;
+            for (i, pred) in self.preds.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                pred.fmt(f)?;
             }
             write!(f, "] ")?;
         }
@@ -1170,7 +1202,7 @@ impl fmt::Display for Pred {
             if i > 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}", ty)?;
+            write!(f, "{ty}")?;
         }
         write!(f, "]")
     }
@@ -1185,5 +1217,14 @@ impl fmt::Debug for TyVar {
             .field("link", &self.link.try_borrow().unwrap()) // don't show `RefCell` part
             .field("loc", &self.loc)
             .finish()
+    }
+}
+
+impl fmt::Display for RecordOrVariant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordOrVariant::Record => write!(f, "record"),
+            RecordOrVariant::Variant => write!(f, "variant"),
+        }
     }
 }

@@ -36,20 +36,12 @@ Option.unwrapOrElse(self: Option[t], f: Fn() t / exn) t / exn:
         Option.Some(val): val
 
 Option.guard(self: Option[t], guard: Fn(t) Bool / exn) Option[t] / exn:
-    match self:
-        Option.None: Option.None
-        Option.Some(val):
-            if guard(val):
-                Option.Some(val)
-            else:
-                Option.None
+    if self is Option.Some(val) and guard(val):
+        return Option.Some(val)
+    Option.None
 
 Option.isSome(self: Option[t]) Bool:
-    match self:
-        Option.Some(_): Bool.True
-        Option.None: Bool.False
+    self is Option.Some(_)
 
 Option.isNone(self: Option[t]) Bool:
-    match self:
-        Option.Some(_): Bool.False
-        Option.None: Bool.True
+    self is Option.None

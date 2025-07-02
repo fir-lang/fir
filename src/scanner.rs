@@ -22,14 +22,38 @@ where
             byte_idx: 0,
         },
         IndentedDelimKind::File,
+        None,
     );
     assert!(tokens.next().is_none());
     new_tokens
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IndentedDelimKind {
     File,
     Brace,
+    Paren,
+    Bracket,
+}
+
+impl IndentedDelimKind {
+    fn opening_delim(&self) -> char {
+        match self {
+            IndentedDelimKind::File => panic!(),
+            IndentedDelimKind::Brace => '{',
+            IndentedDelimKind::Paren => '(',
+            IndentedDelimKind::Bracket => '[',
+        }
+    }
+
+    fn terminate(&self, token: TokenKind) -> bool {
+        match self {
+            IndentedDelimKind::File => false,
+            IndentedDelimKind::Brace => matches!(token, TokenKind::RBrace),
+            IndentedDelimKind::Paren => matches!(token, TokenKind::RParen | TokenKind::Comma),
+            IndentedDelimKind::Bracket => matches!(token, TokenKind::RBracket | TokenKind::Comma),
+        }
+    }
 }
 
 /// Scan an indented block: a file or `{...}` block.
@@ -41,14 +65,16 @@ pub fn scan_indented<I>(
     new_tokens: &mut Vec<(Loc, Token, Loc)>,
     ldelim_loc: Loc,
     delim_kind: IndentedDelimKind,
+    last_loc: Option<Loc>,
 ) -> Loc
 where
     I: Iterator<Item = (Loc, Token, Loc)>,
 {
     // println!(
-    //     "Starting indented block at {}:{}",
+    //     "Starting indented block at {}:{} (generate_indent = {})",
     //     ldelim_loc.line + 1,
-    //     ldelim_loc.col + 1
+    //     ldelim_loc.col + 1,
+    //     generate_indent,
     // );
 
     if tokens.peek().is_none() {
@@ -58,27 +84,26 @@ where
                     line: 0,
                     col: 0,
                     byte_idx: 0,
-                }
+                };
             }
-            IndentedDelimKind::Brace => {
+            IndentedDelimKind::Brace | IndentedDelimKind::Paren | IndentedDelimKind::Bracket => {
                 panic!(
-                    "{}:{}:{}: Unterminated '{{'",
+                    "{}:{}:{}: Unterminated '{}'",
                     module,
                     ldelim_loc.line + 1,
-                    ldelim_loc.col + 1
+                    ldelim_loc.col + 1,
+                    delim_kind.opening_delim(),
                 );
             }
         }
     }
 
-    let mut last_loc: Loc = tokens.peek().unwrap().0;
+    let mut generate_indent = last_loc.is_some();
+    let mut last_loc: Loc = last_loc.unwrap_or_else(|| tokens.peek().unwrap().0);
     let mut indent_stack: Vec<u32> = vec![last_loc.col];
 
-    // Only generate `INDENT` after a `:`.
-    let mut generate_indent = false;
-
     while let Some((l, t, r)) = tokens.next() {
-        if matches!(t.kind, TokenKind::RBrace) {
+        if delim_kind.terminate(t.kind) {
             // Terminate the last statement.
             if !matches!(
                 new_tokens.last(),
@@ -102,7 +127,7 @@ where
                 new_tokens.push(dedent(l));
             }
 
-            // Finally push the '}'
+            // Push the token terminating the indented block.
             new_tokens.push((l, t, r));
 
             // println!("Ending indented block at {}:{}", l.line + 1, l.col + 1);
@@ -160,7 +185,14 @@ where
             }
 
             TokenKind::LBrace => {
-                scan_indented(tokens, module, new_tokens, l, IndentedDelimKind::Brace);
+                scan_indented(
+                    tokens,
+                    module,
+                    new_tokens,
+                    l,
+                    IndentedDelimKind::Brace,
+                    None,
+                );
             }
 
             TokenKind::RParen => {
@@ -208,6 +240,7 @@ where
     last_loc
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NonIndentedDelimKind {
     Paren,
     Bracket,
@@ -235,10 +268,12 @@ where
     while let Some((l, t, r)) = tokens.next() {
         last_loc = r;
 
-        match t.kind {
+        let t_kind = t.kind;
+        new_tokens.push((l, t, r));
+
+        match t_kind {
             TokenKind::RParen => match delim_kind {
                 NonIndentedDelimKind::Paren => {
-                    new_tokens.push((l, t, r));
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
                     return last_loc;
                 }
@@ -254,7 +289,6 @@ where
 
             TokenKind::RBracket => match delim_kind {
                 NonIndentedDelimKind::Bracket => {
-                    new_tokens.push((l, t, r));
                     // println!("Ending non-indented block at {}:{}", l.line + 1, l.col + 1);
                     return last_loc;
                 }
@@ -269,18 +303,22 @@ where
             },
 
             TokenKind::LParen | TokenKind::LParenRow => {
-                new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
             TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
-                new_tokens.push((l, t, r));
                 scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 
             TokenKind::LBrace => {
-                new_tokens.push((l, t, r));
-                scan_indented(tokens, module, new_tokens, l, IndentedDelimKind::Brace);
+                scan_indented(
+                    tokens,
+                    module,
+                    new_tokens,
+                    l,
+                    IndentedDelimKind::Brace,
+                    None,
+                );
             }
 
             TokenKind::RBrace => {
@@ -292,9 +330,56 @@ where
                 );
             }
 
-            _ => {
-                new_tokens.push((l, t, r));
+            TokenKind::Colon => {
+                // Start an indented block if the next token is on a new line.
+                if let Some((l, _, _)) = tokens.peek()
+                    && l.line != last_loc.line
+                {
+                    let l = *l;
+                    last_loc = scan_indented(
+                        tokens,
+                        module,
+                        new_tokens,
+                        // Position of the colon so that scan_indented will generate NEWLINE and
+                        // INDENT.
+                        last_loc,
+                        match delim_kind {
+                            NonIndentedDelimKind::Paren => IndentedDelimKind::Paren,
+                            NonIndentedDelimKind::Bracket => IndentedDelimKind::Bracket,
+                        },
+                        // Somewhat hacky: pass column 0 so that we consider the next line as
+                        // indented even if it's dedented.
+                        Some(Loc {
+                            line: last_loc.line,
+                            col: 0,
+                            byte_idx: 0,
+                        }),
+                    );
+                    let last_tok_kind = new_tokens.last().unwrap().1.kind;
+                    match last_tok_kind {
+                        TokenKind::Comma => {
+                            continue;
+                        }
+                        TokenKind::RParen => {
+                            assert_eq!(delim_kind, NonIndentedDelimKind::Paren);
+                            break;
+                        }
+                        TokenKind::RBracket => {
+                            assert_eq!(delim_kind, NonIndentedDelimKind::Bracket);
+                            break;
+                        }
+                        other => panic!(
+                            "{}:{}:{}: ':' after '{:?}'",
+                            module,
+                            l.line + 1,
+                            l.col + 1,
+                            other
+                        ),
+                    }
+                }
             }
+
+            _ => {}
         }
     }
 

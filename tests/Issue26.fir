@@ -12,7 +12,7 @@ impl[A[t4]] B[Box[t4]]:
         printStr("In b")
 
 main():
-    Box(thing = 123u32).b()
+    Box(thing = u32(123)).b()
 
 # args: --no-backtrace
 # expected exit status: 101

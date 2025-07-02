@@ -76,12 +76,12 @@ impl ToStr[Value]:
 
 parse(pgm: Str) Term:
     let (term = term, rest = rest) = parseWithRest(pgm)
-    if !rest.isEmpty():
+    if not rest.isEmpty():
         panic("Leftover code after parsing the program: \"`rest`\"")
     term
 
 skipWhitespace(pgm: Str) Str:
-    while pgm.len() > 0 && pgm.startsWith(" "):
+    while pgm.len() > 0 and pgm.startsWith(" "):
         pgm = pgm.substr(1, pgm.len())
     pgm
 
@@ -118,7 +118,7 @@ parseArg(pgm: Str) (arg: Term, rest: Str):
     if pgm.isEmpty():
         panic("Unexpected end of program while parsing arguments")
 
-    if !pgm.startsWith("("):
+    if not pgm.startsWith("("):
         panic("Missing argument list")
 
     let pgm = pgm.substr(1, pgm.len())
@@ -130,7 +130,7 @@ parseArg(pgm: Str) (arg: Term, rest: Str):
     if rest.isEmpty():
         panic("Unexpected end of program while parsing arguments")
 
-    if !rest.startsWith(")"):
+    if not rest.startsWith(")"):
         panic("Missing ')'")
 
     let rest = rest.substr(1, rest.len())
@@ -139,7 +139,7 @@ parseArg(pgm: Str) (arg: Term, rest: Str):
 
 expectKeyword(pgm: Str, kw: Str) Str:
     let pgm = skipWhitespace(pgm)
-    if !pgm.startsWith(kw.toStr()):
+    if not pgm.startsWith(kw.toStr()):
         panic("Expected \"`kw`\", found \"`pgm`\"")
     pgm.substr(kw.len(), pgm.len())
 

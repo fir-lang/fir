@@ -26,16 +26,26 @@ interpreter_golden_test:
 interpreter_update_goldens: build
     goldentests target/debug/fir tests '# ' --overwrite
 
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+
 compiler_unit_test:
     cargo run -- compiler/Main.fir
 
 compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
+    goldentests target/debug/fir compiler/DeriveEq.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
+
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
     cargo build
@@ -47,9 +57,13 @@ generate_parser:
 update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
-    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TestGrammar.peg > compiler/TestGrammar.fir
-    cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
-    output=$(cargo run -- -iCompiler=compiler tools/peg/Peg.fir -- tools/peg/PegGrammar.peg)
+    tools/peg/Peg.sh compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    tools/peg/Peg.sh compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+
+    # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
+    # the PEG compiler itself uses the file. Save the output to a local and
+    # then update the file.
+    output=$(tools/peg/Peg.sh tools/peg/PegGrammar.peg)
     if [ $? -eq 0 ]; then
         echo "$output" > tools/peg/PegGrammar.fir
     else

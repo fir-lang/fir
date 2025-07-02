@@ -11,8 +11,8 @@ T2.foo(self):
     print("T2.foo(a = `self.a`)")
 
 main():
-    let t1 = T1(a = 1u32)
-    let t2 = T2(a = 2u32)
+    let t1 = T1(a = u32(1))
+    let t2 = T2(a = u32(2))
     t1.foo()
     t2.foo()
 

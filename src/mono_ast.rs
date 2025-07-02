@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named, UnOp};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -51,7 +51,7 @@ pub enum Type {
     Record { fields: Vec<Named<Type>> },
 
     // NB. Alts should be sorted by label.
-    Variant { alts: Vec<VariantAlt> },
+    Variant { alts: Vec<NamedType> },
 
     Fn(FnType),
 }
@@ -60,12 +60,6 @@ pub enum Type {
 pub struct NamedType {
     pub name: Id,
     pub args: Vec<Type>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>, // TODO: This is always unnamed, and type is always a record. Maybe simplify the type.
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -139,7 +133,6 @@ pub struct Alt {
 pub enum Pat {
     Var(VarPat),
     Constr(ConstrPattern),
-    Variant(VariantPattern),
     Record(RecordPattern),
     Ignore,
     Str(String),
@@ -164,6 +157,7 @@ pub struct ConstrPattern {
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
+    pub variant: bool,
     pub ty: Id,
     pub constr: Option<Id>,
     pub ty_args: Vec<Type>,
@@ -173,12 +167,6 @@ pub struct Constructor {
 pub struct RecordPattern {
     pub fields: Vec<Named<L<Pat>>>,
     pub ty: Type,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -225,24 +213,18 @@ pub enum Expr {
     BinOp(BinOpExpr),
     UnOp(UnOpExpr),
     Record(Vec<Named<L<Expr>>>),
-    Variant(VariantExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
     Is(IsExpr),
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
     pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]

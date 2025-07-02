@@ -2,7 +2,7 @@ type Test[recRowRec]:
     record: (..recRowRec)
 
 main():
-    let x: Test[(a: U32)] = Test(record = (a = 123u32))
+    let x: Test[(a: U32)] = Test(record = (a = u32(123)))
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101

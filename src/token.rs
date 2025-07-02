@@ -8,7 +8,19 @@ pub struct Token {
 
 impl Token {
     pub fn smol_str(&self) -> SmolStr {
-        self.text.clone()
+        match self.kind {
+            // Drop the '~' in tokens that merged with a prefix '~' to avoid LR(1) issues in the
+            // parser.
+            //
+            // We don't drop the brackets as those tokens are generated in a later pass after
+            // lexing, and text does not include the brackets.
+            TokenKind::TildeUpperId
+            | TokenKind::TildeUpperIdPath
+            | TokenKind::TildeUpperIdLBracket
+            | TokenKind::TildeUpperIdPathLBracket => SmolStr::new(&self.text[1..]),
+
+            _ => self.text.clone(),
+        }
     }
 }
 
@@ -37,6 +49,10 @@ pub enum TokenKind {
     /// `'~' UpperId '.' UpperId`, without spaces in between.
     TildeUpperIdPath,
 
+    TildeUpperIdPathLBracket,
+
+    TildeUpperIdLBracket,
+
     /// An identifier starting with a lowercase letter.
     LowerId,
 
@@ -44,9 +60,11 @@ pub enum TokenKind {
     Label,
 
     // Keywords
+    And,
     As,
     Break,
     Continue,
+    Do,
     Elif,
     Else,
     Export,
@@ -61,6 +79,8 @@ pub enum TokenKind {
     Let,
     Loop,
     Match,
+    Not,
+    Or,
     Prim,
     Return,
     Trait,
@@ -118,9 +138,9 @@ pub enum TokenKind {
 
     // Literals
     String,
-    Int(Option<IntKind>),
-    HexInt(Option<IntKind>),
-    BinInt(Option<IntKind>),
+    Int,
+    HexInt,
+    BinInt,
     Char,
 
     // Virtual tokens, used to handle layout. Generatd by the scanner.

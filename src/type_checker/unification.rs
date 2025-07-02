@@ -44,7 +44,11 @@ pub(super) fn unify(
                 )
             }
             if args1.len() != args2.len() {
-                panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
+                panic!(
+                    "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
+                    loc_display(loc),
+                    con1
+                )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                 unify(arg1, arg2, cons, var_gen, level, loc);
@@ -188,17 +192,22 @@ pub(super) fn unify(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2, "{}", loc_display(loc));
-
-            if is_row_1 != is_row_2 {
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
                 panic!(
-                    "{}: Unable to unify row type with *: {} ~ {}",
+                    "{}: Unable to unify {} {} with {} {}",
                     loc_display(loc),
+                    kind1,
                     ty1,
-                    ty2
+                    kind2,
+                    ty2,
                 );
             }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
+            assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
                 collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
@@ -443,8 +452,14 @@ pub(super) fn try_unify_one_way(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2);
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
+                return false;
+            }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
             assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =

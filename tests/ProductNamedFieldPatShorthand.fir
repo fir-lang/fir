@@ -4,7 +4,7 @@ type Foo:
     c: U32
 
 main():
-    let x = Foo(a = 1u32, b = 2u32, c = 3u32)
+    let x = Foo(a = 1, b = 2, c = 3)
 
     match x:
         Foo(a, b, c):

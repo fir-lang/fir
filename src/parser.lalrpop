@@ -18,14 +18,15 @@ extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token {
-        UpperId => Token { kind: TokenKind::UpperId, .. },
-        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
+    enum Token { UpperId => Token { kind: TokenKind::UpperId, .. }, UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
         UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
+        TildeUpperIdLBracket => Token { kind: TokenKind::TildeUpperIdLBracket, .. },
+        TildeUpperIdPathLBracket => Token { kind: TokenKind::TildeUpperIdPathLBracket, .. },
+
         LowerId => Token { kind: TokenKind::LowerId, .. },
         Label => Token { kind: TokenKind::Label, .. },
         "(" => Token { kind: TokenKind::LParen, .. },
@@ -34,8 +35,6 @@ extern {
         "[" => Token { kind: TokenKind::LBracket, .. },
         "row[" => Token { kind: TokenKind::LBracketRow, .. },
         "]" => Token { kind: TokenKind::RBracket, .. },
-        "{" => Token { kind: TokenKind::LBrace, .. },
-        "}" => Token { kind: TokenKind::RBrace, .. },
         ":" => Token { kind: TokenKind::Colon, .. },
         "," => Token { kind: TokenKind::Comma, .. },
         "." => Token { kind: TokenKind::Dot, .. },
@@ -67,9 +66,11 @@ extern {
         DEDENT => Token { kind: TokenKind::Dedent, .. },
         NEWLINE => Token { kind: TokenKind::Newline, .. },
         "Fn" => Token { kind: TokenKind::UpperFn, .. },
+        "and" => Token { kind: TokenKind::And, .. },
         "as" => Token { kind: TokenKind::As, .. },
         "break" => Token { kind: TokenKind::Break, .. },
         "continue" => Token { kind: TokenKind::Continue, .. },
+        "do" => Token { kind: TokenKind::Do, .. },
         "elif" => Token { kind: TokenKind::Elif, .. },
         "else" => Token { kind: TokenKind::Else, .. },
         "fn" => Token { kind: TokenKind::Fn, .. },
@@ -82,6 +83,8 @@ extern {
         "let" => Token { kind: TokenKind::Let, .. },
         "loop" => Token { kind: TokenKind::Loop, .. },
         "match" => Token { kind: TokenKind::Match, .. },
+        "not" => Token { kind: TokenKind::Not, .. },
+        "or" => Token { kind: TokenKind::Or, .. },
         "prim" => Token { kind: TokenKind::Prim, .. },
         "return" => Token { kind: TokenKind::Return, .. },
         "trait" => Token { kind: TokenKind::Trait, .. },
@@ -257,10 +260,10 @@ Type: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -282,10 +285,10 @@ TypeNoFn: Type = {
     "row(" <fields:Sep<RecordTypeField, ",">> <extension:RowExtension> ")" =>
         Type::Record { fields, extension, is_row: true },
 
-    "[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: false },
 
-    "row[" <alts:Sep<VariantAlt, ",">> <extension:RowExtension> "]" =>
+    "row[" <alts:Sep<NamedType, ",">> <extension:RowExtension> "]" =>
         Type::Variant { alts, extension, is_row: true },
 }
 
@@ -299,6 +302,14 @@ TypeNamed: Type = {
 
     <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
         Type::Named(NamedType { name: name.smol_str(), args }),
+}
+
+NamedType: NamedType = {
+    <name:UpperId> =>
+        NamedType { name: name.smol_str(), args: vec![] },
+
+    <name:UpperIdLBracket> <args:Sep<LType, ",">> "]" =>
+        NamedType { name: name.smol_str(), args },
 }
 
 RowExtension: Option<Id> = {
@@ -320,13 +331,6 @@ TypeArg: L<(Option<Id>, L<Type>)> = {
 RecordTypeField: Named<Type> = {
     <name:LowerId> ":" <ty:Type> => Named { name: Some(name.smol_str()), node: ty },
     <ty:Type> => Named { name: None, node: ty },
-}
-
-VariantAlt: VariantAlt = {
-    <name:UpperId> "(" <fields:Sep<RecordTypeField, ",">> ")" =>
-        VariantAlt { con: name.smol_str(), fields },
-    <name:UpperId> =>
-        VariantAlt { con: name.smol_str(), fields: vec![] },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,7 +361,7 @@ FunDecl: L<FunDecl> = {
             body: None,
         }),
 
-    <l:@L> <sig:FunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+    <l:@L> <sig:FunSig> ":" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         L::new(module, l, r, FunDecl {
             parent_ty: None,
@@ -530,6 +534,7 @@ Stmt: Stmt = {
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
+                variant: false,
                 ty: SmolStr::new_static("Bool"),
                 constr: Some(SmolStr::new_static("True")),
                 user_ty_args: vec![],
@@ -622,6 +627,39 @@ BlockExpr: Expr = {
             else_branch,
         })
     },
+
+    "do" ":" NEWLINE INDENT <stmts:LStmts> DEDENT => {
+        Expr::Do(stmts)
+    },
+
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
+                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+            idx: 0,
+            inferred_ty: None,
+        }),
+
+    "||" <ret:ReturnType> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+        Expr::Fn(FnExpr {
+            sig: FunSig {
+                context: Context { type_params: vec![], preds: vec![] },
+                self_: SelfParam::No,
+                params: vec![],
+                exceptions: ret.0,
+                return_ty: ret.1,
+            },
+            body,
+            idx: 0,
+            inferred_ty: None,
+        }),
 }
 
 LInlineExpr: L<Expr> = {
@@ -643,23 +681,43 @@ InlineExpr: Expr = {
     },
 
     <id:UpperId> =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
+
+    <id:TildeUpperId> =>
+        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] }),
 
     <id:UpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
-        Expr::ConstrSelect(Constructor { ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+        Expr::ConstrSelect(Constructor { variant: false, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
+
+    <id:TildeUpperIdLBracket> <user_ty_args:Sep1<LType, ",">> "]" =>
+        Expr::ConstrSelect(Constructor { variant: true, ty: id.smol_str(), constr: None, user_ty_args, ty_args: vec![] }),
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
+    },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] })
     },
 
     <path:UpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Expr::ConstrSelect(Constructor { ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+        Expr::ConstrSelect(Constructor { variant: false, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
+    },
+
+    <path:TildeUpperIdPathLBracket> <user_ty_args:Sep1<LType, ",">> "]" => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Expr::ConstrSelect(Constructor { variant: true, ty, constr: Some(constr), user_ty_args, ty_args: vec![] })
     },
 
     "(" <mut exprs:Sep<ParenExpr, ",">> ")" => {
@@ -671,29 +729,11 @@ InlineExpr: Expr = {
     },
 
     <int:IntLit> => {
-        let kind = match int.kind {
-            TokenKind::Int(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         let token_str = &int.text;
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
-
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
 
         // Drop '_'s.
         for char in token_str.chars() {
@@ -705,17 +745,13 @@ InlineExpr: Expr = {
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 10,
             parsed: 0,
         })
     },
 
     <int:HexIntLit> => {
-        let kind = match int.kind {
-            TokenKind::HexInt(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         debug_assert!(int.text.starts_with("0x"));
         let token_str = &int.text["0x".len()..];
 
@@ -723,20 +759,6 @@ InlineExpr: Expr = {
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
 
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
-
         // Drop '_'s.
         for char in token_str.chars() {
             if char == '_' {
@@ -747,17 +769,13 @@ InlineExpr: Expr = {
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 16,
             parsed: 0,
         })
     },
 
     <int:BinIntLit> => {
-        let kind = match int.kind {
-            TokenKind::BinInt(int_kind) => int_kind,
-            _ => unreachable!(),
-        };
         debug_assert!(int.text.starts_with("0b"));
         let token_str = &int.text["0x".len()..];
 
@@ -765,20 +783,6 @@ InlineExpr: Expr = {
         // Even better, build the number as we scan for underscores.
         let mut int_str = String::new();
 
-        // Drop "i8", "u32" etc. suffix.
-        let suffix = match kind {
-            Some(IntKind::I8) => Some("i8"),
-            Some(IntKind::U8) => Some("u8"),
-            Some(IntKind::I32) => Some("i32"),
-            Some(IntKind::U32) => Some("u32"),
-            None => None,
-        };
-
-        let token_str = match suffix {
-            None => token_str,
-            Some(suffix) => token_str.strip_suffix(suffix).unwrap(),
-        };
-
         // Drop '_'s.
         for char in token_str.chars() {
             if char == '_' {
@@ -789,7 +793,7 @@ InlineExpr: Expr = {
 
         Expr::Int(IntExpr {
             text: int_str,
-            suffix: kind,
+            suffix: None,
             radix: 2,
             parsed: 0,
         })
@@ -810,7 +814,7 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
+            Expr::ConstrSelect(Constructor { variant: false, ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
                 Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), user_ty_args, ty_args: vec![] }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
@@ -830,21 +834,11 @@ InlineExpr: Expr = {
     },
 
     #[precedence(level = "2")]
-    "!" <l:@L> <expr:InlineExpr> <r:@R> =>
+    "not" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
 
     "-" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Neg, expr: Box::new(L::new(module, l, r, expr)) }),
-
-    #[precedence(level = "3")]
-    <id:TildeUpperId> <args:("(" <Sep<ParenExpr, ",">> ")")?> =>
-        Expr::Variant(VariantExpr {
-            id: id.text.as_str()[1..].into(),
-            args: match args {
-                Some(args) => args.into_iter().map(|(name, expr)| Named { name: name, node: expr }).collect(),
-                None => vec![],
-            },
-        }),
 
     #[precedence(level = "4")]
     #[assoc(side = "left")]
@@ -965,7 +959,7 @@ InlineExpr: Expr = {
 
     #[precedence(level = "10")]
     #[assoc(side = "left")]
-    <l1:@L> <left:InlineExpr> <r1:@R> "&&" <l2:@L> <right:InlineExpr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "and" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -974,7 +968,7 @@ InlineExpr: Expr = {
 
     #[precedence(level = "11")]
     #[assoc(side = "left")]
-    <l1:@L> <left:InlineExpr> <r1:@R> "||" <l2:@L> <right:InlineExpr> <r2:@R> =>
+    <l1:@L> <left:InlineExpr> <r1:@R> "or" <l2:@L> <right:InlineExpr> <r2:@R> =>
         Expr::BinOp(BinOpExpr {
             left: Box::new(L::new(module, l1, r1, left)),
             right: Box::new(L::new(module, l2, r2, right)),
@@ -988,23 +982,8 @@ InlineExpr: Expr = {
     "return" <expr:LInlineExpr> =>
         Expr::Return(Box::new(expr)),
 
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LStmts> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: params.into_iter().map(|(name, ty)| (name.smol_str(), ty)).collect(),
-                exceptions: ret.0,
-                return_ty: ret.1,
-            },
-            body,
-            idx: 0,
-            inferred_ty: None,
-        }),
-
-    "fn" "(" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> ")"
-         <ret:ReturnType> "{" <body:LInlineExpr> "}" =>
+    "|" <params:Sep<(<LowerId> <(":" <LType>)?>), ",">> "|"
+         <ret:ReturnType> ":" <body:LInlineExpr> =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
@@ -1018,28 +997,14 @@ InlineExpr: Expr = {
             inferred_ty: None,
         }),
 
-    "{" <body:LStmts> "}" =>
+    "||" <ret:ReturnType> ":" <body:LInlineExpr> =>
         Expr::Fn(FnExpr {
             sig: FunSig {
                 context: Context { type_params: vec![], preds: vec![] },
                 self_: SelfParam::No,
                 params: vec![],
-                exceptions: None,
-                return_ty: None,
-            },
-            body,
-            idx: 0,
-            inferred_ty: None,
-        }),
-
-    "{" <body:LInlineExpr> "}" =>
-        Expr::Fn(FnExpr {
-            sig: FunSig {
-                context: Context { type_params: vec![], preds: vec![] },
-                self_: SelfParam::No,
-                params: vec![],
-                exceptions: None,
-                return_ty: None,
+                exceptions: ret.0,
+                return_ty: ret.1,
             },
             body: vec![L { loc: body.loc.clone(), node: Stmt::Expr(body) }],
             idx: 0,
@@ -1101,8 +1066,6 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
-    <var:VariantPattern> => Pat::Variant(var),
-
     "(" <fields:Sep<PatternField, ",">> ")" =>
         Pat::Record(RecordPattern {
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
@@ -1144,14 +1107,24 @@ StrPfxBinder: Option<Id> = {
 
 Constructor: Constructor = {
     <ty:UpperId> =>
-        Constructor { ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+        Constructor { variant: false, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
 
     <path:UpperIdPath> => {
         let mut parts = path_parts(&path.text);
         let constr = parts.pop().unwrap();
         let ty = parts.pop().unwrap();
-        Constructor { ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
-    }
+        Constructor { variant: false, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+    },
+
+    <ty:TildeUpperId> =>
+        Constructor { variant: true, ty: ty.smol_str(), constr: None, user_ty_args: vec![], ty_args: vec![] },
+
+    <path:TildeUpperIdPath> => {
+        let mut parts = path_parts(&path.smol_str());
+        let constr = parts.pop().unwrap();
+        let ty = parts.pop().unwrap();
+        Constructor { variant: true, ty, constr: Some(constr), user_ty_args: vec![], ty_args: vec![] }
+    },
 }
 
 ConstrPattern: ConstrPattern = {
@@ -1177,20 +1150,6 @@ ConstrPattern: ConstrPattern = {
             constr,
             fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
             ignore_rest: true,
-        },
-}
-
-VariantPattern: VariantPattern = {
-    <constr:TildeUpperId> =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: vec![],
-        },
-
-    <constr:TildeUpperId> "(" <fields:Sep<PatternField, ",">> ")" =>
-        VariantPattern {
-            constr: constr.text.as_str()[1..].into(),
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
         },
 }
 

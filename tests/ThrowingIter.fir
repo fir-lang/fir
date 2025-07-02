@@ -1,5 +1,14 @@
 # Code for the blog post: https://osa1.net/posts/2025-04-17-throwing-iterators-fir.html
 
+type Overflow:
+    Overflow
+
+type EmptyInput:
+    EmptyInput
+
+type InvalidDigit:
+    InvalidDigit
+
 sum(nums: Vec[U32]) U32:
     let result: U32 = 0
     for i: U32 in nums.iter():
@@ -28,8 +37,8 @@ parseSumHandleInvalidDigitsLogRest(nums: Vec[Str]) U32:
     let result: U32 = 0
     for i: Result[[Overflow, EmptyInput], U32] in nums.iter().map(parseU32Exn).mapResult(handleInvalidDigit).try():
         match i:
-            Result.Err(~Overflow): print("Overflow")
-            Result.Err(~EmptyInput): print("Empty input")
+            Result.Err(~Overflow.Overflow): print("Overflow")
+            Result.Err(~EmptyInput.EmptyInput): print("Empty input")
             Result.Ok(i): result += i
     result
 
@@ -47,16 +56,16 @@ main():
     print(parseSum(strs))
 
     strs.push("a")
-    match try({ parseSumPropagateErrors(strs) }):
+    match try(||: parseSumPropagateErrors(strs)):
         Result.Ok(sum): print(sum)
-        Result.Err(~Overflow): print("Overflow")
-        Result.Err(~EmptyInput): print("EmptyInput")
-        Result.Err(~InvalidDigit): print("InvalidDigit")
+        Result.Err(~Overflow.Overflow): print("Overflow")
+        Result.Err(~EmptyInput.EmptyInput): print("EmptyInput")
+        Result.Err(~InvalidDigit.InvalidDigit): print("InvalidDigit")
 
-    match try({ parseSumHandleInvalidDigits(strs) }):
+    match try(||: parseSumHandleInvalidDigits(strs)):
         Result.Ok(sum): print(sum)
-        Result.Err(~Overflow): print("Overflow")
-        Result.Err(~EmptyInput): print("EmptyInput")
+        Result.Err(~Overflow.Overflow): print("Overflow")
+        Result.Err(~EmptyInput.EmptyInput): print("EmptyInput")
 
     strs.push("")
     strs.push("100000000000000000000000000000000")
@@ -73,7 +82,7 @@ main():
 handleInvalidDigit(parseResult: Result[[InvalidDigit, ..errs], Option[U32]]) Option[U32] / [..errs]:
     match parseResult:
         Result.Ok(result): result
-        Result.Err(~InvalidDigit): Option.Some(0u32)
+        Result.Err(~InvalidDigit.InvalidDigit): Option.Some(u32(0))
         Result.Err(other): throw(other)
 
 parseU32(s: Str) U32:
@@ -83,7 +92,7 @@ parseU32(s: Str) U32:
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
+        if c < '0' or c > '9':
             panic("Invalid digit")
 
         let digit = c.asU32() - '0'.asU32()
@@ -95,28 +104,28 @@ parseU32(s: Str) U32:
 
 parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     if s.len() == 0:
-        throw(~EmptyInput)
+        throw(~EmptyInput.EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
-            throw(~InvalidDigit)
+        if c < '0' or c > '9':
+            throw(~InvalidDigit.InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
     result
 
 checkedAdd(i1: U32, i2: U32) Option[U32]:
-    if i1 > 4294967295u32 - i2:
+    if i1 > u32(4294967295) - i2:
         return Option.None
 
     Option.Some(i1 + i2)
@@ -124,7 +133,7 @@ checkedAdd(i1: U32, i2: U32) Option[U32]:
 checkedMul(i1: U32, i2: U32) Option[U32]:
     let result = i1 * i2
 
-    if i1 != 0 && result / i1 != i2:
+    if i1 != 0 and result / i1 != i2:
         return Option.None
 
     Option.Some(result)
@@ -147,5 +156,5 @@ checkedMul(i1: U32, i2: U32) Option[U32]:
 # 10
 
 # expected stderr:
-# tests/ThrowingIter.fir:50:5: Unexhaustive pattern match
-# tests/ThrowingIter.fir:56:5: Unexhaustive pattern match
+# tests/ThrowingIter.fir:59:5: Unexhaustive pattern match
+# tests/ThrowingIter.fir:65:5: Unexhaustive pattern match

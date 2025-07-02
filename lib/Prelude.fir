@@ -46,7 +46,7 @@ trait Eq[t]:
     __eq(self: t, other: t) Bool
 
     __neq(self: t, other: t) Bool:
-        !self.__eq(other)
+        not self.__eq(other)
 
 # The `|` operator.
 trait BitOr[t]:
@@ -95,7 +95,7 @@ trait ToStr[t]:
     toStr(self: t) Str
 
 impl ToStr[()]:
-    toStr(self: ()) Str = "()"
+    toStr(self: ()) Str: "()"
 
 # The bottom type, e.g. return type of a function that doesn't return.
 # We may want to rename this later.
