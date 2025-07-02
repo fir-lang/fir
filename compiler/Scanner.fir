@@ -132,7 +132,7 @@ type Delimiter:
 # --------------------------------------------------------------------------------------------------
 
 scannerTests() () / []:
-    let expected: Vec[TokenKind] = Vec.[
+    let expected = Vec.[
         TokenKind.LowerId, # a
         TokenKind.Newline,
         TokenKind.Indent,
