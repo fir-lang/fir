@@ -18,12 +18,10 @@ extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token {
-        UpperId => Token { kind: TokenKind::UpperId, .. },
-        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
+    enum Token { UpperId => Token { kind: TokenKind::UpperId, .. }, UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
-
+        UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
         TildeUpperIdLBracket => Token { kind: TokenKind::TildeUpperIdLBracket, .. },
@@ -826,6 +824,15 @@ InlineExpr: Expr = {
             }),
         },
 
+    "[" <elems:Sep<SeqElem, ",">> "]" =>
+        Expr::Seq { ty: None, elems },
+
+    <ty:UpperIdDotLBracket> <elems:Sep<SeqElem, ",">> "]" => {
+        let ty_str = ty.smol_str();
+        let ty_str = SmolStr::new(&ty_str[0..ty_str.len() - 2]);
+        Expr::Seq { ty: Some(ty_str), elems }
+    },
+
     #[precedence(level = "2")]
     "not" <l:@L> <expr:InlineExpr> <r:@R> =>
         Expr::UnOp(UnOpExpr { op: UnOp::Not, expr: Box::new(L::new(module, l, r, expr)) }),
@@ -1030,6 +1037,17 @@ CallArg: CallArg = {
 UserTyArgs: Vec<L<Type>> = {
     "[" <user_ty_args:Sep<LType, ",">> "]" => user_ty_args,
     => vec![],
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Sequence elements
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SeqElem: (Option<L<Expr>>, L<Expr>) = {
+    <expr:LInlineExpr> => (None, expr),
+    <key:LInlineExpr> "=" <value:LInlineExpr> => (Some(key), value),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

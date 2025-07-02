@@ -806,6 +806,25 @@ impl Expr {
                     buffer.push('\n');
                 }
             }
+
+            Expr::Seq { ty, elems } => {
+                if let Some(ty) = ty {
+                    buffer.push_str(ty);
+                    buffer.push('.');
+                }
+                buffer.push('[');
+                for (i, (k, v)) in elems.iter().enumerate() {
+                    if i != 0 {
+                        buffer.push_str(", ");
+                    }
+                    if let Some(k) = k {
+                        k.node.print(buffer, indent + 4);
+                        buffer.push_str(" = ");
+                    }
+                    v.node.print(buffer, indent + 4);
+                }
+                buffer.push(']');
+            }
         }
     }
 }

@@ -132,17 +132,18 @@ type Delimiter:
 # --------------------------------------------------------------------------------------------------
 
 scannerTests() () / []:
-    let expected: Vec[TokenKind] = Vec.withCapacity(10)
-    expected.push(TokenKind.LowerId) # a
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # b
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.LowerId) # c
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.LowerId) # d
-    expected.push(TokenKind.Newline)
+    let expected = Vec.[
+        TokenKind.LowerId, # a
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # b
+        TokenKind.Newline,
+        TokenKind.LowerId, # c
+        TokenKind.Newline,
+        TokenKind.Dedent,
+        TokenKind.LowerId, # d
+        TokenKind.Newline,
+    ]
     _scanTest(
         "Indent simple - 1",
         "\
@@ -151,19 +152,20 @@ a
     c
 d", expected)
 
-    expected.clear()
-    expected.push(TokenKind.LowerId) # a
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # b
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # c
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.LowerId) # d
-    expected.push(TokenKind.Newline)
+    expected = Vec.[
+        TokenKind.LowerId, # a
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # b
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # c
+        TokenKind.Newline,
+        TokenKind.Dedent,
+        TokenKind.Dedent,
+        TokenKind.LowerId, # d
+        TokenKind.Newline,
+    ]
     _scanTest(
         "Indent simple - 2",
         "\
@@ -172,17 +174,18 @@ a
         c
 d", expected)
 
-    expected.clear()
-    expected.push(TokenKind.LowerId) # a
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # b
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # c
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.Dedent)
+    expected = Vec.[
+        TokenKind.LowerId, # a
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # b
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # c
+        TokenKind.Newline,
+        TokenKind.Dedent,
+        TokenKind.Dedent,
+    ]
     _scanTest(
         "Dedent at the end",
         "\
@@ -190,31 +193,32 @@ a
     b
         c", expected)
 
-    expected.clear()
-    expected.push(TokenKind.If)
-    expected.push(TokenKind.UpperId)
-    expected.push(TokenKind.Colon)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.LParen)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.LParen)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Comma)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Comma)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.RParen)
-    expected.push(TokenKind.Comma)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Comma)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.RParen)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Newline)
+    expected = Vec.[
+        TokenKind.If,
+        TokenKind.UpperId,
+        TokenKind.Colon,
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId,
+        TokenKind.LParen,
+        TokenKind.LowerId,
+        TokenKind.LParen,
+        TokenKind.LowerId,
+        TokenKind.Comma,
+        TokenKind.LowerId,
+        TokenKind.Comma,
+        TokenKind.LowerId,
+        TokenKind.RParen,
+        TokenKind.Comma,
+        TokenKind.LowerId,
+        TokenKind.Comma,
+        TokenKind.LowerId,
+        TokenKind.RParen,
+        TokenKind.Newline,
+        TokenKind.Dedent,
+        TokenKind.LowerId,
+        TokenKind.Newline,
+    ]
     _scanTest(
         "Line joining in parens",
         "\
@@ -226,20 +230,21 @@ c),
 x, y)
 z", expected)
 
-    expected.clear()
-    expected.push(TokenKind.Fn_)
-    expected.push(TokenKind.LParen)
-    expected.push(TokenKind.RParen)
-    expected.push(TokenKind.LBrace)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId) # a
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.LowerId) #b
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-    expected.push(TokenKind.RBrace)
-    expected.push(TokenKind.Newline)
+    expected = Vec.[
+        TokenKind.Fn_,
+        TokenKind.LParen,
+        TokenKind.RParen,
+        TokenKind.LBrace,
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId, # a
+        TokenKind.Newline,
+        TokenKind.LowerId, #b
+        TokenKind.Newline,
+        TokenKind.Dedent,
+        TokenKind.RBrace,
+        TokenKind.Newline,
+    ]
     _scanTest(
         "Braces",
         "\
@@ -248,17 +253,17 @@ fn() {
     b
 }", expected)
 
-    expected.clear()
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Colon)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Indent)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.LowerId)
-    expected.push(TokenKind.Newline)
-    expected.push(TokenKind.Dedent)
-
+    expected = Vec.[
+        TokenKind.LowerId,
+        TokenKind.Colon,
+        TokenKind.Newline,
+        TokenKind.Indent,
+        TokenKind.LowerId,
+        TokenKind.Newline,
+        TokenKind.LowerId,
+        TokenKind.Newline,
+        TokenKind.Dedent,
+    ]
     _scanTest(
         "Layout tokens after comments",
         "\

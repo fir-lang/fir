@@ -779,6 +779,8 @@ fn mono_expr(
         ast::Expr::Do(stmts) => {
             mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals))
         }
+
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 
