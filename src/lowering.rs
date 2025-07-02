@@ -203,7 +203,7 @@ pub enum BuiltinFunDecl {
     /// `prim throw(exn: [..r]): {..r} a`
     ///
     /// This function never throws or returns, so we don't need the exception and return types.
-    Throw,
+    ThrowUnchecked,
 
     /// `prim try(cb: Fn(): {..exn} a): {..r} Result[[..exn], a]`
     ///
@@ -946,10 +946,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a }));
                     }
 
-                    "throw" => {
-                        // prim throw(exn: [..r]): {..r} a
-                        assert_eq!(fun_ty_args.len(), 2); // r, a
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Throw));
+                    "throwUnchecked" => {
+                        // prim throwUnchecked(exn: exn): a / {..r}
+                        assert_eq!(fun_ty_args.len(), 3); // exn, a, r
+                        lowered_pgm
+                            .funs
+                            .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked));
                     }
 
                     "readFileUtf8" => {
