@@ -59,6 +59,7 @@ type TokenKind:
     # Operators
     Amp
     AmpAmp
+    CaretEq
     DotDot
     DoubleLAngle
     DoubleRAngle
@@ -74,13 +75,13 @@ type TokenKind:
     PipePipe
     Plus
     PlusEq
+    Question
     RAngle
     RAngleEq
     Slash
     Star
     StarEq
     Tilde
-    Question
 
     # Literals
     Str
@@ -138,6 +139,7 @@ impl ToStr[TokenKind]:
         match self:
             TokenKind.Amp: "Amp"
             TokenKind.AmpAmp: "AmpAmp"
+            TokenKind.CaretEq: "CaretEq"
             TokenKind.As: "As"
             TokenKind.Backslash: "Backslash"
             TokenKind.BinInt(kind): "BinInt(`kind`)"
