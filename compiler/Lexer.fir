@@ -676,9 +676,7 @@ Lexer._string(self) Token / Error:
 
             other:
                 self._byteIdx += other.lenUtf8()
-
-                # TODO: Handle non-ascii
-                self._col += other.lenUtf8()
+                self._col += 1                  # TODO: Handle wide chars
 
     self._fail("unterminated string literal")
 
@@ -704,7 +702,7 @@ Lexer._char(self) Token / Error:
                 other: self._fail("invalid escape character in character literal: '`other`'")
         c: c
     self._byteIdx += char.lenUtf8()
-    self._col += char.lenUtf8()         # TODO: Handle non-ascii
+    self._col += 1                              # TODO: Handle wide chars
     if self._nextChar() != '\'':
         self._fail("unterminated character literal")
 
@@ -721,7 +719,7 @@ Lexer._skipSingleLineComment(self):
             self._col = 0
             self._line += 1
             return
-        self._col += c.lenUtf8()         # TODO: Handle non-ascii
+        self._col += 1                          # TODO: Handle wide chars
 
 
 Lexer._skipMultiLineComment(self) () / Error:
@@ -733,7 +731,7 @@ Lexer._skipMultiLineComment(self) () / Error:
             self._col = 0
         else:
             self._byteIdx += c.lenUtf8()
-            self._col += c.lenUtf8()        # TODO: Handle non-ascii
+            self._col += 1                      # TODO: Handle wide chars
         if c == '|':
             if self._byteIdx < self._input.len():
                 let c = self._nextChar()
