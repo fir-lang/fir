@@ -57,12 +57,14 @@ type TokenKind:
     While
 
     # Delimiters
-    LParen
-    RParen
-    LBracket
-    RBracket
     LBrace
+    LBracket
+    LBracketRow
+    LParen
+    LParenRow
     RBrace
+    RBracket
+    RParen
     SingleQuote
 
     # Punctuation
@@ -193,7 +195,9 @@ impl ToStr[TokenKind]:
             TokenKind.LAngleEq: "LAngleEq"
             TokenKind.LBrace: "LBrace"
             TokenKind.LBracket: "LBracket"
+            TokenKind.LBracketRow: "LBracketRow"
             TokenKind.LParen: "LParen"
+            TokenKind.LParenRow: "LParenRow"
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
@@ -273,7 +277,9 @@ impl Eq[TokenKind]:
             (left = TokenKind.LAngleEq, right = TokenKind.LAngleEq): Bool.True
             (left = TokenKind.LBrace, right = TokenKind.LBrace): Bool.True
             (left = TokenKind.LBracket, right = TokenKind.LBracket): Bool.True
+            (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow): Bool.True
             (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
+            (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True

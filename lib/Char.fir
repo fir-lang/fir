@@ -48,10 +48,8 @@ Char.isAsciiAlphanumeric(self) Bool:
 
 Char.isAsciiHexDigit(self) Bool:
     self.isAsciiDigit()
-        or (self._codePoint >= 'a'._codePoint
-            and self._codePoint <= 'f'._codePoint
-            and self._codePoint >= 'A'._codePoint
-            and self._codePoint <= 'F'._codePoint)
+        or (self._codePoint >= 'a'._codePoint and self._codePoint <= 'f'._codePoint)
+        or (self._codePoint >= 'A'._codePoint and self._codePoint <= 'F'._codePoint)
 
 Char.isAsciiBinDigit(self) Bool:
     self == '0' or self == '1'

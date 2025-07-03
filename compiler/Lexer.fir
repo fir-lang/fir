@@ -43,9 +43,6 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                     i += 3
                     continue
 
-                newTokens.push(token)
-                i += 1
-
             TokenKind.UpperId:
                 if i + 2 < tokens.len():
                     if tokens.get(i + 1).kind is TokenKind.Dot:
@@ -273,6 +270,21 @@ Lexer._next(self) Option[Token] / Error:
             self._col += 4
             return Option.Some(Token(kind = TokenKind.Loop, text = "Loop", byteIdx, line, col))
 
+        "row(" _:
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.LParenRow, text = "row(", byteIdx, line, col))
+
+        "row[" _:
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.LBracketRow, text = "row[", byteIdx, line, col))
+
+        "not" rest if not _isIdContStr(rest):
+            self._byteIdx += 3
+            self._col += 3
+            return Option.Some(Token(kind = TokenKind.Not, text = "not", byteIdx, line, col))
+
         # ------------------------------------------------------------------------------------------
         # Delimiters
 
@@ -479,8 +491,8 @@ Lexer._next(self) Option[Token] / Error:
 
         "0b" _:
             let digitsStart = self._byteIdx
-            self._byteIdx += 1
-            self._col += 1
+            self._byteIdx += 2
+            self._col += 2
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
@@ -490,7 +502,7 @@ Lexer._next(self) Option[Token] / Error:
                 self._col += 1
 
             return Option.Some(Token(
-                kind = TokenKind.Int,
+                kind = TokenKind.BinInt,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
@@ -499,18 +511,18 @@ Lexer._next(self) Option[Token] / Error:
 
         "0x" _:
             let digitsStart = self._byteIdx
-            self._byteIdx += 1
-            self._col += 1
+            self._byteIdx += 2
+            self._col += 2
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
-                if c != '_' or not c.isAsciiHexDigit():
+                if c != '_' and not c.isAsciiHexDigit():
                     break
                 self._byteIdx += 1
                 self._col += 1
 
             return Option.Some(Token(
-                kind = TokenKind.Int,
+                kind = TokenKind.HexInt,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
