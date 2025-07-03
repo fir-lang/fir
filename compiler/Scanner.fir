@@ -297,10 +297,10 @@ _scanTest(testName: Str, input: Str, expected: Vec[TokenKind]):
 
     print("\t\tOK")
 
-_scan(input: Str) Vec[TokenKind] / [AssertionError, ..r]:
+_scan(input: Str) Vec[TokenKind]:
     let (tokens, error) = tokenize("Test", input)
     if error is Option.Some(error):
-        throw(~AssertionError(msg = "Lexer failed: `error.msg`"))
+        throwUnchecked(~AssertionError(msg = "Lexer failed: `error.msg`"))
     let scanned = scan(tokens)
     let tokenKinds: Vec[TokenKind] = Vec.withCapacity(scanned.len())
     for token: Token in scanned.iter():

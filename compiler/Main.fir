@@ -19,6 +19,6 @@ main(args: Array[Str]):
     print("")
     scannerTests()
 
-assertEq[Eq[t], ToStr[t]](expected: t, found: t) () / [AssertionError, ..r]:
+assertEq[Eq[t], ToStr[t]](expected: t, found: t):
     if expected != found:
-        throw(~AssertionError(msg = "Expected `expected`, found `found`"))
+        throwUnchecked(~AssertionError(msg = "Expected `expected`, found `found`"))

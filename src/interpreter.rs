@@ -190,7 +190,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         call_site: Loc::dummy(),
     }];
 
-    call_ast_fun(
+    let ret = call_ast_fun(
         w,
         &pgm,
         &mut heap,
@@ -199,6 +199,20 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         &call_loc,
         &mut call_stack,
     );
+
+    match ret {
+        FunRet::Val(_val) => {
+            // Note: This does not hold because apparently we weren't too careful with how we return
+            // units. So far we never needed to check or use a unit return, so it was fine. If we
+            // want this assertion we should fix unit returning statements and expressions.
+            // debug_assert_eq!(_val, pgm.unit_alloc);
+        }
+        FunRet::Unwind(_) => {
+            // TODO: We should show at least the object here somehow, but ideally also the
+            // location/stack trace of the code throwing exception.
+            panic!("Uncaught exception");
+        }
+    }
 }
 
 /// Control flow within a function.
@@ -1570,7 +1584,7 @@ fn call_builtin_fun<W: Write>(
             })
         }
 
-        BuiltinFunDecl::Throw => {
+        BuiltinFunDecl::ThrowUnchecked => {
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
             FunRet::Unwind(exn)
