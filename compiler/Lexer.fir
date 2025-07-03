@@ -10,7 +10,6 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
             Result.Ok(Option.None): break
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
-    let tokens = _combineTokens(contents, tokens)
     (tokens = tokens, error = Option.None)
 
 
@@ -85,6 +84,7 @@ lexerDumpTokens(args: Array[Str]) () / []:
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
+    tokens = _combineTokens(fileContents, tokens)
     if error is Option.Some(error):
         print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
     for token: Token in tokens.iter():
