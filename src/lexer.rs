@@ -137,7 +137,7 @@ lexgen::lexer! {
     rule String {
         "`" => |lexer| lexer.switch(LexerRule::Interpolation),
 
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
 
         // Escaped interpolation start
         "\\`" => |lexer| lexer.continue_(),
@@ -162,7 +162,7 @@ lexgen::lexer! {
 
     rule StringSkipWhitespace {
         ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
         _ => |lexer| lexer.switch(LexerRule::String),
     }
 

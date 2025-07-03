@@ -93,7 +93,7 @@ extern {
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
-        StringLit => Token { kind: TokenKind::String, .. },
+        StringLit => Token { kind: TokenKind::Str, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
     }
 }

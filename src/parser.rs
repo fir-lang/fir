@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: aef154908ebbcb114506065b0ccb6a1954ee008a8c7f3d8d420b3aa8912f012b
+// sha3: f5d9a6472934e524738afb1dcbcefcdea48a45e7427dc18cfb132977e022d863
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -2501,7 +2501,7 @@ mod __parse__LExpr {
             Token { kind: TokenKind::Int { .. }, .. } if true => Some(72),
             Token { kind: TokenKind::HexInt { .. }, .. } if true => Some(73),
             Token { kind: TokenKind::BinInt { .. }, .. } if true => Some(74),
-            Token { kind: TokenKind::String, .. } if true => Some(75),
+            Token { kind: TokenKind::Str, .. } if true => Some(75),
             Token { kind: TokenKind::Char, .. } if true => Some(76),
             _ => None,
         }
@@ -17458,7 +17458,7 @@ mod __parse__LStmt {
             Token { kind: TokenKind::Int { .. }, .. } if true => Some(72),
             Token { kind: TokenKind::HexInt { .. }, .. } if true => Some(73),
             Token { kind: TokenKind::BinInt { .. }, .. } if true => Some(74),
-            Token { kind: TokenKind::String, .. } if true => Some(75),
+            Token { kind: TokenKind::Str, .. } if true => Some(75),
             Token { kind: TokenKind::Char, .. } if true => Some(76),
             _ => None,
         }
@@ -33182,7 +33182,7 @@ mod __parse__TopDecls {
             Token { kind: TokenKind::Int { .. }, .. } if true => Some(72),
             Token { kind: TokenKind::HexInt { .. }, .. } if true => Some(73),
             Token { kind: TokenKind::BinInt { .. }, .. } if true => Some(74),
-            Token { kind: TokenKind::String, .. } if true => Some(75),
+            Token { kind: TokenKind::Str, .. } if true => Some(75),
             Token { kind: TokenKind::Char, .. } if true => Some(76),
             _ => None,
         }
