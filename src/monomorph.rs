@@ -12,9 +12,16 @@ use smol_str::SmolStr;
 #[derive(Debug)]
 struct PolyPgm {
     traits: Map<Id, PolyTrait>,
+
+    /// Top-level functions, e.g. `foo(x: U32): ...`.
     top: Map<Id, ast::FunDecl>,
+
+    /// Associated functions without `self` arguments, e.g. `Type.foo(x: U32): ...`.
     associated: Map<Id, Map<Id, ast::FunDecl>>,
+
+    /// Associated functions with `self` arguments, e.g. `Type.bar(self, x: U32): ...`.
     method: Map<Id, Map<Id, ast::FunDecl>>,
+
     ty: Map<Id, ast::TypeDecl>,
 }
 
@@ -561,7 +568,8 @@ fn mono_expr(
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            let fun_decl = poly_pgm
+            // Check associated functions.
+            if let Some(fun_decl) = poly_pgm
                 .associated
                 .get(ty)
                 .and_then(|ty_map| ty_map.get(member))
@@ -571,22 +579,32 @@ fn mono_expr(
                         .get(ty)
                         .and_then(|ty_map| ty_map.get(member))
                 })
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Associated function or method {}.{} isn't in poly pgm",
-                        loc_display(loc),
-                        ty,
-                        member
-                    )
+            {
+                mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
+                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    ty_args: mono_ty_args,
                 });
+            }
 
-            mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
+            // Check traits.
+            if poly_pgm.traits.contains_key(ty) {
+                mono_method(ty, member, &mono_ty_args, poly_pgm, mono_pgm, loc);
+                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    ty_args: mono_ty_args,
+                });
+            }
 
-            mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
-                ty: ty.clone(),
-                member: member.clone(),
-                ty_args: mono_ty_args,
-            })
+            panic!(
+                "{}: Associated function or method {}.{} isn't in poly pgm",
+                loc_display(loc),
+                ty,
+                member
+            )
         }
 
         ast::Expr::Int(int @ ast::IntExpr { suffix, .. }) => {

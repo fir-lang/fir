@@ -87,13 +87,13 @@ f7_arg_1() Result[[E1, E2], ()]:
 f7_arg_2[VarRow[errs]]() Result[[E2, ..errs], ()]:
     Result.Err(~E2.E2)
 
-f8(f: Fn() [E1, E2] / exn1) = ()
+f8(f: Fn() [E1, E2] / exn1): ()
 
-f9[VarRow[r]]() [E1, ..r] = ~E1.E1
+f9[VarRow[r]]() [E1, ..r]: ~E1.E1
 
-f10[VarRow[r]](f: Fn([E1, E2, ..r]) () / exn1) = ()
+f10[VarRow[r]](f: Fn([E1, E2, ..r]) () / exn1): ()
 
-f11(x: [E1, E2, E3]) = ()
+f11(x: [E1, E2, E3]): ()
 
 type A:
     A

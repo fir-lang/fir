@@ -484,8 +484,8 @@ pub enum Expr {
 
     /// An associated function or method selection:
     ///
-    /// - Associated function: `Vec.withCapacity`.
-    /// - Method: `Vec.push`.
+    /// - Associated function: `Vec.withCapacity` (without `self` parameter).
+    /// - Method: `Vec.push` (with `self` parameter), `ToStr.toStr` (trait method).
     AssocFnSelect(AssocFnSelectExpr),
 
     /// A function call: `f(a)`.

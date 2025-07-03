@@ -1,17 +1,18 @@
 main():
     # Nested function calls, indented differently based on requested string width.
-    let args: Vec[Doc] = Vec.withCapacity(10)
-    args.push(Doc.str("longArgument1"))
-
-    let nestedCallArgs: Vec[Doc] = Vec.withCapacity(10)
-    nestedCallArgs.push(Doc.str("arg1"))
-    nestedCallArgs.push(Doc.str("arg2"))
-    args.push(makeCallSyntax(Doc.str("myOtherFunction"), nestedCallArgs))
-
-    let nestedCallArgs: Vec[Doc] = Vec.withCapacity(10)
-    args.push(makeCallSyntax(Doc.str("yetAnotherFunction"), nestedCallArgs))
-
-    let doc = makeCallSyntax(Doc.str("myFunction"), args)
+    let doc = makeCallSyntax(
+        Doc.str("myFunction"),
+        Vec.[
+            Doc.str("longArgument1"),
+            makeCallSyntax(
+                Doc.str("myOtherFunction"),
+                Vec.[
+                    Doc.str("arg1"),
+                    Doc.str("arg2"),
+                ]),
+            makeCallSyntax(Doc.str("yetAnotherFunction"), Vec.[]),
+        ],
+    )
 
     # Break at column 10: splits all groups into lines.
     print(doc.render(10))

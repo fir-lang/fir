@@ -1,10 +1,10 @@
-expectI8(i: I8) = ()
+expectI8(i: I8): ()
 
-expectU8(i: U8) = ()
+expectU8(i: U8): ()
 
-expectI32(i: I32) = ()
+expectI32(i: I32): ()
 
-expectU32(i: U32) = ()
+expectU32(i: U32): ()
 
 main():
     expectI8(123)

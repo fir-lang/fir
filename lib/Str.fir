@@ -17,9 +17,9 @@ Str.fromUtf8Vec(bytes: Vec[U8]) Str:
     Str(_bytes = copied, _start = 0, _len = copied.len())
 
 # UTF-8 encoding size of the string.
-Str.len(self) U32 = self._len
+Str.len(self) U32: self._len
 
-Str.isEmpty(self) Bool = self.len() == 0
+Str.isEmpty(self) Bool: self.len() == 0
 
 Str.substr(self, byteStart: U32, byteEnd: U32) Str:
     if byteStart > self.len():

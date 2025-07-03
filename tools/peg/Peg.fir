@@ -185,16 +185,16 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     let symbol = convertSymbolNonRec(nodes.get(symbolIdx).asNonTerminal(NonTerminal.SymbolNonRec))
 
     if nodes.len() > symbolIdx + 1:
-        match nodes.get(symbolIdx + 1).asNonTerminal(NonTerminal.SymbolSuffix).get(0).asTerminal().text:
-            "*": symbol = Symbol.ZeroOrMore(symbol)
-            "+": symbol = Symbol.OneOrMore(symbol)
-            "?": symbol = Symbol.Optional(symbol)
+        match nodes.get(symbolIdx + 1).asNonTerminal(NonTerminal.SymbolSuffix).get(0).asTerminal().kind:
+            TokenKind.Star: symbol = Symbol.ZeroOrMore(symbol)
+            TokenKind.Plus: symbol = Symbol.OneOrMore(symbol)
+            TokenKind.Question: symbol = Symbol.Optional(symbol)
             _: panic("")
 
     if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, nodes):
-        match nodes.get(0).asTerminal().text:
-            "-": symbol = Symbol.NegLookahead(symbol)
-            "_": symbol = Symbol.Ignore(symbol)
+        match nodes.get(0).asTerminal().kind:
+            TokenKind.Minus: symbol = Symbol.NegLookahead(symbol)
+            TokenKind.Underscore: symbol = Symbol.Ignore(symbol)
             _: panic("")
 
     symbol
