@@ -1,8 +1,8 @@
 prim type I32
 
-test(i: I32) I32 = i
+test(i: I32) I32: i
 
-blah() (Fn(I32) I32 / exn) = test
+blah() (Fn(I32) I32 / exn): test
 
 f() () / exn:
     let x: Fn(I32) I32 / exn = test

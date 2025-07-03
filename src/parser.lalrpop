@@ -410,7 +410,7 @@ TopFunDecl: L<FunDecl> = {
         })
     },
 
-    <l:@L> <sig:TopFunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+    <l:@L> <sig:TopFunSig> ":" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         let (parent_ty, name, sig) = sig;
         L::new(module, l, r, FunDecl {

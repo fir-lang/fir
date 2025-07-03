@@ -98,7 +98,7 @@ parseWith2(vec: Vec[Str], parseFn: Fn(Str) Result[[OtherError, ..r], a] / exn) R
 
     Result.Ok(ret)
 
-handleSomeErrs(error: [Overflow, OtherError]) U32 = 0
+handleSomeErrs(error: [Overflow, OtherError]) U32: 0
 
 parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]) U32 / exn) Result[[InvalidDigit, EmptyInput, ..r2], U32] / exn:
     match parseU32(input):

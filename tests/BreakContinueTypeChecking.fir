@@ -21,7 +21,7 @@ main():
                 i
         print(x)
 
-f() Option[U32] = Option.None
+f() Option[U32]: Option.None
 
 # expected stdout:
 # break

@@ -45,7 +45,7 @@ impl Step[I32]:
 
 prim type U32
 
-U32.max() U32 = 4294967295
+U32.max() U32: 4294967295
 
 impl Add[U32]:
     prim __add(self: U32, other: U32) U32
@@ -191,7 +191,7 @@ prim I32.abs(self: I32) I32
 # ------------------------------------------------------------------------------
 # Functions to help with type inference
 
-i8(i: I8) I8 = i
-u8(i: U8) U8 = i
-i32(i: I32) I32 = i
-u32(i: U32) U32 = i
+i8(i: I8) I8: i
+u8(i: U8) U8: i
+i32(i: I32) I32: i
+u32(i: U32) U32: i
