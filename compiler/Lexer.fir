@@ -1,6 +1,7 @@
 import Error
 import Token
 
+
 tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     let tokens = Vec.withCapacity(1000)
     let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0, _line = 0, _col = 0)
@@ -11,6 +12,23 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
     (tokens = tokens, error = Option.None)
 
+
+## Entry point to tokenize file in command line argument and print generated tokens.
+##
+## Used in tests to compare generated tokens with the interpreter's tokens.
+lexerDumpTokens(args: Array[Str]) () / []:
+    if args.len() != 2:
+        panic("USAGE: fir compiler/Lexer.fir --main lexerTestMain -- <file>")
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
+    let (tokens, error) = tokenize(file, fileContents)
+    if error is Option.Some(error):
+        print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+    for token: Token in tokens.iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
 type Lexer:
     _file: Str
     _input: Str
@@ -18,12 +36,15 @@ type Lexer:
     _line: U32
     _col: U32
 
+
 Lexer._fail(self, msg: Str) a / Error:
     throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0, line = self._line, col = self._col), msg = msg))
+
 
 # NB. Panics if OOB.
 Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
+
 
 Lexer.next(self) Option[Token] / Error:
     # Skip whitespace and comments before actual tokens.
@@ -59,7 +80,7 @@ Lexer.next(self) Option[Token] / Error:
     let col = self._col
 
     match self._input.substr(self._byteIdx, self._input.len()):
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Keywords
 
         "as" rest if not _isIdContStr(rest):
@@ -177,7 +198,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 5
             return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Delimiters
 
         "(" _:
@@ -210,7 +231,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.RBrace, text = "}", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Punctuation
 
         "," _:
@@ -238,7 +259,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Underscore, text = "_", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Operators
 
         "==" _:
@@ -357,7 +378,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Question, text = "?", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Literals
 
         "\"" _:
@@ -407,6 +428,8 @@ Lexer.next(self) Option[Token] / Error:
                 line,
                 col,
             ))
+
+        # ------------------------------------------------------------------------------------------
 
         "~" _:
             let idStart = self._byteIdx
@@ -486,7 +509,8 @@ Lexer.next(self) Option[Token] / Error:
                     col,
                 ))
 
-            panic("TODO: `c` at `byteIdx`")
+            panic("TODO: `c` at `line + 1`:`col + 1`")
+
 
 Lexer._intTypeSuffix(self) IntKind / Error:
     let rest = self._input.substr(self._byteIdx, self._input.len())
@@ -511,6 +535,7 @@ Lexer._intTypeSuffix(self) IntKind / Error:
         _:
             ()
     typeSuffix
+
 
 # NB. Initial '"' should NOT be consumed.
 Lexer._string(self) Token / Error:
@@ -569,6 +594,7 @@ Lexer._string(self) Token / Error:
 
     self._fail("unterminated string literal")
 
+
 # NB. Initial '\'' should NOT be consumed.
 Lexer._char(self) Token / Error:
     let idx = self._byteIdx
@@ -598,6 +624,7 @@ Lexer._char(self) Token / Error:
     self._col += 1
     Token(kind = TokenKind.Char, text = self._input.substr(idx, self._byteIdx), byteIdx = idx, line, col)
 
+
 Lexer._skipSingleLineComment(self):
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
@@ -607,6 +634,7 @@ Lexer._skipSingleLineComment(self):
             self._line += 1
             return
         self._col += c.lenUtf8()         # TODO: Handle non-ascii
+
 
 Lexer._skipMultiLineComment(self) () / Error:
     while self._byteIdx < self._input.len():
@@ -623,8 +651,10 @@ Lexer._skipMultiLineComment(self) () / Error:
 
     self._fail("unterminated multi-line comment")
 
+
 _isIdCont(c: Char) Bool:
     c.isAsciiAlphanumeric() or c == '_'
+
 
 _isIdContStr(s: Str) Bool:
     match s.chars().next():
