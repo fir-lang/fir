@@ -727,8 +727,13 @@ Lexer._skipSingleLineComment(self):
 Lexer._skipMultiLineComment(self) () / Error:
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
-        self._byteIdx += c.lenUtf8()
-        self._col += c.lenUtf8()        # TODO: Handle non-ascii
+        if c == '\n':
+            self._byteIdx += 1
+            self._line += 1
+            self._col = 0
+        else:
+            self._byteIdx += c.lenUtf8()
+            self._col += c.lenUtf8()        # TODO: Handle non-ascii
         if c == '|':
             if self._byteIdx < self._input.len():
                 let c = self._nextChar()
@@ -736,6 +741,13 @@ Lexer._skipMultiLineComment(self) () / Error:
                     self._byteIdx += 1
                     self._col += 1
                     return
+        elif c == '#':
+            if self._byteIdx < self._input.len():
+                let c = self._nextChar()
+                if c == '|':
+                    self._byteIdx += 1
+                    self._col += 1
+                    self._skipMultiLineComment()
 
     self._fail("unterminated multi-line comment")
 
