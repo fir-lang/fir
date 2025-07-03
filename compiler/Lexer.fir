@@ -662,8 +662,17 @@ Lexer._string(self) Token / Error:
                     '`' | '"' | 'n' | 't' | 'r' | '\\':
                         self._byteIdx += 1
                         self._col += 1
+                    '\n':
+                        self._byteIdx += 1
+                        self._col = 0
+                        self._line += 1
                     other:
                         self._fail("invalid escape: '`other`'")
+
+            '\n':
+                self._byteIdx += 1
+                self._col = 0
+                self._line += 1
 
             other:
                 self._byteIdx += other.lenUtf8()
