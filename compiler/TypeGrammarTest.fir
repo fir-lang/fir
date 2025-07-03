@@ -227,7 +227,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 # 
 # Fn(self)
-# Type_(FnType(FnArgs(Type_(Self(1:4:"self")))))
+# Type_(FnType(FnArgs(Type_(LowerId(1:4:"self")))))
 # 
 # Fn(self, a: U32): [] Foo
 # ERR: unexpected token Colon(1:11:":") at cursor 5

@@ -34,7 +34,6 @@ type TokenKind:
     Match
     Prim
     Return
-    Self_
     Trait
     Type
     UpperFn
@@ -195,7 +194,6 @@ impl ToStr[TokenKind]:
             TokenKind.RBracket: "RBracket"
             TokenKind.RParen: "RParen"
             TokenKind.Return: "Return"
-            TokenKind.Self_: "Self"
             TokenKind.SingleQuote: "SingleQuote"
             TokenKind.Slash: "Slash"
             TokenKind.Star: "Star"
@@ -235,7 +233,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.Match, right = TokenKind.Match): Bool.True
             (left = TokenKind.Prim, right = TokenKind.Prim): Bool.True
             (left = TokenKind.Return, right = TokenKind.Return): Bool.True
-            (left = TokenKind.Self_, right = TokenKind.Self_): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True
             (left = TokenKind.Var, right = TokenKind.Var): Bool.True

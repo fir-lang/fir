@@ -178,11 +178,6 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 6
             return Option.Some(Token(kind = TokenKind.Return, text = "return", byteIdx, line, col))
 
-        "self" rest if not _isIdContStr(rest):
-            self._byteIdx += 4
-            self._col += 4
-            return Option.Some(Token(kind = TokenKind.Self_, text = "self", byteIdx, line, col))
-
         "trait" rest if not _isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
@@ -324,8 +319,8 @@ Lexer.next(self) Option[Token] / Error:
             return Option.Some(Token(kind = TokenKind.Exclamation, text = "!", byteIdx, line, col))
 
         "and" _:
-            self._byteIdx += 2
-            self._col += 2
+            self._byteIdx += 3
+            self._col += 3
             return Option.Some(Token(kind = TokenKind.AmpAmp, text = "and", byteIdx, line, col))
 
         "&" _:
