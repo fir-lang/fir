@@ -404,9 +404,8 @@ Lexer.next(self) Option[Token] / Error:
                 self._byteIdx += 1
                 self._col += 1
 
-            let typeSuffix = self._intTypeSuffix()
             return Option.Some(Token(
-                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                kind = TokenKind.Int,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
@@ -425,9 +424,8 @@ Lexer.next(self) Option[Token] / Error:
                 self._byteIdx += 1
                 self._col += 1
 
-            let typeSuffix = self._intTypeSuffix()
             return Option.Some(Token(
-                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                kind = TokenKind.Int,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
@@ -475,9 +473,8 @@ Lexer.next(self) Option[Token] / Error:
                     self._byteIdx += 1
                     self._col += 1
 
-                let typeSuffix = self._intTypeSuffix()
                 return Option.Some(Token(
-                    kind = TokenKind.Int(Option.Some(typeSuffix)),
+                    kind = TokenKind.Int,
                     text = self._input.substr(digitsStart, self._byteIdx),
                     byteIdx,
                     line,
@@ -518,31 +515,6 @@ Lexer.next(self) Option[Token] / Error:
                 ))
 
             panic("TODO: `c` at `line + 1`:`col + 1`")
-
-
-Lexer._intTypeSuffix(self) IntKind / Error:
-    let rest = self._input.substr(self._byteIdx, self._input.len())
-    let typeSuffix = IntKind.U32
-    match rest:
-        "u8" _:
-            typeSuffix = IntKind.U8
-            self._byteIdx += 2
-            self._col += 2
-        "i8" _:
-            typeSuffix = IntKind.I8
-            self._byteIdx += 2
-            self._col += 2
-        "u32" _:
-            typeSuffix = IntKind.U32
-            self._byteIdx += 3
-            self._col += 3
-        "i32" _:
-            typeSuffix = IntKind.I32
-            self._byteIdx += 3
-            self._col += 3
-        _:
-            ()
-    typeSuffix
 
 
 # NB. Initial '"' should NOT be consumed.

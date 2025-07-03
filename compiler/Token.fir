@@ -85,9 +85,9 @@ type TokenKind:
 
     # Literals
     Str
-    Int(Option[IntKind])
-    HexInt(Option[IntKind])
-    BinInt(Option[IntKind])
+    Int
+    HexInt
+    BinInt
     Char
 
     # Indentation
@@ -142,7 +142,7 @@ impl ToStr[TokenKind]:
             TokenKind.CaretEq: "CaretEq"
             TokenKind.As: "As"
             TokenKind.Backslash: "Backslash"
-            TokenKind.BinInt(kind): "BinInt(`kind`)"
+            TokenKind.BinInt: "BinInt"
             TokenKind.Break: "Break"
             TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"
@@ -161,12 +161,12 @@ impl ToStr[TokenKind]:
             TokenKind.Export: "Export"
             TokenKind.Fn_: "Fn"
             TokenKind.For: "For"
-            TokenKind.HexInt(kind): "HexInt(`kind`)"
+            TokenKind.HexInt: "HexInt"
             TokenKind.If: "If"
             TokenKind.Impl: "Impl"
             TokenKind.Import: "Import"
             TokenKind.In: "In"
-            TokenKind.Int(kind): "Int(`kind`)"
+            TokenKind.Int: "Int"
             TokenKind.Jump: "Jump"
             TokenKind.LAngle: "LAngle"
             TokenKind.LAngleEq: "LAngleEq"
@@ -208,14 +208,6 @@ impl ToStr[TokenKind]:
             TokenKind.Indent: "Indent"
             TokenKind.Dedent: "Dedent"
             TokenKind.Question: "Question"
-
-impl ToStr[IntKind]:
-    toStr(self: IntKind) Str:
-        match self:
-            IntKind.I8: "I8"
-            IntKind.U8: "U8"
-            IntKind.I32: "I32"
-            IntKind.U32: "U32"
 
 impl Eq[TokenKind]:
     __eq(self: TokenKind, other: TokenKind) Bool:
@@ -282,9 +274,9 @@ impl Eq[TokenKind]:
             (left = TokenKind.StarEq, right = TokenKind.StarEq): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
             (left = TokenKind.Str, right = TokenKind.Str): Bool.True
-            (left = TokenKind.Int(intKind1), right = TokenKind.Int(intKind2)): intKind1 == intKind2
-            (left = TokenKind.HexInt(intKind1), right = TokenKind.HexInt(intKind2)): intKind1 == intKind2
-            (left = TokenKind.BinInt(intKind1), right = TokenKind.BinInt(intKind2)): intKind1 == intKind2
+            (left = TokenKind.Int, right = TokenKind.Int): Bool.True
+            (left = TokenKind.HexInt, right = TokenKind.HexInt): Bool.True
+            (left = TokenKind.BinInt, right = TokenKind.BinInt): Bool.True
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
             (left = TokenKind.Newline, right = TokenKind.Newline): Bool.True
             (left = TokenKind.Indent, right = TokenKind.Indent): Bool.True
