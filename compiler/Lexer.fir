@@ -487,6 +487,30 @@ Lexer._next(self) Option[Token] / Error:
             return Option.Some(self._string())
 
         "'" _:
+            match try(self._char):
+                Result.Ok(token):
+                    return Option.Some(token)
+                Result.Err(charErr):
+                    # Try label
+                    self._byteIdx += 1
+                    self._col += 1
+                    if self._byteIdx < self._input.len():
+                        if self._nextChar().isAsciiLowercase():
+                            self._byteIdx += 1
+                            self._col += 1
+                            while self._byteIdx < self._input.len() and _isIdCont(self._nextChar()):
+                                self._byteIdx += 1
+                                self._col += 1
+                            return Option.Some(Token(
+                                kind = TokenKind.Label,
+                                text = self._input.substr(byteIdx, self._byteIdx),
+                                byteIdx,
+                                line,
+                                col,
+                            ))
+
+
+
             return Option.Some(self._char())
 
         "0b" _:

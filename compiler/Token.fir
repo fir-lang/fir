@@ -113,6 +113,8 @@ type TokenKind:
     Indent
     Dedent
 
+    Label
+
 type IntKind:
     I8
     U8
@@ -198,6 +200,7 @@ impl ToStr[TokenKind]:
             TokenKind.LBracketRow: "LBracketRow"
             TokenKind.LParen: "LParen"
             TokenKind.LParenRow: "LParenRow"
+            TokenKind.Label: "Label"
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
@@ -280,6 +283,7 @@ impl Eq[TokenKind]:
             (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow): Bool.True
             (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
             (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
+            (left = TokenKind.Label, right = TokenKind.Label): Bool.True
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
