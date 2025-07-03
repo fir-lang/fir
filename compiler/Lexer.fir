@@ -287,6 +287,11 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 2
             return Option.Some(Token(kind = TokenKind.StarEq, text = "*=", byteIdx, line, col))
 
+        "^=" _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.CaretEq, text = "*=", byteIdx, line, col))
+
         "+" _:
             self._byteIdx += 1
             self._col += 1
@@ -455,7 +460,7 @@ Lexer.next(self) Option[Token] / Error:
                     col,
                 ))
 
-        other:
+        _:
             let c = self._nextChar()
 
             if c.isAsciiDigit():
@@ -479,15 +484,18 @@ Lexer.next(self) Option[Token] / Error:
                     col,
                 ))
 
-            # The `other` starts with '_' then there must be an identifier char after it, as the
+            # If the rest starts with '_' then there must be an identifier char after it, as the
             # other case is handled above. This character specifies the casing.
-            let caseCheckIdx = if c == '_':
-                self._byteIdx + 1
-            else:
-                self._byteIdx
+            let caseCheckIdx = self._byteIdx
+            while caseCheckIdx < self._input.len() and self._input.charAt(caseCheckIdx) == '_':
+                caseCheckIdx += 1
 
-            let uppercaseId = self._input.charAt(caseCheckIdx).isAsciiUppercase()
-            let lowercaseId = self._input.charAt(caseCheckIdx).isAsciiLowercase()
+            if caseCheckIdx == self._input.len():
+                panic("`line + 1`:`col + 1`: Unexpected end of input")
+
+            let caseCheckChar = self._input.charAt(caseCheckIdx)
+            let uppercaseId = caseCheckChar.isAsciiUppercase()
+            let lowercaseId = caseCheckChar.isAsciiLowercase()
 
             if uppercaseId or lowercaseId:
                 let endIdx = self._byteIdx + 1
