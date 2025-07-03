@@ -6,12 +6,77 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     let tokens = Vec.withCapacity(1000)
     let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0, _line = 0, _col = 0)
     loop:
-        match try(lexer.next):
+        match try(lexer._next):
             Result.Ok(Option.None): break
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
+    let tokens = _combineTokens(contents, tokens)
     (tokens = tokens, error = Option.None)
 
+
+# This is mainly for compatibility with the interpreter, to make it easier to test the compiler.
+#
+# In the interpreter we combine some of the tokens to make it easier to parse as LR(1).
+#
+# In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
+# lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
+# remove this once the compiler works and we no longer need the interpreter.
+_combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
+    let newTokens = Vec.withCapacity(tokens.len())
+
+    let i = u32(0)
+    while i < tokens.len():
+        let token = tokens.get(i)
+
+        match token.kind:
+            TokenKind.TildeUpperId:
+                if i + 2 < tokens.len()
+                        and tokens.get(i + 1).kind is TokenKind.Dot
+                        and tokens.get(i + 2) is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
+                    newTokens.push(Token(
+                        kind = TokenKind.TildeUpperIdPath,
+                        text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
+                        byteIdx = token.byteIdx,
+                        line = token.line,
+                        col = token.col,
+                    ))
+                    i += 3
+                    continue
+
+                newTokens.push(token)
+                i += 1
+
+            TokenKind.UpperId:
+                if i + 2 < tokens.len():
+                    if tokens.get(i + 1).kind is TokenKind.Dot:
+                        let next = tokens.get(i + 2)
+                        if next is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
+                            newTokens.push(Token(
+                                kind = TokenKind.UpperIdPath,
+                                text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
+                                byteIdx = token.byteIdx,
+                                line = token.line,
+                                col = token.col,
+                            ))
+                            i += 3
+                            continue
+                        elif next.kind is TokenKind.LBracket:
+                            newTokens.push(Token(
+                                kind = TokenKind.UpperIdDotLBracket,
+                                text = contents.substr(token.byteIdx, token.byteIdx + 2),
+                                byteIdx = token.byteIdx,
+                                line = token.line,
+                                col = token.col,
+                            ))
+                            i += 3
+                            continue
+
+            _: ()
+
+        newTokens.push(token)
+        i += 1
+
+    newTokens
 
 ## Entry point to tokenize file in command line argument and print generated tokens.
 ##
@@ -46,7 +111,7 @@ Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
 
-Lexer.next(self) Option[Token] / Error:
+Lexer._next(self) Option[Token] / Error:
     # Skip whitespace and comments before actual tokens.
     loop:
         while self._byteIdx < self._input.len() and self._nextChar() is char and char.isAsciiWhitespace():
@@ -198,6 +263,16 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 5
             return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx, line, col))
 
+        "do" rest if not _isIdContStr(rest):
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.Do, text = "Do", byteIdx, line, col))
+
+        "loop" rest if not _isIdContStr(rest):
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.Loop, text = "Loop", byteIdx, line, col))
+
         # ------------------------------------------------------------------------------------------
         # Delimiters
 
@@ -321,7 +396,12 @@ Lexer.next(self) Option[Token] / Error:
         "and" _:
             self._byteIdx += 3
             self._col += 3
-            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "and", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.And, text = "and", byteIdx, line, col))
+
+        "&&" _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx, line, col))
 
         "&" _:
             self._byteIdx += 1
@@ -331,7 +411,12 @@ Lexer.next(self) Option[Token] / Error:
         "or" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "or", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Or, text = "or", byteIdx, line, col))
+
+        "||" _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx, line, col))
 
         "|" _:
             self._byteIdx += 1
@@ -440,8 +525,10 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             if self._byteIdx < self._input.len() and self._nextChar().isAsciiUppercase():
                 self._byteIdx += 1
+                self._col += 1
                 while self._byteIdx < self._input.len() and _isIdCont(self._nextChar()):
                     self._byteIdx += 1
+                    self._col += 1
                 return Option.Some(Token(
                     kind = TokenKind.TildeUpperId,
                     text = self._input.substr(idStart, self._byteIdx),
