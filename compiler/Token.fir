@@ -23,12 +23,12 @@ type TokenKind:
     Else
     Export
     Fn_
-    UpperFn
     For
     If
     Impl
     Import
     In
+    Is
     Jump
     Let
     Match
@@ -37,6 +37,7 @@ type TokenKind:
     Self_
     Trait
     Type
+    UpperFn
     Var
     While
 
@@ -139,15 +140,16 @@ impl ToStr[TokenKind]:
         match self:
             TokenKind.Amp: "Amp"
             TokenKind.AmpAmp: "AmpAmp"
-            TokenKind.CaretEq: "CaretEq"
             TokenKind.As: "As"
             TokenKind.Backslash: "Backslash"
             TokenKind.BinInt: "BinInt"
             TokenKind.Break: "Break"
+            TokenKind.CaretEq: "CaretEq"
             TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"
             TokenKind.Comma: "Comma"
             TokenKind.Continue: "Continue"
+            TokenKind.Dedent: "Dedent"
             TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
             TokenKind.DoubleLAngle: "DoubleLAngle"
@@ -166,7 +168,9 @@ impl ToStr[TokenKind]:
             TokenKind.Impl: "Impl"
             TokenKind.Import: "Import"
             TokenKind.In: "In"
+            TokenKind.Indent: "Indent"
             TokenKind.Int: "Int"
+            TokenKind.Is: "Is"
             TokenKind.Jump: "Jump"
             TokenKind.LAngle: "LAngle"
             TokenKind.LAngleEq: "LAngleEq"
@@ -178,11 +182,13 @@ impl ToStr[TokenKind]:
             TokenKind.Match: "Match"
             TokenKind.Minus: "Minus"
             TokenKind.MinusEq: "MinusEq"
+            TokenKind.Newline: "Newline"
             TokenKind.Pipe: "Pipe"
             TokenKind.PipePipe: "PipePipe"
             TokenKind.Plus: "Plus"
             TokenKind.PlusEq: "PlusEq"
             TokenKind.Prim: "Prim"
+            TokenKind.Question: "Question"
             TokenKind.RAngle: "RAngle"
             TokenKind.RAngleEq: "RAngleEq"
             TokenKind.RBrace: "RBrace"
@@ -204,10 +210,6 @@ impl ToStr[TokenKind]:
             TokenKind.UpperId: "UpperId"
             TokenKind.Var: "Var"
             TokenKind.While: "While"
-            TokenKind.Newline: "Newline"
-            TokenKind.Indent: "Indent"
-            TokenKind.Dedent: "Dedent"
-            TokenKind.Question: "Question"
 
 impl Eq[TokenKind]:
     __eq(self: TokenKind, other: TokenKind) Bool:

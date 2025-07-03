@@ -88,6 +88,11 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 2
             return Option.Some(Token(kind = TokenKind.As, text = "as", byteIdx, line, col))
 
+        "is" rest if not _isIdContStr(rest):
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.Is, text = "is", byteIdx, line, col))
+
         "break" rest if not _isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
