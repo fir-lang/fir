@@ -667,7 +667,12 @@ fn collect_schemes(
                     method_schemes
                         .entry(fun.node.name.node.clone())
                         .or_default()
-                        .push((trait_decl.node.name.node.clone(), scheme));
+                        .push((trait_decl.node.name.node.clone(), scheme.clone()));
+
+                    associated_fn_schemes
+                        .entry(trait_decl.node.name.node.clone())
+                        .or_default()
+                        .insert(fun.node.name.node.clone(), scheme);
                 }
             }
 
