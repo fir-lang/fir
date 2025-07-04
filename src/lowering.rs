@@ -230,6 +230,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArraySlice {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 }
 
@@ -1464,6 +1468,15 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArraySet { t }));
+                        }
+
+                        ("Array", "slice") => {
+                            // prim Array.slice(self: Array[t], start: U32, end: U32)
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            let t = fun_ty_args[0].clone();
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::ArraySlice { t }));
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),
