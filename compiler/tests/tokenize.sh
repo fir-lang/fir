@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(dirname "$0")"
+
 cargo build --release
 
 exit_code=0
@@ -12,22 +14,10 @@ skip_files=(
     "tests/StrBuf.fir"
 )
 
-for f in **/*.fir; do
-    skip=false
-    for skip_f in "${skip_files[@]}"; do
-        if [[ "$f" == "$skip_f" ]]; then
-            echo "$f: skipping"
-            skip=true
-            break
-        fi
-    done
+source "${SCRIPT_DIR}/common.sh"
 
-    if $skip; then
-        continue
-    fi
-
+for f in "${files[@]}"; do
     echo $f
-
     compiler_output=$(./target/release/fir compiler/Lexer.fir --main lexerDumpTokens -- "$f")
     interpreter_output=$(./target/release/fir --tokenize "$f")
     diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
