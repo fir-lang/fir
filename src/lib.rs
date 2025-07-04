@@ -32,6 +32,7 @@ pub struct CompilerOpts {
     pub no_prelude: bool,
     pub no_backtrace: bool,
     pub tokenize: bool,
+    pub scan: bool,
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
@@ -112,6 +113,17 @@ mod native {
         if opts.tokenize {
             let file_contents = std::fs::read_to_string(program).unwrap();
             for (l, t, _) in crate::lexer::lex(&file_contents, "test") {
+                println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
+            }
+            return;
+        }
+
+        if opts.scan {
+            let file_contents = std::fs::read_to_string(program).unwrap();
+            for (l, t, _) in scanner::scan(
+                crate::lexer::lex(&file_contents, "test").into_iter(),
+                "test",
+            ) {
                 println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
             }
             return;

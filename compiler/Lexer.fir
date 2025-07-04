@@ -74,12 +74,12 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
 
     newTokens
 
-## Entry point to tokenize file in command line argument and print generated tokens.
+## Entry point to tokenize a file and print generated tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
 lexerDumpTokens(args: Array[Str]) () / []:
     if args.len() != 2:
-        panic("USAGE: fir compiler/Lexer.fir --main lexerTestMain -- <file>")
+        panic("USAGE: fir compiler/Lexer.fir --main lexerDumpTokens -- <file>")
 
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
@@ -89,6 +89,11 @@ lexerDumpTokens(args: Array[Str]) () / []:
         print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
+lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
+    let (tokens, error) = tokenize(file, fileContents)
+    _combineTokens(fileContents, tokens)
 
 
 type Lexer:

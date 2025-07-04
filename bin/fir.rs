@@ -23,7 +23,13 @@ fn main() {
             clap::Arg::new(TOKENIZE)
                 .long(TOKENIZE)
                 .num_args(0)
-                .help("Print tokens."),
+                .help("Print tokens and stop."),
+        )
+        .arg(
+            clap::Arg::new(SCAN)
+                .long(SCAN)
+                .num_args(0)
+                .help("Print scanned tokens and stop."),
         )
         .arg(
             clap::Arg::new(PRINT_PARSED_AST)
@@ -84,6 +90,7 @@ fn main() {
         no_prelude: matches.get_flag(NO_PRELUDE),
         no_backtrace: matches.get_flag(NO_BACKTRACE),
         tokenize: matches.get_flag(TOKENIZE),
+        scan: matches.get_flag(SCAN),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
@@ -109,6 +116,7 @@ const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
 const NO_BACKTRACE: &str = "no-backtrace";
 const TOKENIZE: &str = "tokenize";
+const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";

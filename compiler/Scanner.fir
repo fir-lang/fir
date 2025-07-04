@@ -129,6 +129,25 @@ type Delimiter:
     Bracket
     Brace
 
+
+# --------------------------------------------------------------------------------------------------
+
+
+## Entry point to scan a file print generated tokens.
+##
+## Used in tests to compare generated tokens with the interpreter's tokens.
+scannerDumpTokens(args: Array[Str]) () / []:
+    if args.len() != 2:
+        panic("USAGE: fir compiler/Scanner.fir --main scannerDumpTokens -- <file>")
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
+    let tokens = lexerTokenizeForTesting(file, fileContents)
+    let tokens = scan(tokens)
+    for token: Token in tokens.iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
 # --------------------------------------------------------------------------------------------------
 
 scannerTests() () / []:
