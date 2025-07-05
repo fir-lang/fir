@@ -60,6 +60,7 @@ update_generated_files:
     lalrpop src/parser.lalrpop
     tools/peg/Peg.sh compiler/TestGrammar.peg > compiler/TestGrammar.fir
     tools/peg/Peg.sh compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+    tools/peg/Peg.sh compiler/InlineExprGrammar.peg > compiler/InlineExprGrammar.fir
 
     # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
     # the PEG compiler itself uses the file. Save the output to a local and
