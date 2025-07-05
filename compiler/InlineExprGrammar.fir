@@ -46,6 +46,7 @@ impl Eq[InlineExprKind]:
 
 inlineExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         let nonTerminalResult = prefixExpr(tokens, cursor)
@@ -63,7 +64,12 @@ inlineExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
                 cursor
             )
             match symResult:
-                Result.Err(_):
+                Result.Err(err):
+                    match curErr:
+                        Option.None:
+                            curErr = Option.Some(err)
+                        Option.Some(curErr_):
+                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                     nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
@@ -72,6 +78,11 @@ inlineExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -79,10 +90,16 @@ inlineExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         let nodesLen0 = nodes.len()
@@ -93,7 +110,12 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -108,7 +130,12 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -120,7 +147,12 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -128,6 +160,11 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -135,10 +172,16 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 fields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -146,14 +189,22 @@ fields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
         if tokens.get(cursor) is Token(kind = TokenKind.Dot, ..):
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.LowerId | TokenKind.Self_, ..):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         loop:
             let nodesLen0 = nodes.len()
             let symResult = try(||:
@@ -162,18 +213,31 @@ fields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
                 if tokens.get(cursor) is Token(kind = TokenKind.Dot, ..):
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
                 if tokens.get(cursor) is Token(kind = TokenKind.LowerId | TokenKind.Self_, ..):
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 cursor
             )
             match symResult:
-                Result.Err(_):
+                Result.Err(err):
+                    match curErr:
+                        Option.None:
+                            curErr = Option.Some(err)
+                        Option.Some(curErr_):
+                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                     nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
@@ -182,6 +246,11 @@ fields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -189,10 +258,16 @@ fields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -201,7 +276,11 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], n
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         let nodesLen0 = nodes.len()
         let symResult = try(||:
             let nonTerminalResult = inlineExpr(tokens, cursor)
@@ -216,14 +295,23 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], n
                         nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
-                        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                        throw(
+                            ParseError.UnexpectedToken(
+                                token = tokens.get(cursor),
+                                cursor = cursor,
+                            ))
                     let nonTerminalResult = inlineExpr(tokens, cursor)
                     cursor = nonTerminalResult.newCursor
                     nodes.push(nonTerminalResult.tree)
                     cursor
                 )
                 match symResult:
-                    Result.Err(_):
+                    Result.Err(err):
+                        match curErr:
+                            Option.None:
+                                curErr = Option.Some(err)
+                            Option.Some(curErr_):
+                                curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                         nodes.truncate(nodesLen0)
                         break
                     Result.Ok(newCursor):
@@ -236,18 +324,32 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], n
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 cursor
             )
             match symResult:
-                Result.Err(_):
+                Result.Err(err):
+                    match curErr:
+                        Option.None:
+                            curErr = Option.Some(err)
+                        Option.Some(curErr_):
+                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                     nodes.truncate(nodesLen0)
                 Result.Ok(newCursor):
                     cursor = newCursor
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -257,11 +359,20 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], n
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -269,10 +380,16 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], n
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -281,7 +398,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         let nodesLen0 = nodes.len()
         let symResult = try(||:
             let nonTerminalResult = tyArgs(tokens, cursor)
@@ -290,7 +411,12 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -298,6 +424,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -314,7 +445,12 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -322,6 +458,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -333,7 +474,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         let nodesLen0 = nodes.len()
         let symResult = try(||:
             let nonTerminalResult = parenExpr(tokens, cursor)
@@ -348,14 +493,23 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
                         nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
-                        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                        throw(
+                            ParseError.UnexpectedToken(
+                                token = tokens.get(cursor),
+                                cursor = cursor,
+                            ))
                     let nonTerminalResult = parenExpr(tokens, cursor)
                     cursor = nonTerminalResult.newCursor
                     nodes.push(nonTerminalResult.tree)
                     cursor
                 )
                 match symResult:
-                    Result.Err(_):
+                    Result.Err(err):
+                        match curErr:
+                            Option.None:
+                                curErr = Option.Some(err)
+                            Option.Some(curErr_):
+                                curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                         nodes.truncate(nodesLen0)
                         break
                     Result.Ok(newCursor):
@@ -368,18 +522,32 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 cursor
             )
             match symResult:
-                Result.Err(_):
+                Result.Err(err):
+                    match curErr:
+                        Option.None:
+                            curErr = Option.Some(err)
+                        Option.Some(curErr_):
+                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                     nodes.truncate(nodesLen0)
                 Result.Ok(newCursor):
                     cursor = newCursor
             cursor
         )
         match symResult:
-            Result.Err(_):
+            Result.Err(err):
+                match curErr:
+                    Option.None:
+                        curErr = Option.Some(err)
+                    Option.Some(curErr_):
+                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -389,11 +557,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -405,7 +582,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         let nonTerminalResult = inlineExpr(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
@@ -413,6 +594,11 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -424,11 +610,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -440,11 +635,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -456,11 +660,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -472,11 +685,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -488,11 +710,20 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -500,10 +731,16 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -512,7 +749,11 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprK
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         loop:
             let nodesLen0 = nodes.len()
             let symResult = try(||:
@@ -522,18 +763,31 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprK
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 if cursor == tokens.len():
                     throw(ParseError.UnexpectedEof)
                 if tokens.get(cursor) is Token(kind = TokenKind.UpperId, ..):
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
-                    throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+                    throw(
+                        ParseError.UnexpectedToken(
+                            token = tokens.get(cursor),
+                            cursor = cursor,
+                        ))
                 cursor
             )
             match symResult:
-                Result.Err(_):
+                Result.Err(err):
+                    match curErr:
+                        Option.None:
+                            curErr = Option.Some(err)
+                        Option.Some(curErr_):
+                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
                     nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
@@ -542,6 +796,11 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprK
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -549,10 +808,16 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprK
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -561,18 +826,31 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.RBracket, ..):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -580,10 +858,16 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind],
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -592,14 +876,22 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKin
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.Eq, ..):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         let nonTerminalResult = inlineExpr(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         nodes.push(nonTerminalResult.tree)
@@ -607,6 +899,11 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKin
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -619,6 +916,11 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKin
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -626,10 +928,16 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKin
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -638,11 +946,20 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -654,11 +971,20 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -666,10 +992,16 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKi
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))
 
 binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], newCursor: U32) / ParseError[Token]:
     let cursor0 = cursor
+    let curErr: Option[ParseError[Token]] = Option.None
     let nodes: Vec[ParseTree[Token, InlineExprKind]] = Vec.withCapacity(0)
     let altResult = try(||:
         if cursor == tokens.len():
@@ -678,11 +1010,20 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], 
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -694,11 +1035,20 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], 
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -710,11 +1060,20 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], 
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -726,11 +1085,20 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], 
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
-            throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:
         Result.Err(err):
+            match curErr:
+                Option.None:
+                    curErr = Option.Some(err)
+                Option.Some(curErr_):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -738,4 +1106,9 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, InlineExprKind], 
     if cursor == tokens.len():
         throw(ParseError.UnexpectedEof)
     else:
-        throw(ParseError.UnexpectedToken(tokens.get(cursor)))
+        throw(
+            curErr.unwrapOrElse(||:
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                )))

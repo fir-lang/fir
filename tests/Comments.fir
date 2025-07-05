@@ -17,4 +17,4 @@ Multi-line comment
 test() = a b # comments
 |#
 
-main() = ()
+main(): ()

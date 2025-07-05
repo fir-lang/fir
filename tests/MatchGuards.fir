@@ -15,12 +15,11 @@ main():
         Option.None: panic("WAT")
 
     # Check `is` scoping.
-    # Currently broken, see #122.
-    # let y: Option[Option[U32]] = Option.Some(Option.Some(123))
-    # match y:
-    #     Option.Some(y) if y is Option.Some(y) print(y)
-    #     _: panic("WAT")
-    # print(y)
+    let y: Option[Option[U32]] = Option.Some(Option.Some(123))
+    match y:
+        Option.Some(y) if y is Option.Some(y): print(y)
+        _: panic("WAT")
+    print(y)
 
     # Check `is` scoping.
     let z: Option[Option[U32]] = Option.Some(Option.Some(123))
@@ -34,6 +33,8 @@ main():
 # 120
 # OK
 # 120
+# 123
+# Option.Some(Option.Some(123))
 # Option.Some(123)
 # 123
 

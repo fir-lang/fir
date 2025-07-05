@@ -1,29 +1,29 @@
 main():
     if Bool.False:
-        1u32
+        u32(1)
 
     if Bool.False:
-        1u32
+        u32(1)
     elif Bool.True:
-        2u32
+        u32(2)
 
     match Bool.True:
-        Bool.True: 123u32
+        Bool.True: u32(123)
 
     match Bool.True:
         Bool.False: "Hi"
-        Bool.True: 123u32
+        Bool.True: u32(123)
 
     let x: U32 = if Bool.True:
-        1u32
+        u32(1)
     else:
-        2u32
+        u32(2)
 
     print(x)
 
     let y: U32 = match Bool.True:
-        Bool.True: 1u32
-        Bool.False: 2u32
+        Bool.True: u32(1)
+        Bool.False: u32(2)
 
     print(y)
 

@@ -8,7 +8,7 @@ foo(x: [A, B]):
     ()
 
 main():
-    foo((a = 123u32))
+    foo((a = u32(123)))
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101

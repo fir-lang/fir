@@ -1,15 +1,100 @@
 import Error
 import Token
 
+
 tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     let tokens = Vec.withCapacity(1000)
     let lexer = Lexer(_file = file, _input = contents, _byteIdx = 0, _line = 0, _col = 0)
     loop:
-        match try(lexer.next):
+        match try(lexer._next):
             Result.Ok(Option.None): break
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
     (tokens = tokens, error = Option.None)
+
+
+# This is mainly for compatibility with the interpreter, to make it easier to test the compiler.
+#
+# In the interpreter we combine some of the tokens to make it easier to parse as LR(1).
+#
+# In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
+# lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
+# remove this once the compiler works and we no longer need the interpreter.
+_combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
+    let newTokens = Vec.withCapacity(tokens.len())
+
+    let i = u32(0)
+    while i < tokens.len():
+        let token = tokens.get(i)
+
+        match token.kind:
+            TokenKind.TildeUpperId:
+                if i + 2 < tokens.len()
+                        and tokens.get(i + 1).kind is TokenKind.Dot
+                        and tokens.get(i + 2) is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
+                    newTokens.push(Token(
+                        kind = TokenKind.TildeUpperIdPath,
+                        text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
+                        byteIdx = token.byteIdx,
+                        line = token.line,
+                        col = token.col,
+                    ))
+                    i += 3
+                    continue
+
+            TokenKind.UpperId:
+                if i + 2 < tokens.len():
+                    if tokens.get(i + 1).kind is TokenKind.Dot:
+                        let next = tokens.get(i + 2)
+                        if next is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
+                            newTokens.push(Token(
+                                kind = TokenKind.UpperIdPath,
+                                text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
+                                byteIdx = token.byteIdx,
+                                line = token.line,
+                                col = token.col,
+                            ))
+                            i += 3
+                            continue
+                        elif next.kind is TokenKind.LBracket:
+                            newTokens.push(Token(
+                                kind = TokenKind.UpperIdDotLBracket,
+                                text = contents.substr(token.byteIdx, token.byteIdx + 2),
+                                byteIdx = token.byteIdx,
+                                line = token.line,
+                                col = token.col,
+                            ))
+                            i += 3
+                            continue
+
+            _: ()
+
+        newTokens.push(token)
+        i += 1
+
+    newTokens
+
+## Entry point to tokenize a file and print generated tokens.
+##
+## Used in tests to compare generated tokens with the interpreter's tokens.
+lexerDumpTokens(args: Array[Str]) () / []:
+    if args.len() != 2:
+        panic("USAGE: fir compiler/Lexer.fir --main lexerDumpTokens -- <file>")
+
+    let file = args.get(1)
+    let fileContents = readFileUtf8(file)
+    let (tokens, error) = tokenize(file, fileContents)
+    tokens = _combineTokens(fileContents, tokens)
+    if error is Option.Some(error):
+        print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+    for token: Token in tokens.iter():
+        print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
+lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
+    let (tokens, error) = tokenize(file, fileContents)
+    _combineTokens(fileContents, tokens)
+
 
 type Lexer:
     _file: Str
@@ -18,14 +103,17 @@ type Lexer:
     _line: U32
     _col: U32
 
+
 Lexer._fail(self, msg: Str) a / Error:
     throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0, line = self._line, col = self._col), msg = msg))
+
 
 # NB. Panics if OOB.
 Lexer._nextChar(self) Char:
     self._input.charAt(self._byteIdx)
 
-Lexer.next(self) Option[Token] / Error:
+
+Lexer._next(self) Option[Token] / Error:
     # Skip whitespace and comments before actual tokens.
     loop:
         while self._byteIdx < self._input.len() and self._nextChar() is char and char.isAsciiWhitespace():
@@ -59,13 +147,18 @@ Lexer.next(self) Option[Token] / Error:
     let col = self._col
 
     match self._input.substr(self._byteIdx, self._input.len()):
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Keywords
 
         "as" rest if not _isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.As, text = "as", byteIdx, line, col))
+
+        "is" rest if not _isIdContStr(rest):
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.Is, text = "is", byteIdx, line, col))
 
         "break" rest if not _isIdContStr(rest):
             self._byteIdx += 5
@@ -152,11 +245,6 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 6
             return Option.Some(Token(kind = TokenKind.Return, text = "return", byteIdx, line, col))
 
-        "self" rest if not _isIdContStr(rest):
-            self._byteIdx += 4
-            self._col += 4
-            return Option.Some(Token(kind = TokenKind.Self_, text = "self", byteIdx, line, col))
-
         "trait" rest if not _isIdContStr(rest):
             self._byteIdx += 5
             self._col += 5
@@ -177,7 +265,32 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 5
             return Option.Some(Token(kind = TokenKind.While, text = "while", byteIdx, line, col))
 
-        ########################################################################################
+        "do" rest if not _isIdContStr(rest):
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.Do, text = "Do", byteIdx, line, col))
+
+        "loop" rest if not _isIdContStr(rest):
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.Loop, text = "Loop", byteIdx, line, col))
+
+        "row(" _:
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.LParenRow, text = "row(", byteIdx, line, col))
+
+        "row[" _:
+            self._byteIdx += 4
+            self._col += 4
+            return Option.Some(Token(kind = TokenKind.LBracketRow, text = "row[", byteIdx, line, col))
+
+        "not" rest if not _isIdContStr(rest):
+            self._byteIdx += 3
+            self._col += 3
+            return Option.Some(Token(kind = TokenKind.Not, text = "not", byteIdx, line, col))
+
+        # ------------------------------------------------------------------------------------------
         # Delimiters
 
         "(" _:
@@ -210,7 +323,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.RBrace, text = "}", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Punctuation
 
         "," _:
@@ -238,7 +351,7 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Underscore, text = "_", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Operators
 
         "==" _:
@@ -265,6 +378,11 @@ Lexer.next(self) Option[Token] / Error:
             self._byteIdx += 2
             self._col += 2
             return Option.Some(Token(kind = TokenKind.StarEq, text = "*=", byteIdx, line, col))
+
+        "^=" _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.CaretEq, text = "*=", byteIdx, line, col))
 
         "+" _:
             self._byteIdx += 1
@@ -293,9 +411,14 @@ Lexer.next(self) Option[Token] / Error:
             return Option.Some(Token(kind = TokenKind.Exclamation, text = "!", byteIdx, line, col))
 
         "and" _:
+            self._byteIdx += 3
+            self._col += 3
+            return Option.Some(Token(kind = TokenKind.And, text = "and", byteIdx, line, col))
+
+        "&&" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "and", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.AmpAmp, text = "&&", byteIdx, line, col))
 
         "&" _:
             self._byteIdx += 1
@@ -305,7 +428,12 @@ Lexer.next(self) Option[Token] / Error:
         "or" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.PipePipe, text = "or", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Or, text = "or", byteIdx, line, col))
+
+        "||" _:
+            self._byteIdx += 2
+            self._col += 2
+            return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx, line, col))
 
         "|" _:
             self._byteIdx += 1
@@ -357,19 +485,43 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Question, text = "?", byteIdx, line, col))
 
-        ########################################################################################
+        # ------------------------------------------------------------------------------------------
         # Literals
 
         "\"" _:
             return Option.Some(self._string())
 
         "'" _:
+            match try(self._char):
+                Result.Ok(token):
+                    return Option.Some(token)
+                Result.Err(charErr):
+                    # Try label
+                    self._byteIdx += 1
+                    self._col += 1
+                    if self._byteIdx < self._input.len():
+                        if self._nextChar().isAsciiLowercase():
+                            self._byteIdx += 1
+                            self._col += 1
+                            while self._byteIdx < self._input.len() and _isIdCont(self._nextChar()):
+                                self._byteIdx += 1
+                                self._col += 1
+                            return Option.Some(Token(
+                                kind = TokenKind.Label,
+                                text = self._input.substr(byteIdx, self._byteIdx),
+                                byteIdx,
+                                line,
+                                col,
+                            ))
+
+
+
             return Option.Some(self._char())
 
         "0b" _:
             let digitsStart = self._byteIdx
-            self._byteIdx += 1
-            self._col += 1
+            self._byteIdx += 2
+            self._col += 2
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
@@ -378,9 +530,8 @@ Lexer.next(self) Option[Token] / Error:
                 self._byteIdx += 1
                 self._col += 1
 
-            let typeSuffix = self._intTypeSuffix()
             return Option.Some(Token(
-                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                kind = TokenKind.BinInt,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
@@ -389,24 +540,25 @@ Lexer.next(self) Option[Token] / Error:
 
         "0x" _:
             let digitsStart = self._byteIdx
-            self._byteIdx += 1
-            self._col += 1
+            self._byteIdx += 2
+            self._col += 2
 
             while self._byteIdx < self._input.len():
                 let c = self._nextChar()
-                if c != '_' or not c.isAsciiHexDigit():
+                if c != '_' and not c.isAsciiHexDigit():
                     break
                 self._byteIdx += 1
                 self._col += 1
 
-            let typeSuffix = self._intTypeSuffix()
             return Option.Some(Token(
-                kind = TokenKind.Int(Option.Some(typeSuffix)),
+                kind = TokenKind.HexInt,
                 text = self._input.substr(digitsStart, self._byteIdx),
                 byteIdx = digitsStart,
                 line,
                 col,
             ))
+
+        # ------------------------------------------------------------------------------------------
 
         "~" _:
             let idStart = self._byteIdx
@@ -414,8 +566,10 @@ Lexer.next(self) Option[Token] / Error:
             self._col += 1
             if self._byteIdx < self._input.len() and self._nextChar().isAsciiUppercase():
                 self._byteIdx += 1
+                self._col += 1
                 while self._byteIdx < self._input.len() and _isIdCont(self._nextChar()):
                     self._byteIdx += 1
+                    self._col += 1
                 return Option.Some(Token(
                     kind = TokenKind.TildeUpperId,
                     text = self._input.substr(idStart, self._byteIdx),
@@ -432,7 +586,7 @@ Lexer.next(self) Option[Token] / Error:
                     col,
                 ))
 
-        other:
+        _:
             let c = self._nextChar()
 
             if c.isAsciiDigit():
@@ -447,24 +601,26 @@ Lexer.next(self) Option[Token] / Error:
                     self._byteIdx += 1
                     self._col += 1
 
-                let typeSuffix = self._intTypeSuffix()
                 return Option.Some(Token(
-                    kind = TokenKind.Int(Option.Some(typeSuffix)),
+                    kind = TokenKind.Int,
                     text = self._input.substr(digitsStart, self._byteIdx),
                     byteIdx,
                     line,
                     col,
                 ))
 
-            # The `other` starts with '_' then there must be an identifier char after it, as the
+            # If the rest starts with '_' then there must be an identifier char after it, as the
             # other case is handled above. This character specifies the casing.
-            let caseCheckIdx = if c == '_':
-                self._byteIdx + 1
-            else:
-                self._byteIdx
+            let caseCheckIdx = self._byteIdx
+            while caseCheckIdx < self._input.len() and self._input.charAt(caseCheckIdx) == '_':
+                caseCheckIdx += 1
 
-            let uppercaseId = self._input.charAt(caseCheckIdx).isAsciiUppercase()
-            let lowercaseId = self._input.charAt(caseCheckIdx).isAsciiLowercase()
+            if caseCheckIdx == self._input.len():
+                panic("`line + 1`:`col + 1`: Unexpected end of input")
+
+            let caseCheckChar = self._input.charAt(caseCheckIdx)
+            let uppercaseId = caseCheckChar.isAsciiUppercase()
+            let lowercaseId = caseCheckChar.isAsciiLowercase()
 
             if uppercaseId or lowercaseId:
                 let endIdx = self._byteIdx + 1
@@ -486,31 +642,8 @@ Lexer.next(self) Option[Token] / Error:
                     col,
                 ))
 
-            panic("TODO: `c` at `byteIdx`")
+            panic("TODO: `c` at `line + 1`:`col + 1`")
 
-Lexer._intTypeSuffix(self) IntKind / Error:
-    let rest = self._input.substr(self._byteIdx, self._input.len())
-    let typeSuffix = IntKind.U32
-    match rest:
-        "u8" _:
-            typeSuffix = IntKind.U8
-            self._byteIdx += 2
-            self._col += 2
-        "i8" _:
-            typeSuffix = IntKind.I8
-            self._byteIdx += 2
-            self._col += 2
-        "u32" _:
-            typeSuffix = IntKind.U32
-            self._byteIdx += 3
-            self._col += 3
-        "i32" _:
-            typeSuffix = IntKind.I32
-            self._byteIdx += 3
-            self._col += 3
-        _:
-            ()
-    typeSuffix
 
 # NB. Initial '"' should NOT be consumed.
 Lexer._string(self) Token / Error:
@@ -558,16 +691,24 @@ Lexer._string(self) Token / Error:
                     '`' | '"' | 'n' | 't' | 'r' | '\\':
                         self._byteIdx += 1
                         self._col += 1
+                    '\n':
+                        self._byteIdx += 1
+                        self._col = 0
+                        self._line += 1
                     other:
                         self._fail("invalid escape: '`other`'")
 
+            '\n':
+                self._byteIdx += 1
+                self._col = 0
+                self._line += 1
+
             other:
                 self._byteIdx += other.lenUtf8()
-
-                # TODO: Handle non-ascii
-                self._col += other.lenUtf8()
+                self._col += 1                  # TODO: Handle wide chars
 
     self._fail("unterminated string literal")
+
 
 # NB. Initial '\'' should NOT be consumed.
 Lexer._char(self) Token / Error:
@@ -590,13 +731,14 @@ Lexer._char(self) Token / Error:
                 other: self._fail("invalid escape character in character literal: '`other`'")
         c: c
     self._byteIdx += char.lenUtf8()
-    self._col += char.lenUtf8()         # TODO: Handle non-ascii
+    self._col += 1                              # TODO: Handle wide chars
     if self._nextChar() != '\'':
         self._fail("unterminated character literal")
 
     self._byteIdx += 1
     self._col += 1
     Token(kind = TokenKind.Char, text = self._input.substr(idx, self._byteIdx), byteIdx = idx, line, col)
+
 
 Lexer._skipSingleLineComment(self):
     while self._byteIdx < self._input.len():
@@ -606,13 +748,19 @@ Lexer._skipSingleLineComment(self):
             self._col = 0
             self._line += 1
             return
-        self._col += c.lenUtf8()         # TODO: Handle non-ascii
+        self._col += 1                          # TODO: Handle wide chars
+
 
 Lexer._skipMultiLineComment(self) () / Error:
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
-        self._byteIdx += c.lenUtf8()
-        self._col += c.lenUtf8()        # TODO: Handle non-ascii
+        if c == '\n':
+            self._byteIdx += 1
+            self._line += 1
+            self._col = 0
+        else:
+            self._byteIdx += c.lenUtf8()
+            self._col += 1                      # TODO: Handle wide chars
         if c == '|':
             if self._byteIdx < self._input.len():
                 let c = self._nextChar()
@@ -620,11 +768,20 @@ Lexer._skipMultiLineComment(self) () / Error:
                     self._byteIdx += 1
                     self._col += 1
                     return
+        elif c == '#':
+            if self._byteIdx < self._input.len():
+                let c = self._nextChar()
+                if c == '|':
+                    self._byteIdx += 1
+                    self._col += 1
+                    self._skipMultiLineComment()
 
     self._fail("unterminated multi-line comment")
 
+
 _isIdCont(c: Char) Bool:
     c.isAsciiAlphanumeric() or c == '_'
+
 
 _isIdContStr(s: Str) Bool:
     match s.chars().next():

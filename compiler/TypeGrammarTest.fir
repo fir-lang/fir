@@ -227,10 +227,10 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 # 
 # Fn(self)
-# Type_(FnType(FnArgs(Type_(Self(1:4:"self")))))
+# Type_(FnType(FnArgs(Type_(LowerId(1:4:"self")))))
 # 
 # Fn(self, a: U32): [] Foo
-# ERR: unexpected token UpperFn(1:1:"Fn")
+# ERR: unexpected token Colon(1:11:":") at cursor 5
 # 
 # Map[Foo, Bar]
 # Type_(
@@ -414,6 +414,3 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #         ),
 #     ),
 # )
-
-# expected stderr: compiler/Token.fir:138:9: Unexhaustive pattern match
-

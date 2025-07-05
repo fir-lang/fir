@@ -1,7 +1,7 @@
 main():
     let x = (a = "hi", b = match f():
                 Option.Some(a): a
-                Option.None: 'a', c = 1u32)
+                Option.None: 'a', c = u32(1))
 
     print(x.a)
     print(x.b)

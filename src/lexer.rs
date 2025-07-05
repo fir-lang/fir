@@ -114,31 +114,21 @@ lexgen::lexer! {
 
         '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
 
+        $upper_id ".[" = TokenKind::UpperIdDotLBracket,
+
         // Literals
         '"' => |lexer| {
             lexer.switch(LexerRule::String)
         },
 
         let int = ['0'-'9'] ['0'-'9' '_']*;
-        $int+ = TokenKind::Int(None),
-        $int+ "i32" = TokenKind::Int(Some(IntKind::I32)),
-        $int+ "u32" = TokenKind::Int(Some(IntKind::U32)),
-        $int+ "i8" = TokenKind::Int(Some(IntKind::I8)),
-        $int+ "u8" = TokenKind::Int(Some(IntKind::U8)),
+        $int+ = TokenKind::Int,
 
         let hex_int = ['0'-'9' 'a'-'f' 'A'-'F' '_']+;
-        "0x" $hex_int+ = TokenKind::HexInt(None),
-        "0x" $hex_int+ "i32" = TokenKind::HexInt(Some(IntKind::I32)),
-        "0x" $hex_int+ "u32" = TokenKind::HexInt(Some(IntKind::U32)),
-        "0x" $hex_int+ "i8" = TokenKind::HexInt(Some(IntKind::I8)),
-        "0x" $hex_int+ "u8" = TokenKind::HexInt(Some(IntKind::U8)),
+        "0x" $hex_int+ = TokenKind::HexInt,
 
         let bin_int = ['0' '1' '_']+;
-        "0b" $bin_int+ = TokenKind::BinInt(None),
-        "0b" $bin_int+ "i32" = TokenKind::BinInt(Some(IntKind::I32)),
-        "0b" $bin_int+ "u32" = TokenKind::BinInt(Some(IntKind::U32)),
-        "0b" $bin_int+ "i8" = TokenKind::BinInt(Some(IntKind::I8)),
-        "0b" $bin_int+ "u8" = TokenKind::BinInt(Some(IntKind::U8)),
+        "0b" $bin_int+ = TokenKind::BinInt,
 
         "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\") "'" = TokenKind::Char,
     }
@@ -147,7 +137,7 @@ lexgen::lexer! {
     rule String {
         "`" => |lexer| lexer.switch(LexerRule::Interpolation),
 
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
 
         // Escaped interpolation start
         "\\`" => |lexer| lexer.continue_(),
@@ -172,7 +162,7 @@ lexgen::lexer! {
 
     rule StringSkipWhitespace {
         ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
         _ => |lexer| lexer.switch(LexerRule::String),
     }
 

@@ -5,4 +5,4 @@ type T:
 
 impl Marker[T]
 
-main() = ()
+main(): ()

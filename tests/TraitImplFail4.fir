@@ -4,7 +4,7 @@ trait T[a]:
     a(self: a)
 
 impl T[I32]:
-    a(self: I32) I32 = 123
+    a(self: I32) I32: 123
 
 # args: --typecheck --no-prelude --no-backtrace
 # expected exit status: 101

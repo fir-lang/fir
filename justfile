@@ -32,14 +32,21 @@ interpreter_update_goldens: build
 
 compiler_unit_test:
     cargo run -- compiler/Main.fir
+    ./compiler/tests/tokenize.sh
 
 compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
+    goldentests target/debug/fir compiler/DeriveEq.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
+
+    # goldentests leaves two newlines at the end of the files, remove one of
+    # them.
+    for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
     cargo build

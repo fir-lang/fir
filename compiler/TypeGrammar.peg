@@ -5,7 +5,7 @@ type Terminal = Token
 type NonTerminal = NonTerminal
 
 Terminals:
-    "LowerId" = Token(kind = TokenKind.LowerId | TokenKind.Self_, ..)
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "prim" = Token(kind = TokenKind.Prim, ..)

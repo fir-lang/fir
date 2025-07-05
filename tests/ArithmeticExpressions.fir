@@ -10,7 +10,7 @@ testMain() () / []:
     main("if true then succ(0) else 0")
     main("if iszero(0) then succ(0) else 0")
 
-main(pgm: Str) = print(eval(parse(pgm)))
+main(pgm: Str): print(eval(parse(pgm)))
 
 type Term:
     True

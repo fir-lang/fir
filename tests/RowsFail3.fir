@@ -1,6 +1,6 @@
 main():
     let x = if Bool.True:
-        (x = 123i32)
+        (x = i32(123))
     else:
         (y = "hi")
     ()

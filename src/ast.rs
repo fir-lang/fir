@@ -484,8 +484,8 @@ pub enum Expr {
 
     /// An associated function or method selection:
     ///
-    /// - Associated function: `Vec.withCapacity`.
-    /// - Method: `Vec.push`.
+    /// - Associated function: `Vec.withCapacity` (without `self` parameter).
+    /// - Method: `Vec.push` (with `self` parameter), `ToStr.toStr` (trait method).
     AssocFnSelect(AssocFnSelectExpr),
 
     /// A function call: `f(a)`.
@@ -526,6 +526,12 @@ pub enum Expr {
     Is(IsExpr),
 
     Do(Vec<L<Stmt>>),
+
+    /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    Seq {
+        ty: Option<Id>,
+        elems: Vec<(Option<L<Expr>>, L<Expr>)>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -652,8 +658,7 @@ pub struct IntExpr {
     /// parsing will be done based on the inferred type of the integer.
     pub text: String,
 
-    /// Suffix of the integer. Initially as parsed. If not available, the type checker updates
-    /// this based on the inferred type of the integer.
+    /// The type checker updates this based on the inferred type of the integer.
     pub suffix: Option<IntKind>,
 
     pub radix: u32,
@@ -832,10 +837,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for record extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
                         }
                     };
                 }
@@ -883,10 +885,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for variant extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
                         }
                     }
                 }
@@ -1092,6 +1091,15 @@ impl Expr {
             Expr::Do(stmts) => {
                 for stmt in stmts {
                     stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Seq { ty: _, elems } => {
+                for (k, v) in elems {
+                    if let Some(k) = k {
+                        k.node.subst_ty_ids(substs);
+                    }
+                    v.node.subst_ty_ids(substs);
                 }
             }
         }

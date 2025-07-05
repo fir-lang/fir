@@ -481,7 +481,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails { ref methods }) => methods,
+            TyConDetails::Trait(TraitDetails { methods }) => methods,
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!() // checked above
             }
@@ -667,7 +667,12 @@ fn collect_schemes(
                     method_schemes
                         .entry(fun.node.name.node.clone())
                         .or_default()
-                        .push((trait_decl.node.name.node.clone(), scheme));
+                        .push((trait_decl.node.name.node.clone(), scheme.clone()));
+
+                    associated_fn_schemes
+                        .entry(trait_decl.node.name.node.clone())
+                        .or_default()
+                        .insert(fun.node.name.node.clone(), scheme);
                 }
             }
 
@@ -1463,5 +1468,5 @@ fn resolve_preds(
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
-    SmolStr::new(format!("{}#{}", var, uniq))
+    SmolStr::new(format!("{var}#{uniq}"))
 }

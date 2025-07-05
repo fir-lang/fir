@@ -37,7 +37,8 @@ pub(crate) fn apply_con_ty(
                         if let Some(name) = &ty2.name {
                             panic!(
                                 "{}: Constructor takes positional arguments, but applied named argument '{}'",
-                                loc_display(loc), name
+                                loc_display(loc),
+                                name
                             );
                         }
                         unify(ty1, &ty2.node, cons, var_gen, level, loc);
@@ -112,7 +113,18 @@ pub(crate) fn apply_con_ty(
             (**con_ty_ret).clone()
         }
 
-        Ty::Con(_, _) | Ty::Var(_) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
+        Ty::Con(_, _) => {
+            if args.is_empty() {
+                return con_ty.clone();
+            }
+            panic!(
+                "{}: Constructor doesn't take arguments, but applied {} arguments",
+                loc_display(loc),
+                args.len(),
+            );
+        }
+
+        Ty::Var(_) | Ty::App(_, _, _) | Ty::Anonymous { .. } | Ty::QVar(_, _) => {
             if args.is_empty() {
                 return con_ty.clone();
             }

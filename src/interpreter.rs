@@ -6,7 +6,7 @@ mod heap;
 
 use heap::Heap;
 
-use crate::ast::{self, Id, Loc, L};
+use crate::ast::{self, Id, L, Loc};
 use crate::collections::Map;
 use crate::lowering::*;
 use crate::mono_ast as mono;
@@ -15,8 +15,6 @@ use crate::utils::loc_display;
 
 use std::cmp::Ordering;
 use std::io::Write;
-
-use bytemuck::{cast_slice, cast_slice_mut};
 
 // Just lowered program with some extra cached stuff for easy access.
 struct Pgm {
@@ -139,7 +137,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
             }
             _ => None,
         })
-        .unwrap_or_else(|| panic!("Main function `{}` is not defined", main));
+        .unwrap_or_else(|| panic!("Main function `{main}` is not defined"));
 
     // `main` doesn't have a call site, called by the interpreter.
     let call_loc = Loc {
@@ -157,31 +155,29 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         0 => {
             if args.len() > 1 {
                 println!(
-                    "WARNING: Main function `{}` does not take command line arguments, but command line arguments are passed to the interpreter",
-                    main
+                    "WARNING: Main function `{main}` does not take command line arguments, but command line arguments are passed to the interpreter"
                 );
             }
             vec![]
         }
 
         1 => {
-            let arg_vec = heap.allocate(2 + args.len());
-            heap[arg_vec] = pgm.array_u64_con_idx.as_u64();
-            heap[arg_vec + 1] = args.len() as u64;
+            let arg_array =
+                heap.allocate_array(pgm.array_u64_con_idx.as_u64(), Repr::U64, args.len() as u32);
             for (i, arg) in args.iter().enumerate() {
                 let arg_val = heap.allocate_str(
                     pgm.str_con_idx.as_u64(),
                     pgm.array_u8_con_idx.as_u64(),
+                    Repr::U8,
                     arg.as_bytes(),
                 );
-                heap[arg_vec + 2 + (i as u64)] = arg_val;
+                heap.array_set(arg_array, i as u32, arg_val, Repr::U64, &call_loc, &[]);
             }
-            vec![arg_vec]
+            vec![arg_array]
         }
 
         other => panic!(
-            "Main function `{}` needs to take 0 or 1 argument, but it takes {} arguments",
-            main, other
+            "Main function `{main}` needs to take 0 or 1 argument, but it takes {other} arguments"
         ),
     };
 
@@ -192,7 +188,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         call_site: Loc::dummy(),
     }];
 
-    call_ast_fun(
+    let ret = call_ast_fun(
         w,
         &pgm,
         &mut heap,
@@ -201,6 +197,20 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         &call_loc,
         &mut call_stack,
     );
+
+    match ret {
+        FunRet::Val(_val) => {
+            // Note: This does not hold because apparently we weren't too careful with how we return
+            // units. So far we never needed to check or use a unit return, so it was fine. If we
+            // want this assertion we should fix unit returning statements and expressions.
+            // debug_assert_eq!(_val, pgm.unit_alloc);
+        }
+        FunRet::Unwind(_) => {
+            // TODO: We should show at least the object here somehow, but ideally also the
+            // location/stack trace of the code throwing exception.
+            panic!("Uncaught exception");
+        }
+    }
 }
 
 /// Control flow within a function.
@@ -525,7 +535,7 @@ fn exec<W: Write>(
 
             Stmt::Let(LetStmt { lhs, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
-                if !try_bind_pat(pgm, heap, lhs, locals, val) {
+                if !try_bind_pat(pgm, heap, lhs, locals, val, call_stack) {
                     panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
                 }
                 val
@@ -612,7 +622,7 @@ fn exec<W: Write>(
 
                     let value = heap[next_item_option + 1];
 
-                    if !try_bind_pat(pgm, heap, pat, locals, value) {
+                    if !try_bind_pat(pgm, heap, pat, locals, value, call_stack) {
                         panic!(
                             "{}: For loop pattern failed to match item",
                             loc_display(&pat.loc)
@@ -819,6 +829,7 @@ fn eval<W: Write>(
             ControlFlow::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 &bytes,
             ))
         }
@@ -876,7 +887,7 @@ fn eval<W: Write>(
                 rhs,
             } in alts
             {
-                if try_bind_pat(pgm, heap, pattern, locals, scrut) {
+                if try_bind_pat(pgm, heap, pattern, locals, scrut, call_stack) {
                     if let Some(guard) = guard {
                         let guard = val!(eval(
                             w,
@@ -977,7 +988,7 @@ fn eval<W: Write>(
             let val = val!(eval(
                 w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
             ));
-            ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val) {
+            ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val, call_stack) {
                 pgm.true_alloc
             } else {
                 pgm.false_alloc
@@ -1035,6 +1046,7 @@ fn try_bind_pat(
     pattern: &L<Pat>,
     locals: &mut [u64],
     value: u64,
+    call_stack: &[Frame],
 ) -> bool {
     match &pattern.node {
         Pat::Var(var) => {
@@ -1059,9 +1071,12 @@ fn try_bind_pat(
                     let len = heap.str_bytes(value).len() as u32;
                     let rest = heap.allocate_str_view(
                         pgm.str_con_idx.as_u64(),
+                        pgm.array_u8_con_idx.as_u64(),
                         value,
                         pfx_len,
                         len - pfx_len,
+                        &pattern.loc,
+                        call_stack,
                     );
                     locals[var.as_usize()] = rest;
                 }
@@ -1077,8 +1092,8 @@ fn try_bind_pat(
         }
 
         Pat::Or(pat1, pat2) => {
-            try_bind_pat(pgm, heap, pat1, locals, value)
-                || try_bind_pat(pgm, heap, pat2, locals, value)
+            try_bind_pat(pgm, heap, pat1, locals, value, call_stack)
+                || try_bind_pat(pgm, heap, pat2, locals, value, call_stack)
         }
 
         Pat::Constr(ConstrPattern {
@@ -1098,7 +1113,7 @@ fn try_bind_pat(
                     field_idx = con.fields.find_named_field_idx(field_name);
                 }
                 let field_value = heap[value + 1 + (field_idx as u64)];
-                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value, call_stack) {
                     return false;
                 }
             }
@@ -1129,7 +1144,7 @@ fn try_bind_pat(
                             Some(pat) => pat,
                         };
                         let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value, call_stack) {
                             return false;
                         }
                     }
@@ -1140,7 +1155,14 @@ fn try_bind_pat(
                     for (i, field_pat) in field_pats.iter().enumerate() {
                         debug_assert!(field_pat.name.is_none());
                         let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
+                        if !try_bind_pat(
+                            pgm,
+                            heap,
+                            &field_pat.node,
+                            locals,
+                            field_value,
+                            call_stack,
+                        ) {
                             return false;
                         }
                     }
@@ -1169,22 +1191,7 @@ fn call_builtin_fun<W: Write>(
             let msg = String::from_utf8_lossy(bytes).into_owned();
             let mut msg_str = format!("{}: PANIC: {}\n", loc_display(loc), msg);
             msg_str.push_str("\nFIR STACK:\n");
-            use std::fmt::Write;
-            for frame in call_stack {
-                write!(&mut msg_str, "{}: ", loc_display(&frame.call_site)).unwrap();
-                match &frame.kind {
-                    FrameKind::Builtin(builtin_fun_decl) => {
-                        writeln!(&mut msg_str, "Builtin: {:?}", builtin_fun_decl).unwrap()
-                    }
-                    FrameKind::Source(source_fun_name) => {
-                        msg_str.push_str(source_fun_name);
-                        msg_str.push('\n');
-                    }
-                    FrameKind::Closure(loc) => {
-                        writeln!(&mut msg_str, "Closure at {}", loc_display(loc)).unwrap();
-                    }
-                }
-            }
+            write_call_stack(call_stack, &mut msg_str);
             panic!("{}", msg_str);
         }
 
@@ -1304,6 +1311,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 format!("{}", val_as_i8(i)).as_bytes(),
             ))
         }
@@ -1314,6 +1322,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 format!("{}", val_as_u8(i)).as_bytes(),
             ))
         }
@@ -1324,6 +1333,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 format!("{}", val_as_i32(i)).as_bytes(),
             ))
         }
@@ -1334,6 +1344,7 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 format!("{}", val_as_u32(i)).as_bytes(),
             ))
         }
@@ -1572,7 +1583,7 @@ fn call_builtin_fun<W: Write>(
             })
         }
 
-        BuiltinFunDecl::Throw => {
+        BuiltinFunDecl::ThrowUnchecked => {
             debug_assert_eq!(args.len(), 1);
             let exn = args[0];
             FunRet::Unwind(exn)
@@ -1613,84 +1624,46 @@ fn call_builtin_fun<W: Write>(
             debug_assert_eq!(args.len(), 1);
             let cap = val_as_u32(args[0]);
             let repr = Repr::from_mono_ty(t);
-            let cap_words = (cap as usize) * repr.elem_size_in_bytes().div_ceil(8);
-            let array = heap.allocate(cap_words + 2);
-            heap[array] = (match repr {
+            let tag = match repr {
                 Repr::U8 => pgm.array_u8_con_idx,
                 Repr::U32 => pgm.array_u32_con_idx,
                 Repr::U64 => pgm.array_u64_con_idx,
-            })
-            .as_u64();
-            heap[array + 1] = u32_as_val(cap);
-            heap.values[(array + 2) as usize..(array as usize) + 2 + cap_words].fill(0);
-            FunRet::Val(array)
+            };
+            FunRet::Val(heap.allocate_array(tag.as_u64(), repr, cap))
+        }
+
+        BuiltinFunDecl::ArraySlice { t } => {
+            debug_assert_eq!(args.len(), 3); // array, start, end
+            let array = args[0];
+            let start = val_as_u32(args[1]);
+            let end = val_as_u32(args[2]);
+            let tag = match Repr::from_mono_ty(t) {
+                Repr::U8 => pgm.array_u8_con_idx,
+                Repr::U32 => pgm.array_u32_con_idx,
+                Repr::U64 => pgm.array_u64_con_idx,
+            };
+            FunRet::Val(heap.array_slice(array, start, end, tag.as_u64(), loc, call_stack))
         }
 
         BuiltinFunDecl::ArrayLen => {
             debug_assert_eq!(args.len(), 1);
             let array = args[0];
-            FunRet::Val(heap[array + 1])
+            FunRet::Val(heap[array + heap::ARRAY_LEN_FIELD_IDX])
         }
 
         BuiltinFunDecl::ArrayGet { t } => {
             debug_assert_eq!(args.len(), 2);
             let array = args[0];
             let idx = val_as_u32(args[1]);
-            let array_len = val_as_u32(heap[array + 1]);
-            if idx >= array_len {
-                panic!(
-                    "{}: OOB array access (idx = {}, len = {})",
-                    loc_display(loc),
-                    idx,
-                    array_len
-                );
-            }
-            FunRet::Val(match Repr::from_mono_ty(t) {
-                Repr::U8 => {
-                    let payload: &[u8] = cast_slice(&heap.values[array as usize + 2..]);
-                    u8_as_val(payload[idx as usize])
-                }
-                Repr::U32 => {
-                    let payload: &[u32] = cast_slice(&heap.values[array as usize + 2..]);
-                    u32_as_val(payload[idx as usize])
-                }
-                Repr::U64 => {
-                    let payload: &[u64] = cast_slice(&heap.values[array as usize + 2..]);
-                    payload[idx as usize]
-                }
-            })
+            FunRet::Val(heap.array_get(array, idx, Repr::from_mono_ty(t), loc, call_stack))
         }
 
         BuiltinFunDecl::ArraySet { t } => {
             debug_assert_eq!(args.len(), 3);
             let array = args[0];
-            let idx = args[1];
+            let idx = val_as_u32(args[1]);
             let elem = args[2];
-
-            let array_len = heap[array + 1];
-            if idx >= array_len {
-                panic!("OOB array access (idx = {}, len = {})", idx, array_len);
-            }
-
-            match Repr::from_mono_ty(t) {
-                Repr::U8 => {
-                    let payload: &mut [u8] = cast_slice_mut(&mut heap.values[array as usize + 2..]);
-                    payload[idx as usize] = val_as_u8(elem);
-                }
-
-                Repr::U32 => {
-                    let payload: &mut [u32] =
-                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
-                    payload[idx as usize] = val_as_u32(elem);
-                }
-
-                Repr::U64 => {
-                    let payload: &mut [u64] =
-                        cast_slice_mut(&mut heap.values[array as usize + 2..]);
-                    payload[idx as usize] = elem;
-                }
-            }
-
+            heap.array_set(array, idx, elem, Repr::from_mono_ty(t), loc, call_stack);
             FunRet::Val(pgm.unit_alloc)
         }
 
@@ -1702,8 +1675,33 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(heap.allocate_str(
                 pgm.str_con_idx.as_u64(),
                 pgm.array_u8_con_idx.as_u64(),
+                Repr::U8,
                 file_contents.as_bytes(),
             ))
         }
     }
+}
+
+fn write_call_stack<W: std::fmt::Write>(call_stack: &[Frame], out: &mut W) {
+    for frame in call_stack {
+        write!(out, "{}: ", loc_display(&frame.call_site)).unwrap();
+        match &frame.kind {
+            FrameKind::Builtin(builtin_fun_decl) => {
+                writeln!(out, "Builtin: {builtin_fun_decl:?}").unwrap()
+            }
+            FrameKind::Source(source_fun_name) => {
+                writeln!(out, "{source_fun_name}").unwrap();
+            }
+            FrameKind::Closure(loc) => {
+                writeln!(out, "Closure at {}", loc_display(loc)).unwrap();
+            }
+        }
+    }
+}
+
+#[allow(unused)]
+fn print_call_stack(call_stack: &[Frame]) {
+    let mut out = String::new();
+    write_call_stack(call_stack, &mut out);
+    println!("{out}");
 }

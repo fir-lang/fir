@@ -1,3 +1,4 @@
+
 trait Iterator[iter, item, exn]:
     next(self: iter) Option[item] / exn
 
@@ -39,7 +40,7 @@ trait Iterator[iter, item, exn]:
     ## See also `size` for a version of this that returns the number of elements without consuming
     ## the iterator.
     count(self: iter) U32 / exn:
-        let n = 0u32
+        let n = u32(0)
         for _: item in self:
             n += 1
         n
@@ -99,21 +100,18 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-# NOTE: The row type parameter needs to start with `recRow` to have kind `row(variant)`.
 type Map[iter, a, b, exn]:
     iter: iter
     f: Fn(a) b / exn
 
-# BUG(#86): To work around substitution bugs, give quantified variables
-# different names than the quantified variables of `Iterator`.
-impl[Iterator[iter1, a1, exn1]] Iterator[Map[iter1, a1, b1, exn1], b1, exn1]:
-    next(self: Map[iter1, a1, b1, exn1]) Option[b1] / exn1:
+impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
+    next(self: Map[iter, a, b, exn]) Option[b] / exn:
         match self.iter.next():
             Option.None: Option.None
             Option.Some(a): Option.Some(self.f(a))
 
-    size(self: Map[iter1, a1, b1, exn1]) Option[U32] / exn2:
-        self.iter.size[iter1, a1, exn1, exn2]()
+    size(self: Map[iter, a, b, exn]) Option[U32] / exn2:
+        self.iter.size[iter, a, exn, exn2]()
 
 # --------------------------------------------------------------------------------------------------
 
@@ -147,27 +145,27 @@ type MapResult[iter, item, b, exnOld, exnNew]:
     iter: iter
     f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew
 
-impl[Iterator[iter1, item1, exnOld1]] Iterator[MapResult[iter1, item1, b1, exnOld1, exnNew1], b1, exnNew1]:
-    next(self: MapResult[iter1, item1, b1, exnOld1, exnNew1]) Option[b1] / exnNew1:
+impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, exnNew], b1, exnNew]:
+    next(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[b1] / exnNew:
         self.f(try(self.iter.next))
 
-    size(self: MapResult[iter1, item1, b1, exnOld1, exnNew1]) Option[U32] / exn3:
-        self.iter.size[iter1, item1, exnOld1, exn3]()
+    size(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[U32] / exn3:
+        self.iter.size[iter, item, exnOld, exn3]()
 
 # --------------------------------------------------------------------------------------------------
 
 type Try[iter, item, exn]:
     iter: iter
 
-impl[Iterator[iter1, item1, exn1]] Iterator[Try[iter1, item1, exn1], Result[exn1, item1], exn2]:
-    next(self: Try[iter1, item1, exn1]) Option[Result[exn1, item1]] / exn2:
+impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item], exn2]:
+    next(self: Try[iter, item, exn]) Option[Result[exn, item]] / exn2:
         match try(self.iter.next):
             Result.Err(err): Option.Some(Result.Err(err))
             Result.Ok(Option.Some(item)): Option.Some(Result.Ok(item))
             Result.Ok(Option.None): Option.None
 
-    size(self: Try[iter1, item1, exn1]) Option[U32] / exn3:
-        self.iter.size[iter1, item1, exn1, exn3]()
+    size(self: Try[iter, item, exn]) Option[U32] / exn3:
+        self.iter.size[iter, item, exn, exn3]()
 
 # --------------------------------------------------------------------------------------------------
 
@@ -175,15 +173,15 @@ type Skip[iter, item, exn]:
     iter: iter
     amount: U32
 
-impl[Iterator[iter1, item1, exn1]] Iterator[Skip[iter1, item1, exn1], item1, exn1]:
-    next(self: Skip[iter1, item1, exn1]) Option[item1] / exn1:
+impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
+    next(self: Skip[iter, item, exn]) Option[item] / exn:
         while self.amount != 0:
-            let _: Option[item1] = self.iter.next()
+            let _: Option[item] = self.iter.next()
             self.amount -= 1
         self.iter.next()
 
-    size(self: Skip[iter1, item1, exn1]) Option[U32] / exn2:
-        if self.iter.size[iter1, item1, exn1, exn2]() is Option.Some(size):
+    size(self: Skip[iter, item, exn]) Option[U32] / exn2:
+        if self.iter.size[iter, item, exn, exn2]() is Option.Some(size):
             return Option.Some(size - self.amount)
         Option.None
 

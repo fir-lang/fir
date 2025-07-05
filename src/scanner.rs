@@ -12,7 +12,7 @@ where
 {
     let mut new_tokens: Vec<(Loc, Token, Loc)> = vec![];
     let mut tokens = token_iter.peekable();
-    scan_indented(
+    let _ = scan_indented(
         &mut tokens,
         module,
         &mut new_tokens,
@@ -59,6 +59,7 @@ impl IndentedDelimKind {
 /// Scan an indented block: a file or `{...}` block.
 ///
 /// When scanning a `{...}`, the `{` should be consumed in `tokens`.
+#[must_use]
 pub fn scan_indented<I>(
     tokens: &mut Peekable<I>,
     module: &str,
@@ -84,7 +85,7 @@ where
                     line: 0,
                     col: 0,
                     byte_idx: 0,
-                }
+                };
             }
             IndentedDelimKind::Brace | IndentedDelimKind::Paren | IndentedDelimKind::Bracket => {
                 panic!(
@@ -141,8 +142,12 @@ where
                 Ordering::Greater => {
                     if generate_indent {
                         indent_stack.push(l.col);
-                        new_tokens.push(newline(l));
-                        new_tokens.push(indent(l));
+                        new_tokens.push(newline(last_loc));
+                        new_tokens.push(indent(Loc {
+                            line: last_loc.line + 1,
+                            col: 0,
+                            byte_idx: last_loc.byte_idx + 1,
+                        }));
                     }
                 }
 
@@ -177,15 +182,17 @@ where
 
         match kind {
             TokenKind::LParen | TokenKind::LParenRow => {
-                scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
+                last_loc =
+                    scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow => {
-                scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
+            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
+                last_loc =
+                    scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 
             TokenKind::LBrace => {
-                scan_indented(
+                last_loc = scan_indented(
                     tokens,
                     module,
                     new_tokens,
@@ -247,6 +254,7 @@ pub enum NonIndentedDelimKind {
 }
 
 /// Scan a non-indented block: `(...)` or `[...]`.
+#[must_use]
 pub fn scan_non_indented<I>(
     tokens: &mut Peekable<I>,
     module: &str,
@@ -303,15 +311,17 @@ where
             },
 
             TokenKind::LParen | TokenKind::LParenRow => {
-                scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
+                last_loc =
+                    scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Paren);
             }
 
-            TokenKind::LBracket | TokenKind::LBracketRow => {
-                scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
+            TokenKind::LBracket | TokenKind::LBracketRow | TokenKind::UpperIdDotLBracket => {
+                last_loc =
+                    scan_non_indented(tokens, module, new_tokens, l, NonIndentedDelimKind::Bracket);
             }
 
             TokenKind::LBrace => {
-                scan_indented(
+                last_loc = scan_indented(
                     tokens,
                     module,
                     new_tokens,
@@ -332,42 +342,49 @@ where
 
             TokenKind::Colon => {
                 // Start an indented block if the next token is on a new line.
-                if let Some((l, _, _)) = tokens.peek() {
-                    if l.line != last_loc.line {
-                        last_loc = scan_indented(
-                            tokens,
-                            module,
-                            new_tokens,
-                            // Position of the colon so that scan_indented will generate NEWLINE and
-                            // INDENT.
-                            last_loc,
-                            match delim_kind {
-                                NonIndentedDelimKind::Paren => IndentedDelimKind::Paren,
-                                NonIndentedDelimKind::Bracket => IndentedDelimKind::Bracket,
-                            },
-                            // Somewhat hacky: pass column 0 so that we consider the next line as
-                            // indented even if it's dedented.
-                            Some(Loc {
-                                line: last_loc.line,
-                                col: 0,
-                                byte_idx: 0,
-                            }),
-                        );
-                        let last_tok_kind = new_tokens.last().unwrap().1.kind;
-                        match last_tok_kind {
-                            TokenKind::Comma => {
-                                continue;
-                            }
-                            TokenKind::RParen => {
-                                assert_eq!(delim_kind, NonIndentedDelimKind::Paren);
-                                break;
-                            }
-                            TokenKind::RBracket => {
-                                assert_eq!(delim_kind, NonIndentedDelimKind::Bracket);
-                                break;
-                            }
-                            _ => panic!(),
+                if let Some((l, _, _)) = tokens.peek()
+                    && l.line != last_loc.line
+                {
+                    let l = *l;
+                    last_loc = scan_indented(
+                        tokens,
+                        module,
+                        new_tokens,
+                        // Position of the colon so that scan_indented will generate NEWLINE and
+                        // INDENT.
+                        last_loc,
+                        match delim_kind {
+                            NonIndentedDelimKind::Paren => IndentedDelimKind::Paren,
+                            NonIndentedDelimKind::Bracket => IndentedDelimKind::Bracket,
+                        },
+                        // Somewhat hacky: pass column 0 so that we consider the next line as
+                        // indented even if it's dedented.
+                        Some(Loc {
+                            line: last_loc.line,
+                            col: 0,
+                            byte_idx: 0,
+                        }),
+                    );
+                    let last_tok_kind = new_tokens.last().unwrap().1.kind;
+                    match last_tok_kind {
+                        TokenKind::Comma => {
+                            continue;
                         }
+                        TokenKind::RParen => {
+                            assert_eq!(delim_kind, NonIndentedDelimKind::Paren);
+                            break;
+                        }
+                        TokenKind::RBracket => {
+                            assert_eq!(delim_kind, NonIndentedDelimKind::Bracket);
+                            break;
+                        }
+                        other => panic!(
+                            "{}:{}:{}: ':' after '{:?}'",
+                            module,
+                            l.line + 1,
+                            l.col + 1,
+                            other
+                        ),
                     }
                 }
             }
@@ -386,7 +403,7 @@ fn newline(loc: Loc) -> (Loc, Token, Loc) {
             kind: TokenKind::Newline,
             text: "".into(),
         },
-        loc,
+        loc, // TODO: This is not right, but we don't seem to be using it
     )
 }
 
@@ -609,7 +626,7 @@ mod tests {
     }
 
     #[test]
-    fn newline_token_location() {
+    fn newline_token_location_1() {
         use smol_str::SmolStr;
         let input = "a\nb";
         let toks: Vec<(Loc, Token, Loc)> =
@@ -638,6 +655,104 @@ mod tests {
                     Token { kind: Newline, text: SmolStr::new("") },
                     Loc { line: 1, col: 1, byte_idx: 3 }
                 )
+            ],
+        );
+    }
+
+    #[test]
+    fn newline_token_location_2() {
+        use smol_str::SmolStr;
+        let input = "a:\n    b";
+        let toks: Vec<(Loc, Token, Loc)> =
+            scan(crate::lexer::lex(input, "test").into_iter(), "test");
+        #[rustfmt::skip]
+        assert_eq!(
+            toks,
+            [
+                (
+                    Loc { line: 0, col: 0, byte_idx: 0 },
+                    Token { kind: LowerId, text: SmolStr::new("a") },
+                    Loc { line: 0, col: 1, byte_idx: 1 }
+                ),
+                (
+                    Loc { line: 0, col: 1, byte_idx: 1 },
+                    Token { kind: Colon, text: SmolStr::new(":") },
+                    Loc { line: 0, col: 2, byte_idx: 2 }
+                ),
+                (
+                    Loc { line: 0, col: 2, byte_idx: 2 },
+                    Token { kind: Newline, text: SmolStr::new("") },
+                    Loc { line: 0, col: 2, byte_idx: 2 }
+                ),
+                (
+                    Loc { line: 1, col: 0, byte_idx: 3 },
+                    Token { kind: Indent, text: SmolStr::new("") },
+                    Loc { line: 1, col: 0, byte_idx: 3 }
+                ),
+                (
+                    Loc { line: 1, col: 4, byte_idx: 7 },
+                    Token { kind: LowerId, text: SmolStr::new("b") },
+                    Loc { line: 1, col: 5, byte_idx: 8 }
+                ),
+                (
+                    Loc { line: 1, col: 5, byte_idx: 8 },
+                    Token { kind: Newline, text: SmolStr::new("") },
+                    Loc { line: 1, col: 5, byte_idx: 8 }
+                ),
+                (
+                    Loc { line: 1, col: 5, byte_idx: 8 },
+                    Token { kind: Dedent, text: SmolStr::new("") },
+                    Loc { line: 1, col: 5, byte_idx: 8 }
+                )
+            ],
+        );
+    }
+
+    #[test]
+    fn newline_token_location_3() {
+        use smol_str::SmolStr;
+        let input = "f(x())";
+        let toks: Vec<(Loc, Token, Loc)> =
+            scan(crate::lexer::lex(input, "test").into_iter(), "test");
+        #[rustfmt::skip]
+        assert_eq!(
+            toks,
+            [
+                (
+                    Loc { line: 0, col: 0, byte_idx: 0 },
+                    Token { kind: LowerId, text: SmolStr::new("f") },
+                    Loc { line: 0, col: 1, byte_idx: 1 }
+                ),
+                (
+                    Loc { line: 0, col: 1, byte_idx: 1 },
+                    Token { kind: LParen, text: SmolStr::new("(") },
+                    Loc { line: 0, col: 2, byte_idx: 2 }
+                ),
+                (
+                    Loc { line: 0, col: 2, byte_idx: 2 },
+                    Token { kind: LowerId, text: SmolStr::new("x") },
+                    Loc { line: 0, col: 3, byte_idx: 3 }
+                ),
+                (
+                    Loc { line: 0, col: 3, byte_idx: 3 },
+                    Token { kind: LParen, text: SmolStr::new("(") },
+                    Loc { line: 0, col: 4, byte_idx: 4 }
+                ),
+                (
+                    Loc { line: 0, col: 4, byte_idx: 4 },
+                    Token { kind: RParen, text: SmolStr::new(")") },
+                    Loc { line: 0, col: 5, byte_idx: 5 }
+                ),
+                (
+                    Loc { line: 0, col: 5, byte_idx: 5 },
+                    Token { kind: RParen, text: SmolStr::new(")") },
+                    Loc { line: 0, col: 6, byte_idx: 6 }
+                ),
+                (
+                    Loc { line: 0, col: 6, byte_idx: 6 },
+                    Token { kind: Newline, text: SmolStr::new("") },
+                    Loc { line: 0, col: 6, byte_idx: 6 }
+                ),
             ],
         );
     }
