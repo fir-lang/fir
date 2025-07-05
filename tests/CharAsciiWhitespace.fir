@@ -11,3 +11,10 @@ main():
 
     for c: Char in str.chars():
         print(c.isAsciiWhitespace())
+
+# expected stdout:
+# Bool.True
+# Bool.True
+# Bool.True
+# Bool.True
+# Bool.True
