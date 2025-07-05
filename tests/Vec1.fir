@@ -1,10 +1,10 @@
-main()
-    let test = Vec.withCapacity(10u32)
+main():
+    let test = Vec.withCapacity(u32(10))
 
-    for i: U32 in range(0u32, 20):
+    for i: U32 in range(u32(0), 20):
         test.push(i)
 
-    for i: U32 in range(0u32, test.len()):
+    for i: U32 in range(u32(0), test.len()):
         printStr(test.get(i).toStr())
 
 # expected stdout:

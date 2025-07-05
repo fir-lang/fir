@@ -1,6 +1,6 @@
 pub mod printer;
 
-pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, Loc, Named, UnOp, L};
+pub use crate::ast::{AssignOp, BinOp, Id, IntExpr, L, Loc, Named, UnOp};
 use crate::collections::*;
 use crate::token::IntKind;
 
@@ -51,7 +51,7 @@ pub enum Type {
     Record { fields: Vec<Named<Type>> },
 
     // NB. Alts should be sorted by label.
-    Variant { alts: Vec<VariantAlt> },
+    Variant { alts: Vec<NamedType> },
 
     Fn(FnType),
 }
@@ -60,12 +60,6 @@ pub enum Type {
 pub struct NamedType {
     pub name: Id,
     pub args: Vec<Type>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>, // TODO: This is always unnamed, and type is always a record. Maybe simplify the type.
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -112,7 +106,6 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
-    WhileLet(WhileLetStmt),
     Break { label: Option<Id>, level: u32 },
     Continue { label: Option<Id>, level: u32 },
 }
@@ -140,12 +133,11 @@ pub struct Alt {
 pub enum Pat {
     Var(VarPat),
     Constr(ConstrPattern),
-    Variant(VariantPattern),
-    Record(Vec<Named<L<Pat>>>),
+    Record(RecordPattern),
     Ignore,
     Str(String),
     Char(char),
-    StrPfx(String, Id),
+    StrPfx(String, Option<Id>),
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
@@ -158,20 +150,23 @@ pub struct VarPat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
+
+    // Note: this does not need to bind or match all fields!
     pub fields: Vec<Named<L<Pat>>>,
-    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub type_: Id,
+    pub variant: bool,
+    pub ty: Id,
     pub constr: Option<Id>,
+    pub ty_args: Vec<Type>,
 }
 
 #[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
+pub struct RecordPattern {
     pub fields: Vec<Named<L<Pat>>>,
+    pub ty: Type,
 }
 
 #[derive(Debug, Clone)]
@@ -204,19 +199,10 @@ pub struct WhileStmt {
 }
 
 #[derive(Debug, Clone)]
-pub struct WhileLetStmt {
-    pub label: Option<Id>,
-    pub pat: L<Pat>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-}
-
-#[derive(Debug, Clone)]
 pub enum Expr {
     LocalVar(Id),                     // a local variable
     TopVar(VarExpr),                  // a top-level function reference
-    Constr(ConstrExpr),               // a product constructor
-    ConstrSelect(ConstrSelectExpr),   // <id>.<id>, a sum constructor
+    ConstrSelect(Constructor),        // a product or sum constructor
     FieldSelect(FieldSelectExpr),     // <expr>.<id> (TODO: This could be lowered as function calls)
     MethodSelect(MethodSelectExpr),   // <id>.<id>, with an object captured as receiver
     AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
@@ -227,29 +213,18 @@ pub enum Expr {
     BinOp(BinOpExpr),
     UnOp(UnOpExpr),
     Record(Vec<Named<L<Expr>>>),
-    Variant(VariantExpr),
     Return(Box<L<Expr>>),
     Match(MatchExpr),
     If(IfExpr),
     Fn(FnExpr),
+    Is(IsExpr),
+    Do(Vec<L<Stmt>>),
 }
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
     pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrExpr {
-    pub id: Id,
-    pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -279,13 +254,6 @@ pub struct MethodSelectExpr {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
-    pub ty: Id,
-    pub constr: Id,
-    pub ty_args: Vec<Type>,
-}
-
-#[derive(Debug, Clone)]
 pub struct AssocFnSelectExpr {
     pub ty: Id,
     pub member: Id,
@@ -309,6 +277,12 @@ pub struct UnOpExpr {
 pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct IsExpr {
+    pub expr: Box<L<Expr>>,
+    pub pat: L<Pat>,
 }
 
 #[derive(Debug, Clone)]

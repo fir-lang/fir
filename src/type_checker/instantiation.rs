@@ -49,34 +49,16 @@ pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMa
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
         }
-
-        ast::Stmt::WhileLet(ast::WhileLetStmt {
-            label: _,
-            pat,
-            cond,
-            body,
-        }) => {
-            normalize_pat(&mut pat.node, cons);
-            normalize_expr(&mut cond.node, cons);
-            for stmt in body {
-                normalize_instantiation_types(&mut stmt.node, cons);
-            }
-        }
     }
 }
 
 fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
     match expr {
         ast::Expr::Var(ast::VarExpr { ty_args, .. })
-        | ast::Expr::Constr(ast::ConstrExpr { ty_args, .. })
-        | ast::Expr::ConstrSelect(ast::ConstrSelectExpr { ty_args, .. })
+        | ast::Expr::ConstrSelect(ast::Constructor { ty_args, .. })
         | ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr { ty_args, .. }) => ty_args
             .iter_mut()
             .for_each(|ty| *ty = ty.deep_normalize(cons)),
-
-        ast::Expr::Variant(ast::VariantExpr { args, .. }) => args
-            .iter_mut()
-            .for_each(|arg| normalize_expr(&mut arg.node.node, cons)),
 
         ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
 
@@ -85,7 +67,12 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             StringPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
         }),
 
-        ast::Expr::FieldSelect(ast::FieldSelectExpr { object, field: _ }) => {
+        ast::Expr::FieldSelect(ast::FieldSelectExpr {
+            object,
+            field: _,
+            user_ty_args,
+        }) => {
+            assert!(user_ty_args.is_empty());
             normalize_expr(&mut object.node, cons)
         }
 
@@ -170,11 +157,26 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
             sig: _,
             body,
             idx: _,
+            inferred_ty,
         }) => {
             for stmt in body {
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
+            inferred_ty.as_mut().unwrap().deep_normalize(cons);
         }
+
+        ast::Expr::Is(ast::IsExpr { expr, pat }) => {
+            normalize_expr(&mut expr.node, cons);
+            normalize_pat(&mut pat.node, cons);
+        }
+
+        ast::Expr::Do(stmts) => {
+            for stmt in stmts {
+                normalize_instantiation_types(&mut stmt.node, cons);
+            }
+        }
+
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 
@@ -187,9 +189,9 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
         ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
-            constr: _,
+            constr: ast::Constructor { ty_args, .. },
             fields,
-            ty_args,
+            ignore_rest: _,
         }) => {
             for field in fields {
                 normalize_pat(&mut field.node.node, cons);
@@ -199,14 +201,15 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             }
         }
 
-        ast::Pat::Record(fields) => fields
-            .iter_mut()
-            .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons)),
-
-        ast::Pat::Variant(ast::VariantPattern { constr: _, fields }) => {
-            for field in fields.iter_mut() {
-                normalize_pat(&mut field.node.node, cons);
-            }
+        ast::Pat::Record(ast::RecordPattern {
+            fields,
+            ignore_rest: _,
+            inferred_ty,
+        }) => {
+            fields
+                .iter_mut()
+                .for_each(|ast::Named { name: _, node }| normalize_pat(&mut node.node, cons));
+            *inferred_ty = Some(inferred_ty.as_mut().unwrap().deep_normalize(cons));
         }
 
         ast::Pat::Or(pat1, pat2) => {

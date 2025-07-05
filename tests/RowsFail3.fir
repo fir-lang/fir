@@ -1,6 +1,6 @@
-main()
+main():
     let x = if Bool.True:
-        (x = 123i32)
+        (x = i32(123))
     else:
         (y = "hi")
     ()
@@ -8,5 +8,4 @@ main()
 # args: --typecheck --no-backtrace
 # expected exit status: 101
 # expected stderr:
-# tests/RowsFail3.fir:2:13: Unable to unify record with fields {"x"} with record with fields {"y"}
-
+# tests/RowsFail3.fir:5:9: Unable to unify record with fields {"y"} with record with fields {"x"}

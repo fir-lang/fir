@@ -1,4 +1,4 @@
-main
+main():
     let x: U32 = 123
     printStr(x.toStr())
     let x = x

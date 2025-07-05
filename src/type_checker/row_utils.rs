@@ -26,7 +26,7 @@ pub(crate) fn collect_rows(
                 assert!(is_row);
                 for (label_id, label_ty) in labels {
                     if all_labels.insert(label_id, label_ty).is_some() {
-                        panic!("BUG: Duplicate label in anonymous type {}", ty);
+                        panic!("BUG: Duplicate label in anonymous type {ty}");
                     }
                 }
                 extension = next_ext;
@@ -46,11 +46,14 @@ pub(crate) fn collect_rows(
                         kind,
                         is_row,
                     } => {
-                        assert!(is_row, "{:#?}", ty);
+                        assert!(
+                            is_row,
+                            "Extension variable in anonymous type is not a row: {ty:#?}"
+                        );
                         assert_eq!(kind, ty_kind);
                         for (label_id, label_ty) in labels {
                             if all_labels.insert(label_id, label_ty).is_some() {
-                                panic!("BUG: Duplicate field in anonymous type {}", ty);
+                                panic!("BUG: Duplicate field in anonymous type {ty}");
                             }
                         }
                         extension = next_ext;

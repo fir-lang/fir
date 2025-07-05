@@ -238,7 +238,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                             .cloned()
                             .zip(ty_decl.node.type_param_kinds.iter().cloned())
                             .collect(),
-                        details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+                        details: TyConDetails::Type(TypeDetails {
+                            cons: vec![],
+                            sum: true,
+                        }),
                     },
                 );
             }
@@ -290,18 +293,19 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         ast::TypeDeclRhs::Sum(sum_cons) => {
                             let cons: Vec<ConShape> =
                                 sum_cons.iter().map(ConShape::from_ast).collect();
-                            TyConDetails::Type(TypeDetails { cons })
+                            TyConDetails::Type(TypeDetails { cons, sum: true })
                         }
 
-                        ast::TypeDeclRhs::Product(fields) => TyConDetails::Type(TypeDetails {
-                            cons: vec![ConShape {
-                                name: None,
-                                fields: ConFieldShape::from_ast(fields),
-                            }],
+                        ast::TypeDeclRhs::Product(_fields) => TyConDetails::Type(TypeDetails {
+                            cons: vec![ConShape { name: None }],
+                            sum: false,
                         }),
                     },
 
-                    None => TyConDetails::Type(TypeDetails { cons: vec![] }),
+                    None => TyConDetails::Type(TypeDetails {
+                        cons: vec![],
+                        sum: true,
+                    }),
                 };
 
                 tys.get_con_mut(&ty_decl.node.name).unwrap().details = details;
@@ -355,7 +359,10 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                         .sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(&tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(&tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &fun.node.sig.self_ {
@@ -557,7 +564,7 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
         let trait_ty_con = tys.get_con_mut(trait_con_id).unwrap(); // checked above
         let trait_type_params = &trait_ty_con.ty_params;
         let trait_methods = match &mut trait_ty_con.details {
-            TyConDetails::Trait(TraitDetails { ref methods }) => methods,
+            TyConDetails::Trait(TraitDetails { methods }) => methods,
             TyConDetails::Type { .. } | TyConDetails::Synonym(_) => {
                 panic!() // checked above
             }
@@ -585,40 +592,13 @@ fn collect_cons(module: &mut ast::Module) -> TyMap {
                 .zip(impl_decl.tys.iter().map(|ty| ty.node.clone()))
                 .collect();
 
-            impl_fun_decl.node.sig.self_ = match impl_fun_decl.node.sig.self_ {
-                ast::SelfParam::No => ast::SelfParam::No,
-                ast::SelfParam::Implicit => {
-                    // Traits methods can't have implicit `self` type, checked in the previous pass
-                    // in this function (`collect_cons`).
-                    panic!()
+            if let Some(body) = &mut impl_fun_decl.node.body {
+                for stmt in body {
+                    stmt.node.subst_ty_ids(&substs);
                 }
-                ast::SelfParam::Explicit(ty) => {
-                    ast::SelfParam::Explicit(ty.map_as_ref(|ty| ty.subst_ids(&substs)))
-                }
-                ast::SelfParam::Inferred(_) => {
-                    panic!() // can't happen
-                }
-            };
+            }
 
-            impl_fun_decl.node.sig.params = impl_fun_decl
-                .node
-                .sig
-                .params
-                .into_iter()
-                .map(|(param, param_ty)| (param, param_ty.map(|ty| ty.subst_ids(&substs))))
-                .collect();
-
-            impl_fun_decl.node.sig.exceptions = impl_fun_decl
-                .node
-                .sig
-                .exceptions
-                .map(|exc| exc.map(|exc| exc.subst_ids(&substs)));
-
-            impl_fun_decl.node.sig.return_ty = impl_fun_decl
-                .node
-                .sig
-                .return_ty
-                .map(|ret| ret.map(|ret| ret.subst_ids(&substs)));
+            impl_fun_decl.node.sig.subst_ty_ids(&substs);
 
             impl_fun_decl.loc = decl.loc.clone();
 
@@ -725,7 +705,10 @@ fn collect_schemes(
                         .sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &fun.node.sig.self_ {
@@ -770,7 +753,12 @@ fn collect_schemes(
                     method_schemes
                         .entry(fun.node.name.node.clone())
                         .or_default()
-                        .push((trait_decl.node.name.node.clone(), scheme));
+                        .push((trait_decl.node.name.node.clone(), scheme.clone()));
+
+                    associated_fn_schemes
+                        .entry(trait_decl.node.name.node.clone())
+                        .or_default()
+                        .insert(fun.node.name.node.clone(), scheme);
                 }
             }
 
@@ -784,13 +772,27 @@ fn collect_schemes(
                     },
                 loc,
             }) => {
+                // Check that `parent_ty` exists.
+                if let Some(parent_ty) = parent_ty {
+                    if tys.get_con(&parent_ty.node).is_none() {
+                        panic!(
+                            "{}: Unknown type {}",
+                            loc_display(&decl.loc),
+                            &parent_ty.node
+                        );
+                    }
+                }
+
                 let fun_preds: Set<Pred> =
                     convert_and_bind_context(tys, &sig.context, TyVarConversion::ToQVar, loc);
 
                 let mut arg_tys: Vec<Ty> = sig
                     .params
                     .iter()
-                    .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                    .map(|(_name, ty)| {
+                        let ty = ty.as_ref().unwrap();
+                        convert_ast_ty(tys, &ty.node, &ty.loc)
+                    })
                     .collect();
 
                 match &sig.self_ {
@@ -799,8 +801,8 @@ fn collect_schemes(
                         // The parent type should have no type arguments.
                         match parent_ty {
                             Some(parent_ty) => {
-                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap_or_else(||
-                                    panic!("{}: Unknown type {}", loc_display(&decl.loc), &parent_ty.node));
+                                // We checked above that the parent type exists.
+                                let parent_ty_con = tys.get_con(&parent_ty.node).unwrap();
                                 if !parent_ty_con.ty_params.is_empty() {
                                     panic!(
                                         "{}: Can't infer `self` type as the parent type {} has type parameters",
@@ -808,7 +810,7 @@ fn collect_schemes(
                                         &parent_ty.node
                                     );
                                 }
-                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone()));
+                                arg_tys.insert(0, Ty::Con(parent_ty_con.id.clone(), Kind::Star));
                             }
                             None => panic!(
                                 "{}: Function with `self` type needs to have to be an associated function",
@@ -898,15 +900,27 @@ fn collect_schemes(
                 };
 
                 // Bind type parameters in the context for constructor schemes.
-                for ty_var in &ty_decl.node.type_params {
-                    tys.insert_var(ty_var.clone(), Ty::QVar(ty_var.clone()));
+                assert_eq!(
+                    ty_decl.node.type_params.len(),
+                    ty_decl.node.type_param_kinds.len()
+                );
+                for (ty_var, ty_var_kind) in ty_decl
+                    .node
+                    .type_params
+                    .iter()
+                    .zip(ty_decl.node.type_param_kinds.iter())
+                {
+                    tys.insert_var(
+                        ty_var.clone(),
+                        Ty::QVar(ty_var.clone(), ty_var_kind.clone()),
+                    );
                 }
 
                 let ty_vars: Set<Id> = ty_decl.node.type_params.iter().cloned().collect();
 
                 // Return type of constructors.
                 let ret = if ty_vars.is_empty() {
-                    Ty::Con(ty_decl.node.name.clone())
+                    Ty::Con(ty_decl.node.name.clone(), Kind::Star)
                 } else {
                     Ty::App(
                         ty_decl.node.name.clone(),
@@ -914,8 +928,12 @@ fn collect_schemes(
                             .node
                             .type_params
                             .iter()
-                            .map(|ty_var| Ty::QVar(ty_var.clone()))
+                            .zip(ty_decl.node.type_param_kinds.iter())
+                            .map(|(ty_var, ty_var_kind)| {
+                                Ty::QVar(ty_var.clone(), ty_var_kind.clone())
+                            })
                             .collect(),
+                        Kind::Star,
                     )
                 };
 
@@ -1004,7 +1022,7 @@ fn collect_schemes(
             ast::TopDecl::Impl(impl_decl) => {
                 // Default methods are already copied to impls. Check that impl method signatures
                 // match the trait method signatures.
-                let impl_assumps = convert_and_bind_context(
+                let _impl_assumps = convert_and_bind_context(
                     tys,
                     &impl_decl.node.context,
                     TyVarConversion::ToQVar,
@@ -1024,7 +1042,10 @@ fn collect_schemes(
                     let mut arg_tys: Vec<Ty> = sig
                         .params
                         .iter()
-                        .map(|(_name, ty)| convert_ast_ty(tys, &ty.node, &ty.loc))
+                        .map(|(_name, ty)| {
+                            let ty = ty.as_ref().unwrap();
+                            convert_ast_ty(tys, &ty.node, &ty.loc)
+                        })
                         .collect();
 
                     match &sig.self_ {
@@ -1060,11 +1081,7 @@ fn collect_schemes(
 
                     let impl_fun_scheme = Scheme {
                         quantified_vars: fun.node.sig.context.type_params.clone(),
-                        preds: impl_assumps
-                            .iter()
-                            .cloned()
-                            .chain(fun_assumps.iter().cloned())
-                            .collect(),
+                        preds: fun_assumps.iter().cloned().collect(),
                         ty: fun_ty,
                         loc: fun.loc.clone(),
                     };
@@ -1187,7 +1204,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
                     }
                     env.insert(
                         SmolStr::new_static("self"),
-                        Ty::Con(parent_ty_con.id.clone()),
+                        Ty::Con(parent_ty_con.id.clone(), Kind::Star),
                     );
                 }
                 None => panic!(
@@ -1208,6 +1225,7 @@ fn check_top_fun(fun: &mut ast::L<ast::FunDecl>, tys: &mut PgmTypes, trait_env: 
     }
 
     for (param_name, param_ty) in &fun.node.sig.params {
+        let param_ty = param_ty.as_ref().unwrap();
         env.insert(
             param_name.clone(),
             convert_ast_ty(&tys.tys, &param_ty.node, &fun.loc),
@@ -1331,6 +1349,7 @@ fn check_impl(impl_: &mut ast::L<ast::ImplDecl>, tys: &mut PgmTypes, trait_env: 
             }
 
             for (param_name, param_ty) in &fun.node.sig.params {
+                let param_ty = param_ty.as_ref().unwrap();
                 env.insert(
                     param_name.clone(),
                     convert_ast_ty(&tys.tys, &param_ty.node, &param_ty.loc),
@@ -1514,6 +1533,7 @@ fn resolve_preds(
     }
 
     if !goals.is_empty() {
+        goals.sort();
         use std::fmt::Write;
         let mut msg = String::new();
         writeln!(&mut msg, "Unable to resolve predicates:").unwrap();
@@ -1548,5 +1568,5 @@ fn resolve_preds(
 
 fn rename_domain_var(var: &Id, uniq: u32) -> Id {
     // Add the comment character '#' to make sure it won't conflict with a user variable.
-    SmolStr::new(format!("{}#{}", var, uniq))
+    SmolStr::new(format!("{var}#{uniq}"))
 }

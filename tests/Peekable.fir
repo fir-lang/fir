@@ -2,7 +2,7 @@ type Iter:
     next: U32
 
 impl Iterator[Iter, U32, exn]:
-    next(self: Iter): exn Option[U32]
+    next(self: Iter) Option[U32] / exn:
         if self.next == 3:
             printStr("Stopping")
             Option.None
@@ -12,7 +12,7 @@ impl Iterator[Iter, U32, exn]:
             self.next += 1
             Option.Some(next)
 
-main
+main():
     let iter = Iter(next = 0)
     let peekable = iter.peekable()
     let next: Option[U32] = peekable.next()

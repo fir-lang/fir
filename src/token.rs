@@ -1,6 +1,6 @@
 use smol_str::SmolStr;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     pub kind: TokenKind,
     pub text: SmolStr,
@@ -8,7 +8,19 @@ pub struct Token {
 
 impl Token {
     pub fn smol_str(&self) -> SmolStr {
-        self.text.clone()
+        match self.kind {
+            // Drop the '~' in tokens that merged with a prefix '~' to avoid LR(1) issues in the
+            // parser.
+            //
+            // We don't drop the brackets as those tokens are generated in a later pass after
+            // lexing, and text does not include the brackets.
+            TokenKind::TildeUpperId
+            | TokenKind::TildeUpperIdPath
+            | TokenKind::TildeUpperIdLBracket
+            | TokenKind::TildeUpperIdPathLBracket => SmolStr::new(&self.text[1..]),
+
+            _ => self.text.clone(),
+        }
     }
 }
 
@@ -17,11 +29,29 @@ pub enum TokenKind {
     /// An identifier starting with an uppercase letter.
     UpperId,
 
+    /// `UpperId '.' UpperId`, without spaces in between.
+    UpperIdPath,
+
+    /// `UpperId '.' UpperId`, follwed by a '['.
+    UpperIdPathLBracket,
+
     /// An identifier starting with an uppercase letter, followed by a '['.
     UpperIdLBracket,
 
+    /// An identifier starting with an uppercase letter, followed by a '.['.
+    ///
+    /// This starts an iterator syntax.
+    UpperIdDotLBracket,
+
     /// An identifier starting with a '~' followed by uppercase letter.
     TildeUpperId,
+
+    /// `'~' UpperId '.' UpperId`, without spaces in between.
+    TildeUpperIdPath,
+
+    TildeUpperIdPathLBracket,
+
+    TildeUpperIdLBracket,
 
     /// An identifier starting with a lowercase letter.
     LowerId,
@@ -30,29 +60,34 @@ pub enum TokenKind {
     Label,
 
     // Keywords
+    And,
     As,
     Break,
     Continue,
+    Do,
     Elif,
     Else,
     Export,
     Fn,
-    UpperFn,
     For,
     If,
     Impl,
     Import,
     In,
+    Is,
     Jump,
     Let,
+    Loop,
     Match,
+    Not,
+    Or,
     Prim,
     Return,
     Trait,
     Type,
+    UpperFn,
     Var,
     While,
-    Loop,
 
     // Delimiters
     LParen,
@@ -79,7 +114,6 @@ pub enum TokenKind {
     Caret,
     CaretEq,
     DotDot,
-    DotDotEq,
     Eq,
     EqEq,
     Exclamation,
@@ -103,10 +137,10 @@ pub enum TokenKind {
     Tilde,
 
     // Literals
-    String,
-    Int(Option<IntKind>),
-    HexInt(Option<IntKind>),
-    BinInt(Option<IntKind>),
+    Str,
+    Int,
+    HexInt,
+    BinInt,
     Char,
 
     // Virtual tokens, used to handle layout. Generatd by the scanner.

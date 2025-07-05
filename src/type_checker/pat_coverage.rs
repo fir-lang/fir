@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Loc};
 use crate::collections::{Map, Set};
-use crate::type_checker::{row_utils, FunArgs, TcFunState, Ty, TyMap};
+use crate::type_checker::{FunArgs, TcFunState, Ty, TyMap, row_utils};
 
 use super::RecordOrVariant;
 
@@ -8,7 +8,6 @@ use super::RecordOrVariant;
 pub struct PatCoverage {
     cons: Map<Con, Fields>,
     records: Fields,
-    variants: Map<Id, Fields>,
     matches_all: bool,
 }
 
@@ -27,7 +26,7 @@ struct Con {
 impl Con {
     fn from_ast_con(con: &ast::Constructor) -> Self {
         Con {
-            ty: con.type_.clone(),
+            ty: con.ty.clone(),
             con: con.constr.clone(),
         }
     }
@@ -47,7 +46,7 @@ impl PatCoverage {
             ast::Pat::Constr(ast::ConstrPattern {
                 constr,
                 fields,
-                ty_args: _,
+                ignore_rest: _,
             }) => {
                 let con = Con::from_ast_con(constr);
                 let field_pats = self.cons.entry(con).or_default();
@@ -68,12 +67,11 @@ impl PatCoverage {
                 }
             }
 
-            ast::Pat::Variant(ast::VariantPattern { constr, fields }) => {
-                let variant_pats = self.variants.entry(constr.clone()).or_default();
-                variant_pats.add(fields);
-            }
-
-            ast::Pat::Record(fields) => {
+            ast::Pat::Record(ast::RecordPattern {
+                fields,
+                ignore_rest: _,
+                inferred_ty: _,
+            }) => {
                 self.records.add(fields);
             }
 
@@ -91,10 +89,6 @@ impl PatCoverage {
             ty: ty.clone(),
             con: con.cloned(),
         })
-    }
-
-    pub fn get_variant_fields(&self, con: &Id) -> Option<&Fields> {
-        self.variants.get(con)
     }
 
     pub fn get_record_field(&self, field: &Id) -> Option<&PatCoverage> {
@@ -130,10 +124,10 @@ impl PatCoverage {
         }
 
         match ty.normalize(tc_state.tys.tys.cons()) {
-            Ty::Con(ty_con) => match con_shape(&ty_con, &tc_state.tys.tys) {
+            Ty::Con(ty_con, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -147,7 +141,7 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&[]);
+                        let con_fn_ty = con_scheme.instantiate_with_tys(&[], tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -164,10 +158,10 @@ impl PatCoverage {
                 }
             },
 
-            Ty::App(ty_con, ty_args) => match con_shape(&ty_con, &tc_state.tys.tys) {
+            Ty::App(ty_con, ty_args, _) => match con_shape(&ty_con, &tc_state.tys.tys) {
                 ConShape::Product => {
                     let con_scheme = tc_state.tys.top_schemes.get(&ty_con).unwrap();
-                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                    let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
                     self.is_con_pat_exhaustive(&con_fn_ty, &ty_con, None, tc_state, loc)
                 }
 
@@ -181,7 +175,8 @@ impl PatCoverage {
                             .get(&con)
                             .unwrap();
 
-                        let con_fn_ty = con_scheme.instantiate_with_tys(&ty_args);
+                        let con_fn_ty =
+                            con_scheme.instantiate_with_tys(&ty_args, tc_state.preds, loc);
 
                         if !self.is_con_pat_exhaustive(
                             &con_fn_ty,
@@ -218,37 +213,11 @@ impl PatCoverage {
                     return false;
                 }
 
-                for (label, label_ty) in labels {
-                    // label_ty will be a rigid record type
-                    let label_fields = match &label_ty {
-                        Ty::Anonymous {
-                            labels,
-                            extension,
-                            kind,
-                            is_row,
-                        } => {
-                            assert!(extension.is_none());
-                            assert_eq!(*kind, RecordOrVariant::Record);
-                            assert!(!is_row);
-                            labels
-                        }
-                        _ => panic!(),
-                    };
-
-                    let field_pats: &Fields = match self.variants.get(&label) {
-                        Some(label_pat) => label_pat,
-                        None => return false,
-                    };
-
-                    for (field, field_ty) in label_fields {
-                        match field_pats.named.get(field) {
-                            Some(field_pat) => {
-                                if !field_pat.is_exhaustive(field_ty, tc_state, loc) {
-                                    return false;
-                                }
-                            }
-                            None => return false,
-                        }
+                for label_ty in labels.values() {
+                    // `label` is a fully qualified name of a type, and `label_ty` is a value
+                    // of the type.
+                    if !self.is_exhaustive(label_ty, tc_state, loc) {
+                        return false;
                     }
                 }
 
@@ -286,7 +255,7 @@ impl PatCoverage {
 
             Ty::Var(_) => false,
 
-            Ty::QVar(_) | Ty::Fun { .. } => panic!(),
+            Ty::QVar(_, _) | Ty::Fun { .. } => panic!(),
         }
     }
 
@@ -314,9 +283,9 @@ impl PatCoverage {
             } => {
                 match args {
                     FunArgs::Positional(args) => {
-                        // If we have a pattern for the constructor, it should have the
-                        // right number of fields.
-                        assert_eq!(args.len(), con_field_pats.unnamed.len());
+                        // The constructor can have more fields than the pattern, extra fields in
+                        // the pattern are ignored with `..`.
+                        assert!(con_field_pats.unnamed.len() <= args.len());
 
                         for (fun_arg, fun_arg_pat) in args.iter().zip(con_field_pats.unnamed.iter())
                         {
@@ -328,18 +297,21 @@ impl PatCoverage {
 
                     FunArgs::Named(args) => {
                         // Same as above.
-                        assert_eq!(
-                            args.keys().collect::<Set<_>>(),
-                            con_field_pats.named.keys().collect::<Set<_>>()
+                        assert!(
+                            con_field_pats
+                                .named
+                                .keys()
+                                .collect::<Set<_>>()
+                                .is_subset(&args.keys().collect::<Set<_>>())
                         );
 
                         for (arg_name, arg_ty) in args.iter() {
-                            if !con_field_pats
-                                .named
-                                .get(arg_name)
-                                .unwrap()
-                                .is_exhaustive(arg_ty, tc_state, loc)
-                            {
+                            let field_pat = match con_field_pats.named.get(arg_name) {
+                                Some(field_pat) => field_pat,
+                                None => continue,
+                            };
+
+                            if !field_pat.is_exhaustive(arg_ty, tc_state, loc) {
                                 return false;
                             }
                         }
@@ -349,14 +321,14 @@ impl PatCoverage {
                 true
             }
 
-            Ty::App(_, _) | Ty::Con(_) => {
+            Ty::App(_, _, _) | Ty::Con(_, _) => {
                 // Constructor doesn't have fields.
                 assert!(con_field_pats.named.is_empty());
                 assert!(con_field_pats.unnamed.is_empty());
                 true
             }
 
-            other => panic!("{:?}", other),
+            other => panic!("{other:?}"),
         }
     }
 }
@@ -368,11 +340,17 @@ enum ConShape {
 }
 
 fn con_shape(ty_con: &Id, tys: &TyMap) -> ConShape {
-    let cons = tys.get_con(ty_con).unwrap().con_details().unwrap();
-    if cons.len() == 1 {
-        ConShape::Product
+    let ty_details = tys.get_con(ty_con).unwrap().con_details().unwrap();
+    if ty_details.sum {
+        ConShape::Sum(
+            ty_details
+                .cons
+                .iter()
+                .map(|con| con.name.clone().unwrap())
+                .collect(),
+        )
     } else {
-        ConShape::Sum(cons.iter().map(|con| con.name.clone().unwrap()).collect())
+        ConShape::Product
     }
 }
 

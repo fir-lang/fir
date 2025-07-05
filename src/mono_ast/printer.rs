@@ -5,7 +5,7 @@ use smol_str::SmolStr;
 pub fn print_pgm(pgm: &MonoPgm) {
     let mut s = String::new();
     pgm.print(&mut s);
-    println!("{}", s);
+    println!("{s}");
 }
 
 impl MonoPgm {
@@ -148,18 +148,8 @@ impl FunDecl {
 impl Type {
     pub fn print(&self, buffer: &mut String) {
         match self {
-            Type::Named(NamedType { name, args }) => {
-                buffer.push_str(name);
-                if !args.is_empty() {
-                    buffer.push('[');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        arg.print(buffer);
-                    }
-                    buffer.push(']');
-                }
+            Type::Named(ty) => {
+                ty.print(buffer);
             }
 
             Type::Record { fields } => {
@@ -179,25 +169,11 @@ impl Type {
 
             Type::Variant { alts } => {
                 buffer.push('[');
-                for (i, VariantAlt { con, fields }) in alts.iter().enumerate() {
+                for (i, ty) in alts.iter().enumerate() {
                     if i != 0 {
                         buffer.push_str(", ");
                     }
-                    buffer.push_str(con);
-                    if !fields.is_empty() {
-                        buffer.push('(');
-                        for (i, Named { name, node }) in fields.iter().enumerate() {
-                            if i != 0 {
-                                buffer.push_str(", ");
-                            }
-                            if let Some(name) = name {
-                                buffer.push_str(name);
-                                buffer.push_str(": ");
-                            }
-                            node.print(buffer);
-                        }
-                        buffer.push(')');
-                    }
+                    ty.print(buffer);
                 }
                 buffer.push(']');
             }
@@ -242,6 +218,22 @@ impl Type {
                     ret.node.print(buffer);
                 }
             }
+        }
+    }
+}
+
+impl NamedType {
+    pub fn print(&self, buffer: &mut String) {
+        buffer.push_str(&self.name);
+        if !self.args.is_empty() {
+            buffer.push('[');
+            for (i, arg) in self.args.iter().enumerate() {
+                if i != 0 {
+                    buffer.push_str(", ");
+                }
+                arg.print(buffer);
+            }
+            buffer.push(']');
         }
     }
 }
@@ -382,31 +374,6 @@ impl Stmt {
                     stmt.node.print(buffer, indent + 4);
                 }
             }
-
-            Stmt::WhileLet(WhileLetStmt {
-                label,
-                pat,
-                cond,
-                body,
-            }) => {
-                if let Some(label) = label {
-                    buffer.push('\'');
-                    buffer.push_str(label);
-                    buffer.push_str(": ");
-                }
-                buffer.push_str("while let ");
-                pat.node.print(buffer);
-                buffer.push_str(" = ");
-                cond.node.print(buffer, 0);
-                buffer.push_str(":\n");
-                for (i, stmt) in body.iter().enumerate() {
-                    if i != 0 {
-                        buffer.push('\n');
-                    }
-                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    stmt.node.print(buffer, indent + 4);
-                }
-            }
         }
     }
 }
@@ -418,28 +385,9 @@ impl Expr {
                 buffer.push_str(id);
             }
 
-            Expr::TopVar(VarExpr { id, ty_args }) | Expr::Constr(ConstrExpr { id, ty_args }) => {
+            Expr::TopVar(VarExpr { id, ty_args }) => {
                 buffer.push_str(id);
                 print_ty_args(ty_args, buffer);
-            }
-
-            Expr::Variant(VariantExpr { id, args }) => {
-                buffer.push('~');
-                buffer.push_str(id);
-                if !args.is_empty() {
-                    buffer.push('(');
-                    for (i, arg) in args.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &arg.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        arg.node.node.print(buffer, 0);
-                    }
-                    buffer.push(')');
-                }
             }
 
             Expr::FieldSelect(FieldSelectExpr { object, field }) => {
@@ -462,12 +410,11 @@ impl Expr {
                 print_ty_args(ty_args, buffer);
             }
 
-            Expr::ConstrSelect(ConstrSelectExpr {
-                ty,
-                constr: member,
-                ty_args,
-            })
-            | Expr::AssocFnSelect(AssocFnSelectExpr {
+            Expr::ConstrSelect(constr) => {
+                constr.print(buffer);
+            }
+
+            Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
                 member,
                 ty_args,
@@ -483,7 +430,6 @@ impl Expr {
                     &fun.node,
                     Expr::LocalVar(_)
                         | Expr::TopVar(_)
-                        | Expr::Constr(_)
                         | Expr::FieldSelect(_)
                         | Expr::ConstrSelect(_)
                         | Expr::MethodSelect(_)
@@ -644,8 +590,11 @@ impl Expr {
                         buffer.push('\n');
                     }
                     buffer.push_str(&INDENTS[0..indent as usize + 4]);
-                    assert!(guard.is_none()); // TODO
                     pattern.node.print(buffer);
+                    if let Some(guard) = guard {
+                        buffer.push_str(" if ");
+                        guard.node.print(buffer, indent + 8);
+                    }
                     buffer.push_str(":\n");
                     for (j, stmt) in rhs.iter().enumerate() {
                         if j != 0 {
@@ -732,6 +681,23 @@ impl Expr {
                     stmt.node.print(buffer, indent + 4);
                 }
             }
+
+            Expr::Is(IsExpr { expr, pat }) => {
+                buffer.push('(');
+                expr.node.print(buffer, indent);
+                buffer.push_str(" is ");
+                pat.node.print(buffer);
+                buffer.push(')');
+            }
+
+            Expr::Do(body) => {
+                buffer.push_str("do:\n");
+                for stmt in body.iter() {
+                    buffer.push_str(&INDENTS[0..indent as usize + 4]);
+                    stmt.node.print(buffer, indent + 4);
+                    buffer.push('\n');
+                }
+            }
         }
     }
 }
@@ -745,18 +711,8 @@ impl Pat {
                 ty.print(buffer);
             }
 
-            Pat::Constr(ConstrPattern {
-                constr: Constructor { type_, constr },
-                fields,
-                ty_args,
-            }) => {
-                buffer.push_str(type_);
-                if let Some(constr) = constr {
-                    buffer.push('.');
-                    buffer.push_str(constr);
-                }
-
-                print_ty_args(ty_args, buffer);
+            Pat::Constr(ConstrPattern { constr, fields }) => {
+                constr.print(buffer);
 
                 if !fields.is_empty() {
                     buffer.push('(');
@@ -774,25 +730,7 @@ impl Pat {
                 }
             }
 
-            Pat::Variant(VariantPattern { constr, fields }) => {
-                buffer.push_str(constr);
-                if !fields.is_empty() {
-                    buffer.push('(');
-                    for (i, field) in fields.iter().enumerate() {
-                        if i != 0 {
-                            buffer.push_str(", ");
-                        }
-                        if let Some(name) = &field.name {
-                            buffer.push_str(name);
-                            buffer.push_str(" = ");
-                        }
-                        field.node.node.print(buffer);
-                    }
-                    buffer.push(')');
-                }
-            }
-
-            Pat::Record(fields) => {
+            Pat::Record(RecordPattern { fields, ty }) => {
                 buffer.push('(');
                 for (i, field) in fields.iter().enumerate() {
                     if i != 0 {
@@ -805,7 +743,8 @@ impl Pat {
                     }
                     node.node.print(buffer);
                 }
-                buffer.push(')');
+                buffer.push_str("): ");
+                ty.print(buffer);
             }
 
             Pat::Ignore => buffer.push('_'),
@@ -827,7 +766,14 @@ impl Pat {
                 buffer.push_str(str); // TODO: escaping
                 buffer.push('"');
                 buffer.push(' ');
-                buffer.push_str(pat);
+                match pat {
+                    Some(pat) => {
+                        buffer.push_str(pat);
+                    }
+                    None => {
+                        buffer.push('_');
+                    }
+                }
             }
 
             Pat::Or(pat1, pat2) => {
@@ -841,14 +787,24 @@ impl Pat {
     }
 }
 
+impl Constructor {
+    pub fn print(&self, buffer: &mut String) {
+        if self.variant {
+            buffer.push('~');
+        }
+        buffer.push_str(&self.ty);
+        if let Some(constr) = &self.constr {
+            buffer.push('.');
+            buffer.push_str(constr);
+        }
+        print_ty_args(&self.ty_args, buffer);
+    }
+}
+
 fn expr_parens(expr: &Expr) -> bool {
     !matches!(
         expr,
-        Expr::LocalVar(_)
-            | Expr::TopVar(_)
-            | Expr::Constr(_)
-            | Expr::FieldSelect(_)
-            | Expr::ConstrSelect(_)
+        Expr::LocalVar(_) | Expr::TopVar(_) | Expr::FieldSelect(_) | Expr::ConstrSelect(_)
     )
 }
 

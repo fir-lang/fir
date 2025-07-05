@@ -1,10 +1,10 @@
-collect(iter: SplitWhitespace): Vec[Str]
+collect(iter: SplitWhitespace) Vec[Str]:
     let vec = Vec.withCapacity(10)
     for a: Str in iter:
         vec.push(a)
     vec
 
-main
+main():
     printStr(collect("".splitWhitespace()).toStr())
     printStr(collect("  ".splitWhitespace()).toStr())
     printStr(collect("a".splitWhitespace()).toStr())

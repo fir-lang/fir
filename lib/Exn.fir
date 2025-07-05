@@ -1,8 +1,11 @@
-prim throw(exn: exn): exn a
+prim throwUnchecked(exn: exn) a
 
-prim try(cb: Fn(): exn a): Result[exn, a]
+throw(exn: exn) a / exn:
+    throwUnchecked(exn)
 
-untry(res: Result[exn, a]): exn a
+prim try(cb: Fn() a / exn) Result[exn, a]
+
+untry(res: Result[exn, a]) a / exn:
     match res:
         Result.Ok(a): a
         Result.Err(err): throw(err)

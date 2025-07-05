@@ -1,5 +1,7 @@
 use crate::ast::{self, Id, L};
 
+use smol_str::SmolStr;
+
 pub(crate) fn parse_char_lit(text: &str) -> char {
     let mut chars = text.chars();
 
@@ -14,7 +16,7 @@ pub(crate) fn parse_char_lit(text: &str) -> char {
             't' => '\t',
             'r' => '\r',
             '\\' => '\\',
-            other => panic!("Unknown escaped character: '\\{}'", other),
+            other => panic!("Unknown escaped character: '\\{other}'"),
         }
     } else {
         char
@@ -25,9 +27,9 @@ pub(crate) fn process_param_list(
     params: Vec<(Id, Option<L<ast::Type>>)>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
-) -> (ast::SelfParam, Vec<(Id, L<ast::Type>)>) {
+) -> (ast::SelfParam, Vec<(Id, Option<L<ast::Type>>)>) {
     let mut self_param = ast::SelfParam::No;
-    let mut typed_params: Vec<(Id, L<ast::Type>)> = Vec::with_capacity(params.len());
+    let mut typed_params: Vec<(Id, Option<L<ast::Type>>)> = Vec::with_capacity(params.len());
 
     for (param_id, param_ty) in params {
         if param_id == "self" {
@@ -37,7 +39,7 @@ pub(crate) fn process_param_list(
             };
         } else {
             match param_ty {
-                Some(ty) => typed_params.push((param_id, ty)),
+                Some(ty) => typed_params.push((param_id, Some(ty))),
                 None => panic!(
                     "{}:{}:{}: Parameter {} without type",
                     module,
@@ -50,4 +52,10 @@ pub(crate) fn process_param_list(
     }
 
     (self_param, typed_params)
+}
+
+pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
+    let parts: Vec<SmolStr> = path.split('.').map(SmolStr::new).collect();
+    assert_eq!(parts.len(), 2);
+    parts
 }

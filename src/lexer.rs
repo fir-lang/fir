@@ -26,9 +26,11 @@ lexgen::lexer! {
         },
 
         // Keywords
+        "and" = TokenKind::And,
         "as" = TokenKind::As,
         "break" = TokenKind::Break,
         "continue" = TokenKind::Continue,
+        "do" = TokenKind::Do,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
         "export" = TokenKind::Export,
@@ -39,10 +41,13 @@ lexgen::lexer! {
         "impl" = TokenKind::Impl,
         "import" = TokenKind::Import,
         "in" = TokenKind::In,
+        "is" = TokenKind::Is,
         "jump" = TokenKind::Jump,
         "let" = TokenKind::Let,
         "loop" = TokenKind::Loop,
         "match" = TokenKind::Match,
+        "not" = TokenKind::Not,
+        "or" = TokenKind::Or,
         "prim" = TokenKind::Prim,
         "return" = TokenKind::Return, // maybe shorten as "ret"?
         "trait" = TokenKind::Trait,
@@ -68,7 +73,6 @@ lexgen::lexer! {
         ";" = TokenKind::Semicolon,
         "\\" = TokenKind::Backslash,
         ".." = TokenKind::DotDot,
-        "..=" = TokenKind::DotDotEq,
         "_" = TokenKind::Underscore,
 
         // Operators
@@ -98,39 +102,33 @@ lexgen::lexer! {
         "%" = TokenKind::Percent,
         "^" = TokenKind::Caret,
 
-        let upper_id = $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
-        '~' $upper_id = TokenKind::TildeUpperId,
-        $upper_id = TokenKind::UpperId,
-        ($$ascii_lowercase | '_') ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+        let upper_id = '_'* $$ascii_uppercase ($$ascii_alphanumeric | '_')*;
 
-        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')+ = TokenKind::Label,
+        $upper_id = TokenKind::UpperId,
+        '~' $upper_id = TokenKind::TildeUpperId,
+
+        $upper_id '.' $upper_id = TokenKind::UpperIdPath,
+        '~' $upper_id '.' $upper_id = TokenKind::TildeUpperIdPath,
+
+        '_'* $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::LowerId,
+
+        '\'' $$ascii_lowercase ($$ascii_alphanumeric | '_')* = TokenKind::Label,
+
+        $upper_id ".[" = TokenKind::UpperIdDotLBracket,
 
         // Literals
         '"' => |lexer| {
             lexer.switch(LexerRule::String)
         },
 
-        // TODO: We should probably leave defaulting to the type checker.
-        let int = ['0'-'9' '_']+;
-        $int+ = TokenKind::Int(None),
-        $int+ "i32" = TokenKind::Int(Some(IntKind::I32)),
-        $int+ "u32" = TokenKind::Int(Some(IntKind::U32)),
-        $int+ "i8" = TokenKind::Int(Some(IntKind::I8)),
-        $int+ "u8" = TokenKind::Int(Some(IntKind::U8)),
+        let int = ['0'-'9'] ['0'-'9' '_']*;
+        $int+ = TokenKind::Int,
 
         let hex_int = ['0'-'9' 'a'-'f' 'A'-'F' '_']+;
-        "0x" $hex_int+ = TokenKind::HexInt(None),
-        "0x" $hex_int+ "i32" = TokenKind::HexInt(Some(IntKind::I32)),
-        "0x" $hex_int+ "u32" = TokenKind::HexInt(Some(IntKind::U32)),
-        "0x" $hex_int+ "i8" = TokenKind::HexInt(Some(IntKind::I8)),
-        "0x" $hex_int+ "u8" = TokenKind::HexInt(Some(IntKind::U8)),
+        "0x" $hex_int+ = TokenKind::HexInt,
 
         let bin_int = ['0' '1' '_']+;
-        "0b" $bin_int+ = TokenKind::BinInt(None),
-        "0b" $bin_int+ "i32" = TokenKind::BinInt(Some(IntKind::I32)),
-        "0b" $bin_int+ "u32" = TokenKind::BinInt(Some(IntKind::U32)),
-        "0b" $bin_int+ "i8" = TokenKind::BinInt(Some(IntKind::I8)),
-        "0b" $bin_int+ "u8" = TokenKind::BinInt(Some(IntKind::U8)),
+        "0b" $bin_int+ = TokenKind::BinInt,
 
         "'" ((_ # '\'') | "\\'" | "\\n" | "\\t" | "\\r" | "\\\\") "'" = TokenKind::Char,
     }
@@ -139,13 +137,17 @@ lexgen::lexer! {
     rule String {
         "`" => |lexer| lexer.switch(LexerRule::Interpolation),
 
-        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::String),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
 
         // Escaped interpolation start
         "\\`" => |lexer| lexer.continue_(),
 
         // Escape characters
         '\\' ('"' | 'n' | 't' | 'r' | '\\') => |lexer| lexer.continue_(),
+
+        // "Continuation escape": backslash followed by newline ignores the newline and following
+        // whitespace.
+        '\\' '\n' => |lexer| lexer.switch(LexerRule::StringSkipWhitespace),
 
         _ => |lexer| lexer.continue_(),
     }
@@ -158,6 +160,11 @@ lexgen::lexer! {
         _ => |lexer| lexer.continue_(),
     }
 
+    rule StringSkipWhitespace {
+        ' ' | '\t' | '\n' | '\r' => |lexer| lexer.continue_(),
+        '"' => |lexer| lexer.switch_and_return(LexerRule::Init, TokenKind::Str),
+        _ => |lexer| lexer.switch(LexerRule::String),
+    }
 
     rule Comment {
         "#|" =>
@@ -204,4 +211,66 @@ pub fn lex(src: &str, module: &str) -> Vec<(Loc, Token, Loc)> {
             )
         })
         .collect()
+}
+
+#[test]
+fn lex_ids() {
+    let input = "a _a __a __a__a_ B _B __B __B__B_";
+    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+    assert_eq!(
+        tokens,
+        vec![
+            Token {
+                kind: TokenKind::LowerId,
+                text: "a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "_a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "__a".into(),
+            },
+            Token {
+                kind: TokenKind::LowerId,
+                text: "__a__a_".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "_B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "__B".into(),
+            },
+            Token {
+                kind: TokenKind::UpperId,
+                text: "__B__B_".into(),
+            }
+        ]
+    );
+}
+
+#[test]
+fn lex_underscores() {
+    let input = "__";
+    let tokens: Vec<Token> = lex(input, "test").into_iter().map(|(_, t, _)| t).collect();
+    assert_eq!(
+        tokens,
+        vec![
+            Token {
+                kind: TokenKind::Underscore,
+                text: "_".into(),
+            },
+            Token {
+                kind: TokenKind::Underscore,
+                text: "_".into(),
+            }
+        ]
+    );
 }

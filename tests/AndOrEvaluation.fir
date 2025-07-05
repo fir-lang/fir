@@ -1,8 +1,8 @@
-main()
-    if Bool.True || panic("FAIL 1"):
+main():
+    if Bool.True or panic("FAIL 1"):
         printStr("OK 1")
 
-    if Bool.False && panic("FAIL 2"):
+    if Bool.False and panic("FAIL 2"):
         panic("FAIL 3")
 
     printStr("OK 2")

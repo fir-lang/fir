@@ -188,19 +188,13 @@ pub enum Type {
 
     /// An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
     Variant {
-        alts: Vec<VariantAlt>,
+        alts: Vec<NamedType>,
         extension: Option<Id>,
         is_row: bool,
     },
 
     /// A function type: `Fn(I32): Bool`.
     Fn(FnType),
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantAlt {
-    pub con: Id,
-    pub fields: Vec<Named<Type>>,
 }
 
 /// A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
@@ -256,13 +250,23 @@ pub struct FunSig {
     /// Parameters of the function.
     ///
     /// Note: this does not include `self`!
-    pub params: Vec<(Id, L<Type>)>,
+    ///
+    /// Type is optional for `fn` expressions, where we can sometimes use the type information from
+    /// the `fn` use site to give types to arguments.
+    pub params: Vec<(Id, Option<L<Type>>)>,
 
     /// Optional return type.
+    ///
+    /// When not available in a top-level definition, this defaults to `()`. In a `fn`, we use the
+    /// type information at the `fn` use site or fail and ask user to add type annotation.
     pub return_ty: Option<L<Type>>,
 
-    /// The exception signature. If exists, this will be a variant type. Store as `Type` to make it
-    /// easier to process with rest of the types.
+    /// The exception signature.
+    ///
+    /// When not available in a top-level definition, this will be a quantified type variable that
+    /// is not used anywhere else in the signature.
+    ///
+    /// When not available in a `fn` expr, the exception type will be inferred.
     pub exceptions: Option<L<Type>>,
 }
 
@@ -307,7 +311,6 @@ pub enum Stmt {
     Expr(L<Expr>),
     For(ForStmt),
     While(WhileStmt),
-    WhileLet(WhileLetStmt),
     Break {
         label: Option<Id>,
 
@@ -352,10 +355,7 @@ pub enum Pat {
     /// Matches a constructor.
     Constr(ConstrPattern),
 
-    /// Matches a variant.
-    Variant(VariantPattern),
-
-    Record(Vec<Named<L<Pat>>>),
+    Record(RecordPattern),
 
     /// Underscore, aka. wildcard.
     Ignore,
@@ -367,7 +367,7 @@ pub enum Pat {
     Char(char),
 
     /// Match the prefix, bind the rest. E.g. `"a" .. rest`.
-    StrPfx(String, Id),
+    StrPfx(String, Option<Id>),
 
     /// Or pattern: `<pat1> | <pat2>`.
     Or(Box<L<Pat>>, Box<L<Pat>>),
@@ -384,22 +384,34 @@ pub struct VarPat {
 #[derive(Debug, Clone)]
 pub struct ConstrPattern {
     pub constr: Constructor,
+
     pub fields: Vec<Named<L<Pat>>>,
 
-    /// Inferred type arguments of the constructor. Filled in by the type checker.
-    pub ty_args: Vec<Ty>,
+    /// Whether we ignore fields with `..`: `MyStruct(a = 1u32, ..)`.
+    pub ignore_rest: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct RecordPattern {
+    pub fields: Vec<Named<L<Pat>>>,
+    pub ignore_rest: bool,
+    pub inferred_ty: Option<Ty>,
 }
 
 #[derive(Debug, Clone)]
 pub struct Constructor {
-    pub type_: Id,
+    pub variant: bool,
+    pub ty: Id,
     pub constr: Option<Id>,
-}
 
-#[derive(Debug, Clone)]
-pub struct VariantPattern {
-    pub constr: Id,
-    pub fields: Vec<Named<L<Pat>>>,
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    ///
+    /// Always empty in patterns.
+    pub user_ty_args: Vec<L<Type>>,
+
+    /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
+    pub ty_args: Vec<Ty>,
 }
 
 #[derive(Debug, Clone)]
@@ -453,23 +465,12 @@ pub struct WhileStmt {
 }
 
 #[derive(Debug, Clone)]
-pub struct WhileLetStmt {
-    pub label: Option<Id>,
-    pub pat: L<Pat>,
-    pub cond: L<Expr>,
-    pub body: Vec<L<Stmt>>,
-}
-
-#[derive(Debug, Clone)]
 pub enum Expr {
     /// A variable: `x`.
     Var(VarExpr),
 
-    /// A product constructor: `Vec`, `Bool`, `I32`.
-    Constr(ConstrExpr),
-
-    /// A sum constructor: `Option.None`, `Result.Ok`, `Bool.True`.
-    ConstrSelect(ConstrSelectExpr),
+    /// A constructor: `Option.None`, `Result.Ok`, `Bool.True`, `Vec`.
+    ConstrSelect(Constructor),
 
     /// A field selection: `<expr>.x` where `x` is a field.
     ///
@@ -484,8 +485,8 @@ pub enum Expr {
 
     /// An associated function or method selection:
     ///
-    /// - Associated function: `Vec.withCapacity`.
-    /// - Method: `Vec.push`.
+    /// - Associated function: `Vec.withCapacity` (without `self` parameter).
+    /// - Method: `Vec.push` (with `self` parameter), `ToStr.toStr` (trait method).
     AssocFnSelect(AssocFnSelectExpr),
 
     /// A function call: `f(a)`.
@@ -515,12 +516,6 @@ pub enum Expr {
     /// A record: `(1, 2)`, `(x = 123, msg = "hi")`.
     Record(Vec<Named<L<Expr>>>),
 
-    /// A variant: "~A" (nullary), "~ParseError(...)".
-    ///
-    /// Because "~A" is type checked differently from "~A(1)", we parse variant applications as
-    /// `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr),
-
     Return(Box<L<Expr>>),
 
     Match(MatchExpr),
@@ -528,28 +523,28 @@ pub enum Expr {
     If(IfExpr),
 
     Fn(FnExpr),
+
+    Is(IsExpr),
+
+    Do(Vec<L<Stmt>>),
+
+    /// A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    Seq {
+        ty: Option<Id>,
+        elems: Vec<(Option<L<Expr>>, L<Expr>)>,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub struct VarExpr {
     pub id: Id,
 
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    pub user_ty_args: Vec<L<Type>>,
+
     /// Inferred type arguments of the variable. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct ConstrExpr {
-    pub id: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
-    pub ty_args: Vec<Ty>,
-}
-
-#[derive(Debug, Clone)]
-pub struct VariantExpr {
-    pub id: Id,
-    pub args: Vec<Named<L<Expr>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -568,7 +563,15 @@ pub struct CallArg {
 #[derive(Debug, Clone)]
 pub struct FieldSelectExpr {
     pub object: Box<L<Expr>>,
+
     pub field: Id,
+
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    ///
+    /// Since fields can't have `forall` quantifiers, this will only be valid when the field is a
+    /// method, in which case the type checker will convert this node into `MethodSelectExpr`.
+    pub user_ty_args: Vec<L<Type>>,
 }
 
 /// A method selection: `<expr>.method`.
@@ -618,16 +621,6 @@ pub struct MethodSelectExpr {
     pub ty_args: Vec<Ty>,
 }
 
-/// A constructor selection: `Option.None`.
-#[derive(Debug, Clone)]
-pub struct ConstrSelectExpr {
-    pub ty: Id,
-    pub constr: Id,
-
-    /// Inferred type arguments of the constructor. Filled by the type checker.
-    pub ty_args: Vec<Ty>,
-}
-
 /// An associated function or method selection:
 ///
 /// - Associated function: `Vec.withCapacity`.
@@ -636,6 +629,10 @@ pub struct ConstrSelectExpr {
 pub struct AssocFnSelectExpr {
     pub ty: Id,
     pub member: Id,
+
+    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    /// there will be always one element.
+    pub user_ty_args: Vec<L<Type>>,
 
     /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
@@ -662,16 +659,15 @@ pub struct IntExpr {
     /// parsing will be done based on the inferred type of the integer.
     pub text: String,
 
-    /// Suffix of the integer. Initially as parsed. If not available, the type checker updates
-    /// this based on the inferred type of the integer.
+    /// The type checker updates this based on the inferred type of the integer.
     pub suffix: Option<IntKind>,
 
     pub radix: u32,
 
     /// Filled in by the type checker. The parsed integer.
     ///
-    /// This should be the integer value as expected by the interpreter. E.g. `-1u64` should be
-    /// `0x00000000000000ff`, instead of `0xffffffffffffffff`.
+    /// This will be the integer value in two's complement, extended to unsiged 64-bit.
+    /// E.g. `-1u8` will be `0x00000000000000ff`, instead of `0xffffffffffffffff`.
     pub parsed: u64,
 }
 
@@ -706,6 +702,16 @@ pub struct FnExpr {
     pub sig: FunSig,
     pub body: Vec<L<Stmt>>,
     pub idx: u32,
+    pub inferred_ty: Option<Ty>,
+}
+
+/// `<expr> is <pat>`: matches expression against pattern.
+///
+/// Can bind variables.
+#[derive(Debug, Clone)]
+pub struct IsExpr {
+    pub expr: Box<L<Expr>>,
+    pub pat: L<Pat>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -832,10 +838,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for record extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
                         }
                     };
                 }
@@ -852,14 +855,14 @@ impl Type {
                 extension,
                 is_row,
             } => {
-                let mut alts: Vec<VariantAlt> = alts
+                let mut alts: Vec<NamedType> = alts
                     .iter()
-                    .map(|VariantAlt { con, fields }| VariantAlt {
-                        con: con.clone(),
-                        fields: fields
+                    .map(|NamedType { name, args }| NamedType {
+                        name: name.clone(),
+                        args: args
                             .iter()
-                            .map(|Named { name, node }| Named {
-                                name: name.clone(),
+                            .map(|L { loc, node }| L {
+                                loc: loc.clone(),
                                 node: node.subst_ids(substs),
                             })
                             .collect(),
@@ -883,10 +886,7 @@ impl Type {
                                 extension = new_ext.clone();
                             }
 
-                            _ => panic!(
-                                "Weird substitution for variant extension {}: {}",
-                                ext, ext_ty
-                            ),
+                            _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
                         }
                     }
                 }
@@ -921,6 +921,221 @@ impl Type {
         match self {
             Type::Named(named_type) => named_type,
             _ => panic!(),
+        }
+    }
+}
+
+impl Stmt {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match self {
+            Stmt::Let(LetStmt { lhs: _, ty, rhs }) => {
+                if let Some(ty) = ty {
+                    ty.node = ty.node.subst_ids(substs);
+                }
+                rhs.node.subst_ty_ids(substs);
+            }
+
+            Stmt::Assign(AssignStmt { lhs, rhs, op: _ }) => {
+                lhs.node.subst_ty_ids(substs);
+                rhs.node.subst_ty_ids(substs);
+            }
+
+            Stmt::Expr(expr) => expr.node.subst_ty_ids(substs),
+
+            Stmt::For(ForStmt {
+                label: _,
+                pat: _,
+                ast_ty,
+                tc_ty: _,
+                expr,
+                expr_ty: _,
+                body,
+            }) => {
+                if let Some(ast_ty) = ast_ty {
+                    ast_ty.node = ast_ty.node.subst_ids(substs);
+                }
+                expr.node.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Stmt::While(WhileStmt {
+                label: _,
+                cond,
+                body,
+            }) => {
+                cond.node.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Stmt::Break { label: _, level: _ } => {}
+
+            Stmt::Continue { label: _, level: _ } => {}
+        }
+    }
+}
+
+impl Expr {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match self {
+            Expr::Var(_)
+            | Expr::ConstrSelect(_)
+            | Expr::AssocFnSelect(_)
+            | Expr::Int(_)
+            | Expr::Char(_)
+            | Expr::Self_ => {}
+
+            Expr::FieldSelect(FieldSelectExpr {
+                object,
+                field: _,
+                user_ty_args: _,
+            }) => {
+                object.node.subst_ty_ids(substs);
+            }
+
+            Expr::MethodSelect(MethodSelectExpr {
+                object,
+                object_ty: _,
+                method_ty_id: _,
+                method: _,
+                ty_args: _,
+            }) => {
+                object.node.subst_ty_ids(substs);
+            }
+
+            Expr::Call(CallExpr { fun, args }) => {
+                fun.node.subst_ty_ids(substs);
+                for CallArg { name: _, expr } in args {
+                    expr.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::String(parts) => {
+                for part in parts {
+                    match part {
+                        StringPart::Str(_) => {}
+                        StringPart::Expr(expr) => expr.node.subst_ty_ids(substs),
+                    }
+                }
+            }
+
+            Expr::BinOp(BinOpExpr { left, right, op: _ }) => {
+                left.node.subst_ty_ids(substs);
+                right.node.subst_ty_ids(substs);
+            }
+
+            Expr::UnOp(UnOpExpr { op: _, expr }) => {
+                expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Record(fields) => {
+                for field in fields {
+                    field.node.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Return(expr) => expr.node.subst_ty_ids(substs),
+
+            Expr::Match(MatchExpr { scrutinee, alts }) => {
+                scrutinee.node.subst_ty_ids(substs);
+                for Alt {
+                    pattern: _,
+                    guard,
+                    rhs,
+                } in alts
+                {
+                    if let Some(guard) = guard {
+                        guard.node.subst_ty_ids(substs);
+                    }
+                    for stmt in rhs {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+            }
+
+            Expr::If(IfExpr {
+                branches,
+                else_branch,
+            }) => {
+                for (lhs, rhs) in branches {
+                    lhs.node.subst_ty_ids(substs);
+                    for stmt in rhs {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        stmt.node.subst_ty_ids(substs);
+                    }
+                }
+            }
+
+            Expr::Fn(FnExpr {
+                sig,
+                body,
+                idx: _,
+                inferred_ty: _,
+            }) => {
+                sig.subst_ty_ids(substs);
+                for stmt in body {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Is(IsExpr { expr, pat: _ }) => {
+                expr.node.subst_ty_ids(substs);
+            }
+
+            Expr::Do(stmts) => {
+                for stmt in stmts {
+                    stmt.node.subst_ty_ids(substs);
+                }
+            }
+
+            Expr::Seq { ty: _, elems } => {
+                for (k, v) in elems {
+                    if let Some(k) = k {
+                        k.node.subst_ty_ids(substs);
+                    }
+                    v.node.subst_ty_ids(substs);
+                }
+            }
+        }
+    }
+}
+
+impl FunSig {
+    pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
+        match &mut self.self_ {
+            SelfParam::No => {}
+            SelfParam::Implicit => {
+                // Traits methods can't have implicit `self` type, checked in the previous pass
+                // in this function (`collect_cons`).
+                panic!()
+            }
+            SelfParam::Explicit(ty) => {
+                ty.node = ty.node.subst_ids(substs);
+            }
+            SelfParam::Inferred(_) => {
+                panic!()
+            }
+        }
+
+        for (_, param_ty) in &mut self.params {
+            if let Some(param_ty) = param_ty {
+                param_ty.node = param_ty.node.subst_ids(substs);
+            }
+        }
+
+        if let Some(return_ty) = &mut self.return_ty {
+            return_ty.node = return_ty.node.subst_ids(substs);
+        }
+
+        if let Some(exceptions) = &mut self.exceptions {
+            exceptions.node = exceptions.node.subst_ids(substs);
         }
     }
 }

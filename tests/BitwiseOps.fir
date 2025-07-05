@@ -1,6 +1,6 @@
-main()
-    printStr((0b0000_1111u8 | 0b1111_0000u8 == 0b1111_1111u8).toStr())
-    printStr((0xFFu32 | 0xFF00u32 == 0xFFFFu32).toStr())
+main():
+    printStr((u8(0b0000_1111) | u8(0b1111_0000) == u8(0b1111_1111)).toStr())
+    printStr((u32(0xFF) | u32(0xFF00) == u32(0xFFFF)).toStr())
 
     # TODO: Add more tests
 

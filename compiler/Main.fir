@@ -1,12 +1,6 @@
 import Ast
+import AstPrinter
 import Lexer
+import Scanner
 
-main(args: Array[Str])
-    let filePath = args.get(1)
-    let fileContents = readFileUtf8(filePath)
-    let (tokens = tokens, error = error) = tokenize(filePath, fileContents)
-    for token: Token in tokens.iter():
-        print(token)
-    match error:
-        Option.Some(error): printStr("ERROR: `error.loc.byteIdx`: `error.msg`")
-        Option.None: ()
+main(args: Array[Str]): ()

@@ -1,7 +1,7 @@
-main()
-    printStr((0xFFu8.asI8()).toStr())
-    printStr((0xFFFFFFFFu32.asI32()).toStr())
-    printStr((0xFFFFFFFFu32.asU8()).toStr())
+main():
+    printStr((u8(0xFF).asI8()).toStr())
+    printStr((u32(0xFFFFFFFF).asI32()).toStr())
+    printStr((u32(0xFFFFFFFF).asU8()).toStr())
 
     # TODO: Add more tests
 

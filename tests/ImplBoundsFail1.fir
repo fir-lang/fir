@@ -1,10 +1,10 @@
 type A[t]:
     i: t
 
-A.test[ToStr[t1]](self: A[t1, t2])
+A.test[ToStr[t1]](self: A[t1, t2]):
     printStr(self.i.toStr())
 
-main() = A(i = 123i32).test()
+main(): A(i = i32(123)).test()
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101

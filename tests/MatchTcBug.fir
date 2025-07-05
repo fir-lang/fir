@@ -1,6 +1,6 @@
-test(): U32 = 123u32
+test() U32: u32(123)
 
-main
+main():
     match test():
         idx: ()
 

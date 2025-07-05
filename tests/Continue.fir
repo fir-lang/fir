@@ -1,5 +1,5 @@
-testFor(n: I32): I32
-    let sum = 0i32
+testFor(n: I32) I32:
+    let sum = i32(0)
     for i: I32 in range(0, n):
         # TODO: Use modulus once we have it.
         if i & 0b1 == 0b1:
@@ -7,9 +7,9 @@ testFor(n: I32): I32
         sum += i
     sum
 
-testWhile(n: I32): I32
-    let sum = 0i32
-    let i = 0i32
+testWhile(n: I32) I32:
+    let sum = i32(0)
+    let i = i32(0)
     while Bool.True:
         if i == n:
             break
@@ -23,7 +23,7 @@ testWhile(n: I32): I32
         i += 1
     sum
 
-main()
+main():
     printStr(testFor(10).toStr())
     printStr(testFor(20).toStr())
     printStr(testWhile(10).toStr())

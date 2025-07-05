@@ -23,7 +23,7 @@ pub(super) fn unify(
     }
 
     match (&ty1, &ty2) {
-        (Ty::Con(con1), Ty::Con(con2)) => {
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => {
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
@@ -34,7 +34,7 @@ pub(super) fn unify(
             }
         }
 
-        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+        (Ty::App(con1, args1, _kind1), Ty::App(con2, args2, _kind2)) => {
             if con1 != con2 {
                 panic!(
                     "{}: Unable to unify types {} and {}",
@@ -44,7 +44,11 @@ pub(super) fn unify(
                 )
             }
             if args1.len() != args2.len() {
-                panic!("{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify", loc_display(loc), con1)
+                panic!(
+                    "{}: BUG: Kind error: type constructor {} applied to different number of arguments in unify",
+                    loc_display(loc),
+                    con1
+                )
             }
             for (arg1, arg2) in args1.iter().zip(args2.iter()) {
                 unify(arg1, arg2, cons, var_gen, level, loc);
@@ -125,7 +129,7 @@ pub(super) fn unify(
             unify(ret1, ret2, cons, var_gen, level, loc);
         }
 
-        (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
+        (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
             panic!("{}: QVar {} during unification", loc_display(loc), var);
         }
 
@@ -150,9 +154,29 @@ pub(super) fn unify(
             }
         }
 
-        (Ty::Var(var), ty2) => link_var(var, ty2),
+        (Ty::Var(var), ty2) => {
+            if var.kind() != ty2.kind() {
+                panic!(
+                    "{}: Unable to unify var with kind {} with type with kind {}",
+                    loc_display(loc),
+                    var.kind(),
+                    ty2.kind(),
+                );
+            }
+            link_var(var, ty2)
+        }
 
-        (ty1, Ty::Var(var)) => link_var(var, ty1),
+        (ty1, Ty::Var(var)) => {
+            if var.kind() != ty1.kind() {
+                panic!(
+                    "{}: Unable to unify var with kind {} with type with kind {}",
+                    loc_display(loc),
+                    var.kind(),
+                    ty1.kind(),
+                );
+            }
+            link_var(var, ty1)
+        }
 
         (
             Ty::Anonymous {
@@ -168,17 +192,22 @@ pub(super) fn unify(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2, "{}", loc_display(loc));
-
-            if is_row_1 != is_row_2 {
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
                 panic!(
-                    "{}: Unable to row type with *: {} ~ {}",
+                    "{}: Unable to unify {} {} with {} {}",
                     loc_display(loc),
+                    kind1,
                     ty1,
-                    ty2
+                    kind2,
+                    ty2,
                 );
             }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
+            assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
                 collect_rows(cons, &ty1, *kind1, labels1, extension1.clone());
@@ -304,9 +333,9 @@ pub(super) fn try_unify_one_way(
     let ty1 = ty1.normalize(cons);
     let ty2 = ty2.normalize(cons);
     match (&ty1, &ty2) {
-        (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
+        (Ty::Con(con1, _kind1), Ty::Con(con2, _kind2)) => con1 == con2,
 
-        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+        (Ty::App(con1, args1, _kind1), Ty::App(con2, args2, _kind2)) => {
             if con1 != con2 {
                 return false;
             }
@@ -388,8 +417,20 @@ pub(super) fn try_unify_one_way(
             try_unify_one_way(ret1, ret2, cons, var_gen, level, loc)
         }
 
-        (Ty::QVar(var), _) | (_, Ty::QVar(var)) => {
+        (Ty::QVar(var, _kind), _) | (_, Ty::QVar(var, _kind)) => {
             panic!("{}: QVar {} during unification", loc_display(loc), var);
+        }
+
+        (Ty::Var(var1), Ty::Var(var2)) => {
+            if var1 == var2 {
+                return true;
+            }
+            if var1.level() > var2.level() {
+                var1.set_link(ty2);
+            } else {
+                var2.set_link(ty1);
+            }
+            true
         }
 
         (Ty::Var(var), ty2) => {
@@ -411,8 +452,14 @@ pub(super) fn try_unify_one_way(
                 is_row: is_row_2,
             },
         ) => {
-            // TODO: Are these type errors or bugs?
-            assert_eq!(kind1, kind2);
+            // Kind mismatches can happen when try to unify a record with a variant (e.g. pass a
+            // record when a variant is expected), and fail.
+            if kind1 != kind2 {
+                return false;
+            }
+
+            // If we checked the kinds in type applications properly, we should only try to unify
+            // rows with rows and stars with stars.
             assert_eq!(is_row_1, is_row_2);
 
             let (labels1, mut extension1) =
@@ -533,7 +580,7 @@ fn link_var(var: &TyVarRef, ty: &Ty) {
 
 fn prune_level(ty: &Ty, max_level: u32) {
     match ty {
-        Ty::Con(_) => {}
+        Ty::Con(_, _) => {}
 
         Ty::Var(var) => {
             // Assertion disabled for now, see #22.
@@ -541,7 +588,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
             var.prune_level(max_level);
         }
 
-        Ty::App(_, tys) => tys.iter().for_each(|ty| prune_level(ty, max_level)),
+        Ty::App(_, tys, _) => tys.iter().for_each(|ty| prune_level(ty, max_level)),
 
         Ty::Anonymous {
             labels, extension, ..
@@ -554,7 +601,7 @@ fn prune_level(ty: &Ty, max_level: u32) {
             }
         }
 
-        Ty::QVar(_) => panic!("QVar in prune_level"),
+        Ty::QVar(_, _) => panic!("QVar in prune_level"),
 
         Ty::Fun {
             args,

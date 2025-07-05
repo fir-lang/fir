@@ -34,7 +34,7 @@ pub struct Scheme {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ty {
     /// A type constructor, e.g. `Vec`, `Option`, `U32`.
-    Con(Id),
+    Con(Id, Kind),
 
     /// A unification variable, created by a type scheme when instantiated.
     Var(TyVarRef),
@@ -44,12 +44,12 @@ pub enum Ty {
     /// Because type variables have kind `*`, the constructor can only be a type constructor.
     ///
     /// Invariant: the vector is not empty.
-    App(Id, Vec<Ty>),
+    App(Id, Vec<Ty>, Kind),
 
     /// Only in type schemes: a quantified type variable.
     ///
     /// Instantiation converts these into unification variables (`Ty::Var`).
-    QVar(Id),
+    QVar(Id, Kind),
 
     /// A function type, e.g. `Fn(U32): Str`, `Fn(x: U32, y: U32): T`.
     Fun {
@@ -101,6 +101,12 @@ pub enum FunArgs {
 }
 
 impl FunArgs {
+    pub fn is_named(&self) -> bool {
+        matches!(self, FunArgs::Named(_))
+    }
+}
+
+impl FunArgs {
     pub fn len(&self) -> usize {
         match self {
             FunArgs::Positional(args) => args.len(),
@@ -147,7 +153,7 @@ pub struct TyVar {
 /// Kind of a unification variable.
 ///
 /// We don't support higher-kinded variables yet, so this is either a `*` or `row` for now.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Kind {
     Star,
     Row(RecordOrVariant),
@@ -220,19 +226,18 @@ pub(super) struct TraitMethod {
 pub(super) struct TypeDetails {
     /// Value constructors of the type.
     pub(super) cons: Vec<ConShape>,
+
+    /// Whether the type is a sum type.
+    ///
+    /// A product type will always have one constructor in `cons`.
+    ///
+    /// A sum type can have any number of constructors in `cons`.
+    pub(super) sum: bool,
 }
 
-// TODO: Probably make this an enum with `product` and `sum` variants.
 #[derive(Debug, Clone)]
 pub(super) struct ConShape {
     pub(super) name: Option<Id>,
-    pub(super) fields: ConFieldShape,
-}
-
-#[derive(Debug, Clone)]
-pub(super) enum ConFieldShape {
-    Unnamed(u32),
-    Named(Set<Id>),
 }
 
 /// Types of fields of value constructors. Types may contain quantified types of the type.
@@ -300,13 +305,35 @@ impl Scheme {
         (self.ty.subst_qvars(&var_map), instantiations)
     }
 
-    pub(super) fn instantiate_with_tys(&self, arg_tys: &[Ty]) -> Ty {
+    pub(super) fn instantiate_with_tys(
+        &self,
+        arg_tys: &[Ty],
+        preds: &mut Set<Pred>,
+        loc: &ast::Loc,
+    ) -> Ty {
         assert!(self.quantified_vars.len() == arg_tys.len());
+
         let mut var_map: Map<Id, Ty> =
             Map::with_capacity_and_hasher(self.quantified_vars.len(), Default::default());
+
         for ((qvar, _), arg) in self.quantified_vars.iter().zip(arg_tys.iter()) {
             var_map.insert(qvar.clone(), arg.clone());
         }
+
+        // Generate predicates.
+        for pred in &self.preds {
+            let pred = Pred {
+                trait_: pred.trait_.clone(),
+                params: pred
+                    .params
+                    .iter()
+                    .map(|param| param.subst_qvars(&var_map))
+                    .collect(),
+                loc: loc.clone(),
+            };
+            preds.insert(pred);
+        }
+
         self.ty.subst_qvars(&var_map)
     }
 
@@ -383,6 +410,28 @@ impl Scheme {
             other.quantified_vars,
         );
 
+        let mut left_preds: Vec<Pred> = self.preds.iter().cloned().collect();
+        left_preds.sort();
+
+        let mut right_preds: Vec<Pred> = other.preds.iter().cloned().collect();
+        right_preds.sort();
+
+        if left_preds.len() != right_preds.len() {
+            return false;
+        }
+
+        for (left_pred, right_pred) in left_preds.iter().zip(right_preds.iter()) {
+            assert_eq!(left_pred.params.len(), right_pred.params.len());
+            if left_pred.trait_ != right_pred.trait_ {
+                return false;
+            }
+            for (left_ty, right_ty) in left_pred.params.iter().zip(right_pred.params.iter()) {
+                if !ty_eq_modulo_alpha(cons, left_ty, right_ty, &left_vars, &right_vars, loc) {
+                    return false;
+                }
+            }
+        }
+
         ty_eq_modulo_alpha(cons, &self.ty, &other.ty, &left_vars, &right_vars, loc)
     }
 
@@ -395,7 +444,7 @@ impl Scheme {
             .iter()
             .map(|(qvar, kind)| {
                 let new_qvar = rename_domain_var(qvar, uniq);
-                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone()));
+                subst_map.insert(qvar.clone(), Ty::QVar(new_qvar.clone(), kind.clone()));
                 (new_qvar, kind.clone())
             })
             .collect();
@@ -432,11 +481,11 @@ fn ty_eq_modulo_alpha(
     let ty1_normalized = ty1.normalize(cons);
     let ty2_normalized = ty2.normalize(cons);
     match (&ty1_normalized, &ty2_normalized) {
-        (Ty::Con(con1), Ty::Con(con2)) => con1 == con2,
+        (Ty::Con(con1, _), Ty::Con(con2, _)) => con1 == con2,
 
         (Ty::Var(_), _) | (_, Ty::Var(_)) => panic!("Unification variable in ty_eq_modulo_alpha"),
 
-        (Ty::App(con1, args1), Ty::App(con2, args2)) => {
+        (Ty::App(con1, args1, _), Ty::App(con2, args2, _)) => {
             if con1 != con2 {
                 return false;
             }
@@ -505,7 +554,7 @@ fn ty_eq_modulo_alpha(
             }
         }
 
-        (Ty::QVar(qvar1), Ty::QVar(qvar2)) => {
+        (Ty::QVar(qvar1, _), Ty::QVar(qvar2, _)) => {
             if qvar1 == qvar2 {
                 return true;
             }
@@ -624,7 +673,7 @@ impl Ty {
     }
 
     pub(super) fn bool() -> Ty {
-        Ty::Con(SmolStr::new_static("Bool"))
+        Ty::Con(SmolStr::new_static("Bool"), Kind::Star)
     }
 
     pub(super) fn to_str_id() -> Id {
@@ -632,23 +681,46 @@ impl Ty {
     }
 
     pub(super) fn str() -> Ty {
-        Ty::Con(SmolStr::new_static("Str"))
+        Ty::Con(SmolStr::new_static("Str"), Kind::Star)
     }
 
     pub(super) fn char() -> Ty {
-        Ty::Con(SmolStr::new_static("Char"))
+        Ty::Con(SmolStr::new_static("Char"), Kind::Star)
+    }
+
+    pub fn kind(&self) -> Kind {
+        match self {
+            Ty::Con(_, kind) => kind.clone(),
+
+            Ty::Var(var) => var.kind(),
+
+            Ty::App(_, _, kind) => kind.clone(),
+
+            Ty::QVar(_, kind) => kind.clone(),
+
+            Ty::Fun { .. } => Kind::Star,
+
+            Ty::Anonymous { is_row, kind, .. } => {
+                if *is_row {
+                    Kind::Row(*kind)
+                } else {
+                    Kind::Star
+                }
+            }
+        }
     }
 
     /// Substitute `ty` for quantified `var` in `self`.
     pub(super) fn subst(&self, var: &Id, ty: &Ty) -> Ty {
         match self {
-            Ty::Con(id) => Ty::Con(id.clone()),
+            Ty::Con(id, kind) => Ty::Con(id.clone(), kind.clone()),
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(con, args) => Ty::App(
+            Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|arg_ty| arg_ty.subst(var, ty)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -666,11 +738,11 @@ impl Ty {
                 is_row: *is_row,
             },
 
-            Ty::QVar(qvar) => {
+            Ty::QVar(qvar, kind) => {
                 if qvar == var {
                     ty.clone()
                 } else {
-                    Ty::QVar(qvar.clone())
+                    Ty::QVar(qvar.clone(), kind.clone())
                 }
             }
 
@@ -697,13 +769,14 @@ impl Ty {
 
     pub(super) fn subst_qvars(&self, vars: &Map<Id, Ty>) -> Ty {
         match self {
-            Ty::Con(con) => Ty::Con(con.clone()),
+            Ty::Con(con, kind) => Ty::Con(con.clone(), kind.clone()),
 
             Ty::Var(var) => Ty::Var(var.clone()),
 
-            Ty::App(ty, tys) => Ty::App(
+            Ty::App(ty, tys, kind) => Ty::App(
                 ty.clone(),
                 tys.iter().map(|ty| ty.subst_qvars(vars)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -723,10 +796,10 @@ impl Ty {
                 is_row: *is_row,
             },
 
-            Ty::QVar(id) => vars
+            Ty::QVar(id, _) => vars
                 .get(id)
                 .cloned()
-                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {}", id)),
+                .unwrap_or_else(|| panic!("subst_qvars: unbound QVar {id}")),
 
             Ty::Fun {
                 args,
@@ -758,7 +831,7 @@ impl Ty {
         match self {
             Ty::Var(var_ref) => var_ref.normalize(cons),
 
-            Ty::Con(con) => match cons.get(con) {
+            Ty::Con(con, _) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
                     TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
@@ -782,7 +855,7 @@ impl Ty {
                 var_ref_link
             }
 
-            Ty::Con(con) => match cons.get(con) {
+            Ty::Con(con, _) => match cons.get(con) {
                 Some(ty_con) => match &ty_con.details {
                     TyConDetails::Synonym(ty) => ty.clone(),
                     TyConDetails::Trait(_) | TyConDetails::Type(_) => self.clone(),
@@ -790,9 +863,10 @@ impl Ty {
                 None => self.clone(),
             },
 
-            Ty::App(con, args) => Ty::App(
+            Ty::App(con, args, kind) => Ty::App(
                 con.clone(),
                 args.iter().map(|ty| ty.deep_normalize(cons)).collect(),
+                kind.clone(),
             ),
 
             Ty::Anonymous {
@@ -837,24 +911,24 @@ impl Ty {
                     .map(|exn| Box::new(exn.deep_normalize(cons))),
             },
 
-            Ty::QVar(_) => panic!(),
+            Ty::QVar(_, _) => panic!(),
         }
     }
 
     /// Get the type constructor of the type and the type arguments.
     pub fn con(&self, cons: &ScopeMap<Id, TyCon>) -> Option<(Id, Vec<Ty>)> {
         match self.normalize(cons) {
-            Ty::Con(con) => Some((con.clone(), vec![])),
+            Ty::Con(con, _) => Some((con.clone(), vec![])),
 
-            Ty::App(con, args) => Some((con.clone(), args.clone())),
+            Ty::App(con, args, _) => Some((con.clone(), args.clone())),
 
-            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_) | Ty::Fun { .. } => None,
+            Ty::Var(_) | Ty::Anonymous { .. } | Ty::QVar(_, _) | Ty::Fun { .. } => None,
         }
     }
 
     pub(super) fn is_void(&self) -> bool {
         match self {
-            Ty::Con(con) => con == &SmolStr::new_static("Void"),
+            Ty::Con(con, _) => con == &SmolStr::new_static("Void"),
             _ => false,
         }
     }
@@ -941,7 +1015,10 @@ impl TyCon {
         TyCon {
             id,
             ty_params: vec![],
-            details: TyConDetails::Type(TypeDetails { cons: vec![] }),
+            details: TyConDetails::Type(TypeDetails {
+                cons: vec![],
+                sum: true,
+            }),
         }
     }
 
@@ -957,7 +1034,7 @@ impl TyCon {
         self.details.trait_details()
     }
 
-    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
         self.details.con_details()
     }
 }
@@ -974,9 +1051,9 @@ impl TyConDetails {
         }
     }
 
-    pub(super) fn con_details(&self) -> Option<&[ConShape]> {
+    pub(super) fn con_details(&self) -> Option<&TypeDetails> {
         match self {
-            TyConDetails::Type(TypeDetails { cons }) => Some(cons),
+            TyConDetails::Type(ty_details) => Some(ty_details),
             _ => None,
         }
     }
@@ -984,22 +1061,9 @@ impl TyConDetails {
 
 impl ConShape {
     pub(super) fn from_ast(con: &ast::ConstructorDecl) -> ConShape {
-        let ast::ConstructorDecl { name, fields } = con;
+        let ast::ConstructorDecl { name, fields: _ } = con;
         ConShape {
             name: Some(name.clone()),
-            fields: ConFieldShape::from_ast(fields),
-        }
-    }
-}
-
-impl ConFieldShape {
-    pub(super) fn from_ast(fields: &ast::ConstructorFields) -> ConFieldShape {
-        match fields {
-            ast::ConstructorFields::Empty => ConFieldShape::Unnamed(0),
-            ast::ConstructorFields::Unnamed(fields) => ConFieldShape::Unnamed(fields.len() as u32),
-            ast::ConstructorFields::Named(fields) => {
-                ConFieldShape::Named(fields.iter().map(|(k, _)| k.clone()).collect())
-            }
         }
     }
 }
@@ -1009,17 +1073,17 @@ use std::fmt;
 impl fmt::Display for Ty {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.normalize(&Default::default()) {
-            Ty::Con(id) => write!(f, "{}", id),
+            Ty::Con(id, _) => write!(f, "{id}"),
 
             Ty::Var(var_ref) => write!(f, "_{}", var_ref.id()),
 
-            Ty::App(id, args) => {
-                write!(f, "{}[", id)?;
+            Ty::App(id, args, _) => {
+                write!(f, "{id}[")?;
                 for (i, ty) in args.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", ty)?;
+                    write!(f, "{ty}")?;
                 }
                 write!(f, "]")
             }
@@ -1039,23 +1103,23 @@ impl fmt::Display for Ty {
                     write!(f, "row")?;
                 }
 
-                write!(f, "{}", left_delim)?;
+                write!(f, "{left_delim}")?;
                 for (i, (label_id, label_ty)) in labels.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}: {}", label_id, label_ty)?;
+                    write!(f, "{label_id}: {label_ty}")?;
                 }
                 if let Some(ext) = extension {
                     if !labels.is_empty() {
                         write!(f, ", ")?;
                     }
-                    write!(f, "..{}", ext)?;
+                    write!(f, "..{ext}")?;
                 }
-                write!(f, "{}", right_delim)
+                write!(f, "{right_delim}")
             }
 
-            Ty::QVar(id) => write!(f, "{}", id),
+            Ty::QVar(id, _) => write!(f, "{id}"),
 
             Ty::Fun {
                 args,
@@ -1069,7 +1133,7 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}", arg)?;
+                            write!(f, "{arg}")?;
                         }
                     }
                     FunArgs::Named(args) => {
@@ -1077,15 +1141,15 @@ impl fmt::Display for Ty {
                             if i > 0 {
                                 write!(f, ", ")?;
                             }
-                            write!(f, "{}: {}", name, ty)?;
+                            write!(f, "{name}: {ty}")?;
                         }
                     }
                 }
-                write!(f, "): ")?;
+                write!(f, ") ")?;
                 if let Some(exn) = exceptions {
-                    write!(f, "{} ", exn)?;
+                    write!(f, "{exn} ")?;
                 }
-                write!(f, "{}", ret)
+                write!(f, "{ret}")
             }
         }
     }
@@ -1099,7 +1163,17 @@ impl fmt::Display for Scheme {
                 if i > 0 {
                     write!(f, ", ")?;
                 }
-                write!(f, "{}: {}", qvar, kind)?;
+                write!(f, "{qvar}: {kind}")?;
+            }
+            write!(f, "] ")?;
+        }
+        if !self.preds.is_empty() {
+            write!(f, "[")?;
+            for (i, pred) in self.preds.iter().enumerate() {
+                if i > 0 {
+                    write!(f, ", ")?;
+                }
+                pred.fmt(f)?;
             }
             write!(f, "] ")?;
         }
@@ -1128,7 +1202,7 @@ impl fmt::Display for Pred {
             if i > 0 {
                 write!(f, ", ")?;
             }
-            write!(f, "{}", ty)?;
+            write!(f, "{ty}")?;
         }
         write!(f, "]")
     }
@@ -1143,5 +1217,14 @@ impl fmt::Debug for TyVar {
             .field("link", &self.link.try_borrow().unwrap()) // don't show `RefCell` part
             .field("loc", &self.loc)
             .finish()
+    }
+}
+
+impl fmt::Display for RecordOrVariant {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RecordOrVariant::Record => write!(f, "record"),
+            RecordOrVariant::Variant => write!(f, "variant"),
+        }
     }
 }

@@ -1,5 +1,5 @@
-test(arg: Result[U32, U32]): U32
-    let x = 123u32
+test(arg: Result[U32, U32]) U32:
+    let x = u32(123)
 
     x = match arg:
         Result.Ok(val): val
@@ -7,9 +7,9 @@ test(arg: Result[U32, U32]): U32
 
     x
 
-main
-    printStr(test(Result.Ok(10u32)).toStr())
-    printStr(test(Result.Err(10u32)).toStr())
+main():
+    printStr(test(Result.Ok(u32(10))).toStr())
+    printStr(test(Result.Err(u32(10))).toStr())
 
 # expected stdout:
 # 10

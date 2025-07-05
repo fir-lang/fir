@@ -1,9 +1,11 @@
 syntax case match
 
 syntax keyword firKeyword
+    \ and
     \ as
     \ break
     \ continue
+    \ do
     \ elif
     \ else
     \ export
@@ -14,10 +16,13 @@ syntax keyword firKeyword
     \ impl
     \ import
     \ in
+    \ is
     \ jump
     \ let
     \ loop
     \ match
+    \ not
+    \ or
     \ prim
     \ return
     \ trait
@@ -29,7 +34,7 @@ syntax region firLineComment start="#" end="$"  contains=@Spell
 
 syntax match firNumber display "\<\(0x\|0X\|0b\|0B\)\?[a-fA-F0-9][a-fA-F0-9_]*\(u8\|u16\|u32\|u64\|i8\|i16\|i32\|i64\)\?\>"
 
-syntax match firType "\<[A-Z][a-zA-Z0-9_']*\>"
+syntax match firType "\<_\?[A-Z][a-zA-Z0-9_']*\>"
 
 syntax match firVariable "\<_\?[a-z][a-zA-Z0-9_']*\>"
 
@@ -56,7 +61,7 @@ syn region firBlockComment start="#|" end="|#"
 
 syn keyword firTodo TODO FIXME BUG contained
 
-syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^"
+syntax match firOperator "=\|==\|+=\|-=\|*=\|\^=\|+\|-\|*\|!\|&\|&&\||\|||\|<\|<<\|<=\|>\|>>\|>=\|!=\|/\|%\|\^\|\.\."
 
 highlight default link firKeyword Keyword
 highlight default link firLineComment Comment

@@ -20,6 +20,18 @@ fn main() {
                 .help("Don't print backtraces in panics."),
         )
         .arg(
+            clap::Arg::new(TOKENIZE)
+                .long(TOKENIZE)
+                .num_args(0)
+                .help("Print tokens and stop."),
+        )
+        .arg(
+            clap::Arg::new(SCAN)
+                .long(SCAN)
+                .num_args(0)
+                .help("Print scanned tokens and stop."),
+        )
+        .arg(
             clap::Arg::new(PRINT_PARSED_AST)
                 .long(PRINT_PARSED_AST)
                 .num_args(0)
@@ -58,6 +70,14 @@ fn main() {
                 .help("Path to the program to run."),
         )
         .arg(
+            clap::Arg::new(IMPORT_PATH)
+                .long(IMPORT_PATH)
+                .short('i')
+                .action(clap::ArgAction::Append)
+                .help("<module name>=<file path> pairs for resolving imports")
+                .value_parser(parse_key_val),
+        )
+        .arg(
             clap::Arg::new(PROGRAM_ARGS)
                 .last(true)
                 .allow_hyphen_values(true)
@@ -69,11 +89,17 @@ fn main() {
         typecheck: matches.get_flag(TYPECHECK),
         no_prelude: matches.get_flag(NO_PRELUDE),
         no_backtrace: matches.get_flag(NO_BACKTRACE),
+        tokenize: matches.get_flag(TOKENIZE),
+        scan: matches.get_flag(SCAN),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
+        import_paths: matches
+            .get_many::<(String, String)>(IMPORT_PATH)
+            .map(|pairs| pairs.map(|(k, v)| (k.clone(), v.clone())).collect())
+            .unwrap_or_default(),
     };
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
@@ -89,6 +115,8 @@ fn main() {
 const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
 const NO_BACKTRACE: &str = "no-backtrace";
+const TOKENIZE: &str = "tokenize";
+const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
@@ -96,6 +124,7 @@ const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
+const IMPORT_PATH: &str = "import-path";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.
@@ -117,4 +146,12 @@ fn version_info_str(version_info: rustc_tools_util::VersionInfo) -> String {
             version_info.major, version_info.minor, version_info.patch
         )
     }
+}
+
+fn parse_key_val(s: &str) -> Result<(String, String), String> {
+    let parts: Vec<&str> = s.splitn(2, '=').collect();
+    if parts.len() != 2 {
+        return Err(format!("invalid key=value: `{s}`"));
+    }
+    Ok((parts[0].to_string(), parts[1].to_string()))
 }

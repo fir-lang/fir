@@ -48,7 +48,9 @@ fn add_missing_type_params_fun(
         }
     }
     for (_, param_ty) in &sig.params {
-        collect_tvs(&param_ty.node, &param_ty.loc, tvs);
+        if let Some(param_ty) = param_ty {
+            collect_tvs(&param_ty.node, &param_ty.loc, tvs);
+        }
     }
     if let Some(exn) = &sig.exceptions {
         collect_tvs(&exn.node, &exn.loc, tvs);
@@ -162,39 +164,7 @@ const VAR_ROW_TRAIT_ID: Id = Id::new_static("VarRow");
 /// `*` if not.
 pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option<Kind>>) {
     match ty {
-        ast::Type::Named(ast::NamedType { name, args }) => {
-            if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {
-                let kind = if *name == REC_ROW_TRAIT_ID {
-                    Kind::Row(RecordOrVariant::Record)
-                } else {
-                    Kind::Row(RecordOrVariant::Variant)
-                };
-                assert_eq!(args.len(), 1);
-                match &args[0].node {
-                    ast::Type::Var(var) => {
-                        let old = tvs.insert(var.clone(), Some(kind.clone()));
-                        if let Some(Some(old)) = old {
-                            if old != kind {
-                                panic!(
-                                    "{}: Conflicting kind of type variable {}",
-                                    loc_display(loc),
-                                    var,
-                                );
-                            }
-                        }
-                    }
-                    _ => panic!(
-                        "{}: RecRow argument needs to be a type variable",
-                        loc_display(loc)
-                    ),
-                }
-                return;
-            }
-
-            for arg in args {
-                collect_tvs(&arg.node, &arg.loc, tvs);
-            }
-        }
+        ast::Type::Named(named_ty) => collect_named_ty_tvs(named_ty, loc, tvs),
 
         ast::Type::Var(var) => {
             tvs.entry(var.clone()).or_insert(None);
@@ -228,9 +198,7 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             is_row: _,
         } => {
             for alt in alts {
-                for field in &alt.fields {
-                    collect_tvs(&field.node, loc, tvs);
-                }
+                collect_named_ty_tvs(alt, loc, tvs);
             }
             if let Some(ext) = extension {
                 let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Variant)));
@@ -261,5 +229,45 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
                 collect_tvs(&ret.node, &ret.loc, tvs);
             }
         }
+    }
+}
+
+fn collect_named_ty_tvs(
+    named_ty: &ast::NamedType,
+    loc: &ast::Loc,
+    tvs: &mut OrderMap<Id, Option<Kind>>,
+) {
+    let ast::NamedType { name, args } = named_ty;
+
+    if *name == REC_ROW_TRAIT_ID || *name == VAR_ROW_TRAIT_ID {
+        let kind = if *name == REC_ROW_TRAIT_ID {
+            Kind::Row(RecordOrVariant::Record)
+        } else {
+            Kind::Row(RecordOrVariant::Variant)
+        };
+        assert_eq!(args.len(), 1);
+        match &args[0].node {
+            ast::Type::Var(var) => {
+                let old = tvs.insert(var.clone(), Some(kind.clone()));
+                if let Some(Some(old)) = old {
+                    if old != kind {
+                        panic!(
+                            "{}: Conflicting kind of type variable {}",
+                            loc_display(loc),
+                            var,
+                        );
+                    }
+                }
+            }
+            _ => panic!(
+                "{}: RecRow argument needs to be a type variable",
+                loc_display(loc)
+            ),
+        }
+        return;
+    }
+
+    for arg in args {
+        collect_tvs(&arg.node, &arg.loc, tvs);
     }
 }

@@ -1,9 +1,12 @@
-test(f: Fn(): [Err] U32)
+type Err:
+    Err
+
+test(f: Fn() U32 / [Err]):
     ()
 
-main
-    test({ 123i32 })
+main():
+    test(||: i32(123))
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101
-# expected stderr: tests/ClosuresFail1.fir:5:10: Unable to unify types I32 and U32
+# expected stderr: tests/ClosuresFail1.fir:8:14: Unable to unify types I32 and U32

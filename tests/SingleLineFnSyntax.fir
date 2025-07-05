@@ -1,6 +1,6 @@
-main(): () = sayHi()
+main() (): sayHi()
 
-sayHi() = printStr("Hi")
+sayHi(): printStr("Hi")
 
 # expected stdout:
 # Hi

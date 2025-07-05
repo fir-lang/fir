@@ -2,67 +2,82 @@
 #
 # TODO: Enable overflow tests after adding operators that allow overflows.
 
-parseU32(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
+type InvalidDigit:
+    InvalidDigit
+
+type Overflow:
+    Overflow
+
+type EmptyInput:
+    EmptyInput
+
+type IoError:
+    IoError
+
+type OtherError:
+    OtherError
+
+parseU32(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
     if s.len() == 0:
-        return Result.Err(~EmptyInput)
+        return Result.Err(~EmptyInput.EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
-            return Result.Err(~InvalidDigit)
+        if c < '0' or c > '9':
+            return Result.Err(~InvalidDigit.InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: return Result.Err(~Overflow)
+            Option.None: return Result.Err(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: return Result.Err(~Overflow)
+            Option.None: return Result.Err(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
     Result.Ok(result)
 
-checkedAdd(i1: U32, i2: U32): Option[U32]
-    if i1 > 4294967295u32 - i2:
+checkedAdd(i1: U32, i2: U32) Option[U32]:
+    if i1 > u32(4294967295) - i2:
         return Option.None
 
-    return Option.Some(i1 + i2)
+    Option.Some(i1 + i2)
 
-checkedMul(i1: U32, i2: U32): Option[U32]
+checkedMul(i1: U32, i2: U32) Option[U32]:
     let result = i1 * i2
 
-    if i1 != 0 && result / i1 != i2:
+    if i1 != 0 and result / i1 != i2:
         return Option.None
 
-    return Option.Some(result)
+    Option.Some(result)
 
-parseIntErrorToStr(error: [InvalidDigit, Overflow, EmptyInput]): Str
+parseIntErrorToStr(error: [InvalidDigit, Overflow, EmptyInput]) Str:
     match error:
-        ~InvalidDigit: "invalid digit"
-        ~Overflow: "overflow"
-        ~EmptyInput: "empty input"
+        ~InvalidDigit.InvalidDigit: "invalid digit"
+        ~Overflow.Overflow: "overflow"
+        ~EmptyInput.EmptyInput: "empty input"
 
-defaultEmptyInput(res: Result[[EmptyInput, ..r], U32]): Result[[..r], U32]
+defaultEmptyInput(res: Result[[EmptyInput, ..r], U32]) Result[[..r], U32]:
     match res:
-        Result.Err(~EmptyInput): Result.Ok(0u32)
+        Result.Err(~EmptyInput.EmptyInput): Result.Ok(u32(0))
         Result.Err(other): Result.Err(other)
         Result.Ok(val): Result.Ok(val)
 
-readFile(s: Str): Result[[IoError, ..r], Str]
+readFile(s: Str) Result[[IoError, ..r], Str]:
     # We don't have the standard library support for file IO yet, just return
     # an error for now.
-    Result.Err(~IoError)
+    Result.Err(~IoError.IoError)
 
-parseU32FromFile(filePath: Str): Result[[InvalidDigit, Overflow, EmptyInput, IoError, ..r], U32]
+parseU32FromFile(filePath: Str) Result[[InvalidDigit, Overflow, EmptyInput, IoError, ..r], U32]:
     let fileContents = match readFile(filePath):
         Result.Err(err): return Result.Err(err)
         Result.Ok(contents): contents
 
     parseU32(fileContents)
 
-parseWith(vec: Vec[Str], parseFn: Fn(Str): Result[errs, a]): Result[errs, Vec[a]]
+parseWith(vec: Vec[Str], parseFn: Fn(Str) Result[errs, a] / exn) Result[errs, Vec[a]] / exn:
     let ret = Vec.withCapacity(vec.len())
 
     for s: Str in vec.iter():
@@ -72,68 +87,68 @@ parseWith(vec: Vec[Str], parseFn: Fn(Str): Result[errs, a]): Result[errs, Vec[a]
 
     Result.Ok(ret)
 
-parseWith2(vec: Vec[Str], parseFn: Fn(Str): Result[[OtherError, ..r], a]): Result[[..r], Vec[a]]
+parseWith2(vec: Vec[Str], parseFn: Fn(Str) Result[[OtherError, ..r], a] / exn) Result[[..r], Vec[a]] / exn:
     let ret = Vec.withCapacity(vec.len())
 
     for s in vec.iter():
         match parseFn(s):
-            Result.Err(~OtherError): continue
+            Result.Err(~OtherError.OtherError): continue
             Result.Err(err): return Result.Err(err)
             Result.Ok(val): ret.push(val)
 
     Result.Ok(ret)
 
-handleSomeErrs(error: [Overflow, OtherError]): U32 = 0
+handleSomeErrs(error: [Overflow, OtherError]) U32: 0
 
-parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]): U32): Result[[InvalidDigit, EmptyInput, ..r2], U32]
+parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]) U32 / exn) Result[[InvalidDigit, EmptyInput, ..r2], U32] / exn:
     match parseU32(input):
-        Result.Err(~Overflow): Result.Ok(handler(~Overflow))
+        Result.Err(~Overflow.Overflow): Result.Ok(handler(~Overflow.Overflow))
         Result.Err(other): Result.Err(other)
         Result.Ok(val): Result.Ok(val)
 
-parseU32Exn(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
+parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     if s.len() == 0:
-        throw(~EmptyInput)
+        throw(~EmptyInput.EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
-        if c < '0' || c > '9':
-            throw(~InvalidDigit)
+        if c < '0' or c > '9':
+            throw(~InvalidDigit.InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: throw(~Overflow)
+            Option.None: throw(~Overflow.Overflow)
             Option.Some(newResult): newResult
 
     result
 
-readFileExn(s: Str): [IoError, ..r] Str
+readFileExn(s: Str) Str / [IoError, ..r]:
     # We don't have the standard library support for file IO yet, just return
     # an error for now.
-    throw(~IoError)
+    throw(~IoError.IoError)
 
-parseU32FromFileExn(filePath: Str): [InvalidDigit, Overflow, EmptyInput, IoError, ..r] U32
+parseU32FromFileExn(filePath: Str) U32 / [InvalidDigit, Overflow, EmptyInput, IoError, ..r]:
     parseU32Exn(readFileExn(filePath))
 
-parseWithExn(vec: Vec[Str], parseFn: Fn(Str): exn a): exn Vec[a]
+parseWithExn(vec: Vec[Str], parseFn: Fn(Str) a / exn) Vec[a] / exn:
     let ret = Vec.withCapacity(vec.len())
     for s in vec.iter():
         ret.push(parseFn(s))
     ret
 
-parseU32UsingExnVersion(s: Str): Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]
-    try({ parseU32Exn(s) })
+parseU32UsingExnVersion(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
+    try(||: parseU32Exn(s))
 
-parseU32UsingResultVersion(s: Str): [InvalidDigit, Overflow, EmptyInput, ..r] U32
+parseU32UsingResultVersion(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     untry(parseU32(s))
 
-main
+main():
     print("----- parseU32")
     print(parseU32("123").mapErr(parseIntErrorToStr))
     print(parseU32("12a3").mapErr(parseIntErrorToStr))
@@ -143,7 +158,7 @@ main
 
     print("----- parseU32FromFile")
     match parseU32FromFile("test"):
-        Result.Err(~IoError): print("io error")
+        Result.Err(~IoError.IoError): print("io error")
         Result.Err(other): print(parseIntErrorToStr(other))
         Result.Ok(val): print(val)
     print("")
