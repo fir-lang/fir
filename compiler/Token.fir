@@ -5,6 +5,19 @@ type Token:
     line: U32
     col: U32
 
+
+Token.rightLoc(self) (line: U32, col: U32):
+    let line = self.line
+    let col = self.col
+    for c: Char in self.text.chars():
+        if c == '\n':
+            line += 1
+            col = 0
+        else:
+            col += 1
+    (line = line, col = col)
+
+
 type TokenKind:
     # An identifier starting with an uppercase letter.
     UpperId

@@ -17,14 +17,23 @@ main(args: Array[Str]):
 
 gen(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
+
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
-    tokens = scan(tokens)
+
+    tokens = match try(||: scan[row[]](tokens)):
+        Result.Err(~ScannerError(line, col, msg)):
+            panic("Scanner error: `line + 1`:`col + 1`: `msg`")
+        Result.Ok(tokens):
+            tokens
+
     let result = match try(||: typeDecl(tokens, 0)):
         Result.Err(err): panic("Unable to parse item as type decl: `err`")
         Result.Ok(result): result
+
     if result.newCursor != tokens.len():
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
+
     print(genTree(result.tree).render(80))
 
 genTree(parseTree: ParseTree[Token, NonTerminal]) Doc:

@@ -16,15 +16,24 @@ runParser(
         runScan: Bool,
     ) ParseTree[Token, nt] / TestError:
     let (tokens, error) = tokenize("<test input>", input)
+
     if error is Option.Some(error):
         panic(lexerErrorStr(error))
+
     if runScan:
-        tokens = scan(tokens)
+        tokens = match try(||: scan[row[]](tokens)):
+            Result.Err(~ScannerError(line, col, msg)):
+                throw(TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"))
+            Result.Ok(tokens):
+                tokens
+
     let result = match try(||: parseFn(tokens, 0)):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
+
     if result.newCursor != tokens.len():
         throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
+
     result.tree
 
 runTest[ToStr[nt]](

@@ -11,9 +11,15 @@ main(args: Array[Str]):
     let input = args.get(1)
     let contents = readFileUtf8(input)
     let (tokens, error) = tokenize(input, contents)
+
     if error is Option.Some(error):
         panic(errStr(error))
-    let tokens = scan(tokens)
+
+    let tokens = match try(||: scan[row[]](tokens)):
+        Result.Err(~ScannerError(line, col, msg)):
+            panic("Unable to scan file: `line + 1`:`col + 1`: `msg`")
+        Result.Ok(tokens):
+            tokens
 
     if tokens.len() == 0:
         panic("Empty file")
