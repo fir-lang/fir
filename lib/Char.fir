@@ -1,4 +1,3 @@
-# TODO: We may want to allow unnamed fields: `type Char(U32)`.
 type Char:
     _codePoint: U32
 
