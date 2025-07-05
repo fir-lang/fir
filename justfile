@@ -74,23 +74,27 @@ update_generated_files:
 
 # build_site tested with:
 #
-# - wasm-pack 0.12.1
-# - wasm-opt version 114 (version_114-3-g5f6594c52)
+# - wasm-bindgen 0.2.100
+# - wasm-opt version 123 (version_123-209-g99cf92269)
 
 build_site: generate_parser
     #!/usr/bin/env bash
 
+    set -e
+    set -x
+
     OUT_DIR=../fir-lang.github.io
 
-    wasm-pack build \
-        --target web \
-        --release \
-        --out-dir target/wasm-pack \
-        --no-pack \
-        --no-typescript
+    # Build Wasm binary.
+    cargo build --lib --release --target=wasm32-unknown-unknown
 
-    cp target/wasm-pack/fir.js $OUT_DIR/fir.js
-    cp target/wasm-pack/fir_bg.wasm $OUT_DIR/fir_bg.wasm
+    # Generate JS shims.
+    wasm-bindgen target/wasm32-unknown-unknown/release/fir.wasm \
+        --out-dir $OUT_DIR --no-typescript --target web
+
+    # Optimize Wasm binary for size.
+    wasm-opt --all-features --closed-world --traps-never-happen -Os \
+        $OUT_DIR/fir_bg.wasm -o $OUT_DIR/fir_bg.wasm
 
     # Copy standard library
     rm $OUT_DIR/fir/lib/*
