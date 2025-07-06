@@ -175,6 +175,11 @@ unnamedFields:
 # --------------------------------------------------------------------------------------------------
 # Expressions
 
+expr:
+    inlineExpr
+    blockExpr
+
+
 # Inline expressions don't end with a NEWLINE or DEDENT.
 inlineExpr:
     prefixExpr inlineExprCont*
@@ -201,11 +206,16 @@ inlineExprCont:
 
 
 prefixExpr:
-    exprPrefix? simpleExpr fields? args?
+    exprPrefix? simpleExpr exprSuffix*
 
 
-fields:
-    (_"." "LowerId")+
+exprSuffix:
+    field
+    args
+
+
+field:
+    (_"." "LowerId")
 
 
 args:
@@ -271,7 +281,12 @@ binOp:
 
 
 matchAlt:
-    pat _":" matchRhs _"NEWLINE"
+    pat altGuard? _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    pat altGuard? _":" stmt
+
+
+altGuard:
+    "if" expr
 
 
 matchRhs:
@@ -314,9 +329,9 @@ letRhs:
 
 
 stmtExprCont:
+    _"NEWLINE"
     assignOp blockExpr
     assignOp inlineExpr _"NEWLINE"
-    _"NEWLINE"
 
 
 assignOp:
@@ -339,7 +354,7 @@ simplePat:
     "LowerId"
 
     # Constructors
-    upperIdPath
+    upperIdPath (_"(" pat (_"," pat)* (_"," "..")? _")")?
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
     "(" (recordPat ("," recordPat)* _","?)? ")"
@@ -392,7 +407,7 @@ paramList:
 
 
 param:
-    "LowerId" _":" type_
+    "LowerId" (_":" type_)?
 
 
 # --------------------------------------------------------------------------------------------------

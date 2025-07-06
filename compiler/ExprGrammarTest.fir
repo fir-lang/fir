@@ -132,14 +132,17 @@ runBlockExprScan(input: Str):
 # 
 # foo.bar
 # InlineExpr(
-#     PrefixExpr(SimpleExpr(LowerId(1:1:"foo")), Fields(LowerId(1:5:"bar"))),
+#     PrefixExpr(
+#         SimpleExpr(LowerId(1:1:"foo")),
+#         ExprSuffix(Field(LowerId(1:5:"bar"))),
+#     ),
 # )
 # 
 # Foo.bar
 # InlineExpr(
 #     PrefixExpr(
 #         SimpleExpr(UpperIdPath(UpperId(1:1:"Foo"))),
-#         Fields(LowerId(1:5:"bar")),
+#         ExprSuffix(Field(LowerId(1:5:"bar"))),
 #     ),
 # )
 # 
@@ -147,10 +150,12 @@ runBlockExprScan(input: Str):
 # InlineExpr(
 #     PrefixExpr(
 #         SimpleExpr(LowerId(1:1:"foo")),
-#         Args(
-#             LParen(1:4:"("),
-#             Arg(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
-#             RParen(1:8:")"),
+#         ExprSuffix(
+#             Args(
+#                 LParen(1:4:"("),
+#                 Arg(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
+#                 RParen(1:8:")"),
+#             ),
 #         ),
 #     ),
 # )
@@ -225,11 +230,11 @@ runBlockExprScan(input: Str):
 #     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:7:"foo")))),
 #     MatchAlt(
 #         Pat(SimplePat(UpperIdPath(UpperId(2:5:"A")))),
-#         MatchRhs(InlineExpr(PrefixExpr(SimpleExpr(Int(2:8:"1"))))),
+#         Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(2:8:"1")))), StmtExprCont),
 #     ),
 #     MatchAlt(
 #         Pat(SimplePat(UpperIdPath(UpperId(3:5:"B")))),
-#         MatchRhs(InlineExpr(PrefixExpr(SimpleExpr(Int(3:8:"2"))))),
+#         Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(3:8:"2")))), StmtExprCont),
 #     ),
 # )
 # 
@@ -242,7 +247,7 @@ runBlockExprScan(input: Str):
 #         InlineExpr(
 #             PrefixExpr(
 #                 SimpleExpr(LowerId(2:5:"a")),
-#                 Args(LParen(2:6:"("), RParen(2:7:")")),
+#                 ExprSuffix(Args(LParen(2:6:"("), RParen(2:7:")"))),
 #             ),
 #         ),
 #         StmtExprCont,
@@ -323,7 +328,7 @@ runBlockExprScan(input: Str):
 #         InlineExpr(
 #             PrefixExpr(
 #                 SimpleExpr(LowerId(2:5:"f")),
-#                 Args(LParen(2:6:"("), RParen(2:7:")")),
+#                 ExprSuffix(Args(LParen(2:6:"("), RParen(2:7:")"))),
 #             ),
 #         ),
 #         StmtExprCont,
@@ -332,7 +337,7 @@ runBlockExprScan(input: Str):
 #         InlineExpr(
 #             PrefixExpr(
 #                 SimpleExpr(LowerId(3:5:"g")),
-#                 Args(LParen(3:6:"("), RParen(3:7:")")),
+#                 ExprSuffix(Args(LParen(3:6:"("), RParen(3:7:")"))),
 #             ),
 #         ),
 #         StmtExprCont,
