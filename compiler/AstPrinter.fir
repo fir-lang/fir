@@ -1,12 +1,12 @@
 Expr.pprint(self) Doc:
     match self:
-        Expr.Var(VarExpr(id, tyArgs)):
+        Expr.Var(VarExpr(id, userTyArgs, tyArgs)):
             Doc.str(id.name) + _ppTyArgs(tyArgs)
 
         Expr.ConstrSelect(constr):
             constr.pprint()
 
-        Expr.FieldSelect(FieldSelectExpr(object, field)):
+        Expr.FieldSelect(FieldSelectExpr(object, field, userTyArgs)):
             let addParens = _needsParens(object.node)
             let doc = object.node.pprint()
             if addParens:
@@ -21,7 +21,7 @@ Expr.pprint(self) Doc:
                 doc = parens(doc)
             doc + Doc.char('.') + Doc.str(method.name)
 
-        Expr.AssocFnSelect(AssocFnSelectExpr(ty, member, tyArgs)):
+        Expr.AssocFnSelect(AssocFnSelectExpr(ty, member, userTyArgs, tyArgs)):
             Doc.str(ty.name) + Doc.char('.') + Doc.str(member.name) + _ppTyArgs(tyArgs)
 
         Expr.Call(CallExpr(fun, args)):
@@ -70,9 +70,6 @@ Expr.pprint(self) Doc:
 
         Expr.Record(fields):
             _ppNamedList(fields, Expr.pprint)
-
-        Expr.Variant(VariantExpr(id, args)):
-            brackets(Doc.str(id.name) + _ppNamedList(args, Expr.pprint))
 
         Expr.Return(expr):
             Doc.str("return ") + expr.node.pprint()
@@ -252,7 +249,10 @@ FunSig.pprint(self) Doc:
     doc
 
 Constructor.pprint(self) Doc:
-    let doc = Doc.str(self.ty.name)
+    let doc = Doc.empty()
+    if self.variant:
+        doc += Doc.char('~')
+    doc += Doc.str(self.ty.name)
     if self.constr is Option.Some(constr):
         doc += Doc.char('.') + Doc.str(constr.name)
     doc + _ppTyArgs(self.tyArgs)
