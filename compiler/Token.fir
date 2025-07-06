@@ -28,12 +28,22 @@ type TokenKind:
     # An identifier starting with an uppercase letter, followed by a '.['.
     #
     # This starts an iterator syntax.
+    #
+    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
+    # We will be removed once we have our own tests.
     UpperIdDotLBracket
 
     # An identifier starting with '~', followed by an uppercase letter.
+    #
+    # NOTE: '~' followed by an uppercase letter is tokenized as one in the interpreter, and we do
+    # the same here to be able to compare interpreter's and compiler's tokens when testing. We don't
+    # need to combine them in the compiler. We will remove this once we have our own tests.
     TildeUpperId
 
     # `'~' UpperId '.' UpperId`, without spaces in between.
+    #
+    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
+    # It will be removed once we have our own tests.
     TildeUpperIdPath
 
     # An identifier starting with a lowercase letter.

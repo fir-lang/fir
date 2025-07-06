@@ -9,6 +9,7 @@ type NonTerminal = NonTerminal
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "prim" = Token(kind = TokenKind.Prim, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
@@ -136,7 +137,7 @@ simpleExpr:
     # Records: `(a, b)`, `(a = 1, b = 2)`
     "(" (parenExpr ("," parenExpr)* ","?)? ")"
 
-    "return" inlineExpr
+    "return" inlineExpr?
 
     "Int"
     "HexInt"
@@ -146,6 +147,7 @@ simpleExpr:
 
 upperIdPath:
     "UpperId" ("." "UpperId")*
+    "TildeUpperId" ("." "UpperId")*
 
 tyArgs:
     "[" "]"
