@@ -54,6 +54,9 @@ Terminals:
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
 
+module:
+    topDecl+
+
 topDecl:
     typeDecl
     importDecl
