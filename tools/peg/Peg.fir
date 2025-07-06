@@ -30,7 +30,8 @@ main(args: Array[Str]):
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 print(result.tree.toDoc().render(80))
-                panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`)")
+                let lastToken = tokens.get(result.newCursor)
+                panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`, last token = `lastToken`)")
             # print(result.tree.toDoc().render(80))
             convertParseTree(result.tree)
 

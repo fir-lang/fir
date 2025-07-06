@@ -10,18 +10,27 @@ Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
+    "and" = Token(kind = TokenKind.And, ..)
+    "break" = Token(kind = TokenKind.Break, ..)
+    "continue" = Token(kind = TokenKind.Continue, ..)
     "do" = Token(kind = TokenKind.Do, ..)
     "elif" = Token(kind = TokenKind.Elif, ..)
     "else" = Token(kind = TokenKind.Else, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "for" = Token(kind = TokenKind.For, ..)
     "if" = Token(kind = TokenKind.If, ..)
     "impl" = Token(kind = TokenKind.Impl, ..)
     "import" = Token(kind = TokenKind.Import, ..)
+    "in" = Token(kind = TokenKind.In, ..)
     "is" = Token(kind = TokenKind.Is, ..)
+    "let" = Token(kind = TokenKind.Let, ..)
     "match" = Token(kind = TokenKind.Match, ..)
+    "or" = Token(kind = TokenKind.Or, ..)
     "prim" = Token(kind = TokenKind.Prim, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
     "trait" = Token(kind = TokenKind.Trait, ..)
     "type" = Token(kind = TokenKind.Type, ..)
-    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "while" = Token(kind = TokenKind.While, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "[" = Token(kind = TokenKind.LBracket, ..)
@@ -32,6 +41,11 @@ Terminals:
     "." = Token(kind = TokenKind.Dot, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
     "==" = Token(kind = TokenKind.EqEq, ..)
+    "+=" = Token(kind = TokenKind.PlusEq, ..)
+    "-=" = Token(kind = TokenKind.MinusEq, ..)
+    "*=" = Token(kind = TokenKind.StarEq, ..)
+    "^=" = Token(kind = TokenKind.CaretEq, ..)
+    "!=" = Token(kind = TokenKind.ExclamationEq, ..)
     "-" = Token(kind = TokenKind.Minus, ..)
     "~" = Token(kind = TokenKind.Tilde, ..)
     "+" = Token(kind = TokenKind.Plus, ..)
@@ -49,7 +63,8 @@ Terminals:
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
-    "return" = Token(kind = TokenKind.Return, ..)
+    "label" = Token(kind = TokenKind.Label, ..)
+
 
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
@@ -57,12 +72,14 @@ Terminals:
 module:
     topDecl+
 
+
 topDecl:
     typeDecl
     importDecl
     traitDecl
     implDecl
     topFunDecl
+
 
 # --------------------------------------------------------------------------------------------------
 # Types
@@ -74,39 +91,49 @@ type_:
     variantType
     fnType
 
+
 recordType:
     _"(" _")"
     _"(" recordTypeFields _")"
+
 
 variantType:
     _"[" _"]"
     _"[" variantAlt (_"," variantAlt)* _"," _".." "LowerId" _"]"
     _"[" variantAlt (_"," variantAlt)* _","? _"]"
 
+
 fnType:
     _"Fn" _"(" fnArgTys? _")" returnType?
+
 
 namedType:
     "UpperId" _"[" type_ (_"," type_)* _","? _"]"
     "UpperId"
 
+
 recordTypeFields:
     recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
     recordTypeField (_"," recordTypeField)* _","?
+
 
 recordTypeField:
     "LowerId" _":" type_
     type_
 
+
 variantAlt:
     "UpperId" _"(" recordTypeFields _")"
     "UpperId"
 
+
 fnArgTys:
     type_ (_"," type_)* ","?
 
+
 returnType:
     _":" type_ type_?
+
 
 # --------------------------------------------------------------------------------------------------
 # Type declarations
@@ -116,46 +143,79 @@ typeDecl:
     _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
     "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
 
+
 typeParams:
     "LowerId" (_"," "LowerId")* _","?
     "LowerId"
 
+
 typeDeclRhs:
     conDecl+
     namedField+
+
 
 conDecl:
     "UpperId" _":" _"NEWLINE" _"INDENT" namedFields _"DEDENT"
     "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
     "UpperId" _"NEWLINE"
 
+
 namedFields:
     namedField+
+
 
 namedField:
     "LowerId" _":" type_ _"NEWLINE"
 
+
 unnamedFields:
     type_ (_"," type_)* _","?
+
 
 # --------------------------------------------------------------------------------------------------
 # Expressions
 
+# Inline expressions don't end with a NEWLINE or DEDENT.
 inlineExpr:
     prefixExpr inlineExprCont*
 
+
+# Block expressions include an indented block and always end with DEDENT.
+blockExpr:
+    "match" inlineExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
+
+    "if" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+        ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
+        ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
+
+    "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+
+    "||" returnTy? ":" fnRhs
+
+    "|" fnArgs? "|" returnTy? ":" fnRhs
+
+
 inlineExprCont:
     binOp prefixExpr
-    _"is" pat
+    "is" pat
+
 
 prefixExpr:
     exprPrefix? simpleExpr fields? args?
 
+
 fields:
     (_"." "LowerId")+
 
+
 args:
-    "(" (inlineExpr ("," inlineExpr)* _","?)? ")"
+    "(" (arg ("," arg)* _","?)? ")"
+
+
+arg:
+    "LowerId" "=" inlineExpr
+    inlineExpr
+
 
 simpleExpr:
     # Variables
@@ -169,37 +229,31 @@ simpleExpr:
 
     "return" inlineExpr?
 
-    "match" simpleExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
-
-    "if" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
-        ("elif" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")*
-        ("else" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")?
-
-    "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
-
-    "|" fnArgs? "|" returnTy? ":" fnRhs
-    "||" returnTy? ":" fnRhs
-
     "Int"
     "HexInt"
     "BinInt"
     "Str"
     "Char"
 
+
 upperIdPath:
     "UpperId" ("." "UpperId")*
     "TildeUpperId" ("." "UpperId")*
 
+
 tyArgs:
-    "[" "]"
+    "[" type_ (_"," type_)* _","? "]"
+
 
 parenExpr:
     "LowerId" "=" inlineExpr
     inlineExpr
 
+
 exprPrefix:
     "~"
     "-"
+
 
 binOp:
     "+"
@@ -207,34 +261,79 @@ binOp:
     "*"
     "/"
     "=="
+    "!="
+    "and"
+    "or"
+
 
 matchAlt:
     pat _":" matchRhs _"NEWLINE"
 
+
 matchRhs:
     _"NEWLINE" _"INDENT" blockExpr
-    simpleExpr
+    inlineExpr
 
-blockExpr:
-    (inlineExpr _"NEWLINE")+
 
 fnArgs:
     "LowerId" _":" type_ ("," "LowerId" _":" type_)* _","?
 
+
 fnRhs:
-    _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
     inlineExpr
+
 
 returnTy:
     type_ "/" type_     # return type + effecttype
     type_               # just return type
     "/" type_           # just effect type
 
+
+# --------------------------------------------------------------------------------------------------
+# Statements
+
+stmt:
+    "break" "label" _"NEWLINE"
+
+    "continue" "label" _"NEWLINE"
+
+    "let" pat (_":" type_)? "=" letRhs
+
+    "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    "while" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    inlineExpr stmtExprCont?
+
+    blockExpr
+
+
+letRhs:
+    inlineExpr _"NEWLINE"
+    blockExpr
+
+
+stmtExprCont:
+    assignOp blockExpr
+    assignOp inlineExpr _"NEWLINE"
+    _"NEWLINE"
+
+
+assignOp:
+    "="
+    "+="
+    "-="
+    "*="
+    "^="
+
+
 # --------------------------------------------------------------------------------------------------
 # Patterns
 
 pat:
     simplePat ("|" simplePat)*
+
 
 simplePat:
     # Variables
@@ -254,9 +353,11 @@ simplePat:
     "Str" "LowerId"?
     "Char"
 
+
 recordPat:
     "LowerId" "=" pat
     pat
+
 
 # --------------------------------------------------------------------------------------------------
 # Import declarations
@@ -269,25 +370,31 @@ importDecl:
 
 topFunDecl:
     "prim" topFunSig _"NEWLINE"
-    topFunSig _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    topFunSig _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
     topFunSig _":" inlineExpr _"NEWLINE"
+
 
 topFunSig:
     parentTy? "LowerId" context? paramList returnTy?
+
 
 # TODO: Weird name, rename.
 parentTy:
     "UpperId" _"."
 
+
 context:
     _"[" type_ (_"," type_)* _","? _"]"
+
 
 paramList:
     _"(" _")"
     _"(" param (_"," param)* _","? _")"
 
+
 param:
     "LowerId" _":" type_
+
 
 # --------------------------------------------------------------------------------------------------
 # Trait declarations
@@ -295,12 +402,15 @@ param:
 traitDecl:
     _"trait" "UpperId" _"[" typeParams _"]" traitDeclRhs?
 
+
 traitDeclRhs:
     _"NEWLINE"
     _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
 
+
 funSig:
     "LowerId" context? paramList returnTy?
+
 
 # --------------------------------------------------------------------------------------------------
 # Impl declarations
@@ -308,9 +418,11 @@ funSig:
 implDecl:
     _"impl" context? "UpperId" _"[" type_ _"]" implDeclRhs
 
+
 implDeclRhs:
     _"NEWLINE"
     _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -320,5 +432,5 @@ funDecl:
 
 funDeclRhs:
     _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
     _":" inlineExpr _"NEWLINE"
