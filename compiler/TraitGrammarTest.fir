@@ -76,19 +76,23 @@ runTopDecl(input: Str):
 #             FunDecl(
 #                 FunSig(LowerId(2:5:"foo"), ParamList),
 #                 FunDeclRhs(
-#                     BlockExpr(
+#                     Stmt(
 #                         InlineExpr(
 #                             PrefixExpr(
 #                                 SimpleExpr(LowerId(3:9:"f")),
 #                                 Args(LParen(3:10:"("), RParen(3:11:")")),
 #                             ),
 #                         ),
+#                         StmtExprCont,
+#                     ),
+#                     Stmt(
 #                         InlineExpr(
 #                             PrefixExpr(
 #                                 SimpleExpr(LowerId(4:9:"g")),
 #                                 Args(LParen(4:10:"("), RParen(4:11:")")),
 #                             ),
 #                         ),
+#                         StmtExprCont,
 #                     ),
 #                 ),
 #             ),

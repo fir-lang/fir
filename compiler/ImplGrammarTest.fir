@@ -50,7 +50,10 @@ runTopDecl(input: Str):
 #                     ReturnTy(Type_(NamedType(UpperId(2:20:"Str")))),
 #                 ),
 #                 FunDeclRhs(
-#                     BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(3:9:"1"))))),
+#                     Stmt(
+#                         InlineExpr(PrefixExpr(SimpleExpr(Int(3:9:"1")))),
+#                         StmtExprCont,
+#                     ),
 #                 ),
 #             ),
 #         ),
@@ -85,7 +88,10 @@ runTopDecl(input: Str):
 #                     ReturnTy(Type_(NamedType(UpperId(2:25:"Str")))),
 #                 ),
 #                 FunDeclRhs(
-#                     BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(3:9:"1"))))),
+#                     Stmt(
+#                         InlineExpr(PrefixExpr(SimpleExpr(Int(3:9:"1")))),
+#                         StmtExprCont,
+#                     ),
 #                 ),
 #             ),
 #         ),

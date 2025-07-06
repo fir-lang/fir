@@ -51,21 +51,21 @@ main(args: Array[Str]):
     runInlineExpr("return 123")
 
     # Match
-    runInlineExprScan("\
+    runBlockExprScan("\
 match foo:
     A: 1
     B: 2")
 
     # If
-    runInlineExprScan("\
+    runBlockExprScan("\
 if foo:
     a()")
-    runInlineExprScan("\
+    runBlockExprScan("\
 if foo:
     1
 else:
     2")
-    runInlineExprScan("\
+    runBlockExprScan("\
 if foo:
     1
 elif bar:
@@ -79,7 +79,7 @@ else:
 
     # Function exprs
     runInlineExpr("||: a")
-    runInlineExprScan("\
+    runBlockExprScan("\
 ||:
     f()
     g()")
@@ -93,6 +93,10 @@ runInlineExpr(input: Str):
 
 runInlineExprScan(input: Str):
     runTestScanner_(input, inlineExpr)
+
+
+runBlockExprScan(input: Str):
+    runTestScanner_(input, blockExpr)
 
 # expected stdout:
 # hi
@@ -145,7 +149,7 @@ runInlineExprScan(input: Str):
 #         SimpleExpr(LowerId(1:1:"foo")),
 #         Args(
 #             LParen(1:4:"("),
-#             InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar")))),
+#             Arg(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
 #             RParen(1:8:")"),
 #         ),
 #     ),
@@ -216,39 +220,32 @@ runInlineExprScan(input: Str):
 # match foo:
 #     A: 1
 #     B: 2
-# InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             Match(1:1:"match"),
-#             SimpleExpr(LowerId(1:7:"foo")),
-#             MatchAlt(
-#                 Pat(SimplePat(UpperIdPath(UpperId(2:5:"A")))),
-#                 MatchRhs(SimpleExpr(Int(2:8:"1"))),
-#             ),
-#             MatchAlt(
-#                 Pat(SimplePat(UpperIdPath(UpperId(3:5:"B")))),
-#                 MatchRhs(SimpleExpr(Int(3:8:"2"))),
-#             ),
-#         ),
+# BlockExpr(
+#     Match(1:1:"match"),
+#     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:7:"foo")))),
+#     MatchAlt(
+#         Pat(SimplePat(UpperIdPath(UpperId(2:5:"A")))),
+#         MatchRhs(InlineExpr(PrefixExpr(SimpleExpr(Int(2:8:"1"))))),
+#     ),
+#     MatchAlt(
+#         Pat(SimplePat(UpperIdPath(UpperId(3:5:"B")))),
+#         MatchRhs(InlineExpr(PrefixExpr(SimpleExpr(Int(3:8:"2"))))),
 #     ),
 # )
 # 
 # if foo:
 #     a()
-# InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             If(1:1:"if"),
-#             SimpleExpr(LowerId(1:4:"foo")),
-#             BlockExpr(
-#                 InlineExpr(
-#                     PrefixExpr(
-#                         SimpleExpr(LowerId(2:5:"a")),
-#                         Args(LParen(2:6:"("), RParen(2:7:")")),
-#                     ),
-#                 ),
+# BlockExpr(
+#     If(1:1:"if"),
+#     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:4:"foo")))),
+#     Stmt(
+#         InlineExpr(
+#             PrefixExpr(
+#                 SimpleExpr(LowerId(2:5:"a")),
+#                 Args(LParen(2:6:"("), RParen(2:7:")")),
 #             ),
 #         ),
+#         StmtExprCont,
 #     ),
 # )
 # 
@@ -256,16 +253,12 @@ runInlineExprScan(input: Str):
 #     1
 # else:
 #     2
-# InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             If(1:1:"if"),
-#             SimpleExpr(LowerId(1:4:"foo")),
-#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1"))))),
-#             Else(3:1:"else"),
-#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2"))))),
-#         ),
-#     ),
+# BlockExpr(
+#     If(1:1:"if"),
+#     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:4:"foo")))),
+#     Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1")))), StmtExprCont),
+#     Else(3:1:"else"),
+#     Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2")))), StmtExprCont),
 # )
 # 
 # if foo:
@@ -274,31 +267,27 @@ runInlineExprScan(input: Str):
 #     2
 # else:
 #     3
-# InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             If(1:1:"if"),
-#             SimpleExpr(LowerId(1:4:"foo")),
-#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1"))))),
-#             Elif(3:1:"elif"),
-#             SimpleExpr(LowerId(3:6:"bar")),
-#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2"))))),
-#             Else(5:1:"else"),
-#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(6:5:"3"))))),
-#         ),
-#     ),
+# BlockExpr(
+#     If(1:1:"if"),
+#     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:4:"foo")))),
+#     Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1")))), StmtExprCont),
+#     Elif(3:1:"elif"),
+#     InlineExpr(PrefixExpr(SimpleExpr(LowerId(3:6:"bar")))),
+#     Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2")))), StmtExprCont),
+#     Else(5:1:"else"),
+#     Stmt(InlineExpr(PrefixExpr(SimpleExpr(Int(6:5:"3")))), StmtExprCont),
 # )
 # 
 # x is C
 # InlineExpr(
 #     PrefixExpr(SimpleExpr(LowerId(1:1:"x"))),
-#     InlineExprCont(Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
+#     InlineExprCont(Is(1:3:"is"), Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
 # )
 # 
 # x is C == Bool.True
 # InlineExpr(
 #     PrefixExpr(SimpleExpr(LowerId(1:1:"x"))),
-#     InlineExprCont(Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
+#     InlineExprCont(Is(1:3:"is"), Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
 #     InlineExprCont(
 #         BinOp(EqEq(1:8:"==")),
 #         PrefixExpr(
@@ -319,7 +308,7 @@ runInlineExprScan(input: Str):
 #         SimpleExpr(
 #             PipePipe(1:1:"||"),
 #             Colon(1:3:":"),
-#             FnRhs(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"a"))))),
+#             InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"a")))),
 #         ),
 #     ),
 # )
@@ -327,27 +316,25 @@ runInlineExprScan(input: Str):
 # ||:
 #     f()
 #     g()
-# InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             PipePipe(1:1:"||"),
-#             Colon(1:3:":"),
-#             FnRhs(
-#                 BlockExpr(
-#                     InlineExpr(
-#                         PrefixExpr(
-#                             SimpleExpr(LowerId(2:5:"f")),
-#                             Args(LParen(2:6:"("), RParen(2:7:")")),
-#                         ),
-#                     ),
-#                     InlineExpr(
-#                         PrefixExpr(
-#                             SimpleExpr(LowerId(3:5:"g")),
-#                             Args(LParen(3:6:"("), RParen(3:7:")")),
-#                         ),
-#                     ),
-#                 ),
+# BlockExpr(
+#     PipePipe(1:1:"||"),
+#     Colon(1:3:":"),
+#     Stmt(
+#         InlineExpr(
+#             PrefixExpr(
+#                 SimpleExpr(LowerId(2:5:"f")),
+#                 Args(LParen(2:6:"("), RParen(2:7:")")),
 #             ),
 #         ),
+#         StmtExprCont,
+#     ),
+#     Stmt(
+#         InlineExpr(
+#             PrefixExpr(
+#                 SimpleExpr(LowerId(3:5:"g")),
+#                 Args(LParen(3:6:"("), RParen(3:7:")")),
+#             ),
+#         ),
+#         StmtExprCont,
 #     ),
 # )

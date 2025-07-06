@@ -190,9 +190,9 @@ blockExpr:
 
     "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
 
-    "||" returnTy? ":" fnRhs
+    "||" returnTy? ":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
-    "|" fnArgs? "|" returnTy? ":" fnRhs
+    "|" fnArgs? "|" returnTy? ":" _"NEWLINE" _"INDENT" stmt + _"DEDENT"
 
 
 inlineExprCont:
@@ -228,6 +228,10 @@ simpleExpr:
     "(" (parenExpr ("," parenExpr)* _","?)? ")"
 
     "return" inlineExpr?
+
+    "||" returnTy? ":" inlineExpr
+
+    "|" fnArgs? "|" returnTy? ":" inlineExpr
 
     "Int"
     "HexInt"
@@ -277,11 +281,6 @@ matchRhs:
 
 fnArgs:
     "LowerId" _":" type_ ("," "LowerId" _":" type_)* _","?
-
-
-fnRhs:
-    _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-    inlineExpr
 
 
 returnTy:
