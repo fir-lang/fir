@@ -50,10 +50,41 @@ main(args: Array[Str]):
     runInlineExpr("return")
     runInlineExpr("return 123")
 
-    # TODO: Match, If, Fn, Is
+    # Match
+    runInlineExprScan("\
+match foo:
+    A: 1
+    B: 2")
+
+    # If
+    runInlineExprScan("\
+if foo:
+    a()")
+    runInlineExprScan("\
+if foo:
+    1
+else:
+    2")
+    runInlineExprScan("\
+if foo:
+    1
+elif bar:
+    2
+else:
+    3")
+
+    # Is
+    runInlineExpr("x is C")
+    runInlineExpr("x is C == Bool.True")
+
+    # TODO: Fn
 
     ()
 
 
 runInlineExpr(input: Str):
     runTest_(input, inlineExpr)
+
+
+runInlineExprScan(input: Str):
+    runTestScanner_(input, inlineExpr)

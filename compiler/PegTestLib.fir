@@ -67,6 +67,18 @@ runTest_[ToStr[nt]](
     print("")
 
 
+## Same as `runTest_`, but runs scanner after lexer.
+runTestScanner_[ToStr[nt]](
+        input: Str,
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
+    ) / exn:
+    print(input)
+    match try(||: runParser(input, parseFn, Bool.True)):
+        Result.Ok(tree): print(tree.toDoc().render(80))
+        Result.Err(err): print("ERR: `err`")
+    print("")
+
+
 runTestIndent[ToStr[nt]](
         input: Str,
         parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],

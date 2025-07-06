@@ -12,6 +12,12 @@ Terminals:
     "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "prim" = Token(kind = TokenKind.Prim, ..)
+    "match" = Token(kind = TokenKind.Match, ..)
+    "if" = Token(kind = TokenKind.If, ..)
+    "elif" = Token(kind = TokenKind.Elif, ..)
+    "else" = Token(kind = TokenKind.Else, ..)
+    "do" = Token(kind = TokenKind.Do, ..)
+    "is" = Token(kind = TokenKind.Is, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
@@ -22,12 +28,15 @@ Terminals:
     ".." = Token(kind = TokenKind.DotDot, ..)
     "." = Token(kind = TokenKind.Dot, ..)
     "=" = Token(kind = TokenKind.Eq, ..)
+    "==" = Token(kind = TokenKind.EqEq, ..)
     "-" = Token(kind = TokenKind.Minus, ..)
     "~" = Token(kind = TokenKind.Tilde, ..)
     "+" = Token(kind = TokenKind.Plus, ..)
     "-" = Token(kind = TokenKind.Minus, ..)
     "/" = Token(kind = TokenKind.Slash, ..)
     "*" = Token(kind = TokenKind.Star, ..)
+    "|" = Token(kind = TokenKind.Pipe, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
     "Int" = Token(kind = TokenKind.Int, ..)
     "HexInt" = Token(kind = TokenKind.HexInt, ..)
     "BinInt" = Token(kind = TokenKind.BinInt, ..)
@@ -116,7 +125,11 @@ unnamedFields:
 # Expressions
 
 inlineExpr:
-    prefixExpr (binOp prefixExpr)*
+    prefixExpr inlineExprCont*
+
+inlineExprCont:
+    binOp prefixExpr
+    _"is" pat
 
 prefixExpr:
     exprPrefix? simpleExpr fields? args?
@@ -138,6 +151,14 @@ simpleExpr:
     "(" (parenExpr ("," parenExpr)* ","?)? ")"
 
     "return" inlineExpr?
+
+    "match" simpleExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
+
+    "if" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+        ("elif" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")*
+        ("else" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")?
+
+    "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
 
     "Int"
     "HexInt"
@@ -165,3 +186,42 @@ binOp:
     "-"
     "*"
     "/"
+    "=="
+
+matchAlt:
+    pat _":" matchRhs _"NEWLINE"
+
+matchRhs:
+    _"NEWLINE" _"INDENT" blockExpr
+    simpleExpr
+
+blockExpr:
+    (inlineExpr _"NEWLINE")+
+
+# --------------------------------------------------------------------------------------------------
+# Patterns
+
+pat:
+    simplePat ("|" simplePat)*
+
+simplePat:
+    # Variables
+    "LowerId"
+
+    # Constructors
+    upperIdPath
+
+    # Records: `(pat, pat)`, `(var = pat, ...)`
+    "(" (recordPat ("," recordPat)* ","?)? ")"
+
+    # Ignore
+    "_"
+
+    # Literals.
+    # TODO: Add integers.
+    "Str" "LowerId"?
+    "Char"
+
+recordPat:
+    "LowerId" "=" pat
+    pat
