@@ -1,4 +1,3 @@
-# TODO: We may want to allow unnamed fields: `type Char(U32)`.
 type Char:
     _codePoint: U32
 
@@ -31,8 +30,7 @@ Char.lenUtf8(self) U32:
 
 Char.isAsciiWhitespace(self) Bool:
     self == ' ' or self == '\t' or self == '\n' or self == '\r'
-        # TODO:
-        # or self == '\x0C'
+        or self._codePoint == 0x0C # form feed
 
 Char.isAsciiUppercase(self) Bool:
     self._codePoint >= 'A'._codePoint and self._codePoint <= 'Z'._codePoint
