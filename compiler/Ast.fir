@@ -233,15 +233,15 @@ type ForStmt:
     label: Option[Id]
     pat: L[Pat]
 
-    # Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
+    ## Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
     astTy: Option[L[Type]]
 
-    # `ast_ty`, converted to type checking types by the type checker.
+    ## `ast_ty`, converted to type checking types by the type checker.
     tcTy: Option[L[Type]]  # TODO: type-checking type
 
     expr: L[Expr]
 
-    # Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
+    ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
     exprTy: Option[L[Type]] # TODO: type-checking type
 
     body: Vec[L[Stmt]]
@@ -255,27 +255,27 @@ type Pat:
     ## Matches anything, binds it to variable.
     Var(VarPat)
 
-    # Matches a constructor.
+    ## Matches a constructor.
     Constr(ConstrPat)
 
-    # Matches a variant.
+    ## Matches a variant.
     Variant(VariantPat)
 
     Record(Vec[Named[L[Pat]]])
 
-    # Underscore, aka. wildcard.
+    ## Underscore, aka. wildcard.
     Ignore
 
-    # Matches the string.
+    ## Matches the string.
     Str(Str)
 
-    # Matches the character.
+    ## Matches the character.
     Char(Char)
 
-    # Match the prefix, bind the rest. E.g. `"a" .. rest`.
+    ## Match the prefix, bind the rest. E.g. `"a" .. rest`.
     StrPfx(Str, Id)
 
-    # Or pattern: `<pat1> | <pat2>`.
+    ## Or pattern: `<pat1> | <pat2>`.
     Or(L[Pat], L[Pat])
 
 type VarPat:
@@ -291,10 +291,19 @@ type VariantPat:
     fields: Vec[Named[L[Pat]]]
 
 type Constructor:
+    variant: Bool
+
     ty: Id
+
     constr: Option[Id]
 
-    # Inferred type arguments of the constructor. Filled in by the type checker.
+    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    ## there will be always one element.
+    ##
+    ## Always empty in patterns.
+    userTyArgs: Vec[L[Type]]
+
+    ## Inferred type arguments of the constructor's type. Filled in by the type checker.
     tyArgs: Vec[L[Type]]
 
 type Expr:
@@ -348,12 +357,6 @@ type Expr:
     ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
     Record(Vec[Named[L[Expr]]])
 
-    ## A variant: "~A" (nullary), "~ParseError(...)".
-    ##
-    ## Because "~A" is type checked differently from "~A(1)", we parse variant applications as
-    ## `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr)
-
     Return(L[Expr])
 
     Match(MatchExpr)
@@ -364,8 +367,17 @@ type Expr:
 
     Is(IsExpr)
 
+    Do(Vec[L[Stmt]])
+
+    # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
+    Seq(Vec[L[Stmt]])
+
 type VarExpr:
     id: Id
+
+    # Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    # there will be always one element.
+    userTyArgs: Vec[L[Type]]
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
     tyArgs: Vec[L[Type]]
@@ -378,7 +390,15 @@ type ConstrExpr:
 
 type FieldSelectExpr:
     object: L[Expr]
+
     field: Id
+
+    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    ## there will be always one element.
+    ##
+    ## Since fields can't have `forall` quantifiers, this will only be valid when the field is a
+    ## method, in which case the type checker will convert this node into `MethodSelectExpr`.
+    userTyArgs: Vec[L[Type]]
 
 ## A method selection: `<expr>.method`.
 ##
@@ -433,7 +453,11 @@ type AssocFnSelectExpr:
     ty: Id
     member: Id
 
-    ## Inferred type arguments of the type and assocaited function. Filled in by the type checker.
+    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
+    ## there will be always one element.
+    userTyArgs: Vec[L[Type]]
+
+    ## Inferred type arguments of the type and associated function. Filled in by the type checker.
     tyArgs: Vec[L[Type]]       # TODO: type-checking type
 
 type CallExpr:
