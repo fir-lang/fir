@@ -18,6 +18,7 @@ Terminals:
     "else" = Token(kind = TokenKind.Else, ..)
     "do" = Token(kind = TokenKind.Do, ..)
     "is" = Token(kind = TokenKind.Is, ..)
+    "import" = Token(kind = TokenKind.Import, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
@@ -47,6 +48,13 @@ Terminals:
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
     "return" = Token(kind = TokenKind.Return, ..)
+
+# --------------------------------------------------------------------------------------------------
+# Top-level declarations
+
+topDecl:
+    typeDecl
+    importDecl
 
 # --------------------------------------------------------------------------------------------------
 # Types
@@ -241,3 +249,9 @@ simplePat:
 recordPat:
     "LowerId" "=" pat
     pat
+
+# --------------------------------------------------------------------------------------------------
+# Import declarations
+
+importDecl:
+    "import" "UpperId" (_"." "UpperId")* _"NEWLINE"
