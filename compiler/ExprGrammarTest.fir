@@ -93,3 +93,261 @@ runInlineExpr(input: Str):
 
 runInlineExprScan(input: Str):
     runTestScanner_(input, inlineExpr)
+
+# expected stdout:
+# hi
+# InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:1:"hi"))))
+# 
+# Foo
+# InlineExpr(PrefixExpr(SimpleExpr(UpperIdPath(UpperId(1:1:"Foo")))))
+# 
+# Foo.Bar
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             UpperIdPath(UpperId(1:1:"Foo"), Dot(1:4:"."), UpperId(1:5:"Bar")),
+#         ),
+#     ),
+# )
+# 
+# ~Foo
+# InlineExpr(PrefixExpr(SimpleExpr(UpperIdPath(TildeUpperId(1:1:"~Foo")))))
+# 
+# ~Foo.Bar
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             UpperIdPath(
+#                 TildeUpperId(1:1:"~Foo"),
+#                 Dot(1:5:"."),
+#                 UpperId(1:6:"Bar"),
+#             ),
+#         ),
+#     ),
+# )
+# 
+# foo.bar
+# InlineExpr(
+#     PrefixExpr(SimpleExpr(LowerId(1:1:"foo")), Fields(LowerId(1:5:"bar"))),
+# )
+# 
+# Foo.bar
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(UpperIdPath(UpperId(1:1:"Foo"))),
+#         Fields(LowerId(1:5:"bar")),
+#     ),
+# )
+# 
+# foo(bar)
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(LowerId(1:1:"foo")),
+#         Args(
+#             LParen(1:4:"("),
+#             InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar")))),
+#             RParen(1:8:")"),
+#         ),
+#     ),
+# )
+# 
+# 123
+# InlineExpr(PrefixExpr(SimpleExpr(Int(1:1:"123"))))
+# 
+# "hi"
+# InlineExpr(PrefixExpr(SimpleExpr(Str(1:1:"\"hi\""))))
+# 
+# 'a'
+# InlineExpr(PrefixExpr(SimpleExpr(Char(1:1:"'a'"))))
+# 
+# self
+# InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:1:"self"))))
+# 
+# 1 + 2
+# InlineExpr(
+#     PrefixExpr(SimpleExpr(Int(1:1:"1"))),
+#     InlineExprCont(BinOp(Plus(1:3:"+")), PrefixExpr(SimpleExpr(Int(1:5:"2")))),
+# )
+# 
+# 1 + 2 - 3
+# InlineExpr(
+#     PrefixExpr(SimpleExpr(Int(1:1:"1"))),
+#     InlineExprCont(BinOp(Plus(1:3:"+")), PrefixExpr(SimpleExpr(Int(1:5:"2")))),
+#     InlineExprCont(BinOp(Minus(1:7:"-")), PrefixExpr(SimpleExpr(Int(1:9:"3")))),
+# )
+# 
+# -1
+# InlineExpr(PrefixExpr(ExprPrefix(Minus(1:1:"-")), SimpleExpr(Int(1:2:"1"))))
+# 
+# (x = 123, y = "hi")
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             LParen(1:1:"("),
+#             ParenExpr(
+#                 LowerId(1:2:"x"),
+#                 Eq(1:4:"="),
+#                 InlineExpr(PrefixExpr(SimpleExpr(Int(1:6:"123")))),
+#             ),
+#             Comma(1:9:","),
+#             ParenExpr(
+#                 LowerId(1:11:"y"),
+#                 Eq(1:13:"="),
+#                 InlineExpr(PrefixExpr(SimpleExpr(Str(1:15:"\"hi\"")))),
+#             ),
+#             RParen(1:19:")"),
+#         ),
+#     ),
+# )
+# 
+# return
+# InlineExpr(PrefixExpr(SimpleExpr(Return(1:1:"return"))))
+# 
+# return 123
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             Return(1:1:"return"),
+#             InlineExpr(PrefixExpr(SimpleExpr(Int(1:8:"123")))),
+#         ),
+#     ),
+# )
+# 
+# match foo:
+#     A: 1
+#     B: 2
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             Match(1:1:"match"),
+#             SimpleExpr(LowerId(1:7:"foo")),
+#             MatchAlt(
+#                 Pat(SimplePat(UpperIdPath(UpperId(2:5:"A")))),
+#                 MatchRhs(SimpleExpr(Int(2:8:"1"))),
+#             ),
+#             MatchAlt(
+#                 Pat(SimplePat(UpperIdPath(UpperId(3:5:"B")))),
+#                 MatchRhs(SimpleExpr(Int(3:8:"2"))),
+#             ),
+#         ),
+#     ),
+# )
+# 
+# if foo:
+#     a()
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             If(1:1:"if"),
+#             SimpleExpr(LowerId(1:4:"foo")),
+#             BlockExpr(
+#                 InlineExpr(
+#                     PrefixExpr(
+#                         SimpleExpr(LowerId(2:5:"a")),
+#                         Args(LParen(2:6:"("), RParen(2:7:")")),
+#                     ),
+#                 ),
+#             ),
+#         ),
+#     ),
+# )
+# 
+# if foo:
+#     1
+# else:
+#     2
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             If(1:1:"if"),
+#             SimpleExpr(LowerId(1:4:"foo")),
+#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1"))))),
+#             Else(3:1:"else"),
+#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2"))))),
+#         ),
+#     ),
+# )
+# 
+# if foo:
+#     1
+# elif bar:
+#     2
+# else:
+#     3
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             If(1:1:"if"),
+#             SimpleExpr(LowerId(1:4:"foo")),
+#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(2:5:"1"))))),
+#             Elif(3:1:"elif"),
+#             SimpleExpr(LowerId(3:6:"bar")),
+#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(4:5:"2"))))),
+#             Else(5:1:"else"),
+#             BlockExpr(InlineExpr(PrefixExpr(SimpleExpr(Int(6:5:"3"))))),
+#         ),
+#     ),
+# )
+# 
+# x is C
+# InlineExpr(
+#     PrefixExpr(SimpleExpr(LowerId(1:1:"x"))),
+#     InlineExprCont(Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
+# )
+# 
+# x is C == Bool.True
+# InlineExpr(
+#     PrefixExpr(SimpleExpr(LowerId(1:1:"x"))),
+#     InlineExprCont(Pat(SimplePat(UpperIdPath(UpperId(1:6:"C"))))),
+#     InlineExprCont(
+#         BinOp(EqEq(1:8:"==")),
+#         PrefixExpr(
+#             SimpleExpr(
+#                 UpperIdPath(
+#                     UpperId(1:11:"Bool"),
+#                     Dot(1:15:"."),
+#                     UpperId(1:16:"True"),
+#                 ),
+#             ),
+#         ),
+#     ),
+# )
+# 
+# ||: a
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             PipePipe(1:1:"||"),
+#             Colon(1:3:":"),
+#             FnRhs(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"a"))))),
+#         ),
+#     ),
+# )
+# 
+# ||:
+#     f()
+#     g()
+# InlineExpr(
+#     PrefixExpr(
+#         SimpleExpr(
+#             PipePipe(1:1:"||"),
+#             Colon(1:3:":"),
+#             FnRhs(
+#                 BlockExpr(
+#                     InlineExpr(
+#                         PrefixExpr(
+#                             SimpleExpr(LowerId(2:5:"f")),
+#                             Args(LParen(2:6:"("), RParen(2:7:")")),
+#                         ),
+#                     ),
+#                     InlineExpr(
+#                         PrefixExpr(
+#                             SimpleExpr(LowerId(3:5:"g")),
+#                             Args(LParen(3:6:"("), RParen(3:7:")")),
+#                         ),
+#                     ),
+#                 ),
+#             ),
+#         ),
+#     ),
+# )
