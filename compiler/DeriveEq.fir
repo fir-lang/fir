@@ -1,7 +1,7 @@
+import Grammar
 import Lexer
 import PegTestLib
 import Scanner
-import TypeGrammar
 
 main(args: Array[Str]):
     if args.len() < 2:

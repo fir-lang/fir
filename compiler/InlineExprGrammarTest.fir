@@ -1,4 +1,4 @@
-import InlineExprGrammar
+import Grammar
 import Lexer
 import PegTestLib
 

@@ -1,6 +1,6 @@
+import Grammar
 import Lexer
 import PegTestLib
-import TypeGrammar
 
 main(args: Array[Str]):
     if args.len() > 2:

@@ -4,6 +4,8 @@ import Token
 type Terminal = Token
 type NonTerminal = NonTerminal
 
+# --------------------------------------------------------------------------------------------------
+
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
@@ -17,9 +19,26 @@ Terminals:
     ":" = Token(kind = TokenKind.Colon, ..)
     "," = Token(kind = TokenKind.Comma, ..)
     ".." = Token(kind = TokenKind.DotDot, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "~" = Token(kind = TokenKind.Tilde, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "Int" = Token(kind = TokenKind.Int, ..)
+    "HexInt" = Token(kind = TokenKind.HexInt, ..)
+    "BinInt" = Token(kind = TokenKind.BinInt, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "Char" = Token(kind = TokenKind.Char, ..)
     "NEWLINE" = Token(kind = TokenKind.Newline, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
+
+# --------------------------------------------------------------------------------------------------
+# Types
 
 type_:
     namedType
@@ -63,6 +82,7 @@ returnType:
     _":" type_ type_?
 
 # --------------------------------------------------------------------------------------------------
+# Type declarations
 
 typeDecl:
     _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
@@ -90,3 +110,56 @@ namedField:
 
 unnamedFields:
     type_ (_"," type_)* _","?
+
+# --------------------------------------------------------------------------------------------------
+# Expressions
+
+inlineExpr:
+    prefixExpr (binOp prefixExpr)*
+
+prefixExpr:
+    exprPrefix? simpleExpr fields? args?
+
+fields:
+    (_"." "LowerId")+
+
+args:
+    "(" (inlineExpr ("," inlineExpr)* ","?)? ")"
+
+simpleExpr:
+    # Variables
+    "LowerId" tyArgs?
+
+    # Constructor selection
+    upperIdPath tyArgs?
+
+    # Records: `(a, b)`, `(a = 1, b = 2)`
+    "(" (parenExpr ("," parenExpr)* ","?)? ")"
+
+    "return" inlineExpr
+
+    "Int"
+    "HexInt"
+    "BinInt"
+    "Str"
+    "Char"
+
+upperIdPath:
+    "UpperId" ("." "UpperId")*
+
+tyArgs:
+    "[" "]"
+
+parenExpr:
+    "LowerId" "=" inlineExpr
+    inlineExpr
+
+exprPrefix:
+    "~"
+    "-"
+
+binOp:
+    "+"
+    "-"
+    "*"
+    "/"
