@@ -54,7 +54,15 @@ Terminals:
     "*" = Token(kind = TokenKind.Star, ..)
     "|" = Token(kind = TokenKind.Pipe, ..)
     "||" = Token(kind = TokenKind.PipePipe, ..)
+    "&" = Token(kind = TokenKind.Amp, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
+    ">" = Token(kind = TokenKind.RAngle, ..)
+    ">>" = Token(kind = TokenKind.DoubleRAngle, ..)
+    ">=" = Token(kind = TokenKind.RAngleEq, ..)
+    "<" = Token(kind = TokenKind.LAngle, ..)
+    "<<" = Token(kind = TokenKind.DoubleLAngle, ..)
+    "<=" = Token(kind = TokenKind.LAngleEq, ..)
     "Int" = Token(kind = TokenKind.Int, ..)
     "HexInt" = Token(kind = TokenKind.HexInt, ..)
     "BinInt" = Token(kind = TokenKind.BinInt, ..)
@@ -220,8 +228,8 @@ args:
 
 
 arg:
-    "LowerId" "=" inlineExpr
-    inlineExpr
+    "LowerId" "=" expr
+    expr
 
 
 simpleExpr:
@@ -275,6 +283,15 @@ binOp:
     "!="
     "and"
     "or"
+    "|"
+    "&"
+    "/"
+    ">"
+    ">>"
+    ">="
+    "<"
+    "<<"
+    "<="
 
 
 matchAlt:

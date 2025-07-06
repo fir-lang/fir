@@ -153,7 +153,9 @@ runBlockExprScan(input: Str):
 #         ExprSuffix(
 #             Args(
 #                 LParen(1:4:"("),
-#                 Arg(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
+#                 Arg(
+#                     Expr(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
+#                 ),
 #                 RParen(1:8:")"),
 #             ),
 #         ),
