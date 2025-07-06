@@ -258,9 +258,6 @@ type Pat:
     ## Matches a constructor.
     Constr(ConstrPat)
 
-    ## Matches a variant.
-    Variant(VariantPat)
-
     Record(Vec[Named[L[Pat]]])
 
     ## Underscore, aka. wildcard.

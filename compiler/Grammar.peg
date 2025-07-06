@@ -1,0 +1,243 @@
+import ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+# --------------------------------------------------------------------------------------------------
+
+Terminals:
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
+    "type" = Token(kind = TokenKind.Type, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
+    "match" = Token(kind = TokenKind.Match, ..)
+    "if" = Token(kind = TokenKind.If, ..)
+    "elif" = Token(kind = TokenKind.Elif, ..)
+    "else" = Token(kind = TokenKind.Else, ..)
+    "do" = Token(kind = TokenKind.Do, ..)
+    "is" = Token(kind = TokenKind.Is, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "==" = Token(kind = TokenKind.EqEq, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "~" = Token(kind = TokenKind.Tilde, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "|" = Token(kind = TokenKind.Pipe, ..)
+    "||" = Token(kind = TokenKind.PipePipe, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
+    "Int" = Token(kind = TokenKind.Int, ..)
+    "HexInt" = Token(kind = TokenKind.HexInt, ..)
+    "BinInt" = Token(kind = TokenKind.BinInt, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "Char" = Token(kind = TokenKind.Char, ..)
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
+
+# --------------------------------------------------------------------------------------------------
+# Types
+
+type_:
+    namedType
+    "LowerId"
+    recordType
+    variantType
+    fnType
+
+recordType:
+    _"(" _")"
+    _"(" recordTypeFields _")"
+
+variantType:
+    _"[" _"]"
+    _"[" variantAlt (_"," variantAlt)* _"," _".." "LowerId" _"]"
+    _"[" variantAlt (_"," variantAlt)* _","? _"]"
+
+fnType:
+    _"Fn" _"(" fnArgTys? _")" returnType?
+
+namedType:
+    "UpperId" _"[" type_ (_"," type_)* _","? _"]"
+    "UpperId"
+
+recordTypeFields:
+    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
+    recordTypeField (_"," recordTypeField)* _","?
+
+recordTypeField:
+    "LowerId" _":" type_
+    type_
+
+variantAlt:
+    "UpperId" _"(" recordTypeFields _")"
+    "UpperId"
+
+fnArgTys:
+    type_ (_"," type_)* ","?
+
+returnType:
+    _":" type_ type_?
+
+# --------------------------------------------------------------------------------------------------
+# Type declarations
+
+typeDecl:
+    _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
+    _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+    "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+
+typeParams:
+    "LowerId" (_"," "LowerId")* ","?
+    "LowerId"
+
+typeDeclRhs:
+    conDecl+
+    namedField+
+
+conDecl:
+    "UpperId" _":" _"NEWLINE" _"INDENT" namedFields _"DEDENT"
+    "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
+    "UpperId" _"NEWLINE"
+
+namedFields:
+    namedField+
+
+namedField:
+    "LowerId" _":" type_ _"NEWLINE"
+
+unnamedFields:
+    type_ (_"," type_)* _","?
+
+# --------------------------------------------------------------------------------------------------
+# Expressions
+
+inlineExpr:
+    prefixExpr inlineExprCont*
+
+inlineExprCont:
+    binOp prefixExpr
+    _"is" pat
+
+prefixExpr:
+    exprPrefix? simpleExpr fields? args?
+
+fields:
+    (_"." "LowerId")+
+
+args:
+    "(" (inlineExpr ("," inlineExpr)* ","?)? ")"
+
+simpleExpr:
+    # Variables
+    "LowerId" tyArgs?
+
+    # Constructor selection
+    upperIdPath tyArgs?
+
+    # Records: `(a, b)`, `(a = 1, b = 2)`
+    "(" (parenExpr ("," parenExpr)* ","?)? ")"
+
+    "return" inlineExpr?
+
+    "match" simpleExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
+
+    "if" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+        ("elif" simpleExpr _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")*
+        ("else" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT")?
+
+    "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+
+    "|" fnArgs? "|" returnTy? ":" fnRhs
+    "||" returnTy? ":" fnRhs
+
+    "Int"
+    "HexInt"
+    "BinInt"
+    "Str"
+    "Char"
+
+upperIdPath:
+    "UpperId" ("." "UpperId")*
+    "TildeUpperId" ("." "UpperId")*
+
+tyArgs:
+    "[" "]"
+
+parenExpr:
+    "LowerId" "=" inlineExpr
+    inlineExpr
+
+exprPrefix:
+    "~"
+    "-"
+
+binOp:
+    "+"
+    "-"
+    "*"
+    "/"
+    "=="
+
+matchAlt:
+    pat _":" matchRhs _"NEWLINE"
+
+matchRhs:
+    _"NEWLINE" _"INDENT" blockExpr
+    simpleExpr
+
+blockExpr:
+    (inlineExpr _"NEWLINE")+
+
+fnArgs:
+    "LowerId" _":" type_ ("," "LowerId" _":" type_)* ","?
+
+fnRhs:
+    _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    inlineExpr
+
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type
+
+# --------------------------------------------------------------------------------------------------
+# Patterns
+
+pat:
+    simplePat ("|" simplePat)*
+
+simplePat:
+    # Variables
+    "LowerId"
+
+    # Constructors
+    upperIdPath
+
+    # Records: `(pat, pat)`, `(var = pat, ...)`
+    "(" (recordPat ("," recordPat)* ","?)? ")"
+
+    # Ignore
+    "_"
+
+    # Literals.
+    # TODO: Add integers.
+    "Str" "LowerId"?
+    "Char"
+
+recordPat:
+    "LowerId" "=" pat
+    pat

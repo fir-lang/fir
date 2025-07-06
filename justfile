@@ -38,11 +38,13 @@ compiler_golden_test:
     goldentests target/debug/fir compiler/PegTests.fir '# '
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
     goldentests target/debug/fir compiler/DeriveEq.fir '# '
+    goldentests target/debug/fir compiler/ExprGrammarTest.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
     goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/ExprGrammarTest.fir '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
@@ -59,7 +61,7 @@ update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
     tools/peg/Peg.sh compiler/TestGrammar.peg > compiler/TestGrammar.fir
-    tools/peg/Peg.sh compiler/TypeGrammar.peg > compiler/TypeGrammar.fir
+    tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
 
     # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
     # the PEG compiler itself uses the file. Save the output to a local and

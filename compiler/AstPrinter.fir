@@ -187,9 +187,6 @@ Pat.pprint(self) Doc:
         Pat.Constr(ConstrPat(constr, fields)):
             constr.pprint() + parens(_ppNamedList(fields, Pat.pprint))
 
-        Pat.Variant(VariantPat(constr, fields)):
-            Doc.char('~') + Doc.str(constr.name) + parens(_ppNamedList(fields, Pat.pprint))
-
         Pat.Record(fields):
             _ppNamedList(fields, Pat.pprint)
 

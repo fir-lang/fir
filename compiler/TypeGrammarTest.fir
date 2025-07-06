@@ -1,6 +1,6 @@
+import Grammar
 import Lexer
 import PegTestLib
-import TypeGrammar
 
 main(args: Array[Str]):
     if args.len() > 2:
@@ -227,7 +227,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 # 
 # Fn(self)
-# Type_(FnType(FnArgs(Type_(LowerId(1:4:"self")))))
+# Type_(FnType(FnArgTys(Type_(LowerId(1:4:"self")))))
 # 
 # Fn(self, a: U32): [] Foo
 # ERR: unexpected token Colon(1:11:":") at cursor 5
@@ -386,7 +386,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #             LowerId(3:5:"f"),
 #             Type_(
 #                 FnType(
-#                     FnArgs(
+#                     FnArgTys(
 #                         Type_(
 #                             NamedType(
 #                                 UpperId(3:11:"Result"),
