@@ -10,15 +10,16 @@ Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
-    "type" = Token(kind = TokenKind.Type, ..)
-    "prim" = Token(kind = TokenKind.Prim, ..)
-    "match" = Token(kind = TokenKind.Match, ..)
-    "if" = Token(kind = TokenKind.If, ..)
+    "do" = Token(kind = TokenKind.Do, ..)
     "elif" = Token(kind = TokenKind.Elif, ..)
     "else" = Token(kind = TokenKind.Else, ..)
-    "do" = Token(kind = TokenKind.Do, ..)
-    "is" = Token(kind = TokenKind.Is, ..)
+    "if" = Token(kind = TokenKind.If, ..)
     "import" = Token(kind = TokenKind.Import, ..)
+    "is" = Token(kind = TokenKind.Is, ..)
+    "match" = Token(kind = TokenKind.Match, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
+    "trait" = Token(kind = TokenKind.Trait, ..)
+    "type" = Token(kind = TokenKind.Type, ..)
     "Fn" = Token(kind = TokenKind.UpperFn, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
@@ -55,6 +56,7 @@ Terminals:
 topDecl:
     typeDecl
     importDecl
+    traitDecl
     topFunDecl
 
 # --------------------------------------------------------------------------------------------------
@@ -281,3 +283,25 @@ paramList:
 
 param:
     "LowerId" _":" type_
+
+# --------------------------------------------------------------------------------------------------
+# Trait declarations
+
+traitDecl:
+    _"trait" "UpperId" _"[" typeParams _"]" traitDeclRhs?
+
+traitDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
+
+funDecl:
+    "prim" funSig _"NEWLINE"
+    funSig funDeclRhs
+
+funSig:
+    "LowerId" context? paramList returnTy?
+
+funDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    _":" inlineExpr _"NEWLINE"
