@@ -77,7 +77,12 @@ else:
     runInlineExpr("x is C")
     runInlineExpr("x is C == Bool.True")
 
-    # TODO: Fn
+    # Function exprs
+    runInlineExpr("||: a")
+    runInlineExprScan("\
+||:
+    f()
+    g()")
 
     ()
 

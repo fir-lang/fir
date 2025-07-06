@@ -36,6 +36,7 @@ Terminals:
     "/" = Token(kind = TokenKind.Slash, ..)
     "*" = Token(kind = TokenKind.Star, ..)
     "|" = Token(kind = TokenKind.Pipe, ..)
+    "||" = Token(kind = TokenKind.PipePipe, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
     "Int" = Token(kind = TokenKind.Int, ..)
     "HexInt" = Token(kind = TokenKind.HexInt, ..)
@@ -67,7 +68,7 @@ variantType:
     _"[" variantAlt (_"," variantAlt)* _","? _"]"
 
 fnType:
-    _"Fn" _"(" fnArgs? _")" returnType?
+    _"Fn" _"(" fnArgTys? _")" returnType?
 
 namedType:
     "UpperId" _"[" type_ (_"," type_)* _","? _"]"
@@ -85,7 +86,7 @@ variantAlt:
     "UpperId" _"(" recordTypeFields _")"
     "UpperId"
 
-fnArgs:
+fnArgTys:
     type_ (_"," type_)* ","?
 
 returnType:
@@ -160,6 +161,9 @@ simpleExpr:
 
     "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
 
+    "|" fnArgs? "|" returnTy? ":" fnRhs
+    "||" returnTy? ":" fnRhs
+
     "Int"
     "HexInt"
     "BinInt"
@@ -197,6 +201,18 @@ matchRhs:
 
 blockExpr:
     (inlineExpr _"NEWLINE")+
+
+fnArgs:
+    "LowerId" _":" type_ ("," "LowerId" _":" type_)* ","?
+
+fnRhs:
+    _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    inlineExpr
+
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type
 
 # --------------------------------------------------------------------------------------------------
 # Patterns
