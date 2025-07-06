@@ -14,6 +14,7 @@ Terminals:
     "elif" = Token(kind = TokenKind.Elif, ..)
     "else" = Token(kind = TokenKind.Else, ..)
     "if" = Token(kind = TokenKind.If, ..)
+    "impl" = Token(kind = TokenKind.Impl, ..)
     "import" = Token(kind = TokenKind.Import, ..)
     "is" = Token(kind = TokenKind.Is, ..)
     "match" = Token(kind = TokenKind.Match, ..)
@@ -57,6 +58,7 @@ topDecl:
     typeDecl
     importDecl
     traitDecl
+    implDecl
     topFunDecl
 
 # --------------------------------------------------------------------------------------------------
@@ -294,12 +296,24 @@ traitDeclRhs:
     _"NEWLINE"
     _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
 
+funSig:
+    "LowerId" context? paramList returnTy?
+
+# --------------------------------------------------------------------------------------------------
+# Impl declarations
+
+implDecl:
+    _"impl" context? "UpperId" _"[" type_ _"]" implDeclRhs
+
+implDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
+
+# --------------------------------------------------------------------------------------------------
+
 funDecl:
     "prim" funSig _"NEWLINE"
     funSig funDeclRhs
-
-funSig:
-    "LowerId" context? paramList returnTy?
 
 funDeclRhs:
     _"NEWLINE"

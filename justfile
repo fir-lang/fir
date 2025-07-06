@@ -42,6 +42,7 @@ compiler_golden_test:
     goldentests target/debug/fir compiler/ImportGrammarTest.fir '# '
     goldentests target/debug/fir compiler/TopFunDeclGrammarTest.fir '# '
     goldentests target/debug/fir compiler/TraitGrammarTest.fir '# '
+    goldentests target/debug/fir compiler/ImplGrammarTest.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
@@ -52,6 +53,7 @@ compiler_update_goldens:
     goldentests target/debug/fir compiler/TopFunDeclGrammarTest.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TopFunDeclGrammarTest.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TraitGrammarTest.fir '# ' --overwrite
+    goldentests target/debug/fir compiler/ImplGrammarTest.fir '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
