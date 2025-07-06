@@ -1,14 +1,17 @@
 import Scanner
 
+
 type TestError:
     ParseError(ParseError[Token])
     Other(Str)
+
 
 impl ToStr[TestError]:
     toStr(self: TestError) Str:
         match self:
             TestError.ParseError(parseError): parseError.toStr()
             TestError.Other(msg): msg
+
 
 runParser(
         input: Str,
@@ -36,6 +39,8 @@ runParser(
 
     result.tree
 
+
+## Print test name, run the given parser function on the input, print errors and trees.
 runTest[ToStr[nt]](
         testName: Str,
         input: Str,
@@ -47,6 +52,10 @@ runTest[ToStr[nt]](
         Result.Err(err): print("ERR: `err`")
     print("")
 
+
+## Print input, run the given parser function on the input, print errors and trees.
+##
+## Difference from `runTest` is that this prints the input, `runTest` prints the given test name.
 runTest_[ToStr[nt]](
         input: Str,
         parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
@@ -56,6 +65,7 @@ runTest_[ToStr[nt]](
         Result.Ok(tree): print(tree.toDoc().render(80))
         Result.Err(err): print("ERR: `err`")
     print("")
+
 
 runTestIndent[ToStr[nt]](
         input: Str,
@@ -71,6 +81,7 @@ runTestIndent[ToStr[nt]](
             Bool.False
     print("")
     result
+
 
 lexerErrorStr(err: Error) Str:
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

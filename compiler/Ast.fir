@@ -348,12 +348,6 @@ type Expr:
     ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
     Record(Vec[Named[L[Expr]]])
 
-    ## A variant: "~A" (nullary), "~ParseError(...)".
-    ##
-    ## Because "~A" is type checked differently from "~A(1)", we parse variant applications as
-    ## `Expr::Variant` instead of `Expr::Call` with a variant as the function.
-    Variant(VariantExpr)
-
     Return(L[Expr])
 
     Match(MatchExpr)
