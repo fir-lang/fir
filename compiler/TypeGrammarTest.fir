@@ -31,10 +31,10 @@ main(args: Array[Str]):
     runTest_("[A, B, ..foo]", type_)
     runTest_("[A(x: U32), B(y: Str), ..foo]", type_)
     runTest_("Fn()", type_)
-    runTest_("Fn(): Foo", type_)
-    runTest_("Fn(): exn Foo", type_)
+    runTest_("Fn() Foo", type_)
+    runTest_("Fn() Foo / exn", type_)
     runTest_("Fn(self)", type_)
-    runTest_("Fn(self, a: U32): [] Foo", type_)
+    runTest_("Fn(self, U32) Foo / []", type_)
     runTest_("Map[Foo, Bar]", type_)
     runTest_("[]", type_)
     runTest_("[Foo, Bar]", type_)
@@ -76,7 +76,7 @@ type Type:
     runTestIndent("\
 type MapResult[iter, item, b, exnOld, exnNew]:
     iter: iter
-    f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]", typeDecl)
+    f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew", typeDecl)
 
     ()
 
@@ -213,15 +213,16 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # Fn()
 # Type_(FnType)
 # 
-# Fn(): Foo
-# Type_(FnType(ReturnType(Type_(NamedType(UpperId(1:7:"Foo"))))))
+# Fn() Foo
+# Type_(FnType(ReturnTy(Type_(NamedType(UpperId(1:6:"Foo"))))))
 # 
-# Fn(): exn Foo
+# Fn() Foo / exn
 # Type_(
 #     FnType(
-#         ReturnType(
-#             Type_(LowerId(1:7:"exn")),
-#             Type_(NamedType(UpperId(1:11:"Foo"))),
+#         ReturnTy(
+#             Type_(NamedType(UpperId(1:6:"Foo"))),
+#             Slash(1:10:"/"),
+#             Type_(LowerId(1:12:"exn")),
 #         ),
 #     ),
 # )
@@ -229,8 +230,20 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # Fn(self)
 # Type_(FnType(FnArgTys(Type_(LowerId(1:4:"self")))))
 # 
-# Fn(self, a: U32): [] Foo
-# ERR: unexpected token Colon(1:11:":") at cursor 5
+# Fn(self, U32) Foo / []
+# Type_(
+#     FnType(
+#         FnArgTys(
+#             Type_(LowerId(1:4:"self")),
+#             Type_(NamedType(UpperId(1:10:"U32"))),
+#         ),
+#         ReturnTy(
+#             Type_(NamedType(UpperId(1:15:"Foo"))),
+#             Slash(1:19:"/"),
+#             Type_(VariantType),
+#         ),
+#     ),
+# )
 # 
 # Map[Foo, Bar]
 # Type_(
@@ -370,7 +383,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # 
 # type MapResult[iter, item, b, exnOld, exnNew]:
 #     iter: iter
-#     f: Fn(Result[exnOld, Option[item]]): exnNew Option[b]
+#     f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew
 # TypeDecl(
 #     UpperId(1:6:"MapResult"),
 #     TypeParams(
@@ -400,14 +413,15 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #                             ),
 #                         ),
 #                     ),
-#                     ReturnType(
-#                         Type_(LowerId(3:42:"exnNew")),
+#                     ReturnTy(
 #                         Type_(
 #                             NamedType(
-#                                 UpperId(3:49:"Option"),
-#                                 Type_(LowerId(3:56:"b")),
+#                                 UpperId(3:41:"Option"),
+#                                 Type_(LowerId(3:48:"b")),
 #                             ),
 #                         ),
+#                         Slash(3:51:"/"),
+#                         Type_(LowerId(3:53:"exnNew")),
 #                     ),
 #                 ),
 #             ),

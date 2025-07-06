@@ -104,7 +104,7 @@ variantType:
 
 
 fnType:
-    _"Fn" _"(" fnArgTys? _")" returnType?
+    _"Fn" _"(" fnArgTys? _")" returnTy?
 
 
 namedType:
@@ -113,6 +113,7 @@ namedType:
 
 
 recordTypeFields:
+    ".." "LowerId"
     recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
     recordTypeField (_"," recordTypeField)* _","?
 
@@ -129,10 +130,6 @@ variantAlt:
 
 fnArgTys:
     type_ (_"," type_)* ","?
-
-
-returnType:
-    _":" type_ type_?
 
 
 # --------------------------------------------------------------------------------------------------
