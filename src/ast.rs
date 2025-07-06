@@ -409,7 +409,7 @@ pub struct Constructor {
     /// Always empty in patterns.
     pub user_ty_args: Vec<L<Type>>,
 
-    /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
+    /// Inferred type arguments of the constructor's type. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
@@ -633,7 +633,7 @@ pub struct AssocFnSelectExpr {
     /// there will be always one element.
     pub user_ty_args: Vec<L<Type>>,
 
-    /// Inferred type arguments of the type and assocaited function. Filled in by the type checker.
+    /// Inferred type arguments of the type and associated function. Filled in by the type checker.
     pub ty_args: Vec<Ty>,
 }
 
