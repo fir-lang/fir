@@ -189,7 +189,13 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     else:
         0
 
-    let symbol = convertSymbolNonRec(nodes.get(symbolIdx).asNonTerminal(NonTerminal.SymbolNonRec))
+    let symbolTree = nodes.get(symbolIdx)
+
+    if symbolTree is ParseTree.Terminal(Token(kind = TokenKind.Dollar,..)):
+        return Symbol.EndOfInput
+
+
+    let symbol = convertSymbolNonRec(symbolTree.asNonTerminal(NonTerminal.SymbolNonRec))
 
     if nodes.len() > symbolIdx + 1:
         match nodes.get(symbolIdx + 1).asNonTerminal(NonTerminal.SymbolSuffix).get(0).asTerminal().kind:
@@ -292,6 +298,9 @@ type Symbol:
     ## Negative lookahead: succeeds without incrementing the cursor if parsing fails. Parsed from
     ## `-` prefix.
     NegLookahead(Symbol)
+
+    ## Succeeds when the cursor is at the end. Fails with "unexpected token" otherwise.
+    EndOfInput
 
 # --------------------------------------------------------------------------------------------------
 # Code generation
@@ -568,6 +577,20 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
                                 + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor")))))
+
+        Symbol.EndOfInput:
+            Doc.nested(
+                4,
+                Doc.str("if cursor == tokens.len():")
+                    + Doc.hardLine()
+                    + Doc.str("cursor"))
+                + Doc.hardLine()
+                + Doc.nested(
+                    4,
+                    Doc.str("else:")
+                        + Doc.hardLine()
+                        + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))))
+
 
 tokensToCode(tokens: Vec[Token]) Doc / exn:
     if tokens.len() == 0:

@@ -36,6 +36,9 @@ main():
     runTest("'b' as negLookahead", "b", negLookahead)
     runTest("'a' as negLookahead (should fail)", "a", negLookahead)
     runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
+    runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
+    runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
+    runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
 
 # expected stdout:
 # 'a' as terminalA
@@ -115,3 +118,12 @@ main():
 # 
 # 'a a c' as oneOrMoreAThenB (should fail)
 # ERR: unexpected token LowerId(1:5:"c") at cursor 2
+# 
+# 'a b' as endOfInputTest
+# EndOfInputTest(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'a b ' as endOfInputTest
+# EndOfInputTest(LowerId(1:1:"a"), LowerId(1:3:"b"))
+# 
+# 'a b a' as endOfInputTest (should fail)
+# ERR: unexpected token LowerId(1:5:"a") at cursor 2

@@ -236,6 +236,14 @@ module(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
+        if cursor == tokens.len():
+            cursor
+        else:
+            throw(
+                ParseError.UnexpectedToken(
+                    token = tokens.get(cursor),
+                    cursor = cursor,
+                ))
         cursor
     )
     match altResult:

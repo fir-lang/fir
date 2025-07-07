@@ -51,3 +51,6 @@ nonTerminalsBacktrack:
 
 negLookahead:
     -"a" terminalAOrB
+
+endOfInputTest:
+    "a" "b" $

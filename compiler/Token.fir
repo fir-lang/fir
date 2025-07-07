@@ -101,6 +101,7 @@ type TokenKind:
     Amp
     AmpAmp
     CaretEq
+    Dollar
     DotDot
     DoubleLAngle
     DoubleRAngle
@@ -194,6 +195,7 @@ impl ToStr[TokenKind]:
             TokenKind.Continue: "Continue"
             TokenKind.Dedent: "Dedent"
             TokenKind.Do: "Do"
+            TokenKind.Dollar: "$"
             TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
             TokenKind.DoubleLAngle: "DoubleLAngle"
@@ -216,17 +218,17 @@ impl ToStr[TokenKind]:
             TokenKind.Int: "Int"
             TokenKind.Is: "Is"
             TokenKind.Jump: "Jump"
+            TokenKind.Label: "Label"
             TokenKind.LAngle: "LAngle"
             TokenKind.LAngleEq: "LAngleEq"
             TokenKind.LBrace: "LBrace"
             TokenKind.LBracket: "LBracket"
             TokenKind.LBracketRow: "LBracketRow"
-            TokenKind.LParen: "LParen"
-            TokenKind.LParenRow: "LParenRow"
-            TokenKind.Label: "Label"
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
+            TokenKind.LParen: "LParen"
+            TokenKind.LParenRow: "LParenRow"
             TokenKind.Match: "Match"
             TokenKind.Minus: "Minus"
             TokenKind.MinusEq: "MinusEq"
@@ -243,8 +245,8 @@ impl ToStr[TokenKind]:
             TokenKind.RAngleEq: "RAngleEq"
             TokenKind.RBrace: "RBrace"
             TokenKind.RBracket: "RBracket"
-            TokenKind.RParen: "RParen"
             TokenKind.Return: "Return"
+            TokenKind.RParen: "RParen"
             TokenKind.SingleQuote: "SingleQuote"
             TokenKind.Slash: "Slash"
             TokenKind.Star: "Star"
@@ -278,6 +280,7 @@ impl Eq[TokenKind]:
             (left = TokenKind.Continue, right = TokenKind.Continue): Bool.True
             (left = TokenKind.Dedent, right = TokenKind.Dedent): Bool.True
             (left = TokenKind.Do, right = TokenKind.Do): Bool.True
+            (left = TokenKind.Dollar, right = TokenKind.Dollar): Bool.True
             (left = TokenKind.Dot, right = TokenKind.Dot): Bool.True
             (left = TokenKind.DotDot, right = TokenKind.DotDot): Bool.True
             (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle): Bool.True
@@ -299,17 +302,17 @@ impl Eq[TokenKind]:
             (left = TokenKind.Indent, right = TokenKind.Indent): Bool.True
             (left = TokenKind.Int, right = TokenKind.Int): Bool.True
             (left = TokenKind.Jump, right = TokenKind.Jump): Bool.True
+            (left = TokenKind.Label, right = TokenKind.Label): Bool.True
             (left = TokenKind.LAngle, right = TokenKind.LAngle): Bool.True
             (left = TokenKind.LAngleEq, right = TokenKind.LAngleEq): Bool.True
             (left = TokenKind.LBrace, right = TokenKind.LBrace): Bool.True
             (left = TokenKind.LBracket, right = TokenKind.LBracket): Bool.True
             (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow): Bool.True
-            (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
-            (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
-            (left = TokenKind.Label, right = TokenKind.Label): Bool.True
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
+            (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
+            (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
             (left = TokenKind.Match, right = TokenKind.Match): Bool.True
             (left = TokenKind.Minus, right = TokenKind.Minus): Bool.True
             (left = TokenKind.MinusEq, right = TokenKind.MinusEq): Bool.True
@@ -325,8 +328,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.RAngleEq, right = TokenKind.RAngleEq): Bool.True
             (left = TokenKind.RBrace, right = TokenKind.RBrace): Bool.True
             (left = TokenKind.RBracket, right = TokenKind.RBracket): Bool.True
-            (left = TokenKind.RParen, right = TokenKind.RParen): Bool.True
             (left = TokenKind.Return, right = TokenKind.Return): Bool.True
+            (left = TokenKind.RParen, right = TokenKind.RParen): Bool.True
             (left = TokenKind.SingleQuote, right = TokenKind.SingleQuote): Bool.True
             (left = TokenKind.Slash, right = TokenKind.Slash): Bool.True
             (left = TokenKind.Star, right = TokenKind.Star): Bool.True

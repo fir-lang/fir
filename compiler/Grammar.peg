@@ -80,7 +80,7 @@ Terminals:
 # Top-level declarations
 
 module:
-    topDecl+
+    topDecl+ $
 
 
 topDecl:

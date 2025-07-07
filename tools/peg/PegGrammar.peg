@@ -25,11 +25,12 @@ Terminals:
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "." = Token(kind = TokenKind.Dot, ..)
+    "$" = Token(kind = TokenKind.Dollar, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
 
 grammar:
-    importDecls typeDecls terminalsDecl nonTerminalDecls
+    importDecls typeDecls terminalsDecl nonTerminalDecls $
 
 importDecls:
     importDecl*
@@ -62,6 +63,7 @@ nonTerminalAlt:
 
 symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
+    "$"
 
 symbolPrefix:
     "-"                 # negative lookahead (fails when symbol succeeds)

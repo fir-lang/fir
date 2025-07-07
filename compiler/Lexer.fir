@@ -485,6 +485,11 @@ Lexer._next(self) Option[Token] / Error:
             self._col += 1
             return Option.Some(Token(kind = TokenKind.Question, text = "?", byteIdx, line, col))
 
+        "$" _:
+            self._byteIdx += 1
+            self._col += 1
+            return Option.Some(Token(kind = TokenKind.Dollar, text = "$", byteIdx, line, col))
+
         # ------------------------------------------------------------------------------------------
         # Literals
 
