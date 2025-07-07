@@ -8,7 +8,6 @@ type ParseTree[t, nt]:
 type ParseError[t]:
     UnexpectedEof
     UnexpectedToken:
-        token: t
         cursor: U32
 
 ParseError.takeAdvanced(err1: ParseError[t], err2: ParseError[t]) ParseError[t]:
@@ -29,7 +28,7 @@ impl[ToStr[t]] ToStr[ParseError[t]]:
     toStr(self: ParseError[t]) Str:
         match self:
             ParseError.UnexpectedEof: "unexpected end of input"
-            ParseError.UnexpectedToken(token, cursor): "unexpected token `token` at cursor `cursor`"
+            ParseError.UnexpectedToken(cursor): "unexpected token at cursor `cursor`"
 
 ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]) Doc:
     match self:

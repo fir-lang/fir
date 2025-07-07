@@ -400,7 +400,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                         4,
                         Doc.str("curErr.unwrapOrElse(||:")
                             + Doc.hardLine()
-                            + makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))
+                            + makeUnexpectedTokenError(Doc.str("cursor"))
                             + Doc.char(')'))))
 
     doc.nest(4)
@@ -450,7 +450,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))))
+                        + makeThrow(makeUnexpectedTokenError(Doc.str("cursor"))))
 
             eofCheck + tokenKindCheck
 
@@ -576,7 +576,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                             4,
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
-                                + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor")))))
+                                + makeThrow(makeUnexpectedTokenError(Doc.str("cursor")))))
 
         Symbol.EndOfInput:
             Doc.nested(
@@ -589,7 +589,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError(Doc.str("tokens.get(cursor)"), Doc.str("cursor"))))
+                        + makeThrow(makeUnexpectedTokenError(Doc.str("cursor"))))
 
 
 tokensToCode(tokens: Vec[Token]) Doc / exn:
@@ -616,15 +616,13 @@ tokensToCode(tokens: Vec[Token]) Doc / exn:
 
     Doc.str(out.toStr())
 
-makeUnexpectedTokenError(token: Doc, cursor: Doc) Doc:
+makeUnexpectedTokenError(cursor: Doc) Doc:
     Doc.group(
         Doc.nested(
             4,
             Doc.group(
                 Doc.str("ParseError.UnexpectedToken(")
                     + Doc.break_(0)
-                    + Doc.str("token = ") + token
-                    + Doc.str(",") + Doc.break_(1)
                     + Doc.str("cursor = ") + cursor))
             + Doc.whenNotFlat(Doc.char(','))
             + Doc.break_(0)
