@@ -107,11 +107,7 @@ runBlockExprScan(input: Str):
 # 
 # Foo.Bar
 # InlineExpr(
-#     PrefixExpr(
-#         SimpleExpr(
-#             UpperIdPath(UpperId(1:1:"Foo"), Dot(1:4:"."), UpperId(1:5:"Bar")),
-#         ),
-#     ),
+#     PrefixExpr(SimpleExpr(UpperIdPath(UpperId(1:1:"Foo"), UpperId(1:5:"Bar")))),
 # )
 # 
 # ~Foo
@@ -120,13 +116,7 @@ runBlockExprScan(input: Str):
 # ~Foo.Bar
 # InlineExpr(
 #     PrefixExpr(
-#         SimpleExpr(
-#             UpperIdPath(
-#                 TildeUpperId(1:1:"~Foo"),
-#                 Dot(1:5:"."),
-#                 UpperId(1:6:"Bar"),
-#             ),
-#         ),
+#         SimpleExpr(UpperIdPath(TildeUpperId(1:1:"~Foo"), UpperId(1:6:"Bar"))),
 #     ),
 # )
 # 
@@ -198,13 +188,13 @@ runBlockExprScan(input: Str):
 #             ParenExpr(
 #                 LowerId(1:2:"x"),
 #                 Eq(1:4:"="),
-#                 InlineExpr(PrefixExpr(SimpleExpr(Int(1:6:"123")))),
+#                 Expr(InlineExpr(PrefixExpr(SimpleExpr(Int(1:6:"123"))))),
 #             ),
 #             Comma(1:9:","),
 #             ParenExpr(
 #                 LowerId(1:11:"y"),
 #                 Eq(1:13:"="),
-#                 InlineExpr(PrefixExpr(SimpleExpr(Str(1:15:"\"hi\"")))),
+#                 Expr(InlineExpr(PrefixExpr(SimpleExpr(Str(1:15:"\"hi\""))))),
 #             ),
 #             RParen(1:19:")"),
 #         ),
@@ -298,13 +288,7 @@ runBlockExprScan(input: Str):
 #     InlineExprCont(
 #         BinOp(EqEq(1:8:"==")),
 #         PrefixExpr(
-#             SimpleExpr(
-#                 UpperIdPath(
-#                     UpperId(1:11:"Bool"),
-#                     Dot(1:15:"."),
-#                     UpperId(1:16:"True"),
-#                 ),
-#             ),
+#             SimpleExpr(UpperIdPath(UpperId(1:11:"Bool"), UpperId(1:16:"True"))),
 #         ),
 #     ),
 # )

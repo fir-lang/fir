@@ -26,6 +26,7 @@ Terminals:
     "let" = Token(kind = TokenKind.Let, ..)
     "loop" = Token(kind = TokenKind.Loop, ..)
     "match" = Token(kind = TokenKind.Match, ..)
+    "not" = Token(kind = TokenKind.Not, ..)
     "or" = Token(kind = TokenKind.Or, ..)
     "prim" = Token(kind = TokenKind.Prim, ..)
     "return" = Token(kind = TokenKind.Return, ..)
@@ -101,15 +102,36 @@ type_:
     fnType
 
 
+# - ()
+# - (x: U32)
+# - (x: U32,)
+# - (x: U32, y: U32)
+# - (x: U32, ..foo)
+# - (..foo)
 recordType:
     _"(" _")"
-    _"(" recordTypeFields _")"
+    _"(" ".." "LowerId" _")"
+    _"(" recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
 
 
+recordTypeCont:
+    _"," (_".." "LowerId")?
+
+
+# - []
+# - [A]
+# - [A,]
+# - [A, B]
+# - [A, ..foo]
+# - [..foo]
 variantType:
     _"[" _"]"
-    _"[" variantAlt (_"," variantAlt)* _"," _".." "LowerId" _"]"
-    _"[" variantAlt (_"," variantAlt)* _","? _"]"
+    _"[" _".." "LowerId" _"]"
+    _"[" variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+
+
+variantTypeCont:
+    _"," (_".." "LowerId")?
 
 
 fnType:
@@ -122,7 +144,6 @@ namedType:
 
 
 recordTypeFields:
-    ".." "LowerId"
     recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
     recordTypeField (_"," recordTypeField)* _","?
 
@@ -199,7 +220,7 @@ blockExpr:
         ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
         ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
 
-    "do" _":" _"NEWLINE" _"INDENT" blockExpr _"DEDENT"
+    "do" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
     "||" returnTy? ":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
@@ -216,7 +237,7 @@ prefixExpr:
 
 
 exprSuffix:
-    field
+    field tyArgs?
     args
 
 
@@ -237,11 +258,13 @@ simpleExpr:
     # Variables
     "LowerId" tyArgs?
 
-    # Constructor selection
-    upperIdPath tyArgs?
+    # Constructor selection, or sequence
+    upperIdPath tyArgs? (_"." sequence)?
 
     # Records: `(a, b)`, `(a = 1, b = 2)`
     "(" (parenExpr ("," parenExpr)* _","?)? ")"
+
+    sequence
 
     "return" inlineExpr?
 
@@ -256,9 +279,18 @@ simpleExpr:
     "Char"
 
 
+sequence:
+    "[" "]"
+    "[" seqElem (_"," seqElem)* _","? "]"
+
+
+seqElem:
+    inlineExpr (_"=" inlineExpr)?
+
+
 upperIdPath:
-    "UpperId" ("." "UpperId")*
-    "TildeUpperId" ("." "UpperId")*
+    "UpperId" (_"." "UpperId")*
+    "TildeUpperId" (_"." "UpperId")*
 
 
 tyArgs:
@@ -266,13 +298,14 @@ tyArgs:
 
 
 parenExpr:
-    "LowerId" "=" inlineExpr
-    inlineExpr
+    "LowerId" "=" expr
+    expr
 
 
 exprPrefix:
     "~"
     "-"
+    "not"
 
 
 binOp:
@@ -310,7 +343,7 @@ matchRhs:
 
 
 fnArgs:
-    "LowerId" _":" type_ ("," "LowerId" _":" type_)* _","?
+    "LowerId" (_":" type_)? ("," "LowerId" (_":" type_)?)* _","?
 
 
 returnTy:
@@ -329,15 +362,19 @@ stmt:
 
     "let" pat (_":" type_)? "=" letRhs
 
-    "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    loopLabel? "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
-    "while" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    loopLabel? "while" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
-    "loop" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    loopLabel? "loop" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
 
     inlineExpr stmtExprCont?
 
     blockExpr
+
+
+loopLabel:
+    "label" _":"
 
 
 letRhs:
@@ -374,15 +411,21 @@ simplePat:
     upperIdPath (_"(" pat (_"," pat)* (_"," "..")? _")")?
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
+    "(" ")"
     "(" (recordPat ("," recordPat)* _","?)? ")"
+    "(" (recordPat ("," recordPat)* _"," "..")? ")"
 
     # Ignore
     "_"
 
     # Literals.
-    # TODO: Add integers.
-    "Str" "LowerId"?
+    "Str" strPfxBinder?
     "Char"
+
+
+strPfxBinder:
+    "LowerId"
+    _"_"
 
 
 recordPat:

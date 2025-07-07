@@ -91,76 +91,46 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # Type_(RecordType)
 # 
 # (a)
-# Type_(RecordType(RecordTypeFields(RecordTypeField(Type_(LowerId(1:2:"a"))))))
+# Type_(RecordType(RecordTypeField(Type_(LowerId(1:2:"a")))))
 # 
 # (a, b)
 # Type_(
 #     RecordType(
-#         RecordTypeFields(
-#             RecordTypeField(Type_(LowerId(1:2:"a"))),
-#             RecordTypeField(Type_(LowerId(1:5:"b"))),
-#         ),
+#         RecordTypeField(Type_(LowerId(1:2:"a"))),
+#         RecordTypeField(Type_(LowerId(1:5:"b"))),
 #     ),
 # )
 # 
 # (x: T)
 # Type_(
 #     RecordType(
-#         RecordTypeFields(
-#             RecordTypeField(
-#                 LowerId(1:2:"x"),
-#                 Type_(NamedType(UpperId(1:5:"T"))),
-#             ),
-#         ),
+#         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T")))),
 #     ),
 # )
 # 
 # (x: T1, y: T2)
 # Type_(
 #     RecordType(
-#         RecordTypeFields(
-#             RecordTypeField(
-#                 LowerId(1:2:"x"),
-#                 Type_(NamedType(UpperId(1:5:"T1"))),
-#             ),
-#             RecordTypeField(
-#                 LowerId(1:9:"y"),
-#                 Type_(NamedType(UpperId(1:12:"T2"))),
-#             ),
-#         ),
+#         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
+#         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
 #     ),
 # )
 # 
 # (x: T1, y: T2,)
 # Type_(
 #     RecordType(
-#         RecordTypeFields(
-#             RecordTypeField(
-#                 LowerId(1:2:"x"),
-#                 Type_(NamedType(UpperId(1:5:"T1"))),
-#             ),
-#             RecordTypeField(
-#                 LowerId(1:9:"y"),
-#                 Type_(NamedType(UpperId(1:12:"T2"))),
-#             ),
-#         ),
+#         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
+#         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
+#         RecordTypeCont,
 #     ),
 # )
 # 
 # (x: T1, y: T2, ..r)
 # Type_(
 #     RecordType(
-#         RecordTypeFields(
-#             RecordTypeField(
-#                 LowerId(1:2:"x"),
-#                 Type_(NamedType(UpperId(1:5:"T1"))),
-#             ),
-#             RecordTypeField(
-#                 LowerId(1:9:"y"),
-#                 Type_(NamedType(UpperId(1:12:"T2"))),
-#             ),
-#             LowerId(1:18:"r"),
-#         ),
+#         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
+#         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
+#         RecordTypeCont(LowerId(1:18:"r")),
 #     ),
 # )
 # 
@@ -174,14 +144,20 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # Type_(VariantType(VariantAlt(UpperId(1:2:"A")), VariantAlt(UpperId(1:5:"B"))))
 # 
 # [A, B,]
-# Type_(VariantType(VariantAlt(UpperId(1:2:"A")), VariantAlt(UpperId(1:5:"B"))))
+# Type_(
+#     VariantType(
+#         VariantAlt(UpperId(1:2:"A")),
+#         VariantAlt(UpperId(1:5:"B")),
+#         VariantTypeCont,
+#     ),
+# )
 # 
 # [A, B, ..foo]
 # Type_(
 #     VariantType(
 #         VariantAlt(UpperId(1:2:"A")),
 #         VariantAlt(UpperId(1:5:"B")),
-#         LowerId(1:10:"foo"),
+#         VariantTypeCont(LowerId(1:10:"foo")),
 #     ),
 # )
 # 
@@ -206,7 +182,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #                 ),
 #             ),
 #         ),
-#         LowerId(1:26:"foo"),
+#         VariantTypeCont(LowerId(1:26:"foo")),
 #     ),
 # )
 # 
@@ -264,7 +240,11 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # 
 # [Foo, Bar,]
 # Type_(
-#     VariantType(VariantAlt(UpperId(1:2:"Foo")), VariantAlt(UpperId(1:7:"Bar"))),
+#     VariantType(
+#         VariantAlt(UpperId(1:2:"Foo")),
+#         VariantAlt(UpperId(1:7:"Bar")),
+#         VariantTypeCont,
+#     ),
 # )
 # 
 # [Foo(x: Str), ..x]
@@ -279,7 +259,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #                 ),
 #             ),
 #         ),
-#         LowerId(1:17:"x"),
+#         VariantTypeCont(LowerId(1:17:"x")),
 #     ),
 # )
 # 
