@@ -88,14 +88,20 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # Type_(NamedType(UpperId(1:1:"Asdf")))
 # 
 # ()
-# Type_(RecordType)
+# Type_(RecordType(RecordTypeStart(LParen(1:1:"("))))
 # 
 # (a)
-# Type_(RecordType(RecordTypeField(Type_(LowerId(1:2:"a")))))
+# Type_(
+#     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
+#         RecordTypeField(Type_(LowerId(1:2:"a"))),
+#     ),
+# )
 # 
 # (a, b)
 # Type_(
 #     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
 #         RecordTypeField(Type_(LowerId(1:2:"a"))),
 #         RecordTypeField(Type_(LowerId(1:5:"b"))),
 #     ),
@@ -104,6 +110,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # (x: T)
 # Type_(
 #     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
 #         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T")))),
 #     ),
 # )
@@ -111,6 +118,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # (x: T1, y: T2)
 # Type_(
 #     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
 #         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
 #         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
 #     ),
@@ -119,6 +127,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # (x: T1, y: T2,)
 # Type_(
 #     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
 #         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
 #         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
 #         RecordTypeCont,
@@ -128,6 +137,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # (x: T1, y: T2, ..r)
 # Type_(
 #     RecordType(
+#         RecordTypeStart(LParen(1:1:"(")),
 #         RecordTypeField(LowerId(1:2:"x"), Type_(NamedType(UpperId(1:5:"T1")))),
 #         RecordTypeField(LowerId(1:9:"y"), Type_(NamedType(UpperId(1:12:"T2")))),
 #         RecordTypeCont(LowerId(1:18:"r")),
@@ -135,17 +145,29 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 # 
 # []
-# Type_(VariantType)
+# Type_(VariantType(VariantTypeStart(LBracket(1:1:"["))))
 # 
 # [A]
-# Type_(VariantType(VariantAlt(UpperId(1:2:"A"))))
+# Type_(
+#     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
+#         VariantAlt(UpperId(1:2:"A")),
+#     ),
+# )
 # 
 # [A, B]
-# Type_(VariantType(VariantAlt(UpperId(1:2:"A")), VariantAlt(UpperId(1:5:"B"))))
+# Type_(
+#     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
+#         VariantAlt(UpperId(1:2:"A")),
+#         VariantAlt(UpperId(1:5:"B")),
+#     ),
+# )
 # 
 # [A, B,]
 # Type_(
 #     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
 #         VariantAlt(UpperId(1:2:"A")),
 #         VariantAlt(UpperId(1:5:"B")),
 #         VariantTypeCont,
@@ -155,6 +177,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # [A, B, ..foo]
 # Type_(
 #     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
 #         VariantAlt(UpperId(1:2:"A")),
 #         VariantAlt(UpperId(1:5:"B")),
 #         VariantTypeCont(LowerId(1:10:"foo")),
@@ -164,6 +187,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # [A(x: U32), B(y: Str), ..foo]
 # Type_(
 #     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
 #         VariantAlt(
 #             UpperId(1:2:"A"),
 #             RecordTypeFields(
@@ -216,7 +240,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 #         ReturnTy(
 #             Type_(NamedType(UpperId(1:15:"Foo"))),
 #             Slash(1:19:"/"),
-#             Type_(VariantType),
+#             Type_(VariantType(VariantTypeStart(LBracket(1:21:"[")))),
 #         ),
 #     ),
 # )
@@ -231,16 +255,21 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # )
 # 
 # []
-# Type_(VariantType)
+# Type_(VariantType(VariantTypeStart(LBracket(1:1:"["))))
 # 
 # [Foo, Bar]
 # Type_(
-#     VariantType(VariantAlt(UpperId(1:2:"Foo")), VariantAlt(UpperId(1:7:"Bar"))),
+#     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
+#         VariantAlt(UpperId(1:2:"Foo")),
+#         VariantAlt(UpperId(1:7:"Bar")),
+#     ),
 # )
 # 
 # [Foo, Bar,]
 # Type_(
 #     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
 #         VariantAlt(UpperId(1:2:"Foo")),
 #         VariantAlt(UpperId(1:7:"Bar")),
 #         VariantTypeCont,
@@ -250,6 +279,7 @@ type MapResult[iter, item, b, exnOld, exnNew]:
 # [Foo(x: Str), ..x]
 # Type_(
 #     VariantType(
+#         VariantTypeStart(LBracket(1:1:"[")),
 #         VariantAlt(
 #             UpperId(1:2:"Foo"),
 #             RecordTypeFields(

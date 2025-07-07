@@ -33,6 +33,8 @@ Terminals:
     "trait" = Token(kind = TokenKind.Trait, ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "while" = Token(kind = TokenKind.While, ..)
+    "row[" = Token(kind = TokenKind.LBracketRow, ..)
+    "row(" = Token(kind = TokenKind.LParenRow, ..)
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "[" = Token(kind = TokenKind.LBracket, ..)
@@ -109,9 +111,14 @@ type_:
 # - (x: U32, ..foo)
 # - (..foo)
 recordType:
-    _"(" _")"
-    _"(" ".." "LowerId" _")"
-    _"(" recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+    recordTypeStart _")"
+    recordTypeStart ".." "LowerId" _")"
+    recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+
+
+recordTypeStart:
+    "("
+    "row("
 
 
 recordTypeCont:
@@ -125,9 +132,14 @@ recordTypeCont:
 # - [A, ..foo]
 # - [..foo]
 variantType:
-    _"[" _"]"
-    _"[" _".." "LowerId" _"]"
-    _"[" variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+    variantTypeStart _"]"
+    variantTypeStart _".." "LowerId" _"]"
+    variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+
+
+variantTypeStart:
+    "["
+    "row["
 
 
 variantTypeCont:
@@ -408,12 +420,13 @@ simplePat:
     "LowerId"
 
     # Constructors
-    upperIdPath (_"(" pat (_"," pat)* (_"," "..")? _")")?
+    upperIdPath _"(" ".." _")"
+    upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
     "(" ")"
-    "(" (recordPat ("," recordPat)* _","?)? ")"
-    "(" (recordPat ("," recordPat)* _"," "..")? ")"
+    "(" (recordFieldPat ("," recordFieldPat)* _","?)? ")"
+    "(" (recordFieldPat ("," recordFieldPat)* _"," "..")? ")"
 
     # Ignore
     "_"
@@ -428,7 +441,7 @@ strPfxBinder:
     _"_"
 
 
-recordPat:
+recordFieldPat:
     "LowerId" "=" pat
     pat
 
@@ -479,7 +492,7 @@ traitDecl:
 
 traitDeclRhs:
     _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
+    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
 
 
 funSig:
@@ -490,12 +503,12 @@ funSig:
 # Impl declarations
 
 implDecl:
-    _"impl" context? "UpperId" _"[" type_ _"]" implDeclRhs
+    _"impl" context? "UpperId" _"[" type_ (_"," type_)* _","? _"]" implDeclRhs
 
 
 implDeclRhs:
     _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" funDecl _"DEDENT"
+    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
 
 
 # --------------------------------------------------------------------------------------------------
