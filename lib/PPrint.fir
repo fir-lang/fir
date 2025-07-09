@@ -41,9 +41,12 @@ Doc.render(self, width: U32) Str:
     # TODO: For now copying the initial buffer size from the original PPrint, but we should be able
     # to estimate better numbers using the `Doc` type.
     let output = StrBuf.withCapacity(512)
-    let state = _State(width, column = 0, output)
-    self._render(state, 0, Bool.False)
+    self.renderToBuf(width, output)
     output.toStr()
+
+Doc.renderToBuf(self, width: U32, buf: StrBuf):
+    let state = _State(width, column = 0, output = buf)
+    self._render(state, 0, Bool.False)
 
 Doc._render(self, state: _State, indent: U32, flatten: Bool):
     match self:
