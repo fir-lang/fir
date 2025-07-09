@@ -96,7 +96,29 @@ conDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) ConDecl:
     # "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
     # "UpperId" _"NEWLINE"
 
-    panic("TODO")
+    let name = newId(treeNodes.get(0).asTerminal().text)
+
+    if treeNodes.len() == 1:
+        return ConDecl(name = name, fields = ConFields.Empty)
+
+    let fields = if treeNodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes):
+        ConFields.Named(
+            nodes
+                .iter()
+                .map(|node: ParseTree[Token, NonTerminal]|:
+                    namedFieldToAst(node.asNonTerminal(NonTerminal.NamedField)))
+                .toVec())
+    else:
+        ConFields.Unnamed(
+            treeNodes
+                .get(1)
+                .asNonTerminal(NonTerminal.UnnamedFields)
+                .iter()
+                .map(|node: ParseTree[Token, NonTerminal]|:
+                    typeToAst(node.asNonTerminal(NonTerminal.Type_)))
+                .toVec())
+
+    ConDecl(name, fields)
 
 
 namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: Type):
@@ -109,6 +131,34 @@ namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: Ty
 
 
 typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
+    # type_:
+    #     namedType
+    #     "LowerId"
+    #     recordType
+    #     variantType
+    #     fnType
+
+    match treeNodes.get(0):
+        ParseTree.NonTerminal(kind = NonTerminal.NamedType, nodes):
+            Type.Named(namedTypeToAst(nodes))
+
+        ParseTree.Terminal(Token(kind = TokenKind.LowerId, text, ..)):
+            Type.Var(newId(text))
+
+        ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes):
+            panic("TODO")
+
+        ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes):
+            panic("TODO")
+
+        ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes):
+            panic("TODO")
+
+        _:
+            panic("TODO")
+
+
+namedTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) NamedType:
     panic("TODO")
 
 
