@@ -1,30 +1,25 @@
 import Error    # imports Loc
 # TODO: Why is Loc in Error module?
 
-## Things with location information.
-type L[a]:
-    loc: Loc
-    node: a
-
 type Id:
     name: Str
 
 ## A top-level declaration.
 type TopDecl:
     ## A type declaration: `type T: ...`.
-    Type(L[TypeDecl])
+    Type(TypeDecl)
 
     ## A function declaration: `f(...) = ...`.
-    Fun(L[FunDecl])
+    Fun(FunDecl)
 
     ## An import declaration.
-    Import(L[ImportDecl])
+    Import(ImportDecl)
 
     ## A trait declaration.
-    Trait(L[TraitDecl])
+    Trait(TraitDecl)
 
     ## An `impl` block, implementing a trait or associated methods for a type.
-    Impl(L[ImplDecl])
+    Impl(ImplDecl)
 
 ## A type declaration: `type Vec[t]: ...`.
 type TypeDecl:
@@ -63,8 +58,8 @@ type RecordOrVariant:
 
 type ConFields:
     Empty
-    Named(Vec[(name: Id, ty: L[Type])])
-    Unnamed(Vec[L[Type]])
+    Named(Vec[(name: Id, ty: Type)])
+    Unnamed(Vec[Type])
 
 type FunDecl:
     ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
@@ -77,19 +72,19 @@ type FunDecl:
     sig: FunSig
 
     ## Body (code) of the function. Not available in `prim` functions.
-    body: Option[Vec[L[Stmt]]]
+    body: Option[Vec[Stmt]]
 
 type FunSig:
     context: Context
     self_: SelfParam
-    params: Vec[(name: Id, ty: L[Type])]
-    exceptions: Option[L[Type]]
-    returnTy: Option[L[Type]]
+    params: Vec[(name: Id, ty: Type)]
+    exceptions: Option[Type]
+    returnTy: Option[Type]
 
 type SelfParam:
     No
     Implicit
-    Explicit(L[Type])
+    Explicit(Type)
 
 type ImportDecl:
     ## Import path, e.g. `Fir.Prelude`.
@@ -132,7 +127,7 @@ type ImplDecl:
     ## Type parameters of the trait.
     ##
     ## In the example: `[Vec[a]]`.
-    tys: Vec[L[Type]]
+    tys: Vec[Type]
 
     ## Method implementations.
     items: Vec[FunDecl]
@@ -148,7 +143,7 @@ type Type:
 
     ## An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
     Record:
-        fields: Vec[Named[L[Type]]]
+        fields: Vec[Named[Type]]
         extension: Option[Id]
 
     ## An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
@@ -160,17 +155,17 @@ type Type:
     Fn_(FnType)
 
 type FnType:
-    args: Vec[L[Type]]
+    args: Vec[Type]
 
     ## Optional return type of the function. `()` when omitted.
-    ret: Option[L[Type]]
+    ret: Option[Type]
 
     ## Same as `FunSig.exceptions`.
-    exceptions: Option[L[Type]]
+    exceptions: Option[Type]
 
 type VariantAlt:
     con: Id
-    fields: Vec[Named[L[Type]]]
+    fields: Vec[Named[Type]]
 
 ## Type parameter and predicates of an `impl` or function.
 ##
@@ -180,7 +175,7 @@ type Context:
     typeParams: Vec[(name: Id, kind: Kind)]
 
     ## Predicates.
-    preds: Vec[L[Type]]
+    preds: Vec[Type]
 
 ## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 type NamedType:
@@ -188,7 +183,7 @@ type NamedType:
     name: Id
 
     ## Arguments of the type constructor.
-    args: Vec[L[Type]]
+    args: Vec[Type]
 
 type Named[t]:
     name: Option[Id]
@@ -214,13 +209,13 @@ type Stmt:
 
 ## A let statement: `let x: T = expr`.
 type LetStmt:
-    lhs: L[Pat]
-    ty: Option[L[Type]]
-    rhs: L[Expr]
+    lhs: Pat
+    ty: Option[Type]
+    rhs: Expr
 
 type AssignStmt:
-    lhs: L[Expr]
-    rhs: L[Expr]
+    lhs: Expr
+    rhs: Expr
     op: AssignOp
 
 type AssignOp:
@@ -232,25 +227,25 @@ type AssignOp:
 
 type ForStmt:
     label: Option[Id]
-    pat: L[Pat]
+    pat: Pat
 
     ## Type annotation on the loop variable, the `item` type in `Iterator[iter, item]`.
-    astTy: Option[L[Type]]
+    astTy: Option[Type]
 
     ## `ast_ty`, converted to type checking types by the type checker.
-    tcTy: Option[L[Type]]  # TODO: type-checking type
+    tcTy: Option[Type]  # TODO: type-checking type
 
-    expr: L[Expr]
+    expr: Expr
 
     ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
-    exprTy: Option[L[Type]] # TODO: type-checking type
+    exprTy: Option[Type] # TODO: type-checking type
 
-    body: Vec[L[Stmt]]
+    body: Vec[Stmt]
 
 type WhileStmt:
     label: Option[Id]
-    cond: L[Expr]
-    body: Vec[L[Stmt]]
+    cond: Expr
+    body: Vec[Stmt]
 
 type Pat:
     ## Matches anything, binds it to variable.
@@ -259,7 +254,7 @@ type Pat:
     ## Matches a constructor.
     Constr(ConstrPat)
 
-    Record(Vec[Named[L[Pat]]])
+    Record(Vec[Named[Pat]])
 
     ## Underscore, aka. wildcard.
     Ignore
@@ -274,19 +269,19 @@ type Pat:
     StrPfx(Str, Id)
 
     ## Or pattern: `<pat1> | <pat2>`.
-    Or(L[Pat], L[Pat])
+    Or(Pat, Pat)
 
 type VarPat:
     var_: Id
-    ty: Option[L[Type]]    # TODO: This should be type-checking type instead of AST type
+    ty: Option[Type]    # TODO: This should be type-checking type instead of AST type
 
 type ConstrPat:
     constr: Constructor
-    fields: Vec[Named[L[Pat]]]
+    fields: Vec[Named[Pat]]
 
 type VariantPat:
     constr: Id
-    fields: Vec[Named[L[Pat]]]
+    fields: Vec[Named[Pat]]
 
 type Constructor:
     variant: Bool
@@ -299,10 +294,10 @@ type Constructor:
     ## there will be always one element.
     ##
     ## Always empty in patterns.
-    userTyArgs: Vec[L[Type]]
+    userTyArgs: Vec[Type]
 
     ## Inferred type arguments of the constructor's type. Filled in by the type checker.
-    tyArgs: Vec[L[Type]]
+    tyArgs: Vec[Type]
 
 type Expr:
     ## A variable: `x`.
@@ -353,9 +348,9 @@ type Expr:
     UnOp(UnOpExpr)
 
     ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
-    Record(Vec[Named[L[Expr]]])
+    Record(Vec[Named[Expr]])
 
-    Return(L[Expr])
+    Return(Expr)
 
     Match(MatchExpr)
 
@@ -365,29 +360,29 @@ type Expr:
 
     Is(IsExpr)
 
-    Do(Vec[L[Stmt]])
+    Do(Vec[Stmt])
 
     # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
-    Seq(Vec[L[Stmt]])
+    Seq(Vec[Stmt])
 
 type VarExpr:
     id: Id
 
     # Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     # there will be always one element.
-    userTyArgs: Vec[L[Type]]
+    userTyArgs: Vec[Type]
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
-    tyArgs: Vec[L[Type]]
+    tyArgs: Vec[Type]
 
 type ConstrExpr:
     id: Id
 
     ## Inferred type arguments of the constructor. Filled by the type checker.
-    tyArgs: Vec[L[Type]]
+    tyArgs: Vec[Type]
 
 type FieldSelectExpr:
-    object: L[Expr]
+    object: Expr
 
     field: Id
 
@@ -396,7 +391,7 @@ type FieldSelectExpr:
     ##
     ## Since fields can't have `forall` quantifiers, this will only be valid when the field is a
     ## method, in which case the type checker will convert this node into `MethodSelectExpr`.
-    userTyArgs: Vec[L[Type]]
+    userTyArgs: Vec[Type]
 
 ## A method selection: `<expr>.method`.
 ##
@@ -406,7 +401,7 @@ type FieldSelectExpr:
 ## trait methods (e.g. `Iterator.next`).
 type MethodSelectExpr:
     ## The reciever, `<expr>` in `<expr>.method`.
-    object: L[Expr]
+    object: Expr
 
     ## Type of `object` (receiver), filled in by the type checker.
     ##
@@ -419,7 +414,7 @@ type MethodSelectExpr:
     # TODO: We could also add types to every expression if it's going to help with monomorphisation.
     #       For efficiency though, we should only annotate inferred types and then type check from
     #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[L[Type]]  # TODO: type-checking type
+    objectTy: Option[Type]  # TODO: type-checking type
 
     ## The type or trait id that defines the method.
     ##
@@ -441,7 +436,7 @@ type MethodSelectExpr:
     ##
     ## (If the method is not a trait method, then we don't care about the type parameter order.. I
     ## think?)
-    tyArgs: Vec[L[Type]]       # TODO: type-checking type
+    tyArgs: Vec[Type]       # TODO: type-checking type
 
 ## An associated function or method selection:
 ##
@@ -453,18 +448,18 @@ type AssocFnSelectExpr:
 
     ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
     ## there will be always one element.
-    userTyArgs: Vec[L[Type]]
+    userTyArgs: Vec[Type]
 
     ## Inferred type arguments of the type and associated function. Filled in by the type checker.
-    tyArgs: Vec[L[Type]]       # TODO: type-checking type
+    tyArgs: Vec[Type]       # TODO: type-checking type
 
 type CallExpr:
-    fun: L[Expr]
+    fun: Expr
     args: Vec[CallArg]
 
 type CallArg:
     name: Option[Id]
-    expr: L[Expr]
+    expr: Expr
 
 type IntExpr:
     ## The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
@@ -487,11 +482,11 @@ type IntExpr:
 
 type StrPart:
     Str(Str)
-    Expr(L[Expr])
+    Expr(Expr)
 
 type BinOpExpr:
-    left: L[Expr]
-    right: L[Expr]
+    left: Expr
+    right: Expr
     op: BinOp
 
 type BinOp:
@@ -514,34 +509,34 @@ type BinOp:
 
 type UnOpExpr:
     op: UnOp
-    expr: L[Expr]
+    expr: Expr
 
 type VariantExpr:
     id: Id
-    args: Vec[Named[L[Expr]]]
+    args: Vec[Named[Expr]]
 
 type MatchExpr:
-    scrutinee: L[Expr]
+    scrutinee: Expr
     alts: Vec[Alt]
 
 type Alt:
-    pattern: L[Pat]
-    guard: Option[L[Expr]]
-    rhs: Vec[L[Stmt]]
+    pattern: Pat
+    guard: Option[Expr]
+    rhs: Vec[Stmt]
 
 type IfExpr:
     # At least one element
-    branches: Vec[(guard: L[Expr], body: Vec[L[Stmt]])]
-    else_branch: Option[Vec[L[Stmt]]]
+    branches: Vec[(guard: Expr, body: Vec[Stmt])]
+    else_branch: Option[Vec[Stmt]]
 
 type FnExpr:
     sig: FunSig
-    body: Vec[L[Stmt]]
+    body: Vec[Stmt]
     idx: U32
 
 type IsExpr:
-    expr: L[Expr]
-    pat: L[Pat]
+    expr: Expr
+    pat: Pat
 
 type UnOp:
     Not

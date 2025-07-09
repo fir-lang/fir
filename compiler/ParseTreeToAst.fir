@@ -19,9 +19,7 @@ moduleToAst(module: ParseTree[Token, NonTerminal]) Vec[TopDecl]:
 topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
     match topDecl:
         ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes):
-            typeDeclToAst(nodes)
-            # TODO: We need a Loc
-            panic("TODO")
+            TopDecl.Type(typeDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes):
             panic("TODO")
@@ -87,7 +85,7 @@ typeDeclRhsToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDeclRhs:
             conDecls.push(conDeclToAst(node.asNonTerminal(NonTerminal.ConDecl)))
         TypeDeclRhs.Sum(conDecls)
     else:
-        let fields = Vec[(name: Id, ty: L[Type])].withCapacity(treeNodes.len())
+        let fields = Vec[(name: Id, ty: Type)].withCapacity(treeNodes.len())
         for node: ParseTree[Token, NonTerminal] in treeNodes.iter():
             fields.push(namedFieldToAst(node.asNonTerminal(NonTerminal.NamedField)))
         TypeDeclRhs.Product(ConFields.Named(fields))
@@ -101,7 +99,7 @@ conDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) ConDecl:
     panic("TODO")
 
 
-namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: L[Type]):
+namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: Type):
     # namedField:
     #     "LowerId" _":" type_ _"NEWLINE"
 
@@ -110,7 +108,7 @@ namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: L[
     (name = name, ty = ty)
 
 
-typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) L[Type]:
+typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
     panic("TODO")
 
 
