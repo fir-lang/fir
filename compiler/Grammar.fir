@@ -1449,7 +1449,6 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             if cursor == tokens.len():
                 throw(ParseError.UnexpectedEof)
             if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                 cursor += 1
             else:
                 throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -3074,7 +3073,6 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.LParen, ..):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -3089,7 +3087,6 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
                     if cursor == tokens.len():
                         throw(ParseError.UnexpectedEof)
                     if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                        nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
                         throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -3144,7 +3141,6 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         if cursor == tokens.len():
             throw(ParseError.UnexpectedEof)
         if tokens.get(cursor) is Token(kind = TokenKind.RParen, ..):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -3345,7 +3341,6 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
                     if cursor == tokens.len():
                         throw(ParseError.UnexpectedEof)
                     if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                        nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
                         throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -6050,7 +6045,6 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
                     if cursor == tokens.len():
                         throw(ParseError.UnexpectedEof)
                     if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                        nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
                         throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -6141,7 +6135,6 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
                     if cursor == tokens.len():
                         throw(ParseError.UnexpectedEof)
                     if tokens.get(cursor) is Token(kind = TokenKind.Comma, ..):
-                        nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                         cursor += 1
                     else:
                         throw(ParseError.UnexpectedToken(cursor = cursor))

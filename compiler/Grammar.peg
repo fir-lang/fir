@@ -171,7 +171,7 @@ variantAlt:
 
 
 fnArgTys:
-    type_ (_"," type_)* ","?
+    type_ (_"," type_)* _","?
 
 
 # --------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ field:
 
 
 args:
-    "(" (arg ("," arg)* _","?)? ")"
+    _"(" (arg (_"," arg)* _","?)? _")"
 
 
 arg:
@@ -274,7 +274,7 @@ simpleExpr:
     upperIdPath tyArgs? (_"." sequence)?
 
     # Records: `(a, b)`, `(a = 1, b = 2)`
-    "(" (parenExpr ("," parenExpr)* _","?)? ")"
+    "(" (parenExpr (_"," parenExpr)* _","?)? ")"
 
     sequence
 
@@ -425,8 +425,8 @@ simplePat:
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
     "(" ")"
-    "(" (recordFieldPat ("," recordFieldPat)* _","?)? ")"
-    "(" (recordFieldPat ("," recordFieldPat)* _"," "..")? ")"
+    "(" (recordFieldPat (_"," recordFieldPat)* _","?)? ")"
+    "(" (recordFieldPat (_"," recordFieldPat)* _"," "..")? ")"
 
     # Ignore
     "_"

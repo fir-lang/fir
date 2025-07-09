@@ -94,19 +94,13 @@ runTopDecl(input: Str):
 #         TopFunSig(LowerId(1:1:"f"), ParamList),
 #         Stmt(
 #             InlineExpr(
-#                 PrefixExpr(
-#                     SimpleExpr(LowerId(2:5:"a")),
-#                     ExprSuffix(Args(LParen(2:6:"("), RParen(2:7:")"))),
-#                 ),
+#                 PrefixExpr(SimpleExpr(LowerId(2:5:"a")), ExprSuffix(Args)),
 #             ),
 #             StmtExprCont,
 #         ),
 #         Stmt(
 #             InlineExpr(
-#                 PrefixExpr(
-#                     SimpleExpr(LowerId(3:5:"b")),
-#                     ExprSuffix(Args(LParen(3:6:"("), RParen(3:7:")"))),
-#                 ),
+#                 PrefixExpr(SimpleExpr(LowerId(3:5:"b")), ExprSuffix(Args)),
 #             ),
 #             StmtExprCont,
 #         ),

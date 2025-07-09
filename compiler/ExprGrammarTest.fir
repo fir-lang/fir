@@ -142,11 +142,9 @@ runBlockExprScan(input: Str):
 #         SimpleExpr(LowerId(1:1:"foo")),
 #         ExprSuffix(
 #             Args(
-#                 LParen(1:4:"("),
 #                 Arg(
 #                     Expr(InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:5:"bar"))))),
 #                 ),
-#                 RParen(1:8:")"),
 #             ),
 #         ),
 #     ),
@@ -190,7 +188,6 @@ runBlockExprScan(input: Str):
 #                 Eq(1:4:"="),
 #                 Expr(InlineExpr(PrefixExpr(SimpleExpr(Int(1:6:"123"))))),
 #             ),
-#             Comma(1:9:","),
 #             ParenExpr(
 #                 LowerId(1:11:"y"),
 #                 Eq(1:13:"="),
@@ -236,12 +233,7 @@ runBlockExprScan(input: Str):
 #     If(1:1:"if"),
 #     InlineExpr(PrefixExpr(SimpleExpr(LowerId(1:4:"foo")))),
 #     Stmt(
-#         InlineExpr(
-#             PrefixExpr(
-#                 SimpleExpr(LowerId(2:5:"a")),
-#                 ExprSuffix(Args(LParen(2:6:"("), RParen(2:7:")"))),
-#             ),
-#         ),
+#         InlineExpr(PrefixExpr(SimpleExpr(LowerId(2:5:"a")), ExprSuffix(Args))),
 #         StmtExprCont,
 #     ),
 # )
@@ -311,21 +303,11 @@ runBlockExprScan(input: Str):
 #     PipePipe(1:1:"||"),
 #     Colon(1:3:":"),
 #     Stmt(
-#         InlineExpr(
-#             PrefixExpr(
-#                 SimpleExpr(LowerId(2:5:"f")),
-#                 ExprSuffix(Args(LParen(2:6:"("), RParen(2:7:")"))),
-#             ),
-#         ),
+#         InlineExpr(PrefixExpr(SimpleExpr(LowerId(2:5:"f")), ExprSuffix(Args))),
 #         StmtExprCont,
 #     ),
 #     Stmt(
-#         InlineExpr(
-#             PrefixExpr(
-#                 SimpleExpr(LowerId(3:5:"g")),
-#                 ExprSuffix(Args(LParen(3:6:"("), RParen(3:7:")"))),
-#             ),
-#         ),
+#         InlineExpr(PrefixExpr(SimpleExpr(LowerId(3:5:"g")), ExprSuffix(Args))),
 #         StmtExprCont,
 #     ),
 # )

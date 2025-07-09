@@ -80,9 +80,7 @@ runTopDecl(input: Str):
 #                         InlineExpr(
 #                             PrefixExpr(
 #                                 SimpleExpr(LowerId(3:9:"f")),
-#                                 ExprSuffix(
-#                                     Args(LParen(3:10:"("), RParen(3:11:")")),
-#                                 ),
+#                                 ExprSuffix(Args),
 #                             ),
 #                         ),
 #                         StmtExprCont,
@@ -91,9 +89,7 @@ runTopDecl(input: Str):
 #                         InlineExpr(
 #                             PrefixExpr(
 #                                 SimpleExpr(LowerId(4:9:"g")),
-#                                 ExprSuffix(
-#                                     Args(LParen(4:10:"("), RParen(4:11:")")),
-#                                 ),
+#                                 ExprSuffix(Args),
 #                             ),
 #                         ),
 #                         StmtExprCont,
