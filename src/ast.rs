@@ -980,19 +980,40 @@ impl Stmt {
 impl Expr {
     pub fn subst_ty_ids(&mut self, substs: &Map<Id, Type>) {
         match self {
-            Expr::Var(_)
-            | Expr::ConstrSelect(_)
-            | Expr::AssocFnSelect(_)
-            | Expr::Int(_)
-            | Expr::Char(_)
-            | Expr::Self_ => {}
+            Expr::ConstrSelect(_) | Expr::Int(_) | Expr::Char(_) | Expr::Self_ => {}
+
+            Expr::Var(VarExpr {
+                id: _,
+                user_ty_args,
+                ty_args,
+            }) => {
+                assert!(ty_args.is_empty());
+                for ty_arg in user_ty_args.iter_mut() {
+                    ty_arg.node = ty_arg.node.subst_ids(substs);
+                }
+            }
+
+            Expr::AssocFnSelect(AssocFnSelectExpr {
+                ty: _,
+                member: _,
+                user_ty_args,
+                ty_args,
+            }) => {
+                assert!(ty_args.is_empty());
+                for ty_arg in user_ty_args.iter_mut() {
+                    ty_arg.node = ty_arg.node.subst_ids(substs);
+                }
+            }
 
             Expr::FieldSelect(FieldSelectExpr {
                 object,
                 field: _,
-                user_ty_args: _,
+                user_ty_args,
             }) => {
                 object.node.subst_ty_ids(substs);
+                for ty_arg in user_ty_args.iter_mut() {
+                    ty_arg.node = ty_arg.node.subst_ids(substs);
+                }
             }
 
             Expr::MethodSelect(MethodSelectExpr {
@@ -1000,8 +1021,9 @@ impl Expr {
                 object_ty: _,
                 method_ty_id: _,
                 method: _,
-                ty_args: _,
+                ty_args,
             }) => {
+                assert!(ty_args.is_empty());
                 object.node.subst_ty_ids(substs);
             }
 
