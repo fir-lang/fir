@@ -1,3 +1,6 @@
+import Error    # imports Loc
+# TODO: Why is Loc in Error module?
+
 ## Things with location information.
 type L[a]:
     loc: Loc
@@ -5,8 +8,6 @@ type L[a]:
 
 type Id:
     name: Str
-    idx: U32
-    loc: Loc
 
 ## A top-level declaration.
 type TopDecl:
@@ -42,15 +43,15 @@ type TypeDecl:
 ## Constructors of a type declaration.
 type TypeDeclRhs:
     ## A sum type, with more than one constructor.
-    Sum(Vec[ConstructorDecl])
+    Sum(Vec[ConDecl])
 
     ## A product type uses the type name as the constructor and only has fields.
-    Product(ConstructorFields)
+    Product(ConFields)
 
 ## A sum type constructor.
-type ConstructorDecl:
+type ConDecl:
     name: Id
-    fields: ConstructorFields
+    fields: ConFields
 
 type Kind:
     Star
@@ -60,7 +61,7 @@ type RecordOrVariant:
     Record
     Variant
 
-type ConstructorFields:
+type ConFields:
     Empty
     Named(Vec[(name: Id, ty: L[Type])])
     Unnamed(Vec[L[Type]])
