@@ -40,6 +40,11 @@ topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
 
 
 typeDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDecl:
+    # typeDecl:
+    #     _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
+    #     _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+    #     "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+
     let idx = u32(0)
 
     # Skip 'prim'.
@@ -82,10 +87,30 @@ typeDeclRhsToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDeclRhs:
             conDecls.push(conDeclToAst(node.asNonTerminal(NonTerminal.ConDecl)))
         TypeDeclRhs.Sum(conDecls)
     else:
-        panic("TODO")
+        let fields = Vec[(name: Id, ty: L[Type])].withCapacity(treeNodes.len())
+        for node: ParseTree[Token, NonTerminal] in treeNodes.iter():
+            fields.push(namedFieldToAst(node.asNonTerminal(NonTerminal.NamedField)))
+        TypeDeclRhs.Product(ConFields.Named(fields))
 
 
 conDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) ConDecl:
+    # "UpperId" _":" _"NEWLINE" _"INDENT" namedFields _"DEDENT"
+    # "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
+    # "UpperId" _"NEWLINE"
+
+    panic("TODO")
+
+
+namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: L[Type]):
+    # namedField:
+    #     "LowerId" _":" type_ _"NEWLINE"
+
+    let name = newId(treeNodes.get(0).asTerminal().text)
+    let ty = typeToAst(treeNodes.get(1).asNonTerminal(NonTerminal.Type_))
+    (name = name, ty = ty)
+
+
+typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) L[Type]:
     panic("TODO")
 
 
