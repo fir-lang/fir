@@ -1,3 +1,4 @@
+import Assert
 import Ast
 import Grammar
 import ParseTree
@@ -337,26 +338,55 @@ fnTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) FnType:
 
     let args = if treeNodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.FnArgTys, nodes):
         retIdx += 1
-        Option.Some(fnArgTysToAst(nodes))
+        fnArgTysToAst(nodes)
     else:
-        Option.None
+        Vec.empty()
 
-    panic("TODO")
+    let ret = if treeNodes.last().unwrap() is ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes):
+        returnTyToAst(nodes)
+    else:
+        (ret = Option.None, exn = Option.None)
+
+    FnType(
+        args,
+        ret = ret.ret,
+        exceptions = ret.exn,
+    )
 
 
 fnArgTysToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[Type]:
     # fnArgTys:
     #     type_ (_"," type_)* _","?
-    panic("TODO")
+
+    nodes
+        .iter()
+        .map(|node: ParseTree[Token, NonTerminal]|:
+            typeToAst(node.asNonTerminal(NonTerminal.Type_)))
+        .toVec()
 
 
-returnTyToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) (ret: Type, exn: Type):
+returnTyToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) (ret: Option[Type], exn: Option[Type]):
     # returnTyToAst:
     #     type_ "/" type_
     #     type_
     #     "/" type_
 
-    panic("TODO")
+    if nodes.len() == 1:
+        (
+            ret = Option.Some(typeToAst(nodes.get(0).asNonTerminal(NonTerminal.Type_))),
+            exn = Option.None
+        )
+    elif nodes.len() == 2:
+        (
+            ret = Option.None,
+            exn = Option.Some(typeToAst(nodes.get(0).asNonTerminal(NonTerminal.Type_)))
+        )
+    else:
+        assertEq(nodes.len(), 3)
+        (
+            ret = Option.Some(typeToAst(nodes.get(0).asNonTerminal(NonTerminal.Type_))),
+            exn = Option.Some(typeToAst(nodes.get(2).asNonTerminal(NonTerminal.Type_))),
+        )
 
 
 # --------------------------------------------------------------------------------------------------
