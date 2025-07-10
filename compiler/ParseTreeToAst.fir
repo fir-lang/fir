@@ -63,7 +63,7 @@ typeDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDecl:
             typeParams.push(newId(node.asTerminal().text))
         typeParams
     else:
-        Vec.withCapacity(0)
+        Vec.empty()
 
     let rhs: Option[TypeDeclRhs] = if idx < treeNodes.len():
         Option.Some(typeDeclRhsToAst(treeNodes.get(idx).asNonTerminal(NonTerminal.TypeDeclRhs)))
@@ -73,7 +73,7 @@ typeDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDecl:
     TypeDecl(
         name = newId(typeName),
         typeParams,
-        typeParamKinds = Vec.withCapacity(0),
+        typeParamKinds = Vec.empty(),
         rhs,
     )
 
@@ -200,7 +200,7 @@ recordTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) RecordType:
     if treeNodes.get(1) is ParseTree.Terminal(Token(kind = TokenKind.DotDot, ..)):
         let extension = newId(treeNodes.get(2).asTerminal().text)
         return RecordType(
-            fields = Vec.withCapacity(0),
+            fields = Vec.empty(),
             extension = Option.Some(extension),
             isRow,
         )
@@ -273,7 +273,7 @@ variantTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantType:
     if treeNodes.get(1) is ParseTree.Terminal(Token(kind = TokenKind.DotDot, ..)):
         let extension = newId(treeNodes.get(2).asTerminal().text)
         return VariantType(
-            alts = Vec.withCapacity(0),
+            alts = Vec.empty(),
             extension = Option.Some(extension),
             isRow,
         )
@@ -308,7 +308,7 @@ variantAltToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantAlt:
     let con = newId(treeNodes.get(0).asTerminal().text)
 
     if treeNodes.len() == 1:
-        return VariantAlt(con, fields = Vec.withCapacity(0))
+        return VariantAlt(con, fields = Vec.empty())
 
     let treeNodes = treeNodes.get(1).asNonTerminal(NonTerminal.RecordTypeFields)
 
@@ -330,6 +330,31 @@ fnTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) FnType:
     # fnType:
     #     _"Fn" _"(" fnArgTys? _")" returnTy?
 
+    if treeNodes.isEmpty():
+        return FnType(args = Vec.empty(), ret = Option.None, exceptions = Option.None)
+
+    let retIdx = 0
+
+    let args = if treeNodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.FnArgTys, nodes):
+        retIdx += 1
+        Option.Some(fnArgTysToAst(nodes))
+    else:
+        Option.None
+
+    panic("TODO")
+
+
+fnArgTysToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[Type]:
+    # fnArgTys:
+    #     type_ (_"," type_)* _","?
+    panic("TODO")
+
+
+returnTyToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) (ret: Type, exn: Type):
+    # returnTyToAst:
+    #     type_ "/" type_
+    #     type_
+    #     "/" type_
 
     panic("TODO")
 

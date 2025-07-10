@@ -2,6 +2,9 @@ type Vec[t]:
     _data: Array[t]
     _len: U32
 
+Vec.empty() Vec[t]:
+    Vec(_data = Array.new(0), _len = 0)
+
 Vec.withCapacity(cap: U32) Vec[t]:
     Vec(_data = Array.new(cap), _len = 0)
 
@@ -29,6 +32,9 @@ Vec.spareCapacity(self: Vec[t]) U32:
 
 Vec.len(self: Vec[t]) U32:
     self._len
+
+Vec.isEmpty(self: Vec[t]) Bool:
+    self._len == 0
 
 Vec.clear(self: Vec[t]):
     # In the compiled version we should actually clear the elements to allow garbage collection.
@@ -68,6 +74,12 @@ Vec.get(self: Vec[t], idx: U32) t:
         panic("Vec.get OOB (len=`self._len`, idx=`idx`)")
 
     self._data.get(idx)
+
+Vec.getOpt(self: Vec[t], idx: U32) Option[t]:
+    if idx >= self._len:
+        Option.None
+
+    Option.Some(self._data.get(idx))
 
 Vec.swap(self: Vec[t], i: U32, j: U32):
     let tmp = self.get(i)
