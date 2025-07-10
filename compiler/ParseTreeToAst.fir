@@ -154,12 +154,25 @@ typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
         ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes):
             panic("TODO")
 
-        _:
-            panic("TODO")
+        other:
+            panic("Strange type parse tree:\n`other.toDoc().render(80)`")
 
 
 namedTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) NamedType:
-    panic("TODO")
+    # namedType:
+    #     "UpperId" _"[" type_ (_"," type_)* _","? _"]"
+    #     "UpperId"
+
+    let name = newId(treeNodes.get(0).asTerminal().text)
+
+    let args = treeNodes
+        .iter()
+        .skip(1)
+        .map(|node: ParseTree[Token, NonTerminal]|:
+            typeToAst(node.asNonTerminal(NonTerminal.Type_)))
+        .toVec()
+
+    NamedType(name, args)
 
 
 newId(name: Str) Id:
