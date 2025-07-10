@@ -26,7 +26,7 @@ topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
             TopDecl.Import(importDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.TraitDecl, nodes):
-            panic("TODO")
+            TopDecl.Trait(traitDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.ImplDecl, nodes):
             panic("TODO")
@@ -402,6 +402,17 @@ importDeclToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) ImportDecl:
             .iter()
             .map(|node: ParseTree[Token, NonTerminal]|: node.asTerminal().text)
             .toVec())
+
+
+# --------------------------------------------------------------------------------------------------
+# Trait declarations
+
+
+traitDeclToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) TraitDecl:
+    # traitDecl:
+    #     _"trait" "UpperId" _"[" typeParams _"]" traitDeclRhs?
+
+    panic("TODO")
 
 
 # --------------------------------------------------------------------------------------------------
