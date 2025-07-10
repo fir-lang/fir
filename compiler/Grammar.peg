@@ -450,7 +450,7 @@ recordFieldPat:
 # Import declarations
 
 importDecl:
-    "import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+    _"import" "UpperId" (_"." "UpperId")* _"NEWLINE"
 
 # --------------------------------------------------------------------------------------------------
 # Top-level functions

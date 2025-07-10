@@ -29,7 +29,7 @@ topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
             panic("TODO")
 
         ParseTree.NonTerminal(kind = NonTerminal.ImplDecl, nodes):
-            panic("TODO")
+            TopDecl.Import(importDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes):
             panic("TODO")
@@ -387,6 +387,21 @@ returnTyToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) (ret: Option[Type], exn
             ret = Option.Some(typeToAst(nodes.get(0).asNonTerminal(NonTerminal.Type_))),
             exn = Option.Some(typeToAst(nodes.get(2).asNonTerminal(NonTerminal.Type_))),
         )
+
+
+# --------------------------------------------------------------------------------------------------
+# Import declarations
+
+
+importDeclToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) ImportDecl:
+    # importDecl:
+    #     "import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+
+    ImportDecl(
+        path = nodes
+            .iter()
+            .map(|node: ParseTree[Token, NonTerminal]|: node.asTerminal().text)
+            .toVec())
 
 
 # --------------------------------------------------------------------------------------------------
