@@ -23,13 +23,13 @@ topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
             TopDecl.Type(typeDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes):
-            panic("TODO")
+            TopDecl.Import(importDeclToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.TraitDecl, nodes):
             panic("TODO")
 
         ParseTree.NonTerminal(kind = NonTerminal.ImplDecl, nodes):
-            TopDecl.Import(importDeclToAst(nodes))
+            panic("TODO")
 
         ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes):
             panic("TODO")
