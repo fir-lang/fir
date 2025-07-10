@@ -142,17 +142,23 @@ type Type:
     Var(Id)
 
     ## An anonymous record type, e.g. `(x: I32, y: I32)`, `(a: Str, ..R)`.
-    Record:
-        fields: Vec[Named[Type]]
-        extension: Option[Id]
+    Record(RecordType)
 
     ## An anonymous variant type, e.g. `[Error(msg: Str), Ok, ..R]`.
-    Variant:
-        alts: Vec[VariantAlt]
-        extension: Option[Id]
+    Variant(VariantType)
 
     ## A function type: `Fn(I32): Bool`.
     Fn_(FnType)
+
+type RecordType:
+    fields: Vec[Named[Type]]
+    extension: Option[Id]
+    isRow: Bool
+
+type VariantType:
+    alts: Vec[VariantAlt]
+    extension: Option[Id]
+    isRow: Bool
 
 type FnType:
     args: Vec[Type]

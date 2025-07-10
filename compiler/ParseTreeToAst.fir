@@ -146,10 +146,10 @@ typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
             Type.Var(newId(text))
 
         ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes):
-            panic("TODO")
+            Type.Record(recordTypeToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes):
-            panic("TODO")
+            Type.Variant(variantTypeToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes):
             panic("TODO")
@@ -173,6 +173,70 @@ namedTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) NamedType:
         .toVec()
 
     NamedType(name, args)
+
+
+recordTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) RecordType:
+    # recordType:
+    #     recordTypeStart _")"
+    #     recordTypeStart ".." "LowerId" _")"
+    #     recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+    #
+    # recordTypeStart:
+    #     "("
+    #     "row("
+
+    let isRow =
+        treeNodes.get(0).asNonTerminal(NonTerminal.RecordTypeStart).get(0).asTerminal().kind
+            is TokenKind.LParenRow
+
+    if treeNodes.get(1) is ParseTree.Terminal(Token(kind = TokenKind.DotDot, ..)):
+        let extension = newId(treeNodes.get(2).asTerminal().text)
+        return RecordType(
+            fields = Vec.withCapacity(0),
+            extension = Option.Some(extension),
+            isRow,
+        )
+
+    let fields = Vec[Named[Type]].withCapacity(treeNodes.len() - 1)
+    for node: ParseTree[Token, NonTerminal] in treeNodes.iter().skip(1):
+        if node is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes):
+            fields.push(recordTypeFieldToAst(nodes))
+        else:
+            break
+
+    let extension = Option.None
+    if treeNodes.last().unwrap() is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeCont, nodes):
+        extension = recordTypeContToExtension(nodes)
+
+    RecordType(
+        fields,
+        extension,
+        isRow,
+    )
+
+
+recordTypeFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Named[Type]:
+    # recordTypeField:
+    #     "LowerId" _":" type_
+    #     type_
+
+    panic("TODO")
+
+
+recordTypeContToExtension(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Option[Id]:
+    # recordTypeCont:
+    #     _"," (_".." "LowerId")?
+
+    panic("TODO")
+
+
+variantTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantType:
+    # variantType:
+    #     variantTypeStart _"]"
+    #     variantTypeStart _".." "LowerId" _"]"
+    #     variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+
+    panic("TODO")
 
 
 newId(name: Str) Id:
