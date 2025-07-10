@@ -37,6 +37,10 @@ topDeclToAst(topDecl: ParseTree[Token, NonTerminal]) TopDecl:
             panic("Strange top-decl parse tree:\n`other.toDoc().render(80)`")
 
 
+# --------------------------------------------------------------------------------------------------
+# Type declarations
+
+
 typeDeclToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) TypeDecl:
     # typeDecl:
     #     _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
@@ -130,6 +134,10 @@ namedFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: Ty
     (name = name, ty = ty)
 
 
+# --------------------------------------------------------------------------------------------------
+# Types
+
+
 typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
     # type_:
     #     namedType
@@ -152,7 +160,7 @@ typeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Type:
             Type.Variant(variantTypeToAst(nodes))
 
         ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes):
-            panic("TODO")
+            Type.Fn_(fnTypeToAst(nodes))
 
         other:
             panic("Strange type parse tree:\n`other.toDoc().render(80)`")
@@ -220,14 +228,32 @@ recordTypeFieldToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Named[Type]:
     #     "LowerId" _":" type_
     #     type_
 
-    panic("TODO")
+    let name = if treeNodes.get(0) is ParseTree.Terminal(token):
+        Option.Some(newId(token.text))
+    else:
+        Option.None
+
+    let tyIdx = if name.isSome():
+        1
+    else:
+        0
+
+    let ty = typeToAst(treeNodes.get(1).asNonTerminal(NonTerminal.Type_))
+
+    Named(
+        name,
+        node = ty,
+    )
 
 
 recordTypeContToExtension(treeNodes: Vec[ParseTree[Token, NonTerminal]]) Option[Id]:
     # recordTypeCont:
     #     _"," (_".." "LowerId")?
 
-    panic("TODO")
+    if treeNodes.len() == 1:
+        return Option.None
+
+    Option.Some(newId(treeNodes.get(0).asTerminal().text))
 
 
 variantTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantType:
@@ -235,8 +261,80 @@ variantTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantType:
     #     variantTypeStart _"]"
     #     variantTypeStart _".." "LowerId" _"]"
     #     variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+    #
+    # variantTypeStart:
+    #     "["
+    #     "row["
+
+    let isRow =
+            treeNodes.get(0).asNonTerminal(NonTerminal.VariantTypeStart).get(0).asTerminal().kind
+                is TokenKind.LBracketRow
+
+    if treeNodes.get(1) is ParseTree.Terminal(Token(kind = TokenKind.DotDot, ..)):
+        let extension = newId(treeNodes.get(2).asTerminal().text)
+        return VariantType(
+            alts = Vec.withCapacity(0),
+            extension = Option.Some(extension),
+            isRow,
+        )
+
+    let alts = Vec[VariantAlt].withCapacity(treeNodes.len() - 1)
+    for node: ParseTree[Token, NonTerminal] in treeNodes.iter().skip(1):
+        if node is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes):
+            alts.push(variantAltToAst(nodes))
+        else:
+            break
+
+    let extension = Option.None
+    if treeNodes.last().unwrap() is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeCont, nodes):
+        extension = recordTypeContToExtension(nodes)
+
+    VariantType(
+        alts,
+        extension,
+        isRow,
+    )
+
+
+variantAltToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) VariantAlt:
+    # variantAlt:
+    #     "UpperId" _"(" recordTypeFields _")"
+    #     "UpperId"
+    #
+    # recordTypeFields:
+    #     recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
+    #     recordTypeField (_"," recordTypeField)* _","?
+
+    let con = newId(treeNodes.get(0).asTerminal().text)
+
+    if treeNodes.len() == 1:
+        return VariantAlt(con, fields = Vec.withCapacity(0))
+
+    let treeNodes = treeNodes.get(1).asNonTerminal(NonTerminal.RecordTypeFields)
+
+    let fields = Vec[Named[Type]].withCapacity(treeNodes.len() - 1)
+    for node: ParseTree[Token, NonTerminal] in treeNodes.iter():
+        if node is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes):
+            fields.push(recordTypeFieldToAst(nodes))
+        else:
+            break
+
+    let extension = Option.None
+    if treeNodes.last().unwrap() is ParseTree.NonTerminal(kind = NonTerminal.RecordTypeCont, nodes):
+        extension = recordTypeContToExtension(nodes)
+
+    VariantAlt(con, fields)
+
+
+fnTypeToAst(treeNodes: Vec[ParseTree[Token, NonTerminal]]) FnType:
+    # fnType:
+    #     _"Fn" _"(" fnArgTys? _")" returnTy?
+
 
     panic("TODO")
+
+
+# --------------------------------------------------------------------------------------------------
 
 
 newId(name: Str) Id:
