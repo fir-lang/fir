@@ -25,8 +25,10 @@ main(args: Array[Str]):
         panic("Empty file")
 
     let grammar = match try(||: grammar(tokens, 0)):
-        Result.Err(err):
-            panic(err.toStr())
+        Result.Err(ParseError.UnexpectedEof):
+            panic("Unexpected end of input")
+        Result.Err(ParseError.UnexpectedToken(cursor)):
+            panic("Unexpected token `tokens.get(cursor)`")
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 print(result.tree.toDoc().render(80))
@@ -179,9 +181,12 @@ convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]) Alt:
     let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
 
     for symbolTree: ParseTree[Token, NonTerminal] in nodes.iter():
+        if symbolTree is ParseTree.NonTerminal(kind = NonTerminal.NonTerminalRhs, nodes = rhsNodes):
+            return Alt(symbols, rhs = Option.Some(rhsNodes))
+
         symbols.push(convertSymbol(symbolTree.asNonTerminal(NonTerminal.Symbol)))
 
-    Alt(symbols)
+    Alt(symbols, rhs = Option.None)
 
 convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
     let symbolIdx: U32 = if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, ..):
@@ -270,6 +275,7 @@ type NonTerminalDecl:
 ## Alternatives of a non-terminal.
 type Alt:
     symbols: Vec[Symbol]
+    rhs: Option[Vec[ParseTree[Token, NonTerminal]]]
 
 ## A symbol in an alternative.
 type Symbol:

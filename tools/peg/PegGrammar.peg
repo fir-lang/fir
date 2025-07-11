@@ -29,6 +29,14 @@ Terminals:
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
 
+    # For semantic actions:
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    "{" = Token(kind = TokenKind.LBrace, ..)
+    "}" = Token(kind = TokenKind.RBrace, ..)
+    "row(" = Token(kind = TokenKind.LParenRow, ..)
+    "row[" = Token(kind = TokenKind.LBracketRow, ..)
+
 grammar:
     importDecls typeDecls terminalsDecl nonTerminalDecls $
 
@@ -59,7 +67,7 @@ nonTerminalDecl:
     "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
 
 nonTerminalAlt:
-    symbol+ _"NEWLINE"
+    symbol+ nonTerminalRhs
 
 symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
@@ -78,3 +86,29 @@ symbolSuffix:
     "*"                 # zero or more
     "+"                 # one or more
     "?"                 # optional (zero or one)
+
+nonTerminalRhs:
+    _"NEWLINE"
+    _":" tokenTree _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" tokenTree _"DEDENT"
+
+# --------------------------------------------------------------------------------------------------
+# Token trees for the semantic action code.
+
+tokenTree:
+    tokenTreeSingle*
+
+tokenTreeSingle:
+    "(" tokenTree ")"
+    "row(" tokenTree ")"
+    "[" tokenTree "]"
+    "row[" tokenTree "]"
+    "{" tokenTree "}"
+    ":" "NEWLINE" "INDENT" tokenTree "DEDENT"
+    -tokenTreeTerminator "ANY"
+
+tokenTreeTerminator:
+    ")"
+    "]"
+    "}"
+    "DEDENT"
