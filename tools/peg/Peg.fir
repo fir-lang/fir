@@ -25,8 +25,10 @@ main(args: Array[Str]):
         panic("Empty file")
 
     let grammar = match try(||: grammar(tokens, 0)):
-        Result.Err(err):
-            panic(err.toStr())
+        Result.Err(ParseError.UnexpectedEof):
+            panic("Unexpected end of input")
+        Result.Err(ParseError.UnexpectedToken(cursor)):
+            panic("Unexpected token `tokens.get(cursor)`")
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 print(result.tree.toDoc().render(80))
