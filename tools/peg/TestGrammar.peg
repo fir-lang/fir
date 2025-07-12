@@ -1,7 +1,7 @@
 # PEG parsers in this file are used to test the PEG parser generator.
 
-import ParseTree
-import Token
+import Compiler.Token
+import Peg.ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal
@@ -54,3 +54,8 @@ negLookahead:
 
 endOfInputTest:
     "a" "b" $
+
+# Repro for bug: this used to update error location in a `try` closure, and
+# report error at cursor 1 instead of 4 on input "b a a a c b".
+bracketedOneOrMoreA:
+    _"b" oneOrMoreAThenB* $

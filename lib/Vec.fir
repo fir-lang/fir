@@ -77,7 +77,7 @@ Vec.get(self: Vec[t], idx: U32) t:
 
 Vec.getOpt(self: Vec[t], idx: U32) Option[t]:
     if idx >= self._len:
-        Option.None
+        return Option.None
 
     Option.Some(self._data.get(idx))
 

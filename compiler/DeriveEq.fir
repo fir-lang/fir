@@ -1,7 +1,7 @@
 import Grammar
 import Lexer
-import PegTestLib
-import Scanner
+import Peg.PegTestLib
+import Compiler.Scanner
 
 main(args: Array[Str]):
     if args.len() < 2:
@@ -216,6 +216,7 @@ type Token:
     line: U32
     col: U32")
 
+# args: -iPeg=tools/peg -iCompiler=compiler
 # args after: -- --test
 # expected stdout:
 # impl[Eq[t]] Eq[Option[t]]:

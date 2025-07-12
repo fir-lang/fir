@@ -1,6 +1,6 @@
 import Grammar
 import Lexer
-import PegTestLib
+import Peg.PegTestLib
 
 main(args: Array[Str]):
     if args.len() > 2:
@@ -79,6 +79,8 @@ type MapResult[iter, item, b, exnOld, exnNew]:
     f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew", typeDecl)
 
     ()
+
+# args: -iPeg=tools/peg -iCompiler=compiler
 
 # expected stdout:
 # asdf
