@@ -39,6 +39,7 @@ main():
     runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
     runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
+    runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
 
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
@@ -128,4 +129,7 @@ main():
 # 
 # 'a b a' as endOfInputTest (should fail)
 # ERR: unexpected token or end of input at cursor 2
+# 
+# 'b a a a c b' as bracketedOneOrMoreA (should fail)
+# ERR: unexpected token or end of input at cursor 4
 

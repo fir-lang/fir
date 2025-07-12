@@ -20,6 +20,18 @@ ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
             else:
                 return err2
 
+ParseError.takeAdvancedOpt(err1: Option[ParseError], err2: Option[ParseError]) Option[ParseError]:
+    match (left = err1, right = err2):
+        (left = Option.Some(err1_), right = Option.Some(err2_)):
+            if err1_.cursor > err2_.cursor:
+                err1
+            else:
+                err2
+
+        (left = Option.Some(_), ..): err1
+
+        _: err2
+
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]) Str:
         self.toDoc().render(80)
