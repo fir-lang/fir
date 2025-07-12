@@ -61,9 +61,7 @@ terminalA(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -84,9 +82,7 @@ terminalB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -107,9 +103,7 @@ terminalAOrB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -124,9 +118,7 @@ terminalAOrB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.TerminalAOrB, nodes), newCursor = newCursor)
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -147,16 +139,12 @@ terminalAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -180,9 +168,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
         loop:
             let nodesLen0 = nodes.len()
             let symResult = try(||:
-                if cursor == tokens.len():
-                    throw(ParseError(cursor = cursor))
-                if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+                if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
@@ -196,9 +182,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -219,9 +203,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -229,9 +211,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
         loop:
             let nodesLen0 = nodes.len()
             let symResult = try(||:
-                if cursor == tokens.len():
-                    throw(ParseError(cursor = cursor))
-                if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+                if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                     nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                     cursor += 1
                 else:
@@ -245,9 +225,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
                     break
                 Result.Ok(newCursor):
                     cursor = newCursor
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -270,9 +248,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
     let altResult = try(||:
         let nodesLen0 = nodes.len()
         let symResult = try(||:
-            if cursor == tokens.len():
-                throw(ParseError(cursor = cursor))
-            if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                 nodes.push(ParseTree.Terminal(tokens.get(cursor)))
                 cursor += 1
             else:
@@ -285,9 +261,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -308,15 +282,11 @@ ignoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -337,15 +307,11 @@ ignoreAThenIgnoreB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonT
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
@@ -365,15 +331,11 @@ ignoreGroupAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTe
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
@@ -431,16 +393,12 @@ nonTerminalsBacktrack(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, N
         Result.Ok(newCursor):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes), newCursor = newCursor)
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "c", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "c", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
@@ -463,9 +421,7 @@ negLookahead(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     let altResult = try(||:
         let tokensLen0 = tokens.len()
         let symResult = try(||:
-            if cursor == tokens.len():
-                throw(ParseError(cursor = cursor))
-            if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                 cursor += 1
             else:
                 throw(ParseError(cursor = cursor))
@@ -495,16 +451,12 @@ endOfInputTest(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
     let curErr: Option[ParseError] = Option.None
     let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
     let altResult = try(||:
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "a", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError(cursor = cursor))
-        if cursor == tokens.len():
-            throw(ParseError(cursor = cursor))
-        if tokens.get(cursor) is Token(kind = TokenKind.LowerId, text = "b", ..):
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:

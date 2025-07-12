@@ -416,18 +416,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse(||: panic("Unknown terminal: `terminal`"))
 
-            let eofCheck =
-                Doc.nested(
-                    4,
-                    Doc.str("if cursor == tokens.len():")
-                        + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError(Doc.str("cursor"))))
-
-            eofCheck += Doc.hardLine()
-
-            let tokenKindCheck = Doc.str("if tokens.get(cursor) is ")
+            let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(")
                 + tokensToCode(patToks)
-                + Doc.char(':')
+                + Doc.str("):")
                 + Doc.hardLine()
 
             let nested = Doc.empty()
@@ -437,14 +428,12 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
             tokenKindCheck = Doc.nested(4, tokenKindCheck + nested) + Doc.hardLine()
 
-            tokenKindCheck +=
+            tokenKindCheck +
                 Doc.nested(
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
                         + makeThrow(makeUnexpectedTokenError(Doc.str("cursor"))))
-
-            eofCheck + tokenKindCheck
 
         Symbol.NonTerminal(nonTerminal):
             let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)")
