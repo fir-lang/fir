@@ -41,13 +41,12 @@ main():
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
 
 # args: -iCompiler=compiler -iPeg=tools/peg
-
 # expected stdout:
 # 'a' as terminalA
 # TerminalA(LowerId(1:1:"a"))
 # 
 # 'b' as terminalA (should fail)
-# ERR: unexpected token at cursor 0
+# ERR: unexpected token or end of input at cursor 0
 # 
 # 'a b' as terminalA (should fail)
 # ERR: parser didn't consume all input, input len = 2, cursor after parsing = 1
@@ -62,10 +61,10 @@ main():
 # TerminalAOrB(LowerId(1:1:"b"))
 # 
 # 'c' as terminalAOrB (should fail)
-# ERR: unexpected token at cursor 0
+# ERR: unexpected token or end of input at cursor 0
 # 
 # 'b b' as terminalAThenB (should fail)
-# ERR: unexpected token at cursor 0
+# ERR: unexpected token or end of input at cursor 0
 # 
 # 'a b' as terminalAThenB
 # TerminalAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -80,7 +79,7 @@ main():
 # ZeroOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
 # 
 # 'b' as oneOrMoreAThenB (should fail)
-# ERR: unexpected token at cursor 0
+# ERR: unexpected token or end of input at cursor 0
 # 
 # 'a b' as oneOrMoreAThenB
 # OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -89,7 +88,7 @@ main():
 # OneOrMoreAThenB(LowerId(1:1:"a"), LowerId(1:3:"a"), LowerId(1:5:"b"))
 # 
 # 'a a b' as zeroOrOneAThenB
-# ERR: unexpected token at cursor 1
+# ERR: unexpected token or end of input at cursor 1
 # 
 # 'a b' as zeroOrOneAThenB
 # ZeroOrOneAThenB(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -116,10 +115,10 @@ main():
 # NegLookahead(TerminalAOrB(LowerId(1:1:"b")))
 # 
 # 'a' as negLookahead (should fail)
-# ERR: unexpected token at cursor 0
+# ERR: unexpected token or end of input at cursor 0
 # 
 # 'a a c' as oneOrMoreAThenB (should fail)
-# ERR: unexpected token at cursor 2
+# ERR: unexpected token or end of input at cursor 2
 # 
 # 'a b' as endOfInputTest
 # EndOfInputTest(LowerId(1:1:"a"), LowerId(1:3:"b"))
@@ -128,4 +127,5 @@ main():
 # EndOfInputTest(LowerId(1:1:"a"), LowerId(1:3:"b"))
 # 
 # 'a b a' as endOfInputTest (should fail)
-# ERR: unexpected token at cursor 2
+# ERR: unexpected token or end of input at cursor 2
+

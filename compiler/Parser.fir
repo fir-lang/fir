@@ -20,8 +20,11 @@ main(args: Array[Str]):
             tokens
 
     let result = match try(||: module(tokens, 0)):
-        Result.Err(ParseError.UnexpectedEof): panic("Parse error: unexpected end of input")
-        Result.Err(ParseError.UnexpectedToken(cursor)): panic("Parse error: unexpected token `tokens.get(cursor)`")
+        Result.Err(ParseError(cursor)):
+            if cursor == tokens.len():
+                panic("Parse error: unexpected end of input")
+            else:
+                panic("Parse error: unexpected token `tokens.get(cursor)`")
         Result.Ok(result): result
 
     if result.newCursor != tokens.len():

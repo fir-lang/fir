@@ -25,10 +25,11 @@ main(args: Array[Str]):
         panic("Empty file")
 
     let grammar = match try(||: grammar(tokens, 0)):
-        Result.Err(ParseError.UnexpectedEof):
-            panic("Unexpected end of input")
-        Result.Err(ParseError.UnexpectedToken(cursor)):
-            panic("Unexpected token `tokens.get(cursor)`")
+        Result.Err(ParseError(cursor)):
+            if cursor == tokens.len():
+                panic("Unexpected end of input")
+            else:
+                panic("Unexpected token `tokens.get(cursor)`")
         Result.Ok(result):
             if result.newCursor != tokens.len():
                 print(result.tree.toDoc().render(80))
@@ -387,22 +388,12 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
         doc += altResultMatchDoc + Doc.hardLine()
 
     doc +=
-        Doc.nested(
-            4,
-            Doc.str("if cursor == tokens.len():")
-                + Doc.hardLine()
-                + makeThrowUnexpectedEof())
-        + Doc.hardLine()
-        + Doc.nested(
-            4,
-            Doc.str("else:")
-                + Doc.hardLine()
-                + makeThrow(
-                    Doc.nested(
-                        4,
-                        Doc.str("curErr.unwrapOr(")
-                            + makeUnexpectedTokenError(Doc.str("cursor"))
-                            + Doc.char(')'))))
+        makeThrow(
+            Doc.nested(
+                4,
+                Doc.str("curErr.unwrapOr(")
+                    + makeUnexpectedTokenError(Doc.str("cursor"))
+                    + Doc.char(')')))
 
     doc.nest(4)
 
@@ -430,7 +421,7 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                     4,
                     Doc.str("if cursor == tokens.len():")
                         + Doc.hardLine()
-                        + makeThrowUnexpectedEof())
+                        + makeThrow(makeUnexpectedTokenError(Doc.str("cursor"))))
 
             eofCheck += Doc.hardLine()
 
@@ -618,22 +609,10 @@ tokensToCode(tokens: Vec[Token]) Doc / exn:
     Doc.str(out.toStr())
 
 makeUnexpectedTokenError(cursor: Doc) Doc:
-    Doc.group(
-        Doc.nested(
-            4,
-            Doc.group(
-                Doc.str("ParseError.UnexpectedToken(")
-                    + Doc.break_(0)
-                    + Doc.str("cursor = ") + cursor))
-            + Doc.whenNotFlat(Doc.char(','))
-            + Doc.break_(0)
-            + Doc.str(")"))
+    Doc.str("ParseError(cursor = ") + cursor + Doc.char(')')
 
 makeThrow(expr: Doc) Doc:
     Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')')).group()
-
-makeThrowUnexpectedEof() Doc:
-    makeThrow(Doc.str("ParseError.UnexpectedEof"))
 
 # When generating code that backtracks, update the local `curErr: Option[ParseError]` if the new
 # error's cursor is more advanced than the current.

@@ -5,24 +5,20 @@ type ParseTree[t, nt]:
         kind: nt
         nodes: Vec[ParseTree[t, nt]]
 
+# Indicates an unexpected token (when `cursor` is smaller than the length of the input) or
+# unexpected end-of-input (when `cursor` is the length of the input).
 type ParseError:
-    UnexpectedEof
-    UnexpectedToken:
-        cursor: U32
+    cursor: U32
 
 ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
     match err1:
         Option.None:
             err2
         Option.Some(err1):
-            if err1 is ParseError.UnexpectedToken(cursor = c1, ..)
-                    and err2 is ParseError.UnexpectedToken(cursor = c2, ..):
-                if c1 > c2:
-                    return err1
-                else:
-                    return err2
-
-            ParseError.UnexpectedEof
+            if err1.cursor > err2.cursor:
+                return err1
+            else:
+                return err2
 
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]) Str:
@@ -30,9 +26,7 @@ impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
 
 impl ToStr[ParseError]:
     toStr(self: ParseError) Str:
-        match self:
-            ParseError.UnexpectedEof: "unexpected end of input"
-            ParseError.UnexpectedToken(cursor): "unexpected token at cursor `cursor`"
+        "unexpected token or end of input at cursor `self.cursor`"
 
 ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]) Doc:
     match self:
