@@ -400,8 +400,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                 + makeThrow(
                     Doc.nested(
                         4,
-                        Doc.str("curErr.unwrapOrElse(||:")
-                            + Doc.hardLine()
+                        Doc.str("curErr.unwrapOr(")
                             + makeUnexpectedTokenError(Doc.str("cursor"))
                             + Doc.char(')'))))
 
