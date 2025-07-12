@@ -1,7 +1,7 @@
 # This is generated file, do not edit.
 
-import Compiler.ParseTree
 import Compiler.Token
+import ParseTree
 
 type NonTerminal:
     Grammar

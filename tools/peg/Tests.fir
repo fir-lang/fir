@@ -4,8 +4,8 @@
 # Without vector literals it's painful to compare parse trees with expected trees, so for now, this
 # prints parse trees, which we then compare with expected output using `goldentests`.
 
-import Error
-import Lexer
+import Compiler.Error
+import Compiler.Lexer
 import PegTestLib
 import TestGrammar
 
@@ -39,6 +39,8 @@ main():
     runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
     runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
+
+# args: -iCompiler=compiler -iPeg=tools/peg
 
 # expected stdout:
 # 'a' as terminalA

@@ -35,7 +35,7 @@ compiler_unit_test:
     ./compiler/tests/tokenize.sh
 
 compiler_golden_test:
-    goldentests target/debug/fir compiler/PegTests.fir '# '
+    goldentests target/debug/fir tools/peg/Tests.fir '# '
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# '
     goldentests target/debug/fir compiler/DeriveEq.fir '# '
     goldentests target/debug/fir compiler/ExprGrammarTest.fir '# '
@@ -45,7 +45,7 @@ compiler_golden_test:
     goldentests target/debug/fir compiler/ImplGrammarTest.fir '# '
 
 compiler_update_goldens:
-    goldentests target/debug/fir compiler/PegTests.fir '# ' --overwrite
+    goldentests target/debug/fir tools/peg/Tests.fir '# ' --overwrite
     goldentests target/debug/fir compiler/TypeGrammarTest.fir '# ' --overwrite
     goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
     goldentests target/debug/fir compiler/ExprGrammarTest.fir '# ' --overwrite
@@ -69,7 +69,7 @@ generate_parser:
 update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
-    tools/peg/Peg.sh compiler/TestGrammar.peg > compiler/TestGrammar.fir
+    tools/peg/Peg.sh tools/peg/TestGrammar.peg > tools/peg/TestGrammar.fir
     tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
 
     # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
@@ -79,7 +79,7 @@ update_generated_files:
     if [ $? -eq 0 ]; then
         echo "$output" > tools/peg/PegGrammar.fir
     else
-        echo "cargo run failed"
+        echo "generated file update failed"
         exit 1
     fi
 

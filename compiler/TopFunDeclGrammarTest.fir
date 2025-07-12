@@ -1,6 +1,6 @@
 import Grammar
 import Lexer
-import PegTestLib
+import Peg.PegTestLib
 
 
 main(args: Array[Str]):
@@ -17,6 +17,8 @@ f():
 
 runTopDecl(input: Str):
     runTestScanner_(input, topDecl)
+
+# args: -iPeg=tools/peg -iCompiler=compiler
 
 # expected stdout:
 # f(): 1

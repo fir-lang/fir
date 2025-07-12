@@ -1,7 +1,7 @@
 # PEG parsers in this file are used to test the PEG parser generator.
 
-import ParseTree
-import Token
+import Compiler.Token
+import Peg.ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal

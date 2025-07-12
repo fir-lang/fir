@@ -1,6 +1,6 @@
 # This is generated file, do not edit.
 
-import ParseTree
+import Peg.ParseTree
 import Token
 
 type NonTerminal:

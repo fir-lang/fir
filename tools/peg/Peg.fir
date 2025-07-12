@@ -1,7 +1,7 @@
 import Compiler.Lexer
-import Compiler.ParseTree
 import Compiler.Scanner
 import Compiler.Token
+import ParseTree
 import PegGrammar
 
 main(args: Array[Str]):
