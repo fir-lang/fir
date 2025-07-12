@@ -344,11 +344,11 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
 
 generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
     let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) \
-                            (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32) / ParseError[`terminalType`]:")
+                            (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32) / ParseError:")
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
-    doc += Doc.str("let curErr: Option[ParseError[`terminalType`]] = Option.None") + Doc.hardLine()
+    doc += Doc.str("let curErr: Option[ParseError] = Option.None") + Doc.hardLine()
 
     # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
     doc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
@@ -636,7 +636,7 @@ makeThrow(expr: Doc) Doc:
 makeThrowUnexpectedEof() Doc:
     makeThrow(Doc.str("ParseError.UnexpectedEof"))
 
-# When generating code that backtracks, update the local `curErr: Option[ParseError[t]]` if the new
+# When generating code that backtracks, update the local `curErr: Option[ParseError]` if the new
 # error's cursor is more advanced than the current.
 #
 # The new error value should be named `err`.
