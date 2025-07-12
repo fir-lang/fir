@@ -10,15 +10,19 @@ type ParseError:
     UnexpectedToken:
         cursor: U32
 
-ParseError.takeAdvanced(err1: ParseError, err2: ParseError) ParseError:
-    if err1 is ParseError.UnexpectedToken(cursor = c1, ..)
-            and err2 is ParseError.UnexpectedToken(cursor = c2, ..):
-        if c1 > c2:
-            return err1
-        else:
-            return err2
+ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
+    match err1:
+        Option.None:
+            err2
+        Option.Some(err1):
+            if err1 is ParseError.UnexpectedToken(cursor = c1, ..)
+                    and err2 is ParseError.UnexpectedToken(cursor = c2, ..):
+                if c1 > c2:
+                    return err1
+                else:
+                    return err2
 
-    ParseError.UnexpectedEof
+            ParseError.UnexpectedEof
 
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]) Str:

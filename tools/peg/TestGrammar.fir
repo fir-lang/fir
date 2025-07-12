@@ -72,11 +72,7 @@ terminalA(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -104,11 +100,7 @@ terminalB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -136,11 +128,7 @@ terminalAOrB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -157,11 +145,7 @@ terminalAOrB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -196,11 +180,7 @@ terminalAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -231,11 +211,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
             )
             match symResult:
                 Result.Err(err):
-                    match curErr:
-                        Option.None:
-                            curErr = Option.Some(err)
-                        Option.Some(curErr_):
-                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                     nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
@@ -251,11 +227,7 @@ zeroOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -293,11 +265,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
             )
             match symResult:
                 Result.Err(err):
-                    match curErr:
-                        Option.None:
-                            curErr = Option.Some(err)
-                        Option.Some(curErr_):
-                            curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                     nodes.truncate(nodesLen0)
                     break
                 Result.Ok(newCursor):
@@ -313,11 +281,7 @@ oneOrMoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -347,11 +311,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
         )
         match symResult:
             Result.Err(err):
-                match curErr:
-                    Option.None:
-                        curErr = Option.Some(err)
-                    Option.Some(curErr_):
-                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+                curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 nodes.truncate(nodesLen0)
             Result.Ok(newCursor):
                 cursor = newCursor
@@ -366,11 +326,7 @@ zeroOrOneAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -404,11 +360,7 @@ ignoreAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -441,11 +393,7 @@ ignoreAThenIgnoreB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonT
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -478,11 +426,7 @@ ignoreGroupAThenB(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTe
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -509,11 +453,7 @@ nonTerminals(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -540,11 +480,7 @@ nonTerminalsBacktrack(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, N
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -568,11 +504,7 @@ nonTerminalsBacktrack(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, N
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -600,11 +532,7 @@ negLookahead(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
         )
         match symResult:
             Result.Err(err):
-                match curErr:
-                    Option.None:
-                        curErr = Option.Some(err)
-                    Option.Some(curErr_):
-                        curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+                curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 tokens.truncate(tokensLen0)
             Result.Ok(_):
                 throw(ParseError.UnexpectedToken(cursor = cursor))
@@ -615,11 +543,7 @@ negLookahead(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):
@@ -658,11 +582,7 @@ endOfInputTest(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
     )
     match altResult:
         Result.Err(err):
-            match curErr:
-                Option.None:
-                    curErr = Option.Some(err)
-                Option.Some(curErr_):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             cursor = cursor0
             nodes.clear()
         Result.Ok(newCursor):

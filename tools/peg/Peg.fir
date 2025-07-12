@@ -641,18 +641,4 @@ makeThrowUnexpectedEof() Doc:
 #
 # The new error value should be named `err`.
 makeUpdateError() Doc:
-    Doc.nested(
-        4,
-        Doc.str("match curErr:")
-            + Doc.hardLine()
-            + Doc.nested(
-                4,
-                Doc.str("Option.None:")
-                    + Doc.hardLine()
-                    + Doc.str("curErr = Option.Some(err)"))
-            + Doc.hardLine()
-            + Doc.nested(
-                4,
-                Doc.str("Option.Some(curErr_):")
-                    + Doc.hardLine()
-                    + Doc.str("curErr = Option.Some(ParseError.takeAdvanced(curErr_, err))")))
+    Doc.str("curErr = Option.Some(ParseError.takeAdvanced(curErr, err))")
