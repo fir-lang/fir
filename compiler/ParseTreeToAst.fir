@@ -446,7 +446,7 @@ topFunSigToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) FunSig:
         parentTy = Option.Some(newId(nodes.get(0).asTerminal().text))
         idx += 1
 
-    let sig = funSigToAst
+    let sig = funSigToAst(nodes, idx)
 
     panic("TODO")
 
@@ -471,11 +471,27 @@ funSigToAst(nodes: Vec[ParseTree[Token, NonTerminal]], startIdx: U32) FunSig:
     else:
         (ret = Option.None, exn = Option.None)
 
-    panic("TODO")
+    FunSig(
+        context,
+        self_ = SelfParam.No,    # TODO
+        params,
+        exceptions = ret.exn,
+        returnTy = ret.ret,
+    )
 
 
-paramListToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[(name: Str, ty: Type)]:
-    panic("TODO")
+paramListToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[(name: Id, ty: Type)]:
+    nodes
+        .iter()
+        .map(|node: ParseTree[Token, NonTerminal]|: paramToAst(node.asNonTerminal(NonTerminal.Param)))
+        .toVec()
+
+
+paramToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) (name: Id, ty: Type):
+    (
+        name = newId(nodes.get(0).asTerminal().text),
+        ty = typeToAst(nodes.get(1).asNonTerminal(NonTerminal.Type_))
+    )
 
 
 # --------------------------------------------------------------------------------------------------
