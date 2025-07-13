@@ -439,6 +439,45 @@ funDeclToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) FunDecl:
     panic("TODO")
 
 
+topFunSigToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) FunSig:
+    let idx: U32 = 0
+    let parentTy: Option[Id] = Option.None
+    if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.ParentTy, nodes):
+        parentTy = Option.Some(newId(nodes.get(0).asTerminal().text))
+        idx += 1
+
+    let sig = funSigToAst
+
+    panic("TODO")
+
+
+funSigToAst(nodes: Vec[ParseTree[Token, NonTerminal]], startIdx: U32) FunSig:
+    let idx = startIdx
+    let name = newId(nodes.get(idx).asTerminal().text)
+
+    let preds = if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.Context, nodes):
+        idx += 1
+        contextToAst(nodes)
+    else:
+        Vec.empty()
+
+    let context = Context(typeParams = Vec.empty(), preds)
+
+    let params = paramListToAst(nodes.get(idx).asNonTerminal(NonTerminal.ParamList))
+    idx += 1
+
+    let ret = if idx < nodes.len():
+        returnTyToAst(nodes.get(idx).asNonTerminal(NonTerminal.ReturnTy))
+    else:
+        (ret = Option.None, exn = Option.None)
+
+    panic("TODO")
+
+
+paramListToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[(name: Str, ty: Type)]:
+    panic("TODO")
+
+
 # --------------------------------------------------------------------------------------------------
 
 
