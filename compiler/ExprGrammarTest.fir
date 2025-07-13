@@ -1,6 +1,6 @@
 import Grammar
 import Lexer
-import PegTestLib
+import Peg.PegTestLib
 
 
 main(args: Array[Str]):
@@ -97,6 +97,8 @@ runInlineExprScan(input: Str):
 
 runBlockExprScan(input: Str):
     runTestScanner_(input, blockExpr)
+
+# args: -iPeg=tools/peg -iCompiler=compiler
 
 # expected stdout:
 # hi

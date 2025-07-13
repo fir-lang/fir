@@ -1,4 +1,4 @@
-import ParseTree
+import Peg.ParseTree
 import Token
 
 type Terminal = Token

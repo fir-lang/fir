@@ -1,7 +1,7 @@
-import Assert
-import Ast
-import Grammar
-import ParseTree
+import Compiler.Assert
+import Compiler.Ast
+import Compiler.Grammar
+import Peg.ParseTree
 
 
 main():
