@@ -19,6 +19,7 @@ type NonTerminal:
     RecordTypeField
     VariantAlt
     FnArgTys
+    ReturnTy
     TypeDecl
     TypeParams
     TypeDeclRhs
@@ -47,7 +48,6 @@ type NonTerminal:
     AltGuard
     MatchRhs
     FnArgs
-    ReturnTy
     Stmt
     LoopLabel
     LetRhs
@@ -90,6 +90,7 @@ impl ToStr[NonTerminal]:
             NonTerminal.RecordTypeField: "RecordTypeField"
             NonTerminal.VariantAlt: "VariantAlt"
             NonTerminal.FnArgTys: "FnArgTys"
+            NonTerminal.ReturnTy: "ReturnTy"
             NonTerminal.TypeDecl: "TypeDecl"
             NonTerminal.TypeParams: "TypeParams"
             NonTerminal.TypeDeclRhs: "TypeDeclRhs"
@@ -118,7 +119,6 @@ impl ToStr[NonTerminal]:
             NonTerminal.AltGuard: "AltGuard"
             NonTerminal.MatchRhs: "MatchRhs"
             NonTerminal.FnArgs: "FnArgs"
-            NonTerminal.ReturnTy: "ReturnTy"
             NonTerminal.Stmt: "Stmt"
             NonTerminal.LoopLabel: "LoopLabel"
             NonTerminal.LetRhs: "LetRhs"
@@ -161,6 +161,7 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.RecordTypeField, right = NonTerminal.RecordTypeField): Bool.True
             (left = NonTerminal.VariantAlt, right = NonTerminal.VariantAlt): Bool.True
             (left = NonTerminal.FnArgTys, right = NonTerminal.FnArgTys): Bool.True
+            (left = NonTerminal.ReturnTy, right = NonTerminal.ReturnTy): Bool.True
             (left = NonTerminal.TypeDecl, right = NonTerminal.TypeDecl): Bool.True
             (left = NonTerminal.TypeParams, right = NonTerminal.TypeParams): Bool.True
             (left = NonTerminal.TypeDeclRhs, right = NonTerminal.TypeDeclRhs): Bool.True
@@ -189,7 +190,6 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.AltGuard, right = NonTerminal.AltGuard): Bool.True
             (left = NonTerminal.MatchRhs, right = NonTerminal.MatchRhs): Bool.True
             (left = NonTerminal.FnArgs, right = NonTerminal.FnArgs): Bool.True
-            (left = NonTerminal.ReturnTy, right = NonTerminal.ReturnTy): Bool.True
             (left = NonTerminal.Stmt, right = NonTerminal.Stmt): Bool.True
             (left = NonTerminal.LoopLabel, right = NonTerminal.LoopLabel): Bool.True
             (left = NonTerminal.LetRhs, right = NonTerminal.LetRhs): Bool.True
@@ -1184,6 +1184,68 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             nodes.clear()
         Result.Ok((cursor = newCursor, err = newErr)):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.FnArgTys, nodes), newCursor = newCursor, newErr = newErr)
+    throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+
+returnTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32, newErr: Option[ParseError]) / ParseError:
+    let cursor0 = cursor
+    let curErr: Option[ParseError] = Option.None
+    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+    let altResult = try(||:
+        let nonTerminalResult = type_(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        curErr = nonTerminalResult.newErr
+        nodes.push(nonTerminalResult.tree)
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Slash, ..)):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let nonTerminalResult = type_(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        curErr = nonTerminalResult.newErr
+        nodes.push(nonTerminalResult.tree)
+        (cursor = cursor, err = curErr)
+    )
+    match altResult:
+        Result.Err(err):
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok((cursor = newCursor, err = newErr)):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
+    let altResult = try(||:
+        let nonTerminalResult = type_(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        curErr = nonTerminalResult.newErr
+        nodes.push(nonTerminalResult.tree)
+        (cursor = cursor, err = curErr)
+    )
+    match altResult:
+        Result.Err(err):
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok((cursor = newCursor, err = newErr)):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
+    let altResult = try(||:
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Slash, ..)):
+            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
+            cursor += 1
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let nonTerminalResult = type_(tokens, cursor)
+        cursor = nonTerminalResult.newCursor
+        curErr = nonTerminalResult.newErr
+        nodes.push(nonTerminalResult.tree)
+        (cursor = cursor, err = curErr)
+    )
+    match altResult:
+        Result.Err(err):
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+            cursor = cursor0
+            nodes.clear()
+        Result.Ok((cursor = newCursor, err = newErr)):
+            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
 
 typeDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32, newErr: Option[ParseError]) / ParseError:
@@ -3827,68 +3889,6 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             nodes.clear()
         Result.Ok((cursor = newCursor, err = newErr)):
             return (tree = ParseTree.NonTerminal(kind = NonTerminal.FnArgs, nodes), newCursor = newCursor, newErr = newErr)
-    throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-
-returnTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32, newErr: Option[ParseError]) / ParseError:
-    let cursor0 = cursor
-    let curErr: Option[ParseError] = Option.None
-    let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-    let altResult = try(||:
-        let nonTerminalResult = type_(tokens, cursor)
-        cursor = nonTerminalResult.newCursor
-        curErr = nonTerminalResult.newErr
-        nodes.push(nonTerminalResult.tree)
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Slash, ..)):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let nonTerminalResult = type_(tokens, cursor)
-        cursor = nonTerminalResult.newCursor
-        curErr = nonTerminalResult.newErr
-        nodes.push(nonTerminalResult.tree)
-        (cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-            nodes.clear()
-        Result.Ok((cursor = newCursor, err = newErr)):
-            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
-        let nonTerminalResult = type_(tokens, cursor)
-        cursor = nonTerminalResult.newCursor
-        curErr = nonTerminalResult.newErr
-        nodes.push(nonTerminalResult.tree)
-        (cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-            nodes.clear()
-        Result.Ok((cursor = newCursor, err = newErr)):
-            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Slash, ..)):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let nonTerminalResult = type_(tokens, cursor)
-        cursor = nonTerminalResult.newCursor
-        curErr = nonTerminalResult.newErr
-        nodes.push(nonTerminalResult.tree)
-        (cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-            nodes.clear()
-        Result.Ok((cursor = newCursor, err = newErr)):
-            return (tree = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes), newCursor = newCursor, newErr = newErr)
     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
 
 stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32, newErr: Option[ParseError]) / ParseError:

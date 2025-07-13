@@ -7,11 +7,12 @@ type Terminal = Token
 type NonTerminal = NonTerminal
 
 Terminals:
-    "lowerId" = Token(kind = TokenKind.LowerId, ..)
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "import" = Token(kind = TokenKind.Import, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
     ":" = Token(kind = TokenKind.Colon, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
@@ -25,6 +26,9 @@ Terminals:
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "." = Token(kind = TokenKind.Dot, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
     "$" = Token(kind = TokenKind.Dollar, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
@@ -64,7 +68,7 @@ nonTerminalDecls:
     nonTerminalDecl*
 
 nonTerminalDecl:
-    "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
+    "LowerId" type_? _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
 
 nonTerminalAlt:
     symbol+ nonTerminalRhs
@@ -79,10 +83,10 @@ symbolPrefix:
 
     # Binder: it doesn't make sense to combine these with negative lookahead
     # and ignore, so we're parsing either a prefix or binder.
-    "lowerId" _"="
+    "LowerId" _"="
 
 symbolNonRec:
-    "lowerId"           # non-terminal
+    "LowerId"           # non-terminal
     "Str"               # terminal
     _"(" symbol+ _")"   # group
 
@@ -135,3 +139,91 @@ indentedTokenTreeTerminator:
     "]"
     "}"
     "DEDENT"
+
+# --------------------------------------------------------------------------------------------------
+# Type parser copied from compiler.
+#
+# TODO: We should reuse compiler's parser.
+
+type_:
+    namedType
+    "LowerId"
+    recordType
+    variantType
+    fnType
+
+
+# - ()
+# - (x: U32)
+# - (x: U32,)
+# - (x: U32, y: U32)
+# - (x: U32, ..foo)
+# - (..foo)
+recordType:
+    recordTypeStart _")"
+    recordTypeStart ".." "LowerId" _")"
+    recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+
+
+recordTypeStart:
+    "("
+    "row("
+
+
+recordTypeCont:
+    _"," (_".." "LowerId")?
+
+
+# - []
+# - [A]
+# - [A,]
+# - [A, B]
+# - [A, ..foo]
+# - [..foo]
+variantType:
+    variantTypeStart _"]"
+    variantTypeStart _".." "LowerId" _"]"
+    variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+
+
+variantTypeStart:
+    "["
+    "row["
+
+
+variantTypeCont:
+    _"," (_".." "LowerId")?
+
+
+fnType:
+    _"Fn" _"(" fnArgTys? _")" returnTy?
+
+
+namedType:
+    "UpperId" _"[" type_ (_"," type_)* _","? _"]"
+    "UpperId"
+
+
+recordTypeFields:
+    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
+    recordTypeField (_"," recordTypeField)* _","?
+
+
+recordTypeField:
+    "LowerId" _":" type_
+    type_
+
+
+variantAlt:
+    "UpperId" _"(" recordTypeFields _")"
+    "UpperId"
+
+
+fnArgTys:
+    type_ (_"," type_)* _","?
+
+
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type

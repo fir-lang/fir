@@ -170,13 +170,20 @@ convertTerminalsDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) TerminalsDecl:
 convertNonTerminalDecl(nodes: Vec[ParseTree[Token, NonTerminal]]) NonTerminalDecl:
     let name = nodes.get(0).asTerminal().text
 
-    let alts: Vec[Alt] = Vec.withCapacity(nodes.len() - 1)
+    let altIdx: U32 = 1
 
-    for altTree: ParseTree[Token, NonTerminal] in nodes.iter().skip(1):
+    let ty: Option[Vec[ParseTree[Token, NonTerminal]]] = Option.None
+    if nodes.get(1) is ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes):
+        altIdx += 1
+        ty = Option.Some(nodes)
+
+    let alts: Vec[Alt] = Vec.withCapacity(nodes.len() - altIdx)
+
+    for altTree: ParseTree[Token, NonTerminal] in nodes.iter().skip(altIdx):
         let altTreeNodes = altTree.asNonTerminal(NonTerminal.NonTerminalAlt)
         alts.push(convertAlt(altTreeNodes))
 
-    NonTerminalDecl(name, alts)
+    NonTerminalDecl(name, ty, alts)
 
 convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]) Alt:
     let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
@@ -278,13 +285,17 @@ type TerminalDecl:
 ## `name` is `"jsonObject"`, and `alts` is the two alternatives.
 type NonTerminalDecl:
     name: Str
+
+    ## Optional return type of the non-terminal, as a token tree.
+    ty: Option[Vec[ParseTree[Token, NonTerminal]]]
+
     alts: Vec[Alt]
 
 ## Alternatives of a non-terminal.
 type Alt:
     symbols: Vec[Symbol]
 
-    # Semantic action.
+    ## Optional semantic action of the production, as a token tree.
     rhs: Option[Vec[ParseTree[Token, NonTerminal]]]
 
 ## A symbol in an alternative.
