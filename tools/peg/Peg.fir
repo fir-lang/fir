@@ -211,9 +211,16 @@ convertSymbol(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
             _: panic("")
 
     if nodes.get(0) is ParseTree.NonTerminal(kind = NonTerminal.SymbolPrefix, nodes):
-        match nodes.get(0).asTerminal().kind:
-            TokenKind.Minus: symbol = Symbol.NegLookahead(symbol)
-            TokenKind.Underscore: symbol = Symbol.Ignore(symbol)
+        match nodes.get(0).asTerminal():
+            Token(kind = TokenKind.Minus, ..):
+                symbol = Symbol.NegLookahead(symbol)
+
+            Token(kind = TokenKind.Underscore, ..):
+                symbol = Symbol.Ignore(symbol)
+
+            Token(kind = TokenKind.LowerId, text = binder, ..):
+                symbol = Symbol.Bind(binder, symbol)
+
             _: panic("")
 
     symbol
@@ -276,6 +283,8 @@ type NonTerminalDecl:
 ## Alternatives of a non-terminal.
 type Alt:
     symbols: Vec[Symbol]
+
+    # Semantic action.
     rhs: Option[Vec[ParseTree[Token, NonTerminal]]]
 
 ## A symbol in an alternative.
@@ -305,6 +314,10 @@ type Symbol:
     ## Negative lookahead: succeeds without incrementing the cursor if parsing fails. Parsed from
     ## `-` prefix.
     NegLookahead(Symbol)
+
+    ## Binder: `x=symbol`. Binds the result of parsing `symbol` to variable `x`, to be used in the
+    ## semantic action of the production.
+    Bind(Str, Symbol)
 
     ## Succeeds when the cursor is at the end. Fails with "unexpected token" otherwise.
     EndOfInput
@@ -562,6 +575,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
                                 + makeThrow(makeUnexpectedTokenError())))
+
+        Symbol.Bind(binder, symbol):
+            panic("TODO")
 
         Symbol.EndOfInput:
             Doc.nested(

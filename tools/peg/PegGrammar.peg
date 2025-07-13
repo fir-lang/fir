@@ -77,6 +77,10 @@ symbolPrefix:
     "-"                 # negative lookahead (fails when symbol succeeds)
     "_"                 # silence, or ignore (don't push match to the tree)
 
+    # Binder: it doesn't make sense to combine these with negative lookahead
+    # and ignore, so we're parsing either a prefix or binder.
+    "lowerId" _"="
+
 symbolNonRec:
     "lowerId"           # non-terminal
     "Str"               # terminal
@@ -89,25 +93,44 @@ symbolSuffix:
 
 nonTerminalRhs:
     _"NEWLINE"
-    _":" tokenTree _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" tokenTree _"DEDENT"
+    _":" inlineTokenTreeSingle+ _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" indentedTokenTreeSingle+ _"DEDENT"
 
 # --------------------------------------------------------------------------------------------------
 # Token trees for the semantic action code.
 
-tokenTree:
-    tokenTreeSingle*
+inlineTokenTree:
+    inlineTokenTreeSingle*
 
-tokenTreeSingle:
-    "(" tokenTree ")"
-    "row(" tokenTree ")"
-    "[" tokenTree "]"
-    "row[" tokenTree "]"
-    "{" tokenTree "}"
-    ":" "NEWLINE" "INDENT" tokenTree "DEDENT"
-    -tokenTreeTerminator "ANY"
+inlineTokenTreeSingle:
+    "(" indentedTokenTree ")"
+    "row(" indentedTokenTree ")"
+    "[" indentedTokenTree "]"
+    "row[" indentedTokenTree "]"
+    "{" indentedTokenTree "}"
+    "INDENT" indentedTokenTree "DEDENT"
+    -inlineTokenTreeTerminator "ANY"
 
-tokenTreeTerminator:
+inlineTokenTreeTerminator:
+    ")"
+    "]"
+    "}"
+    "DEDENT"
+    "NEWLINE"
+
+indentedTokenTree:
+    indentedTokenTreeSingle*
+
+indentedTokenTreeSingle:
+    "(" indentedTokenTree ")"
+    "row(" indentedTokenTree ")"
+    "[" indentedTokenTree "]"
+    "row[" indentedTokenTree "]"
+    "{" indentedTokenTree "}"
+    "INDENT" indentedTokenTree "DEDENT"
+    -indentedTokenTreeTerminator "ANY"
+
+indentedTokenTreeTerminator:
     ")"
     "]"
     "}"
