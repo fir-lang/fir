@@ -44,6 +44,18 @@ main(args: Array[Str]):
 
     let nonTerminalNames: Vec[Str] = Vec.withCapacity(grammar.nonTerminalDecls.len())
     for nonTerminal: NonTerminalDecl in grammar.nonTerminalDecls.iter():
+        # If the non-terminal has a return type, then it needs to have a semantic action, and we
+        # don't generate a constructor for the non-terminal in the parse tree types, as we never
+        # allocate it.
+        if nonTerminal.ty.isSome():
+            # Check that all productions have a semantic action.
+            for alt: Alt in nonTerminal.alts.iter():
+                if alt.rhs.isNone():
+                    panic("Non-terminal `nonTerminal.name` has a return type, but it also has production(s) without a semantic action.")
+
+            # Don't generate a constructor for it.
+            continue
+
         nonTerminalNames.push(nonTerminal.name)
 
     print("# This is generated file, do not edit.")
@@ -190,7 +202,13 @@ convertAlt(nodes: Vec[ParseTree[Token, NonTerminal]]) Alt:
 
     for symbolTree: ParseTree[Token, NonTerminal] in nodes.iter():
         if symbolTree is ParseTree.NonTerminal(kind = NonTerminal.NonTerminalRhs, nodes = rhsNodes):
-            return Alt(symbols, rhs = Option.Some(rhsNodes))
+            if rhsNodes.isEmpty():
+                return Alt(symbols, rhs = Option.None)
+            else:
+                # print("-------")
+                # print(symbolTree.toDoc().render(80))
+                # print("-------")
+                return Alt(symbols, rhs = Option.Some(rhsNodes))
 
         symbols.push(convertSymbol(symbolTree.asNonTerminal(NonTerminal.Symbol)))
 
@@ -372,23 +390,49 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
 
 generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
-    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) \
-                            (tree: ParseTree[`terminalType`, `nonTerminalType`], newCursor: U32, newErr: Option[ParseError]) / ParseError:")
+    let returnTy = match decl.ty:
+        Option.Some(ty):
+            generateType(ty)
+        Option.None:
+            Doc.str("ParseTree[`terminalType`, `nonTerminalType`]")
+
+    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) (tree: ")
+                + returnTy
+                + Doc.str(", newCursor: U32, newErr: Option[ParseError]) / ParseError:")
                 + Doc.hardLine()
 
     doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
     doc += Doc.str("let curErr: Option[ParseError] = Option.None") + Doc.hardLine()
 
-    # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
-    doc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
-
     for alt: Alt in decl.alts.iter():
         let altResultDoc = Doc.str("let altResult = try(||:") + Doc.hardLine()
+
+        if alt.rhs.isNone():
+            # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
+            altResultDoc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
+
         for symbol: Symbol in alt.symbols.iter():
             altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats) + Doc.hardLine()
-        altResultDoc += Doc.str("(cursor = cursor, err = curErr)")
+
+        let valueDoc = match alt.rhs:
+            Option.None:
+                Doc.str("ParseTree.NonTerminal(kind = `nonTerminalType`.`capitalize(decl.name)`, nodes)")
+            Option.Some(semanticActionTokens):
+                let tokens = Vec.withCapacity(50)
+                for node: ParseTree[Token, NonTerminal] in semanticActionTokens.iter():
+                    parseTreeTokens(node, tokens)
+                tokensToCode(tokens)
+
+        altResultDoc += Doc.str("let value = ") + valueDoc
+        altResultDoc += Doc.hardLine()
+
+        altResultDoc += Doc.str("(value = value, cursor = cursor, err = curErr)")
+
         altResultDoc = altResultDoc.nest(4)
+
+        # Terminate `try(||: ...)`.
         altResultDoc += Doc.hardLine() + Doc.str(")") + Doc.hardLine()
+
         doc += altResultDoc
 
         let altResultMatchDoc = Doc.str("match altResult:") + Doc.hardLine()
@@ -400,16 +444,14 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                     + Doc.hardLine()
                     + makeUpdateError()
                     + Doc.hardLine()
-                    + Doc.str("cursor = cursor0")
-                    + Doc.hardLine()
-                    + Doc.str("nodes.clear()"))
+                    + Doc.str("cursor = cursor0"))
 
         let okAlt =
             Doc.nested(
                 4,
-                Doc.str("Result.Ok((cursor = newCursor, err = newErr)):")
+                Doc.str("Result.Ok((value = value, cursor = newCursor, err = newErr)):")
                     + Doc.hardLine()
-                    + Doc.str("return (tree = ParseTree.NonTerminal(kind = `nonTerminalType`.`capitalize(decl.name)`, nodes), newCursor = newCursor, newErr = newErr)"))
+                    + Doc.str("return (tree = value, newCursor = newCursor, newErr = newErr)"))
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
 
@@ -606,9 +648,9 @@ generateSymbolParser(symbol: Symbol, ignore: Bool, terminalPats: HashMap[Str, Ve
 
 tokensToCode(tokens: Vec[Token]) Doc / exn:
     if tokens.len() == 0:
-        panic("tokensToCode: empty tokens")
+        return Doc.empty()
 
-    let out = StrBuf.withCapacity(tokens.len() * 3)
+    let out = StrBuf.withCapacity(100)
 
     let lastLine = tokens.get(0).line
     let lastCol = tokens.get(0).col
@@ -640,3 +682,21 @@ makeThrow(expr: Doc) Doc:
 # The new error value should be named `err`.
 makeUpdateError() Doc:
     Doc.str("curErr = Option.Some(ParseError.takeAdvanced(curErr, err))")
+
+generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+    let tokens: Vec[Token] = Vec.withCapacity(4)
+        # Size of a generic type with one argument, e.g. `Option[U32]`.
+
+    for node: ParseTree[Token, NonTerminal] in nodes.iter():
+        parseTreeTokens(node, tokens)
+
+    tokensToCode(tokens)
+
+parseTreeTokens(tree: ParseTree[t, nt], tokens: Vec[t]):
+    match tree:
+        ParseTree.Terminal(t):
+            tokens.push(t)
+
+        ParseTree.NonTerminal(nodes, ..):
+            for node: ParseTree[t, nt] in nodes.iter():
+                parseTreeTokens(node, tokens)

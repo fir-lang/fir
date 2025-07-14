@@ -59,3 +59,14 @@ endOfInputTest:
 # report error at cursor 1 instead of 4 on input "b a a a c b".
 bracketedOneOrMoreA:
     _"b" oneOrMoreAThenB* $
+
+# --------------------------------------------------------------------------------------------------
+# Semantic actions
+
+semanticAction1 Char:
+    # Test parsing block expression syntax.
+    "a":
+        'a'
+
+    # Test parsing inline expression syntax.
+    "b": 'b'

@@ -143,7 +143,9 @@ indentedTokenTreeTerminator:
 # --------------------------------------------------------------------------------------------------
 # Type parser copied from compiler.
 #
-# TODO: We should reuse compiler's parser.
+# TODO: We should reuse compiler's parser, or maybe use inline token tree parser?
+# NOTE: The parser below should not ignore any tokens as we serialize it back
+# in the PEG code generator.
 
 type_:
     namedType
@@ -160,9 +162,9 @@ type_:
 # - (x: U32, ..foo)
 # - (..foo)
 recordType:
-    recordTypeStart _")"
-    recordTypeStart ".." "LowerId" _")"
-    recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+    recordTypeStart ")"
+    recordTypeStart ".." "LowerId" ")"
+    recordTypeStart recordTypeField ("," recordTypeField)* recordTypeCont? ")"
 
 
 recordTypeStart:
@@ -171,7 +173,7 @@ recordTypeStart:
 
 
 recordTypeCont:
-    _"," (_".." "LowerId")?
+    "," (".." "LowerId")?
 
 
 # - []
@@ -181,9 +183,9 @@ recordTypeCont:
 # - [A, ..foo]
 # - [..foo]
 variantType:
-    variantTypeStart _"]"
-    variantTypeStart _".." "LowerId" _"]"
-    variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+    variantTypeStart "]"
+    variantTypeStart ".." "LowerId" "]"
+    variantTypeStart variantAlt ("," variantAlt)* variantTypeCont? "]"
 
 
 variantTypeStart:
@@ -192,35 +194,35 @@ variantTypeStart:
 
 
 variantTypeCont:
-    _"," (_".." "LowerId")?
+    "," (".." "LowerId")?
 
 
 fnType:
-    _"Fn" _"(" fnArgTys? _")" returnTy?
+    "Fn" "(" fnArgTys? ")" returnTy?
 
 
 namedType:
-    "UpperId" _"[" type_ (_"," type_)* _","? _"]"
+    "UpperId" "[" type_ ("," type_)* ","? "]"
     "UpperId"
 
 
 recordTypeFields:
-    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
-    recordTypeField (_"," recordTypeField)* _","?
+    recordTypeField ("," recordTypeField)* "," ".." "LowerId"
+    recordTypeField ("," recordTypeField)* ","?
 
 
 recordTypeField:
-    "LowerId" _":" type_
+    "LowerId" ":" type_
     type_
 
 
 variantAlt:
-    "UpperId" _"(" recordTypeFields _")"
+    "UpperId" "(" recordTypeFields ")"
     "UpperId"
 
 
 fnArgTys:
-    type_ (_"," type_)* _","?
+    type_ ("," type_)* ","?
 
 
 returnTy:
