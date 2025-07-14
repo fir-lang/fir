@@ -407,9 +407,11 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
     for alt: Alt in decl.alts.iter():
         let altResultDoc = Doc.str("let altResult = try(||:") + Doc.hardLine()
 
-        if alt.rhs.isNone():
-            # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
-            altResultDoc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
+        # if alt.rhs.isNone():
+        # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
+        # TODO: Update the symbol code generator to only push to `nodes` when the production doesn't
+        # have a semantic action, then move this code to the commented-out `if` above.
+        altResultDoc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
 
         for symbol: Symbol in alt.symbols.iter():
             altResultDoc += generateSymbolParser(symbol, Bool.False, terminalPats) + Doc.hardLine()
