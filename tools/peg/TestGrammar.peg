@@ -63,10 +63,22 @@ bracketedOneOrMoreA:
 # --------------------------------------------------------------------------------------------------
 # Semantic actions
 
-semanticAction1 Char:
+semanticActionSimple Char:
     # Test parsing block expression syntax.
     "a":
         'a'
 
     # Test parsing inline expression syntax.
     "b": 'b'
+
+semanticActionZeroOrMore Vec[Char]:
+    cs=semanticActionSimple*:
+        cs
+
+semanticActionOneOrMore Vec[Char]:
+    cs=semanticActionSimple+:
+        cs
+
+semanticActionGroup (a: Char, b: Char):
+    _"a" ab=(a="a" b="b") _"b":
+        ab

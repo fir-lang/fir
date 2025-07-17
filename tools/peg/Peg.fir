@@ -589,6 +589,7 @@ generateSymbolParser(
                     if nameIdx != 0:
                         recordDoc += Doc.str(", ")
                     recordDoc += Doc.str(name) + Doc.str(" = ") + Doc.str(name)
+                    nameIdx += 1
                 recordDoc += Doc.char(')')
 
                 match cont:
