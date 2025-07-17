@@ -541,7 +541,6 @@ semanticAction1(tokens: Vec[Token], cursor: U32) (tree: Char, newCursor: U32, ne
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
@@ -557,7 +556,6 @@ semanticAction1(tokens: Vec[Token], cursor: U32) (tree: Char, newCursor: U32, ne
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))

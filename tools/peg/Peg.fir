@@ -475,9 +475,6 @@ type SymbolCont:
     ## Bind the symbol value to the variable.
     Bind(Str)
 
-    ## Bind the symbol value, but as `Option.Some(value)`.
-    BindOption(Str)
-
     ## Push the symbol value to the vector in the variable.
     Push(Str)
 
@@ -521,11 +518,11 @@ generateSymbolParser(
                 SymbolCont.Bind(local):
                     Doc.str("let `local` = tokens.get(cursor)") + Doc.hardLine()
 
-                SymbolCont.BindOption(local):
-                    Doc.str("`local` = Option.Some(tokens.get(cursor))") + Doc.hardLine()
-
-                SymbolCont.Push(vecLocal) | SymbolCont.PushToParseTree(vecLocal):
+                SymbolCont.Push(vecLocal):
                     Doc.str("`vecLocal`.push(tokens.get(cursor))") + Doc.hardLine()
+
+                SymbolCont.PushToParseTree(vecLocal):
+                    Doc.str("`vecLocal`.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
 
                 SymbolCont.Ignore:
                     Doc.empty()
@@ -552,9 +549,6 @@ generateSymbolParser(
                 SymbolCont.Bind(local):
                     doc += Doc.hardLine() + Doc.str("let `local` = nonTerminalResult.tree")
 
-                SymbolCont.BindOption(local):
-                    doc += Doc.hardLine() + Doc.str("`local` = Option.Some(nonTerminalResult.tree)")
-
                 SymbolCont.Push(vecLocal) | SymbolCont.PushToParseTree(vecLocal):
                     doc += Doc.hardLine() + Doc.str("`vecLocal`.push(nonTerminalResult.tree)")
 
@@ -571,15 +565,15 @@ generateSymbolParser(
                 if symIdx != 0:
                     doc += Doc.hardLine()
 
-                let groupSymbolCont = match cont:
-                    SymbolCont.Bind(_) | SymbolCont.BindOption(_) | SymbolCont.Push(_) | SymbolCont.Ignore:
+                let symbolCont = match cont:
+                    SymbolCont.Bind(_) | SymbolCont.Push(_) | SymbolCont.Ignore:
                         # Ignore by default. Named symbols will be returned in a record.
                         SymbolCont.Ignore
 
                     SymbolCont.PushToParseTree(vecLocal):
                         SymbolCont.PushToParseTree(vecLocal)
 
-                doc += generateSymbolParser(symbol, terminalPats, groupSymbolCont)
+                doc += generateSymbolParser(symbol, terminalPats, symbolCont)
 
                 symIdx += 1
 
@@ -601,9 +595,6 @@ generateSymbolParser(
                     SymbolCont.Bind(local):
                         doc += Doc.hardLine() + Doc.str("let `local` = ") + recordDoc
 
-                    SymbolCont.BindOption(local):
-                        doc += Doc.hardLine() + Doc.str("let `local` = Option.Some(") + recordDoc + Doc.char(')')
-
                     SymbolCont.Push(vecLocal):
                         doc += Doc.hardLine() + Doc.str("`vecLocal`.push(") + recordDoc + Doc.char(')')
 
@@ -612,13 +603,34 @@ generateSymbolParser(
                         ()
 
                     SymbolCont.Ignore:
-                        # Checked above.
+                        # Checked above in the conditional.
                         panic("")
 
             doc
 
         Symbol.ZeroOrMore(symbol):
-            Doc.nested(
+            let doc = Doc.empty()
+
+            let symbolCont = match cont:
+                SymbolCont.Bind(local):
+                    # `x = symbol*`
+                    doc += Doc.str("let `local` = Vec.empty()") + Doc.hardLine()
+                    SymbolCont.Push(local)
+
+                SymbolCont.Push(local):
+                    # I think this can only happen in strange symbols like `symbol**`.
+                    # For now ignore this case.
+                    panic("")
+
+                SymbolCont.PushToParseTree(local):
+                    # `symbol*` without a binder and semantic action.
+                    SymbolCont.PushToParseTree(local)
+
+                SymbolCont.Ignore:
+                    # `_"foo"*`.
+                    SymbolCont.Ignore
+
+            doc += Doc.nested(
                 4,
                 Doc.str("loop:")
                     + Doc.hardLine()
@@ -628,36 +640,60 @@ generateSymbolParser(
                         4,
                         Doc.str("let symResult = try(||:")
                             + Doc.hardLine()
-                            + generateSymbolParser(symbol, terminalPats, cont)
+                            + generateSymbolParser(symbol, terminalPats, symbolCont)
                             + Doc.hardLine()
                             + Doc.str("(cursor = cursor, err = curErr)"))
                     + Doc.hardLine()
                     + Doc.str(")")
                     + Doc.hardLine()
                     + Doc.nested(
-                          4,
-                          Doc.str("match symResult:")
-                              + Doc.hardLine()
-                              + Doc.nested(
-                                  4,
-                                  Doc.str("Result.Err(err):")
-                                      + Doc.hardLine()
-                                      + makeUpdateError()
-                                      + Doc.hardLine()
-                                      + Doc.str("nodes.truncate(nodesLen0)")
-                                      + Doc.hardLine()
-                                      + Doc.str("break"))
-                              + Doc.hardLine()
-                              + Doc.nested(
-                                  4,
-                                  Doc.str("Result.Ok(ok):")
-                                      + Doc.hardLine()
-                                      + Doc.str("cursor = ok.cursor")
-                                      + Doc.hardLine()
-                                      + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)"))))
+                        4,
+                        Doc.str("match symResult:")
+                            + Doc.hardLine()
+                            + Doc.nested(
+                                4,
+                                Doc.str("Result.Err(err):")
+                                    + Doc.hardLine()
+                                    + makeUpdateError()
+                                    + Doc.hardLine()
+                                    + Doc.str("nodes.truncate(nodesLen0)")
+                                    + Doc.hardLine()
+                                    + Doc.str("break"))
+                            + Doc.hardLine()
+                            + Doc.nested(
+                                4,
+                                Doc.str("Result.Ok(ok):")
+                                    + Doc.hardLine()
+                                    + Doc.str("cursor = ok.cursor")
+                                    + Doc.hardLine()
+                                    + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)"))))
+
+            doc
 
         Symbol.OneOrMore(symbol):
-            generateSymbolParser(symbol, terminalPats, cont)
+            let doc = Doc.empty()
+
+            # Same as ZeroOrMore case above.
+            let symbolCont = match cont:
+                SymbolCont.Bind(local):
+                    # `x = symbol*`
+                    doc += Doc.str("let `local` = Vec.empty()") + Doc.hardLine()
+                    SymbolCont.Push(local)
+
+                SymbolCont.Push(local):
+                    # I think this can only happen in strange symbols like `symbol**`.
+                    # For now ignore this case.
+                    panic("")
+
+                SymbolCont.PushToParseTree(local):
+                    # `symbol*` without a binder and semantic action.
+                    SymbolCont.PushToParseTree(local)
+
+                SymbolCont.Ignore:
+                    # `_"foo"*`.
+                    SymbolCont.Ignore
+
+            doc + generateSymbolParser(symbol, terminalPats, cont)
                 + Doc.hardLine()
                 + generateSymbolParser(Symbol.ZeroOrMore(symbol), terminalPats, cont)
 
@@ -665,34 +701,48 @@ generateSymbolParser(
             Doc.str("let nodesLen0 = nodes.len()")
                 + Doc.hardLine()
                 + Doc.nested(
-                      4,
-                      Doc.str("let symResult = try(||:")
-                          + Doc.hardLine()
-                          + generateSymbolParser(symbol, ignore, terminalPats)
-                          + Doc.hardLine()
-                          + Doc.str("(cursor = cursor, err = curErr)"))
+                    4,
+                    Doc.str("let symResult = try(||:")
+                        + Doc.hardLine()
+                        + (match cont:
+                               SymbolCont.Bind(_):
+                                   Doc.str("let symVal = Option.None") + Doc.hardLine()
+                               _:
+                                   Doc.empty())
+                        + (do:
+                               let symCont = match cont:
+                                   SymbolCont.Bind(_):
+                                       SymbolCont.Bind("symVal")
+                                   _: cont
+                               generateSymbolParser(symbol, terminalPats, cont))
+                        + Doc.hardLine()
+                        + (match cont:
+                               SymbolCont.Bind(_):
+                                   Doc.str("(cursor = cursor, err = curErr, val = symResult)")
+                               _:
+                                   Doc.str("(cursor = cursor, err = curErr)")))
                  + Doc.hardLine()
                  + Doc.str(")")
                  + Doc.hardLine()
                  + Doc.nested(
-                       4,
-                       Doc.str("match symResult:")
-                           + Doc.hardLine()
-                           + Doc.nested(
-                               4,
-                               Doc.str("Result.Err(err):")
-                                   + Doc.hardLine()
-                                   + makeUpdateError()
-                                   + Doc.hardLine()
-                                   + Doc.str("nodes.truncate(nodesLen0)"))
-                           + Doc.hardLine()
-                           + Doc.nested(
-                                   4,
-                                   Doc.str("Result.Ok(ok):")
-                                       + Doc.hardLine()
-                                       + Doc.str("cursor = ok.cursor")
-                                       + Doc.hardLine()
-                                       + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)")))
+                     4,
+                     Doc.str("match symResult:")
+                         + Doc.hardLine()
+                         + Doc.nested(
+                             4,
+                             Doc.str("Result.Err(err):")
+                                 + Doc.hardLine()
+                                 + makeUpdateError()
+                                 + Doc.hardLine()
+                                 + Doc.str("nodes.truncate(nodesLen0)"))
+                         + Doc.hardLine()
+                         + Doc.nested(
+                             4,
+                             Doc.str("Result.Ok(ok):")
+                                 + Doc.hardLine()
+                                 + Doc.str("cursor = ok.cursor")
+                                 + Doc.hardLine()
+                                 + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)")))
 
         Symbol.Ignore(symbol):
             generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore)
