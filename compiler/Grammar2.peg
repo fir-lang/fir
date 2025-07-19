@@ -103,7 +103,8 @@ topDecl:
 type_ Type:
     t=namedType: Type.Named(t)
 
-    # "LowerId"
+    id="LowerId": Type.Var(newId(id.text))
+
     # recordType
     # variantType
     # fnType
@@ -157,16 +158,13 @@ fnType:
 
 |#
 
-namedType NamedType:
+ namedType NamedType:
     name="UpperId" _"[" arg0=type_ args=(_"," t=type_)* _","? _"]":
-        NamedType(name = newId(name.text), args = Vec.empty())
+        let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
+        NamedType(name = newId(name.text), args = args)
 
     name="UpperId":
         NamedType(name = newId(name.text), args = Vec.empty())
-
-
-
-
 
 #|
 
@@ -185,7 +183,8 @@ variantAlt:
     "UpperId"
 
 
-fnArgTys:
+
+ffnArgTys:
     type_ (_"," type_)* _","?
 
 
