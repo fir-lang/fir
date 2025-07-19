@@ -5197,7 +5197,6 @@ importDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Import, ..)):
-            nodes.push(ParseTree.Terminal(tokens.get(cursor)))
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
