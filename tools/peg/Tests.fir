@@ -41,6 +41,37 @@ main():
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
     runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
 
+    print("# Simple cases -------------------------------------------")
+    print(try(||: runParser("a", semanticActionSimple, Bool.False)))
+    print(try(||: runParser("b", semanticActionSimple, Bool.False)))
+    print(try(||: runParser("c", semanticActionSimple, Bool.False)))
+
+    print("# Zero or more -------------------------------------------")
+    print(try(||: runParser("", semanticActionZeroOrMore, Bool.False)))
+    print(try(||: runParser("a", semanticActionZeroOrMore, Bool.False)))
+    print(try(||: runParser("a b", semanticActionZeroOrMore, Bool.False)))
+
+    print("# One or more --------------------------------------------")
+    print(try(||: runParser("", semanticActionOneOrMore, Bool.False)))
+    print(try(||: runParser("a", semanticActionOneOrMore, Bool.False)))
+    print(try(||: runParser("a b", semanticActionOneOrMore, Bool.False)))
+
+    print("# Group --------------------------------------------------")
+    print(try(||: runParser("a a b b", semanticActionGroup, Bool.False)))
+
+    print("# Optional -----------------------------------------------")
+    print(try(||: runParser("a", semanticActionOptional, Bool.False)))
+    print(try(||: runParser("", semanticActionOptional, Bool.False)))
+
+    print("# Complex group ------------------------------------------")
+    match try(||: runParser("a a a b b b c", semanticActionComplex, Bool.False)):
+        Result.Err(err):
+            print(err)
+        Result.Ok(result):
+            print("aVec = `result.aVec`")
+            print("bVec = `result.bVec`")
+            print("cOpt = `result.cOpt`")
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -132,4 +163,25 @@ main():
 # 
 # 'b a a a c b' as bracketedOneOrMoreA (should fail)
 # ERR: unexpected token or end of input at cursor 4
-
+# 
+# # Simple cases -------------------------------------------
+# Result.Ok('a')
+# Result.Ok('b')
+# Result.Err(unexpected token or end of input at cursor 0)
+# # Zero or more -------------------------------------------
+# Result.Ok([])
+# Result.Ok(['a'])
+# Result.Ok(['a','b'])
+# # One or more --------------------------------------------
+# Result.Err(unexpected token or end of input at cursor 0)
+# Result.Ok([])
+# Result.Ok(['b'])
+# # Group --------------------------------------------------
+# Result.Ok([a,b])
+# # Optional -----------------------------------------------
+# Result.Ok(Option.Some(LowerId(1:1:"a")))
+# Result.Ok(Option.None)
+# # Complex group ------------------------------------------
+# aVec = [LowerId(1:3:"a"),LowerId(1:5:"a")]
+# bVec = [LowerId(1:9:"b"),LowerId(1:11:"b")]
+# cOpt = Option.Some(LowerId(1:13:"c"))

@@ -174,6 +174,12 @@ fnArgTys:
     type_ (_"," type_)* _","?
 
 
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type
+
+
 # --------------------------------------------------------------------------------------------------
 # Type declarations
 
@@ -356,12 +362,6 @@ matchRhs:
 
 fnArgs:
     "LowerId" (_":" type_)? ("," "LowerId" (_":" type_)?)* _","?
-
-
-returnTy:
-    type_ "/" type_     # return type + effecttype
-    type_               # just return type
-    "/" type_           # just effect type
 
 
 # --------------------------------------------------------------------------------------------------
