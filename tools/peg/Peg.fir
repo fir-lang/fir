@@ -509,6 +509,11 @@ generateSymbolParser(
         Symbol.Terminal(terminal):
             let patToks = terminalPats.get(terminal).unwrapOrElse(||: panic("Unknown terminal: `terminal`"))
 
+            let doc = Doc.empty()
+
+            if cont is SymbolCont.Bind(local):
+                doc += Doc.str("let `local` = ")
+
             let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(")
                 + tokensToCode(patToks)
                 + Doc.str("):")
@@ -516,22 +521,28 @@ generateSymbolParser(
 
             let nested = match cont:
                 SymbolCont.Bind(local):
-                    Doc.str("let `local` = tokens.get(cursor)") + Doc.hardLine()
+                    Doc.str("let sym = tokens.get(cursor)")
+                        + Doc.hardLine()
+                        + Doc.str("cursor += 1")
+                        + Doc.hardLine()
+                        + Doc.str("sym")
 
                 SymbolCont.Push(vecLocal):
-                    Doc.str("`vecLocal`.push(tokens.get(cursor))") + Doc.hardLine()
+                    Doc.str("`vecLocal`.push(tokens.get(cursor))")
+                        + Doc.hardLine()
+                        + Doc.str("cursor += 1")
 
                 SymbolCont.PushToParseTree(vecLocal):
-                    Doc.str("`vecLocal`.push(ParseTree.Terminal(tokens.get(cursor)))") + Doc.hardLine()
+                    Doc.str("`vecLocal`.push(ParseTree.Terminal(tokens.get(cursor)))")
+                        + Doc.hardLine()
+                        + Doc.str("cursor += 1")
 
                 SymbolCont.Ignore:
-                    Doc.empty()
-
-            nested += Doc.str("cursor += 1")
+                    Doc.str("cursor += 1")
 
             tokenKindCheck = Doc.nested(4, tokenKindCheck + nested) + Doc.hardLine()
 
-            tokenKindCheck +
+            doc + tokenKindCheck +
                 Doc.nested(
                     4,
                     Doc.str("else:")
