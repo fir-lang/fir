@@ -102,13 +102,10 @@ topDecl:
 
 type_ Type:
     t=namedType: Type.Named(t)
-
     id="LowerId": Type.Var(newId(id.text))
-
     t=recordType: Type.Record(t)
-
-    # variantType
-    # fnType
+    t=variantType: Type.Variant(t)
+    t=fnType: Type.Fn_(t)
 
 
  namedType NamedType:
@@ -203,19 +200,29 @@ recordTypeField Named[Type]:
         Named(name = Option.None, node = ty)
 
 
-#|
-fnType:
-    _"Fn" _"(" fnArgTys? _")" returnTy?
+fnType FnType:
+    _"Fn" _"(" args=fnArgTys? _")" ret=returnTy?:
+        let args = args.unwrapOr(Vec.empty())
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        FnType(args = args, ret = ret.ret, exceptions = ret.exn)
 
-ffnArgTys:
-    type_ (_"," type_)* _","?
+fnArgTys Vec[Type]:
+    t0=type_ ts=(_"," t=type_)* _","?:
+        # TODO: Not sure why we need a type annotation here...
+        let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+        vec
 
 
-returnTy:
-    type_ "/" type_     # return type + effecttype
-    type_               # just return type
-    "/" type_           # just effect type
-|#
+returnTy (ret: Option[Type], exn: Option[Type]):
+    ret=type_ _"/" exn=type_:
+        (ret = Option.Some(ret), exn = Option.Some(exn))
+
+    ret=type_:
+        (ret = Option.Some(ret), exn = Option.None)
+
+    "/" exn=type_:
+        (ret = Option.None, exn = Option.Some(exn))
+
 
 #|
 # --------------------------------------------------------------------------------------------------
