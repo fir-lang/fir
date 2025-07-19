@@ -245,7 +245,8 @@ module(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             cursor
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Module, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Module, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -265,7 +266,8 @@ topDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -280,7 +282,8 @@ topDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -295,7 +298,8 @@ topDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -310,7 +314,8 @@ topDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -325,7 +330,8 @@ topDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -345,7 +351,8 @@ type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -361,7 +368,8 @@ type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -376,7 +384,8 @@ type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -391,7 +400,8 @@ type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -406,7 +416,8 @@ type_(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Type_, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -430,7 +441,8 @@ recordType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -459,7 +471,8 @@ recordType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -519,7 +532,8 @@ recordType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -540,7 +554,8 @@ recordTypeStart(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeStart, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeStart, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -556,7 +571,8 @@ recordTypeStart(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeStart, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeStart, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -598,7 +614,8 @@ recordTypeCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -622,7 +639,8 @@ variantType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -650,7 +668,8 @@ variantType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -710,7 +729,8 @@ variantType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -731,7 +751,8 @@ variantTypeStart(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantTypeStart, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantTypeStart, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -747,7 +768,8 @@ variantTypeStart(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantTypeStart, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantTypeStart, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -789,7 +811,8 @@ variantTypeCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantTypeCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantTypeCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -847,7 +870,8 @@ fnType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FnType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -918,7 +942,8 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.NamedType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.NamedType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -934,7 +959,8 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.NamedType, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.NamedType, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -989,7 +1015,8 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1042,7 +1069,8 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeFields, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1071,7 +1099,8 @@ recordTypeField(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1086,7 +1115,8 @@ recordTypeField(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerm
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordTypeField, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1119,7 +1149,8 @@ variantAlt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1135,7 +1166,8 @@ variantAlt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.VariantAlt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1193,7 +1225,8 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FnArgTys, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FnArgTys, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1222,7 +1255,8 @@ returnTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1237,7 +1271,8 @@ returnTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1257,7 +1292,8 @@ returnTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ReturnTy, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1327,7 +1363,8 @@ typeDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1376,7 +1413,8 @@ typeDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1430,7 +1468,8 @@ typeDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1491,7 +1530,8 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeParams, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeParams, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1507,7 +1547,8 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeParams, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeParams, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1544,7 +1585,8 @@ typeDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1576,7 +1618,8 @@ typeDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TypeDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TypeDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1617,7 +1660,8 @@ conDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1660,7 +1704,8 @@ conDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1680,7 +1725,8 @@ conDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ConDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1717,7 +1763,8 @@ namedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.NamedFields, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1750,7 +1797,8 @@ namedField(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.NamedField, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.NamedField, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1808,7 +1856,8 @@ unnamedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermin
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.UnnamedFields, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.UnnamedFields, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1828,7 +1877,8 @@ expr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Expr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Expr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1843,7 +1893,8 @@ expr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Expr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Expr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1880,7 +1931,8 @@ inlineExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.InlineExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.InlineExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1942,7 +1994,8 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2121,7 +2174,8 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2174,7 +2228,8 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2243,7 +2298,8 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2332,7 +2388,8 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BlockExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2356,7 +2413,8 @@ inlineExprCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.InlineExprCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.InlineExprCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2376,7 +2434,8 @@ inlineExprCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.InlineExprCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.InlineExprCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2428,7 +2487,8 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.PrefixExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.PrefixExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2463,7 +2523,8 @@ exprSuffix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ExprSuffix, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ExprSuffix, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2478,7 +2539,8 @@ exprSuffix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ExprSuffix, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ExprSuffix, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2503,7 +2565,8 @@ field(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Field, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Field, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2580,7 +2643,8 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Args, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Args, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2610,7 +2674,8 @@ arg(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCu
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Arg, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Arg, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2625,7 +2690,8 @@ arg(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCu
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Arg, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Arg, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2661,7 +2727,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2711,7 +2778,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2785,7 +2853,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2800,7 +2869,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2831,7 +2901,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2871,7 +2942,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2931,7 +3003,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2947,7 +3020,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2963,7 +3037,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2979,7 +3054,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2995,7 +3071,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3011,7 +3088,8 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimpleExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3037,7 +3115,8 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Sequence, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Sequence, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3100,7 +3179,8 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Sequence, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Sequence, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3140,7 +3220,8 @@ seqElem(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SeqElem, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SeqElem, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3185,7 +3266,8 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3225,7 +3307,8 @@ upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3293,7 +3376,8 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TyArgs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TyArgs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3323,7 +3407,8 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ParenExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ParenExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3338,7 +3423,8 @@ parenExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ParenExpr, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ParenExpr, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3359,7 +3445,8 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3375,7 +3462,8 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3391,7 +3479,8 @@ exprPrefix(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ExprPrefix, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3412,7 +3501,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3428,7 +3518,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3444,7 +3535,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3460,7 +3552,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3476,7 +3569,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3492,7 +3586,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3508,7 +3603,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3524,7 +3620,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3540,7 +3637,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3556,7 +3654,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3572,7 +3671,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3588,7 +3688,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3604,7 +3705,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3620,7 +3722,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3636,7 +3739,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3652,7 +3756,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3668,7 +3773,8 @@ binOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.BinOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3740,7 +3846,8 @@ matchAlt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.MatchAlt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.MatchAlt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3778,7 +3885,8 @@ matchAlt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.MatchAlt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.MatchAlt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3803,7 +3911,8 @@ altGuard(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AltGuard, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AltGuard, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3831,7 +3940,8 @@ matchRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.MatchRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.MatchRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3846,7 +3956,8 @@ matchRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.MatchRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.MatchRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3948,7 +4059,8 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FnArgs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FnArgs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3990,7 +4102,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4027,7 +4140,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4076,7 +4190,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4177,7 +4292,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4249,7 +4365,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4317,7 +4434,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4347,7 +4465,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4362,7 +4481,8 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Stmt, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4387,7 +4507,8 @@ loopLabel(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.LoopLabel, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.LoopLabel, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4411,7 +4532,8 @@ letRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.LetRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.LetRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4426,7 +4548,8 @@ letRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.LetRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.LetRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4446,7 +4569,8 @@ stmtExprCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4465,7 +4589,8 @@ stmtExprCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4488,7 +4613,8 @@ stmtExprCont(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.StmtExprCont, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4509,7 +4635,8 @@ assignOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4525,7 +4652,8 @@ assignOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4541,7 +4669,8 @@ assignOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4557,7 +4686,8 @@ assignOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4573,7 +4703,8 @@ assignOp(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.AssignOp, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4616,7 +4747,8 @@ pat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCu
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Pat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Pat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4637,7 +4769,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4665,7 +4798,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4749,7 +4883,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4770,7 +4905,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4844,7 +4980,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4913,7 +5050,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4929,7 +5067,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4960,7 +5099,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4976,7 +5116,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.SimplePat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4997,7 +5138,8 @@ strPfxBinder(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.StrPfxBinder, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.StrPfxBinder, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5012,7 +5154,8 @@ strPfxBinder(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.StrPfxBinder, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.StrPfxBinder, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5042,7 +5185,8 @@ recordFieldPat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordFieldPat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordFieldPat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5057,7 +5201,8 @@ recordFieldPat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermi
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.RecordFieldPat, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.RecordFieldPat, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5111,7 +5256,8 @@ importDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5140,7 +5286,8 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5192,7 +5339,8 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5219,7 +5367,8 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopFunDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5289,7 +5438,8 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TopFunSig, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TopFunSig, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5314,7 +5464,8 @@ parentTy(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ParentTy, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ParentTy, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5380,7 +5531,8 @@ context(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Context, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Context, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5404,7 +5556,8 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ParamList, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ParamList, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5465,7 +5618,8 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ParamList, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ParamList, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5506,7 +5660,8 @@ param(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], new
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.Param, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.Param, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5558,7 +5713,8 @@ traitDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TraitDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TraitDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5578,7 +5734,8 @@ traitDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TraitDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TraitDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5626,7 +5783,8 @@ traitDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermina
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.TraitDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.TraitDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5681,7 +5839,8 @@ funSig(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunSig, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunSig, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5775,7 +5934,8 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ImplDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ImplDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5795,7 +5955,8 @@ implDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ImplDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ImplDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5843,7 +6004,8 @@ implDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.ImplDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.ImplDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5872,7 +6034,8 @@ funDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5891,7 +6054,8 @@ funDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunDecl, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunDecl, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5911,7 +6075,8 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5959,7 +6124,8 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5982,7 +6148,8 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
+        let value = do:
+            ParseTree.NonTerminal(kind = NonTerminal.FunDeclRhs, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

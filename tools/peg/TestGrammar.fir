@@ -728,6 +728,10 @@ semanticActionOptional(tokens: Vec[Token], cursor: U32) (tree: Option[Token], ne
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
+        if cursor == tokens.len():
+            cursor
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             cs
         (value = value, cursor = cursor, err = curErr)

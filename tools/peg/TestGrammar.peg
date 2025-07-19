@@ -85,5 +85,5 @@ semanticActionGroup Vec[Str]:
         strs
 
 semanticActionOptional Option[Token]:
-    cs="a"?:
+    cs="a"? $:
         cs

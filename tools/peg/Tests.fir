@@ -10,36 +10,36 @@ import PegTestLib
 import TestGrammar
 
 main():
-    # runTest("'a' as terminalA", "a", terminalA)
-    # runTest("'b' as terminalA (should fail)", "b", terminalA)
-    # runTest("'a b' as terminalA (should fail)", "a b", terminalA)
-    # runTest("'b' as terminalB", "b", terminalB)
-    # runTest("'a' as terminalAOrB", "a", terminalAOrB)
-    # runTest("'b' as terminalAOrB", "b", terminalAOrB)
-    # runTest("'c' as terminalAOrB (should fail)", "c", terminalAOrB)
-    # runTest("'b b' as terminalAThenB (should fail)", "b b", terminalAThenB)
-    # runTest("'a b' as terminalAThenB", "a b", terminalAThenB)
-    # runTest("'b' as zeroOrMOreAThenB", "b", zeroOrMoreAThenB)
-    # runTest("'a b' as zeroOrMoreAThenB", "a b", zeroOrMoreAThenB)
-    # runTest("'a a b' as zeroOrMoreAThenB", "a a b", zeroOrMoreAThenB)
-    # runTest("'b' as oneOrMoreAThenB (should fail)", "b", oneOrMoreAThenB)
-    # runTest("'a b' as oneOrMoreAThenB", "a b", oneOrMoreAThenB)
-    # runTest("'a a b' as oneOrMoreAThenB", "a a b", oneOrMoreAThenB)
-    # runTest("'a a b' as zeroOrOneAThenB", "a a b", zeroOrOneAThenB)
-    # runTest("'a b' as zeroOrOneAThenB", "a b", zeroOrOneAThenB)
-    # runTest("'b' as zeroOrOneAThenB", "b", zeroOrOneAThenB)
-    # runTest("'a b' as ignoreAThenB", "a b", ignoreAThenB)
-    # runTest("'a b' as ignoreGroupAThenB", "a b", ignoreGroupAThenB)
-    # runTest("'a a' as nonTerminals", "a a", nonTerminals)
-    # runTest("'a b' as nonTerminals", "a b", nonTerminals)
-    # runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
-    # runTest("'b' as negLookahead", "b", negLookahead)
-    # runTest("'a' as negLookahead (should fail)", "a", negLookahead)
-    # runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
-    # runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
-    # runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
-    # runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
-    # runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
+    runTest("'a' as terminalA", "a", terminalA)
+    runTest("'b' as terminalA (should fail)", "b", terminalA)
+    runTest("'a b' as terminalA (should fail)", "a b", terminalA)
+    runTest("'b' as terminalB", "b", terminalB)
+    runTest("'a' as terminalAOrB", "a", terminalAOrB)
+    runTest("'b' as terminalAOrB", "b", terminalAOrB)
+    runTest("'c' as terminalAOrB (should fail)", "c", terminalAOrB)
+    runTest("'b b' as terminalAThenB (should fail)", "b b", terminalAThenB)
+    runTest("'a b' as terminalAThenB", "a b", terminalAThenB)
+    runTest("'b' as zeroOrMOreAThenB", "b", zeroOrMoreAThenB)
+    runTest("'a b' as zeroOrMoreAThenB", "a b", zeroOrMoreAThenB)
+    runTest("'a a b' as zeroOrMoreAThenB", "a a b", zeroOrMoreAThenB)
+    runTest("'b' as oneOrMoreAThenB (should fail)", "b", oneOrMoreAThenB)
+    runTest("'a b' as oneOrMoreAThenB", "a b", oneOrMoreAThenB)
+    runTest("'a a b' as oneOrMoreAThenB", "a a b", oneOrMoreAThenB)
+    runTest("'a a b' as zeroOrOneAThenB", "a a b", zeroOrOneAThenB)
+    runTest("'a b' as zeroOrOneAThenB", "a b", zeroOrOneAThenB)
+    runTest("'b' as zeroOrOneAThenB", "b", zeroOrOneAThenB)
+    runTest("'a b' as ignoreAThenB", "a b", ignoreAThenB)
+    runTest("'a b' as ignoreGroupAThenB", "a b", ignoreGroupAThenB)
+    runTest("'a a' as nonTerminals", "a a", nonTerminals)
+    runTest("'a b' as nonTerminals", "a b", nonTerminals)
+    runTest("'c a' as nonTerminalsBacktrack", "c a", nonTerminalsBacktrack)
+    runTest("'b' as negLookahead", "b", negLookahead)
+    runTest("'a' as negLookahead (should fail)", "a", negLookahead)
+    runTest("'a a c' as oneOrMoreAThenB (should fail)", "a a c", oneOrMoreAThenB)
+    runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
+    runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
+    runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
+    runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
 
     print("# Simple cases -------------------------------------------")
     print(try(||: runParser("a", semanticActionSimple, Bool.False)))
@@ -60,7 +60,8 @@ main():
     print(try(||: runParser("a a b b", semanticActionGroup, Bool.False)))
 
     print("# Optional -----------------------------------------------")
-    print(try(||: runParser("a a b b", semanticActionOptional, Bool.False)))
+    print(try(||: runParser("a", semanticActionOptional, Bool.False)))
+    print(try(||: runParser("", semanticActionOptional, Bool.False)))
 
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
@@ -153,4 +154,21 @@ main():
 # 
 # 'b a a a c b' as bracketedOneOrMoreA (should fail)
 # ERR: unexpected token or end of input at cursor 4
-
+# 
+# # Simple cases -------------------------------------------
+# Result.Ok('a')
+# Result.Ok('b')
+# Result.Err(unexpected token or end of input at cursor 0)
+# # Zero or more -------------------------------------------
+# Result.Ok([])
+# Result.Ok(['a'])
+# Result.Ok(['a','b'])
+# # One or more --------------------------------------------
+# Result.Err(unexpected token or end of input at cursor 0)
+# Result.Ok([])
+# Result.Ok(['b'])
+# # Group --------------------------------------------------
+# Result.Ok([a,b])
+# # Optional -----------------------------------------------
+# Result.Ok(Option.Some(LowerId(1:1:"a")))
+# Result.Ok(Option.None)
