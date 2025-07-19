@@ -1,0 +1,543 @@
+import Peg.ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+# --------------------------------------------------------------------------------------------------
+
+Terminals:
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
+    "and" = Token(kind = TokenKind.And, ..)
+    "break" = Token(kind = TokenKind.Break, ..)
+    "continue" = Token(kind = TokenKind.Continue, ..)
+    "do" = Token(kind = TokenKind.Do, ..)
+    "elif" = Token(kind = TokenKind.Elif, ..)
+    "else" = Token(kind = TokenKind.Else, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "for" = Token(kind = TokenKind.For, ..)
+    "if" = Token(kind = TokenKind.If, ..)
+    "impl" = Token(kind = TokenKind.Impl, ..)
+    "import" = Token(kind = TokenKind.Import, ..)
+    "in" = Token(kind = TokenKind.In, ..)
+    "is" = Token(kind = TokenKind.Is, ..)
+    "let" = Token(kind = TokenKind.Let, ..)
+    "loop" = Token(kind = TokenKind.Loop, ..)
+    "match" = Token(kind = TokenKind.Match, ..)
+    "not" = Token(kind = TokenKind.Not, ..)
+    "or" = Token(kind = TokenKind.Or, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
+    "trait" = Token(kind = TokenKind.Trait, ..)
+    "type" = Token(kind = TokenKind.Type, ..)
+    "while" = Token(kind = TokenKind.While, ..)
+    "row[" = Token(kind = TokenKind.LBracketRow, ..)
+    "row(" = Token(kind = TokenKind.LParenRow, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "==" = Token(kind = TokenKind.EqEq, ..)
+    "+=" = Token(kind = TokenKind.PlusEq, ..)
+    "-=" = Token(kind = TokenKind.MinusEq, ..)
+    "*=" = Token(kind = TokenKind.StarEq, ..)
+    "^=" = Token(kind = TokenKind.CaretEq, ..)
+    "!=" = Token(kind = TokenKind.ExclamationEq, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "~" = Token(kind = TokenKind.Tilde, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "|" = Token(kind = TokenKind.Pipe, ..)
+    "||" = Token(kind = TokenKind.PipePipe, ..)
+    "&" = Token(kind = TokenKind.Amp, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
+    ">" = Token(kind = TokenKind.RAngle, ..)
+    ">>" = Token(kind = TokenKind.DoubleRAngle, ..)
+    ">=" = Token(kind = TokenKind.RAngleEq, ..)
+    "<" = Token(kind = TokenKind.LAngle, ..)
+    "<<" = Token(kind = TokenKind.DoubleLAngle, ..)
+    "<=" = Token(kind = TokenKind.LAngleEq, ..)
+    "Int" = Token(kind = TokenKind.Int, ..)
+    "HexInt" = Token(kind = TokenKind.HexInt, ..)
+    "BinInt" = Token(kind = TokenKind.BinInt, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "Char" = Token(kind = TokenKind.Char, ..)
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "label" = Token(kind = TokenKind.Label, ..)
+
+
+#|
+
+# --------------------------------------------------------------------------------------------------
+# Top-level declarations
+
+module:
+    topDecl+ $
+
+
+topDecl:
+    typeDecl
+    importDecl
+    traitDecl
+    implDecl
+    topFunDecl
+
+
+|#
+
+# --------------------------------------------------------------------------------------------------
+# Types
+
+type_ Type:
+    t=namedType: Type.Named(t)
+
+    # "LowerId"
+    # recordType
+    # variantType
+    # fnType
+
+
+#|
+# - ()
+# - (x: U32)
+# - (x: U32,)
+# - (x: U32, y: U32)
+# - (x: U32, ..foo)
+# - (..foo)
+recordType:
+    recordTypeStart _")"
+    recordTypeStart ".." "LowerId" _")"
+    recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+
+
+recordTypeStart:
+    "("
+    "row("
+
+
+recordTypeCont:
+    _"," (_".." "LowerId")?
+
+
+# - []
+# - [A]
+# - [A,]
+# - [A, B]
+# - [A, ..foo]
+# - [..foo]
+variantType:
+    variantTypeStart _"]"
+    variantTypeStart _".." "LowerId" _"]"
+    variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+
+
+variantTypeStart:
+    "["
+    "row["
+
+
+variantTypeCont:
+    _"," (_".." "LowerId")?
+
+
+fnType:
+    _"Fn" _"(" fnArgTys? _")" returnTy?
+
+|#
+
+namedType NamedType:
+    name="UpperId" _"[" arg0=type_ args=(_"," t=type_)* _","? _"]":
+        NamedType(name = newId(name.text), args = Vec.empty())
+
+    name="UpperId":
+        NamedType(name = newId(name.text), args = Vec.empty())
+
+
+
+
+
+#|
+
+recordTypeFields:
+    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
+    recordTypeField (_"," recordTypeField)* _","?
+
+
+recordTypeField:
+    "LowerId" _":" type_
+    type_
+
+
+variantAlt:
+    "UpperId" _"(" recordTypeFields _")"
+    "UpperId"
+
+
+fnArgTys:
+    type_ (_"," type_)* _","?
+
+
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type
+
+
+|#
+
+#|
+# --------------------------------------------------------------------------------------------------
+# Type declarations
+
+typeDecl:
+    _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
+    _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+    "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+
+
+typeParams:
+    "LowerId" (_"," "LowerId")* _","?
+    "LowerId"
+
+
+typeDeclRhs:
+    conDecl+
+    namedField+
+
+
+conDecl:
+    "UpperId" _":" _"NEWLINE" _"INDENT" namedFields _"DEDENT"
+    "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
+    "UpperId" _"NEWLINE"
+
+
+namedFields:
+    namedField+
+
+
+namedField:
+    "LowerId" _":" type_ _"NEWLINE"
+
+
+unnamedFields:
+    type_ (_"," type_)* _","?
+
+
+# --------------------------------------------------------------------------------------------------
+# Expressions
+
+expr:
+    inlineExpr
+    blockExpr
+
+
+# Inline expressions don't end with a NEWLINE or DEDENT.
+inlineExpr:
+    prefixExpr inlineExprCont*
+
+
+# Block expressions include an indented block and always end with DEDENT.
+blockExpr:
+    "match" inlineExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
+
+    "if" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+        ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
+        ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
+
+    "do" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    "||" returnTy? ":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    "|" fnArgs? "|" returnTy? ":" _"NEWLINE" _"INDENT" stmt + _"DEDENT"
+
+
+inlineExprCont:
+    binOp prefixExpr
+    "is" pat
+
+
+prefixExpr:
+    exprPrefix? simpleExpr exprSuffix*
+
+
+exprSuffix:
+    field tyArgs?
+    args
+
+
+field:
+    (_"." "LowerId")
+
+
+args:
+    _"(" (arg (_"," arg)* _","?)? _")"
+
+
+arg:
+    "LowerId" "=" expr
+    expr
+
+
+simpleExpr:
+    # Variables
+    "LowerId" tyArgs?
+
+    # Constructor selection, or sequence
+    upperIdPath tyArgs? (_"." sequence)?
+
+    # Records: `(a, b)`, `(a = 1, b = 2)`
+    "(" (parenExpr (_"," parenExpr)* _","?)? ")"
+
+    sequence
+
+    "return" inlineExpr?
+
+    "||" returnTy? ":" inlineExpr
+
+    "|" fnArgs? "|" returnTy? ":" inlineExpr
+
+    "Int"
+    "HexInt"
+    "BinInt"
+    "Str"
+    "Char"
+
+
+sequence:
+    "[" "]"
+    "[" seqElem (_"," seqElem)* _","? "]"
+
+
+seqElem:
+    inlineExpr (_"=" inlineExpr)?
+
+
+upperIdPath:
+    "UpperId" (_"." "UpperId")*
+    "TildeUpperId" (_"." "UpperId")*
+
+
+tyArgs:
+    "[" type_ (_"," type_)* _","? "]"
+
+
+parenExpr:
+    "LowerId" "=" expr
+    expr
+
+
+exprPrefix:
+    "~"
+    "-"
+    "not"
+
+
+binOp:
+    "+"
+    "-"
+    "*"
+    "/"
+    "=="
+    "!="
+    "and"
+    "or"
+    "|"
+    "&"
+    "/"
+    ">"
+    ">>"
+    ">="
+    "<"
+    "<<"
+    "<="
+
+
+matchAlt:
+    pat altGuard? _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    pat altGuard? _":" stmt
+
+
+altGuard:
+    "if" expr
+
+
+matchRhs:
+    _"NEWLINE" _"INDENT" blockExpr
+    inlineExpr
+
+
+fnArgs:
+    "LowerId" (_":" type_)? ("," "LowerId" (_":" type_)?)* _","?
+
+
+# --------------------------------------------------------------------------------------------------
+# Statements
+
+stmt:
+    "break" "label"? _"NEWLINE"
+
+    "continue" "label"? _"NEWLINE"
+
+    "let" pat (_":" type_)? "=" letRhs
+
+    loopLabel? "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    loopLabel? "while" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    loopLabel? "loop" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+
+    inlineExpr stmtExprCont?
+
+    blockExpr
+
+
+loopLabel:
+    "label" _":"
+
+
+letRhs:
+    inlineExpr _"NEWLINE"
+    blockExpr
+
+
+stmtExprCont:
+    _"NEWLINE"
+    assignOp blockExpr
+    assignOp inlineExpr _"NEWLINE"
+
+
+assignOp:
+    "="
+    "+="
+    "-="
+    "*="
+    "^="
+
+
+# --------------------------------------------------------------------------------------------------
+# Patterns
+
+pat:
+    simplePat ("|" simplePat)*
+
+
+simplePat:
+    # Variables
+    "LowerId"
+
+    # Constructors
+    upperIdPath _"(" ".." _")"
+    upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?
+
+    # Records: `(pat, pat)`, `(var = pat, ...)`
+    "(" ")"
+    "(" (recordFieldPat (_"," recordFieldPat)* _","?)? ")"
+    "(" (recordFieldPat (_"," recordFieldPat)* _"," "..")? ")"
+
+    # Ignore
+    "_"
+
+    # Literals.
+    "Str" strPfxBinder?
+    "Char"
+
+
+strPfxBinder:
+    "LowerId"
+    _"_"
+
+
+recordFieldPat:
+    "LowerId" "=" pat
+    pat
+
+
+# --------------------------------------------------------------------------------------------------
+# Import declarations
+
+importDecl:
+    _"import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+
+# --------------------------------------------------------------------------------------------------
+# Top-level functions
+
+topFunDecl:
+    "prim" topFunSig _"NEWLINE"
+    topFunSig _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    topFunSig _":" inlineExpr _"NEWLINE"
+
+
+topFunSig:
+    parentTy? "LowerId" context? paramList returnTy?
+
+
+# TODO: Weird name, rename.
+parentTy:
+    "UpperId" _"."
+
+
+context:
+    _"[" type_ (_"," type_)* _","? _"]"
+
+
+paramList:
+    _"(" _")"
+    _"(" param (_"," param)* _","? _")"
+
+
+param:
+    "LowerId" (_":" type_)?
+
+
+# --------------------------------------------------------------------------------------------------
+# Trait declarations
+
+traitDecl:
+    _"trait" "UpperId" _"[" typeParams _"]" traitDeclRhs?
+
+
+traitDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
+
+
+funSig:
+    "LowerId" context? paramList returnTy?
+
+
+# --------------------------------------------------------------------------------------------------
+# Impl declarations
+
+implDecl:
+    _"impl" context? "UpperId" _"[" type_ (_"," type_)* _","? _"]" implDeclRhs
+
+
+implDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
+
+
+# --------------------------------------------------------------------------------------------------
+
+funDecl:
+    "prim" funSig _"NEWLINE"
+    funSig funDeclRhs
+
+funDeclRhs:
+    _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    _":" inlineExpr _"NEWLINE"
+
+|#

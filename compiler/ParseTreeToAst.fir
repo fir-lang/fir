@@ -1,6 +1,7 @@
 import Compiler.Assert
 import Compiler.Ast
-import Compiler.Grammar
+# import Compiler.Grammar
+import Compiler.Grammar2
 import Peg.ParseTree
 
 
@@ -8,6 +9,7 @@ main():
     print("hi")
 
 
+#|
 moduleToAst(module: ParseTree[Token, NonTerminal]) Vec[TopDecl]:
     let decls = Vec[TopDecl].withCapacity(10)
 
@@ -502,6 +504,7 @@ contextToAst(nodes: Vec[ParseTree[Token, NonTerminal]]) Vec[Type]:
         .iter()
         .map(|node: ParseTree[Token, NonTerminal]|: typeToAst(node.asNonTerminal(NonTerminal.Type_)))
         .toVec()
+|#
 
 
 newId(name: Str) Id:
