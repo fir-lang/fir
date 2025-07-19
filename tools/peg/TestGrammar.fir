@@ -710,7 +710,6 @@ semanticActionOptional(tokens: Vec[Token], cursor: U32) (tree: Option[Token], ne
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         let nodesLen0 = nodes.len()
         let symResult = try(||:
-            let symVal = Option.None
             let cs = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                 let sym = tokens.get(cursor)
                 cursor += 1
@@ -718,15 +717,17 @@ semanticActionOptional(tokens: Vec[Token], cursor: U32) (tree: Option[Token], ne
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            (cursor = cursor, err = curErr, val = symResult)
+            (cursor = cursor, err = curErr, val = cs)
         )
-        match symResult:
+        let cs = match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 nodes.truncate(nodesLen0)
+                Option.None
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+                Option.Some(ok.val)
         let value = do:
             cs
         (value = value, cursor = cursor, err = curErr)
