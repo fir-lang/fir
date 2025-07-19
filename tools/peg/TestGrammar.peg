@@ -59,3 +59,35 @@ endOfInputTest:
 # report error at cursor 1 instead of 4 on input "b a a a c b".
 bracketedOneOrMoreA:
     _"b" oneOrMoreAThenB* $
+
+# --------------------------------------------------------------------------------------------------
+# Semantic actions
+
+semanticActionSimple Char:
+    # Test parsing block expression syntax.
+    "a":
+        'a'
+
+    # Test parsing inline expression syntax.
+    "b": 'b'
+
+semanticActionZeroOrMore Vec[Char]:
+    cs=semanticActionSimple*:
+        cs
+
+semanticActionOneOrMore Vec[Char]:
+    cs=semanticActionSimple+:
+        cs
+
+semanticActionGroup Vec[Str]:
+    _"a" ab=(a="a" b="b") _"b":
+        let strs: Vec[Str] = Vec.[ab.a.text, ab.b.text]
+        strs
+
+semanticActionOptional Option[Token]:
+    cs="a"? $:
+        cs
+
+semanticActionComplex (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]):
+    _"a" group=(aVec="a"* bVec="b"+ cOpt="c"?) $:
+        group

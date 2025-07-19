@@ -58,6 +58,7 @@ compiler_update_goldens:
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
     for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+    for f in tools/peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
     cargo build

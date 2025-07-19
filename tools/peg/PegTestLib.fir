@@ -15,9 +15,9 @@ impl ToStr[TestError]:
 
 runParser(
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
+        parseFn: Fn(Vec[Token], U32) (tree: tree, newCursor: U32, newErr: Option[ParseError]) / ParseError,
         runScan: Bool,
-    ) ParseTree[Token, nt] / TestError:
+    ) tree / TestError:
     let (tokens, error) = tokenize("<test input>", input)
 
     if error is Option.Some(error):
