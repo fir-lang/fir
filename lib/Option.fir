@@ -45,3 +45,8 @@ Option.isSome(self: Option[t]) Bool:
 
 Option.isNone(self: Option[t]) Bool:
     self is Option.None
+
+Option.flatten(self: Option[Option[t]]) Option[t]:
+    match self:
+        Option.Some(Option.Some(a)): Option.Some(a)
+        _: Option.None
