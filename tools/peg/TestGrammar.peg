@@ -87,3 +87,7 @@ semanticActionGroup Vec[Str]:
 semanticActionOptional Option[Token]:
     cs="a"? $:
         cs
+
+semanticActionComplex (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]):
+    _"a" group=(aVec="a"* bVec="b"+ cOpt="c"?) $:
+        group

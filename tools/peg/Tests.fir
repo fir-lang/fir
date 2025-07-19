@@ -63,6 +63,15 @@ main():
     print(try(||: runParser("a", semanticActionOptional, Bool.False)))
     print(try(||: runParser("", semanticActionOptional, Bool.False)))
 
+    print("# Complex group ------------------------------------------")
+    match try(||: runParser("a a a b b b c", semanticActionComplex, Bool.False)):
+        Result.Err(err):
+            print(err)
+        Result.Ok(result):
+            print("aVec = `result.aVec`")
+            print("bVec = `result.bVec`")
+            print("cOpt = `result.cOpt`")
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -172,3 +181,7 @@ main():
 # # Optional -----------------------------------------------
 # Result.Ok(Option.Some(LowerId(1:1:"a")))
 # Result.Ok(Option.None)
+# # Complex group ------------------------------------------
+# aVec = [LowerId(1:3:"a"),LowerId(1:5:"a")]
+# bVec = [LowerId(1:9:"b"),LowerId(1:11:"b")]
+# cOpt = Option.Some(LowerId(1:13:"c"))
