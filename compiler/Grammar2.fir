@@ -668,7 +668,8 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+            vec
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -682,6 +683,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
         let f0 = nonTerminalResult.tree
+        let fs = Vec.empty()
         loop:
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
@@ -693,6 +695,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
                 let f = nonTerminalResult.tree
+                fs.push((f = f))
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -717,7 +720,8 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
-            panic("TODO")
+            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+            vec
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

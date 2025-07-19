@@ -186,10 +186,14 @@ variantAlt VariantAlt:
 
 recordTypeFields Vec[Named[Type]]:
     f0=recordTypeField fs=(_"," f=recordTypeField)* _"," _".." "LowerId":
-        panic("TODO")
+        # TODO: Extension?
+        # TODO: We do we need the type annotation here?
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+        vec
 
-    f0=recordTypeField (_"," f=recordTypeField)* _","?:
-        panic("TODO")
+    f0=recordTypeField fs=(_"," f=recordTypeField)* _","?:
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+        vec
 
 
 recordTypeField Named[Type]:
@@ -208,7 +212,6 @@ fnType FnType:
 
 fnArgTys Vec[Type]:
     t0=type_ ts=(_"," t=type_)* _","?:
-        # TODO: Not sure why we need a type annotation here...
         let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
         vec
 
