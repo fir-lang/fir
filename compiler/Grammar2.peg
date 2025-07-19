@@ -111,6 +111,15 @@ type_ Type:
     # fnType
 
 
+ namedType NamedType:
+    name="UpperId" _"[" arg0=type_ args=(_"," t=type_)* _","? _"]":
+        let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
+        NamedType(name = newId(name.text), args = args)
+
+    name="UpperId":
+        NamedType(name = newId(name.text), args = Vec.empty())
+
+
 # - ()
 # - (x: U32)
 # - (x: U32,)
@@ -138,46 +147,52 @@ recordTypeCont:
     _"," (_".." "LowerId")?
 
 
-#|
 # - []
 # - [A]
 # - [A,]
 # - [A, B]
 # - [A, ..foo]
 # - [..foo]
-variantType:
-    variantTypeStart _"]"
-    variantTypeStart _".." "LowerId" _"]"
-    variantTypeStart variantAlt (_"," variantAlt)* variantTypeCont? _"]"
+variantType VariantType:
+    isRow=variantTypeStart _"]":
+        VariantType(alts = Vec.empty(), extension = Option.None, isRow = isRow)
+
+    isRow=variantTypeStart _".." ext="LowerId" _"]":
+        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
+
+    isRow=variantTypeStart alt0=variantAlt alts=(_"," a=variantAlt)* ext=variantTypeCont? _"]":
+        VariantType(
+            alts = once(alt0).chain(alts.iter().map(|alt: (a: VariantAlt)|: alt.a)).toVec(),
+            extension = ext.flatten(),
+            isRow = isRow,
+        )
 
 
-variantTypeStart:
-    "["
-    "row["
+# Returns whether the type is a row.
+variantTypeStart Bool:
+    _"[": Bool.False
+    _"row[": Bool.True
 
 
-variantTypeCont:
-    _"," (_".." "LowerId")?
+variantTypeCont Option[Id]:
+    _"," id=(_".." id="LowerId")?:
+        id.map(|id: (id: Token)|: newId(id.id.text))
 
 
-fnType:
-    _"Fn" _"(" fnArgTys? _")" returnTy?
+variantAlt VariantAlt:
+    con="UpperId" _"(" fields=recordTypeFields _")":
+        VariantAlt(con = newId(con.text), fields = fields)
 
-|#
-
- namedType NamedType:
-    name="UpperId" _"[" arg0=type_ args=(_"," t=type_)* _","? _"]":
-        let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
-        NamedType(name = newId(name.text), args = args)
-
-    name="UpperId":
-        NamedType(name = newId(name.text), args = Vec.empty())
+    con="UpperId":
+        VariantAlt(con = newId(con.text), fields = Vec.empty())
 
 
-# recordTypeFields Vec[Named[Type]]:
-#     f0=recordTypeField fs=(_"," f=recordTypeField)* _"," _".." "LowerId"
-# 
-#     f0=recordTypeField (_"," f=recordTypeField)* _","?
+recordTypeFields Vec[Named[Type]]:
+    f0=recordTypeField fs=(_"," f=recordTypeField)* _"," _".." "LowerId":
+        panic("TODO")
+
+    f0=recordTypeField (_"," f=recordTypeField)* _","?:
+        panic("TODO")
 
 
 recordTypeField Named[Type]:
@@ -187,13 +202,10 @@ recordTypeField Named[Type]:
     ty=type_:
         Named(name = Option.None, node = ty)
 
+
 #|
-
-variantAlt:
-    "UpperId" _"(" recordTypeFields _")"
-    "UpperId"
-
-
+fnType:
+    _"Fn" _"(" fnArgTys? _")" returnTy?
 
 ffnArgTys:
     type_ (_"," type_)* _","?
@@ -203,8 +215,6 @@ returnTy:
     type_ "/" type_     # return type + effecttype
     type_               # just return type
     "/" type_           # just effect type
-
-
 |#
 
 #|
