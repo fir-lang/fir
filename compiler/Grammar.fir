@@ -922,7 +922,6 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -934,7 +933,6 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -1053,7 +1051,6 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -1065,7 +1062,6 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTer
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -1209,7 +1205,6 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -1221,7 +1216,6 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -1514,7 +1508,6 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -1526,7 +1519,6 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -1840,7 +1832,6 @@ unnamedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermin
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -1852,7 +1843,6 @@ unnamedFields(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTermin
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -2614,7 +2604,6 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
                     Result.Ok(ok):
                         cursor = ok.cursor
                         curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                     cursor += 1
@@ -2626,7 +2615,6 @@ args(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newC
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -2823,7 +2811,6 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
                     Result.Ok(ok):
                         cursor = ok.cursor
                         curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                     cursor += 1
@@ -2835,7 +2822,6 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal]
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -3158,7 +3144,6 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -3170,7 +3155,6 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -3355,7 +3339,6 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -3367,7 +3350,6 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -4043,7 +4025,6 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -4055,7 +4036,6 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], ne
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -4950,7 +4930,6 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
                     Result.Ok(ok):
                         cursor = ok.cursor
                         curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                     cursor += 1
@@ -4962,7 +4941,6 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -5511,7 +5489,6 @@ context(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -5523,7 +5500,6 @@ context(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], n
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -5598,7 +5574,6 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -5610,7 +5585,6 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal],
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
@@ -5910,7 +5884,6 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Comma, ..)):
                 cursor += 1
@@ -5922,7 +5895,6 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], 
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)

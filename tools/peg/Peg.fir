@@ -68,12 +68,13 @@ main(args: Array[Str]):
     if grammar.imports.len() != 0:
         print("")
 
-    print(generateNonTerminalType(grammar.nonTerminalType, nonTerminalNames).render(80))
-    print("")
-    print(generateNonTerminalToStr(grammar.nonTerminalType, nonTerminalNames).render(80))
-    print("")
-    print(generateNonTerminalEq(grammar.nonTerminalType, nonTerminalNames).render(80))
-    print("")
+    if not nonTerminalNames.isEmpty():
+        print(generateNonTerminalType(grammar.nonTerminalType, nonTerminalNames).render(80))
+        print("")
+        print(generateNonTerminalToStr(grammar.nonTerminalType, nonTerminalNames).render(80))
+        print("")
+        print(generateNonTerminalEq(grammar.nonTerminalType, nonTerminalNames).render(80))
+        print("")
 
     let nonTerminalDeclIdx = 0
     for nonTerminalDecl: NonTerminalDecl in grammar.nonTerminalDecls.iter():
@@ -408,11 +409,11 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
     for alt: Alt in decl.alts.iter():
         let altResultDoc = Doc.str("let altResult = try(||:") + Doc.hardLine()
 
-        # if alt.rhs.isNone():
         # TODO: Count the non-ignored symbols, allocate vector (or maybe array) with the right size.
         # TODO: Update the symbol code generator to only push to `nodes` when the production doesn't
         # have a semantic action, then move this code to the commented-out `if` above.
-        altResultDoc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
+        if alt.rhs.isNone():
+            altResultDoc += Doc.str("let nodes: Vec[ParseTree[`terminalType`, `nonTerminalType`]] = Vec.empty()") + Doc.hardLine()
 
         let symbolCont = if alt.rhs.isSome():
             SymbolCont.Ignore
@@ -657,8 +658,10 @@ generateSymbolParser(
                 4,
                 Doc.str("loop:")
                     + Doc.hardLine()
-                    + Doc.str("let nodesLen0 = nodes.len()")
-                    + Doc.hardLine()
+                    + (if symbolCont is SymbolCont.PushToParseTree(_):
+                           Doc.str("let nodesLen0 = nodes.len()") + Doc.hardLine()
+                       else:
+                           Doc.empty())
                     + Doc.nested(
                         4,
                         Doc.str("let symResult = try(||:")
@@ -679,8 +682,10 @@ generateSymbolParser(
                                     + Doc.hardLine()
                                     + makeUpdateError()
                                     + Doc.hardLine()
-                                    + Doc.str("nodes.truncate(nodesLen0)")
-                                    + Doc.hardLine()
+                                    + (if symbolCont is SymbolCont.PushToParseTree(_):
+                                           Doc.str("nodes.truncate(nodesLen0)") + Doc.hardLine()
+                                       else:
+                                           Doc.empty())
                                     + Doc.str("break"))
                             + Doc.hardLine()
                             + Doc.nested(
@@ -735,7 +740,11 @@ generateSymbolParser(
                     + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)")
 
             let optionalErrDoc =
-                makeUpdateError() + Doc.hardLine() + Doc.str("nodes.truncate(nodesLen0)")
+                makeUpdateError()
+                    + (if cont is SymbolCont.PushToParseTree(_):
+                           Doc.hardLine() + Doc.str("nodes.truncate(nodesLen0)")
+                       else:
+                           Doc.empty())
 
             let symResultBinder = Doc.empty()
 
@@ -744,9 +753,11 @@ generateSymbolParser(
                 optionalErrDoc += Doc.hardLine() + Doc.str("Option.None")
                 symResultBinder += Doc.str("let `local` = ")
 
-            Doc.str("let nodesLen0 = nodes.len()")
-                + Doc.hardLine()
-                + Doc.nested(
+            let doc = Doc.empty()
+            if cont is SymbolCont.PushToParseTree(_):
+                doc += Doc.str("let nodesLen0 = nodes.len()") + Doc.hardLine()
+
+            doc + Doc.nested(
                       4,
                       Doc.str("let symResult = try(||:")
                           + Doc.hardLine()
