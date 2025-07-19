@@ -105,33 +105,40 @@ type_ Type:
 
     id="LowerId": Type.Var(newId(id.text))
 
-    # recordType
+    t=recordType: Type.Record(t)
+
     # variantType
     # fnType
 
 
-#|
 # - ()
 # - (x: U32)
 # - (x: U32,)
 # - (x: U32, y: U32)
 # - (x: U32, ..foo)
 # - (..foo)
-recordType:
-    recordTypeStart _")"
-    recordTypeStart ".." "LowerId" _")"
-    recordTypeStart recordTypeField (_"," recordTypeField)* recordTypeCont? _")"
+recordType RecordType:
+    isRow=recordTypeStart _")":
+        RecordType(fields = Vec.empty(), extension = Option.None, isRow = isRow)
+
+    isRow=recordTypeStart ".." ext="LowerId" _")":
+        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
+
+    isRow=recordTypeStart f0=recordTypeField fs=(_"," f=recordTypeField)* ext=recordTypeCont? _")":
+        panic("")
 
 
-recordTypeStart:
-    "("
-    "row("
+# Returns whether the type is a row.
+recordTypeStart Bool:
+    _"(": Bool.False
+    "row(": Bool.True
 
 
 recordTypeCont:
     _"," (_".." "LowerId")?
 
 
+#|
 # - []
 # - [A]
 # - [A,]
@@ -166,17 +173,21 @@ fnType:
     name="UpperId":
         NamedType(name = newId(name.text), args = Vec.empty())
 
+
+# recordTypeFields Vec[Named[Type]]:
+#     f0=recordTypeField fs=(_"," f=recordTypeField)* _"," _".." "LowerId"
+# 
+#     f0=recordTypeField (_"," f=recordTypeField)* _","?
+
+
+recordTypeField Named[Type]:
+    name="LowerId" _":" ty=type_:
+        Named(name = Option.Some(newId(name.text)), node = ty)
+
+    ty=type_:
+        Named(name = Option.None, node = ty)
+
 #|
-
-recordTypeFields:
-    recordTypeField (_"," recordTypeField)* _"," _".." "LowerId"
-    recordTypeField (_"," recordTypeField)* _","?
-
-
-recordTypeField:
-    "LowerId" _":" type_
-    type_
-
 
 variantAlt:
     "UpperId" _"(" recordTypeFields _")"
