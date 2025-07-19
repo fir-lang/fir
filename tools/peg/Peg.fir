@@ -393,7 +393,7 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
 generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
     let returnTy = match decl.ty:
         Option.Some(ty):
-            generateType(ty)
+            Doc.str(generateType(ty))
         Option.None:
             Doc.str("ParseTree[`terminalType`, `nonTerminalType`]")
 
@@ -429,9 +429,20 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                 let tokens = Vec.withCapacity(50)
                 for node: ParseTree[Token, NonTerminal] in semanticActionTokens.iter():
                     parseTreeTokens(node, tokens)
-                tokensToCode(tokens)
+                let code = tokensToCode(tokens)
+                let lines: Vec[Str] = code.lines().toVec()
+                let doc = Doc.empty()
+                let lineIdx: U32 = 0
+                for line in lines.iter():
+                    if lineIdx != 0:
+                        doc += Doc.hardLine()
+                    doc += Doc.str(line)
+                    lineIdx += 1
+                doc
 
-        altResultDoc += Doc.str("let value = ") + valueDoc
+        altResultDoc +=
+            Doc.nested(4, Doc.str("let value = do:") + Doc.hardLine() + valueDoc)
+
         altResultDoc += Doc.hardLine()
 
         altResultDoc += Doc.str("(value = value, cursor = cursor, err = curErr)")
@@ -515,7 +526,7 @@ generateSymbolParser(
                 doc += Doc.str("let `local` = ")
 
             let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(")
-                + tokensToCode(patToks)
+                + Doc.str(tokensToCode(patToks))
                 + Doc.str("):")
                 + Doc.hardLine()
 
@@ -804,18 +815,22 @@ generateSymbolParser(
                         + makeThrow(makeUnexpectedTokenError()))
 
 
-tokensToCode(tokens: Vec[Token]) Doc / exn:
+tokensToCode(tokens: Vec[Token]) Str / exn:
     if tokens.len() == 0:
-        return Doc.empty()
+        return ""
 
     let out = StrBuf.withCapacity(100)
 
     let lastLine = tokens.get(0).line
     let lastCol = tokens.get(0).col
 
+    let col0 = lastCol
+
     for token: Token in tokens.iter():
         if token.line != lastLine:
-            panic("tokensToCode: tokens span multiple lines")
+            out.push('\n')
+            lastCol = col0
+            lastLine = token.line
 
         while lastCol < token.col:
             out.push(' ')
@@ -826,7 +841,7 @@ tokensToCode(tokens: Vec[Token]) Doc / exn:
         # TODO: We could iterate the text once, increment column and push chars.
         lastCol += token.text.chars().count[CharIter, Char, exn]()
 
-    Doc.str(out.toStr())
+    out.toStr()
 
 makeUnexpectedTokenError() Doc:
     Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = cursor))")
@@ -841,7 +856,7 @@ makeThrow(expr: Doc) Doc:
 makeUpdateError() Doc:
     Doc.str("curErr = Option.Some(ParseError.takeAdvanced(curErr, err))")
 
-generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Doc:
+generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Str:
     let tokens: Vec[Token] = Vec.withCapacity(4)
         # Size of a generic type with one argument, e.g. `Option[U32]`.
 

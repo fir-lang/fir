@@ -83,3 +83,7 @@ semanticActionGroup Vec[Str]:
     _"a" ab=(a="a" b="b") _"b":
         let strs: Vec[Str] = Vec.[ab.a.text, ab.b.text]
         strs
+
+semanticActionOptional Option[Token]:
+    cs="a"?:
+        cs

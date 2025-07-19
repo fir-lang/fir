@@ -41,7 +41,6 @@ main():
     # runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
     # runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
 
-
     print("# Simple cases -------------------------------------------")
     print(try(||: runParser("a", semanticActionSimple, Bool.False)))
     print(try(||: runParser("b", semanticActionSimple, Bool.False)))
@@ -59,6 +58,9 @@ main():
 
     print("# Group --------------------------------------------------")
     print(try(||: runParser("a a b b", semanticActionGroup, Bool.False)))
+
+    print("# Optional -----------------------------------------------")
+    print(try(||: runParser("a a b b", semanticActionOptional, Bool.False)))
 
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
