@@ -556,7 +556,6 @@ semanticActionSimple(tokens: Vec[Token], cursor: U32) (tree: Char, newCursor: U3
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
@@ -572,7 +571,6 @@ semanticActionSimple(tokens: Vec[Token], cursor: U32) (tree: Char, newCursor: U3
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
             cursor += 1
         else:
@@ -593,10 +591,8 @@ semanticActionZeroOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newC
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         let cs = Vec.empty()
         loop:
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 let nonTerminalResult = semanticActionSimple(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
@@ -607,7 +603,6 @@ semanticActionZeroOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newC
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(ok):
                     cursor = ok.cursor
@@ -628,7 +623,6 @@ semanticActionOneOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newCu
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         let cs = Vec.empty()
         let nonTerminalResult = semanticActionSimple(tokens, cursor)
         cursor = nonTerminalResult.newCursor
@@ -636,7 +630,6 @@ semanticActionOneOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newCu
         let cs = nonTerminalResult.tree
         let cs = Vec.empty()
         loop:
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 let nonTerminalResult = semanticActionSimple(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
@@ -647,7 +640,6 @@ semanticActionOneOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newCu
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(ok):
                     cursor = ok.cursor
@@ -668,7 +660,6 @@ semanticActionGroup(tokens: Vec[Token], cursor: U32) (tree: Vec[Str], newCursor:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
@@ -707,8 +698,6 @@ semanticActionOptional(tokens: Vec[Token], cursor: U32) (tree: Option[Token], ne
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             let cs = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                 let sym = tokens.get(cursor)
@@ -722,7 +711,6 @@ semanticActionOptional(tokens: Vec[Token], cursor: U32) (tree: Option[Token], ne
         let cs = match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
                 Option.None
             Result.Ok(ok):
                 cursor = ok.cursor
@@ -748,14 +736,12 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let aVec = Vec.empty()
         loop:
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "a", ..)):
                     aVec.push(tokens.get(cursor))
@@ -768,7 +754,6 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(ok):
                     cursor = ok.cursor
@@ -782,7 +767,6 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let bVec = Vec.empty()
         loop:
-            let nodesLen0 = nodes.len()
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
                     bVec.push(tokens.get(cursor))
@@ -795,12 +779,10 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
             match symResult:
                 Result.Err(err):
                     curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
                     break
                 Result.Ok(ok):
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let nodesLen0 = nodes.len()
         let symResult = try(||:
             let cOpt = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "c", ..)):
                 let sym = tokens.get(cursor)
@@ -814,7 +796,6 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
         let cOpt = match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                nodes.truncate(nodesLen0)
                 Option.None
             Result.Ok(ok):
                 cursor = ok.cursor
