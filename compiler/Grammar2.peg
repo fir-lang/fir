@@ -131,7 +131,7 @@ recordType RecordType:
         RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
     isRow=recordTypeStart f0=recordTypeField fs=(_"," f=recordTypeField)* ext=recordTypeCont? _")":
-        panic("")
+        panic("TODO")
 
 
 # Returns whether the type is a row.
@@ -227,44 +227,84 @@ returnTy (ret: Option[Type], exn: Option[Type]):
         (ret = Option.None, exn = Option.Some(exn))
 
 
-#|
 # --------------------------------------------------------------------------------------------------
 # Type declarations
 
-typeDecl:
-    _"type" "UpperId" (_"[" typeParams _"]")? _":" _"NEWLINE" _"INDENT" typeDeclRhs _"DEDENT"
-    _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
-    "prim" _"type" "UpperId" (_"[" typeParams _"]")? _"NEWLINE"
+typeDecl TypeDecl:
+    _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _":" _"NEWLINE" _"INDENT" rhs=typeDeclRhs _"DEDENT":
+        TypeDecl(
+            name = newId(name.text),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.Some(rhs),
+        )
+
+    _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _"NEWLINE":
+        TypeDecl(
+            name = newId(name.text),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.None,
+        )
+
+    "prim" _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _"NEWLINE":
+        TypeDecl(
+            name = newId(name.text),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.None,
+        )
 
 
-typeParams:
-    "LowerId" (_"," "LowerId")* _","?
-    "LowerId"
+typeParams Vec[Id]:
+    id0="LowerId" ids=(_"," id="LowerId")* _","?:
+        let vec: Vec[Id] =
+            once(newId(id0.text)).chain(ids.iter().map(|id: (id: Token)|: newId(id.id.text))).toVec()
+        vec
 
 
-typeDeclRhs:
-    conDecl+
-    namedField+
+typeDeclRhs TypeDeclRhs:
+    cs=conDecl+:
+        TypeDeclRhs.Sum(cs)
+
+    fs=namedField+:
+        TypeDeclRhs.Product(ConFields.Named(fs))
 
 
-conDecl:
-    "UpperId" _":" _"NEWLINE" _"INDENT" namedFields _"DEDENT"
-    "UpperId" _"(" unnamedFields? _")" _"NEWLINE"
-    "UpperId" _"NEWLINE"
+conDecl ConDecl:
+    name="UpperId" _":" _"NEWLINE" _"INDENT" fs=namedFields _"DEDENT":
+        ConDecl(name = newId(name.text), fields = ConFields.Named(fs))
+
+    name="UpperId" _"(" fs=unnamedFields? _")" _"NEWLINE":
+        ConDecl(name = newId(name.text), fields = ConFields.Unnamed(fs.unwrapOr(Vec.empty())))
+
+    name="UpperId" _"NEWLINE":
+        ConDecl(name = newId(name.text), fields = ConFields.Empty)
 
 
-namedFields:
-    namedField+
+namedFields Vec[(name: Id, ty: Type)]:
+    fs=namedField+:
+        fs
 
 
-namedField:
-    "LowerId" _":" type_ _"NEWLINE"
+namedField (name: Id, ty: Type):
+    name="LowerId" _":" ty=type_ _"NEWLINE":
+        (name = newId(name.text), ty = ty)
 
 
-unnamedFields:
-    type_ (_"," type_)* _","?
+unnamedFields Vec[Type]:
+    t0=type_ ts=(_"," t=type_)* _","?:
+        let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+        vec
 
 
+#|
 # --------------------------------------------------------------------------------------------------
 # Expressions
 
