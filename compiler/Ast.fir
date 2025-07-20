@@ -77,7 +77,7 @@ type FunDecl:
 type FunSig:
     context: Context
     self_: SelfParam
-    params: Vec[(name: Id, ty: Type)]
+    params: Vec[(name: Id, ty: Option[Type])]
     exceptions: Option[Type]
     returnTy: Option[Type]
 
