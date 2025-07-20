@@ -520,30 +520,48 @@ simplePat Pat:
     con=upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?:
         panic("TODO")
 
-    # # Records: `(pat, pat)`, `(var = pat, ...)`
-    # "(" ")"
-    # "(" (recordFieldPat (_"," recordFieldPat)* _","?)? ")"
-    # "(" (recordFieldPat (_"," recordFieldPat)* _"," "..")? ")"
+    # Records: `(pat, pat)`, `(var = pat, ...)`
+    "(" ")":
+        Pat.Record(RecordPat(fields = Vec.empty(), ignoreRest = Bool.False, inferredTy = Option.None))
 
-    # # Ignore
-    # "_"
+    "(" p0=recordFieldPat ps=("," p=recordFieldPat)* ","? ")":
+        Pat.Record(RecordPat(
+            fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+            ignoreRest = Bool.False,
+            inferredTy = Option.None,
+        ))
 
-    # # Literals.
-    # "Str" strPfxBinder?
+    "(" p0=recordFieldPat ps=("," p=recordFieldPat)* "," ignoreRest=".." ")":
+        Pat.Record(RecordPat(
+            fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+            ignoreRest = Bool.True,
+            inferredTy = Option.None,
+        ))
+
+    # Ignore
+    "_":
+        Pat.Ignore
+
+    # Literals.
+    str="Str" binder=strPfxBinder?:
+        Pat.StrPfx(str.text, binder.flatten())
+
     # "Char"
+    char="Char":
+        panic("TODO")
 
 
-# strPfxBinder:
-#     "LowerId"
-#     _"_"
+strPfxBinder Option[Id]:
+    id="LowerId": Option.Some(newId(id.text))
+    "_": Option.None
 
 
 recordFieldPat Named[Pat]:
-    "LowerId" "=" pat:
-        panic("TODO")
+    name="LowerId" "=" pat=pat:
+        Named(name = Option.Some(newId(name.text)), node = pat)
 
-    pat:
-        panic("TODO")
+    pat=pat:
+        Named(name = Option.None, node = pat)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -599,7 +617,6 @@ paramList Vec[(name: Id, ty: Option[Type])]:
         vec
 
 
-
 param (name: Id, ty: Option[Type]):
     name="LowerId" ty=(":" ty=type_)?:
         (name = newId(name.text), ty = ty.map(|ty: (ty: Type)|: ty.ty))
@@ -607,6 +624,7 @@ param (name: Id, ty: Option[Type]):
 
 # --------------------------------------------------------------------------------------------------
 # Trait declarations
+
 
 traitDecl TraitDecl:
     "trait" name="UpperId" "[" tys=typeParams "]" rhs=traitDeclRhs?:
@@ -626,6 +644,7 @@ traitDeclRhs Vec[FunDecl]:
 # --------------------------------------------------------------------------------------------------
 # Impl declarations
 
+
 implDecl ImplDecl:
     "impl" ctx=context? name="UpperId" "[" t0=type_ ts=("," t=type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
@@ -642,6 +661,7 @@ implDeclRhs Vec[FunDecl]:
 
 
 # --------------------------------------------------------------------------------------------------
+
 
 funDecl FunDecl:
     "prim" funSig _"NEWLINE":

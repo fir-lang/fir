@@ -260,7 +260,7 @@ type Pat:
     ## Matches a constructor.
     Constr(ConstrPat)
 
-    Record(Vec[Named[Pat]])
+    Record(RecordPat)
 
     ## Underscore, aka. wildcard.
     Ignore
@@ -272,7 +272,7 @@ type Pat:
     Char(Char)
 
     ## Match the prefix, bind the rest. E.g. `"a" .. rest`.
-    StrPfx(Str, Id)
+    StrPfx(Str, Option[Id])
 
     ## Or pattern: `<pat1> | <pat2>`.
     Or(Pat, Pat)
@@ -285,6 +285,11 @@ type ConstrPat:
     constr: Constructor
     fields: Vec[Named[Pat]]
     ignoreRest: Bool
+
+type RecordPat:
+    fields: Vec[Named[Pat]]
+    ignoreRest:Bool
+    inferredTy: Option[Type]    # TODO: This should be type-checking type instead of AST type
 
 type Constructor:
     variant: Bool
