@@ -79,7 +79,6 @@ Terminals:
 
 
 #|
-
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
 
@@ -532,14 +531,18 @@ strPfxBinder:
 recordFieldPat:
     "LowerId" "=" pat
     pat
-
+|#
 
 # --------------------------------------------------------------------------------------------------
 # Import declarations
 
-importDecl:
-    _"import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+importDecl Vec[Str]:
+    _"import" p0="UpperId" ps=(_"." p="UpperId")* _"NEWLINE":
+        let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: (p: Token)|: p.p.text)).toVec()
+        vec
 
+
+#|
 # --------------------------------------------------------------------------------------------------
 # Top-level functions
 

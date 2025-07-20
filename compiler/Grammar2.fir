@@ -1521,3 +1521,59 @@ unnamedFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Type], newCursor: U32,
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+
+importDecl(tokens: Vec[Token], cursor: U32) (tree: Vec[Str], newCursor: U32, newErr: Option[ParseError]) / ParseError:
+    let cursor0 = cursor
+    let curErr: Option[ParseError] = Option.None
+    let altResult = try(||:
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Import, ..)):
+            cursor += 1
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let p0 = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
+            let sym = tokens.get(cursor)
+            cursor += 1
+            sym
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let ps = Vec.empty()
+        loop:
+            let symResult = try(||:
+                if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Dot, ..)):
+                    cursor += 1
+                else:
+                    throw(
+                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+                let p = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
+                    let sym = tokens.get(cursor)
+                    cursor += 1
+                    sym
+                else:
+                    throw(
+                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+                ps.push((p = p))
+                (cursor = cursor, err = curErr)
+            )
+            match symResult:
+                Result.Err(err):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+                    break
+                Result.Ok(ok):
+                    cursor = ok.cursor
+                    curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
+            cursor += 1
+        else:
+            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let value = do:
+            let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: (p: Token)|: p.p.text)).toVec()
+            vec
+        (value = value, cursor = cursor, err = curErr)
+    )
+    match altResult:
+        Result.Err(err):
+            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+            cursor = cursor0
+        Result.Ok((value = value, cursor = newCursor, err = newErr)):
+            return (tree = value, newCursor = newCursor, newErr = newErr)
+    throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
