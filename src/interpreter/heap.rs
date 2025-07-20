@@ -163,6 +163,44 @@ impl Heap {
         }
     }
 
+    pub fn array_copy_within(
+        &mut self,
+        array: u64,
+        src: u32,
+        dst: u32,
+        len: u32,
+        repr: Repr,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
+    ) {
+        let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
+        if src + dst >= array_len || dst + len >= array_len {
+            let mut msg_str = format!("{}: OOB array access\n", loc_display(loc));
+            msg_str.push_str("\nFIR STACK:\n");
+            crate::interpreter::write_call_stack(call_stack, &mut msg_str);
+            panic!("{}", msg_str);
+        }
+
+        let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+
+        match repr {
+            Repr::U8 => {
+                let payload: &mut [u8] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+
+            Repr::U32 => {
+                let payload: &mut [u32] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+
+            Repr::U64 => {
+                let payload: &mut [u64] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+        }
+    }
+
     pub fn array_get(
         &mut self,
         array: u64,

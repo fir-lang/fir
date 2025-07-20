@@ -1667,6 +1667,16 @@ fn call_builtin_fun<W: Write>(
             FunRet::Val(pgm.unit_alloc)
         }
 
+        BuiltinFunDecl::ArrayCopyWithin { t } => {
+            debug_assert_eq!(args.len(), 4); // array, src, dst, len
+            let array = args[0];
+            let src = val_as_u32(args[1]);
+            let dst = val_as_u32(args[2]);
+            let len = val_as_u32(args[3]);
+            heap.array_copy_within(array, src, dst, len, Repr::from_mono_ty(t), loc, call_stack);
+            FunRet::Val(pgm.unit_alloc)
+        }
+
         BuiltinFunDecl::ReadFileUtf8 => {
             debug_assert_eq!(args.len(), 1);
             let path = args[0];
