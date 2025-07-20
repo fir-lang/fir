@@ -6,6 +6,9 @@ prim Array.get(self: Array[t], idx: U32) t
 prim Array.set(self: Array[t], idx: U32, elem: t)
 prim Array.slice(self: Array[t], start: U32, end: U32) Array[t]
 
+# memmove
+prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+
 Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
     let size = match iter.size[iter, item, exn, exn]():
         Option.Some(size): size

@@ -234,6 +234,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayCopyWithin {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 }
 
@@ -1477,6 +1481,15 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArraySlice { t }));
+                        }
+
+                        ("Array", "copyWithin") => {
+                            // prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            let t = fun_ty_args[0].clone();
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),
