@@ -78,23 +78,20 @@ Terminals:
     "label" = Token(kind = TokenKind.Label, ..)
 
 
-#|
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
 
-module:
-    topDecl+ $
+module Vec[TopDecl]:
+    ds=topDecl+ $: ds
 
 
-topDecl:
-    typeDecl
-    importDecl
-    traitDecl
-    implDecl
-    topFunDecl
+topDecl TopDecl:
+    t=typeDecl: TopDecl.Type(t)
+    t=importDecl: TopDecl.Import(t)
+    t=traitDecl: TopDecl.Trait(t)
+    t=implDecl: TopDecl.Impl(t)
+    t=topFunDecl: TopDecl.Fun(t)
 
-
-|#
 
 # --------------------------------------------------------------------------------------------------
 # Types
@@ -108,7 +105,7 @@ type_ Type:
 
 
  namedType NamedType:
-    name="UpperId" _"[" arg0=type_ args=(_"," t=type_)* _","? _"]":
+    name="UpperId" "[" arg0=type_ args=("," t=type_)* ","? "]":
         let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
         NamedType(name = newId(name.text), args = args)
 
@@ -123,24 +120,24 @@ type_ Type:
 # - (x: U32, ..foo)
 # - (..foo)
 recordType RecordType:
-    isRow=recordTypeStart _")":
+    isRow=recordTypeStart ")":
         RecordType(fields = Vec.empty(), extension = Option.None, isRow = isRow)
 
-    isRow=recordTypeStart ".." ext="LowerId" _")":
+    isRow=recordTypeStart ".." ext="LowerId" ")":
         RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
-    isRow=recordTypeStart f0=recordTypeField fs=(_"," f=recordTypeField)* ext=recordTypeCont? _")":
+    isRow=recordTypeStart f0=recordTypeField fs=("," f=recordTypeField)* ext=recordTypeCont? ")":
         panic("TODO")
 
 
 # Returns whether the type is a row.
 recordTypeStart Bool:
-    _"(": Bool.False
+    "(": Bool.False
     "row(": Bool.True
 
 
 recordTypeCont:
-    _"," (_".." "LowerId")?
+    "," (".." "LowerId")?
 
 
 # - []
@@ -150,13 +147,13 @@ recordTypeCont:
 # - [A, ..foo]
 # - [..foo]
 variantType VariantType:
-    isRow=variantTypeStart _"]":
+    isRow=variantTypeStart "]":
         VariantType(alts = Vec.empty(), extension = Option.None, isRow = isRow)
 
-    isRow=variantTypeStart _".." ext="LowerId" _"]":
+    isRow=variantTypeStart ".." ext="LowerId" "]":
         VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
-    isRow=variantTypeStart alt0=variantAlt alts=(_"," a=variantAlt)* ext=variantTypeCont? _"]":
+    isRow=variantTypeStart alt0=variantAlt alts=("," a=variantAlt)* ext=variantTypeCont? "]":
         VariantType(
             alts = once(alt0).chain(alts.iter().map(|alt: (a: VariantAlt)|: alt.a)).toVec(),
             extension = ext.flatten(),
@@ -166,17 +163,17 @@ variantType VariantType:
 
 # Returns whether the type is a row.
 variantTypeStart Bool:
-    _"[": Bool.False
-    _"row[": Bool.True
+    "[": Bool.False
+    "row[": Bool.True
 
 
 variantTypeCont Option[Id]:
-    _"," id=(_".." id="LowerId")?:
+    "," id=(".." id="LowerId")?:
         id.map(|id: (id: Token)|: newId(id.id.text))
 
 
 variantAlt VariantAlt:
-    con="UpperId" _"(" fields=recordTypeFields _")":
+    con="UpperId" "(" fields=recordTypeFields ")":
         VariantAlt(con = newId(con.text), fields = fields)
 
     con="UpperId":
@@ -184,19 +181,19 @@ variantAlt VariantAlt:
 
 
 recordTypeFields Vec[Named[Type]]:
-    f0=recordTypeField fs=(_"," f=recordTypeField)* _"," _".." "LowerId":
+    f0=recordTypeField fs=("," f=recordTypeField)* "," ".." "LowerId":
         # TODO: Extension?
         # TODO: We do we need the type annotation here?
         let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
         vec
 
-    f0=recordTypeField fs=(_"," f=recordTypeField)* _","?:
+    f0=recordTypeField fs=("," f=recordTypeField)* ","?:
         let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
         vec
 
 
 recordTypeField Named[Type]:
-    name="LowerId" _":" ty=type_:
+    name="LowerId" ":" ty=type_:
         Named(name = Option.Some(newId(name.text)), node = ty)
 
     ty=type_:
@@ -204,19 +201,19 @@ recordTypeField Named[Type]:
 
 
 fnType FnType:
-    _"Fn" _"(" args=fnArgTys? _")" ret=returnTy?:
+    "Fn" "(" args=fnArgTys? ")" ret=returnTy?:
         let args = args.unwrapOr(Vec.empty())
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         FnType(args = args, ret = ret.ret, exceptions = ret.exn)
 
 fnArgTys Vec[Type]:
-    t0=type_ ts=(_"," t=type_)* _","?:
+    t0=type_ ts=("," t=type_)* ","?:
         let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
         vec
 
 
 returnTy (ret: Option[Type], exn: Option[Type]):
-    ret=type_ _"/" exn=type_:
+    ret=type_ "/" exn=type_:
         (ret = Option.Some(ret), exn = Option.Some(exn))
 
     ret=type_:
@@ -230,7 +227,7 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 # Type declarations
 
 typeDecl TypeDecl:
-    _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _":" _"NEWLINE" _"INDENT" rhs=typeDeclRhs _"DEDENT":
+    "type" name="UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=typeDeclRhs "DEDENT":
         TypeDecl(
             name = newId(name.text),
             typeParams = match params:
@@ -240,7 +237,7 @@ typeDecl TypeDecl:
             rhs = Option.Some(rhs),
         )
 
-    _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _"NEWLINE":
+    "type" name="UpperId" params=("[" params=typeParams "]")? "NEWLINE":
         TypeDecl(
             name = newId(name.text),
             typeParams = match params:
@@ -250,7 +247,7 @@ typeDecl TypeDecl:
             rhs = Option.None,
         )
 
-    "prim" _"type" name="UpperId" params=(_"[" params=typeParams _"]")? _"NEWLINE":
+    "prim" "type" name="UpperId" params=("[" params=typeParams "]")? "NEWLINE":
         TypeDecl(
             name = newId(name.text),
             typeParams = match params:
@@ -262,7 +259,7 @@ typeDecl TypeDecl:
 
 
 typeParams Vec[Id]:
-    id0="LowerId" ids=(_"," id="LowerId")* _","?:
+    id0="LowerId" ids=("," id="LowerId")* ","?:
         let vec: Vec[Id] =
             once(newId(id0.text)).chain(ids.iter().map(|id: (id: Token)|: newId(id.id.text))).toVec()
         vec
@@ -277,13 +274,13 @@ typeDeclRhs TypeDeclRhs:
 
 
 conDecl ConDecl:
-    name="UpperId" _":" _"NEWLINE" _"INDENT" fs=namedFields _"DEDENT":
+    name="UpperId" ":" "NEWLINE" "INDENT" fs=namedFields "DEDENT":
         ConDecl(name = newId(name.text), fields = ConFields.Named(fs))
 
-    name="UpperId" _"(" fs=unnamedFields? _")" _"NEWLINE":
+    name="UpperId" "(" fs=unnamedFields? ")" "NEWLINE":
         ConDecl(name = newId(name.text), fields = ConFields.Unnamed(fs.unwrapOr(Vec.empty())))
 
-    name="UpperId" _"NEWLINE":
+    name="UpperId" "NEWLINE":
         ConDecl(name = newId(name.text), fields = ConFields.Empty)
 
 
@@ -293,12 +290,12 @@ namedFields Vec[(name: Id, ty: Type)]:
 
 
 namedField (name: Id, ty: Type):
-    name="LowerId" _":" ty=type_ _"NEWLINE":
+    name="LowerId" ":" ty=type_ "NEWLINE":
         (name = newId(name.text), ty = ty)
 
 
 unnamedFields Vec[Type]:
-    t0=type_ ts=(_"," t=type_)* _","?:
+    t0=type_ ts=("," t=type_)* ","?:
         let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
         vec
 
@@ -461,10 +458,10 @@ stmt Stmt:
     "break" label="label"? "NEWLINE":
         Stmt.Break(label = label.map(|l: Token|: newId(l.text)), level = 0)
 
+    "continue" label="label"? "NEWLINE":
+        Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
+
 #|
-
-    "continue" "label"? _"NEWLINE"
-
     "let" pat (_":" type_)? "=" letRhs
 
     loopLabel? "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
@@ -542,23 +539,23 @@ recordFieldPat:
 # --------------------------------------------------------------------------------------------------
 # Import declarations
 
-importDecl Vec[Str]:
-    _"import" p0="UpperId" ps=(_"." p="UpperId")* _"NEWLINE":
+importDecl ImportDecl:
+    "import" p0="UpperId" ps=("." p="UpperId")* "NEWLINE":
         let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: (p: Token)|: p.p.text)).toVec()
-        vec
+        ImportDecl(path = vec)
 
 
 # --------------------------------------------------------------------------------------------------
 # Top-level functions
 
 topFunDecl FunDecl:
-    "prim" topFunSig _"NEWLINE":
+    "prim" topFunSig "NEWLINE":
         panic("TODO")
 
-    topFunSig _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT":
+    topFunSig ":" "NEWLINE" "INDENT" stmt+ "DEDENT":
         panic("TODO")
 
-    topFunSig _":" inlineExpr _"NEWLINE":
+    topFunSig ":" inlineExpr "NEWLINE":
         panic("TODO")
 
 
@@ -569,7 +566,7 @@ topFunSig (parenTy: Option[Id], sig: FunSig):
 
 # TODO: Weird name, rename.
 parentTy Id:
-    id="UpperId" _".":
+    id="UpperId" ".":
         newId(id.text)
 
 
@@ -597,30 +594,40 @@ param (name: Id, ty: Option[Type]):
         (name = newId(name.text), ty = ty.map(|ty: (ty: Type)|: ty.ty))
 
 
-#|
 # --------------------------------------------------------------------------------------------------
 # Trait declarations
 
-traitDecl:
-    _"trait" "UpperId" _"[" typeParams _"]" traitDeclRhs?
+traitDecl TraitDecl:
+    "trait" name="UpperId" "[" tys=typeParams "]" rhs=traitDeclRhs?:
+        TraitDecl(
+            name = newId(name.text),
+            typeParams = tys,
+            typeParamKinds = Vec.empty(),       # will be generated by kind inference
+            items = rhs.unwrapOr(Vec.empty()),
+        )
 
 
-traitDeclRhs:
-    _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
+traitDeclRhs Vec[FunDecl]:
+    "NEWLINE": Vec.empty()
+    ":" "NEWLINE" "INDENT" fs=funDecl+ "DEDENT": fs
 
 
 # --------------------------------------------------------------------------------------------------
 # Impl declarations
 
-implDecl:
-    _"impl" context? "UpperId" _"[" type_ (_"," type_)* _","? _"]" implDeclRhs
+implDecl ImplDecl:
+    "impl" ctx=context? name="UpperId" "[" t0=type_ ts=("," t=type_)* ","? "]" rhs=implDeclRhs:
+        ImplDecl(
+            context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+            trait_ = newId(name.text),
+            tys = once(t0).chain(ts.iter().map(|ts: (t: Type)|: ts.t)).toVec(),
+            items = rhs,
+        )
 
 
-implDeclRhs:
-    _"NEWLINE"
-    _":" _"NEWLINE" _"INDENT" funDecl+ _"DEDENT"
-|#
+implDeclRhs Vec[FunDecl]:
+    "NEWLINE": Vec.empty()
+    ":" "NEWLINE" "INDENT" funs=funDecl+ "DEDENT": funs
 
 
 # --------------------------------------------------------------------------------------------------
