@@ -284,10 +284,7 @@ type VarPat:
 type ConstrPat:
     constr: Constructor
     fields: Vec[Named[Pat]]
-
-type VariantPat:
-    constr: Id
-    fields: Vec[Named[Pat]]
+    ignoreRest: Bool
 
 type Constructor:
     variant: Bool

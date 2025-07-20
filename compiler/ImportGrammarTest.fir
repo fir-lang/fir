@@ -16,22 +16,14 @@ runTopDecl(input: Str):
     runTestScanner_(input, topDecl)
 
 # args: -iPeg=tools/peg -iCompiler=compiler
-
 # expected stdout:
 # import Foo
-# TopDecl(ImportDecl(Import(1:1:"import"), UpperId(1:8:"Foo")))
+# TopDecl(ImportDecl(UpperId(1:8:"Foo")))
 # 
 # import Foo.Bar
-# TopDecl(
-#     ImportDecl(Import(1:1:"import"), UpperId(1:8:"Foo"), UpperId(1:12:"Bar")),
-# )
+# TopDecl(ImportDecl(UpperId(1:8:"Foo"), UpperId(1:12:"Bar")))
 # 
 # import Foo.Bar.Baz
 # TopDecl(
-#     ImportDecl(
-#         Import(1:1:"import"),
-#         UpperId(1:8:"Foo"),
-#         UpperId(1:12:"Bar"),
-#         UpperId(1:16:"Baz"),
-#     ),
+#     ImportDecl(UpperId(1:8:"Foo"), UpperId(1:12:"Bar"), UpperId(1:16:"Baz")),
 # )

@@ -390,6 +390,7 @@ sequence:
 
 seqElem:
     inlineExpr (_"=" inlineExpr)?
+|#
 
 
 upperIdPath:
@@ -397,6 +398,7 @@ upperIdPath:
     "TildeUpperId" (_"." "UpperId")*
 
 
+#|
 tyArgs:
     "[" type_ (_"," type_)* _","? "]"
 
@@ -496,48 +498,57 @@ assignOp AssignOp:
     "*=": AssignOp.StarEq
     "^=": AssignOp.CaretEq
 
-#|
 
 # --------------------------------------------------------------------------------------------------
 # Patterns
 
-pat:
-    simplePat ("|" simplePat)*
+
+pat Pat:
+    simplePat ("|" simplePat)*:
+        panic("TODO")
 
 
-simplePat:
+simplePat Pat:
     # Variables
-    "LowerId"
+    var_="LowerId":
+        Pat.Var(VarPat(var_ = newId(var_.text), ty = Option.None))
 
     # Constructors
-    upperIdPath _"(" ".." _")"
-    upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?
+    con=upperIdPath "(" ".." ")":
+        panic("TODO")
 
-    # Records: `(pat, pat)`, `(var = pat, ...)`
-    "(" ")"
-    "(" (recordFieldPat (_"," recordFieldPat)* _","?)? ")"
-    "(" (recordFieldPat (_"," recordFieldPat)* _"," "..")? ")"
+    con=upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?:
+        panic("TODO")
 
-    # Ignore
-    "_"
+    # # Records: `(pat, pat)`, `(var = pat, ...)`
+    # "(" ")"
+    # "(" (recordFieldPat (_"," recordFieldPat)* _","?)? ")"
+    # "(" (recordFieldPat (_"," recordFieldPat)* _"," "..")? ")"
 
-    # Literals.
-    "Str" strPfxBinder?
-    "Char"
+    # # Ignore
+    # "_"
 
-
-strPfxBinder:
-    "LowerId"
-    _"_"
+    # # Literals.
+    # "Str" strPfxBinder?
+    # "Char"
 
 
-recordFieldPat:
-    "LowerId" "=" pat
-    pat
-|#
+# strPfxBinder:
+#     "LowerId"
+#     _"_"
+
+
+recordFieldPat Named[Pat]:
+    "LowerId" "=" pat:
+        panic("TODO")
+
+    pat:
+        panic("TODO")
+
 
 # --------------------------------------------------------------------------------------------------
 # Import declarations
+
 
 importDecl ImportDecl:
     "import" p0="UpperId" ps=("." p="UpperId")* "NEWLINE":
