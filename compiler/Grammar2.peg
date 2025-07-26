@@ -127,7 +127,8 @@ recordType RecordType:
         RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
     isRow=recordTypeStart f0=recordTypeField fs=("," f=recordTypeField)* ext=recordTypeCont? ")":
-        panic("TODO")
+        let fields: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+        RecordType(fields, extension = ext.flatten(), isRow = isRow)
 
 
 # Returns whether the type is a row.
@@ -136,8 +137,9 @@ recordTypeStart Bool:
     "row(": Bool.True
 
 
-recordTypeCont:
-    "," (".." "LowerId")?
+recordTypeCont Option[Id]:
+    "," id=(".." id="LowerId")?:
+        id.map(|i: (id: Token)|: newId(i.id.text))
 
 
 # - []
@@ -393,16 +395,39 @@ seqElem:
 |#
 
 
+# TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
+constructor Constructor:
+    ty="UpperId" con=("." con="UpperId")? userTyArgs=tyArgs?:
+        Constructor(
+            variant = Bool.False,
+            ty = newId(ty.text),
+            constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+        )
+
+    ty="TildeUpperId" con=("." con="UpperId")? userTyArgs=tyArgs?:
+        Constructor(
+            variant = Bool.True,
+            ty = newId(ty.text),
+            constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+        )
+
+
 upperIdPath:
     "UpperId" (_"." "UpperId")*
     "TildeUpperId" (_"." "UpperId")*
 
 
+tyArgs Vec[Type]:
+    "[" t0=type_ ts=("," t=type_)* ","? "]":
+        let ts: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+        ts
+
+
 #|
-tyArgs:
-    "[" type_ (_"," type_)* _","? "]"
-
-
 parenExpr:
     "LowerId" "=" expr
     expr
@@ -514,11 +539,20 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_.text), ty = Option.None))
 
     # Constructors
-    con=upperIdPath "(" ".." ")":
-        panic("TODO")
-
-    con=upperIdPath (_"(" recordFieldPat (_"," recordFieldPat)* (_"," "..")? _")")?:
-        panic("TODO")
+    con=constructor fs=("(" p0=recordFieldPat ps=("," p=recordFieldPat)* ignoreRest=("," "..")? ")")?:
+        Pat.Constr(ConstrPat(
+            constr = con,
+            fields = match fs:
+                Option.None:
+                    Vec.empty()
+                Option.Some((p0, ps, ..)):
+                    once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+            ignoreRest = match fs:
+                Option.None:
+                    Bool.False
+                Option.Some((ignoreRest, ..)):
+                    ignoreRest.isSome()
+        ))
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
     "(" ")":

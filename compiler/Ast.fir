@@ -294,8 +294,10 @@ type RecordPat:
 type Constructor:
     variant: Bool
 
+    ## Type of the constructor.
     ty: Id
 
+    ## Name of the constructor. Only in sum types.
     constr: Option[Id]
 
     ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
