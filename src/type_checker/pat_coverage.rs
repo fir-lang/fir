@@ -15,6 +15,7 @@ pub struct PatCoverage {
 pub struct Fields {
     named: Map<Id, PatCoverage>,
     unnamed: Vec<PatCoverage>,
+    ignore_rest: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -69,9 +70,10 @@ impl PatCoverage {
 
             ast::Pat::Record(ast::RecordPattern {
                 fields,
-                ignore_rest: _,
+                ignore_rest,
                 inferred_ty: _,
             }) => {
+                self.records.ignore_rest |= *ignore_rest;
                 self.records.add(fields);
             }
 
@@ -246,7 +248,11 @@ impl PatCoverage {
                                 return false;
                             }
                         }
-                        None => return false,
+                        None => {
+                            if !self.records.ignore_rest {
+                                return false;
+                            }
+                        }
                     }
                 }
 
