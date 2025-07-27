@@ -3312,19 +3312,39 @@ funDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newErr:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Prim, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let symResult = try(||:
+            let prim_ = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Prim, ..)):
+                let sym = tokens.get(cursor)
+                cursor += 1
+                sym
+            else:
+                throw(
+                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+            (cursor = cursor, err = curErr, val = prim_)
+        )
+        let prim_ = match symResult:
+            Result.Err(err):
+                curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+                Option.None
+            Result.Ok(ok):
+                cursor = ok.cursor
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+                Option.Some(ok.val)
         let nonTerminalResult = funSig(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let sig = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            FunDecl(
+                parentTy = Option.None,
+                name = sig.id,
+                sig = sig.sig,
+                body = Option.None
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3337,11 +3357,18 @@ funDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newErr:
         let nonTerminalResult = funSig(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let sig = nonTerminalResult.tree
         let nonTerminalResult = funDeclRhs(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let stmts = nonTerminalResult.tree
         let value = do:
-            panic("TODO")
+            FunDecl(
+                parentTy = Option.None,
+                name = sig.id,
+                sig = sig.sig,
+                body = Option.Some(stmts),
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3356,21 +3383,6 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = do:
-            panic("TODO")
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Colon, ..)):
             cursor += 1
         else:
@@ -3383,14 +3395,18 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let stmts = Vec.empty()
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let stmts = nonTerminalResult.tree
+        let stmts = Vec.empty()
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
+                stmts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -3405,7 +3421,7 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            stmts
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3422,12 +3438,14 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
         let nonTerminalResult = inlineExpr(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let expr = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            let vec: Vec[Stmt] = Vec.[Stmt.Expr(expr)]
+            vec
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -3438,43 +3456,62 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
             return (tree = value, newCursor = newCursor, newErr = newErr)
     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
 
-funSig(tokens: Vec[Token], cursor: U32) (tree: FunSig, newCursor: U32, newErr: Option[ParseError]) / ParseError:
+funSig(tokens: Vec[Token], cursor: U32) (tree: (id: Id, sig: FunSig), newCursor: U32, newErr: Option[ParseError]) / ParseError:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, ..)):
+        let id = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, ..)):
+            let sym = tokens.get(cursor)
             cursor += 1
+            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let symResult = try(||:
             let nonTerminalResult = context(tokens, cursor)
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
-            (cursor = cursor, err = curErr)
+            let ctx = nonTerminalResult.tree
+            (cursor = cursor, err = curErr, val = ctx)
         )
-        match symResult:
+        let ctx = match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+                Option.None
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+                Option.Some(ok.val)
         let nonTerminalResult = paramList(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let params = nonTerminalResult.tree
         let symResult = try(||:
             let nonTerminalResult = returnTy(tokens, cursor)
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
-            (cursor = cursor, err = curErr)
+            let ret = nonTerminalResult.tree
+            (cursor = cursor, err = curErr, val = ret)
         )
-        match symResult:
+        let ret = match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+                Option.None
             Result.Ok(ok):
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+                Option.Some(ok.val)
         let value = do:
-            panic("TODO")
+            let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+            (
+                id = newId(id.text),
+                sig = FunSig(
+                    context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                    self_ = SelfParam.No,
+                    params,
+                    exceptions = ret.exn,
+                    returnTy = ret.ret,
+                ),
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

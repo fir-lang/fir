@@ -208,6 +208,7 @@ fnType FnType:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         FnType(args = args, ret = ret.ret, exceptions = ret.exn)
 
+
 fnArgTys Vec[Type]:
     t0=type_ ts=("," t=type_)* ","?:
         let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
@@ -698,23 +699,43 @@ implDeclRhs Vec[FunDecl]:
 
 
 funDecl FunDecl:
-    "prim" funSig _"NEWLINE":
-        panic("TODO")
+    prim_="prim"? sig=funSig _"NEWLINE":
+        # TODO: Add prim to FunDecl
+        FunDecl(
+            parentTy = Option.None,
+            name = sig.id,
+            sig = sig.sig,
+            body = Option.None
+        )
 
-    funSig funDeclRhs:
-        panic("TODO")
+    sig=funSig stmts=funDeclRhs:
+        FunDecl(
+            parentTy = Option.None,
+            name = sig.id,
+            sig = sig.sig,
+            body = Option.Some(stmts),
+        )
+
 
 funDeclRhs Vec[Stmt]:
-    "NEWLINE":
-        panic("TODO")
+    ":" "NEWLINE" "INDENT" stmts=stmt+ "DEDENT":
+        stmts
 
-    ":" "NEWLINE" "INDENT" stmt+ "DEDENT":
-        panic("TODO")
-
-    ":" inlineExpr "NEWLINE":
-        panic("TODO")
+    ":" expr=inlineExpr "NEWLINE":
+        let vec: Vec[Stmt] = Vec.[Stmt.Expr(expr)]
+        vec
 
 
-funSig FunSig:
-    "LowerId" context? paramList returnTy?:
-        panic("TODO")
+funSig (id: Id, sig: FunSig):
+    id="LowerId" ctx=context? params=paramList ret=returnTy?:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        (
+            id = newId(id.text),
+            sig = FunSig(
+                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                self_ = SelfParam.No,       # TODO
+                params,
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+        )
