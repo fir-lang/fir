@@ -623,9 +623,20 @@ topFunDecl FunDecl:
         panic("TODO")
 
 
-topFunSig (parenTy: Option[Id], sig: FunSig):
-    parentTy=parentTy? name="LowerId" ctx=context? params=paramList ret=returnTy?:
-        panic("TODO")
+topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):
+    parentTy=(id="UpperId" ".")? name="LowerId" ctx=context? params=paramList ret=returnTy?:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        (
+            parentTy = parentTy.map(|id: (id: Token)|: newId(id.id.text)),
+            name = newId(name.text),
+            sig = FunSig(
+                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                self_ = SelfParam.No,       # TODO
+                params,
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+        )
 
 
 # TODO: Weird name, rename.

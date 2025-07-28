@@ -2724,15 +2724,24 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
             return (tree = value, newCursor = newCursor, newErr = newErr)
     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
 
-topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parenTy: Option[Id], sig: FunSig), newCursor: U32, newErr: Option[ParseError]) / ParseError:
+topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: Id, sig: FunSig), newCursor: U32, newErr: Option[ParseError]) / ParseError:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let symResult = try(||:
-            let nonTerminalResult = parentTy(tokens, cursor)
-            cursor = nonTerminalResult.newCursor
-            curErr = nonTerminalResult.newErr
-            let parentTy = nonTerminalResult.tree
+            let id = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
+                let sym = tokens.get(cursor)
+                cursor += 1
+                sym
+            else:
+                throw(
+                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Dot, ..)):
+                cursor += 1
+            else:
+                throw(
+                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+            let parentTy = (id = id)
             (cursor = cursor, err = curErr, val = parentTy)
         )
         let parentTy = match symResult:
@@ -2784,7 +2793,18 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parenTy: Option[Id], sig: Fun
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let value = do:
-            panic("TODO")
+            let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+            (
+                parentTy = parentTy.map(|id: (id: Token)|: newId(id.id.text)),
+                name = newId(name.text),
+                sig = FunSig(
+                    context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                    self_ = SelfParam.No,
+                    params,
+                    exceptions = ret.exn,
+                    returnTy = ret.ret,
+                ),
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
