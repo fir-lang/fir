@@ -489,26 +489,42 @@ stmt Stmt:
     "continue" label="label"? "NEWLINE":
         Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
 
+    "let" pat=pat ty=(":" ty=type_)? "=" rhs=letRhs:
+        Stmt.Let(LetStmt(
+            lhs = pat,
+            ty = ty.map(|t: (ty: Type)|: t.ty),
+            rhs = rhs,
+        ))
+
+    label=loopLabel? "for" pat=pat ty=(":" ty=type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.For(ForStmt(
+            label = label,
+            pat = pat,
+            astTy = ty.map(|t: (ty: Type)|: t.ty),
+            tcTy = Option.None,
+            expr = expr,
+            exprTy = Option.None,
+            body = body,
+        ))
+
+    label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.While(WhileStmt(
+            label = label,
+            cond = cond,
+            body = body,
+        ))
+
+    # label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    #     Stmt.Loop(LoopStmt(
+    #         label = label,
+    #         body = body,
+    #     ))
+
 #|
-    "let" pat (_":" type_)? "=" letRhs
-
-    loopLabel? "for" pat (_":" type_)? "in" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-
-    loopLabel? "while" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-
-    loopLabel? "loop" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-
     inlineExpr stmtExprCont?
 
     blockExpr
 
-loopLabel:
-    "label" _":"
-
-
-letRhs:
-    inlineExpr _"NEWLINE"
-    blockExpr
 
 
 stmtExprCont:
@@ -516,6 +532,20 @@ stmtExprCont:
     assignOp blockExpr
     assignOp inlineExpr _"NEWLINE"
 |#
+
+
+loopLabel Id:
+    id="label" ":":
+        newId(id.text)
+
+
+letRhs Expr:
+    expr=inlineExpr _"NEWLINE":
+        expr
+
+    # expr=blockExpr:
+    #     expr
+
 
 assignOp AssignOp:
     "=": AssignOp.Eq
