@@ -373,7 +373,9 @@ type Expr:
     Do(Vec[Stmt])
 
     # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
-    Seq(Vec[Stmt])
+    Seq:
+        ty: Option[Type]
+        elems: Vec[(key: Option[Expr], value: Expr)]
 
 type VarExpr:
     id: Id

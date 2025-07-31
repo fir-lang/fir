@@ -468,18 +468,30 @@ arg Named[Expr]:
 
 simpleExpr Expr:
     # Variables
-    "LowerId" tyArgs?:
-        panic("TODO")
+    var_="LowerId" tyArgs=tyArgs?:
+        Expr.Var(VarExpr(
+            id = newId(var_.text),
+            userTyArgs = tyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+        ))
 
-#|
     # Constructor selection, or sequence
-    upperIdPath tyArgs? (_"." sequence)?
+    con=constructor:
+        Expr.ConstrSelect(con)
 
     # Records: `(a, b)`, `(a = 1, b = 2)`
-    "(" (parenExpr (_"," parenExpr)* _","?)? ")"
+    "(" exprs=(e0=parenExpr es=("," e=parenExpr)* ","?)? ")":
+        match exprs:
+            Option.None:
+                Expr.Record(Vec.empty())
+            Option.Some(fields):
+                Expr.Record(Vec.empty())
 
-    sequence
 
+    seq=sequence:
+        seq
+
+#|
     "return" inlineExpr?
 
     "||" returnTy? ":" inlineExpr
@@ -491,16 +503,26 @@ simpleExpr Expr:
     "BinInt"
     "Str"
     "Char"
-
-
-sequence:
-    "[" "]"
-    "[" seqElem (_"," seqElem)* _","? "]"
-
-
-seqElem:
-    inlineExpr (_"=" inlineExpr)?
 |#
+
+
+sequence Expr:
+    "[" "]": 
+        Expr.Seq(ty = Option.None, elems = Vec.empty())
+
+    "[" e0=seqElem es=("," e=seqElem)* ","? "]":
+        let vec: Vec[(key: Option[Expr], value: Expr)] =
+            once(e0).chain(es.iter().map(|e: (e: (key: Option[Expr], value: Expr))|: e.e)).toVec()
+        Expr.Seq(ty = Option.None, elems = vec)
+
+
+seqElem (key: Option[Expr], value: Expr):
+    e1=inlineExpr e2=("=" e=inlineExpr)?:
+        match e2:
+            Option.None:
+                (key = Option.None, value = e1)
+            Option.Some((e = e2)):
+                (key = Option.Some(e1), value = e2)
 
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
