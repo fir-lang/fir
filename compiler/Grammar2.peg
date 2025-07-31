@@ -313,21 +313,43 @@ expr Expr:
 
 # Inline expressions don't end with a NEWLINE or DEDENT.
 inlineExpr Expr:
-    "NEWLINE": panic("TODO")
-    # prefixExpr inlineExprCont*:
-    #     panic("TODO")
+    expr=prefixExpr cont=inlineExprCont*:
+        let ret = expr
+        for cont_: InlineExprCont in cont.iter():
+            match cont_:
+                InlineExprCont.BinOp(op, rhs):
+                    ret = Expr.BinOp(BinOpExpr(
+                        left = ret,
+                        right = rhs,
+                        op = op,
+                    ))
+
+                InlineExprCont.Is(pat):
+                    ret = Expr.Is(IsExpr(
+                        expr = ret,
+                        pat = pat,
+                    ))
+        ret
 
 
 # Block expressions include an indented block and always end with DEDENT.
 blockExpr Expr:
     "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
-        panic("TODO")
+        Expr.Match(MatchExpr(
+            scrutinee = scrut,
+            alts = alts,
+        ))
 
-#|
-    "if" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-        ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
-        ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
-|#
+    "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
+            conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
+            else_=("else" ":" "NEWLINE" "INDENT" else_=stmt+ _"DEDENT")?:
+        Expr.If(IfExpr(
+            branches =
+                once((guard = cond0, body = body0))
+                    .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
+                    .toVec(),
+            elseBranch = else_.map(|branch: (else_: Vec[Stmt])|: branch.else_),
+        ))
 
     "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
         Expr.Do(body)
@@ -362,38 +384,94 @@ blockExpr Expr:
         ))
 
 
-#|
-inlineExprCont:
-    binOp prefixExpr
-    "is" pat
+inlineExprCont InlineExprCont:
+    op=binOp rhs=prefixExpr:
+        InlineExprCont.BinOp(op = op, rhs = rhs)
+
+    "is" pat=pat:
+        InlineExprCont.Is(pat = pat)
 
 
-prefixExpr:
-    exprPrefix? simpleExpr exprSuffix*
+prefixExpr Expr:
+    pfx=exprPrefix? expr=simpleExpr suffix=exprSuffix*:
+        let ret = expr
+
+        for suffix_ in suffix.iter():
+            match suffix_:
+                ExprSuffix.Field(field, tyArgs):
+                    ret = Expr.FieldSelect(FieldSelectExpr(
+                        object = ret,
+                        field = field,
+                        userTyArgs = tyArgs,
+                    ))
+
+                ExprSuffix.Args(args):
+                    ret = Expr.Call(CallExpr(
+                        fun = ret,
+                        args = args,
+                    ))
+
+        if pfx is Option.Some(pfx):
+            match pfx:
+                ExprPrefix.Tilde:
+                    panic("TODO")
+
+                ExprPrefix.Minus:
+                    ret = Expr.UnOp(UnOpExpr(
+                        op = UnOp.Neg,
+                        expr = ret,
+                    ))
+
+                ExprPrefix.Not:
+                    ret = Expr.UnOp(UnOpExpr(
+                        op = UnOp.Not,
+                        expr = ret,
+                    ))
+
+        ret
 
 
-exprSuffix:
-    field tyArgs?
-    args
+exprSuffix ExprSuffix:
+    field=field args=tyArgs?:
+        ExprSuffix.Field(
+            field = field,
+            tyArgs = args.unwrapOr(Vec.empty()),
+        )
+
+    args=args:
+        ExprSuffix.Args(args = args)
 
 
-field:
-    (_"." "LowerId")
+field Id:
+    "." field="LowerId":
+        newId(field.text)
 
 
-args:
-    _"(" (arg (_"," arg)* _","?)? _")"
+args Vec[Named[Expr]]:
+    "(" args=(arg0=arg args=("," arg=arg)* ","?)? ")":
+        match args:
+            Option.None:
+                Vec.empty()
+            Option.Some((arg0, args)):
+                let vec: Vec[Named[Expr]] =
+                    once(arg0).chain(args.iter().map(|arg: (arg: Named[Expr])|: arg.arg)).toVec()
+                vec
 
 
-arg:
-    "LowerId" "=" expr
-    expr
+arg Named[Expr]:
+    name="LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name.text)), node = expr)
+
+    expr=expr:
+        Named(name = Option.None, node = expr)
 
 
-simpleExpr:
+simpleExpr Expr:
     # Variables
-    "LowerId" tyArgs?
+    "LowerId" tyArgs?:
+        panic("TODO")
 
+#|
     # Constructor selection, or sequence
     upperIdPath tyArgs? (_"." sequence)?
 

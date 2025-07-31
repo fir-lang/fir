@@ -465,11 +465,7 @@ type AssocFnSelectExpr:
 
 type CallExpr:
     fun: Expr
-    args: Vec[CallArg]
-
-type CallArg:
-    name: Option[Id]
-    expr: Expr
+    args: Vec[Named[Expr]]
 
 type IntExpr:
     ## The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
@@ -537,7 +533,7 @@ type Alt:
 type IfExpr:
     # At least one element
     branches: Vec[(guard: Expr, body: Vec[Stmt])]
-    else_branch: Option[Vec[Stmt]]
+    elseBranch: Option[Vec[Stmt]]
 
 type FnExpr:
     sig: FunSig
@@ -601,3 +597,19 @@ type ExprPrefix:
     Tilde
     Minus
     Not
+
+type InlineExprCont:
+    BinOp:
+        op: BinOp
+        rhs: Expr
+
+    Is:
+        pat: Pat
+
+type ExprSuffix:
+    Field:
+        field: Id
+        tyArgs: Vec[Type]
+
+    Args:
+        args: Vec[Named[Expr]]
