@@ -627,14 +627,29 @@ importDecl ImportDecl:
 # Top-level functions
 
 topFunDecl FunDecl:
-    "prim" topFunSig "NEWLINE":
-        panic("TODO")
+    "prim" sig=topFunSig "NEWLINE":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.None,
+        )
 
-    topFunSig ":" "NEWLINE" "INDENT" stmt+ "DEDENT":
-        panic("TODO")
+    sig=topFunSig ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.Some(body),
+        )
 
-    topFunSig ":" inlineExpr "NEWLINE":
-        panic("TODO")
+    sig=topFunSig ":" body=inlineExpr "NEWLINE":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.Some(Vec.[Stmt.Expr(body)]),
+        )
 
 
 topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):

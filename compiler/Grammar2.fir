@@ -2654,12 +2654,18 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         let nonTerminalResult = topFunSig(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let sig = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            FunDecl(
+                parentTy = sig.parentTy,
+                name = sig.name,
+                sig = sig.sig,
+                body = Option.None,
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2672,6 +2678,7 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         let nonTerminalResult = topFunSig(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let sig = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Colon, ..)):
             cursor += 1
         else:
@@ -2684,14 +2691,18 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let body = Vec.empty()
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let body = nonTerminalResult.tree
+        let body = Vec.empty()
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
+                body.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -2706,7 +2717,12 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            FunDecl(
+                parentTy = sig.parentTy,
+                name = sig.name,
+                sig = sig.sig,
+                body = Option.Some(body),
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2719,6 +2735,7 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         let nonTerminalResult = topFunSig(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let sig = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Colon, ..)):
             cursor += 1
         else:
@@ -2726,12 +2743,18 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         let nonTerminalResult = inlineExpr(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let body = nonTerminalResult.tree
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            FunDecl(
+                parentTy = sig.parentTy,
+                name = sig.name,
+                sig = sig.sig,
+                body = Option.Some(Vec.[Stmt.Expr(body)]),
+            )
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
