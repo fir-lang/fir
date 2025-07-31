@@ -308,7 +308,7 @@ unnamedFields Vec[Type]:
 
 expr Expr:
     e=inlineExpr: e
-    # e=blockExpr: e
+    e=blockExpr: e
 
 
 # Inline expressions don't end with a NEWLINE or DEDENT.
@@ -318,11 +318,12 @@ inlineExpr Expr:
     #     panic("TODO")
 
 
-#|
 # Block expressions include an indented block and always end with DEDENT.
-blockExpr:
-    "match" inlineExpr _":" _"NEWLINE" _"INDENT" matchAlt+ _"DEDENT"
+blockExpr Expr:
+    "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
+        panic("TODO")
 
+#|
     "if" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
         ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
         ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
@@ -428,52 +429,61 @@ tyArgs Vec[Type]:
         ts
 
 
+parenExpr Named[Expr]:
+    name="LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name.text)), node = expr)
+
+    expr=expr:
+        Named(name = Option.None, node = expr)
+
+
+exprPrefix ExprPrefix:
+    "~": ExprPrefix.Tilde
+    "-": ExprPrefix.Minus
+    "not": ExprPrefix.Not
+
+
+binOp BinOp:
+    "+": BinOp.Add
+    "-": BinOp.Subtract
+    "*": BinOp.Multiply
+    "/": BinOp.Divide
+    "==": BinOp.Equal
+    "!=": BinOp.NotEqual
+    "and": BinOp.And
+    "or": BinOp.Or
+    "|": BinOp.BitOr
+    "&": BinOp.BitAnd
+    ">": BinOp.Gt
+    ">>": BinOp.RightShift
+    ">=": BinOp.GtEq
+    "<": BinOp.Lt
+    "<<": BinOp.LeftShift
+    "<=": BinOp.LtEq
+
+
+matchAlt Alt:
+    pat=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Alt(
+            pattern = pat,
+            guard = guard,
+            rhs = body,
+        )
+
+    pat=pat guard=altGuard? ":" body=stmt:
+        Alt(
+            pattern = pat,
+            guard = guard,
+            rhs = Vec.[body],
+        )
+
+
+altGuard Expr:
+    "if" expr=expr:
+        expr
+
+
 #|
-parenExpr:
-    "LowerId" "=" expr
-    expr
-
-
-exprPrefix:
-    "~"
-    "-"
-    "not"
-
-
-binOp:
-    "+"
-    "-"
-    "*"
-    "/"
-    "=="
-    "!="
-    "and"
-    "or"
-    "|"
-    "&"
-    "/"
-    ">"
-    ">>"
-    ">="
-    "<"
-    "<<"
-    "<="
-
-
-matchAlt:
-    pat altGuard? _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
-    pat altGuard? _":" stmt
-
-
-altGuard:
-    "if" expr
-
-
-matchRhs:
-    _"NEWLINE" _"INDENT" blockExpr
-    inlineExpr
-
-
 fnArgs:
     "LowerId" (_":" type_)? ("," "LowerId" (_":" type_)?)* _","?
 
@@ -520,18 +530,27 @@ stmt Stmt:
     #         body = body,
     #     ))
 
-#|
-    inlineExpr stmtExprCont?
+    lhs=inlineExpr rhs=stmtExprCont:
+        match rhs:
+            Option.None:
+                Stmt.Expr(lhs)
 
-    blockExpr
+            Option.Some((op, rhs)):
+                Stmt.Assign(AssignStmt(lhs = lhs, rhs = rhs, op = op))
+
+    expr=blockExpr:
+        Stmt.Expr(expr)
 
 
+stmtExprCont Option[(op: AssignOp, rhs: Expr)]:
+    "NEWLINE":
+        Option.None
 
-stmtExprCont:
-    _"NEWLINE"
-    assignOp blockExpr
-    assignOp inlineExpr _"NEWLINE"
-|#
+    op=assignOp expr=blockExpr:
+        Option.Some((op = op, rhs = expr))
+
+    op=assignOp expr=inlineExpr "NEWLINE":
+        Option.Some((op = op, rhs = expr))
 
 
 loopLabel Id:
@@ -543,8 +562,8 @@ letRhs Expr:
     expr=inlineExpr _"NEWLINE":
         expr
 
-    # expr=blockExpr:
-    #     expr
+    expr=blockExpr:
+        expr
 
 
 assignOp AssignOp:

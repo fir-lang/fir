@@ -593,3 +593,11 @@ impl Eq[BinOp]:
             (left = BinOp.RightShift, right = BinOp.RightShift): Bool.True
             (left = BinOp.Subtract, right = BinOp.Subtract): Bool.True
             _: Bool.False
+
+# --------------------------------------------------------------------------------------------------
+# Used in the parser, not AST
+
+type ExprPrefix:
+    Tilde
+    Minus
+    Not
