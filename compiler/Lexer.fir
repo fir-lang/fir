@@ -268,12 +268,12 @@ Lexer._next(self) Option[Token] / Error:
         "do" rest if not _isIdContStr(rest):
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.Do, text = "Do", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Do, text = "do", byteIdx, line, col))
 
         "loop" rest if not _isIdContStr(rest):
             self._byteIdx += 4
             self._col += 4
-            return Option.Some(Token(kind = TokenKind.Loop, text = "Loop", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.Loop, text = "loop", byteIdx, line, col))
 
         "row(" _:
             self._byteIdx += 4

@@ -2132,6 +2132,8 @@ pat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: Option[
         let nonTerminalResult = simplePat(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
+        let p0 = nonTerminalResult.tree
+        let ps = Vec.empty()
         loop:
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Pipe, ..)):
@@ -2142,6 +2144,8 @@ pat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: Option[
                 let nonTerminalResult = simplePat(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
+                let p = nonTerminalResult.tree
+                ps.push((p = p))
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -2152,7 +2156,21 @@ pat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: Option[
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
-            panic("TODO")
+            if ps.isEmpty():
+                p0
+            else:
+            
+                let pRet = ps.pop().unwrap().p
+                if ps.isEmpty():
+                    Pat.Or(p0, pRet)
+                else:
+                    let i: U32 = ps.len() - 1
+                    loop:
+                        pRet = Pat.Or(ps.get(i).p, pRet)
+                        if i == 0:
+                            break
+                        i -= 1
+                    Pat.Or(p0, pRet)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
