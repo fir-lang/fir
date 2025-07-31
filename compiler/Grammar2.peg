@@ -327,14 +327,42 @@ blockExpr Expr:
     "if" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
         ("elif" inlineExpr _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")*
         ("else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?
+|#
 
-    "do" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Expr.Do(body)
 
-    "||" returnTy? ":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT"
+    "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = body,
+            idx = 0,
+        ))
 
-    "|" fnArgs? "|" returnTy? ":" _"NEWLINE" _"INDENT" stmt + _"DEDENT"
+
+    "|" args=fnArgs? "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = body,
+            idx = 0,
+        ))
 
 
+#|
 inlineExprCont:
     binOp prefixExpr
     "is" pat
@@ -483,14 +511,18 @@ altGuard Expr:
         expr
 
 
-#|
-fnArgs:
-    "LowerId" (_":" type_)? ("," "LowerId" (_":" type_)?)* _","?
+fnArgs Vec[(name: Id, ty: Option[Type])]:
+    v0="LowerId" ty0=(":" ty=type_)? vs=("," v="LowerId" ty=(":" ty=type_)?)* ","?:
+        let vec: Vec[(name: Id, ty: Option[Type])] =
+            once((name = newId(v0.text), ty = ty0.map(|ty: (ty: Type)|: ty.ty)))
+                .chain(vs.iter().map(|v: (v: Token, ty: Option[(ty: Type)])|: (name = newId(v.v.text), ty = v.ty.map(|ty: (ty: Type)|: ty.ty))))
+                .toVec()
+        vec
 
 
 # --------------------------------------------------------------------------------------------------
 # Statements
-|#
+
 
 stmt Stmt:
     "break" label="label"? "NEWLINE":
