@@ -26,8 +26,7 @@ module(tokens: Vec[Token], cursor: U32) (tree: Vec[TopDecl], newCursor: U32, new
         let nonTerminalResult = topDecl(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let ds = nonTerminalResult.tree
-        let ds = Vec.empty()
+        ds.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = topDecl(tokens, cursor)
@@ -1350,8 +1349,7 @@ typeDeclRhs(tokens: Vec[Token], cursor: U32) (tree: TypeDeclRhs, newCursor: U32,
         let nonTerminalResult = conDecl(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let cs = nonTerminalResult.tree
-        let cs = Vec.empty()
+        cs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = conDecl(tokens, cursor)
@@ -1382,8 +1380,7 @@ typeDeclRhs(tokens: Vec[Token], cursor: U32) (tree: TypeDeclRhs, newCursor: U32,
         let nonTerminalResult = namedField(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let fs = nonTerminalResult.tree
-        let fs = Vec.empty()
+        fs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = namedField(tokens, cursor)
@@ -1526,8 +1523,7 @@ namedFields(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Type)], n
         let nonTerminalResult = namedField(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let fs = nonTerminalResult.tree
-        let fs = Vec.empty()
+        fs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = namedField(tokens, cursor)
@@ -1759,8 +1755,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
         let nonTerminalResult = matchAlt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let alts = nonTerminalResult.tree
-        let alts = Vec.empty()
+        alts.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = matchAlt(tokens, cursor)
@@ -1818,8 +1813,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body0 = nonTerminalResult.tree
-        let body0 = Vec.empty()
+        body0.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -1870,8 +1864,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
                 let nonTerminalResult = stmt(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let body = nonTerminalResult.tree
-                let body = Vec.empty()
+                body.push(nonTerminalResult.tree)
                 loop:
                     let symResult = try(||:
                         let nonTerminalResult = stmt(tokens, cursor)
@@ -1927,8 +1920,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
             let nonTerminalResult = stmt(tokens, cursor)
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
-            let else_ = nonTerminalResult.tree
-            let else_ = Vec.empty()
+            else_.push(nonTerminalResult.tree)
             loop:
                 let symResult = try(||:
                     let nonTerminalResult = stmt(tokens, cursor)
@@ -1997,8 +1989,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -2064,8 +2055,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -2161,8 +2151,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -3784,8 +3773,7 @@ matchAlt(tokens: Vec[Token], cursor: U32) (tree: Alt, newCursor: U32, newErr: Op
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -4192,8 +4180,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -4271,8 +4258,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -4342,8 +4328,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -5200,8 +5185,7 @@ topFunDecl(tokens: Vec[Token], cursor: U32) (tree: FunDecl, newCursor: U32, newE
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let body = nonTerminalResult.tree
-        let body = Vec.empty()
+        body.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
@@ -5675,8 +5659,7 @@ traitDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[FunDecl], newCursor: U3
         let nonTerminalResult = funDecl(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let fs = nonTerminalResult.tree
-        let fs = Vec.empty()
+        fs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = funDecl(tokens, cursor)
@@ -5841,8 +5824,7 @@ implDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[FunDecl], newCursor: U32
         let nonTerminalResult = funDecl(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let funs = nonTerminalResult.tree
-        let funs = Vec.empty()
+        funs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = funDecl(tokens, cursor)
@@ -5965,8 +5947,7 @@ funDeclRhs(tokens: Vec[Token], cursor: U32) (tree: Vec[Stmt], newCursor: U32, ne
         let nonTerminalResult = stmt(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let stmts = nonTerminalResult.tree
-        let stmts = Vec.empty()
+        stmts.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = stmt(tokens, cursor)
