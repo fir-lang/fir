@@ -1,10 +1,13 @@
+import ParseUtils
 import Peg.ParseTree
 import Token
 
 type Terminal = Token
 type NonTerminal = NonTerminal
 
+
 # --------------------------------------------------------------------------------------------------
+
 
 Terminals:
     "LowerId" = Token(kind = TokenKind.LowerId, ..)
@@ -81,6 +84,7 @@ Terminals:
 # --------------------------------------------------------------------------------------------------
 # Top-level declarations
 
+
 module Vec[TopDecl]:
     ds=topDecl+ $: ds
 
@@ -95,6 +99,7 @@ topDecl TopDecl:
 
 # --------------------------------------------------------------------------------------------------
 # Types
+
 
 type_ Type:
     t=namedType: Type.Named(t)
@@ -229,6 +234,7 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 # --------------------------------------------------------------------------------------------------
 # Type declarations
 
+
 typeDecl TypeDecl:
     "type" name="UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=typeDeclRhs "DEDENT":
         TypeDecl(
@@ -305,6 +311,7 @@ unnamedFields Vec[Type]:
 
 # --------------------------------------------------------------------------------------------------
 # Expressions
+
 
 expr Expr:
     e=inlineExpr: e
@@ -491,23 +498,57 @@ simpleExpr Expr:
     seq=sequence:
         seq
 
-#|
-    "return" inlineExpr?
+    "return" expr=inlineExpr?:
+        Expr.Return(match expr:
+            Option.None: Expr.Record(Vec.empty())
+            Option.Some(expr): expr)
 
-    "||" returnTy? ":" inlineExpr
+    "||" ret=returnTy? ":" body=inlineExpr:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = Vec.[Stmt.Expr(body)],
+            idx = 0,
+        ))
 
-    "|" fnArgs? "|" returnTy? ":" inlineExpr
+    "|" args=fnArgs? "|" ret=returnTy? ":" body=inlineExpr:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = Vec.[Stmt.Expr(body)],
+            idx = 0,
+        ))
 
-    "Int"
-    "HexInt"
-    "BinInt"
-    "Str"
-    "Char"
-|#
+    "Int":
+        panic("TODO")
+
+    "HexInt":
+        panic("TODO")
+
+    "BinInt":
+        panic("TODO")
+
+    "Str":
+        panic("TODO")
+
+    "Char":
+        panic("TODO")
 
 
 sequence Expr:
-    "[" "]": 
+    "[" "]":
         Expr.Seq(ty = Option.None, elems = Vec.empty())
 
     "[" e0=seqElem es=("," e=seqElem)* ","? "]":
@@ -806,6 +847,7 @@ importDecl ImportDecl:
 
 # --------------------------------------------------------------------------------------------------
 # Top-level functions
+
 
 topFunDecl FunDecl:
     "prim" sig=topFunSig "NEWLINE":

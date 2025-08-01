@@ -476,8 +476,7 @@ type IntExpr:
     ## will be done based on the inferred type of the integer.
     text: Str
 
-    ## Suffix of the integer. Initially as parsed. If not available, the type checker updates this
-    ## based on the inferred type of the integer.
+    ## The type checker updates this based on the inferred type of the integer.
     suffix: Option[IntKind]
 
     radix: U32
@@ -591,27 +590,3 @@ impl Eq[BinOp]:
             (left = BinOp.RightShift, right = BinOp.RightShift): Bool.True
             (left = BinOp.Subtract, right = BinOp.Subtract): Bool.True
             _: Bool.False
-
-# --------------------------------------------------------------------------------------------------
-# Used in the parser, not AST
-
-type ExprPrefix:
-    Tilde
-    Minus
-    Not
-
-type InlineExprCont:
-    BinOp:
-        op: BinOp
-        rhs: Expr
-
-    Is:
-        pat: Pat
-
-type ExprSuffix:
-    Field:
-        field: Id
-        tyArgs: Vec[Type]
-
-    Args:
-        args: Vec[Named[Expr]]
