@@ -475,6 +475,11 @@ arg Named[Expr]:
 
 
 simpleExpr Expr:
+    # TODO: This will every time we parse a constructor selection as it needs to try `Con.[...]`
+    # first.
+    seq=sequence:
+        seq
+
     # Variables
     var_="LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
@@ -494,10 +499,6 @@ simpleExpr Expr:
                 Expr.Record(Vec.empty())
             Option.Some(fields):
                 Expr.Record(Vec.empty())
-
-
-    seq=sequence:
-        seq
 
     "return" expr=inlineExpr?:
         Expr.Return(match expr:
@@ -606,13 +607,18 @@ simpleExpr Expr:
 
 
 sequence Expr:
+    ty=(ty=type_ ".")? elems=seqElems:
+        Expr.Seq(ty = ty.map(|ty: (ty: Type)|: ty.ty), elems = elems)
+
+
+seqElems Vec[(key: Option[Expr], value: Expr)]:
     "[" "]":
-        Expr.Seq(ty = Option.None, elems = Vec.empty())
+        Vec.empty()
 
     "[" e0=seqElem es=("," e=seqElem)* ","? "]":
         let vec: Vec[(key: Option[Expr], value: Expr)] =
             once(e0).chain(es.iter().map(|e: (e: (key: Option[Expr], value: Expr))|: e.e)).toVec()
-        Expr.Seq(ty = Option.None, elems = vec)
+        vec
 
 
 seqElem (key: Option[Expr], value: Expr):
