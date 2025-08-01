@@ -174,8 +174,8 @@ main():
 # Result.Ok(['a','b'])
 # # One or more --------------------------------------------
 # Result.Err(unexpected token or end of input at cursor 0)
-# Result.Ok([])
-# Result.Ok(['b'])
+# Result.Ok(['a'])
+# Result.Ok(['a','b'])
 # # Group --------------------------------------------------
 # Result.Ok([a,b])
 # # Optional -----------------------------------------------
@@ -183,5 +183,5 @@ main():
 # Result.Ok(Option.None)
 # # Complex group ------------------------------------------
 # aVec = [LowerId(1:3:"a"),LowerId(1:5:"a")]
-# bVec = [LowerId(1:9:"b"),LowerId(1:11:"b")]
+# bVec = [LowerId(1:7:"b"),LowerId(1:9:"b"),LowerId(1:11:"b")]
 # cOpt = Option.Some(LowerId(1:13:"c"))
