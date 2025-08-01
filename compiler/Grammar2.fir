@@ -2827,12 +2827,25 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr:
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Int, ..)):
+        let int = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Int, ..)):
+            let sym = tokens.get(cursor)
             cursor += 1
+            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            let text = int.text
+            let intStr = StrBuf.withCapacity(text.len())
+            for char: Char in text.chars():
+                if char == '_':
+                    continue
+                intStr.push(char)
+            Expr.Int(IntExpr(
+                text = intStr.toStr(),
+                suffix = Option.None,
+                radix = 10,
+                parsed = 0,
+            ))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2842,12 +2855,28 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr:
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.HexInt, ..)):
+        let int = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.HexInt, ..)):
+            let sym = tokens.get(cursor)
             cursor += 1
+            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            let text = int.text
+            if not text.startsWith("0x"):
+                panic("Bug in int lexer")
+            let text = text.substr(2, text.len())
+            let intStr = StrBuf.withCapacity(text.len())
+            for char: Char in text.chars():
+                if char == '_':
+                    continue
+                intStr.push(char)
+            Expr.Int(IntExpr(
+                text = intStr.toStr(),
+                suffix = Option.None,
+                radix = 16,
+                parsed = 0,
+            ))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2857,12 +2886,28 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr:
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.BinInt, ..)):
+        let int = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.BinInt, ..)):
+            let sym = tokens.get(cursor)
             cursor += 1
+            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            let text = int.text
+            if not text.startsWith("0b"):
+                panic("Bug in int lexer")
+            let text = text.substr(2, text.len())
+            let intStr = StrBuf.withCapacity(text.len())
+            for char: Char in text.chars():
+                if char == '_':
+                    continue
+                intStr.push(char)
+            Expr.Int(IntExpr(
+                text = intStr.toStr(),
+                suffix = Option.None,
+                radix = 2,
+                parsed = 0,
+            ))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

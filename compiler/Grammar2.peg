@@ -531,14 +531,71 @@ simpleExpr Expr:
             idx = 0,
         ))
 
-    "Int":
-        panic("TODO")
+    int="Int":
+        let text = int.text
 
-    "HexInt":
-        panic("TODO")
+        let intStr = StrBuf.withCapacity(text.len())
 
-    "BinInt":
-        panic("TODO")
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 10,
+            parsed = 0,
+        ))
+
+    int="HexInt":
+        let text = int.text
+    
+        # TODO: Make this an assertion
+        if not text.startsWith("0x"):
+            panic("Bug in int lexer")
+
+        let text = text.substr(2, text.len())
+
+        let intStr = StrBuf.withCapacity(text.len())
+
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 16,
+            parsed = 0,
+        ))
+
+    int="BinInt":
+        let text = int.text
+    
+        # TODO: Make this an assertion
+        if not text.startsWith("0b"):
+            panic("Bug in int lexer")
+
+        let text = text.substr(2, text.len())
+
+        let intStr = StrBuf.withCapacity(text.len())
+
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 2,
+            parsed = 0,
+        ))
 
     "Str":
         panic("TODO")
