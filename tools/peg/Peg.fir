@@ -642,9 +642,7 @@ generateSymbolParser(
                     SymbolCont.Push(local)
 
                 SymbolCont.Push(local):
-                    # I think this can only happen in strange symbols like `symbol**`.
-                    # For now ignore this case.
-                    panic("")
+                    cont
 
                 SymbolCont.PushToParseTree(local):
                     # `symbol*` without a binder and semantic action.
@@ -709,9 +707,7 @@ generateSymbolParser(
                     SymbolCont.Push(local)
 
                 SymbolCont.Push(local):
-                    # I think this can only happen in strange symbols like `symbol**`.
-                    # For now ignore this case.
-                    panic("")
+                    cont
 
                 SymbolCont.PushToParseTree(local):
                     # `symbol*` without a binder and semantic action.
@@ -721,9 +717,9 @@ generateSymbolParser(
                     # `_"foo"*`.
                     SymbolCont.Ignore
 
-            doc + generateSymbolParser(symbol, terminalPats, cont)
+            doc + generateSymbolParser(symbol, terminalPats, symbolCont)
                 + Doc.hardLine()
-                + generateSymbolParser(Symbol.ZeroOrMore(symbol), terminalPats, cont)
+                + generateSymbolParser(Symbol.ZeroOrMore(symbol), terminalPats, symbolCont)
 
         Symbol.Optional(symbol):
             let optionalRecordDoc = match cont:

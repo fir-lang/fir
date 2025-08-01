@@ -627,8 +627,7 @@ semanticActionOneOrMore(tokens: Vec[Token], cursor: U32) (tree: Vec[Char], newCu
         let nonTerminalResult = semanticActionSimple(tokens, cursor)
         cursor = nonTerminalResult.newCursor
         curErr = nonTerminalResult.newErr
-        let cs = nonTerminalResult.tree
-        let cs = Vec.empty()
+        cs.push(nonTerminalResult.tree)
         loop:
             let symResult = try(||:
                 let nonTerminalResult = semanticActionSimple(tokens, cursor)
@@ -759,13 +758,11 @@ semanticActionComplex(tokens: Vec[Token], cursor: U32) (tree: (aVec: Vec[Token],
                     cursor = ok.cursor
                     curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let bVec = Vec.empty()
-        let bVec = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
-            let sym = tokens.get(cursor)
+        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
+            bVec.push(tokens.get(cursor))
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let bVec = Vec.empty()
         loop:
             let symResult = try(||:
                 if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, text = "b", ..)):
