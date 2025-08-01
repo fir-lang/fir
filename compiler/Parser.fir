@@ -39,12 +39,12 @@ main(args: Array[Str]):
     if result.newCursor != tokens.len():
         print("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
 
-    if printAst:
-        let buf = StrBuf.withCapacity(1_000_000)
-        for topDecl: ParseTree[Token, NonTerminal] in result.tree.asNonTerminal(NonTerminal.Module).iter():
-            topDecl.toDoc().renderToBuf(80, buf)
-            print(buf.toStr())
-            buf.clear()
+    # if printAst:
+    #     let buf = StrBuf.withCapacity(1_000_000)
+    #     for topDecl: ParseTree[Token, NonTerminal] in result.tree.asNonTerminal(NonTerminal.Module).iter():
+    #         topDecl.toDoc().renderToBuf(80, buf)
+    #         print(buf.toStr())
+    #         buf.clear()
 
 showUsageAndExit() a:
     panic("USAGE: fir compiler/Parser.fir -- <file> [--print]")
