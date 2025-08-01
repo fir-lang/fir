@@ -755,11 +755,18 @@ stmt Stmt:
             body = body,
         ))
 
-    # label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-    #     Stmt.Loop(LoopStmt(
-    #         label = label,
-    #         body = body,
-    #     ))
+    label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.While(WhileStmt(
+            label = label,
+            cond = Expr.ConstrSelect(Constructor(
+                variant = Bool.False,
+                ty = newId("Bool"),
+                constr = Option.Some(newId("True")),
+                userTyArgs = Vec.empty(),
+                tyArgs = Vec.empty(),
+            )),
+            body = body,
+        ))
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:
