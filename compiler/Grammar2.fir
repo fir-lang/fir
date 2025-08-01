@@ -2305,7 +2305,8 @@ prefixExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr:
             if pfx is Option.Some(pfx):
                 match pfx:
                     ExprPrefix.Tilde:
-                        panic("TODO")
+            
+                        ()
                     ExprPrefix.Minus:
                         ret = Expr.UnOp(UnOpExpr(
                             op = UnOp.Neg,
@@ -2917,12 +2918,14 @@ simpleExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr:
         Result.Ok((value = value, cursor = newCursor, err = newErr)):
             return (tree = value, newCursor = newCursor, newErr = newErr)
     let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Str, ..)):
+        let str = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Str, ..)):
+            let sym = tokens.get(cursor)
             cursor += 1
+            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            panic("TODO")
+            Expr.Str(parseStrParts(str.text))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

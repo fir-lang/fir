@@ -42,3 +42,7 @@ parseCharLit(text: Str) Char:
             other: panic("Unknown escaped character: '\\`other`'")
     else:
         char
+
+
+parseStrParts(text: Str) Vec[StrPart]:
+    Vec.empty() # TODO

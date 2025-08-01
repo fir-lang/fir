@@ -421,7 +421,8 @@ prefixExpr Expr:
         if pfx is Option.Some(pfx):
             match pfx:
                 ExprPrefix.Tilde:
-                    panic("TODO")
+                    # panic("TODO")
+                    () # TODO
 
                 ExprPrefix.Minus:
                     ret = Expr.UnOp(UnOpExpr(
@@ -597,8 +598,8 @@ simpleExpr Expr:
             parsed = 0,
         ))
 
-    "Str":
-        panic("TODO")
+    str="Str":
+        Expr.Str(parseStrParts(str.text))
 
     char="Char":
         Expr.Char(parseCharLit(char.text))
@@ -874,7 +875,6 @@ simplePat Pat:
     str="Str" binder=strPfxBinder?:
         Pat.StrPfx(str.text, binder.flatten())
 
-    # "Char"
     char="Char":
         Pat.Char(parseCharLit(char.text))
 
