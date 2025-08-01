@@ -543,8 +543,8 @@ simpleExpr Expr:
     "Str":
         panic("TODO")
 
-    "Char":
-        panic("TODO")
+    char="Char":
+        Expr.Char(parseCharLit(char.text))
 
 
 sequence Expr:
@@ -819,7 +819,7 @@ simplePat Pat:
 
     # "Char"
     char="Char":
-        panic("TODO")
+        Pat.Char(parseCharLit(char.text))
 
 
 strPfxBinder Option[Id]:
