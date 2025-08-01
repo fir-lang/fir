@@ -1,3 +1,6 @@
+import Compiler.Ast
+
+
 type ExprPrefix:
     Tilde
     Minus
@@ -46,3 +49,7 @@ parseCharLit(text: Str) Char:
 
 parseStrParts(text: Str) Vec[StrPart]:
     Vec.empty() # TODO
+
+
+newId(name: Str) Id:
+    Id(name)
