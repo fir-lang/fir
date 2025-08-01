@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: f5d9a6472934e524738afb1dcbcefcdea48a45e7427dc18cfb132977e022d863
+// sha3: 77a04dcf21eadbca7099dae0e6209cc7a811f8b32ac9da63a53da670234d2194
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -47710,7 +47710,7 @@ fn __action108<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr 
 fn __action109<'a>(module: &'a Rc<str>, (_, int, _): (Loc, Token, Loc)) -> Expr {
     {
         debug_assert!(int.text.starts_with("0b"));
-        let token_str = &int.text["0x".len()..];
+        let token_str = &int.text["0b".len()..];
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.

@@ -777,7 +777,7 @@ InlineExpr: Expr = {
 
     <int:BinIntLit> => {
         debug_assert!(int.text.starts_with("0b"));
-        let token_str = &int.text["0x".len()..];
+        let token_str = &int.text["0b".len()..];
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
