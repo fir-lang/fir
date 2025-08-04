@@ -387,12 +387,6 @@ type VarExpr:
     ## Inferred type arguments of the variable. Filled in by the type checker.
     tyArgs: Vec[Type]
 
-type ConstrExpr:
-    id: Id
-
-    ## Inferred type arguments of the constructor. Filled by the type checker.
-    tyArgs: Vec[Type]
-
 type FieldSelectExpr:
     object: Expr
 
@@ -517,10 +511,6 @@ type BinOp:
 type UnOpExpr:
     op: UnOp
     expr: Expr
-
-type VariantExpr:
-    id: Id
-    args: Vec[Named[Expr]]
 
 type MatchExpr:
     scrutinee: Expr
