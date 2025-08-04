@@ -66,27 +66,44 @@ genTree(typeDecl: TypeDecl) Doc:
 
     Doc.nested(
         4,
-        Doc.str("impl") + preds + Doc.str(" Eq[") + typeNameDoc + typeParamsDoc + Doc.str("]:") + Doc.hardLine()
+        Doc.str("impl")
+            + preds
+            + Doc.str(" Eq[")
+            + typeNameDoc
+            + typeParamsDoc
+            + Doc.str("]:")
+            + Doc.hardLine()
             + Doc.nested(
                 4,
-                Doc.str("__eq(self: ") + typeNameDoc + Doc.str(", other: ") + typeNameDoc + Doc.str(") Bool:") + Doc.hardLine()
+                Doc.str("__eq(self: ")
+                    + typeNameDoc
+                    + typeParamsDoc
+                    + Doc.str(", other: ")
+                    + typeNameDoc
+                    + typeParamsDoc
+                    + Doc.str(") Bool:")
+                    + Doc.hardLine()
                     + methodBody))
 
 genSumAlts(typeName: Str, decls: Vec[ConDecl]) Doc:
-    let doc = Doc.empty()
+    let alts = Doc.empty()
     let i = u32(0)
     for conDecl: ConDecl in decls.iter():
         if i != 0:
-            doc += Doc.hardLine()
+            alts += Doc.hardLine()
         i += 1
         let l = genConPat('l', typeName, conDecl)
         let r = genConPat('r', typeName, conDecl)
         let pat = makeLRRecord(l, r)
-        doc += Doc.nested(
+        alts += Doc.nested(
                 4,
                 pat + Doc.char(':') + Doc.hardLine()
                     + genSumRhs(typeName, conDecl))
-    doc
+    Doc.nested(
+        4,
+        Doc.str("match (l = self, r = other):")
+            + Doc.hardLine()
+            + alts)
 
 genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl) Doc:
     let fieldPats = match conDecl.fields:
@@ -99,11 +116,23 @@ genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl) Doc:
         ConFields.Unnamed(fields):
             genUnnamedFieldPats(varPrefix, fields)
 
-    Doc.str(typeName) + Doc.char('.') + Doc.str(conDecl.name.name) + Doc.char('(') + fieldPats + Doc.char(')')
+    Doc.str(typeName)
+        + Doc.char('.')
+        + Doc.str(conDecl.name.name)
+        + Doc.char('(')
+        + fieldPats
+        + Doc.char(')')
 
 genNamedFieldPats(varPrefix: Char, fields: Vec[(name: Id, ty: Type)]) Doc:
-    # TODO
-    Doc.empty()
+    let doc = Doc.empty()
+    for i: U32 in range(u32(0), fields.len()):
+        if i != 0:
+            doc += Doc.str(", ")
+        doc += Doc.str(fields.get(i).name.name)
+            + Doc.str(" = ")
+            + Doc.char(varPrefix)
+            + Doc.str(i.toStr())
+    doc
 
 genUnnamedFieldPats(varPrefix: Char, fields: Vec[Type]) Doc:
     let doc = Doc.empty()
@@ -190,9 +219,9 @@ type Option[t]:
     print("")
 
     gen("\
-type Result[e, r]:
-    Ok(r)
-    Err(e)")
+type Result[e, t]:
+    Err(e)
+    Ok(t)")
 
     print("")
 
@@ -210,22 +239,34 @@ type Token:
     line: U32
     col: U32")
 
+    print("")
+
+    gen("\
+type Foo:
+    A:
+        x: U32
+    B:
+        y: Str
+        z: Bool")
+
 # args: -iPeg=tools/peg -iCompiler=compiler
 # args after: -- --test
 # expected stdout:
 # impl[Eq[t]] Eq[Option[t]]:
-#     __eq(self: Option, other: Option) Bool:
-#         (l = Option.None, r = Option.None):
-#             Bool.True
-#         (l = Option.Some(l0), r = Option.Some(r0)):
-#             l0 == r0
+#     __eq(self: Option[t], other: Option[t]) Bool:
+#         match (l = self, r = other):
+#             (l = Option.None, r = Option.None):
+#                 Bool.True
+#             (l = Option.Some(l0), r = Option.Some(r0)):
+#                 l0 == r0
 # 
-# impl[Eq[e], Eq[r]] Eq[Result[e, r]]:
-#     __eq(self: Result, other: Result) Bool:
-#         (l = Result.Ok(l0), r = Result.Ok(r0)):
-#             l0 == r0
-#         (l = Result.Err(l0), r = Result.Err(r0)):
-#             l0 == r0
+# impl[Eq[e], Eq[t]] Eq[Result[e, t]]:
+#     __eq(self: Result[e, t], other: Result[e, t]) Bool:
+#         match (l = self, r = other):
+#             (l = Result.Err(l0), r = Result.Err(r0)):
+#                 l0 == r0
+#             (l = Result.Ok(l0), r = Result.Ok(r0)):
+#                 l0 == r0
 # 
 # impl Eq[Char]:
 #     __eq(self: Char, other: Char) Bool:
@@ -238,3 +279,11 @@ type Token:
 #             && self.byteIdx == other.byteIdx
 #             && self.line == other.line
 #             && self.col == other.col
+# 
+# impl Eq[Foo]:
+#     __eq(self: Foo, other: Foo) Bool:
+#         match (l = self, r = other):
+#             (l = Foo.A(x = l0), r = Foo.A(x = r0)):
+#                 l0 == r0
+#             (l = Foo.B(y = l0, z = l1), r = Foo.B(y = r0, z = r1)):
+#                 l0 == r0 && l1 == r1

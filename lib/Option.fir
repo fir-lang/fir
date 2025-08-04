@@ -10,6 +10,14 @@ impl[ToStr[t]] ToStr[Option[t]]:
 
 impl[Eq[t]] Eq[Option[t]]:
     __eq(self: Option[t], other: Option[t]) Bool:
+        match (l = self, r = other):
+            (l = Option.None, r = Option.None):
+                Bool.True
+            (l = Option.Some(l0), r = Option.Some(r0)):
+                l0 == r0
+
+impl[Eq[t]] Eq[Option[t]]:
+    __eq(self: Option[t], other: Option[t]) Bool:
         match (left = self, right = other):
             (left = Option.None, right = Option.None): Bool.True
             (left = Option.Some(left), right = Option.Some(right)): left == right
