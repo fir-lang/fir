@@ -382,7 +382,7 @@ Lexer._next(self) Option[Token] / Error:
         "^=" _:
             self._byteIdx += 2
             self._col += 2
-            return Option.Some(Token(kind = TokenKind.CaretEq, text = "*=", byteIdx, line, col))
+            return Option.Some(Token(kind = TokenKind.CaretEq, text = "^=", byteIdx, line, col))
 
         "+" _:
             self._byteIdx += 1
