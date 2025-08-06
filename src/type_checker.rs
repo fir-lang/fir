@@ -94,7 +94,7 @@ pub fn check_module(module: &mut ast::Module, fir_root: &str) -> PgmTypes {
         let def = &file_contents
             [ty_decl_loc.byte_offset_start as usize..ty_decl_loc.byte_offset_end as usize];
         println!("---------------------------------");
-        println!("{}", def);
+        println!("{def}");
         println!("Generated code:");
         let macro_pgm = macro_runner.get_macro_runner(&pragma.args[0]);
         let mut output = Vec::new();

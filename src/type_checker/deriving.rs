@@ -47,7 +47,7 @@ impl DeriveMacroRunner {
     }
 
     fn load_macro(&mut self, macro_: &Id) -> InterpretedPgm {
-        let path = format!("compiler/Derive{}.fir", macro_);
+        let path = format!("compiler/Derive{macro_}.fir");
 
         let file_path = std::path::Path::new(&path); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
