@@ -340,7 +340,7 @@ mod wasm {
         import_path.insert("Fir".to_string(), "fir/lib".to_string());
         let mut module = import_resolver::resolve_imports(&import_path, "", module, true);
 
-        type_checker::check_module(&mut module, "fir/lib".to_string());
+        type_checker::check_module(&mut module, "fir/lib");
 
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
