@@ -130,12 +130,7 @@ mod native {
         }
 
         let fir_root = match std::env::var("FIR_ROOT") {
-            Ok(fir_root) => {
-                let mut path = std::path::PathBuf::new();
-                path.push(fir_root);
-                path.push("lib");
-                path.to_string_lossy().to_string()
-            }
+            Ok(fir_root) => fir_root,
             Err(_) => {
                 eprintln!("Fir uses FIR_ROOT environment variable to find standard libraries.");
                 eprintln!("Please set FIR_ROOT to Fir git repo root.");
@@ -143,9 +138,14 @@ mod native {
             }
         };
 
-        let old_fir_root = opts
-            .import_paths
-            .insert("Fir".to_string(), fir_root.clone());
+        let fir_lib_root = {
+            let mut path = std::path::PathBuf::new();
+            path.push(&fir_root);
+            path.push("lib");
+            path.to_string_lossy().to_string()
+        };
+
+        let old_fir_root = opts.import_paths.insert("Fir".to_string(), fir_lib_root);
         if old_fir_root.is_some() {
             eprintln!("WARNING: Fir root specified multiple times. Using {fir_root} as root.");
         }

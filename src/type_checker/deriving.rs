@@ -57,7 +57,12 @@ impl DeriveMacroRunner {
             crate::parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
 
         let mut import_paths: Map<String, String> = Default::default();
-        import_paths.insert("Fir".to_string(), self.fir_root.clone());
+        import_paths.insert("Fir".to_string(), format!("{}/lib", self.fir_root));
+        import_paths.insert(
+            "Compiler".to_string(),
+            format!("{}/compiler", self.fir_root),
+        );
+        import_paths.insert("Peg".to_string(), format!("{}/tools/peg", self.fir_root));
 
         let mut module = crate::import_resolver::resolve_imports(
             &import_paths,
