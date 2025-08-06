@@ -3,46 +3,28 @@ type Str:
     # UTF-8 encoding of the string.
     _bytes: Array[U8]
 
-    # Where the string starts in `bytes`.
-    _start: U32
-
-    # Length of the encoding.
-    _len: U32
-
 # Copies the bytes, does not validate UTF-8.
 Str.fromUtf8Vec(bytes: Vec[U8]) Str:
     let copied = Array.new(bytes.len())
     for i: U32 in range(u32(0), bytes.len()):
         copied.set(i, bytes.get(i))
-    Str(_bytes = copied, _start = 0, _len = copied.len())
+    Str(_bytes = copied)
 
 # UTF-8 encoding size of the string.
-Str.len(self) U32 = self._len
+Str.len(self) U32: self._bytes.len()
 
-Str.isEmpty(self) Bool = self.len() == 0
+Str.isEmpty(self) Bool: self.len() == 0
 
+# TODO: This should check that `byteStart` and `byteEnd` are on character boundaries.
 Str.substr(self, byteStart: U32, byteEnd: U32) Str:
-    if byteStart > self.len():
-        panic("Str.substr: byteStart (`byteStart`) > len (`self.len()`)")
-
-    if byteEnd > self.len():
-        panic("Str.substr: byteEnd (`byteEnd`) > len (`self.len()`)")
-
-    if byteStart > byteEnd:
-        panic("Str.substr: byteStart (`byteStart`) > byteEnd (`byteEnd`)")
-
-    Str(
-        _bytes = self._bytes,
-        _start = self._start + byteStart,
-        _len = byteEnd - byteStart,
-    )
+    Str(_bytes = self._bytes.slice(byteStart, byteEnd))
 
 Str.startsWith(self, prefix: Str) Bool:
     if self.len() < prefix.len():
         return Bool.False
 
     for i in range(u32(0), prefix.len()):
-        if self._bytes.get(self._start + i) != prefix._bytes.get(prefix._start + i):
+        if self._bytes.get(i) != prefix._bytes.get(i):
             return Bool.False
 
     Bool.True
@@ -50,7 +32,6 @@ Str.startsWith(self, prefix: Str) Bool:
 # Get the character at given byte index. Panics if the byte is not a first byte of a UTF-8
 # code point.
 Str.charAt(self, byteIndex: U32) Char:
-    byteIndex += self._start
     let byte = self._bytes.get(byteIndex)
 
     if byte < 128:
@@ -80,11 +61,7 @@ Str.charAt(self, byteIndex: U32) Char:
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
 Str.chars(self) CharIter:
-    CharIter(
-        _bytes = self._bytes,
-        _idx = self._start,
-        _end = self._start + self._len,
-    )
+    CharIter(_bytes = self._bytes, _idx = 0)
 
 Str.charIndices(self) CharIndices:
     CharIndices(_str = self, _idx = 0)
@@ -101,7 +78,7 @@ impl Eq[Str]:
             return Bool.False
 
         for i in range(u32(0), self.len()):
-            if self._bytes.get(i + self._start) != other._bytes.get(i + other._start):
+            if self._bytes.get(i) != other._bytes.get(i):
                 return Bool.False
 
         Bool.True
@@ -109,8 +86,7 @@ impl Eq[Str]:
 impl Hash[Str]:
     hash(self: Str) U32:
         let hash: U32 = 2166136261
-        for byteIdx: U32 in range(self._start, self._start + self._len):
-            let byte = self._bytes.get(byteIdx)
+        for byte: U8 in self._bytes.iter():
             hash *= 16777619
             hash ^= byte.asU32()
         hash
@@ -125,20 +101,13 @@ type CharIter:
     # Current index into `_bytes`.
     _idx: U32
 
-    # End index.
-    _end: U32
-
 # Get the slice of the original string, starting from the current iteration point.
 CharIter.asStr(self) Str:
-    Str(
-        _bytes = self._bytes,
-        _start = self._idx,
-        _len = self._end - self._idx
-    )
+    Str(_bytes = self._bytes.slice(self._idx, self._bytes.len()))
 
 impl Iterator[CharIter, Char, exn]:
     next(self: CharIter) Option[Char] / exn:
-        if self._idx == self._end:
+        if self._idx == self._bytes.len():
             return Option.None
 
         let char = _charAt(self._bytes, self._idx)

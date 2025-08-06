@@ -8,6 +8,14 @@ impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
             Result.Err(e): "Result.Err(`e`)"
             Result.Ok(t): "Result.Ok(`t`)"
 
+impl[Eq[e], Eq[t]] Eq[Result[e, t]]:
+    __eq(self: Result[e, t], other: Result[e, t]) Bool:
+        match (l = self, r = other):
+            (l = Result.Err(l0), r = Result.Err(r0)):
+                l0 == r0
+            (l = Result.Ok(l0), r = Result.Ok(r0)):
+                l0 == r0
+
 Result.map(self: Result[e, t], f: Fn(t) t2 / exn) Result[e, t2] / exn:
     match self:
         Result.Ok(val): Result.Ok(f(val))
@@ -34,11 +42,7 @@ Result.unwrapOrElse(self: Result[e, t], f: Fn(e) t / exn) t / exn:
         Result.Err(err): f(err)
 
 Result.isOk(self: Result[e, t]) Bool:
-    match self:
-        Result.Ok(_): Bool.True
-        Result.Err(_): Bool.False
+    self is Result.Ok(_)
 
 Result.isErr(self: Result[e, t]) Bool:
-    match self:
-        Result.Ok(_): Bool.False
-        Result.Err(_): Bool.True
+    self is Result.Err(_)

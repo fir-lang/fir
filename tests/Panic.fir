@@ -1,4 +1,4 @@
-optionInt() Option[I32] = Option.Some(123)
+optionInt() Option[I32]: Option.Some(123)
 
 main():
     match optionInt():

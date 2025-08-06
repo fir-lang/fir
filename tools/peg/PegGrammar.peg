@@ -1,17 +1,18 @@
 # PEG grammar of PEG grammars.
 
-import Compiler.ParseTree
 import Compiler.Token
+import ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal
 
 Terminals:
-    "lowerId" = Token(kind = TokenKind.LowerId, ..)
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
     "UpperId" = Token(kind = TokenKind.UpperId, ..)
     "Terminals" = Token(kind = TokenKind.UpperId, text = "Terminals", ..)
     "type" = Token(kind = TokenKind.Type, ..)
     "import" = Token(kind = TokenKind.Import, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
     ":" = Token(kind = TokenKind.Colon, ..)
     "INDENT" = Token(kind = TokenKind.Indent, ..)
     "DEDENT" = Token(kind = TokenKind.Dedent, ..)
@@ -25,11 +26,23 @@ Terminals:
     "(" = Token(kind = TokenKind.LParen, ..)
     ")" = Token(kind = TokenKind.RParen, ..)
     "." = Token(kind = TokenKind.Dot, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "$" = Token(kind = TokenKind.Dollar, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
 
+    # For semantic actions:
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    "{" = Token(kind = TokenKind.LBrace, ..)
+    "}" = Token(kind = TokenKind.RBrace, ..)
+    "row(" = Token(kind = TokenKind.LParenRow, ..)
+    "row[" = Token(kind = TokenKind.LBracketRow, ..)
+
 grammar:
-    importDecls typeDecls terminalsDecl nonTerminalDecls
+    importDecls typeDecls terminalsDecl nonTerminalDecls $
 
 importDecls:
     importDecl*
@@ -55,20 +68,25 @@ nonTerminalDecls:
     nonTerminalDecl*
 
 nonTerminalDecl:
-    "lowerId" _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
+    "LowerId" type_? _":" _"NEWLINE" _"INDENT" nonTerminalAlt+ _"DEDENT"
 
 nonTerminalAlt:
-    symbol+ _"NEWLINE"
+    symbol+ nonTerminalRhs
 
 symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
+    "$"
 
 symbolPrefix:
     "-"                 # negative lookahead (fails when symbol succeeds)
     "_"                 # silence, or ignore (don't push match to the tree)
 
+    # Binder: it doesn't make sense to combine these with negative lookahead
+    # and ignore, so we're parsing either a prefix or binder.
+    "LowerId" _"="
+
 symbolNonRec:
-    "lowerId"           # non-terminal
+    "LowerId"           # non-terminal
     "Str"               # terminal
     _"(" symbol+ _")"   # group
 
@@ -76,3 +94,138 @@ symbolSuffix:
     "*"                 # zero or more
     "+"                 # one or more
     "?"                 # optional (zero or one)
+
+nonTerminalRhs:
+    _"NEWLINE"
+    _":" inlineTokenTreeSingle+ _"NEWLINE"
+    _":" _"NEWLINE" _"INDENT" indentedTokenTreeSingle+ _"DEDENT"
+
+# --------------------------------------------------------------------------------------------------
+# Token trees for the semantic action code.
+
+inlineTokenTree:
+    inlineTokenTreeSingle*
+
+inlineTokenTreeSingle:
+    "(" indentedTokenTree ")"
+    "row(" indentedTokenTree ")"
+    "[" indentedTokenTree "]"
+    "row[" indentedTokenTree "]"
+    "{" indentedTokenTree "}"
+    "INDENT" indentedTokenTree "DEDENT"
+    -inlineTokenTreeTerminator "ANY"
+
+inlineTokenTreeTerminator:
+    ")"
+    "]"
+    "}"
+    "DEDENT"
+    "NEWLINE"
+
+indentedTokenTree:
+    indentedTokenTreeSingle*
+
+indentedTokenTreeSingle:
+    "(" indentedTokenTree ")"
+    "row(" indentedTokenTree ")"
+    "[" indentedTokenTree "]"
+    "row[" indentedTokenTree "]"
+    "{" indentedTokenTree "}"
+    "INDENT" indentedTokenTree "DEDENT"
+    -indentedTokenTreeTerminator "ANY"
+
+indentedTokenTreeTerminator:
+    ")"
+    "]"
+    "}"
+    "DEDENT"
+
+# --------------------------------------------------------------------------------------------------
+# Type parser copied from compiler.
+#
+# TODO: We should reuse compiler's parser, or maybe use inline token tree parser?
+# NOTE: The parser below should not ignore any tokens as we serialize it back
+# in the PEG code generator.
+
+type_:
+    namedType
+    "LowerId"
+    recordType
+    variantType
+    fnType
+
+
+# - ()
+# - (x: U32)
+# - (x: U32,)
+# - (x: U32, y: U32)
+# - (x: U32, ..foo)
+# - (..foo)
+recordType:
+    recordTypeStart ")"
+    recordTypeStart ".." "LowerId" ")"
+    recordTypeStart recordTypeField ("," recordTypeField)* recordTypeCont? ")"
+
+
+recordTypeStart:
+    "("
+    "row("
+
+
+recordTypeCont:
+    "," (".." "LowerId")?
+
+
+# - []
+# - [A]
+# - [A,]
+# - [A, B]
+# - [A, ..foo]
+# - [..foo]
+variantType:
+    variantTypeStart "]"
+    variantTypeStart ".." "LowerId" "]"
+    variantTypeStart variantAlt ("," variantAlt)* variantTypeCont? "]"
+
+
+variantTypeStart:
+    "["
+    "row["
+
+
+variantTypeCont:
+    "," (".." "LowerId")?
+
+
+fnType:
+    "Fn" "(" fnArgTys? ")" returnTy?
+
+
+namedType:
+    "UpperId" "[" type_ ("," type_)* ","? "]"
+    "UpperId"
+
+
+recordTypeFields:
+    recordTypeField ("," recordTypeField)* "," ".." "LowerId"
+    recordTypeField ("," recordTypeField)* ","?
+
+
+recordTypeField:
+    "LowerId" ":" type_
+    type_
+
+
+variantAlt:
+    "UpperId" "(" recordTypeFields ")"
+    "UpperId"
+
+
+fnArgTys:
+    type_ ("," type_)* ","?
+
+
+returnTy:
+    type_ "/" type_     # return type + effecttype
+    type_               # just return type
+    "/" type_           # just effect type

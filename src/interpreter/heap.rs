@@ -1,7 +1,10 @@
 use crate::interpreter::*;
-use crate::lowering::{CONSTR_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX};
+use crate::lowering::{CONSTR_CON_IDX, FUN_CON_IDX, METHOD_CON_IDX, Repr};
 
-use bytemuck::cast_slice;
+use bytemuck::{cast_slice, cast_slice_mut};
+
+pub const ARRAY_DATA_ADDR_FIELD_IDX: u64 = 1;
+pub const ARRAY_LEN_FIELD_IDX: u64 = 2;
 
 /// Heap is just a growable array of words. A word is 8 bytes, to easily allow references larger
 /// than 4 bytes, which we may need when interpreting the bootstrapping compiler without a GC.
@@ -61,48 +64,232 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str(&mut self, str_tag: u64, array_tag: u64, string: &[u8]) -> u64 {
-        let size_words = string.len().div_ceil(8);
-        let array = self.allocate(size_words + 2);
-        self[array] = array_tag;
-        self[array + 1] = string.len() as u64;
+    // Allocate data, then allocate a separate `Array` object with:
+    // - Header
+    // - Pointer to data
+    // - Length of data (in number of elements)
+    // This layout allows slicing the array.
+    pub fn allocate_array(&mut self, tag: u64, repr: Repr, len: u32) -> u64 {
+        let len_words = (len as usize) * repr.elem_size_in_bytes().div_ceil(8);
+        // Allocate in one go. Bump alloc is cheap so we could also allocate separately.
+        let array_obj_addr = self.allocate(len_words + 3);
+        let data_addr = array_obj_addr + 3;
+        self[array_obj_addr] = tag;
+        assert_eq!(ARRAY_DATA_ADDR_FIELD_IDX, 1);
+        self[array_obj_addr + 1] = data_addr
+            * match repr {
+                Repr::U8 => 8,
+                Repr::U32 => 2,
+                Repr::U64 => 1,
+            };
+        assert_eq!(ARRAY_LEN_FIELD_IDX, 2);
+        self[array_obj_addr + 2] = u32_as_val(len);
+        self.values[data_addr as usize..(data_addr as usize) + len_words].fill(0);
+        array_obj_addr
+    }
+
+    pub(super) fn array_slice(
+        &mut self,
+        array: u64,
+        start: u32,
+        end: u32,
+        tag: u64,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
+    ) -> u64 {
+        let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
+        if start > array_len || end > array_len || start > end {
+            let mut msg_str = format!(
+                "{}: OOB array slice (start = {}, end = {}, len = {})\n",
+                loc_display(loc),
+                start,
+                end,
+                array_len
+            );
+            msg_str.push_str("\nFIR STACK:\n");
+            crate::interpreter::write_call_stack(call_stack, &mut msg_str);
+            panic!("{}", msg_str);
+        }
+
+        let data_addr = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+        let array_obj_addr = self.allocate(3);
+        self[array_obj_addr] = tag;
+        assert_eq!(ARRAY_DATA_ADDR_FIELD_IDX, 1);
+        self[array_obj_addr + 1] = data_addr + u64::from(start);
+        assert_eq!(ARRAY_LEN_FIELD_IDX, 2);
+        self[array_obj_addr + 2] = u32_as_val(end - start);
+        array_obj_addr
+    }
+
+    pub(super) fn array_set(
+        &mut self,
+        array: u64,
+        idx: u32,
+        val: u64,
+        repr: Repr,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
+    ) {
+        let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
+        if idx >= array_len {
+            let mut msg_str = format!(
+                "{}: OOB array access (idx = {}, len = {})\n",
+                loc_display(loc),
+                idx,
+                array_len
+            );
+            msg_str.push_str("\nFIR STACK:\n");
+            crate::interpreter::write_call_stack(call_stack, &mut msg_str);
+            panic!("{}", msg_str);
+        }
+
+        let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+
+        match repr {
+            Repr::U8 => {
+                let payload: &mut [u8] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload[idx as usize] = val_as_u8(val);
+            }
+
+            Repr::U32 => {
+                let payload: &mut [u32] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload[idx as usize] = val_as_u32(val);
+            }
+
+            Repr::U64 => {
+                let payload: &mut [u64] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload[idx as usize] = val;
+            }
+        }
+    }
+
+    pub(super) fn array_copy_within(
+        &mut self,
+        array: u64,
+        src: u32,
+        dst: u32,
+        len: u32,
+        repr: Repr,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
+    ) {
+        let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
+        if src + dst >= array_len || dst + len >= array_len {
+            let mut msg_str = format!("{}: OOB array access\n", loc_display(loc));
+            msg_str.push_str("\nFIR STACK:\n");
+            crate::interpreter::write_call_stack(call_stack, &mut msg_str);
+            panic!("{}", msg_str);
+        }
+
+        let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+
+        match repr {
+            Repr::U8 => {
+                let payload: &mut [u8] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+
+            Repr::U32 => {
+                let payload: &mut [u32] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+
+            Repr::U64 => {
+                let payload: &mut [u64] = &mut cast_slice_mut(&mut self.values)[data as usize..];
+                payload.copy_within(src as usize..((src + len) as usize), dst as usize);
+            }
+        }
+    }
+
+    pub(super) fn array_get(
+        &mut self,
+        array: u64,
+        idx: u32,
+        repr: Repr,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
+    ) -> u64 {
+        let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
+        if idx >= array_len {
+            let mut msg_str = format!(
+                "{}: OOB array access (idx = {}, len = {})\n",
+                loc_display(loc),
+                idx,
+                array_len
+            );
+            msg_str.push_str("\nFIR STACK:\n");
+            crate::interpreter::write_call_stack(call_stack, &mut msg_str);
+            panic!("{}", msg_str);
+        }
+        let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+        match repr {
+            Repr::U8 => {
+                let payload: &[u8] = &cast_slice(&self.values)[data as usize..];
+                u8_as_val(payload[idx as usize])
+            }
+            Repr::U32 => {
+                let payload: &[u32] = &cast_slice(&self.values)[data as usize..];
+                u32_as_val(payload[idx as usize])
+            }
+            Repr::U64 => {
+                let payload: &[u64] = &cast_slice(&self.values)[data as usize..];
+                payload[idx as usize]
+            }
+        }
+    }
+
+    pub fn allocate_str(
+        &mut self,
+        str_tag: u64,
+        array_tag: u64,
+        array_repr: Repr,
+        string: &[u8],
+    ) -> u64 {
+        let array = self.allocate_array(array_tag, array_repr, string.len() as u32);
+        let data = self[array + ARRAY_DATA_ADDR_FIELD_IDX];
+
         let bytes: &mut [u8] =
-            &mut cast_slice_mut::<u64, u8>(&mut self.values[array as usize + 2..])[..string.len()];
+            &mut cast_slice_mut::<u64, u8>(&mut self.values)[data as usize..][..string.len()];
         bytes.copy_from_slice(string);
 
-        let alloc = self.allocate(4);
+        let alloc = self.allocate(2);
         self[alloc] = str_tag;
-        self[alloc + 1] = array;
-        self[alloc + 2] = 0;
-        self[alloc + 3] = string.len() as u64;
+        self[alloc + 1] = array; // _bytes: Array[U8]
         alloc
     }
 
-    pub fn allocate_str_view(
+    pub(super) fn allocate_str_view(
         &mut self,
-        ty_tag: u64,
+        str_tag: u64,
+        array_u8_tag: u64,
         str: u64,
         byte_start: u32,
         byte_len: u32,
+        loc: &ast::Loc,
+        call_stack: &[Frame],
     ) -> u64 {
         let array = self[str + 1];
-        let start = val_as_u32(self[str + 2]);
+        let sliced_array = self.array_slice(
+            array,
+            byte_start,
+            byte_start + byte_len,
+            array_u8_tag,
+            loc,
+            call_stack,
+        );
 
-        let new_str = self.allocate(4);
-        self[new_str] = ty_tag;
-        self[new_str + 1] = array;
-        self[new_str + 2] = u32_as_val(start + byte_start);
-        self[new_str + 3] = u32_as_val(byte_len);
+        let new_str = self.allocate(2);
+        self[new_str] = str_tag;
+        self[new_str + 1] = sliced_array;
 
         new_str
     }
 
     pub fn str_bytes(&self, str_addr: u64) -> &[u8] {
-        let str_byte_array = self[str_addr + 1];
-        let str_start = val_as_u32(self[str_addr + 2]);
-        let str_len = val_as_u32(self[str_addr + 3]);
-        &cast_slice::<u64, u8>(&self.values[(str_byte_array + 2) as usize..])
-            [str_start as usize..(str_start + str_len) as usize]
+        let str_byte_array = self[str_addr + 1]; // _bytes: Array[U8]
+        let byte_array_data = self[str_byte_array + ARRAY_DATA_ADDR_FIELD_IDX];
+        let byte_array_len = self[str_byte_array + ARRAY_LEN_FIELD_IDX];
+        &cast_slice::<u64, u8>(&self.values)[byte_array_data as usize..][0..byte_array_len as usize]
     }
 
     pub fn allocate_constr(&mut self, type_tag: u64) -> u64 {

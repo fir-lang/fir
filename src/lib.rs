@@ -1,7 +1,8 @@
 #![allow(
     clippy::too_many_arguments,
     clippy::type_complexity,
-    clippy::large_enum_variant
+    clippy::large_enum_variant,
+    unused_braces // lalrpop generates these
 )]
 
 mod ast;
@@ -30,7 +31,8 @@ pub struct CompilerOpts {
     pub typecheck: bool,
     pub no_prelude: bool,
     pub no_backtrace: bool,
-    pub print_tokens: bool,
+    pub tokenize: bool,
+    pub scan: bool,
     pub print_parsed_ast: bool,
     pub print_checked_ast: bool,
     pub print_mono_ast: bool,
@@ -43,25 +45,12 @@ fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String 
     format!("{}:{}:{}", module, lexgen_loc.line + 1, lexgen_loc.col + 1)
 }
 
-fn parse_module(module: &SmolStr, contents: &str, print_tokens: bool) -> ast::Module {
+fn parse_module(module: &SmolStr, contents: &str) -> ast::Module {
     let tokens = combine_uppercase_lbrackets(scanner::scan(
         lexer::lex(contents, module).into_iter(),
         module,
     ));
     // dbg!(tokens.iter().map(|(_, t, _)| t.clone()).collect::<Vec<_>>());
-
-    if print_tokens {
-        for (l, t, _) in &tokens {
-            println!(
-                "{}:{}:{}: {:?} {:?}",
-                module,
-                l.line + 1,
-                l.col + 1,
-                t.kind,
-                t.text
-            );
-        }
-    }
 
     let parser = parser::TopDeclsParser::new();
     match parser.parse(&(module.as_str().into()), tokens) {
@@ -108,7 +97,7 @@ fn report_parse_error(
         }
 
         lalrpop_util::ParseError::User { error } => {
-            panic!("Lexer error: {:?}", error)
+            panic!("Lexer error: {error:?}")
         }
     }
 }
@@ -121,6 +110,25 @@ mod native {
     use std::path::Path;
 
     pub fn main(mut opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
+        if opts.tokenize {
+            let file_contents = std::fs::read_to_string(program).unwrap();
+            for (l, t, _) in crate::lexer::lex(&file_contents, "test") {
+                println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
+            }
+            return;
+        }
+
+        if opts.scan {
+            let file_contents = std::fs::read_to_string(program).unwrap();
+            for (l, t, _) in scanner::scan(
+                crate::lexer::lex(&file_contents, "test").into_iter(),
+                "test",
+            ) {
+                println!("{}:{}: {:?}", l.line + 1, l.col + 1, t.kind);
+            }
+            return;
+        }
+
         let fir_root = match std::env::var("FIR_ROOT") {
             Ok(fir_root) => {
                 let mut path = std::path::PathBuf::new();
@@ -139,18 +147,15 @@ mod native {
             .import_paths
             .insert("Fir".to_string(), fir_root.clone());
         if old_fir_root.is_some() {
-            eprintln!(
-                "WARNING: Fir root specified multiple times. Using {} as root.",
-                fir_root
-            );
+            eprintln!("WARNING: Fir root specified multiple times. Using {fir_root} as root.");
         }
 
         if opts.no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
                 if let Some(s) = panic_info.payload().downcast_ref::<String>() {
-                    eprintln!("{}", s);
+                    eprintln!("{s}");
                 } else if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-                    eprintln!("{}", s);
+                    eprintln!("{s}");
                 } else {
                     eprintln!("Weird panic payload in panic handler");
                 }
@@ -161,17 +166,12 @@ mod native {
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
 
-        let module = parse_file(
-            file_path,
-            &SmolStr::new(file_name_wo_ext.to_str().unwrap()),
-            opts.print_tokens,
-        );
+        let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
         let mut module = import_resolver::resolve_imports(
             &opts.import_paths,
             root_path.to_str().unwrap(),
             module,
             !opts.no_prelude, // import_prelude
-            opts.print_tokens,
         );
 
         if opts.print_parsed_ast {
@@ -205,11 +205,7 @@ mod native {
         interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, &program_args);
     }
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(
-        path: P,
-        module: &SmolStr,
-        print_tokens: bool,
-    ) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let contents = std::fs::read_to_string(path.clone()).unwrap_or_else(|err| {
             panic!(
                 "Unable to read file {} for module {}: {}",
@@ -219,7 +215,7 @@ mod native {
             )
         });
         let module_path: SmolStr = path.as_ref().to_string_lossy().into();
-        parse_module(&module_path, &contents, print_tokens)
+        parse_module(&module_path, &contents)
     }
 
     /// The `readFileUtf8` primitive.
@@ -292,14 +288,10 @@ mod wasm {
     use smol_str::SmolStr;
     use wasm_bindgen::prelude::wasm_bindgen;
 
-    pub fn parse_file<P: AsRef<Path> + Clone>(
-        path: P,
-        module: &SmolStr,
-        _print_tokens: bool,
-    ) -> ast::Module {
+    pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
         let path = path.as_ref().to_string_lossy();
         let contents = read_file_utf8(&path);
-        parse_module(&module, &contents, false)
+        parse_module(&module, &contents)
     }
 
     #[wasm_bindgen]
@@ -343,10 +335,10 @@ mod wasm {
         args.insert(0, pgm.to_string());
 
         let module_name = SmolStr::new_static("FirWeb");
-        let module = parse_module(&module_name, pgm, false);
+        let module = parse_module(&module_name, pgm);
         let mut import_path: crate::collections::Map<String, String> = Default::default();
         import_path.insert("Fir".to_string(), "fir/lib".to_string());
-        let mut module = import_resolver::resolve_imports(&import_path, "", module, true, false);
+        let mut module = import_resolver::resolve_imports(&import_path, "", module, true);
 
         type_checker::check_module(&mut module, "fir/lib".to_string());
 

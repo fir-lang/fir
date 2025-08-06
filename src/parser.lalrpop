@@ -18,12 +18,10 @@ extern {
     type Location = Loc;
     type Error = LexerError<Infallible>;
 
-    enum Token {
-        UpperId => Token { kind: TokenKind::UpperId, .. },
-        UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
+    enum Token { UpperId => Token { kind: TokenKind::UpperId, .. }, UpperIdPath => Token { kind: TokenKind::UpperIdPath, .. },
         UpperIdLBracket => Token { kind: TokenKind::UpperIdLBracket, .. },
         UpperIdPathLBracket => Token { kind: TokenKind::UpperIdPathLBracket, .. },
-
+        UpperIdDotLBracket => Token { kind: TokenKind::UpperIdDotLBracket, .. },
         TildeUpperId => Token { kind: TokenKind::TildeUpperId, .. },
         TildeUpperIdPath => Token { kind: TokenKind::TildeUpperIdPath, .. },
         TildeUpperIdLBracket => Token { kind: TokenKind::TildeUpperIdLBracket, .. },
@@ -96,7 +94,7 @@ extern {
         IntLit => Token { kind: TokenKind::Int { .. }, .. },
         HexIntLit => Token { kind: TokenKind::HexInt { .. }, .. },
         BinIntLit => Token { kind: TokenKind::BinInt { .. }, .. },
-        StringLit => Token { kind: TokenKind::String, .. },
+        StringLit => Token { kind: TokenKind::Str, .. },
         CharLit => Token { kind: TokenKind::Char, .. },
     }
 }
@@ -425,7 +423,7 @@ TopFunDecl: L<FunDecl> = {
         })
     },
 
-    <l:@L> <sig:TopFunSig> "=" <rhs:LInlineExpr> NEWLINE <r:@R> => {
+    <l:@L> <sig:TopFunSig> ":" <rhs:LInlineExpr> NEWLINE <r:@R> => {
         let L { loc, node } = rhs;
         let (parent_ty, name, sig) = sig;
         L::new(module, l, r, FunDecl {
@@ -792,7 +790,7 @@ InlineExpr: Expr = {
 
     <int:BinIntLit> => {
         debug_assert!(int.text.starts_with("0b"));
-        let token_str = &int.text["0x".len()..];
+        let token_str = &int.text["0b".len()..];
 
         // TODO: Allocate the buffer once and reuse.
         // Even better, build the number as we scan for underscores.
@@ -838,6 +836,15 @@ InlineExpr: Expr = {
                 user_ty_args,
             }),
         },
+
+    "[" <elems:Sep<SeqElem, ",">> "]" =>
+        Expr::Seq { ty: None, elems },
+
+    <ty:UpperIdDotLBracket> <elems:Sep<SeqElem, ",">> "]" => {
+        let ty_str = ty.smol_str();
+        let ty_str = SmolStr::new(&ty_str[0..ty_str.len() - 2]);
+        Expr::Seq { ty: Some(ty_str), elems }
+    },
 
     #[precedence(level = "2")]
     "not" <l:@L> <expr:InlineExpr> <r:@R> =>
@@ -1043,6 +1050,17 @@ CallArg: CallArg = {
 UserTyArgs: Vec<L<Type>> = {
     "[" <user_ty_args:Sep<LType, ",">> "]" => user_ty_args,
     => vec![],
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Sequence elements
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SeqElem: (Option<L<Expr>>, L<Expr>) = {
+    <expr:LInlineExpr> => (None, expr),
+    <key:LInlineExpr> "=" <value:LInlineExpr> => (Some(key), value),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

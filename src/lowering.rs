@@ -4,8 +4,8 @@
 pub mod printer;
 
 use crate::collections::*;
-use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, Loc, Named, UnOp, L};
-use crate::record_collector::{collect_records, RecordShape};
+use crate::mono_ast::{self as mono, AssignOp, Id, IntExpr, L, Loc, Named, UnOp};
+use crate::record_collector::{RecordShape, collect_records};
 
 use smol_str::SmolStr;
 
@@ -203,7 +203,7 @@ pub enum BuiltinFunDecl {
     /// `prim throw(exn: [..r]): {..r} a`
     ///
     /// This function never throws or returns, so we don't need the exception and return types.
-    Throw,
+    ThrowUnchecked,
 
     /// `prim try(cb: Fn(): {..exn} a): {..r} Result[[..exn], a]`
     ///
@@ -227,6 +227,14 @@ pub enum BuiltinFunDecl {
     },
 
     ArraySet {
+        t: mono::Type,
+    },
+
+    ArraySlice {
+        t: mono::Type,
+    },
+
+    ArrayCopyWithin {
         t: mono::Type,
     },
 
@@ -785,7 +793,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     mono::TypeDeclRhs::Sum(cons) => {
                         for mono::ConstructorDecl { name, fields } in cons {
                             let idx = HeapObjIdx(lowered_pgm.heap_objs.len() as u32);
-                            let name = SmolStr::new(format!("{}.{}", con_id, name));
+                            let name = SmolStr::new(format!("{con_id}.{name}"));
                             lowered_pgm.heap_objs.push(lower_source_con(
                                 idx,
                                 &name,
@@ -876,7 +884,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }))
                     }
 
-                    other => panic!("Unknown built-in type: {}", other),
+                    other => panic!("Unknown built-in type: {other}"),
                 },
             }
         }
@@ -899,7 +907,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
 
     lowered_pgm.unit_con_idx = *record_indices
         .get(&RecordShape::UnnamedFields { arity: 0 })
-        .unwrap_or_else(|| panic!("Unit record not defined {:#?}", record_indices));
+        .unwrap_or_else(|| panic!("Unit record not defined {record_indices:#?}"));
 
     let mut indices = Indices {
         product_cons: product_con_nums,
@@ -946,10 +954,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a }));
                     }
 
-                    "throw" => {
-                        // prim throw(exn: [..r]): {..r} a
-                        assert_eq!(fun_ty_args.len(), 2); // r, a
-                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Throw));
+                    "throwUnchecked" => {
+                        // prim throwUnchecked(exn: exn): a / {..r}
+                        assert_eq!(fun_ty_args.len(), 3); // exn, a, r
+                        lowered_pgm
+                            .funs
+                            .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked));
                     }
 
                     "readFileUtf8" => {
@@ -961,10 +971,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     other => {
-                        panic!(
-                            "Unknown built-in function: {} (ty args = {:?})",
-                            other, fun_ty_args
-                        );
+                        panic!("Unknown built-in function: {other} (ty args = {fun_ty_args:?})");
                     }
                 }
             }
@@ -1443,7 +1450,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         ("Array", "len") => {
                             // prim Array.len(self: Array[t]): U32
                             assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                                                              // All arrays have the length in the same location, ignore `t`.
+                            // All arrays have the length in the same location, ignore `t`.
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArrayLen));
@@ -1465,6 +1472,24 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArraySet { t }));
+                        }
+
+                        ("Array", "slice") => {
+                            // prim Array.slice(self: Array[t], start: U32, end: U32)
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            let t = fun_ty_args[0].clone();
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::ArraySlice { t }));
+                        }
+
+                        ("Array", "copyWithin") => {
+                            // prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            let t = fun_ty_args[0].clone();
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),

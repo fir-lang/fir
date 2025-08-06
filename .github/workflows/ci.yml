@@ -85,7 +85,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install --git https://github.com/osa1/golden-tests --features=binary
+        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
@@ -129,7 +129,7 @@ jobs:
         run: sudo apt install -y just
 
       - name: Install goldentests
-        run: cargo install --git https://github.com/osa1/golden-tests --features=binary
+        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
 
       - name: Build interpreter
         run: cargo build --verbose
@@ -165,6 +165,25 @@ jobs:
             git -P diff
             ! git status --porcelain | grep -q '^ M'
 
+  # This step takes long, so it's a separate step.
+  run_compiler_parser_tests:
+    name: Compiler parser tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Test
+        run: |
+          export FIR_ROOT=`pwd`
+          ./compiler/tests/parse.sh
+
   check_web_build:
     name: Check web build
     needs: [build]
@@ -177,15 +196,7 @@ jobs:
         with:
             toolchain: stable
             override: true
-
-      - name: Install wasm-pack
-        run: cargo install wasm-pack
+            target: wasm32-unknown-unknown
 
       - name: Make web build
-        run: |
-            wasm-pack build \
-                --target web \
-                --release \
-                --out-dir target/wasm-pack \
-                --no-pack \
-                --no-typescript
+        run: cargo build --lib --release --target=wasm32-unknown-unknown

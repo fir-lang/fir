@@ -6,7 +6,7 @@ use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
 use crate::type_checker::ty::*;
 use crate::type_checker::unification::{try_unify_one_way, unify, unify_expected_ty};
-use crate::type_checker::{loc_display, TcFunState};
+use crate::type_checker::{TcFunState, loc_display};
 
 use std::mem::{replace, take};
 
@@ -1107,6 +1107,171 @@ pub(super) fn check_expr(
             tc_state.env.exit();
             (ty, Default::default())
         }
+
+        ast::Expr::Seq { ty, elems } => {
+            /*
+            Functions used in the desugaring:
+
+            - empty:    [?exn] Fn() Empty / ?exn
+            - once:     [t, ?exn] Fn(t) Once[t] / ?exn
+            - onceWith: [exn, t, ?exn] Fn(Fn() : t / exn) OnceWith[t, exn] / ?exn
+            - chain:    [iter, item, exn, other, ?exn] [Iterator[iter, item, exn]] Fn(iter, other) Chain[iter, other, item, exn] / ?exn
+            */
+
+            let iter_ty = ty.clone();
+
+            let iter_expr = if elems.is_empty() {
+                ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::Var(ast::VarExpr {
+                                id: SmolStr::new("empty"),
+                                user_ty_args: vec![],
+                                ty_args: vec![],
+                            }),
+                        }),
+                        args: vec![],
+                    }),
+                }
+            } else {
+                let mut pairs = false;
+                let mut singles = false;
+
+                for (k, _) in elems.iter() {
+                    match k {
+                        Some(_) => pairs = true,
+                        None => singles = true,
+                    }
+                }
+
+                if pairs && singles {
+                    panic!(
+                        "{}: Sequence has both key-value pair and single element",
+                        loc_display(&expr.loc)
+                    );
+                }
+
+                let mut elem_iters: Vec<ast::L<ast::Expr>> = Vec::with_capacity(elems.len());
+                for (k, v) in elems.iter() {
+                    let elem = match k {
+                        Some(k) => ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::Record(vec![
+                                ast::Named {
+                                    name: Some(SmolStr::new("key")),
+                                    node: k.clone(),
+                                },
+                                ast::Named {
+                                    name: Some(SmolStr::new("value")),
+                                    node: v.clone(),
+                                },
+                            ]),
+                        },
+                        None => v.clone(),
+                    };
+                    elem_iters.push(ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(ast::L {
+                                loc: ast::Loc::dummy(),
+                                node: ast::Expr::Var(ast::VarExpr {
+                                    id: SmolStr::new_static("once"),
+                                    user_ty_args: vec![],
+                                    ty_args: vec![],
+                                }),
+                            }),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: elem,
+                            }],
+                        }),
+                    });
+                }
+
+                let mut iter = elem_iters.into_iter();
+                let init = iter.next().unwrap();
+                iter.fold(init, |elem, next| ast::L {
+                    loc: ast::Loc::dummy(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: ast::Loc::dummy(),
+                            node: ast::Expr::FieldSelect(ast::FieldSelectExpr {
+                                object: Box::new(elem),
+                                field: SmolStr::new_static("chain"),
+                                user_ty_args: vec![],
+                            }),
+                        }),
+                        args: vec![ast::CallArg {
+                            name: None,
+                            expr: next,
+                        }],
+                    }),
+                })
+            };
+
+            let desugared = match iter_ty {
+                Some(iter_ty) => {
+                    let field_select_expr = ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                            ty: iter_ty,
+                            member: SmolStr::new_static("fromIter"),
+                            user_ty_args: vec![],
+                            ty_args: vec![],
+                        }),
+                    };
+
+                    ast::L {
+                        loc: ast::Loc::dummy(),
+                        node: ast::Expr::Call(ast::CallExpr {
+                            fun: Box::new(field_select_expr),
+                            args: vec![ast::CallArg {
+                                name: None,
+                                expr: iter_expr,
+                            }],
+                        }),
+                    }
+                }
+
+                None => match expected_ty {
+                    Some(expected_ty) => {
+                        let expected_ty = expected_ty.normalize(tc_state.tys.tys.cons());
+                        match expected_ty.con(tc_state.tys.tys.cons()) {
+                            Some((con, _)) => {
+                                let field_select_expr = ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
+                                        ty: con,
+                                        member: SmolStr::new_static("fromIter"),
+                                        user_ty_args: vec![],
+                                        ty_args: vec![],
+                                    }),
+                                };
+
+                                ast::L {
+                                    loc: ast::Loc::dummy(),
+                                    node: ast::Expr::Call(ast::CallExpr {
+                                        fun: Box::new(field_select_expr),
+                                        args: vec![ast::CallArg {
+                                            name: None,
+                                            expr: iter_expr,
+                                        }],
+                                    }),
+                                }
+                            }
+                            None => iter_expr,
+                        }
+                    }
+                    None => iter_expr,
+                },
+            };
+
+            *expr = desugared;
+
+            check_expr(tc_state, expr, expected_ty, level, loop_stack)
+        }
     }
 }
 
@@ -1444,7 +1609,7 @@ fn select_method(
 
         let candidates_str: Vec<String> = candidates
             .iter()
-            .map(|(ty_id, _)| format!("{}.{}", ty_id, method))
+            .map(|(ty_id, _)| format!("{ty_id}.{method}"))
             .collect();
 
         panic!(
@@ -1479,7 +1644,7 @@ pub(crate) fn make_variant(tc_state: &mut TcFunState, ty: Ty, level: u32, loc: &
             };
         }
 
-        ty => panic!("Type in variant is not a constructor: {}", ty),
+        ty => panic!("Type in variant is not a constructor: {ty}"),
     };
 
     let row_ext = tc_state

@@ -175,6 +175,8 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
                 normalize_instantiation_types(&mut stmt.node, cons);
             }
         }
+
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 

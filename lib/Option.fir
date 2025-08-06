@@ -10,6 +10,14 @@ impl[ToStr[t]] ToStr[Option[t]]:
 
 impl[Eq[t]] Eq[Option[t]]:
     __eq(self: Option[t], other: Option[t]) Bool:
+        match (l = self, r = other):
+            (l = Option.None, r = Option.None):
+                Bool.True
+            (l = Option.Some(l0), r = Option.Some(r0)):
+                l0 == r0
+
+impl[Eq[t]] Eq[Option[t]]:
+    __eq(self: Option[t], other: Option[t]) Bool:
         match (left = self, right = other):
             (left = Option.None, right = Option.None): Bool.True
             (left = Option.Some(left), right = Option.Some(right)): left == right
@@ -36,20 +44,17 @@ Option.unwrapOrElse(self: Option[t], f: Fn() t / exn) t / exn:
         Option.Some(val): val
 
 Option.guard(self: Option[t], guard: Fn(t) Bool / exn) Option[t] / exn:
-    match self:
-        Option.None: Option.None
-        Option.Some(val):
-            if guard(val):
-                Option.Some(val)
-            else:
-                Option.None
+    if self is Option.Some(val) and guard(val):
+        return Option.Some(val)
+    Option.None
 
 Option.isSome(self: Option[t]) Bool:
-    match self:
-        Option.Some(_): Bool.True
-        Option.None: Bool.False
+    self is Option.Some(_)
 
 Option.isNone(self: Option[t]) Bool:
+    self is Option.None
+
+Option.flatten(self: Option[Option[t]]) Option[t]:
     match self:
-        Option.Some(_): Bool.False
-        Option.None: Bool.True
+        Option.Some(Option.Some(a)): Option.Some(a)
+        _: Option.None

@@ -53,11 +53,8 @@ impl DeriveMacroRunner {
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
         let root_path = file_path.parent().unwrap(); // "examples/"
 
-        let module = crate::parse_file(
-            file_path,
-            &SmolStr::new(file_name_wo_ext.to_str().unwrap()),
-            false, // print tokens
-        );
+        let module =
+            crate::parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
 
         let mut import_paths: Map<String, String> = Default::default();
         import_paths.insert("Fir".to_string(), self.fir_root.clone());
@@ -66,8 +63,7 @@ impl DeriveMacroRunner {
             &import_paths,
             root_path.to_str().unwrap(),
             module,
-            true,  // import prelude
-            false, // print tokens
+            true, // import prelude
         );
 
         crate::type_checker::check_module(&mut module, &self.fir_root);

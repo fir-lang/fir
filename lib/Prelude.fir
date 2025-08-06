@@ -108,9 +108,9 @@ printStr(s: Str):
     printStrNoNl(s)
     printStrNoNl("\n")
 
-print[ToStr[a]](a: a) = printStr(a.toStr())
+print[ToStr[a]](a: a): printStr(a.toStr())
 
-printNoNl[ToStr[a]](a: a) = printStrNoNl(a.toStr())
+printNoNl[ToStr[a]](a: a): printStrNoNl(a.toStr())
 
 prim panic(msg: Str) Void
 

@@ -12,9 +12,16 @@ use smol_str::SmolStr;
 #[derive(Debug)]
 struct PolyPgm {
     traits: Map<Id, PolyTrait>,
+
+    /// Top-level functions, e.g. `foo(x: U32): ...`.
     top: Map<Id, ast::FunDecl>,
+
+    /// Associated functions without `self` arguments, e.g. `Type.foo(x: U32): ...`.
     associated: Map<Id, Map<Id, ast::FunDecl>>,
+
+    /// Associated functions with `self` arguments, e.g. `Type.bar(self, x: U32): ...`.
     method: Map<Id, Map<Id, ast::FunDecl>>,
+
     ty: Map<Id, ast::TypeDecl>,
 }
 
@@ -179,7 +186,7 @@ pub fn monomorphise(pgm: &[ast::L<ast::TopDecl>], main: &str) -> MonoPgm {
     let main = poly_pgm
         .top
         .get(main)
-        .unwrap_or_else(|| panic!("Main function `{}` not defined", main));
+        .unwrap_or_else(|| panic!("Main function `{main}` not defined"));
 
     mono_top_fn(main, &[], &poly_pgm, &mut mono_pgm);
 
@@ -530,7 +537,7 @@ fn mono_expr(
             }
             None => {
                 let poly_ty_decl = match poly_pgm.ty.get(ty) {
-                    None => panic!("Unknown constructor {}", ty),
+                    None => panic!("Unknown constructor {ty}"),
                     Some(ty_decl) => ty_decl,
                 };
 
@@ -561,7 +568,8 @@ fn mono_expr(
                 .map(|ty_arg| mono_tc_ty(ty_arg, ty_map, poly_pgm, mono_pgm))
                 .collect();
 
-            let fun_decl = poly_pgm
+            // Check associated functions.
+            if let Some(fun_decl) = poly_pgm
                 .associated
                 .get(ty)
                 .and_then(|ty_map| ty_map.get(member))
@@ -571,22 +579,32 @@ fn mono_expr(
                         .get(ty)
                         .and_then(|ty_map| ty_map.get(member))
                 })
-                .unwrap_or_else(|| {
-                    panic!(
-                        "{}: Associated function or method {}.{} isn't in poly pgm",
-                        loc_display(loc),
-                        ty,
-                        member
-                    )
+            {
+                mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
+
+                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    ty_args: mono_ty_args,
                 });
+            }
 
-            mono_top_fn(fun_decl, &mono_ty_args, poly_pgm, mono_pgm);
+            // Check traits.
+            if poly_pgm.traits.contains_key(ty) {
+                mono_method(ty, member, &mono_ty_args, poly_pgm, mono_pgm, loc);
+                return mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
+                    ty: ty.clone(),
+                    member: member.clone(),
+                    ty_args: mono_ty_args,
+                });
+            }
 
-            mono::Expr::AssocFnSelect(mono::AssocFnSelectExpr {
-                ty: ty.clone(),
-                member: member.clone(),
-                ty_args: mono_ty_args,
-            })
+            panic!(
+                "{}: Associated function or method {}.{} isn't in poly pgm",
+                loc_display(loc),
+                ty,
+                member
+            )
         }
 
         ast::Expr::Int(int @ ast::IntExpr { suffix, .. }) => {
@@ -779,6 +797,8 @@ fn mono_expr(
         ast::Expr::Do(stmts) => {
             mono::Expr::Do(mono_l_stmts(stmts, ty_map, poly_pgm, mono_pgm, locals))
         }
+
+        ast::Expr::Seq { .. } => panic!("Seq expr should've been desugared"),
     }
 }
 
@@ -1007,7 +1027,7 @@ fn mono_method(
         return;
     }
 
-    panic!("Type {} is not a trait or type", method_ty_id)
+    panic!("Type {method_ty_id} is not a trait or type")
 }
 
 fn mono_l_stmts(
@@ -1209,7 +1229,7 @@ fn match_trait_impl(
     ty_args: &[mono::Type],
     trait_impl: &PolyTraitImpl,
 ) -> Option<Map<Id, mono::Type>> {
-    debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{:?}", ty_args);
+    debug_assert_eq!(ty_args.len(), trait_impl.tys.len(), "{ty_args:?}");
 
     let mut substs: Map<Id, mono::Type> = Default::default();
     for (trait_ty, ty_arg) in trait_impl.tys.iter().zip(ty_args.iter()) {
@@ -1379,7 +1399,7 @@ fn mono_tc_ty(
             let ty_decl = poly_pgm
                 .ty
                 .get(&con)
-                .unwrap_or_else(|| panic!("Unknown type constructor {}", con));
+                .unwrap_or_else(|| panic!("Unknown type constructor {con}"));
 
             mono::Type::Named(mono::NamedType {
                 name: mono_ty_decl(ty_decl, &[], poly_pgm, mono_pgm),
@@ -1549,7 +1569,7 @@ fn mono_ast_ty(
                 if let Some(name) = &field.name {
                     let new = names.insert(name);
                     if !new {
-                        panic!("Record has duplicate fields: {:?}", fields);
+                        panic!("Record has duplicate fields: {fields:?}");
                     }
                 }
             }
@@ -1568,7 +1588,7 @@ fn mono_ast_ty(
                     }) => {
                         fields.extend(extra_fields.iter().cloned());
                     }
-                    other => panic!("Record extension is not a record: {:?}", other),
+                    other => panic!("Record extension is not a record: {other:?}"),
                 }
             }
 
@@ -1586,7 +1606,7 @@ fn mono_ast_ty(
             for ast::NamedType { name, .. } in alts {
                 let new = labels.insert(name);
                 if !new {
-                    panic!("Variant has duplicate labels: {:?}", alts);
+                    panic!("Variant has duplicate labels: {alts:?}");
                 }
             }
 
@@ -1606,11 +1626,10 @@ fn mono_ast_ty(
                     Some(mono::Type::Variant { alts: extra_alts }) => {
                         alts.extend(extra_alts.iter().cloned());
                     }
-                    Some(other) => panic!("Variant extension is not a variant: {:?}", other),
+                    Some(other) => panic!("Variant extension is not a variant: {other:?}"),
                     None => panic!(
-                        "Variant extension is not in ty map: {}\n\
-                        Ty map = {:#?}",
-                        extension, ty_map
+                        "Variant extension is not in ty map: {extension}\n\
+                        Ty map = {ty_map:#?}"
                     ),
                 }
             }

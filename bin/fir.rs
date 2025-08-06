@@ -20,10 +20,16 @@ fn main() {
                 .help("Don't print backtraces in panics."),
         )
         .arg(
-            clap::Arg::new(PRINT_TOKENS)
-                .long(PRINT_TOKENS)
+            clap::Arg::new(TOKENIZE)
+                .long(TOKENIZE)
                 .num_args(0)
-                .help("Print tokens."),
+                .help("Print tokens and stop."),
+        )
+        .arg(
+            clap::Arg::new(SCAN)
+                .long(SCAN)
+                .num_args(0)
+                .help("Print scanned tokens and stop."),
         )
         .arg(
             clap::Arg::new(PRINT_PARSED_AST)
@@ -83,7 +89,8 @@ fn main() {
         typecheck: matches.get_flag(TYPECHECK),
         no_prelude: matches.get_flag(NO_PRELUDE),
         no_backtrace: matches.get_flag(NO_BACKTRACE),
-        print_tokens: matches.get_flag(PRINT_TOKENS),
+        tokenize: matches.get_flag(TOKENIZE),
+        scan: matches.get_flag(SCAN),
         print_parsed_ast: matches.get_flag(PRINT_PARSED_AST),
         print_checked_ast: matches.get_flag(PRINT_CHECKED_AST),
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
@@ -108,7 +115,8 @@ fn main() {
 const TYPECHECK: &str = "typecheck";
 const NO_PRELUDE: &str = "no-prelude";
 const NO_BACKTRACE: &str = "no-backtrace";
-const PRINT_TOKENS: &str = "print-tokens";
+const TOKENIZE: &str = "tokenize";
+const SCAN: &str = "scan";
 const PRINT_PARSED_AST: &str = "print-parsed-ast";
 const PRINT_CHECKED_AST: &str = "print-checked-ast";
 const PRINT_MONO_AST: &str = "print-mono-ast";
@@ -143,7 +151,7 @@ fn version_info_str(version_info: rustc_tools_util::VersionInfo) -> String {
 fn parse_key_val(s: &str) -> Result<(String, String), String> {
     let parts: Vec<&str> = s.splitn(2, '=').collect();
     if parts.len() != 2 {
-        return Err(format!("invalid key=value: `{}`", s));
+        return Err(format!("invalid key=value: `{s}`"));
     }
     Ok((parts[0].to_string(), parts[1].to_string()))
 }

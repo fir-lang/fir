@@ -1,7 +1,7 @@
 type E1:
     E1
 
-id(a: t) t = a
+id(a: t) t: a
 
 f1() Result[[E1, ..r], ()]:
     Result.Err(~E1.E1)
@@ -19,4 +19,4 @@ trait Test[t]:
     f() a
     x() (Fn(a) b / [..r])
 
-main() = ()
+main(): ()

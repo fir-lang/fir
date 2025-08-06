@@ -1,4 +1,3 @@
-
 trait Iterator[iter, item, exn]:
     next(self: iter) Option[item] / exn
 
@@ -31,6 +30,16 @@ trait Iterator[iter, item, exn]:
 
     chain(self: iter, other: other) Chain[iter, other, item, exn]:
         Chain(iter1 = Option.Some(self), iter2 = Option.Some(other))
+
+    filter(self: iter, f: Fn(item) Bool / exn) Filter[iter, item, exn]:
+        Filter(iter = self, f = f)
+
+    # Temporary: in the long term we probably want something like `FromIter`.
+    toVec(self: iter) Vec[item] / exn:
+        let vec = Vec[item].withCapacity(self.size[iter, item, exn, exn]().unwrapOr(10))
+        for item: item in self:
+            vec.push(item)
+        vec
 
     ## Count number of elements the iterator yields.
     ##
@@ -276,3 +285,17 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
                 Option.Some(hint_): hint += hint_
 
         Option.Some(hint)
+
+# --------------------------------------------------------------------------------------------------
+
+type Filter[iter, item, exn]:
+    iter: iter
+    f: Fn(item) Bool / exn
+
+impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
+    next(self: Filter[iter, item, exn]) Option[item] / exn:
+        while self.iter.next() is Option.Some(item):
+            if self.f(item):
+                return Option.Some(item)
+
+        Option.None

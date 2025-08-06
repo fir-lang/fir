@@ -1,6 +1,6 @@
-# f1() (I8, I32, Option[Str]) = (123, 456, None)
+# f1() (I8, I32, Option[Str]): (123, 456, None)
 
-f2() (x: I32, y: I32, optStr: Option[Str]) = (x = 123, y = 456, optStr = Option.Some("Blah"))
+f2() (x: I32, y: I32, optStr: Option[Str]): (x = 123, y = 456, optStr = Option.Some("Blah"))
 
 main():
     # let (x, y, optStr) = f1()
