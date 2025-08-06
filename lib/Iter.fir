@@ -68,6 +68,9 @@ trait Iterator[iter, item, exn]:
     size(self: iter) Option[U32]:
         Option.None
 
+    enumerate(self: iter) Enumerate[iter, item, exn]:
+        Enumerate(iter = self, idx = 0)
+
 # --------------------------------------------------------------------------------------------------
 
 trait Step[t]:
@@ -299,3 +302,23 @@ impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
                 return Option.Some(item)
 
         Option.None
+
+# --------------------------------------------------------------------------------------------------
+
+type Enumerate[iter, item, exn]:
+    iter: iter
+    idx: U32
+
+# TODO: Maybe update item type to `(U32, item)` once we have records with positional fields.
+impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, item: item), exn]:
+    next(self: Enumerate[iter, item, exn]) Option[(idx: U32, item: item)] / exn:
+        match self.iter.next():
+            Option.None:
+                Option.None
+            Option.Some(item):
+                let idx = self.idx
+                self.idx += 1
+                Option.Some((idx = idx, item = item))
+
+    size(self: Enumerate[iter, item, exn]) Option[U32] / exn2:
+        self.iter.size[iter, item, exn, exn2]()
