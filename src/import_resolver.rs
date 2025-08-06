@@ -123,7 +123,11 @@ fn resolve_imports_(
                 let root = if path.len() == 2 {
                     match import_paths.get(path[0].as_str()) {
                         Some(root) => root,
-                        None => panic!("Path {} is not in import paths", path[0]),
+                        None => panic!(
+                            "{}: Path {} is not in import paths",
+                            crate::utils::loc_display(&decl.loc),
+                            path[0]
+                        ),
                     }
                 } else {
                     module_root
