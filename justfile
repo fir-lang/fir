@@ -57,8 +57,6 @@ generate_parser:
 update_generated_files:
     #!/usr/bin/env bash
     lalrpop src/parser.lalrpop
-    tools/peg/Peg.sh tools/peg/TestGrammar.peg > tools/peg/TestGrammar.fir
-    tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
 
     # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
     # the PEG compiler itself uses the file. Save the output to a local and
@@ -70,6 +68,9 @@ update_generated_files:
         echo "generated file update failed"
         exit 1
     fi
+
+    tools/peg/Peg.sh tools/peg/TestGrammar.peg > tools/peg/TestGrammar.fir
+    tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
 
 # build_site tested with:
 #

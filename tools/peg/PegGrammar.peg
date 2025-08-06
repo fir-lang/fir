@@ -30,6 +30,7 @@ Terminals:
     "," = Token(kind = TokenKind.Comma, ..)
     "/" = Token(kind = TokenKind.Slash, ..)
     "$" = Token(kind = TokenKind.Dollar, ..)
+    "^" = Token(kind = TokenKind.Caret, ..)
     "Str" = Token(kind = TokenKind.Str, ..)
     "ANY" = Token(..)
 
@@ -75,7 +76,7 @@ nonTerminalAlt:
 
 symbol:
     symbolPrefix? symbolNonRec symbolSuffix?
-    "$"
+    "$"         # end of input
 
 symbolPrefix:
     "-"                 # negative lookahead (fails when symbol succeeds)
@@ -89,6 +90,7 @@ symbolNonRec:
     "LowerId"           # non-terminal
     "Str"               # terminal
     _"(" symbol+ _")"   # group
+    "^"                 # current cursor location
 
 symbolSuffix:
     "*"                 # zero or more

@@ -258,6 +258,7 @@ convertSymbolNonRec(nodes: Vec[ParseTree[Token, NonTerminal]]) Symbol:
         match terminal.kind:
             TokenKind.LowerId: Symbol.NonTerminal(terminal.text)
             TokenKind.Str: Symbol.Terminal(terminal.text.substr(1, terminal.text.len() - 1))
+            TokenKind.Caret: Symbol.Cursor
             _: panic("")
     else:
         let symbols: Vec[Symbol] = Vec.withCapacity(nodes.len())
@@ -352,6 +353,9 @@ type Symbol:
 
     ## Succeeds when the cursor is at the end. Fails with "unexpected token" otherwise.
     EndOfInput
+
+    ## The '^' symbol representing the current cursor position in the token vector.
+    Cursor
 
 # --------------------------------------------------------------------------------------------------
 # Code generation
@@ -827,6 +831,19 @@ generateSymbolParser(
                         + Doc.hardLine()
                         + makeThrow(makeUnexpectedTokenError()))
 
+        Symbol.Cursor:
+            match cont:
+                SymbolCont.Bind(local):
+                    Doc.str("let `local` = cursor")
+
+                SymbolCont.Push(vecLocal):
+                    Doc.str("`vecLocal`.push(cursor)")
+
+                SymbolCont.PushToParseTree(_):
+                    panic("Can't push cursor location to parse tree")
+
+                SymbolCont.Ignore:
+                    Doc.empty()
 
 tokensToCode(tokens: Vec[Token]) Str / exn:
     if tokens.len() == 0:

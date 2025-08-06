@@ -100,6 +100,7 @@ type TokenKind:
     # Operators
     Amp
     AmpAmp
+    Caret
     CaretEq
     Dollar
     DotDot
@@ -188,6 +189,7 @@ impl ToStr[TokenKind]:
             TokenKind.Backslash: "Backslash"
             TokenKind.BinInt: "BinInt"
             TokenKind.Break: "Break"
+            TokenKind.Caret: "Caret"
             TokenKind.CaretEq: "CaretEq"
             TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"

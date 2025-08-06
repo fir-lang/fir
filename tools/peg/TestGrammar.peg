@@ -91,3 +91,11 @@ semanticActionOptional Option[Token]:
 semanticActionComplex (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]):
     _"a" group=(aVec="a"* bVec="b"+ cOpt="c"?) $:
         group
+
+# --------------------------------------------------------------------------------------------------
+# Cursor positions
+
+cursorPositions Vec[U32]:
+    c0=^ "a" c1=^ "b" c2=^ "c" c3=^:
+        let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
+        vec

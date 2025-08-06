@@ -72,6 +72,9 @@ main():
             print("bVec = `result.bVec`")
             print("cOpt = `result.cOpt`")
 
+    print("# Cursor locations ---------------------------------------")
+    print(try(||: runParser("a b c", cursorPositions, Bool.False)))
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -185,3 +188,5 @@ main():
 # aVec = [LowerId(1:3:"a"),LowerId(1:5:"a")]
 # bVec = [LowerId(1:7:"b"),LowerId(1:9:"b"),LowerId(1:11:"b")]
 # cOpt = Option.Some(LowerId(1:13:"c"))
+# # Cursor locations ---------------------------------------
+# Result.Ok([0,1,2,3])
