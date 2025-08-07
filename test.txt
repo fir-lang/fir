@@ -1,0 +1,9 @@
+#[derive(Eq)]
+type TypeDecl:
+    name: Id
+    typeParams: Vec[Id]
+    typeParamKinds: Vec[Kind]
+    rhs: Option[TypeDeclRhs]
+
+main():
+    ()

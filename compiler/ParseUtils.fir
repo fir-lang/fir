@@ -1,4 +1,4 @@
-import Compiler.Ast
+import Ast
 
 
 type ExprPrefix:

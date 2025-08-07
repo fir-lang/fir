@@ -88,7 +88,7 @@ impl Heap {
         array_obj_addr
     }
 
-    pub fn array_slice(
+    pub(super) fn array_slice(
         &mut self,
         array: u64,
         start: u32,
@@ -121,7 +121,7 @@ impl Heap {
         array_obj_addr
     }
 
-    pub fn array_set(
+    pub(super) fn array_set(
         &mut self,
         array: u64,
         idx: u32,
@@ -163,7 +163,7 @@ impl Heap {
         }
     }
 
-    pub fn array_copy_within(
+    pub(super) fn array_copy_within(
         &mut self,
         array: u64,
         src: u32,
@@ -201,7 +201,7 @@ impl Heap {
         }
     }
 
-    pub fn array_get(
+    pub(super) fn array_get(
         &mut self,
         array: u64,
         idx: u32,
@@ -258,7 +258,7 @@ impl Heap {
         alloc
     }
 
-    pub fn allocate_str_view(
+    pub(super) fn allocate_str_view(
         &mut self,
         str_tag: u64,
         array_u8_tag: u64,

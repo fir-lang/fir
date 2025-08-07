@@ -1,7 +1,6 @@
 import Grammar
 import Lexer
-import Peg.PegTestLib
-import Compiler.Scanner
+import Scanner
 
 main(args: Array[Str]):
     if args.len() < 2:
@@ -35,6 +34,9 @@ gen(item: Str):
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
 
     print(genTree(result.tree).render(80))
+
+lexerErrorStr(err: Error) Str:
+    "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
 
 genTree(typeDecl: TypeDecl) Doc:
     let typeName = typeDecl.name.name
@@ -249,7 +251,7 @@ type Foo:
         y: Str
         z: Bool")
 
-# args: -iPeg=tools/peg -iCompiler=compiler
+# args: -iPeg=tools/peg
 # args after: -- --test
 # expected stdout:
 # impl[Eq[t]] Eq[Option[t]]:
