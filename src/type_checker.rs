@@ -687,14 +687,14 @@ fn collect_schemes(
                 loc,
             }) => {
                 // Check that `parent_ty` exists.
-                if let Some(parent_ty) = parent_ty {
-                    if tys.get_con(&parent_ty.node).is_none() {
-                        panic!(
-                            "{}: Unknown type {}",
-                            loc_display(&decl.loc),
-                            &parent_ty.node
-                        );
-                    }
+                if let Some(parent_ty) = parent_ty
+                    && tys.get_con(&parent_ty.node).is_none()
+                {
+                    panic!(
+                        "{}: Unknown type {}",
+                        loc_display(&decl.loc),
+                        &parent_ty.node
+                    );
                 }
 
                 let fun_preds: Set<Pred> =

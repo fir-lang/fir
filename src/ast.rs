@@ -822,25 +822,25 @@ impl Type {
 
                 let mut extension = extension.clone();
 
-                if let Some(ext) = &extension {
-                    if let Some(ext_ty) = substs.get(ext) {
-                        match ext_ty {
-                            Type::Var(new_ext) => extension = Some(new_ext.clone()),
+                if let Some(ext) = &extension
+                    && let Some(ext_ty) = substs.get(ext)
+                {
+                    match ext_ty {
+                        Type::Var(new_ext) => extension = Some(new_ext.clone()),
 
-                            Type::Record {
-                                fields: ext_fields,
-                                extension: new_ext,
-                                is_row,
-                            } => {
-                                assert!(*is_row);
-                                fields.extend(ext_fields.iter().cloned());
-                                extension = new_ext.clone();
-                            }
-
-                            _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
+                        Type::Record {
+                            fields: ext_fields,
+                            extension: new_ext,
+                            is_row,
+                        } => {
+                            assert!(*is_row);
+                            fields.extend(ext_fields.iter().cloned());
+                            extension = new_ext.clone();
                         }
-                    };
-                }
+
+                        _ => panic!("Weird substitution for record extension {ext}: {ext_ty}"),
+                    }
+                };
 
                 Type::Record {
                     fields,
@@ -870,23 +870,23 @@ impl Type {
 
                 let mut extension = extension.clone();
 
-                if let Some(ext) = &extension {
-                    if let Some(ext_ty) = substs.get(ext) {
-                        match ext_ty {
-                            Type::Var(new_ext) => extension = Some(new_ext.clone()),
+                if let Some(ext) = &extension
+                    && let Some(ext_ty) = substs.get(ext)
+                {
+                    match ext_ty {
+                        Type::Var(new_ext) => extension = Some(new_ext.clone()),
 
-                            Type::Variant {
-                                alts: ext_alts,
-                                extension: new_ext,
-                                is_row,
-                            } => {
-                                assert!(*is_row);
-                                alts.extend(ext_alts.iter().cloned());
-                                extension = new_ext.clone();
-                            }
-
-                            _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
+                        Type::Variant {
+                            alts: ext_alts,
+                            extension: new_ext,
+                            is_row,
+                        } => {
+                            assert!(*is_row);
+                            alts.extend(ext_alts.iter().cloned());
+                            extension = new_ext.clone();
                         }
+
+                        _ => panic!("Weird substitution for variant extension {ext}: {ext_ty}"),
                     }
                 }
 

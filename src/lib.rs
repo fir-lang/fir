@@ -235,8 +235,7 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
         | TokenKind::UpperIdPath
         | TokenKind::TildeUpperId
         | TokenKind::TildeUpperIdPath = t.kind
-        {
-            if let Some((
+            && let Some((
                 l_next,
                 Token {
                     kind: TokenKind::LBracket,
@@ -244,28 +243,27 @@ fn combine_uppercase_lbrackets(tokens: Vec<(Loc, Token, Loc)>) -> Vec<(Loc, Toke
                 },
                 r_next,
             )) = iter.peek()
-            {
-                // TODO: This assumes 1-byte character, which holds today, but may not in the
-                // future.
-                if r.byte_idx == l_next.byte_idx {
-                    let r_next = *r_next;
-                    iter.next(); // consume '['
-                    new_tokens.push((
-                        l,
-                        Token {
-                            kind: match t.kind {
-                                TokenKind::UpperId => TokenKind::UpperIdLBracket,
-                                TokenKind::UpperIdPath => TokenKind::UpperIdPathLBracket,
-                                TokenKind::TildeUpperId => TokenKind::TildeUpperIdLBracket,
-                                TokenKind::TildeUpperIdPath => TokenKind::TildeUpperIdPathLBracket,
-                                _ => panic!(),
-                            },
-                            text: t.text, // NB. Does not include the lbracket in text as parser needs the id text
+        {
+            // TODO: This assumes 1-byte character, which holds today, but may not in the
+            // future.
+            if r.byte_idx == l_next.byte_idx {
+                let r_next = *r_next;
+                iter.next(); // consume '['
+                new_tokens.push((
+                    l,
+                    Token {
+                        kind: match t.kind {
+                            TokenKind::UpperId => TokenKind::UpperIdLBracket,
+                            TokenKind::UpperIdPath => TokenKind::UpperIdPathLBracket,
+                            TokenKind::TildeUpperId => TokenKind::TildeUpperIdLBracket,
+                            TokenKind::TildeUpperIdPath => TokenKind::TildeUpperIdPathLBracket,
+                            _ => panic!(),
                         },
-                        r_next,
-                    ));
-                    continue;
-                }
+                        text: t.text, // NB. Does not include the lbracket in text as parser needs the id text
+                    },
+                    r_next,
+                ));
+                continue;
             }
         }
 
