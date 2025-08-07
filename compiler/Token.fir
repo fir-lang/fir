@@ -1,9 +1,10 @@
-type Token:
-    kind: TokenKind
-    text: Str
-    byteIdx: U32
-    line: U32
-    col: U32
+type Token(
+    kind: TokenKind,
+    text: Str,
+    byteIdx: U32,
+    line: U32,
+    col: U32,
+)
 
 
 Token.rightLoc(self) (line: U32, col: U32):

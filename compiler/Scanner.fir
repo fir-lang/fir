@@ -3,10 +3,11 @@ import Lexer
 import Token
 
 
-type ScannerError:
-    line: U32
-    col: U32
-    msg: Str
+type ScannerError(
+    line: U32,
+    col: U32,
+    msg: Str,
+)
 
 
 scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
