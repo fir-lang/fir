@@ -1,14 +1,14 @@
 type ParseTree[t, nt]:
     Terminal(t)
 
-    NonTerminal:
-        kind: nt
-        nodes: Vec[ParseTree[t, nt]]
+    NonTerminal(
+        kind: nt,
+        nodes: Vec[ParseTree[t, nt]],
+    )
 
 # Indicates an unexpected token (when `cursor` is smaller than the length of the input) or
 # unexpected end-of-input (when `cursor` is the length of the input).
-type ParseError:
-    cursor: U32
+type ParseError(cursor: U32)
 
 ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
     match err1:

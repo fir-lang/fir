@@ -102,12 +102,13 @@ capitalize(s: Str) Str / exn:
 # --------------------------------------------------------------------------------------------------
 # Parsing PEG specs
 
-type Grammar:
-    imports: Vec[Str]
-    terminalType: Str
-    nonTerminalType: Str
-    terminalsDecl: TerminalsDecl
-    nonTerminalDecls: Vec[NonTerminalDecl]
+type Grammar(
+    imports: Vec[Str],
+    terminalType: Str,
+    nonTerminalType: Str,
+    terminalsDecl: TerminalsDecl,
+    nonTerminalDecls: Vec[NonTerminalDecl],
+)
 
 convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     let grammar = tree.asNonTerminal(NonTerminal.Grammar)
@@ -277,8 +278,9 @@ type TopDecl:
     NonTerminal(NonTerminalDecl)
 
 ## Declares terminals in the grammar.
-type TerminalsDecl:
-    terminals: Vec[TerminalDecl]
+type TerminalsDecl(
+    terminals: Vec[TerminalDecl],
+)
 
 ## A terminal declaration. E.g. in
 ##
@@ -291,9 +293,10 @@ type TerminalsDecl:
 ## At least for now, we don't parse the pattern and make sure it's a valid Fir pattern. If the
 ## pattern has syntax or type errors, we will still generate the code, and the generated code will
 ## have syntax or type errors too.
-type TerminalDecl:
-    name: Str
-    pattern: Vec[Token]
+type TerminalDecl(
+    name: Str,
+    pattern: Vec[Token],
+)
 
 ## A non-terminal declaration. E.g. in
 ##
@@ -304,20 +307,22 @@ type TerminalDecl:
 ## ```
 ##
 ## `name` is `"jsonObject"`, and `alts` is the two alternatives.
-type NonTerminalDecl:
-    name: Str
+type NonTerminalDecl(
+    name: Str,
 
     ## Optional return type of the non-terminal, as a token tree.
-    ty: Option[Vec[ParseTree[Token, NonTerminal]]]
+    ty: Option[Vec[ParseTree[Token, NonTerminal]]],
 
-    alts: Vec[Alt]
+    alts: Vec[Alt],
+)
 
 ## Alternatives of a non-terminal.
-type Alt:
-    symbols: Vec[Symbol]
+type Alt(
+    symbols: Vec[Symbol],
 
     ## Optional semantic action of the production, as a token tree.
-    rhs: Option[Vec[ParseTree[Token, NonTerminal]]]
+    rhs: Option[Vec[ParseTree[Token, NonTerminal]]],
+)
 
 ## A symbol in an alternative.
 type Symbol:

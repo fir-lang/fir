@@ -8,21 +8,13 @@ type ExprPrefix:
 
 
 type InlineExprCont:
-    BinOp:
-        op: BinOp
-        rhs: Expr
-
-    Is:
-        pat: Pat
+    BinOp(op: BinOp, rhs: Expr)
+    Is(pat: Pat)
 
 
 type ExprSuffix:
-    Field:
-        field: Id
-        tyArgs: Vec[Type]
-
-    Args:
-        args: Vec[Named[Expr]]
+    Field(field: Id, tyArgs: Vec[Type])
+    Args(args: Vec[Named[Expr]])
 
 
 parseCharLit(text: Str) Char:
