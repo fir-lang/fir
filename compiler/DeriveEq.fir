@@ -225,29 +225,24 @@ type Result[e, t]:
 
     print("")
 
-    gen("\
-type Char:
-    _codePoint: U32")
+    gen("type Char(_codePoint: U32)")
 
     print("")
 
     gen("\
-type Token:
-    kind: TokenKind
-    text: Str
-    byteIdx: U32
-    line: U32
-    col: U32")
+type Token(
+    kind: TokenKind,
+    text: Str,
+    byteIdx: U32,
+    line: U32,
+    col: U32)")
 
     print("")
 
     gen("\
 type Foo:
-    A:
-        x: U32
-    B:
-        y: Str
-        z: Bool")
+    A(x: U32)
+    B(y: Str, z: Bool)")
 
 # args: -iPeg=tools/peg -iCompiler=compiler
 # args after: -- --test
