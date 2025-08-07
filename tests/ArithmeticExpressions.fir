@@ -17,10 +17,11 @@ type Term:
 
     False
 
-    If:
-        cond: Term
-        then: Term
-        else_: Term
+    If(
+        cond: Term,
+        then: Term,
+        else_: Term,
+    )
 
     Zero
 

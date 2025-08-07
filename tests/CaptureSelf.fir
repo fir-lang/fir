@@ -1,5 +1,4 @@
-type T:
-    a: U32
+type T(a: U32)
 
 T.captureSelf(self: T) (Fn() () / [..errs]):
     || () / [..errs]:

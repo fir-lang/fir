@@ -1,5 +1,4 @@
-type Char:
-    _codePoint: U32
+type Char(_codePoint: U32)
 
 impl Eq[Char]:
     __eq(self: Char, other: Char) Bool:

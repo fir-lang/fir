@@ -1,5 +1,4 @@
-type Iter:
-    next: U32
+type Iter(next: U32)
 
 impl Iterator[Iter, U32, exn]:
     next(self: Iter) Option[U32] / exn:

@@ -1,9 +1,7 @@
 trait Test[a, b]:
     test(self: a) b
 
-type AB[a, b]:
-    a: a
-    b: b
+type AB[a, b](a: a, b: b)
 
 impl Test[AB[b, a], a]:
     test(self: AB[b, a]) a:

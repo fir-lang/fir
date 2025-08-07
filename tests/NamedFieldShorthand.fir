@@ -1,13 +1,7 @@
-type T:
-    x: U32
-    y: U32
-    z: U32
+type T(x: U32, y: U32, z: U32)
 
 type A:
-    A:
-        x: U32
-        y: U32
-        z: U32
+    A(x: U32, y: U32, z: U32)
 
 main():
     let x = u32(1)

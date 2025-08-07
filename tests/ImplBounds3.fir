@@ -5,9 +5,10 @@ prim type U32
 trait Ord[t]:
     cmp(self: t, other: t)
 
-type Vec[t]:
-    _data: Array[t]
-    _len: U32
+type Vec[t](
+    _data: Array[t],
+    _len: U32,
+)
 
 Vec.len(self: Vec[t]) U32:
     self._len

@@ -1,7 +1,4 @@
-type Foo:
-    a: U32
-    b: U32
-    c: U32
+type Foo(a: U32, b: U32, c: U32)
 
 main():
     let x = Foo(a = 1, b = 2, c = 3)

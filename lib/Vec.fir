@@ -1,6 +1,7 @@
-type Vec[t]:
-    _data: Array[t]
-    _len: U32
+type Vec[t](
+    _data: Array[t],
+    _len: U32,
+)
 
 Vec.empty() Vec[t]:
     Vec(_data = Array.new(0), _len = 0)
@@ -166,9 +167,10 @@ impl[ToStr[t]] ToStr[Vec[t]]:
         buf.push(']')
         buf.toStr()
 
-type VecIter[t]:
-    _vec: Vec[t]
-    _idx: U32
+type VecIter[t](
+    _vec: Vec[t],
+    _idx: U32,
+)
 
 impl Iterator[VecIter[t], t, exn]:
     next(self: VecIter[t]) Option[t] / exn:

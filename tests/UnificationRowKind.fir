@@ -1,9 +1,10 @@
 type Foo:
     Foo
 
-type Test[varRowVar, recRowRec]:
-    variant: [..varRowVar]
-    record: (..recRowRec)
+type Test[varRowVar, recRowRec](
+    variant: [..varRowVar],
+    record: (..recRowRec),
+)
 
 main():
     let x: Test[row[Foo], row(a: U32)] = Test(variant = ~Foo.Foo, record = (a = u32(123)))

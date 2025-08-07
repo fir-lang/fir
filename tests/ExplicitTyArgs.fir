@@ -6,8 +6,7 @@ main():
 foo() Option[t]:
     Option.None[t]
 
-type T[a]:
-    x: ()
+type T[a](x: ())
 
 T.f(self: T[a]) Option[t]:
     Option.None[t]

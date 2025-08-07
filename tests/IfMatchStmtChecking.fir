@@ -49,8 +49,7 @@ main():
 
     ()
 
-type StrBuilder:
-    _buf: StrBuf
+type StrBuilder(_buf: StrBuf)
 
 StrBuilder.str(self, s: Str) StrBuilder:
     self._buf.pushStr(s)

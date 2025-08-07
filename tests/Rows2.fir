@@ -1,11 +1,8 @@
-type A:
-    x: I32
+type A(x: I32)
 
-type B:
-    y: Str
+type B(y: Str)
 
-type C:
-    t: Bool
+type C(t: Bool)
 
 mono_fn(alts: [A, B]):
     match alts:

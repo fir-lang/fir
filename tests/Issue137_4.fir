@@ -3,8 +3,7 @@ trait Sequence[seq, t, exn]:
 
 # ------------------------------------------------------------------------------
 
-type CountFrom:
-    from: U32
+type CountFrom(from: U32)
 
 impl Sequence[CountFrom, U32, exn]:
     forEach(self: CountFrom, consumer: Fn(U32) / exn) / exn:
@@ -15,10 +14,11 @@ impl Sequence[CountFrom, U32, exn]:
 
 # ------------------------------------------------------------------------------
 
-type AppendAfter[s1, s2]:
-    seq1: s1
-    seq2: s2
-    amt: U32
+type AppendAfter[s1, s2](
+    seq1: s1,
+    seq2: s2,
+    amt: U32,
+)
 
 type AppendAfterStop:
     AppendAfterStop

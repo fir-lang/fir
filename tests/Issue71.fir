@@ -1,5 +1,4 @@
-type T:
-    x: U32
+type T(x: U32)
 
 T.increment(self) T:
     T(x = self.x + 1)

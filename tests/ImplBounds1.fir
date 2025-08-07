@@ -1,5 +1,4 @@
-type A[t]:
-    i: t
+type A[t](i: t)
 
 A.test[ToStr[t1]](self: A[t1]):
     printStr(self.i.toStr())

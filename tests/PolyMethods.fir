@@ -1,8 +1,7 @@
 trait T[a]:
     f[ToStr[b]](self: a, b: b)
 
-type X:
-    value: I32
+type X(value: I32)
 
 impl T[X]:
     f[ToStr[q]](self: X, q: q):

@@ -1,8 +1,6 @@
-type A:
-    x: I32
+type A(x: I32)
 
-type B:
-    y: Str
+type B(y: Str)
 
 type C:
     C
@@ -17,4 +15,4 @@ main(): mono_fn(~C.C)
 # args: --typecheck --no-backtrace
 # expected exit status: 101
 # expected stderr:
-# tests/RowsFail4.fir:15:17: Unable to unify variant with constructors {"C"} with variant with constructors {"A", "B"}
+# tests/RowsFail4.fir:13:17: Unable to unify variant with constructors {"C"} with variant with constructors {"A", "B"}

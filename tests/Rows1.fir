@@ -6,8 +6,9 @@ id[RecRow[r]](r: (x: I32, ..r)) (x: I32, ..r):
     printStr(r.x.toStr())
     r
 
-type Test[recRow]:
-    x: (x: I32, ..recRow)
+type Test[recRow](
+    x: (x: I32, ..recRow),
+)
 
 main():
     test(id((x = 1, y = 2)))

@@ -1,7 +1,8 @@
 # Immutable, UTF-8 encoded strings.
-type Str:
+type Str(
     # UTF-8 encoding of the string.
-    _bytes: Array[U8]
+    _bytes: Array[U8],
+)
 
 # Copies the bytes, does not validate UTF-8.
 Str.fromUtf8Vec(bytes: Vec[U8]) Str:
@@ -94,12 +95,13 @@ impl Hash[Str]:
 impl ToStr[Str]:
     toStr(self: Str) Str: self
 
-type CharIter:
+type CharIter(
     # UTF-8 encoding of the string.
-    _bytes: Array[U8]
+    _bytes: Array[U8],
 
     # Current index into `_bytes`.
-    _idx: U32
+    _idx: U32,
+)
 
 # Get the slice of the original string, starting from the current iteration point.
 CharIter.asStr(self) Str:
@@ -115,9 +117,10 @@ impl Iterator[CharIter, Char, exn]:
         self._idx += charLength
         Option.Some(char)
 
-type CharIndices:
-    _str: Str
-    _idx: U32
+type CharIndices(
+    _str: Str,
+    _idx: U32,
+)
 
 impl Iterator[CharIndices, (char: Char, idx: U32), exn]:
     next(self: CharIndices) Option[(char: Char, idx: U32)] / exn:
@@ -159,9 +162,10 @@ _charAt(bytes: Array[U8], idx: U32) Char:
         let b3 = (bytes.get(idx + 3) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
-type SplitWhitespace:
-    _str: Str
-    _idx: U32
+type SplitWhitespace(
+    _str: Str,
+    _idx: U32,
+)
 
 impl Iterator[SplitWhitespace, Str, exn]:
     next(self: SplitWhitespace) Option[Str] / exn:
@@ -198,9 +202,10 @@ impl Iterator[SplitWhitespace, Str, exn]:
         self._idx = wordEnd
         Option.Some(self._str.substr(wordStart, wordEnd))
 
-type Lines:
-    _str: Str
-    _idx: U32
+type Lines(
+    _str: Str,
+    _idx: U32,
+)
 
 impl Iterator[Lines, Str, exn]:
     next(self: Lines) Option[Str] / exn:

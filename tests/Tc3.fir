@@ -6,8 +6,7 @@ trait T[a]:
     getI32(self: a) I32:
         0
 
-type A:
-    i: I32
+type A(i: I32)
 
 impl T[A]:
     test(self: A) ():
