@@ -45,3 +45,29 @@ parseStrParts(text: Str) Vec[StrPart]:
 
 newId(name: Str) Id:
     Id(name)
+
+
+processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
+    if fields.isEmpty():
+        return ConFields.Empty
+
+    let foundNamed = Bool.False
+    let foundUnnamed = Bool.False
+
+    for field: (name: Option[Id], ty: Type) in fields.iter():
+        if field.name.isSome():
+            foundNamed = Bool.True
+        else:
+            foundUnnamed = Bool.True
+
+    if foundNamed and foundUnnamed:
+        panic("Field list cannot have both named and unnamed fields")
+
+    if foundNamed:
+        let fs: Vec[(name: Id, ty: Type)] =
+            fields.iter().map(|f: (name: Option[Id], ty: Type)|: (name = f.name.unwrap(), ty = f.ty)).toVec()
+        ConFields.Named(fs)
+    else:
+        let fs: Vec[Type] =
+            fields.iter().map(|f: (name: Option[Id], ty: Type)|: f.ty).toVec()
+        ConFields.Unnamed(fs)

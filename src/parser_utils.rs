@@ -72,8 +72,11 @@ pub(crate) fn process_fields(
     let mut found_named = false;
     let mut found_unnamed = false;
     for (name, _) in fields.iter() {
-        found_named |= name.is_some();
-        found_unnamed |= name.is_none();
+        if name.is_some() {
+            found_named = true;
+        } else {
+            found_unnamed = true;
+        }
     }
 
     if found_named && found_unnamed {
