@@ -98,7 +98,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
             # Push the token terminating the indented block.
             newTokens.push(t)
 
-            return l
+            return (line = t.line, col = t.col + t.text.len())
 
         if l.line != lastLoc.line:
             # Generate indentation tokens.
