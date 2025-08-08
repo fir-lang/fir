@@ -492,21 +492,6 @@ impl Pat {
                 buffer.push('\'');
             }
 
-            Pat::StrPfx(str, idx) => {
-                buffer.push('"');
-                buffer.push_str(str); // TODO: escaping
-                buffer.push('"');
-                buffer.push(' ');
-                match idx {
-                    Some(idx) => {
-                        write!(buffer, "local{}", idx.0).unwrap();
-                    }
-                    None => {
-                        buffer.push('_');
-                    }
-                }
-            }
-
             Pat::Or(p1, p2) => {
                 p1.node.print(buffer);
                 buffer.push_str(" | ");

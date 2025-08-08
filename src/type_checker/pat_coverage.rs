@@ -82,7 +82,7 @@ impl PatCoverage {
                 self.add(&l2.node);
             }
 
-            ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
+            ast::Pat::Str(_) | ast::Pat::Char(_) => {}
         }
     }
 

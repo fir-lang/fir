@@ -33,7 +33,6 @@ lexgen::lexer! {
         "do" = TokenKind::Do,
         "elif" = TokenKind::Elif,
         "else" = TokenKind::Else,
-        "export" = TokenKind::Export,
         "fn" = TokenKind::Fn,
         "Fn" = TokenKind::UpperFn,
         "for" = TokenKind::For,

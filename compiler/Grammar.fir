@@ -4858,23 +4858,8 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
             sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let symResult = try(||:
-            let nonTerminalResult = strPfxBinder(tokens, cursor)
-            cursor = nonTerminalResult.newCursor
-            curErr = nonTerminalResult.newErr
-            let binder = nonTerminalResult.tree
-            (cursor = cursor, err = curErr, val = binder)
-        )
-        let binder = match symResult:
-            Result.Err(err):
-                curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                Option.None
-            Result.Ok(ok):
-                cursor = ok.cursor
-                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-                Option.Some(ok.val)
         let value = do:
-            Pat.StrPfx(str.text, binder.flatten())
+            Pat.Str(str.text)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4892,43 +4877,6 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             Pat.Char(parseCharLit(char.text))
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-
-strPfxBinder(tokens: Vec[Token], cursor: U32) (tree: Option[Id], newCursor: U32, newErr: Option[ParseError]) / ParseError:
-    let cursor0 = cursor
-    let curErr: Option[ParseError] = Option.None
-    let altResult = try(||:
-        let id = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, ..)):
-            let sym = tokens.get(cursor)
-            cursor += 1
-            sym
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = do:
-            Option.Some(newId(id.text))
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Underscore, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = do:
-            Option.None
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

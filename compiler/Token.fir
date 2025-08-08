@@ -58,7 +58,6 @@ type TokenKind:
     Do
     Elif
     Else
-    Export
     Fn_
     For
     If
@@ -209,7 +208,6 @@ impl ToStr[TokenKind]:
             TokenKind.EqEq: "EqEq"
             TokenKind.Exclamation: "Exclamation"
             TokenKind.ExclamationEq: "ExclamationEq"
-            TokenKind.Export: "Export"
             TokenKind.Fn_: "Fn"
             TokenKind.For: "For"
             TokenKind.HexInt: "HexInt"
@@ -294,7 +292,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.EqEq, right = TokenKind.EqEq): Bool.True
             (left = TokenKind.Exclamation, right = TokenKind.Exclamation): Bool.True
             (left = TokenKind.ExclamationEq, right = TokenKind.ExclamationEq): Bool.True
-            (left = TokenKind.Export, right = TokenKind.Export): Bool.True
             (left = TokenKind.Fn_, right = TokenKind.Fn_): Bool.True
             (left = TokenKind.For, right = TokenKind.For): Bool.True
             (left = TokenKind.HexInt, right = TokenKind.HexInt): Bool.True

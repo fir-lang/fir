@@ -290,9 +290,6 @@ type Pat:
     ## Matches the character.
     Char(Char)
 
-    ## Match the prefix, bind the rest. E.g. `"a" .. rest`.
-    StrPfx(Str, Option[Id])
-
     ## Or pattern: `<pat1> | <pat2>`.
     Or(Pat, Pat)
 

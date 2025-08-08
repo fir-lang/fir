@@ -258,6 +258,7 @@ impl Heap {
         alloc
     }
 
+    #[allow(unused)]
     pub fn allocate_str_view(
         &mut self,
         str_tag: u64,

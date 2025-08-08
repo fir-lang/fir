@@ -1090,13 +1090,6 @@ fn mono_pat(
 
         ast::Pat::Char(c) => mono::Pat::Char(*c),
 
-        ast::Pat::StrPfx(pfx, var) => {
-            if let Some(var) = var {
-                locals.insert(var.clone());
-            }
-            mono::Pat::StrPfx(pfx.clone(), var.clone())
-        }
-
         ast::Pat::Or(pat1, pat2) => mono::Pat::Or(
             mono_bl_pat(pat1, ty_map, poly_pgm, mono_pgm, locals),
             mono_bl_pat(pat2, ty_map, poly_pgm, mono_pgm, locals),

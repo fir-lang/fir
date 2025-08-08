@@ -217,13 +217,6 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
 
         ast::Pat::Str(_) => Ty::str(),
 
-        ast::Pat::StrPfx(_, var) => {
-            if let Some(var) = var {
-                tc_state.env.insert(var.clone(), Ty::str());
-            }
-            Ty::str()
-        }
-
         ast::Pat::Char(_) => Ty::char(),
 
         ast::Pat::Or(pat1, pat2) => {
@@ -420,6 +413,6 @@ pub(super) fn refine_pat_binders(
             refine_pat_binders(tc_state, ty, &mut *p2, coverage);
         }
 
-        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
     }
 }

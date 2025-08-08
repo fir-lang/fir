@@ -492,7 +492,6 @@ pub enum Pat {
     Ignore,
     Str(String),
     Char(char),
-    StrPfx(String, Option<LocalIdx>),
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
@@ -2107,22 +2106,6 @@ fn lower_pat(
         mono::Pat::Str(str) => Pat::Str(str.clone()),
 
         mono::Pat::Char(char) => Pat::Char(*char),
-
-        mono::Pat::StrPfx(str, var) => match var {
-            Some(var) => {
-                let var_idx = LocalIdx(scope.locals.len() as u32);
-                scope.locals.push(LocalInfo {
-                    name: var.clone(),
-                    ty: mono::Type::Named(mono::NamedType {
-                        name: "Str".into(),
-                        args: vec![],
-                    }),
-                });
-                scope.bounds.insert(var.clone(), var_idx);
-                Pat::StrPfx(str.clone(), Some(var_idx))
-            }
-            None => Pat::StrPfx(str.clone(), None),
-        },
 
         mono::Pat::Or(p1, p2) => Pat::Or(
             Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),

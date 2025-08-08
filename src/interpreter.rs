@@ -535,7 +535,7 @@ fn exec<W: Write>(
 
             Stmt::Let(LetStmt { lhs, rhs }) => {
                 let val = val!(eval(w, pgm, heap, locals, &rhs.node, &rhs.loc, call_stack));
-                if !try_bind_pat(pgm, heap, lhs, locals, val, call_stack) {
+                if !try_bind_pat(pgm, heap, lhs, locals, val) {
                     panic!("{}: Pattern binding failed", loc_display(&stmt.loc));
                 }
                 val
@@ -622,7 +622,7 @@ fn exec<W: Write>(
 
                     let value = heap[next_item_option + 1];
 
-                    if !try_bind_pat(pgm, heap, pat, locals, value, call_stack) {
+                    if !try_bind_pat(pgm, heap, pat, locals, value) {
                         panic!(
                             "{}: For loop pattern failed to match item",
                             loc_display(&pat.loc)
@@ -887,7 +887,7 @@ fn eval<W: Write>(
                 rhs,
             } in alts
             {
-                if try_bind_pat(pgm, heap, pattern, locals, scrut, call_stack) {
+                if try_bind_pat(pgm, heap, pattern, locals, scrut) {
                     if let Some(guard) = guard {
                         let guard = val!(eval(
                             w,
@@ -988,7 +988,7 @@ fn eval<W: Write>(
             let val = val!(eval(
                 w, pgm, heap, locals, &expr.node, &expr.loc, call_stack
             ));
-            ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val, call_stack) {
+            ControlFlow::Val(if try_bind_pat(pgm, heap, pat, locals, val) {
                 pgm.true_alloc
             } else {
                 pgm.false_alloc
@@ -1046,7 +1046,6 @@ fn try_bind_pat(
     pattern: &L<Pat>,
     locals: &mut [u64],
     value: u64,
-    call_stack: &[Frame],
 ) -> bool {
     match &pattern.node {
         Pat::Var(var) => {
@@ -1062,38 +1061,14 @@ fn try_bind_pat(
             value_bytes == str.as_bytes()
         }
 
-        Pat::StrPfx(pfx, var) => {
-            debug_assert!(heap[value] == pgm.str_con_idx.as_u64());
-            let value_bytes = heap.str_bytes(value);
-            if value_bytes.starts_with(pfx.as_bytes()) {
-                if let Some(var) = var {
-                    let pfx_len = pfx.len() as u32;
-                    let len = heap.str_bytes(value).len() as u32;
-                    let rest = heap.allocate_str_view(
-                        pgm.str_con_idx.as_u64(),
-                        pgm.array_u8_con_idx.as_u64(),
-                        value,
-                        pfx_len,
-                        len - pfx_len,
-                        &pattern.loc,
-                        call_stack,
-                    );
-                    locals[var.as_usize()] = rest;
-                }
-                true
-            } else {
-                false
-            }
-        }
-
         Pat::Char(char) => {
             debug_assert_eq!(heap[value], pgm.char_con_idx.as_u64());
             heap[value + 1] == u64::from(*char as u32)
         }
 
         Pat::Or(pat1, pat2) => {
-            try_bind_pat(pgm, heap, pat1, locals, value, call_stack)
-                || try_bind_pat(pgm, heap, pat2, locals, value, call_stack)
+            try_bind_pat(pgm, heap, pat1, locals, value)
+                || try_bind_pat(pgm, heap, pat2, locals, value)
         }
 
         Pat::Constr(ConstrPattern {
@@ -1113,7 +1088,7 @@ fn try_bind_pat(
                     field_idx = con.fields.find_named_field_idx(field_name);
                 }
                 let field_value = heap[value + 1 + (field_idx as u64)];
-                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value, call_stack) {
+                if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
                     return false;
                 }
             }
@@ -1144,7 +1119,7 @@ fn try_bind_pat(
                             Some(pat) => pat,
                         };
                         let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value, call_stack) {
+                        if !try_bind_pat(pgm, heap, field_pat, locals, field_value) {
                             return false;
                         }
                     }
@@ -1155,14 +1130,7 @@ fn try_bind_pat(
                     for (i, field_pat) in field_pats.iter().enumerate() {
                         debug_assert!(field_pat.name.is_none());
                         let field_value = heap[value + 1 + (i as u64)];
-                        if !try_bind_pat(
-                            pgm,
-                            heap,
-                            &field_pat.node,
-                            locals,
-                            field_value,
-                            call_stack,
-                        ) {
+                        if !try_bind_pat(pgm, heap, &field_pat.node, locals, field_value) {
                             return false;
                         }
                     }

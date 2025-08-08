@@ -883,16 +883,11 @@ simplePat Pat:
         Pat.Ignore
 
     # Literals.
-    str="Str" binder=strPfxBinder?:
-        Pat.StrPfx(str.text, binder.flatten())
+    str="Str":
+        Pat.Str(str.text)
 
     char="Char":
         Pat.Char(parseCharLit(char.text))
-
-
-strPfxBinder Option[Id]:
-    id="LowerId": Option.Some(newId(id.text))
-    "_": Option.None
 
 
 recordFieldPat Named[Pat]:

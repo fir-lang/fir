@@ -67,7 +67,6 @@ pub enum TokenKind {
     Do,
     Elif,
     Else,
-    Export,
     Fn,
     For,
     If,
