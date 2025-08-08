@@ -75,6 +75,31 @@ main():
     print("# Cursor locations ---------------------------------------")
     print(try(||: runParser("a b c", cursorPositions, Bool.False)))
 
+    print("# Simple groups ------------------------------------------")
+    print(try(||: runParser("a a b c c", simpleGroup1, Bool.False)))
+    print(try(||: runParser("a a c c", simpleGroup1, Bool.False)))
+
+    print(try(||: runParser("a a b c c", simpleGroup2, Bool.False)))
+    print(try(||: runParser("a a c c", simpleGroup2, Bool.False)))
+
+    print(try(||: runParser("a a b b c c", simpleGroup3, Bool.False)))
+    print(try(||: runParser("a a b c c", simpleGroup3, Bool.False)))
+    print(try(||: runParser("a a c c", simpleGroup3, Bool.False)))
+
+    print(try(||: runParser("a a b c c", simpleGroup4, Bool.False)))
+    print(try(||: runParser("a a c c", simpleGroup4, Bool.False)))
+
+    print(try(||: runParser("a c", simpleGroup5, Bool.False)))
+    print(try(||: runParser("a a b c c", simpleGroup5, Bool.False)))
+
+    print(try(||: runParser("a c", simpleGroup6, Bool.False)))
+    print(try(||: runParser("a a b c c", simpleGroup6, Bool.False)))
+    print(try(||: runParser("a a b c a b c c", simpleGroup6, Bool.False)))
+
+    print(try(||: runParser("a c", simpleGroup7, Bool.False)))
+    print(try(||: runParser("a a b c c", simpleGroup7, Bool.False)))
+    print(try(||: runParser("a a b c a b c c", simpleGroup7, Bool.False)))
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -190,3 +215,21 @@ main():
 # cOpt = Option.Some(LowerId(1:13:"c"))
 # # Cursor locations ---------------------------------------
 # Result.Ok([0,1,2,3])
+# # Simple groups ------------------------------------------
+# Result.Ok(LowerId(1:5:"b"))
+# Result.Err(unexpected token or end of input at cursor 2)
+# Result.Ok(Option.Some(LowerId(1:5:"b")))
+# Result.Ok(Option.None)
+# Result.Ok([LowerId(1:5:"b"),LowerId(1:7:"b")])
+# Result.Ok([LowerId(1:5:"b")])
+# Result.Ok([])
+# Result.Ok([LowerId(1:5:"b")])
+# Result.Err(unexpected token or end of input at cursor 2)
+# Result.Ok(Option.None)
+# Result.Ok(Option.Some(LowerId(1:5:"b")))
+# Result.Ok([])
+# Result.Ok([LowerId(1:5:"b")])
+# Result.Ok([LowerId(1:5:"b"),LowerId(1:11:"b")])
+# Result.Err(unexpected token or end of input at cursor 1)
+# Result.Ok([LowerId(1:5:"b")])
+# Result.Ok([LowerId(1:5:"b"),LowerId(1:11:"b")])

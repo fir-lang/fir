@@ -110,8 +110,8 @@ type_ Type:
 
 
  namedType NamedType:
-    name="UpperId" "[" arg0=type_ args=("," t=type_)* ","? "]":
-        let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
+    name="UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
+        let args = once(arg0).chain(args.iter()).toVec()
         NamedType(name = newId(name.text), args = args)
 
     name="UpperId":
@@ -131,8 +131,8 @@ recordType RecordType:
     isRow=recordTypeStart ".." ext="LowerId" ")":
         RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
-    isRow=recordTypeStart f0=recordTypeField fs=("," f=recordTypeField)* ext=recordTypeCont? ")":
-        let fields: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+    isRow=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? ")":
+        let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
         RecordType(fields, extension = ext.flatten(), isRow = isRow)
 
 
@@ -143,8 +143,8 @@ recordTypeStart Bool:
 
 
 recordTypeCont Option[Id]:
-    "," id=(".." id="LowerId")?:
-        id.map(|i: (id: Token)|: newId(i.id.text))
+    "," id=(_".." "LowerId")?:
+        id.map(|id: Token|: newId(id.text))
 
 
 # - []
@@ -160,9 +160,9 @@ variantType VariantType:
     isRow=variantTypeStart ".." ext="LowerId" "]":
         VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
 
-    isRow=variantTypeStart alt0=variantAlt alts=("," a=variantAlt)* ext=variantTypeCont? "]":
+    isRow=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? "]":
         VariantType(
-            alts = once(alt0).chain(alts.iter().map(|alt: (a: VariantAlt)|: alt.a)).toVec(),
+            alts = once(alt0).chain(alts.iter()).toVec(),
             extension = ext.flatten(),
             isRow = isRow,
         )
@@ -175,8 +175,8 @@ variantTypeStart Bool:
 
 
 variantTypeCont Option[Id]:
-    "," id=(".." id="LowerId")?:
-        id.map(|id: (id: Token)|: newId(id.id.text))
+    "," id=(_".." "LowerId")?:
+        id.map(|id: Token|: newId(id.text))
 
 
 variantAlt VariantAlt:
@@ -188,14 +188,14 @@ variantAlt VariantAlt:
 
 
 recordTypeFields Vec[Named[Type]]:
-    f0=recordTypeField fs=("," f=recordTypeField)* "," ".." "LowerId":
+    f0=recordTypeField fs=(_"," recordTypeField)* "," ".." "LowerId":
         # TODO: Extension?
         # TODO: We do we need the type annotation here?
-        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
         vec
 
-    f0=recordTypeField fs=("," f=recordTypeField)* ","?:
-        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+    f0=recordTypeField fs=(_"," recordTypeField)* ","?:
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
         vec
 
 
@@ -215,8 +215,8 @@ fnType FnType:
 
 
 fnArgTys Vec[Type]:
-    t0=type_ ts=("," t=type_)* ","?:
-        let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+    t0=type_ ts=(_"," type_)* ","?:
+        let vec: Vec[Type] = once(t0).chain(ts.iter()).toVec()
         vec
 
 
@@ -273,9 +273,9 @@ typeDecl TypeDecl:
 
 
 typeParams Vec[Id]:
-    id0="LowerId" ids=("," id="LowerId")* ","?:
+    id0="LowerId" ids=(_"," "LowerId")* ","?:
         let vec: Vec[Id] =
-            once(newId(id0.text)).chain(ids.iter().map(|id: (id: Token)|: newId(id.id.text))).toVec()
+            once(newId(id0.text)).chain(ids.iter().map(|id: Token|: newId(id.text))).toVec()
         vec
 
 
@@ -295,16 +295,16 @@ conDecl ConDecl:
 
 # One or more fields, with optional trailing comma.
 conFields ConFields:
-    f0=conField fs=("," f=conField)* ","?:
+    f0=conField fs=(_"," conField)* ","?:
         let vec: Vec[(name: Option[Id], ty: Type)] =
-            once(f0).chain(fs.iter().map(|fs: (f: (name: Option[Id], ty: Type))|: fs.f)).toVec()
+            once(f0).chain(fs.iter()).toVec()
         processFields(vec)
 
 
 # A constructor field with optional name: `Type` or `foo: Type`.
 conField (name: Option[Id], ty: Type):
-    name=(name="LowerId" ":")? ty=type_:
-        (name = name.map(|name: (name: Token)|: newId(name.name.text)), ty = ty)
+    name=("LowerId" _":")? ty=type_:
+        (name = name.map(|name: Token|: newId(name.text)), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -347,13 +347,13 @@ blockExpr Expr:
 
     "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
             conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
-            else_=("else" ":" "NEWLINE" "INDENT" else_=stmt+ _"DEDENT")?:
+            else_=(_"else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?:
         Expr.If(IfExpr(
             branches =
                 once((guard = cond0, body = body0))
                     .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
                     .toVec(),
-            elseBranch = else_.map(|branch: (else_: Vec[Stmt])|: branch.else_),
+            elseBranch = else_,
         ))
 
     "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
@@ -454,13 +454,13 @@ field Id:
 
 
 args Vec[Named[Expr]]:
-    "(" args=(arg0=arg args=("," arg=arg)* ","?)? ")":
+    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")":
         match args:
             Option.None:
                 Vec.empty()
             Option.Some((arg0, args)):
                 let vec: Vec[Named[Expr]] =
-                    once(arg0).chain(args.iter().map(|arg: (arg: Named[Expr])|: arg.arg)).toVec()
+                    once(arg0).chain(args.iter()).toVec()
                 vec
 
 
@@ -605,17 +605,17 @@ simpleExpr Expr:
 
 
 sequence Expr:
-    ty=(ty=type_ ".")? elems=seqElems:
-        Expr.Seq(ty = ty.map(|ty: (ty: Type)|: ty.ty), elems = elems)
+    ty=(type_ _".")? elems=seqElems:
+        Expr.Seq(ty = ty, elems = elems)
 
 
 seqElems Vec[(key: Option[Expr], value: Expr)]:
     "[" "]":
         Vec.empty()
 
-    "[" e0=seqElem es=("," e=seqElem)* ","? "]":
+    "[" e0=seqElem es=(_"," seqElem)* ","? "]":
         let vec: Vec[(key: Option[Expr], value: Expr)] =
-            once(e0).chain(es.iter().map(|e: (e: (key: Option[Expr], value: Expr))|: e.e)).toVec()
+            once(e0).chain(es.iter()).toVec()
         vec
 
 
@@ -630,20 +630,20 @@ seqElem (key: Option[Expr], value: Expr):
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
-    ty="UpperId" con=("." con="UpperId")? userTyArgs=tyArgs?:
+    ty="UpperId" con=(_"." "UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
             ty = newId(ty.text),
-            constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+            constr = con.map(|con: Token|: newId(con.text)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
         )
 
-    ty="TildeUpperId" con=("." con="UpperId")? userTyArgs=tyArgs?:
+    ty="TildeUpperId" con=(_"." "UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
             ty = newId(ty.text),
-            constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+            constr = con.map(|con: Token|: newId(con.text)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
         )
@@ -655,8 +655,8 @@ upperIdPath:
 
 
 tyArgs Vec[Type]:
-    "[" t0=type_ ts=("," t=type_)* ","? "]":
-        let ts: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+    "[" t0=type_ ts=(_"," type_)* ","? "]":
+        let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
         ts
 
 
@@ -715,10 +715,10 @@ altGuard Expr:
 
 
 fnArgs Vec[(name: Id, ty: Option[Type])]:
-    v0="LowerId" ty0=(":" ty=type_)? vs=("," v="LowerId" ty=(":" ty=type_)?)* ","?:
+    v0="LowerId" ty0=(_":" type_)? vs=("," v="LowerId" ty=(_":" type_)?)* ","?:
         let vec: Vec[(name: Id, ty: Option[Type])] =
-            once((name = newId(v0.text), ty = ty0.map(|ty: (ty: Type)|: ty.ty)))
-                .chain(vs.iter().map(|v: (v: Token, ty: Option[(ty: Type)])|: (name = newId(v.v.text), ty = v.ty.map(|ty: (ty: Type)|: ty.ty))))
+            once((name = newId(v0.text), ty = ty0))
+                .chain(vs.iter().map(|v: (v: Token, ty: Option[Type])|: (name = newId(v.v.text), ty = v.ty)))
                 .toVec()
         vec
 
@@ -734,18 +734,18 @@ stmt Stmt:
     "continue" label="label"? "NEWLINE":
         Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
 
-    "let" pat=pat ty=(":" ty=type_)? "=" rhs=letRhs:
+    "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
         Stmt.Let(LetStmt(
             lhs = pat,
-            ty = ty.map(|t: (ty: Type)|: t.ty),
+            ty = ty,
             rhs = rhs,
         ))
 
-    label=loopLabel? "for" pat=pat ty=(":" ty=type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         Stmt.For(ForStmt(
             label = label,
             pat = pat,
-            astTy = ty.map(|t: (ty: Type)|: t.ty),
+            astTy = ty,
             tcTy = Option.None,
             expr = expr,
             exprTy = Option.None,
@@ -845,14 +845,14 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_.text), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" p0=recordFieldPat ps=("," p=recordFieldPat)* ignoreRest=("," "..")? ")")?:
+    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")?:
         Pat.Constr(ConstrPat(
             constr = con,
             fields = match fs:
                 Option.None:
                     Vec.empty()
                 Option.Some((p0, ps, ..)):
-                    once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+                    once(p0).chain(ps.iter()).toVec(),
             ignoreRest = match fs:
                 Option.None:
                     Bool.False
@@ -864,16 +864,16 @@ simplePat Pat:
     "(" ")":
         Pat.Record(RecordPat(fields = Vec.empty(), ignoreRest = Bool.False, inferredTy = Option.None))
 
-    "(" p0=recordFieldPat ps=("," p=recordFieldPat)* ","? ")":
+    "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")":
         Pat.Record(RecordPat(
-            fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+            fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.False,
             inferredTy = Option.None,
         ))
 
-    "(" p0=recordFieldPat ps=("," p=recordFieldPat)* "," ignoreRest=".." ")":
+    "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")":
         Pat.Record(RecordPat(
-            fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+            fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.True,
             inferredTy = Option.None,
         ))
@@ -908,8 +908,8 @@ recordFieldPat Named[Pat]:
 
 
 importDecl ImportDecl:
-    "import" p0="UpperId" ps=("." p="UpperId")* "NEWLINE":
-        let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: (p: Token)|: p.p.text)).toVec()
+    "import" p0="UpperId" ps=(_"." "UpperId")* "NEWLINE":
+        let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: Token|: p.text)).toVec()
         ImportDecl(path = vec)
 
 
@@ -944,10 +944,10 @@ topFunDecl FunDecl:
 
 
 topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):
-    parentTy=(id="UpperId" ".")? name="LowerId" ctx=context? params=paramList ret=returnTy?:
+    parentTy=("UpperId" _".")? name="LowerId" ctx=context? params=paramList ret=returnTy?:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         (
-            parentTy = parentTy.map(|id: (id: Token)|: newId(id.id.text)),
+            parentTy = parentTy.map(|id: Token|: newId(id.text)),
             name = newId(name.text),
             sig = FunSig(
                 context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
@@ -966,10 +966,10 @@ parentTy Id:
 
 
 context Context:
-    "[" t0=type_ ts=("," t=type_)* ","? "]":
+    "[" t0=type_ ts=(_"," type_)* ","? "]":
         Context(
             typeParams = Vec.empty(),   # generated by the type checker
-            preds = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec(),
+            preds = once(t0).chain(ts.iter()).toVec(),
         )
 
 
@@ -977,15 +977,15 @@ paramList Vec[(name: Id, ty: Option[Type])]:
     "(" ")":
         Vec.empty()
 
-    "(" p0=param ps=("," p=param)* ","? ")":
+    "(" p0=param ps=(_"," param)* ","? ")":
         let vec: Vec[(name: Id, ty: Option[Type])] =
-            once(p0).chain(ps.iter().map(|p: (p: (name: Id, ty: Option[Type]))|: p.p)).toVec()
+            once(p0).chain(ps.iter()).toVec()
         vec
 
 
 param (name: Id, ty: Option[Type]):
-    name="LowerId" ty=(":" ty=type_)?:
-        (name = newId(name.text), ty = ty.map(|ty: (ty: Type)|: ty.ty))
+    name="LowerId" ty=(_":" type_)?:
+        (name = newId(name.text), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1012,11 +1012,11 @@ traitDeclRhs Vec[FunDecl]:
 
 
 implDecl ImplDecl:
-    "impl" ctx=context? name="UpperId" "[" t0=type_ ts=("," t=type_)* ","? "]" rhs=implDeclRhs:
+    "impl" ctx=context? name="UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
             context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
             trait_ = newId(name.text),
-            tys = once(t0).chain(ts.iter().map(|ts: (t: Type)|: ts.t)).toVec(),
+            tys = once(t0).chain(ts.iter()).toVec(),
             items = rhs,
         )
 

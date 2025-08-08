@@ -99,3 +99,34 @@ cursorPositions Vec[U32]:
     c0=^ "a" c1=^ "b" c2=^ "c" c3=^:
         let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
         vec
+
+# --------------------------------------------------------------------------------------------------
+# Simple groups
+
+simpleGroup1 Token:
+    _"a" x=(_"a" "b" _"c") _"c":
+        x
+
+simpleGroup2 Option[Token]:
+    _"a" x=(_"a" "b"? _"c") _"c":
+        x
+
+simpleGroup3 Vec[Token]:
+    _"a" x=(_"a" "b"* _"c") _"c":
+        x
+
+simpleGroup4 Vec[Token]:
+    _"a" x=(_"a" "b"+ _"c") _"c":
+        x
+
+simpleGroup5 Option[Token]:
+    _"a" x=(_"a" "b" _"c")? _"c":
+        x
+
+simpleGroup6 Vec[Token]:
+    _"a" x=(_"a" "b" _"c")* _"c":
+        x
+
+simpleGroup7 Vec[Token]:
+    _"a" x=(_"a" "b" _"c")+ _"c":
+        x

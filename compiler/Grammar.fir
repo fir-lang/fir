@@ -249,8 +249,7 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: NamedType, newCursor: U32, new
                 let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let t = nonTerminalResult.tree
-                args.push((t = t))
+                args.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -279,7 +278,7 @@ namedType(tokens: Vec[Token], cursor: U32) (tree: NamedType, newCursor: U32, new
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            let args = once(arg0).chain(args.iter().map(|arg: (t: Type)|: arg.t)).toVec()
+            let args = once(arg0).chain(args.iter()).toVec()
             NamedType(name = newId(name.text), args = args)
         (value = value, cursor = cursor, err = curErr)
     )
@@ -379,8 +378,7 @@ recordType(tokens: Vec[Token], cursor: U32) (tree: RecordType, newCursor: U32, n
                 let nonTerminalResult = recordTypeField(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let f = nonTerminalResult.tree
-                fs.push((f = f))
+                fs.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -410,7 +408,7 @@ recordType(tokens: Vec[Token], cursor: U32) (tree: RecordType, newCursor: U32, n
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            let fields: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+            let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
             RecordType(fields, extension = ext.flatten(), isRow = isRow)
         (value = value, cursor = cursor, err = curErr)
     )
@@ -478,7 +476,6 @@ recordTypeCont(tokens: Vec[Token], cursor: U32) (tree: Option[Id], newCursor: U3
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let id = (id = id)
             (cursor = cursor, err = curErr, val = id)
         )
         let id = match symResult:
@@ -490,7 +487,7 @@ recordTypeCont(tokens: Vec[Token], cursor: U32) (tree: Option[Id], newCursor: U3
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let value = do:
-            id.map(|i: (id: Token)|: newId(i.id.text))
+            id.map(|id: Token|: newId(id.text))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -572,8 +569,7 @@ variantType(tokens: Vec[Token], cursor: U32) (tree: VariantType, newCursor: U32,
                 let nonTerminalResult = variantAlt(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let a = nonTerminalResult.tree
-                alts.push((a = a))
+                alts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -604,7 +600,7 @@ variantType(tokens: Vec[Token], cursor: U32) (tree: VariantType, newCursor: U32,
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             VariantType(
-                alts = once(alt0).chain(alts.iter().map(|alt: (a: VariantAlt)|: alt.a)).toVec(),
+                alts = once(alt0).chain(alts.iter()).toVec(),
                 extension = ext.flatten(),
                 isRow = isRow,
             )
@@ -674,7 +670,6 @@ variantTypeCont(tokens: Vec[Token], cursor: U32) (tree: Option[Id], newCursor: U
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let id = (id = id)
             (cursor = cursor, err = curErr, val = id)
         )
         let id = match symResult:
@@ -686,7 +681,7 @@ variantTypeCont(tokens: Vec[Token], cursor: U32) (tree: Option[Id], newCursor: U
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let value = do:
-            id.map(|id: (id: Token)|: newId(id.id.text))
+            id.map(|id: Token|: newId(id.text))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -767,8 +762,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
                 let nonTerminalResult = recordTypeField(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let f = nonTerminalResult.tree
-                fs.push((f = f))
+                fs.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -791,7 +785,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -817,8 +811,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
                 let nonTerminalResult = recordTypeField(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let f = nonTerminalResult.tree
-                fs.push((f = f))
+                fs.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -843,7 +836,7 @@ recordTypeFields(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Type]], newCu
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
-            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter().map(|f: (f: Named[Type])|: f.f)).toVec()
+            let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -979,8 +972,7 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: Vec[Type], newCursor: U32, newE
                 let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let t = nonTerminalResult.tree
-                ts.push((t = t))
+                ts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -1005,7 +997,7 @@ fnArgTys(tokens: Vec[Token], cursor: U32) (tree: Vec[Type], newCursor: U32, newE
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
-            let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+            let vec: Vec[Type] = once(t0).chain(ts.iter()).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -1352,14 +1344,12 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: Vec[Id], newCursor: U32, newE
                 else:
                     throw(
                         ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                let id = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, ..)):
-                    let sym = tokens.get(cursor)
+                if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LowerId, ..)):
+                    ids.push(tokens.get(cursor))
                     cursor += 1
-                    sym
                 else:
                     throw(
                         ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                ids.push((id = id))
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -1385,7 +1375,7 @@ typeParams(tokens: Vec[Token], cursor: U32) (tree: Vec[Id], newCursor: U32, newE
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
             let vec: Vec[Id] =
-                once(newId(id0.text)).chain(ids.iter().map(|id: (id: Token)|: newId(id.id.text))).toVec()
+                once(newId(id0.text)).chain(ids.iter().map(|id: Token|: newId(id.text))).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -1492,8 +1482,7 @@ conFields(tokens: Vec[Token], cursor: U32) (tree: ConFields, newCursor: U32, new
                 let nonTerminalResult = conField(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let f = nonTerminalResult.tree
-                fs.push((f = f))
+                fs.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -1519,7 +1508,7 @@ conFields(tokens: Vec[Token], cursor: U32) (tree: ConFields, newCursor: U32, new
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
             let vec: Vec[(name: Option[Id], ty: Type)] =
-                once(f0).chain(fs.iter().map(|fs: (f: (name: Option[Id], ty: Type))|: fs.f)).toVec()
+                once(f0).chain(fs.iter()).toVec()
             processFields(vec)
         (value = value, cursor = cursor, err = curErr)
     )
@@ -1548,7 +1537,6 @@ conField(tokens: Vec[Token], cursor: U32) (tree: (name: Option[Id], ty: Type), n
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let name = (name = name)
             (cursor = cursor, err = curErr, val = name)
         )
         let name = match symResult:
@@ -1564,7 +1552,7 @@ conField(tokens: Vec[Token], cursor: U32) (tree: (name: Option[Id], ty: Type), n
         curErr = nonTerminalResult.newErr
         let ty = nonTerminalResult.tree
         let value = do:
-            (name = name.map(|name: (name: Token)|: newId(name.name.text)), ty = ty)
+            (name = name.map(|name: Token|: newId(name.text)), ty = ty)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -1874,7 +1862,6 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let else_ = (else_ = else_)
             (cursor = cursor, err = curErr, val = else_)
         )
         let else_ = match symResult:
@@ -1891,7 +1878,7 @@ blockExpr(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: 
                     once((guard = cond0, body = body0))
                         .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
                         .toVec(),
-                elseBranch = else_.map(|branch: (else_: Vec[Stmt])|: branch.else_),
+                elseBranch = else_,
             ))
         (value = value, cursor = cursor, err = curErr)
     )
@@ -2353,8 +2340,7 @@ args(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Expr]], newCursor: U32, n
                     let nonTerminalResult = arg(tokens, cursor)
                     cursor = nonTerminalResult.newCursor
                     curErr = nonTerminalResult.newErr
-                    let arg = nonTerminalResult.tree
-                    args.push((arg = arg))
+                    args.push(nonTerminalResult.tree)
                     (cursor = cursor, err = curErr)
                 )
                 match symResult:
@@ -2399,7 +2385,7 @@ args(tokens: Vec[Token], cursor: U32) (tree: Vec[Named[Expr]], newCursor: U32, n
                     Vec.empty()
                 Option.Some((arg0, args)):
                     let vec: Vec[Named[Expr]] =
-                        once(arg0).chain(args.iter().map(|arg: (arg: Named[Expr])|: arg.arg)).toVec()
+                        once(arg0).chain(args.iter()).toVec()
                     vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -2889,7 +2875,6 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: O
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let ty = (ty = ty)
             (cursor = cursor, err = curErr, val = ty)
         )
         let ty = match symResult:
@@ -2905,7 +2890,7 @@ sequence(tokens: Vec[Token], cursor: U32) (tree: Expr, newCursor: U32, newErr: O
         curErr = nonTerminalResult.newErr
         let elems = nonTerminalResult.tree
         let value = do:
-            Expr.Seq(ty = ty.map(|ty: (ty: Type)|: ty.ty), elems = elems)
+            Expr.Seq(ty = ty, elems = elems)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -2958,8 +2943,7 @@ seqElems(tokens: Vec[Token], cursor: U32) (tree: Vec[(key: Option[Expr], value: 
                 let nonTerminalResult = seqElem(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let e = nonTerminalResult.tree
-                es.push((e = e))
+                es.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -2989,7 +2973,7 @@ seqElems(tokens: Vec[Token], cursor: U32) (tree: Vec[(key: Option[Expr], value: 
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             let vec: Vec[(key: Option[Expr], value: Expr)] =
-                once(e0).chain(es.iter().map(|e: (e: (key: Option[Expr], value: Expr))|: e.e)).toVec()
+                once(e0).chain(es.iter()).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -3069,7 +3053,6 @@ constructor(tokens: Vec[Token], cursor: U32) (tree: Constructor, newCursor: U32,
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let con = (con = con)
             (cursor = cursor, err = curErr, val = con)
         )
         let con = match symResult:
@@ -3099,7 +3082,7 @@ constructor(tokens: Vec[Token], cursor: U32) (tree: Constructor, newCursor: U32,
             Constructor(
                 variant = Bool.False,
                 ty = newId(ty.text),
-                constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+                constr = con.map(|con: Token|: newId(con.text)),
                 userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
                 tyArgs = Vec.empty(),
             )
@@ -3131,7 +3114,6 @@ constructor(tokens: Vec[Token], cursor: U32) (tree: Constructor, newCursor: U32,
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let con = (con = con)
             (cursor = cursor, err = curErr, val = con)
         )
         let con = match symResult:
@@ -3161,7 +3143,7 @@ constructor(tokens: Vec[Token], cursor: U32) (tree: Constructor, newCursor: U32,
             Constructor(
                 variant = Bool.True,
                 ty = newId(ty.text),
-                constr = con.map(|con: (con: Token)|: newId(con.con.text)),
+                constr = con.map(|con: Token|: newId(con.text)),
                 userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
                 tyArgs = Vec.empty(),
             )
@@ -3285,8 +3267,7 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: Vec[Type], newCursor: U32, newErr
                 let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let t = nonTerminalResult.tree
-                ts.push((t = t))
+                ts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -3315,7 +3296,7 @@ tyArgs(tokens: Vec[Token], cursor: U32) (tree: Vec[Type], newCursor: U32, newErr
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            let ts: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
+            let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
             ts
         (value = value, cursor = cursor, err = curErr)
     )
@@ -3827,8 +3808,7 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Option[Type])]
             let nonTerminalResult = type_(tokens, cursor)
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
-            let ty = nonTerminalResult.tree
-            let ty0 = (ty = ty)
+            let ty0 = nonTerminalResult.tree
             (cursor = cursor, err = curErr, val = ty0)
         )
         let ty0 = match symResult:
@@ -3864,7 +3844,6 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Option[Type])]
                     cursor = nonTerminalResult.newCursor
                     curErr = nonTerminalResult.newErr
                     let ty = nonTerminalResult.tree
-                    let ty = (ty = ty)
                     (cursor = cursor, err = curErr, val = ty)
                 )
                 let ty = match symResult:
@@ -3901,8 +3880,8 @@ fnArgs(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Option[Type])]
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         let value = do:
             let vec: Vec[(name: Id, ty: Option[Type])] =
-                once((name = newId(v0.text), ty = ty0.map(|ty: (ty: Type)|: ty.ty)))
-                    .chain(vs.iter().map(|v: (v: Token, ty: Option[(ty: Type)])|: (name = newId(v.v.text), ty = v.ty.map(|ty: (ty: Type)|: ty.ty))))
+                once((name = newId(v0.text), ty = ty0))
+                    .chain(vs.iter().map(|v: (v: Token, ty: Option[Type])|: (name = newId(v.v.text), ty = v.ty)))
                     .toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
@@ -4011,7 +3990,6 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
             let ty = nonTerminalResult.tree
-            let ty = (ty = ty)
             (cursor = cursor, err = curErr, val = ty)
         )
         let ty = match symResult:
@@ -4033,7 +4011,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         let value = do:
             Stmt.Let(LetStmt(
                 lhs = pat,
-                ty = ty.map(|t: (ty: Type)|: t.ty),
+                ty = ty,
                 rhs = rhs,
             ))
         (value = value, cursor = cursor, err = curErr)
@@ -4078,7 +4056,6 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
             let ty = nonTerminalResult.tree
-            let ty = (ty = ty)
             (cursor = cursor, err = curErr, val = ty)
         )
         let ty = match symResult:
@@ -4137,7 +4114,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
             Stmt.For(ForStmt(
                 label = label,
                 pat = pat,
-                astTy = ty.map(|t: (ty: Type)|: t.ty),
+                astTy = ty,
                 tcTy = Option.None,
                 expr = expr,
                 exprTy = Option.None,
@@ -4650,8 +4627,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
                     let nonTerminalResult = recordFieldPat(tokens, cursor)
                     cursor = nonTerminalResult.newCursor
                     curErr = nonTerminalResult.newErr
-                    let p = nonTerminalResult.tree
-                    ps.push((p = p))
+                    ps.push(nonTerminalResult.tree)
                     (cursor = cursor, err = curErr)
                 )
                 match symResult:
@@ -4706,7 +4682,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
                     Option.None:
                         Vec.empty()
                     Option.Some((p0, ps, ..)):
-                        once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+                        once(p0).chain(ps.iter()).toVec(),
                 ignoreRest = match fs:
                     Option.None:
                         Bool.False
@@ -4760,8 +4736,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
                 let nonTerminalResult = recordFieldPat(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let p = nonTerminalResult.tree
-                ps.push((p = p))
+                ps.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -4791,7 +4766,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             Pat.Record(RecordPat(
-                fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+                fields = once(p0).chain(ps.iter()).toVec(),
                 ignoreRest = Bool.False,
                 inferredTy = Option.None,
             ))
@@ -4823,8 +4798,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
                 let nonTerminalResult = recordFieldPat(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let p = nonTerminalResult.tree
-                ps.push((p = p))
+                ps.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -4850,7 +4824,7 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             Pat.Record(RecordPat(
-                fields = once(p0).chain(ps.iter().map(|p: (p: Named[Pat])|: p.p)).toVec(),
+                fields = once(p0).chain(ps.iter()).toVec(),
                 ignoreRest = Bool.True,
                 inferredTy = Option.None,
             ))
@@ -5032,14 +5006,12 @@ importDecl(tokens: Vec[Token], cursor: U32) (tree: ImportDecl, newCursor: U32, n
                 else:
                     throw(
                         ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                let p = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
-                    let sym = tokens.get(cursor)
+                if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
+                    ps.push(tokens.get(cursor))
                     cursor += 1
-                    sym
                 else:
                     throw(
                         ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                ps.push((p = p))
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -5054,7 +5026,7 @@ importDecl(tokens: Vec[Token], cursor: U32) (tree: ImportDecl, newCursor: U32, n
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: (p: Token)|: p.p.text)).toVec()
+            let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: Token|: p.text)).toVec()
             ImportDecl(path = vec)
         (value = value, cursor = cursor, err = curErr)
     )
@@ -5192,7 +5164,7 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let symResult = try(||:
-            let id = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
+            let parentTy = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
                 let sym = tokens.get(cursor)
                 cursor += 1
                 sym
@@ -5204,7 +5176,6 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let parentTy = (id = id)
             (cursor = cursor, err = curErr, val = parentTy)
         )
         let parentTy = match symResult:
@@ -5258,7 +5229,7 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
         let value = do:
             let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
             (
-                parentTy = parentTy.map(|id: (id: Token)|: newId(id.id.text)),
+                parentTy = parentTy.map(|id: Token|: newId(id.text)),
                 name = newId(name.text),
                 sig = FunSig(
                     context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
@@ -5327,8 +5298,7 @@ context(tokens: Vec[Token], cursor: U32) (tree: Context, newCursor: U32, newErr:
                 let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let t = nonTerminalResult.tree
-                ts.push((t = t))
+                ts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -5359,7 +5329,7 @@ context(tokens: Vec[Token], cursor: U32) (tree: Context, newCursor: U32, newErr:
         let value = do:
             Context(
                 typeParams = Vec.empty(),
-                preds = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec(),
+                preds = once(t0).chain(ts.iter()).toVec(),
             )
         (value = value, cursor = cursor, err = curErr)
     )
@@ -5413,8 +5383,7 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Option[Type
                 let nonTerminalResult = param(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let p = nonTerminalResult.tree
-                ps.push((p = p))
+                ps.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -5444,7 +5413,7 @@ paramList(tokens: Vec[Token], cursor: U32) (tree: Vec[(name: Id, ty: Option[Type
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             let vec: Vec[(name: Id, ty: Option[Type])] =
-                once(p0).chain(ps.iter().map(|p: (p: (name: Id, ty: Option[Type]))|: p.p)).toVec()
+                once(p0).chain(ps.iter()).toVec()
             vec
         (value = value, cursor = cursor, err = curErr)
     )
@@ -5476,7 +5445,6 @@ param(tokens: Vec[Token], cursor: U32) (tree: (name: Id, ty: Option[Type]), newC
             cursor = nonTerminalResult.newCursor
             curErr = nonTerminalResult.newErr
             let ty = nonTerminalResult.tree
-            let ty = (ty = ty)
             (cursor = cursor, err = curErr, val = ty)
         )
         let ty = match symResult:
@@ -5488,7 +5456,7 @@ param(tokens: Vec[Token], cursor: U32) (tree: (name: Id, ty: Option[Type]), newC
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let value = do:
-            (name = newId(name.text), ty = ty.map(|ty: (ty: Type)|: ty.ty))
+            (name = newId(name.text), ty = ty)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5672,8 +5640,7 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ImplDecl, newCursor: U32, newEr
                 let nonTerminalResult = type_(tokens, cursor)
                 cursor = nonTerminalResult.newCursor
                 curErr = nonTerminalResult.newErr
-                let t = nonTerminalResult.tree
-                ts.push((t = t))
+                ts.push(nonTerminalResult.tree)
                 (cursor = cursor, err = curErr)
             )
             match symResult:
@@ -5709,7 +5676,7 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ImplDecl, newCursor: U32, newEr
             ImplDecl(
                 context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
                 trait_ = newId(name.text),
-                tys = once(t0).chain(ts.iter().map(|ts: (t: Type)|: ts.t)).toVec(),
+                tys = once(t0).chain(ts.iter()).toVec(),
                 items = rhs,
             )
         (value = value, cursor = cursor, err = curErr)

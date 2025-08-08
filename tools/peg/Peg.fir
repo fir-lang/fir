@@ -586,6 +586,32 @@ generateSymbolParser(
 
             doc
 
+        # Special case for simple groups: the value of the group should be the value of the only
+        # matched symbol in the group.
+        Symbol.Group(symbols) if isSimpleGroup(symbols) and cont is SymbolCont.Bind(_) | SymbolCont.Push(_):
+            let doc = Doc.empty()
+
+            let symIdx: U32 = 0
+
+            for symbol: Symbol in symbols.iter():
+                # TODO: Make these assertions.
+                if symbol is Symbol.Bind(_, _):
+                    panic("")
+
+                if symIdx != 0:
+                    doc += Doc.hardLine()
+
+                let symbolCont = if not (symbol is Symbol.Ignore(_)):
+                    SymbolCont.Bind("val")
+                else:
+                    SymbolCont.Ignore
+
+                doc += generateSymbolParser(symbol, terminalPats, cont)
+
+                symIdx += 1
+
+            doc
+
         Symbol.Group(symbols):
             let doc = Doc.empty()
 
@@ -918,3 +944,39 @@ parseTreeTokens(tree: ParseTree[t, nt], tokens: Vec[t]):
         ParseTree.NonTerminal(nodes, ..):
             for node: ParseTree[t, nt] in nodes.iter():
                 parseTreeTokens(node, tokens)
+
+## Whether the group has only ignored symbols with just one non-ignored, non-bound symbol. E.g. it's
+## one of these:
+##
+## - `_"a" "b" _"c"`
+## - `_foo bar? _baz`
+##
+## and not one of these:
+##
+## - `"a" "b" _"c"`: two non-ignored symbols
+## - `_foo x=bar? _baz`: bound symbol
+##
+## When a group is simple, we return the only matched symbol's value directly from the group (or
+## push it etc. depending on the continuation).
+isSimpleGroup(group: Vec[Symbol]) Bool:
+    if group.isEmpty():
+        # Parser doesn't allow empty groups, this should be a bug somehwere.
+        panic("Empty group")
+
+    let foundNonIgnored = Bool.False
+
+    for sym: Symbol in group.iter():
+        match sym:
+            Symbol.Bind(_, _):
+                return Bool.False
+
+            Symbol.Ignore(_):
+                ()
+
+            _:
+                if foundNonIgnored:
+                    return Bool.False
+
+                foundNonIgnored = Bool.True
+
+    foundNonIgnored
