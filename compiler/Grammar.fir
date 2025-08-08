@@ -1209,15 +1209,33 @@ typeDecl(tokens: Vec[Token], cursor: U32) (tree: TypeDecl, newCursor: U32, newEr
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LParen, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let symResult = try(||:
-            let nonTerminalResult = conFields(tokens, cursor)
-            cursor = nonTerminalResult.newCursor
-            curErr = nonTerminalResult.newErr
-            let fs = nonTerminalResult.tree
+            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LParen, ..)):
+                cursor += 1
+            else:
+                throw(
+                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+            let symResult = try(||:
+                let nonTerminalResult = conFields(tokens, cursor)
+                cursor = nonTerminalResult.newCursor
+                curErr = nonTerminalResult.newErr
+                let fs = nonTerminalResult.tree
+                (cursor = cursor, err = curErr, val = fs)
+            )
+            let fs = match symResult:
+                Result.Err(err):
+                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
+                    Option.None
+                Result.Ok(ok):
+                    cursor = ok.cursor
+                    curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
+                    Option.Some(ok.val)
+            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.RParen, ..)):
+                cursor += 1
+            else:
+                throw(
+                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+            let fs = (fs = fs)
             (cursor = cursor, err = curErr, val = fs)
         )
         let fs = match symResult:
@@ -1228,80 +1246,21 @@ typeDecl(tokens: Vec[Token], cursor: U32) (tree: TypeDecl, newCursor: U32, newEr
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.RParen, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
+            let fs = match fs:
+                Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+                Option.None: ConFields.Empty
             TypeDecl(
                 name = newId(name.text),
                 typeParams = match params:
                     Option.Some(params): params.params
                     Option.None: Vec.empty(),
                 typeParamKinds = Vec.empty(),
-                rhs = Option.Some(TypeDeclRhs.Product(fs.unwrapOr(ConFields.Empty))),
-            )
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Type, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let name = if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.UpperId, ..)):
-            let sym = tokens.get(cursor)
-            cursor += 1
-            sym
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let symResult = try(||:
-            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.LBracket, ..)):
-                cursor += 1
-            else:
-                throw(
-                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let nonTerminalResult = typeParams(tokens, cursor)
-            cursor = nonTerminalResult.newCursor
-            curErr = nonTerminalResult.newErr
-            let params = nonTerminalResult.tree
-            if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.RBracket, ..)):
-                cursor += 1
-            else:
-                throw(
-                    ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-            let params = (params = params)
-            (cursor = cursor, err = curErr, val = params)
-        )
-        let params = match symResult:
-            Result.Err(err):
-                curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                Option.None
-            Result.Ok(ok):
-                cursor = ok.cursor
-                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-                Option.Some(ok.val)
-        if tokens.getOpt(cursor) is Option.Some(Token(kind = TokenKind.Newline, ..)):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let value = do:
-            TypeDecl(
-                name = newId(name.text),
-                typeParams = match params:
-                    Option.Some(params): params.params
-                    Option.None: Vec.empty(),
-                typeParamKinds = Vec.empty(),
-                rhs = Option.None,
+                rhs = Option.Some(TypeDeclRhs.Product(fs))
             )
         (value = value, cursor = cursor, err = curErr)
     )
