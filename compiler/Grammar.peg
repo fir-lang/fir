@@ -112,7 +112,7 @@ type_ Type:
  namedType NamedType:
     name="UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
         let args = once(arg0).chain(args.iter()).toVec()
-        NamedType(name = newId(name.text), args = args)
+        NamedType(name = newId(name.text), args)
 
     name="UpperId":
         NamedType(name = newId(name.text), args = Vec.empty())
@@ -126,14 +126,14 @@ type_ Type:
 # - (..foo)
 recordType RecordType:
     isRow=recordTypeStart ")":
-        RecordType(fields = Vec.empty(), extension = Option.None, isRow = isRow)
+        RecordType(fields = Vec.empty(), extension = Option.None, isRow)
 
     isRow=recordTypeStart ".." ext="LowerId" ")":
-        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
+        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow)
 
     isRow=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? ")":
         let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
-        RecordType(fields, extension = ext.flatten(), isRow = isRow)
+        RecordType(fields, extension = ext.flatten(), isRow)
 
 
 # Returns whether the type is a row.
@@ -155,16 +155,16 @@ recordTypeCont Option[Id]:
 # - [..foo]
 variantType VariantType:
     isRow=variantTypeStart "]":
-        VariantType(alts = Vec.empty(), extension = Option.None, isRow = isRow)
+        VariantType(alts = Vec.empty(), extension = Option.None, isRow)
 
     isRow=variantTypeStart ".." ext="LowerId" "]":
-        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow = isRow)
+        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow)
 
     isRow=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? "]":
         VariantType(
             alts = once(alt0).chain(alts.iter()).toVec(),
             extension = ext.flatten(),
-            isRow = isRow,
+            isRow,
         )
 
 
@@ -181,7 +181,7 @@ variantTypeCont Option[Id]:
 
 variantAlt VariantAlt:
     con="UpperId" "(" fields=recordTypeFields ")":
-        VariantAlt(con = newId(con.text), fields = fields)
+        VariantAlt(con = newId(con.text), fields)
 
     con="UpperId":
         VariantAlt(con = newId(con.text), fields = Vec.empty())
@@ -211,7 +211,7 @@ fnType FnType:
     "Fn" "(" args=fnArgTys? ")" ret=returnTy?:
         let args = args.unwrapOr(Vec.empty())
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
-        FnType(args = args, ret = ret.ret, exceptions = ret.exn)
+        FnType(args, ret = ret.ret, exceptions = ret.exn)
 
 
 fnArgTys Vec[Type]:
@@ -323,27 +323,17 @@ inlineExpr Expr:
         for cont_: InlineExprCont in cont.iter():
             match cont_:
                 InlineExprCont.BinOp(op, rhs):
-                    ret = Expr.BinOp(BinOpExpr(
-                        left = ret,
-                        right = rhs,
-                        op = op,
-                    ))
+                    ret = Expr.BinOp(BinOpExpr(left = ret, right = rhs, op))
 
                 InlineExprCont.Is(pat):
-                    ret = Expr.Is(IsExpr(
-                        expr = ret,
-                        pat = pat,
-                    ))
+                    ret = Expr.Is(IsExpr(expr = ret, pat))
         ret
 
 
 # Block expressions include an indented block and always end with DEDENT.
 blockExpr Expr:
     "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
-        Expr.Match(MatchExpr(
-            scrutinee = scrut,
-            alts = alts,
-        ))
+        Expr.Match(MatchExpr(scrutinee = scrut, alts))
 
     "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
             conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
@@ -369,7 +359,7 @@ blockExpr Expr:
                 exceptions = ret.exn,
                 returnTy = ret.ret,
             ),
-            body = body,
+            body,
             idx = 0,
         ))
 
@@ -384,17 +374,17 @@ blockExpr Expr:
                 exceptions = ret.exn,
                 returnTy = ret.ret,
             ),
-            body = body,
+            body,
             idx = 0,
         ))
 
 
 inlineExprCont InlineExprCont:
     op=binOp rhs=prefixExpr:
-        InlineExprCont.BinOp(op = op, rhs = rhs)
+        InlineExprCont.BinOp(op, rhs)
 
     "is" pat=pat:
-        InlineExprCont.Is(pat = pat)
+        InlineExprCont.Is(pat)
 
 
 prefixExpr Expr:
@@ -406,15 +396,12 @@ prefixExpr Expr:
                 ExprSuffix.Field(field, tyArgs):
                     ret = Expr.FieldSelect(FieldSelectExpr(
                         object = ret,
-                        field = field,
+                        field,
                         userTyArgs = tyArgs,
                     ))
 
                 ExprSuffix.Args(args):
-                    ret = Expr.Call(CallExpr(
-                        fun = ret,
-                        args = args,
-                    ))
+                    ret = Expr.Call(CallExpr(fun = ret, args))
 
         if pfx is Option.Some(pfx):
             match pfx:
@@ -439,10 +426,7 @@ prefixExpr Expr:
 
 exprSuffix ExprSuffix:
     field=field args=tyArgs?:
-        ExprSuffix.Field(
-            field = field,
-            tyArgs = args.unwrapOr(Vec.empty()),
-        )
+        ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
 
     args=args:
         ExprSuffix.Args(args = args)
@@ -606,7 +590,7 @@ simpleExpr Expr:
 
 sequence Expr:
     ty=(type_ _".")? elems=seqElems:
-        Expr.Seq(ty = ty, elems = elems)
+        Expr.Seq(ty, elems)
 
 
 seqElems Vec[(key: Option[Expr], value: Expr)]:
@@ -694,19 +678,11 @@ binOp BinOp:
 
 
 matchAlt Alt:
-    pat=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
-        Alt(
-            pattern = pat,
-            guard = guard,
-            rhs = body,
-        )
+    pattern=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Alt(pattern, guard, rhs = body)
 
-    pat=pat guard=altGuard? ":" body=stmt:
-        Alt(
-            pattern = pat,
-            guard = guard,
-            rhs = Vec.[body],
-        )
+    pattern=pat guard=altGuard? ":" body=stmt:
+        Alt(pattern, guard, rhs = Vec.[body])
 
 
 altGuard Expr:
@@ -735,33 +711,25 @@ stmt Stmt:
         Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
 
     "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
-        Stmt.Let(LetStmt(
-            lhs = pat,
-            ty = ty,
-            rhs = rhs,
-        ))
+        Stmt.Let(LetStmt(lhs = pat, ty, rhs))
 
     label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         Stmt.For(ForStmt(
-            label = label,
-            pat = pat,
+            label,
+            pat,
             astTy = ty,
             tcTy = Option.None,
-            expr = expr,
+            expr,
             exprTy = Option.None,
-            body = body,
+            body,
         ))
 
     label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.While(WhileStmt(
-            label = label,
-            cond = cond,
-            body = body,
-        ))
+        Stmt.While(WhileStmt(label, cond, body))
 
     label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         Stmt.While(WhileStmt(
-            label = label,
+            label,
             cond = Expr.ConstrSelect(Constructor(
                 variant = Bool.False,
                 ty = newId("Bool"),
@@ -769,7 +737,7 @@ stmt Stmt:
                 userTyArgs = Vec.empty(),
                 tyArgs = Vec.empty(),
             )),
-            body = body,
+            body,
         ))
 
     lhs=inlineExpr rhs=stmtExprCont:
@@ -778,7 +746,7 @@ stmt Stmt:
                 Stmt.Expr(lhs)
 
             Option.Some((op, rhs)):
-                Stmt.Assign(AssignStmt(lhs = lhs, rhs = rhs, op = op))
+                Stmt.Assign(AssignStmt(lhs, rhs, op))
 
     expr=blockExpr:
         Stmt.Expr(expr)
