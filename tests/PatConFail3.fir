@@ -2,9 +2,7 @@ main():
     match f():
         Foo.X: ()
 
-type Foo:
-    a: U32
-    b: U32
+type Foo(a: U32, b: U32)
 
 f() Foo: Foo(a = 1, b = 2)
 

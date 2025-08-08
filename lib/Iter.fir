@@ -82,9 +82,10 @@ range(start: t, end: t) RangeIterator[t]:
 irange(start: t, end: t) InclusiveRangeIterator[t]:
     InclusiveRangeIterator(current = start, end = end)
 
-type RangeIterator[t]:
-    current: t
-    end: t
+type RangeIterator[t](
+    current: t,
+    end: t,
+)
 
 impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
     next(self: RangeIterator[t]) Option[t] / exn:
@@ -97,9 +98,10 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type InclusiveRangeIterator[t]:
-    current: t
-    end: t
+type InclusiveRangeIterator[t](
+    current: t,
+    end: t,
+)
 
 impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
     next(self: InclusiveRangeIterator[t]) Option[t] / exn:
@@ -112,9 +114,10 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Map[iter, a, b, exn]:
-    iter: iter
-    f: Fn(a) b / exn
+type Map[iter, a, b, exn](
+    iter: iter,
+    f: Fn(a) b / exn,
+)
 
 impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
     next(self: Map[iter, a, b, exn]) Option[b] / exn:
@@ -127,9 +130,10 @@ impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Peekable[iter, item, exn]:
-    iter: iter
-    peeked: Option[item]
+type Peekable[iter, item, exn](
+    iter: iter,
+    peeked: Option[item],
+)
 
 impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
     next(self: Peekable[iter, item, exn]) Option[item] / exn:
@@ -153,9 +157,10 @@ Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]) Option
 
 # --------------------------------------------------------------------------------------------------
 
-type MapResult[iter, item, b, exnOld, exnNew]:
-    iter: iter
-    f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew
+type MapResult[iter, item, b, exnOld, exnNew](
+    iter: iter,
+    f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew,
+)
 
 impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, exnNew], b1, exnNew]:
     next(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[b1] / exnNew:
@@ -166,8 +171,9 @@ impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, ex
 
 # --------------------------------------------------------------------------------------------------
 
-type Try[iter, item, exn]:
-    iter: iter
+type Try[iter, item, exn](
+    iter: iter,
+)
 
 impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item], exn2]:
     next(self: Try[iter, item, exn]) Option[Result[exn, item]] / exn2:
@@ -181,9 +187,10 @@ impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item]
 
 # --------------------------------------------------------------------------------------------------
 
-type Skip[iter, item, exn]:
-    iter: iter
-    amount: U32
+type Skip[iter, item, exn](
+    iter: iter,
+    amount: U32,
+)
 
 impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
     next(self: Skip[iter, item, exn]) Option[item] / exn:
@@ -199,8 +206,9 @@ impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Once[t]:
-    val: Option[t]
+type Once[t](
+    val: Option[t],
+)
 
 once(val: t) Once[t]:
     Once(val = Option.Some(val))
@@ -216,8 +224,9 @@ impl Iterator[Once[t], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type OnceWith[t, exn]:
-    f: Option[Fn() t / exn]
+type OnceWith[t, exn](
+    f: Option[Fn() t / exn],
+)
 
 onceWith(f: Fn() t / exn) OnceWith[t, exn]:
     OnceWith(f = Option.Some(f))
@@ -237,8 +246,9 @@ impl Iterator[OnceWith[t, exn], t, exn]:
 # --------------------------------------------------------------------------------------------------
 
 # TODO: We don't have a syntax to declare unit types.
-type Empty:
-    x: ()
+type Empty(
+    x: (),
+)
 
 empty() Empty:
     Empty(x = ())
@@ -252,9 +262,10 @@ impl Iterator[Empty, item, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Chain[iter1, iter2, item, exn]:
-    iter1: Option[iter1]
-    iter2: Option[iter2]
+type Chain[iter1, iter2, item, exn](
+    iter1: Option[iter1],
+    iter2: Option[iter2],
+)
 
 impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter1, iter2, item, exn], item, exn]:
     next(self: Chain[iter1, iter2, item, exn]) Option[item] / exn:
@@ -291,9 +302,10 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
 
 # --------------------------------------------------------------------------------------------------
 
-type Filter[iter, item, exn]:
-    iter: iter
-    f: Fn(item) Bool / exn
+type Filter[iter, item, exn](
+    iter: iter,
+    f: Fn(item) Bool / exn,
+)
 
 impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
     next(self: Filter[iter, item, exn]) Option[item] / exn:
@@ -305,9 +317,10 @@ impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Enumerate[iter, item, exn]:
-    iter: iter
-    idx: U32
+type Enumerate[iter, item, exn](
+    iter: iter,
+    idx: U32,
+)
 
 # TODO: Maybe update item type to `(U32, item)` once we have records with positional fields.
 impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, item: item), exn]:

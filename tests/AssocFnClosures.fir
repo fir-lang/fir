@@ -1,5 +1,4 @@
-type T:
-    i: I32
+type T(i: I32)
 
 T.print(self):
     printStr("T(i = `self.i`)")

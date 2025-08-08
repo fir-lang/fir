@@ -59,3 +59,38 @@ pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
     assert_eq!(parts.len(), 2);
     parts
 }
+
+pub(crate) fn process_fields(
+    fields: Vec<(Option<Id>, ast::Type)>,
+    module: &std::rc::Rc<str>,
+    loc: &lexgen_util::Loc,
+) -> ast::ConstructorFields {
+    if fields.is_empty() {
+        return ast::ConstructorFields::Empty;
+    }
+
+    let mut found_named = false;
+    let mut found_unnamed = false;
+    for (name, _) in fields.iter() {
+        if name.is_some() {
+            found_named = true;
+        } else {
+            found_unnamed = true;
+        }
+    }
+
+    if found_named && found_unnamed {
+        panic!(
+            "{}:{}:{}: Field list cannot have both named and unnamed fields",
+            module,
+            loc.line + 1,
+            loc.col + 1,
+        );
+    }
+
+    if found_named {
+        ast::ConstructorFields::Named(fields.into_iter().map(|(n, t)| (n.unwrap(), t)).collect())
+    } else {
+        ast::ConstructorFields::Unnamed(fields.into_iter().map(|(_, t)| t).collect())
+    }
+}

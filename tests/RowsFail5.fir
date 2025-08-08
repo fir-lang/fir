@@ -1,8 +1,6 @@
-type A:
-    x: I32
+type A(x: I32)
 
-type B:
-    y: Str
+type B(y: Str)
 
 poly_fn(alts: [A, B, ..r]):
     match alts:
@@ -14,4 +12,4 @@ main(): poly_fn(~B(y = Bool.False))
 
 # args: --typecheck --no-backtrace
 # expected exit status: 101
-# expected stderr: tests/RowsFail5.fir:13:24: Unable to unify types Bool and Str
+# expected stderr: tests/RowsFail5.fir:11:24: Unable to unify types Bool and Str

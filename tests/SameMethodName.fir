@@ -1,8 +1,6 @@
-type T1:
-    a: U32
+type T1(a: U32)
 
-type T2:
-    a: U32
+type T2(a: U32)
 
 T1.foo(self):
     print("T1.foo(a = `self.a`)")

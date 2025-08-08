@@ -38,9 +38,10 @@ impl[ToStr[t]] ToStr[Array[t]]:
         buf.push(']')
         buf.toStr()
 
-type ArrayIter[t]:
-    _array: Array[t]
-    _idx: U32
+type ArrayIter[t](
+    _array: Array[t],
+    _idx: U32,
+)
 
 impl Iterator[ArrayIter[t], t, exn]:
     next(self: ArrayIter[t]) Option[t] / exn:

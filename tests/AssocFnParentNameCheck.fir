@@ -1,5 +1,4 @@
-type Foo:
-    x: U32
+type Foo(x: U32)
 
 Fo.f(self: Foo):
     print("Foo.f")
@@ -10,4 +9,4 @@ main():
 
 # args: --no-backtrace
 # expected exit status: 101
-# expected stderr: tests/AssocFnParentNameCheck.fir:4:1: Unknown type Fo
+# expected stderr: tests/AssocFnParentNameCheck.fir:3:1: Unknown type Fo

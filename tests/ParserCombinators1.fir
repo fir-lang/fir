@@ -8,8 +8,9 @@ impl ToStr[ParseError]:
             ParseError.EndOfInput: "end of input"
             ParseError.UnexpectedToken: "unexpected token"
 
-type Parser[input, output]:
-    f: Fn(Vec[input], U32) (output: output, nextPos: U32) / ParseError
+type Parser[input, output](
+    f: Fn(Vec[input], U32) (output: output, nextPos: U32) / ParseError,
+)
 
 ## Match a single token in the input.
 Parser.match_(f: Fn(input) Option[output] / ParseError) Parser[input, output]:

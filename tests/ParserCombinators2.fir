@@ -8,12 +8,14 @@ impl ToStr[ParseError]:
             ParseError.EndOfInput: "end of input"
             ParseError.UnexpectedToken: "unexpected token"
 
-type Parser[input, output]:
-    f: Fn(ParserState[input]) output / ParseError
+type Parser[input, output](
+    f: Fn(ParserState[input]) output / ParseError,
+)
 
-type ParserState[input]:
-    input: Vec[input]
-    pos: U32
+type ParserState[input](
+    input: Vec[input],
+    pos: U32,
+)
 
 Parser.match_(f: Fn(input) output / ParseError) Parser[input, output]:
     Parser(f = |state|:

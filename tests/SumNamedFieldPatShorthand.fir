@@ -1,8 +1,5 @@
 type T:
-    A:
-        x: U32
-        y: U32
-        z: U32
+    A(x: U32, y: U32, z: U32)
 
 main():
     let val = T.A(x = u32(123), y = u32(456), z = u32(789))

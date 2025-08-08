@@ -1,6 +1,7 @@
-type MyIter:
-    start: U32
-    end: U32
+type MyIter(
+    start: U32,
+    end: U32,
+)
 
 impl Iterator[MyIter, U32, exn]:
     next(self: MyIter) Option[U32] / exn:

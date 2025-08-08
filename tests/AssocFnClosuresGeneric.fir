@@ -1,5 +1,4 @@
-type T:
-    i: I32
+type T(i: I32)
 
 T.print1[ToStr[a]](self, other: a):
     printStr("T(i = `self.i`, other = `other.toStr()`)")

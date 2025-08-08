@@ -97,11 +97,6 @@ trait ToStr[t]:
 impl ToStr[()]:
     toStr(self: ()) Str: "()"
 
-# The bottom type, e.g. return type of a function that doesn't return.
-# We may want to rename this later.
-type Void
-
-
 prim printStrNoNl(s: Str)
 
 printStr(s: Str):
@@ -112,7 +107,7 @@ print[ToStr[a]](a: a): printStr(a.toStr())
 
 printNoNl[ToStr[a]](a: a): printStrNoNl(a.toStr())
 
-prim panic(msg: Str) Void
+prim panic(msg: Str) a
 
 type Ordering:
     Less

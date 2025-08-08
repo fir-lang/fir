@@ -96,12 +96,13 @@ lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
     _combineTokens(fileContents, tokens)
 
 
-type Lexer:
-    _file: Str
-    _input: Str
-    _byteIdx: U32
-    _line: U32
-    _col: U32
+type Lexer(
+    _file: Str,
+    _input: Str,
+    _byteIdx: U32,
+    _line: U32,
+    _col: U32,
+)
 
 
 Lexer._fail(self, msg: Str) a / Error:

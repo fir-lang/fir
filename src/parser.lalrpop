@@ -142,23 +142,23 @@ LLowerId: L<Id> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TypeDecl: L<TypeDecl> = {
-    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> "type" <type_name:UpperId> <rhs:TypeDeclRhs?> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params: vec![],
             type_param_kinds: vec![],
-            rhs: Some(rhs),
+            rhs: Some(rhs.unwrap_or(TypeDeclRhs::Product(ConstructorFields::Empty))),
         }),
 
-    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs> <r:@R> =>
+    <l:@L> "type" <type_name:UpperIdLBracket> <type_params:TypeParams> <rhs:TypeDeclRhs?> <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
             type_param_kinds: vec![],
-            rhs: Some(rhs),
+            rhs: Some(rhs.unwrap_or(TypeDeclRhs::Product(ConstructorFields::Empty))),
         }),
 
-    <l:@L> "prim"? "type" <type_name:UpperId> NEWLINE <r:@R> =>
+    <l:@L> "prim" "type" <type_name:UpperId> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params: vec![],
@@ -166,7 +166,7 @@ TypeDecl: L<TypeDecl> = {
             rhs: None,
         }),
 
-    <l:@L> "prim"? "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
+    <l:@L> "prim" "type" <type_name:UpperIdLBracket> <type_params:TypeParams> NEWLINE <r:@R> =>
         L::new(module, l, r, TypeDecl {
             name: type_name.smol_str(),
             type_params,
@@ -179,8 +179,10 @@ TypeDeclRhs: TypeDeclRhs = {
     ":" NEWLINE INDENT <constrs:TypeConstrs> DEDENT =>
         TypeDeclRhs::Sum(constrs),
 
-    ":" NEWLINE INDENT <named_fields:NamedFields> DEDENT =>
-        TypeDeclRhs::Product(ConstructorFields::Named(named_fields)),
+    <l:@L> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
+        let fields = process_fields(fields, module, &l);
+        TypeDeclRhs::Product(fields)
+    }
 }
 
 TypeParams: Vec<Id> = {
@@ -196,38 +198,21 @@ ConstructorDecl: ConstructorDecl = {
     <name:UpperId> NEWLINE =>
         ConstructorDecl {
             name: name.smol_str(),
-            fields: ConstructorFields::Empty
+            fields: ConstructorFields::Empty,
         },
 
-    <name:UpperId> ":" NEWLINE INDENT <named_fields:NamedFields> DEDENT =>
+    <l:@L> <name:UpperId> "(" <fields:Sep<Field, ",">> ")" NEWLINE => {
+        let fields = process_fields(fields, module, &l);
         ConstructorDecl {
             name: name.smol_str(),
-            fields: ConstructorFields::Named(named_fields),
-        },
-
-    <name:UpperId> "(" <fields:UnnamedFields> ","? ")" NEWLINE =>
-        ConstructorDecl {
-            name: name.smol_str(),
-            fields: ConstructorFields::Unnamed(fields),
-        },
+            fields,
+        }
+    }
 }
 
-NamedFields: Vec<(Id, Type)> = {
-    (<NamedField> NEWLINE)+
-}
-
-NamedField: (Id, Type) = {
-    <name:LowerId> ":" <type_:Type> =>
-        (name.smol_str(), type_),
-}
-
-UnnamedFields: Vec<Type> = {
-    <mut fields:UnnamedFields> "," <field:Type> => {
-        fields.push(field);
-        fields
-    },
-
-    <field:Type> => vec![field],
+Field: (Option<Id>, Type) = {
+    <name:(<LowerId> ":")?> <type_:Type> =>
+        (name.map(|n| n.smol_str()), type_),
 }
 
 LType: L<Type> = {

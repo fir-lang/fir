@@ -236,24 +236,29 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 
 typeDecl TypeDecl:
-    "type" name="UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=typeDeclRhs "DEDENT":
+    # Sum type: at least one constructors
+    "type" name="UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
             name = newId(name.text),
             typeParams = match params:
                 Option.Some(params): params.params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
-            rhs = Option.Some(rhs),
+            rhs = Option.Some(TypeDeclRhs.Sum(rhs)),
         )
 
-    "type" name="UpperId" params=("[" params=typeParams "]")? "NEWLINE":
+    # Product type
+    "type" name="UpperId" params=("[" params=typeParams "]")? fs=("(" fs=conFields? ")")? "NEWLINE":
+        let fs = match fs:
+            Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+            Option.None: ConFields.Empty
         TypeDecl(
             name = newId(name.text),
             typeParams = match params:
                 Option.Some(params): params.params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
-            rhs = Option.None,
+            rhs = Option.Some(TypeDeclRhs.Product(fs))
         )
 
     "prim" "type" name="UpperId" params=("[" params=typeParams "]")? "NEWLINE":
@@ -274,39 +279,32 @@ typeParams Vec[Id]:
         vec
 
 
-typeDeclRhs TypeDeclRhs:
-    cs=conDecl+:
-        TypeDeclRhs.Sum(cs)
-
-    fs=namedField+:
-        TypeDeclRhs.Product(ConFields.Named(fs))
-
-
 conDecl ConDecl:
-    name="UpperId" ":" "NEWLINE" "INDENT" fs=namedFields "DEDENT":
-        ConDecl(name = newId(name.text), fields = ConFields.Named(fs))
-
-    name="UpperId" "(" fs=unnamedFields? ")" "NEWLINE":
-        ConDecl(name = newId(name.text), fields = ConFields.Unnamed(fs.unwrapOr(Vec.empty())))
+    name="UpperId" "(" fs=conFields? ")" "NEWLINE":
+        ConDecl(
+            name = newId(name.text),
+            fields = fs.unwrapOr(ConFields.Empty),
+        )
 
     name="UpperId" "NEWLINE":
-        ConDecl(name = newId(name.text), fields = ConFields.Empty)
+        ConDecl(
+            name = newId(name.text),
+            fields = ConFields.Empty
+        )
 
 
-namedFields Vec[(name: Id, ty: Type)]:
-    fs=namedField+:
-        fs
+# One or more fields, with optional trailing comma.
+conFields ConFields:
+    f0=conField fs=("," f=conField)* ","?:
+        let vec: Vec[(name: Option[Id], ty: Type)] =
+            once(f0).chain(fs.iter().map(|fs: (f: (name: Option[Id], ty: Type))|: fs.f)).toVec()
+        processFields(vec)
 
 
-namedField (name: Id, ty: Type):
-    name="LowerId" ":" ty=type_ "NEWLINE":
-        (name = newId(name.text), ty = ty)
-
-
-unnamedFields Vec[Type]:
-    t0=type_ ts=("," t=type_)* ","?:
-        let vec: Vec[Type] = once(t0).chain(ts.iter().map(|t: (t: Type)|: t.t)).toVec()
-        vec
+# A constructor field with optional name: `Type` or `foo: Type`.
+conField (name: Option[Id], ty: Type):
+    name=(name="LowerId" ":")? ty=type_:
+        (name = name.map(|name: (name: Token)|: newId(name.name.text)), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -553,7 +551,7 @@ simpleExpr Expr:
 
     int="HexInt":
         let text = int.text
-    
+
         # TODO: Make this an assertion
         if not text.startsWith("0x"):
             panic("Bug in int lexer")
@@ -577,7 +575,7 @@ simpleExpr Expr:
 
     int="BinInt":
         let text = int.text
-    
+
         # TODO: Make this an assertion
         if not text.startsWith("0b"):
             panic("Bug in int lexer")
