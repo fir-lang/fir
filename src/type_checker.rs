@@ -557,14 +557,14 @@ fn collect_schemes(
             ast::TopDecl::Trait(trait_decl) => {
                 /*
                 trait ToStr[t]:
-                    toStr(self: t): Str
+                    toStr(self: t) Str
                 ==>
-                toStr[ToStr[t]](self: t): Str
+                ToStr.toStr[ToStr[t]](self: t) Str
 
                 trait Iterator[iter, item]:
-                    next(self: Iterator[iter, item]): Option[item]
+                    next(self: Iterator[iter, item]) Option[item]
                 ==>
-                next[Iterator[iter, item]](self: Iterator[iter, item]): Option[item]
+                Iterator.next[Iterator[iter, item]](self: Iterator[iter, item]) Option[item]
                 */
 
                 assert_eq!(
