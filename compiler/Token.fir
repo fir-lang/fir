@@ -20,6 +20,11 @@ Token.rightLoc(self) (line: U32, col: U32):
 
 
 type TokenKind:
+    # This includes all kinds of comments: single or multi-line, documentation or not.
+    #
+    # Single-line comments on consecutive lines are generated as separate tokens.
+    Comment
+
     # An identifier starting with an uppercase letter.
     UpperId
 
@@ -194,6 +199,7 @@ impl ToStr[TokenKind]:
             TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"
             TokenKind.Comma: "Comma"
+            TokenKind.Comment: "Comment"
             TokenKind.Continue: "Continue"
             TokenKind.Dedent: "Dedent"
             TokenKind.Do: "Do"
@@ -278,6 +284,7 @@ impl Eq[TokenKind]:
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
             (left = TokenKind.Colon, right = TokenKind.Colon): Bool.True
             (left = TokenKind.Comma, right = TokenKind.Comma): Bool.True
+            (left = TokenKind.Comment, right = TokenKind.Comment): Bool.True
             (left = TokenKind.Continue, right = TokenKind.Continue): Bool.True
             (left = TokenKind.Dedent, right = TokenKind.Dedent): Bool.True
             (left = TokenKind.Do, right = TokenKind.Do): Bool.True
