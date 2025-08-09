@@ -532,26 +532,24 @@ generateSymbolParser(
             if cont is SymbolCont.Bind(local):
                 doc += Doc.str("let `local` = ")
 
-            let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(")
+            let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(sym) and sym is ")
                 + Doc.str(tokensToCode(patToks))
-                + Doc.str("):")
+                + Doc.char(':')
                 + Doc.hardLine()
 
             let nested = match cont:
                 SymbolCont.Bind(local):
-                    Doc.str("let sym = tokens.get(cursor)")
-                        + Doc.hardLine()
-                        + Doc.str("cursor += 1")
+                     Doc.str("cursor += 1")
                         + Doc.hardLine()
                         + Doc.str("sym")
 
                 SymbolCont.Push(vecLocal):
-                    Doc.str("`vecLocal`.push(tokens.get(cursor))")
+                    Doc.str("`vecLocal`.push(sym)")
                         + Doc.hardLine()
                         + Doc.str("cursor += 1")
 
                 SymbolCont.PushToParseTree(vecLocal):
-                    Doc.str("`vecLocal`.push(ParseTree.Terminal(tokens.get(cursor)))")
+                    Doc.str("`vecLocal`.push(ParseTree.Terminal(sym))")
                         + Doc.hardLine()
                         + Doc.str("cursor += 1")
 
