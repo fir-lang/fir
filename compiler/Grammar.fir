@@ -4,20 +4,6 @@ import ParseUtils
 import Peg.ParseTree
 import Token
 
-type NonTerminal:
-    UpperIdPath
-
-impl ToStr[NonTerminal]:
-    toStr(self: NonTerminal) Str:
-        match self:
-            NonTerminal.UpperIdPath: "UpperIdPath"
-
-impl Eq[NonTerminal]:
-    __eq(self: NonTerminal, other: NonTerminal) Bool:
-        match (left = self, right = other):
-            (left = NonTerminal.UpperIdPath, right = NonTerminal.UpperIdPath): Bool.True
-            _: Bool.False
-
 module(tokens: Vec[Token], cursor: U32) (tree: Vec[TopDecl], newCursor: U32, newErr: Option[ParseError]) / ParseError:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
@@ -3160,93 +3146,6 @@ constructor(tokens: Vec[Token], cursor: U32) (tree: Constructor, newCursor: U32,
                 _firstToken = TokenIdx(idx = ty),
                 _lastToken = TokenIdx(idx = last),
             )
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-
-upperIdPath(tokens: Vec[Token], cursor: U32) (tree: ParseTree[Token, NonTerminal], newCursor: U32, newErr: Option[ParseError]) / ParseError:
-    let cursor0 = cursor
-    let curErr: Option[ParseError] = Option.None
-    let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-            nodes.push(ParseTree.Terminal(sym))
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        loop:
-            let nodesLen0 = nodes.len()
-            let symResult = try(||:
-                if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
-                    cursor += 1
-                else:
-                    throw(
-                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-                    nodes.push(ParseTree.Terminal(sym))
-                    cursor += 1
-                else:
-                    throw(
-                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                (cursor = cursor, err = curErr)
-            )
-            match symResult:
-                Result.Err(err):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
-                    break
-                Result.Ok(ok):
-                    cursor = ok.cursor
-                    curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = do:
-            ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
-        (value = value, cursor = cursor, err = curErr)
-    )
-    match altResult:
-        Result.Err(err):
-            curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-            cursor = cursor0
-        Result.Ok((value = value, cursor = newCursor, err = newErr)):
-            return (tree = value, newCursor = newCursor, newErr = newErr)
-    let altResult = try(||:
-        let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.TildeUpperId, ..):
-            nodes.push(ParseTree.Terminal(sym))
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        loop:
-            let nodesLen0 = nodes.len()
-            let symResult = try(||:
-                if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
-                    cursor += 1
-                else:
-                    throw(
-                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-                    nodes.push(ParseTree.Terminal(sym))
-                    cursor += 1
-                else:
-                    throw(
-                        ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-                (cursor = cursor, err = curErr)
-            )
-            match symResult:
-                Result.Err(err):
-                    curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
-                    nodes.truncate(nodesLen0)
-                    break
-                Result.Ok(ok):
-                    cursor = ok.cursor
-                    curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
-        let value = do:
-            ParseTree.NonTerminal(kind = NonTerminal.UpperIdPath, nodes)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

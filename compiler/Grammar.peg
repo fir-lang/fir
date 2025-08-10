@@ -670,11 +670,6 @@ constructor Constructor:
         )
 
 
-upperIdPath:
-    "UpperId" (_"." "UpperId")*
-    "TildeUpperId" (_"." "UpperId")*
-
-
 tyArgs Vec[Type]:
     "[" t0=type_ ts=(_"," type_)* ","? "]":
         let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
