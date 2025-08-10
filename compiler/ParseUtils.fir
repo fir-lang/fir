@@ -2,9 +2,9 @@ import Compiler.Ast
 
 
 type ExprPrefix:
-    Tilde
-    Minus
-    Not
+    Tilde(TokenIdx)
+    Minus(TokenIdx)
+    Not(TokenIdx)
 
 
 type InlineExprCont:
@@ -14,7 +14,7 @@ type InlineExprCont:
 
 type ExprSuffix:
     Field(field: Id, tyArgs: Vec[Type])
-    Args(args: Vec[Named[Expr]])
+    Args(args: Vec[Named[Expr]], _lastToken: TokenIdx)
 
 
 parseCharLit(text: Str) Char:
@@ -43,8 +43,8 @@ parseStrParts(text: Str) Vec[StrPart]:
     Vec.empty() # TODO
 
 
-newId(name: Str) Id:
-    Id(name)
+newId(cursor: U32) Id:
+    Id(token = TokenIdx(idx = cursor))
 
 
 processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
