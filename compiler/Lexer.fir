@@ -8,6 +8,7 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     loop:
         match try(lexer._next):
             Result.Ok(Option.None): break
+            Result.Ok(Option.Some(Token(kind = TokenKind.Comment, ..))): continue
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
     (tokens = tokens, error = Option.None)
