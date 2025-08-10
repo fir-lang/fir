@@ -335,10 +335,11 @@ blockExpr Expr:
     "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
         Expr.Match(MatchExpr(scrutinee = scrut, alts))
 
-    "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
+    cur=^ "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
             conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
             else_=(_"else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?:
         Expr.If(IfExpr(
+            _firstToken = TokenIdx(idx = cur),
             branches =
                 once((guard = cond0, body = body0))
                     .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
@@ -346,8 +347,8 @@ blockExpr Expr:
             elseBranch = else_,
         ))
 
-    "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
-        Expr.Do(body)
+    cur=^ "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
 
     "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
@@ -400,25 +401,27 @@ prefixExpr Expr:
                         userTyArgs = tyArgs,
                     ))
 
-                ExprSuffix.Args(args):
-                    ret = Expr.Call(CallExpr(fun = ret, args))
+                ExprSuffix.Args(args, _lastToken):
+                    ret = Expr.Call(CallExpr(fun = ret, args, _lastToken))
 
         if pfx is Option.Some(pfx):
             match pfx:
-                ExprPrefix.Tilde:
+                ExprPrefix.Tilde(token):
                     # panic("TODO")
                     () # TODO
 
-                ExprPrefix.Minus:
+                ExprPrefix.Minus(token):
                     ret = Expr.UnOp(UnOpExpr(
                         op = UnOp.Neg,
                         expr = ret,
+                        _firstToken = token,
                     ))
 
-                ExprPrefix.Not:
+                ExprPrefix.Not(token):
                     ret = Expr.UnOp(UnOpExpr(
                         op = UnOp.Not,
                         expr = ret,
+                        _firstToken = token,
                     ))
 
         ret
@@ -429,7 +432,7 @@ exprSuffix ExprSuffix:
         ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
 
     args=args:
-        ExprSuffix.Args(args = args)
+        ExprSuffix.Args(args = args.args, _lastToken = TokenIdx(idx = args.cursorRight))
 
 
 field Id:
@@ -437,15 +440,16 @@ field Id:
         newId(field)
 
 
-args Vec[Named[Expr]]:
-    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")":
-        match args:
-            Option.None:
-                Vec.empty()
-            Option.Some((arg0, args)):
-                let vec: Vec[Named[Expr]] =
-                    once(arg0).chain(args.iter()).toVec()
-                vec
+args (args: Vec[Named[Expr]], cursorRight: U32):
+    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")" last=^:
+        (args = match args:
+             Option.None:
+                 Vec.empty()
+             Option.Some((arg0, args)):
+                 let vec: Vec[Named[Expr]] =
+                     once(arg0).chain(args.iter()).toVec()
+                 vec,
+         cursorRight = last)
 
 
 arg Named[Expr]:
@@ -463,11 +467,12 @@ simpleExpr Expr:
         seq
 
     # Variables
-    var_=^ "LowerId" tyArgs=tyArgs?:
+    var_=^ "LowerId" tyArgs=tyArgs? last=^:
         Expr.Var(VarExpr(
             id = newId(var_),
             userTyArgs = tyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
+            _lastToken = TokenIdx(idx = last),
         ))
 
     # Constructor selection, or sequence
@@ -614,22 +619,26 @@ seqElem (key: Option[Expr], value: Expr):
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
-    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
+    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
         Constructor(
             variant = Bool.False,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
+            _firstToken = TokenIdx(idx = ty),
+            _lastToken = TokenIdx(idx = last),
         )
 
-    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
+    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
         Constructor(
             variant = Bool.True,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
+            _firstToken = TokenIdx(idx = ty),
+            _lastToken = TokenIdx(idx = last),
         )
 
 
@@ -653,9 +662,9 @@ parenExpr Named[Expr]:
 
 
 exprPrefix ExprPrefix:
-    "~": ExprPrefix.Tilde
-    "-": ExprPrefix.Minus
-    "not": ExprPrefix.Not
+    cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
+    cur=^ "-": ExprPrefix.Minus(TokenIdx(idx = cur))
+    cur=^ "not": ExprPrefix.Not(TokenIdx(idx = cur))
 
 
 binOp BinOp:
@@ -803,7 +812,7 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")?:
+    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")? last=^:
         Pat.Constr(ConstrPat(
             constr = con,
             fields = match fs:
@@ -815,37 +824,48 @@ simplePat Pat:
                 Option.None:
                     Bool.False
                 Option.Some((ignoreRest, ..)):
-                    ignoreRest.isSome()
+                    ignoreRest.isSome(),
+            _lastToken = TokenIdx(idx = last),
         ))
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
-    "(" ")":
-        Pat.Record(RecordPat(fields = Vec.empty(), ignoreRest = Bool.False, inferredTy = Option.None))
+    first=^ "(" ")" last=^:
+        Pat.Record(RecordPat(
+            fields = Vec.empty(),
+            ignoreRest = Bool.False,
+            inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
 
-    "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")":
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")" last=^:
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.False,
             inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
         ))
 
-    "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")":
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")" last=^:
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.True,
             inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
         ))
 
     # Ignore
-    "_":
-        Pat.Ignore
+    cur=^ "_":
+        Pat.Ignore(TokenIdx(idx = cur))
 
     # Literals.
-    str="Str":
-        Pat.Str(str.text)
+    cur=^ str="Str":
+        Pat.Str(str.text, TokenIdx(idx = cur))
 
-    char="Char":
-        Pat.Char(parseCharLit(char.text))
+    cur=^ char="Char":
+        Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))
 
 
 recordFieldPat Named[Pat]:
