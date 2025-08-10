@@ -1,7 +1,9 @@
 import Error    # imports Loc
 # TODO: Why is Loc in Error module?
 
-type Id(name: Str)
+type TokenIdx(idx: U32)
+
+type Id(token: TokenIdx)
 
 ## A top-level declaration.
 type TopDecl:

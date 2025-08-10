@@ -103,19 +103,19 @@ topDecl TopDecl:
 
 type_ Type:
     t=namedType: Type.Named(t)
-    id="LowerId": Type.Var(newId(id.text))
+    id=^ "LowerId": Type.Var(newId(id))
     t=recordType: Type.Record(t)
     t=variantType: Type.Variant(t)
     t=fnType: Type.Fn_(t)
 
 
  namedType NamedType:
-    name="UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
+    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
         let args = once(arg0).chain(args.iter()).toVec()
-        NamedType(name = newId(name.text), args)
+        NamedType(name = newId(name), args)
 
-    name="UpperId":
-        NamedType(name = newId(name.text), args = Vec.empty())
+    name=^ "UpperId":
+        NamedType(name = newId(name), args = Vec.empty())
 
 
 # - ()
@@ -128,8 +128,8 @@ recordType RecordType:
     isRow=recordTypeStart ")":
         RecordType(fields = Vec.empty(), extension = Option.None, isRow)
 
-    isRow=recordTypeStart ".." ext="LowerId" ")":
-        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow)
+    isRow=recordTypeStart ".." ext=^ "LowerId" ")":
+        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
 
     isRow=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? ")":
         let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
@@ -143,8 +143,8 @@ recordTypeStart Bool:
 
 
 recordTypeCont Option[Id]:
-    "," id=(_".." "LowerId")?:
-        id.map(|id: Token|: newId(id.text))
+    "," id=(_".." ^ _"LowerId")?:
+        id.map(|id: U32|: newId(id))
 
 
 # - []
@@ -157,8 +157,8 @@ variantType VariantType:
     isRow=variantTypeStart "]":
         VariantType(alts = Vec.empty(), extension = Option.None, isRow)
 
-    isRow=variantTypeStart ".." ext="LowerId" "]":
-        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext.text)), isRow)
+    isRow=variantTypeStart ".." ext=^ "LowerId" "]":
+        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
 
     isRow=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? "]":
         VariantType(
@@ -175,16 +175,16 @@ variantTypeStart Bool:
 
 
 variantTypeCont Option[Id]:
-    "," id=(_".." "LowerId")?:
-        id.map(|id: Token|: newId(id.text))
+    "," id=(_".." ^ _"LowerId")?:
+        id.map(|id: U32|: newId(id))
 
 
 variantAlt VariantAlt:
-    con="UpperId" "(" fields=recordTypeFields ")":
-        VariantAlt(con = newId(con.text), fields)
+    con=^ "UpperId" "(" fields=recordTypeFields ")":
+        VariantAlt(con = newId(con), fields)
 
-    con="UpperId":
-        VariantAlt(con = newId(con.text), fields = Vec.empty())
+    con=^ "UpperId":
+        VariantAlt(con = newId(con), fields = Vec.empty())
 
 
 recordTypeFields Vec[Named[Type]]:
@@ -200,8 +200,8 @@ recordTypeFields Vec[Named[Type]]:
 
 
 recordTypeField Named[Type]:
-    name="LowerId" ":" ty=type_:
-        Named(name = Option.Some(newId(name.text)), node = ty)
+    name=^ "LowerId" ":" ty=type_:
+        Named(name = Option.Some(newId(name)), node = ty)
 
     ty=type_:
         Named(name = Option.None, node = ty)
@@ -237,9 +237,9 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    "type" name="UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+    "type" name=^ "UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
-            name = newId(name.text),
+            name = newId(name),
             typeParams = match params:
                 Option.Some(params): params.params
                 Option.None: Vec.empty(),
@@ -248,12 +248,12 @@ typeDecl TypeDecl:
         )
 
     # Product type
-    "type" name="UpperId" params=("[" params=typeParams "]")? fs=("(" fs=conFields? ")")? "NEWLINE":
+    "type" name=^ "UpperId" params=("[" params=typeParams "]")? fs=("(" fs=conFields? ")")? "NEWLINE":
         let fs = match fs:
             Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
             Option.None: ConFields.Empty
         TypeDecl(
-            name = newId(name.text),
+            name = newId(name),
             typeParams = match params:
                 Option.Some(params): params.params
                 Option.None: Vec.empty(),
@@ -261,9 +261,9 @@ typeDecl TypeDecl:
             rhs = Option.Some(TypeDeclRhs.Product(fs))
         )
 
-    "prim" "type" name="UpperId" params=("[" params=typeParams "]")? "NEWLINE":
+    "prim" "type" name=^ "UpperId" params=("[" params=typeParams "]")? "NEWLINE":
         TypeDecl(
-            name = newId(name.text),
+            name = newId(name),
             typeParams = match params:
                 Option.Some(params): params.params
                 Option.None: Vec.empty(),
@@ -273,22 +273,22 @@ typeDecl TypeDecl:
 
 
 typeParams Vec[Id]:
-    id0="LowerId" ids=(_"," "LowerId")* ","?:
+    id0=^ "LowerId" ids=(_"," ^ _"LowerId")* ","?:
         let vec: Vec[Id] =
-            once(newId(id0.text)).chain(ids.iter().map(|id: Token|: newId(id.text))).toVec()
+            once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))).toVec()
         vec
 
 
 conDecl ConDecl:
-    name="UpperId" "(" fs=conFields? ")" "NEWLINE":
+    name=^ "UpperId" "(" fs=conFields? ")" "NEWLINE":
         ConDecl(
-            name = newId(name.text),
+            name = newId(name),
             fields = fs.unwrapOr(ConFields.Empty),
         )
 
-    name="UpperId" "NEWLINE":
+    name=^ "UpperId" "NEWLINE":
         ConDecl(
-            name = newId(name.text),
+            name = newId(name),
             fields = ConFields.Empty
         )
 
@@ -303,8 +303,8 @@ conFields ConFields:
 
 # A constructor field with optional name: `Type` or `foo: Type`.
 conField (name: Option[Id], ty: Type):
-    name=("LowerId" _":")? ty=type_:
-        (name = name.map(|name: Token|: newId(name.text)), ty = ty)
+    name=(^ _"LowerId" _":")? ty=type_:
+        (name = name.map(|name: U32|: newId(name)), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -433,8 +433,8 @@ exprSuffix ExprSuffix:
 
 
 field Id:
-    "." field="LowerId":
-        newId(field.text)
+    "." field=^ "LowerId":
+        newId(field)
 
 
 args Vec[Named[Expr]]:
@@ -449,8 +449,8 @@ args Vec[Named[Expr]]:
 
 
 arg Named[Expr]:
-    name="LowerId" "=" expr=expr:
-        Named(name = Option.Some(newId(name.text)), node = expr)
+    name=^ "LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name)), node = expr)
 
     expr=expr:
         Named(name = Option.None, node = expr)
@@ -463,9 +463,9 @@ simpleExpr Expr:
         seq
 
     # Variables
-    var_="LowerId" tyArgs=tyArgs?:
+    var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
-            id = newId(var_.text),
+            id = newId(var_),
             userTyArgs = tyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
         ))
@@ -614,20 +614,20 @@ seqElem (key: Option[Expr], value: Expr):
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
-    ty="UpperId" con=(_"." "UpperId")? userTyArgs=tyArgs?:
+    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
-            ty = newId(ty.text),
-            constr = con.map(|con: Token|: newId(con.text)),
+            ty = newId(ty),
+            constr = con.map(|con: U32|: newId(con)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
         )
 
-    ty="TildeUpperId" con=(_"." "UpperId")? userTyArgs=tyArgs?:
+    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
-            ty = newId(ty.text),
-            constr = con.map(|con: Token|: newId(con.text)),
+            ty = newId(ty),
+            constr = con.map(|con: U32|: newId(con)),
             userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
             tyArgs = Vec.empty(),
         )
@@ -645,8 +645,8 @@ tyArgs Vec[Type]:
 
 
 parenExpr Named[Expr]:
-    name="LowerId" "=" expr=expr:
-        Named(name = Option.Some(newId(name.text)), node = expr)
+    name=^ "LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name)), node = expr)
 
     expr=expr:
         Named(name = Option.None, node = expr)
@@ -691,10 +691,10 @@ altGuard Expr:
 
 
 fnArgs Vec[(name: Id, ty: Option[Type])]:
-    v0="LowerId" ty0=(_":" type_)? vs=("," v="LowerId" ty=(_":" type_)?)* ","?:
+    v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
         let vec: Vec[(name: Id, ty: Option[Type])] =
-            once((name = newId(v0.text), ty = ty0))
-                .chain(vs.iter().map(|v: (v: Token, ty: Option[Type])|: (name = newId(v.v.text), ty = v.ty)))
+            once((name = newId(v0), ty = ty0))
+                .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: (name = newId(v.v), ty = v.ty)))
                 .toVec()
         vec
 
@@ -704,11 +704,11 @@ fnArgs Vec[(name: Id, ty: Option[Type])]:
 
 
 stmt Stmt:
-    "break" label="label"? "NEWLINE":
-        Stmt.Break(label = label.map(|l: Token|: newId(l.text)), level = 0)
+    "break" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Break(label = label.map(|l: Token|: newId(labelLoc)), level = 0)
 
-    "continue" label="label"? "NEWLINE":
-        Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
+    "continue" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Continue(label = label.map(|l: Token|: newId(labelLoc)), level = 0)
 
     "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
         Stmt.Let(LetStmt(lhs = pat, ty, rhs))

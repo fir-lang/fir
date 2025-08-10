@@ -43,8 +43,8 @@ parseStrParts(text: Str) Vec[StrPart]:
     Vec.empty() # TODO
 
 
-newId(name: Str) Id:
-    Id(name)
+newId(cursor: U32) Id:
+    Id(token = TokenIdx(idx = cursor))
 
 
 processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
