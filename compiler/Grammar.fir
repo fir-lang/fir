@@ -4194,17 +4194,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            Stmt.While(WhileStmt(
-                label,
-                cond = Expr.ConstrSelect(Constructor(
-                    variant = Bool.False,
-                    ty = newId("Bool"),
-                    constr = Option.Some(newId("True")),
-                    userTyArgs = Vec.empty(),
-                    tyArgs = Vec.empty(),
-                )),
-                body,
-            ))
+            Stmt.Loop(body)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:

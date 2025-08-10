@@ -216,6 +216,7 @@ type Stmt:
     Expr(Expr)
     For(ForStmt)
     While(WhileStmt)
+    Loop(Vec[Stmt])
     Break(
         label: Option[Id],
 
