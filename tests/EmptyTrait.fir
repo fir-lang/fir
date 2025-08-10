@@ -1,7 +1,6 @@
 trait Marker[t]
 
-type T:
-    x: U32
+type T(x: U32)
 
 impl Marker[T]
 

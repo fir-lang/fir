@@ -17,10 +17,11 @@ type Term:
 
     False
 
-    If:
-        cond: Term
-        then: Term
-        else_: Term
+    If(
+        cond: Term,
+        then: Term,
+        else_: Term,
+    )
 
     Zero
 
@@ -87,31 +88,39 @@ skipWhitespace(pgm: Str) Str:
 
 ## Parse the program, return the parsed term and the unparsed part of the program.
 parseWithRest(pgm: Str) (term: Term, rest: Str):
-    match skipWhitespace(pgm):
-        "0" rest:
-            (term = Term.Zero, rest = rest)
-        "true" rest:
-            (term = Term.True, rest = rest)
-        "false" rest:
-            (term = Term.False, rest = rest)
-        "succ" rest:
-            let (arg = arg, rest = rest) = parseArg(rest)
-            (term = Term.Succ(arg), rest = rest)
-        "pred" rest:
-            let (arg = arg, rest = rest) = parseArg(rest)
-            (term = Term.Pred(arg), rest = rest)
-        "iszero" rest:
-            let (arg = arg, rest = rest) = parseArg(rest)
-            (term = Term.IsZero(arg), rest = rest)
-        "if" rest:
-            let (term = cond, rest = rest) = parseWithRest(rest)
-            let rest = expectKeyword(rest, "then")
-            let (term = then, rest = rest) = parseWithRest(rest)
-            let rest = expectKeyword(rest, "else")
-            let (term = else_, rest = rest) = parseWithRest(rest)
-            (term = Term.If(cond = cond, then = then, else_ = else_), rest = rest)
-        _:
-            panic("Invalid syntax: \"`pgm`\"")
+    let pgm = skipWhitespace(pgm)
+
+    if pgm.startsWith("0"):
+        (term = Term.Zero, rest = pgm.substr(1, pgm.len()))
+
+    elif pgm.startsWith("true"):
+        (term = Term.True, rest = pgm.substr(4, pgm.len()))
+
+    elif pgm.startsWith("false"):
+        (term = Term.False, rest = pgm.substr(5, pgm.len()))
+
+    elif pgm.startsWith("succ"):
+        let (arg = arg, rest = rest) = parseArg(pgm.substr(4, pgm.len()))
+        (term = Term.Succ(arg), rest = rest)
+
+    elif pgm.startsWith("pred"):
+        let (arg = arg, rest = rest) = parseArg(pgm.substr(4, pgm.len()))
+        (term = Term.Pred(arg), rest = rest)
+
+    elif pgm.startsWith("iszero"):
+        let (arg = arg, rest = rest) = parseArg(pgm.substr(6, pgm.len()))
+        (term = Term.IsZero(arg), rest = rest)
+
+    elif pgm.startsWith("if"):
+        let (term = cond, rest = rest) = parseWithRest(pgm.substr(2, pgm.len()))
+        let rest = expectKeyword(rest, "then")
+        let (term = then, rest = rest) = parseWithRest(rest)
+        let rest = expectKeyword(rest, "else")
+        let (term = else_, rest = rest) = parseWithRest(rest)
+        (term = Term.If(cond = cond, then = then, else_ = else_), rest = rest)
+
+    else:
+        panic("Invalid syntax: \"`pgm`\"")
 
 parseArg(pgm: Str) (arg: Term, rest: Str):
     # Skip "("

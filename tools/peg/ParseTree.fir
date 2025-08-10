@@ -1,35 +1,44 @@
 type ParseTree[t, nt]:
     Terminal(t)
 
-    NonTerminal:
-        kind: nt
-        nodes: Vec[ParseTree[t, nt]]
+    NonTerminal(
+        kind: nt,
+        nodes: Vec[ParseTree[t, nt]],
+    )
 
-type ParseError[t]:
-    UnexpectedEof
-    UnexpectedToken:
-        token: t
-        cursor: U32
+# Indicates an unexpected token (when `cursor` is smaller than the length of the input) or
+# unexpected end-of-input (when `cursor` is the length of the input).
+type ParseError(cursor: U32)
 
-ParseError.takeAdvanced(err1: ParseError[t], err2: ParseError[t]) ParseError[t]:
-    if err1 is ParseError.UnexpectedToken(cursor = c1, ..)
-            and err2 is ParseError.UnexpectedToken(cursor = c2, ..):
-        if c1 > c2:
-            return err1
-        else:
-            return err2
+ParseError.takeAdvanced(err1: Option[ParseError], err2: ParseError) ParseError:
+    match err1:
+        Option.None:
+            err2
+        Option.Some(err1):
+            if err1.cursor > err2.cursor:
+                return err1
+            else:
+                return err2
 
-    ParseError.UnexpectedEof
+ParseError.takeAdvancedOpt(err1: Option[ParseError], err2: Option[ParseError]) Option[ParseError]:
+    match (left = err1, right = err2):
+        (left = Option.Some(err1_), right = Option.Some(err2_)):
+            if err1_.cursor > err2_.cursor:
+                err1
+            else:
+                err2
+
+        (left = Option.Some(_), ..): err1
+
+        _: err2
 
 impl[ToStr[t], ToStr[nt]] ToStr[ParseTree[t, nt]]:
     toStr(self: ParseTree[t, nt]) Str:
         self.toDoc().render(80)
 
-impl[ToStr[t]] ToStr[ParseError[t]]:
-    toStr(self: ParseError[t]) Str:
-        match self:
-            ParseError.UnexpectedEof: "unexpected end of input"
-            ParseError.UnexpectedToken(token, cursor): "unexpected token `token` at cursor `cursor`"
+impl ToStr[ParseError]:
+    toStr(self: ParseError) Str:
+        "unexpected token or end of input at cursor `self.cursor`"
 
 ParseTree.toDoc[ToStr[t], ToStr[nt]](self: ParseTree[t, nt]) Doc:
     match self:

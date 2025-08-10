@@ -234,6 +234,10 @@ pub enum BuiltinFunDecl {
         t: mono::Type,
     },
 
+    ArrayCopyWithin {
+        t: mono::Type,
+    },
+
     ReadFileUtf8,
 }
 
@@ -488,7 +492,6 @@ pub enum Pat {
     Ignore,
     Str(String),
     Char(char),
-    StrPfx(String, Option<LocalIdx>),
     Or(Box<L<Pat>>, Box<L<Pat>>),
 }
 
@@ -936,7 +939,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     "panic" => {
-                        assert_eq!(fun_ty_args.len(), 1); // panic message
+                        assert_eq!(fun_ty_args.len(), 2); // a, exn
                         lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::Panic));
                     }
 
@@ -1477,6 +1480,15 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArraySlice { t }));
+                        }
+
+                        ("Array", "copyWithin") => {
+                            // prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+                            assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
+                            let t = fun_ty_args[0].clone();
+                            lowered_pgm
+                                .funs
+                                .push(Fun::Builtin(BuiltinFunDecl::ArrayCopyWithin { t }));
                         }
 
                         (_, _) => todo!("Built-in function {}.{}", ty, fun),
@@ -2094,22 +2106,6 @@ fn lower_pat(
         mono::Pat::Str(str) => Pat::Str(str.clone()),
 
         mono::Pat::Char(char) => Pat::Char(*char),
-
-        mono::Pat::StrPfx(str, var) => match var {
-            Some(var) => {
-                let var_idx = LocalIdx(scope.locals.len() as u32);
-                scope.locals.push(LocalInfo {
-                    name: var.clone(),
-                    ty: mono::Type::Named(mono::NamedType {
-                        name: "Str".into(),
-                        args: vec![],
-                    }),
-                });
-                scope.bounds.insert(var.clone(), var_idx);
-                Pat::StrPfx(str.clone(), Some(var_idx))
-            }
-            None => Pat::StrPfx(str.clone(), None),
-        },
 
         mono::Pat::Or(p1, p2) => Pat::Or(
             Box::new(lower_l_pat(p1, indices, scope, mapped_binders)),

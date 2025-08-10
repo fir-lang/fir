@@ -1,8 +1,6 @@
-type IoError:
-    msg: Str
+type IoError(msg: Str)
 
-type InvalidDigit:
-    char: Char
+type InvalidDigit(char: Char)
 
 type Overflow:
     Overflow

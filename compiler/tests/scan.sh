@@ -11,7 +11,9 @@ exit_code=0
 # update columns properly with wide chars.
 skip_files=(
     "tests/Char.fir"
+    "tests/Str.fir"
     "tests/StrBuf.fir"
+    "tests/StrCharIndices.fir"
 )
 
 source "${SCRIPT_DIR}/common.sh"

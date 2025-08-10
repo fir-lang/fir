@@ -1,10 +1,12 @@
-type HashMap[k, v]:
-    _elems: Vec[Option[Elem[k, v]]]
+type HashMap[k, v](
+    _elems: Vec[Option[Elem[k, v]]],
+)
 
-type Elem[k, v]:
-    key: k
-    value: v
-    next: Option[Elem[k, v]]
+type Elem[k, v](
+    key: k,
+    value: v,
+    next: Option[Elem[k, v]],
+)
 
 HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)

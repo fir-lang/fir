@@ -640,14 +640,14 @@ fn collect_schemes(
             ast::TopDecl::Trait(trait_decl) => {
                 /*
                 trait ToStr[t]:
-                    toStr(self: t): Str
+                    toStr(self: t) Str
                 ==>
-                toStr[ToStr[t]](self: t): Str
+                ToStr.toStr[ToStr[t]](self: t) Str
 
                 trait Iterator[iter, item]:
-                    next(self: Iterator[iter, item]): Option[item]
+                    next(self: Iterator[iter, item]) Option[item]
                 ==>
-                next[Iterator[iter, item]](self: Iterator[iter, item]): Option[item]
+                Iterator.next[Iterator[iter, item]](self: Iterator[iter, item]) Option[item]
                 */
 
                 assert_eq!(
@@ -773,14 +773,14 @@ fn collect_schemes(
                 loc,
             }) => {
                 // Check that `parent_ty` exists.
-                if let Some(parent_ty) = parent_ty {
-                    if tys.get_con(&parent_ty.node).is_none() {
-                        panic!(
-                            "{}: Unknown type {}",
-                            loc_display(&decl.loc),
-                            &parent_ty.node
-                        );
-                    }
+                if let Some(parent_ty) = parent_ty
+                    && tys.get_con(&parent_ty.node).is_none()
+                {
+                    panic!(
+                        "{}: Unknown type {}",
+                        loc_display(&decl.loc),
+                        &parent_ty.node
+                    );
                 }
 
                 let fun_preds: Set<Pred> =

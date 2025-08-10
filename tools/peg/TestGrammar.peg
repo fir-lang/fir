@@ -1,0 +1,132 @@
+# PEG parsers in this file are used to test the PEG parser generator.
+
+import Compiler.Token
+import Peg.ParseTree
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+Terminals:
+    "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
+    "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
+    "c" = Token(kind = TokenKind.LowerId, text = "c", ..)
+
+terminalA:
+    "a"
+
+terminalB:
+    "b"
+
+terminalAOrB:
+    "a"
+    "b"
+
+terminalAThenB:
+    "a" "b"
+
+zeroOrMoreAThenB:
+    "a"* "b"
+
+oneOrMoreAThenB:
+    "a"+ "b"
+
+zeroOrOneAThenB:
+    "a"? "b"
+
+ignoreAThenB:
+    _"a" "b"
+
+ignoreAThenIgnoreB:
+    _"a" _"b"
+
+ignoreGroupAThenB:
+    _("a" "b")
+
+nonTerminals:
+    terminalAOrB terminalAOrB
+
+nonTerminalsBacktrack:
+    terminalAOrB terminalAOrB
+    "c" "a"
+
+negLookahead:
+    -"a" terminalAOrB
+
+endOfInputTest:
+    "a" "b" $
+
+# Repro for bug: this used to update error location in a `try` closure, and
+# report error at cursor 1 instead of 4 on input "b a a a c b".
+bracketedOneOrMoreA:
+    _"b" oneOrMoreAThenB* $
+
+# --------------------------------------------------------------------------------------------------
+# Semantic actions
+
+semanticActionSimple Char:
+    # Test parsing block expression syntax.
+    "a":
+        'a'
+
+    # Test parsing inline expression syntax.
+    "b": 'b'
+
+semanticActionZeroOrMore Vec[Char]:
+    cs=semanticActionSimple*:
+        cs
+
+semanticActionOneOrMore Vec[Char]:
+    cs=semanticActionSimple+:
+        cs
+
+semanticActionGroup Vec[Str]:
+    _"a" ab=(a="a" b="b") _"b":
+        let strs: Vec[Str] = Vec.[ab.a.text, ab.b.text]
+        strs
+
+semanticActionOptional Option[Token]:
+    cs="a"? $:
+        cs
+
+semanticActionComplex (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]):
+    _"a" group=(aVec="a"* bVec="b"+ cOpt="c"?) $:
+        group
+
+# --------------------------------------------------------------------------------------------------
+# Cursor positions
+
+cursorPositions Vec[U32]:
+    c0=^ "a" c1=^ "b" c2=^ "c" c3=^:
+        let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
+        vec
+
+# --------------------------------------------------------------------------------------------------
+# Simple groups
+
+simpleGroup1 Token:
+    _"a" x=(_"a" "b" _"c") _"c":
+        x
+
+simpleGroup2 Option[Token]:
+    _"a" x=(_"a" "b"? _"c") _"c":
+        x
+
+simpleGroup3 Vec[Token]:
+    _"a" x=(_"a" "b"* _"c") _"c":
+        x
+
+simpleGroup4 Vec[Token]:
+    _"a" x=(_"a" "b"+ _"c") _"c":
+        x
+
+simpleGroup5 Option[Token]:
+    _"a" x=(_"a" "b" _"c")? _"c":
+        x
+
+simpleGroup6 Vec[Token]:
+    _"a" x=(_"a" "b" _"c")* _"c":
+        x
+
+simpleGroup7 Vec[Token]:
+    _"a" x=(_"a" "b" _"c")+ _"c":
+        x

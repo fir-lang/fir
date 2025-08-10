@@ -1,0 +1,1082 @@
+import ParseUtils
+import Peg.ParseTree
+import Token
+
+type Terminal = Token
+type NonTerminal = NonTerminal
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+Terminals:
+    "LowerId" = Token(kind = TokenKind.LowerId, ..)
+    "UpperId" = Token(kind = TokenKind.UpperId, ..)
+    "TildeUpperId" = Token(kind = TokenKind.TildeUpperId, ..)
+    "and" = Token(kind = TokenKind.And, ..)
+    "break" = Token(kind = TokenKind.Break, ..)
+    "continue" = Token(kind = TokenKind.Continue, ..)
+    "do" = Token(kind = TokenKind.Do, ..)
+    "elif" = Token(kind = TokenKind.Elif, ..)
+    "else" = Token(kind = TokenKind.Else, ..)
+    "Fn" = Token(kind = TokenKind.UpperFn, ..)
+    "for" = Token(kind = TokenKind.For, ..)
+    "if" = Token(kind = TokenKind.If, ..)
+    "impl" = Token(kind = TokenKind.Impl, ..)
+    "import" = Token(kind = TokenKind.Import, ..)
+    "in" = Token(kind = TokenKind.In, ..)
+    "is" = Token(kind = TokenKind.Is, ..)
+    "let" = Token(kind = TokenKind.Let, ..)
+    "loop" = Token(kind = TokenKind.Loop, ..)
+    "match" = Token(kind = TokenKind.Match, ..)
+    "not" = Token(kind = TokenKind.Not, ..)
+    "or" = Token(kind = TokenKind.Or, ..)
+    "prim" = Token(kind = TokenKind.Prim, ..)
+    "return" = Token(kind = TokenKind.Return, ..)
+    "trait" = Token(kind = TokenKind.Trait, ..)
+    "type" = Token(kind = TokenKind.Type, ..)
+    "while" = Token(kind = TokenKind.While, ..)
+    "row[" = Token(kind = TokenKind.LBracketRow, ..)
+    "row(" = Token(kind = TokenKind.LParenRow, ..)
+    "(" = Token(kind = TokenKind.LParen, ..)
+    ")" = Token(kind = TokenKind.RParen, ..)
+    "[" = Token(kind = TokenKind.LBracket, ..)
+    "]" = Token(kind = TokenKind.RBracket, ..)
+    ":" = Token(kind = TokenKind.Colon, ..)
+    "," = Token(kind = TokenKind.Comma, ..)
+    ".." = Token(kind = TokenKind.DotDot, ..)
+    "." = Token(kind = TokenKind.Dot, ..)
+    "=" = Token(kind = TokenKind.Eq, ..)
+    "==" = Token(kind = TokenKind.EqEq, ..)
+    "+=" = Token(kind = TokenKind.PlusEq, ..)
+    "-=" = Token(kind = TokenKind.MinusEq, ..)
+    "*=" = Token(kind = TokenKind.StarEq, ..)
+    "^=" = Token(kind = TokenKind.CaretEq, ..)
+    "!=" = Token(kind = TokenKind.ExclamationEq, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "~" = Token(kind = TokenKind.Tilde, ..)
+    "+" = Token(kind = TokenKind.Plus, ..)
+    "-" = Token(kind = TokenKind.Minus, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "*" = Token(kind = TokenKind.Star, ..)
+    "|" = Token(kind = TokenKind.Pipe, ..)
+    "||" = Token(kind = TokenKind.PipePipe, ..)
+    "&" = Token(kind = TokenKind.Amp, ..)
+    "/" = Token(kind = TokenKind.Slash, ..)
+    "_" = Token(kind = TokenKind.Underscore, ..)
+    ">" = Token(kind = TokenKind.RAngle, ..)
+    ">>" = Token(kind = TokenKind.DoubleRAngle, ..)
+    ">=" = Token(kind = TokenKind.RAngleEq, ..)
+    "<" = Token(kind = TokenKind.LAngle, ..)
+    "<<" = Token(kind = TokenKind.DoubleLAngle, ..)
+    "<=" = Token(kind = TokenKind.LAngleEq, ..)
+    "Int" = Token(kind = TokenKind.Int, ..)
+    "HexInt" = Token(kind = TokenKind.HexInt, ..)
+    "BinInt" = Token(kind = TokenKind.BinInt, ..)
+    "Str" = Token(kind = TokenKind.Str, ..)
+    "Char" = Token(kind = TokenKind.Char, ..)
+    "NEWLINE" = Token(kind = TokenKind.Newline, ..)
+    "INDENT" = Token(kind = TokenKind.Indent, ..)
+    "DEDENT" = Token(kind = TokenKind.Dedent, ..)
+    "label" = Token(kind = TokenKind.Label, ..)
+
+
+# --------------------------------------------------------------------------------------------------
+# Top-level declarations
+
+
+module Vec[TopDecl]:
+    ds=topDecl+ $: ds
+
+
+topDecl TopDecl:
+    t=typeDecl: TopDecl.Type(t)
+    t=importDecl: TopDecl.Import(t)
+    t=traitDecl: TopDecl.Trait(t)
+    t=implDecl: TopDecl.Impl(t)
+    t=topFunDecl: TopDecl.Fun(t)
+
+
+# --------------------------------------------------------------------------------------------------
+# Types
+
+
+type_ Type:
+    t=namedType: Type.Named(t)
+    id=^ "LowerId": Type.Var(newId(id))
+    t=recordType: Type.Record(t)
+    t=variantType: Type.Variant(t)
+    t=fnType: Type.Fn_(t)
+
+
+ namedType NamedType:
+    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
+        let args = once(arg0).chain(args.iter()).toVec()
+        NamedType(name = newId(name), args)
+
+    name=^ "UpperId":
+        NamedType(name = newId(name), args = Vec.empty())
+
+
+# - ()
+# - (x: U32)
+# - (x: U32,)
+# - (x: U32, y: U32)
+# - (x: U32, ..foo)
+# - (..foo)
+recordType RecordType:
+    isRow=recordTypeStart ")":
+        RecordType(fields = Vec.empty(), extension = Option.None, isRow)
+
+    isRow=recordTypeStart ".." ext=^ "LowerId" ")":
+        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
+
+    isRow=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? ")":
+        let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        RecordType(fields, extension = ext.flatten(), isRow)
+
+
+# Returns whether the type is a row.
+recordTypeStart Bool:
+    "(": Bool.False
+    "row(": Bool.True
+
+
+recordTypeCont Option[Id]:
+    "," id=(_".." ^ _"LowerId")?:
+        id.map(|id: U32|: newId(id))
+
+
+# - []
+# - [A]
+# - [A,]
+# - [A, B]
+# - [A, ..foo]
+# - [..foo]
+variantType VariantType:
+    isRow=variantTypeStart "]":
+        VariantType(alts = Vec.empty(), extension = Option.None, isRow)
+
+    isRow=variantTypeStart ".." ext=^ "LowerId" "]":
+        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
+
+    isRow=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? "]":
+        VariantType(
+            alts = once(alt0).chain(alts.iter()).toVec(),
+            extension = ext.flatten(),
+            isRow,
+        )
+
+
+# Returns whether the type is a row.
+variantTypeStart Bool:
+    "[": Bool.False
+    "row[": Bool.True
+
+
+variantTypeCont Option[Id]:
+    "," id=(_".." ^ _"LowerId")?:
+        id.map(|id: U32|: newId(id))
+
+
+variantAlt VariantAlt:
+    con=^ "UpperId" "(" fields=recordTypeFields ")":
+        VariantAlt(con = newId(con), fields)
+
+    con=^ "UpperId":
+        VariantAlt(con = newId(con), fields = Vec.empty())
+
+
+recordTypeFields Vec[Named[Type]]:
+    f0=recordTypeField fs=(_"," recordTypeField)* "," ".." "LowerId":
+        # TODO: Extension?
+        # TODO: We do we need the type annotation here?
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        vec
+
+    f0=recordTypeField fs=(_"," recordTypeField)* ","?:
+        let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
+        vec
+
+
+recordTypeField Named[Type]:
+    name=^ "LowerId" ":" ty=type_:
+        Named(name = Option.Some(newId(name)), node = ty)
+
+    ty=type_:
+        Named(name = Option.None, node = ty)
+
+
+fnType FnType:
+    "Fn" "(" args=fnArgTys? ")" ret=returnTy?:
+        let args = args.unwrapOr(Vec.empty())
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        FnType(args, ret = ret.ret, exceptions = ret.exn)
+
+
+fnArgTys Vec[Type]:
+    t0=type_ ts=(_"," type_)* ","?:
+        let vec: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+        vec
+
+
+returnTy (ret: Option[Type], exn: Option[Type]):
+    ret=type_ "/" exn=type_:
+        (ret = Option.Some(ret), exn = Option.Some(exn))
+
+    ret=type_:
+        (ret = Option.Some(ret), exn = Option.None)
+
+    "/" exn=type_:
+        (ret = Option.None, exn = Option.Some(exn))
+
+
+# --------------------------------------------------------------------------------------------------
+# Type declarations
+
+
+typeDecl TypeDecl:
+    # Sum type: at least one constructors
+    "type" name=^ "UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+        TypeDecl(
+            name = newId(name),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.Some(TypeDeclRhs.Sum(rhs)),
+        )
+
+    # Product type
+    "type" name=^ "UpperId" params=("[" params=typeParams "]")? fs=("(" fs=conFields? ")")? "NEWLINE":
+        let fs = match fs:
+            Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+            Option.None: ConFields.Empty
+        TypeDecl(
+            name = newId(name),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.Some(TypeDeclRhs.Product(fs))
+        )
+
+    "prim" "type" name=^ "UpperId" params=("[" params=typeParams "]")? "NEWLINE":
+        TypeDecl(
+            name = newId(name),
+            typeParams = match params:
+                Option.Some(params): params.params
+                Option.None: Vec.empty(),
+            typeParamKinds = Vec.empty(),
+            rhs = Option.None,
+        )
+
+
+typeParams Vec[Id]:
+    id0=^ "LowerId" ids=(_"," ^ _"LowerId")* ","?:
+        let vec: Vec[Id] =
+            once(newId(id0)).chain(ids.iter().map(|id: U32|: newId(id))).toVec()
+        vec
+
+
+conDecl ConDecl:
+    name=^ "UpperId" "(" fs=conFields? ")" "NEWLINE":
+        ConDecl(
+            name = newId(name),
+            fields = fs.unwrapOr(ConFields.Empty),
+        )
+
+    name=^ "UpperId" "NEWLINE":
+        ConDecl(
+            name = newId(name),
+            fields = ConFields.Empty
+        )
+
+
+# One or more fields, with optional trailing comma.
+conFields ConFields:
+    f0=conField fs=(_"," conField)* ","?:
+        let vec: Vec[(name: Option[Id], ty: Type)] =
+            once(f0).chain(fs.iter()).toVec()
+        processFields(vec)
+
+
+# A constructor field with optional name: `Type` or `foo: Type`.
+conField (name: Option[Id], ty: Type):
+    name=(^ _"LowerId" _":")? ty=type_:
+        (name = name.map(|name: U32|: newId(name)), ty = ty)
+
+
+# --------------------------------------------------------------------------------------------------
+# Expressions
+
+
+expr Expr:
+    e=inlineExpr: e
+    e=blockExpr: e
+
+
+# Inline expressions don't end with a NEWLINE or DEDENT.
+inlineExpr Expr:
+    expr=prefixExpr cont=inlineExprCont*:
+        let ret = expr
+        for cont_: InlineExprCont in cont.iter():
+            match cont_:
+                InlineExprCont.BinOp(op, rhs):
+                    ret = Expr.BinOp(BinOpExpr(left = ret, right = rhs, op))
+
+                InlineExprCont.Is(pat):
+                    ret = Expr.Is(IsExpr(expr = ret, pat))
+        ret
+
+
+# Block expressions include an indented block and always end with DEDENT.
+blockExpr Expr:
+    cur=^ "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
+        Expr.Match(MatchExpr(
+            scrutinee = scrut,
+            alts,
+            _firstToken = TokenIdx(idx = cur)
+        ))
+
+    cur=^ "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
+            conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
+            else_=(_"else" _":" _"NEWLINE" _"INDENT" stmt+ _"DEDENT")?:
+        Expr.If(IfExpr(
+            _firstToken = TokenIdx(idx = cur),
+            branches =
+                once((guard = cond0, body = body0))
+                    .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
+                    .toVec(),
+            elseBranch = else_,
+        ))
+
+    cur=^ "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
+
+    cur=^ "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body,
+            idx = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+
+    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body,
+            idx = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+
+inlineExprCont InlineExprCont:
+    op=binOp rhs=prefixExpr:
+        InlineExprCont.BinOp(op, rhs)
+
+    "is" pat=pat:
+        InlineExprCont.Is(pat)
+
+
+prefixExpr Expr:
+    pfx=exprPrefix? expr=simpleExpr suffix=exprSuffix*:
+        let ret = expr
+
+        for suffix_ in suffix.iter():
+            match suffix_:
+                ExprSuffix.Field(field, tyArgs):
+                    ret = Expr.FieldSelect(FieldSelectExpr(
+                        object = ret,
+                        field,
+                        userTyArgs = tyArgs,
+                    ))
+
+                ExprSuffix.Args(args, _lastToken):
+                    ret = Expr.Call(CallExpr(fun = ret, args, _lastToken))
+
+        if pfx is Option.Some(pfx):
+            match pfx:
+                ExprPrefix.Tilde(token):
+                    # panic("TODO")
+                    () # TODO
+
+                ExprPrefix.Minus(token):
+                    ret = Expr.UnOp(UnOpExpr(
+                        op = UnOp.Neg,
+                        expr = ret,
+                        _firstToken = token,
+                    ))
+
+                ExprPrefix.Not(token):
+                    ret = Expr.UnOp(UnOpExpr(
+                        op = UnOp.Not,
+                        expr = ret,
+                        _firstToken = token,
+                    ))
+
+        ret
+
+
+exprSuffix ExprSuffix:
+    field=field args=tyArgs?:
+        ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
+
+    args=args:
+        ExprSuffix.Args(args = args.args, _lastToken = TokenIdx(idx = args.cursorRight))
+
+
+field Id:
+    "." field=^ "LowerId":
+        newId(field)
+
+
+args (args: Vec[Named[Expr]], cursorRight: U32):
+    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")" last=^:
+        (args = match args:
+             Option.None:
+                 Vec.empty()
+             Option.Some((arg0, args)):
+                 let vec: Vec[Named[Expr]] =
+                     once(arg0).chain(args.iter()).toVec()
+                 vec,
+         cursorRight = last)
+
+
+arg Named[Expr]:
+    name=^ "LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name)), node = expr)
+
+    expr=expr:
+        Named(name = Option.None, node = expr)
+
+
+simpleExpr Expr:
+    # TODO: This will every time we parse a constructor selection as it needs to try `Con.[...]`
+    # first.
+    seq=sequence:
+        seq
+
+    # Variables
+    var_=^ "LowerId" tyArgs=tyArgs? last=^:
+        Expr.Var(VarExpr(
+            id = newId(var_),
+            userTyArgs = tyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    # Constructor selection, or sequence
+    con=constructor:
+        Expr.ConstrSelect(con)
+
+    # Records: `(a, b)`, `(a = 1, b = 2)`
+    first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* ","?)? last=^ ")":
+        match exprs:
+            Option.None:
+                Expr.Record(RecordExpr(
+                    fields = Vec.empty(),
+                    _firstToken = TokenIdx(idx = first),
+                    _lastToken = TokenIdx(idx = last),
+                ))
+            Option.Some(fields):
+                Expr.Record(RecordExpr(
+                    fields = once(fields.e0).chain(fields.es.iter()).toVec(),
+                    _firstToken = TokenIdx(idx = first),
+                    _lastToken = TokenIdx(idx = last),
+                ))
+
+    cur=^ "return" expr=inlineExpr?:
+        Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
+
+    cur=^ "||" ret=returnTy? ":" body=inlineExpr:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = Vec.[Stmt.Expr(body)],
+            idx = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" body=inlineExpr:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        Expr.Fn_(FnExpr(
+            sig = FunSig(
+                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                self_ = SelfParam.No,
+                params = Vec.empty(),
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+            body = Vec.[Stmt.Expr(body)],
+            idx = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+    cur=^ int="Int":
+        let text = int.text
+
+        let intStr = StrBuf.withCapacity(text.len())
+
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 10,
+            parsed = 0,
+            token = TokenIdx(idx = cur),
+        ))
+
+    cur=^ int="HexInt":
+        let text = int.text
+
+        # TODO: Make this an assertion
+        if not text.startsWith("0x"):
+            panic("Bug in int lexer")
+
+        let text = text.substr(2, text.len())
+
+        let intStr = StrBuf.withCapacity(text.len())
+
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 16,
+            parsed = 0,
+            token = TokenIdx(idx = cur),
+        ))
+
+    cur=^ int="BinInt":
+        let text = int.text
+
+        # TODO: Make this an assertion
+        if not text.startsWith("0b"):
+            panic("Bug in int lexer")
+
+        let text = text.substr(2, text.len())
+
+        let intStr = StrBuf.withCapacity(text.len())
+
+        for char: Char in text.chars():
+            if char == '_':
+                continue
+
+            intStr.push(char)
+
+        Expr.Int(IntExpr(
+            text = intStr.toStr(),
+            suffix = Option.None,
+            radix = 2,
+            parsed = 0,
+            token = TokenIdx(idx = cur),
+        ))
+
+    cur=^ str="Str":
+        Expr.Str(StrExpr(
+            parts = parseStrParts(str.text),
+            token = TokenIdx(idx = cur),
+        ))
+
+    cur=^ char="Char":
+        Expr.Char(CharExpr(
+            char = parseCharLit(char.text),
+            token = TokenIdx(idx = cur),
+        ))
+
+
+sequence Expr:
+    first=^ ty=(type_ _".")? elems=seqElems:
+        Expr.Seq(SeqExpr(
+            ty,
+            elems = elems.elems,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = elems.last,
+        ))
+
+
+seqElems (elems: Vec[(key: Option[Expr], value: Expr)], last: TokenIdx):
+    "[" last=^ "]":
+        (elems = Vec.empty(), last = TokenIdx(idx = last))
+
+    "[" e0=seqElem es=(_"," seqElem)* ","? last=^ "]":
+        let vec: Vec[(key: Option[Expr], value: Expr)] =
+            once(e0).chain(es.iter()).toVec()
+        (elems = vec, last = TokenIdx(idx = last))
+
+
+seqElem (key: Option[Expr], value: Expr):
+    e1=inlineExpr e2=("=" e=inlineExpr)?:
+        match e2:
+            Option.None:
+                (key = Option.None, value = e1)
+            Option.Some((e = e2)):
+                (key = Option.Some(e1), value = e2)
+
+
+# TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
+constructor Constructor:
+    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+        Constructor(
+            variant = Bool.False,
+            ty = newId(ty),
+            constr = con.map(|con: U32|: newId(con)),
+            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+            _firstToken = TokenIdx(idx = ty),
+            _lastToken = TokenIdx(idx = last),
+        )
+
+    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+        Constructor(
+            variant = Bool.True,
+            ty = newId(ty),
+            constr = con.map(|con: U32|: newId(con)),
+            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            tyArgs = Vec.empty(),
+            _firstToken = TokenIdx(idx = ty),
+            _lastToken = TokenIdx(idx = last),
+        )
+
+
+upperIdPath:
+    "UpperId" (_"." "UpperId")*
+    "TildeUpperId" (_"." "UpperId")*
+
+
+tyArgs Vec[Type]:
+    "[" t0=type_ ts=(_"," type_)* ","? "]":
+        let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
+        ts
+
+
+parenExpr Named[Expr]:
+    name=^ "LowerId" "=" expr=expr:
+        Named(name = Option.Some(newId(name)), node = expr)
+
+    expr=expr:
+        Named(name = Option.None, node = expr)
+
+
+exprPrefix ExprPrefix:
+    cur=^ "~": ExprPrefix.Tilde(TokenIdx(idx = cur))
+    cur=^ "-": ExprPrefix.Minus(TokenIdx(idx = cur))
+    cur=^ "not": ExprPrefix.Not(TokenIdx(idx = cur))
+
+
+binOp BinOp:
+    "+": BinOp.Add
+    "-": BinOp.Subtract
+    "*": BinOp.Multiply
+    "/": BinOp.Divide
+    "==": BinOp.Equal
+    "!=": BinOp.NotEqual
+    "and": BinOp.And
+    "or": BinOp.Or
+    "|": BinOp.BitOr
+    "&": BinOp.BitAnd
+    ">": BinOp.Gt
+    ">>": BinOp.RightShift
+    ">=": BinOp.GtEq
+    "<": BinOp.Lt
+    "<<": BinOp.LeftShift
+    "<=": BinOp.LtEq
+
+
+matchAlt Alt:
+    pattern=pat guard=altGuard? ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
+        Alt(pattern, guard, rhs = body)
+
+    pattern=pat guard=altGuard? ":" body=stmt:
+        Alt(pattern, guard, rhs = Vec.[body])
+
+
+altGuard Expr:
+    "if" expr=expr:
+        expr
+
+
+fnArgs Vec[(name: Id, ty: Option[Type])]:
+    v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
+        let vec: Vec[(name: Id, ty: Option[Type])] =
+            once((name = newId(v0), ty = ty0))
+                .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: (name = newId(v.v), ty = v.ty)))
+                .toVec()
+        vec
+
+
+# --------------------------------------------------------------------------------------------------
+# Statements
+
+
+stmt Stmt:
+    cur=^ "break" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Break(BreakStmt(
+            label = label.map(|l: Token|: newId(labelLoc)),
+            level = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+    cur=^ "continue" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Continue(ContinueStmt(
+            label = label.map(|l: Token|: newId(labelLoc)),
+            level = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+    cur=^ "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
+        Stmt.Let(LetStmt(lhs = pat, ty, rhs, _firstToken = TokenIdx(idx = cur)))
+
+    cur=^ label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.For(ForStmt(
+            label,
+            pat,
+            astTy = ty,
+            tcTy = Option.None,
+            expr,
+            exprTy = Option.None,
+            body,
+            _firstToken = TokenIdx(idx = cur),
+        ))
+
+    cur=^ label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
+
+    cur=^ label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
+
+    lhs=inlineExpr rhs=stmtExprCont:
+        match rhs:
+            Option.None:
+                Stmt.Expr(lhs)
+
+            Option.Some((op, rhs)):
+                Stmt.Assign(AssignStmt(lhs, rhs, op))
+
+    expr=blockExpr:
+        Stmt.Expr(expr)
+
+
+stmtExprCont Option[(op: AssignOp, rhs: Expr)]:
+    "NEWLINE":
+        Option.None
+
+    op=assignOp expr=blockExpr:
+        Option.Some((op = op, rhs = expr))
+
+    op=assignOp expr=inlineExpr "NEWLINE":
+        Option.Some((op = op, rhs = expr))
+
+
+loopLabel Id:
+    id=^ "label" ":":
+        newId(id)
+
+
+letRhs Expr:
+    expr=inlineExpr _"NEWLINE":
+        expr
+
+    expr=blockExpr:
+        expr
+
+
+assignOp AssignOp:
+    "=": AssignOp.Eq
+    "+=": AssignOp.PlusEq
+    "-=": AssignOp.MinusEq
+    "*=": AssignOp.StarEq
+    "^=": AssignOp.CaretEq
+
+
+# --------------------------------------------------------------------------------------------------
+# Patterns
+
+
+pat Pat:
+    p0=simplePat ps=("|" p=simplePat)*:
+        if ps.isEmpty():
+            p0
+        else:
+            # foldr1 Pat.Or (p0 : ps)
+            let pRet = ps.pop().unwrap().p
+            if ps.isEmpty():
+                Pat.Or(p0, pRet)
+            else:
+                let i: U32 = ps.len() - 1
+                loop:
+                    pRet = Pat.Or(ps.get(i).p, pRet)
+                    if i == 0:
+                        break
+                    i -= 1
+                Pat.Or(p0, pRet)
+
+
+simplePat Pat:
+    # Variables
+    var_=^ "LowerId":
+        Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
+
+    # Constructors
+    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")? last=^:
+        Pat.Constr(ConstrPat(
+            constr = con,
+            fields = match fs:
+                Option.None:
+                    Vec.empty()
+                Option.Some((p0, ps, ..)):
+                    once(p0).chain(ps.iter()).toVec(),
+            ignoreRest = match fs:
+                Option.None:
+                    Bool.False
+                Option.Some((ignoreRest, ..)):
+                    ignoreRest.isSome(),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    # Records: `(pat, pat)`, `(var = pat, ...)`
+    first=^ "(" ")" last=^:
+        Pat.Record(RecordPat(
+            fields = Vec.empty(),
+            ignoreRest = Bool.False,
+            inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")" last=^:
+        Pat.Record(RecordPat(
+            fields = once(p0).chain(ps.iter()).toVec(),
+            ignoreRest = Bool.False,
+            inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")" last=^:
+        Pat.Record(RecordPat(
+            fields = once(p0).chain(ps.iter()).toVec(),
+            ignoreRest = Bool.True,
+            inferredTy = Option.None,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
+        ))
+
+    # Ignore
+    cur=^ "_":
+        Pat.Ignore(TokenIdx(idx = cur))
+
+    # Literals.
+    cur=^ str="Str":
+        Pat.Str(str.text, TokenIdx(idx = cur))
+
+    cur=^ char="Char":
+        Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))
+
+
+recordFieldPat Named[Pat]:
+    name=^ "LowerId" "=" pat=pat:
+        Named(name = Option.Some(newId(name)), node = pat)
+
+    pat=pat:
+        Named(name = Option.None, node = pat)
+
+
+# --------------------------------------------------------------------------------------------------
+# Import declarations
+
+
+importDecl ImportDecl:
+    "import" p0="UpperId" ps=(_"." "UpperId")* "NEWLINE":
+        let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: Token|: p.text)).toVec()
+        ImportDecl(path = vec)
+
+
+# --------------------------------------------------------------------------------------------------
+# Top-level functions
+
+
+topFunDecl FunDecl:
+    "prim" sig=topFunSig "NEWLINE":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.None,
+        )
+
+    sig=topFunSig ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.Some(body),
+        )
+
+    sig=topFunSig ":" body=inlineExpr "NEWLINE":
+        FunDecl(
+            parentTy = sig.parentTy,
+            name = sig.name,
+            sig = sig.sig,
+            body = Option.Some(Vec.[Stmt.Expr(body)]),
+        )
+
+
+topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):
+    parentTy=(^ _"UpperId" _".")? name=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        (
+            parentTy = parentTy.map(|id: U32|: newId(id)),
+            name = newId(name),
+            sig = FunSig(
+                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                self_ = SelfParam.No,       # TODO
+                params,
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+        )
+
+
+# TODO: Weird name, rename.
+parentTy Id:
+    id=^ "UpperId" ".":
+        newId(id)
+
+
+context Context:
+    "[" t0=type_ ts=(_"," type_)* ","? "]":
+        Context(
+            typeParams = Vec.empty(),   # generated by the type checker
+            preds = once(t0).chain(ts.iter()).toVec(),
+        )
+
+
+paramList Vec[(name: Id, ty: Option[Type])]:
+    "(" ")":
+        Vec.empty()
+
+    "(" p0=param ps=(_"," param)* ","? ")":
+        let vec: Vec[(name: Id, ty: Option[Type])] =
+            once(p0).chain(ps.iter()).toVec()
+        vec
+
+
+param (name: Id, ty: Option[Type]):
+    name=^ "LowerId" ty=(_":" type_)?:
+        (name = newId(name), ty = ty)
+
+
+# --------------------------------------------------------------------------------------------------
+# Trait declarations
+
+
+traitDecl TraitDecl:
+    "trait" name=^ "UpperId" "[" tys=typeParams "]" rhs=traitDeclRhs?:
+        TraitDecl(
+            name = newId(name),
+            typeParams = tys,
+            typeParamKinds = Vec.empty(),       # will be generated by kind inference
+            items = rhs.unwrapOr(Vec.empty()),
+        )
+
+
+traitDeclRhs Vec[FunDecl]:
+    "NEWLINE": Vec.empty()
+    ":" "NEWLINE" "INDENT" fs=funDecl+ "DEDENT": fs
+
+
+# --------------------------------------------------------------------------------------------------
+# Impl declarations
+
+
+implDecl ImplDecl:
+    "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
+        ImplDecl(
+            context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+            trait_ = newId(name),
+            tys = once(t0).chain(ts.iter()).toVec(),
+            items = rhs,
+        )
+
+
+implDeclRhs Vec[FunDecl]:
+    "NEWLINE": Vec.empty()
+    ":" "NEWLINE" "INDENT" funs=funDecl+ "DEDENT": funs
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+funDecl FunDecl:
+    prim_="prim"? sig=funSig _"NEWLINE":
+        # TODO: Add prim to FunDecl
+        FunDecl(
+            parentTy = Option.None,
+            name = sig.id,
+            sig = sig.sig,
+            body = Option.None
+        )
+
+    sig=funSig stmts=funDeclRhs:
+        FunDecl(
+            parentTy = Option.None,
+            name = sig.id,
+            sig = sig.sig,
+            body = Option.Some(stmts),
+        )
+
+
+funDeclRhs Vec[Stmt]:
+    ":" "NEWLINE" "INDENT" stmts=stmt+ "DEDENT":
+        stmts
+
+    ":" expr=inlineExpr "NEWLINE":
+        let vec: Vec[Stmt] = Vec.[Stmt.Expr(expr)]
+        vec
+
+
+funSig (id: Id, sig: FunSig):
+    id=^ "LowerId" ctx=context? params=paramList ret=returnTy?:
+        let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
+        (
+            id = newId(id),
+            sig = FunSig(
+                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                self_ = SelfParam.No,       # TODO
+                params,
+                exceptions = ret.exn,
+                returnTy = ret.ret,
+            ),
+        )

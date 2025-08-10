@@ -761,21 +761,6 @@ impl Pat {
                 buffer.push('\'');
             }
 
-            Pat::StrPfx(str, pat) => {
-                buffer.push('"');
-                buffer.push_str(str); // TODO: escaping
-                buffer.push('"');
-                buffer.push(' ');
-                match pat {
-                    Some(pat) => {
-                        buffer.push_str(pat);
-                    }
-                    None => {
-                        buffer.push('_');
-                    }
-                }
-            }
-
             Pat::Or(pat1, pat2) => {
                 buffer.push('(');
                 pat1.node.print(buffer);

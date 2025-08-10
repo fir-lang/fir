@@ -3,12 +3,6 @@ main():
     printStr(s)
 
     match s:
-        "\"" rest:
-            printStr("Matched, rest = \"`rest`\"")
-        other:
-            panic("")
-
-    match s:
         "\"":
             printStr("Matched")
         other:
@@ -16,5 +10,4 @@ main():
 
 # expected stdout:
 # "
-# Matched, rest = ""
 # Matched

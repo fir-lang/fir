@@ -1,6 +1,7 @@
-type StrBuf:
+type StrBuf(
     # UTF-8 encoding of the string.
-    _bytes: Vec[U8]
+    _bytes: Vec[U8],
+)
 
 StrBuf.withCapacity(cap: U32) StrBuf:
     StrBuf(_bytes = Vec.withCapacity(cap))

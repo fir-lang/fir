@@ -1,8 +1,10 @@
-import Scanner
+import Compiler.Scanner
+
 
 type TestError:
-    ParseError(ParseError[Token])
+    ParseError(ParseError)
     Other(Str)
+
 
 impl ToStr[TestError]:
     toStr(self: TestError) Str:
@@ -10,11 +12,12 @@ impl ToStr[TestError]:
             TestError.ParseError(parseError): parseError.toStr()
             TestError.Other(msg): msg
 
+
 runParser(
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: tree, newCursor: U32, newErr: Option[ParseError]) / ParseError,
         runScan: Bool,
-    ) ParseTree[Token, nt] / TestError:
+    ) tree / TestError:
     let (tokens, error) = tokenize("<test input>", input)
 
     if error is Option.Some(error):
@@ -36,10 +39,12 @@ runParser(
 
     result.tree
 
+
+## Print test name, run the given parser function on the input, print errors and trees.
 runTest[ToStr[nt]](
         testName: Str,
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
     ) / exn:
     print(testName)
     match try(||: runParser(input, parseFn, Bool.False)):
@@ -47,9 +52,13 @@ runTest[ToStr[nt]](
         Result.Err(err): print("ERR: `err`")
     print("")
 
+
+## Print input, run the given parser function on the input, print errors and trees.
+##
+## Difference from `runTest` is that this prints the input, `runTest` prints the given test name.
 runTest_[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
     ) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.False)):
@@ -57,9 +66,22 @@ runTest_[ToStr[nt]](
         Result.Err(err): print("ERR: `err`")
     print("")
 
+
+## Same as `runTest_`, but runs scanner after lexer.
+runTestScanner_[ToStr[nt]](
+        input: Str,
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
+    ) / exn:
+    print(input)
+    match try(||: runParser(input, parseFn, Bool.True)):
+        Result.Ok(tree): print(tree.toDoc().render(80))
+        Result.Err(err): print("ERR: `err`")
+    print("")
+
+
 runTestIndent[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32) / ParseError[Token],
+        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
     ) Bool / exn:
     print(input)
     let result = match try(||: runParser(input, parseFn, Bool.True)):
@@ -71,6 +93,7 @@ runTestIndent[ToStr[nt]](
             Bool.False
     print("")
     result
+
 
 lexerErrorStr(err: Error) Str:
     "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

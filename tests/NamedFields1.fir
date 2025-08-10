@@ -1,9 +1,6 @@
 type Result[t, e]:
-    Ok:
-        value: t
-
-    Err:
-        value: e
+    Ok(value: t)
+    Err(value: e)
 
 prim type I32
 

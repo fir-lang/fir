@@ -1,16 +1,19 @@
-type Error:
-    loc: Loc
-    msg: Str
+type Error(
+    loc: Loc,
+    msg: Str,
+)
 
-type AssertionError:
-    msg: Str
+type AssertionError(
+    msg: Str,
+)
 
-type Loc:
-    file: Str
-    byteIdx: U32
-    byteLen: U32
-    line: U32
-    col: U32
+type Loc(
+    file: Str,
+    byteIdx: U32,
+    byteLen: U32,
+    line: U32,
+    col: U32,
+)
 
 # TODO: Debug assert that `self.file == other.file`
 Loc.combine(self, other: Loc) Loc:

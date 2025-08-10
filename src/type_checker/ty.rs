@@ -911,7 +911,7 @@ impl Ty {
                     .map(|exn| Box::new(exn.deep_normalize(cons))),
             },
 
-            Ty::QVar(_, _) => panic!(),
+            Ty::QVar(_, _) => self.clone(),
         }
     }
 

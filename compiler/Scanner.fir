@@ -3,10 +3,11 @@ import Lexer
 import Token
 
 
-type ScannerError:
-    line: U32
-    col: U32
-    msg: Str
+type ScannerError(
+    line: U32,
+    col: U32,
+    msg: Str,
+)
 
 
 scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
@@ -97,7 +98,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
             # Push the token terminating the indented block.
             newTokens.push(t)
 
-            return l
+            return (line = t.line, col = t.col + t.text.len())
 
         if l.line != lastLoc.line:
             # Generate indentation tokens.

@@ -2,39 +2,34 @@
 #
 # TODO: Enable overflow tests after adding operators that allow overflows.
 
-type InvalidDigit:
-    InvalidDigit
+type InvalidDigit
 
-type Overflow:
-    Overflow
+type Overflow
 
-type EmptyInput:
-    EmptyInput
+type EmptyInput
 
-type IoError:
-    IoError
+type IoError
 
-type OtherError:
-    OtherError
+type OtherError
 
 parseU32(s: Str) Result[[InvalidDigit, Overflow, EmptyInput, ..r], U32]:
     if s.len() == 0:
-        return Result.Err(~EmptyInput.EmptyInput)
+        return Result.Err(~EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
         if c < '0' or c > '9':
-            return Result.Err(~InvalidDigit.InvalidDigit)
+            return Result.Err(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: return Result.Err(~Overflow.Overflow)
+            Option.None: return Result.Err(~Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: return Result.Err(~Overflow.Overflow)
+            Option.None: return Result.Err(~Overflow)
             Option.Some(newResult): newResult
 
     Result.Ok(result)
@@ -55,20 +50,20 @@ checkedMul(i1: U32, i2: U32) Option[U32]:
 
 parseIntErrorToStr(error: [InvalidDigit, Overflow, EmptyInput]) Str:
     match error:
-        ~InvalidDigit.InvalidDigit: "invalid digit"
-        ~Overflow.Overflow: "overflow"
-        ~EmptyInput.EmptyInput: "empty input"
+        ~InvalidDigit: "invalid digit"
+        ~Overflow: "overflow"
+        ~EmptyInput: "empty input"
 
 defaultEmptyInput(res: Result[[EmptyInput, ..r], U32]) Result[[..r], U32]:
     match res:
-        Result.Err(~EmptyInput.EmptyInput): Result.Ok(u32(0))
+        Result.Err(~EmptyInput): Result.Ok(u32(0))
         Result.Err(other): Result.Err(other)
         Result.Ok(val): Result.Ok(val)
 
 readFile(s: Str) Result[[IoError, ..r], Str]:
     # We don't have the standard library support for file IO yet, just return
     # an error for now.
-    Result.Err(~IoError.IoError)
+    Result.Err(~IoError)
 
 parseU32FromFile(filePath: Str) Result[[InvalidDigit, Overflow, EmptyInput, IoError, ..r], U32]:
     let fileContents = match readFile(filePath):
@@ -92,7 +87,7 @@ parseWith2(vec: Vec[Str], parseFn: Fn(Str) Result[[OtherError, ..r], a] / exn) R
 
     for s in vec.iter():
         match parseFn(s):
-            Result.Err(~OtherError.OtherError): continue
+            Result.Err(~OtherError): continue
             Result.Err(err): return Result.Err(err)
             Result.Ok(val): ret.push(val)
 
@@ -102,28 +97,28 @@ handleSomeErrs(error: [Overflow, OtherError]) U32: 0
 
 parseWithErrorHandler(input: Str, handler: Fn([Overflow, ..r1]) U32 / exn) Result[[InvalidDigit, EmptyInput, ..r2], U32] / exn:
     match parseU32(input):
-        Result.Err(~Overflow.Overflow): Result.Ok(handler(~Overflow.Overflow))
+        Result.Err(~Overflow): Result.Ok(handler(~Overflow))
         Result.Err(other): Result.Err(other)
         Result.Ok(val): Result.Ok(val)
 
 parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
     if s.len() == 0:
-        throw(~EmptyInput.EmptyInput)
+        throw(~EmptyInput)
 
     let result: U32 = 0
 
     for c: Char in s.chars():
         if c < '0' or c > '9':
-            throw(~InvalidDigit.InvalidDigit)
+            throw(~InvalidDigit)
 
         let digit = c.asU32() - '0'.asU32()
 
         result = match checkedMul(result, 10):
-            Option.None: throw(~Overflow.Overflow)
+            Option.None: throw(~Overflow)
             Option.Some(newResult): newResult
 
         result = match checkedAdd(result, digit):
-            Option.None: throw(~Overflow.Overflow)
+            Option.None: throw(~Overflow)
             Option.Some(newResult): newResult
 
     result
@@ -131,7 +126,7 @@ parseU32Exn(s: Str) U32 / [InvalidDigit, Overflow, EmptyInput, ..r]:
 readFileExn(s: Str) Str / [IoError, ..r]:
     # We don't have the standard library support for file IO yet, just return
     # an error for now.
-    throw(~IoError.IoError)
+    throw(~IoError)
 
 parseU32FromFileExn(filePath: Str) U32 / [InvalidDigit, Overflow, EmptyInput, IoError, ..r]:
     parseU32Exn(readFileExn(filePath))
@@ -158,7 +153,7 @@ main():
 
     print("----- parseU32FromFile")
     match parseU32FromFile("test"):
-        Result.Err(~IoError.IoError): print("io error")
+        Result.Err(~IoError): print("io error")
         Result.Err(other): print(parseIntErrorToStr(other))
         Result.Ok(val): print(val)
     print("")

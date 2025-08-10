@@ -210,11 +210,7 @@ fn visit_stmt(stmt: &mono::Stmt, records: &mut Set<RecordShape>) {
 
 fn visit_pat(pat: &mono::Pat, records: &mut Set<RecordShape>) {
     match pat {
-        mono::Pat::Var(_)
-        | mono::Pat::Ignore
-        | mono::Pat::Str(_)
-        | mono::Pat::StrPfx(_, _)
-        | mono::Pat::Char(_) => {}
+        mono::Pat::Var(_) | mono::Pat::Ignore | mono::Pat::Str(_) | mono::Pat::Char(_) => {}
 
         mono::Pat::Constr(mono::ConstrPattern { constr: _, fields }) => {
             for field in fields {

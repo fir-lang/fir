@@ -2,8 +2,7 @@ test[Eq[t], ToStr[t]](a: t):
     printStr((a == a).toStr())
     printStr(a.toStr())
 
-type A[t]:
-    i: t
+type A[t](i: t)
 
 A.test[Eq[t], ToStr[t]](self: A[t]):
     printStr((self.i == self.i).toStr())

@@ -1,9 +1,10 @@
-type Token:
-    kind: TokenKind
-    text: Str
-    byteIdx: U32
-    line: U32
-    col: U32
+type Token(
+    kind: TokenKind,
+    text: Str,
+    byteIdx: U32,
+    line: U32,
+    col: U32,
+)
 
 
 Token.rightLoc(self) (line: U32, col: U32):
@@ -19,6 +20,11 @@ Token.rightLoc(self) (line: U32, col: U32):
 
 
 type TokenKind:
+    # This includes all kinds of comments: single or multi-line, documentation or not.
+    #
+    # Single-line comments on consecutive lines are generated as separate tokens.
+    Comment
+
     # An identifier starting with an uppercase letter.
     UpperId
 
@@ -28,12 +34,22 @@ type TokenKind:
     # An identifier starting with an uppercase letter, followed by a '.['.
     #
     # This starts an iterator syntax.
+    #
+    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
+    # We will be removed once we have our own tests.
     UpperIdDotLBracket
 
     # An identifier starting with '~', followed by an uppercase letter.
+    #
+    # NOTE: '~' followed by an uppercase letter is tokenized as one in the interpreter, and we do
+    # the same here to be able to compare interpreter's and compiler's tokens when testing. We don't
+    # need to combine them in the compiler. We will remove this once we have our own tests.
     TildeUpperId
 
     # `'~' UpperId '.' UpperId`, without spaces in between.
+    #
+    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
+    # It will be removed once we have our own tests.
     TildeUpperIdPath
 
     # An identifier starting with a lowercase letter.
@@ -47,7 +63,6 @@ type TokenKind:
     Do
     Elif
     Else
-    Export
     Fn_
     For
     If
@@ -90,7 +105,9 @@ type TokenKind:
     # Operators
     Amp
     AmpAmp
+    Caret
     CaretEq
+    Dollar
     DotDot
     DoubleLAngle
     DoubleRAngle
@@ -177,13 +194,16 @@ impl ToStr[TokenKind]:
             TokenKind.Backslash: "Backslash"
             TokenKind.BinInt: "BinInt"
             TokenKind.Break: "Break"
+            TokenKind.Caret: "Caret"
             TokenKind.CaretEq: "CaretEq"
             TokenKind.Char: "Char"
             TokenKind.Colon: "Colon"
             TokenKind.Comma: "Comma"
+            TokenKind.Comment: "Comment"
             TokenKind.Continue: "Continue"
             TokenKind.Dedent: "Dedent"
             TokenKind.Do: "Do"
+            TokenKind.Dollar: "$"
             TokenKind.Dot: "Dot"
             TokenKind.DotDot: "DotDot"
             TokenKind.DoubleLAngle: "DoubleLAngle"
@@ -194,7 +214,6 @@ impl ToStr[TokenKind]:
             TokenKind.EqEq: "EqEq"
             TokenKind.Exclamation: "Exclamation"
             TokenKind.ExclamationEq: "ExclamationEq"
-            TokenKind.Export: "Export"
             TokenKind.Fn_: "Fn"
             TokenKind.For: "For"
             TokenKind.HexInt: "HexInt"
@@ -206,17 +225,17 @@ impl ToStr[TokenKind]:
             TokenKind.Int: "Int"
             TokenKind.Is: "Is"
             TokenKind.Jump: "Jump"
+            TokenKind.Label: "Label"
             TokenKind.LAngle: "LAngle"
             TokenKind.LAngleEq: "LAngleEq"
             TokenKind.LBrace: "LBrace"
             TokenKind.LBracket: "LBracket"
             TokenKind.LBracketRow: "LBracketRow"
-            TokenKind.LParen: "LParen"
-            TokenKind.LParenRow: "LParenRow"
-            TokenKind.Label: "Label"
             TokenKind.Let: "Let"
             TokenKind.Loop: "Loop"
             TokenKind.LowerId: "LowerId"
+            TokenKind.LParen: "LParen"
+            TokenKind.LParenRow: "LParenRow"
             TokenKind.Match: "Match"
             TokenKind.Minus: "Minus"
             TokenKind.MinusEq: "MinusEq"
@@ -233,8 +252,8 @@ impl ToStr[TokenKind]:
             TokenKind.RAngleEq: "RAngleEq"
             TokenKind.RBrace: "RBrace"
             TokenKind.RBracket: "RBracket"
-            TokenKind.RParen: "RParen"
             TokenKind.Return: "Return"
+            TokenKind.RParen: "RParen"
             TokenKind.SingleQuote: "SingleQuote"
             TokenKind.Slash: "Slash"
             TokenKind.Star: "Star"
@@ -265,9 +284,11 @@ impl Eq[TokenKind]:
             (left = TokenKind.Char, right = TokenKind.Char): Bool.True
             (left = TokenKind.Colon, right = TokenKind.Colon): Bool.True
             (left = TokenKind.Comma, right = TokenKind.Comma): Bool.True
+            (left = TokenKind.Comment, right = TokenKind.Comment): Bool.True
             (left = TokenKind.Continue, right = TokenKind.Continue): Bool.True
             (left = TokenKind.Dedent, right = TokenKind.Dedent): Bool.True
             (left = TokenKind.Do, right = TokenKind.Do): Bool.True
+            (left = TokenKind.Dollar, right = TokenKind.Dollar): Bool.True
             (left = TokenKind.Dot, right = TokenKind.Dot): Bool.True
             (left = TokenKind.DotDot, right = TokenKind.DotDot): Bool.True
             (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle): Bool.True
@@ -278,7 +299,6 @@ impl Eq[TokenKind]:
             (left = TokenKind.EqEq, right = TokenKind.EqEq): Bool.True
             (left = TokenKind.Exclamation, right = TokenKind.Exclamation): Bool.True
             (left = TokenKind.ExclamationEq, right = TokenKind.ExclamationEq): Bool.True
-            (left = TokenKind.Export, right = TokenKind.Export): Bool.True
             (left = TokenKind.Fn_, right = TokenKind.Fn_): Bool.True
             (left = TokenKind.For, right = TokenKind.For): Bool.True
             (left = TokenKind.HexInt, right = TokenKind.HexInt): Bool.True
@@ -289,17 +309,17 @@ impl Eq[TokenKind]:
             (left = TokenKind.Indent, right = TokenKind.Indent): Bool.True
             (left = TokenKind.Int, right = TokenKind.Int): Bool.True
             (left = TokenKind.Jump, right = TokenKind.Jump): Bool.True
+            (left = TokenKind.Label, right = TokenKind.Label): Bool.True
             (left = TokenKind.LAngle, right = TokenKind.LAngle): Bool.True
             (left = TokenKind.LAngleEq, right = TokenKind.LAngleEq): Bool.True
             (left = TokenKind.LBrace, right = TokenKind.LBrace): Bool.True
             (left = TokenKind.LBracket, right = TokenKind.LBracket): Bool.True
             (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow): Bool.True
-            (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
-            (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
-            (left = TokenKind.Label, right = TokenKind.Label): Bool.True
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
+            (left = TokenKind.LParen, right = TokenKind.LParen): Bool.True
+            (left = TokenKind.LParenRow, right = TokenKind.LParenRow): Bool.True
             (left = TokenKind.Match, right = TokenKind.Match): Bool.True
             (left = TokenKind.Minus, right = TokenKind.Minus): Bool.True
             (left = TokenKind.MinusEq, right = TokenKind.MinusEq): Bool.True
@@ -315,8 +335,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.RAngleEq, right = TokenKind.RAngleEq): Bool.True
             (left = TokenKind.RBrace, right = TokenKind.RBrace): Bool.True
             (left = TokenKind.RBracket, right = TokenKind.RBracket): Bool.True
-            (left = TokenKind.RParen, right = TokenKind.RParen): Bool.True
             (left = TokenKind.Return, right = TokenKind.Return): Bool.True
+            (left = TokenKind.RParen, right = TokenKind.RParen): Bool.True
             (left = TokenKind.SingleQuote, right = TokenKind.SingleQuote): Bool.True
             (left = TokenKind.Slash, right = TokenKind.Slash): Bool.True
             (left = TokenKind.Star, right = TokenKind.Star): Bool.True

@@ -6,8 +6,7 @@ id(a: t) t: a
 f1() Result[[E1, ..r], ()]:
     Result.Err(~E1.E1)
 
-type X[t]:
-    a: t
+type X[t](a: t)
 
 X.f2(self: X[t], other: t) t:
     self.a

@@ -1,5 +1,4 @@
-type T1:
-    a: U32
+type T1(a: U32)
 
 trait Foo[t]:
     foo(self: t)

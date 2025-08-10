@@ -186,7 +186,7 @@ fn normalize_pat(pat: &mut ast::Pat, cons: &ScopeMap<Id, TyCon>) {
             *ty = Some(ty.as_ref().unwrap().deep_normalize(cons));
         }
 
-        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) | ast::Pat::StrPfx(_, _) => {}
+        ast::Pat::Ignore | ast::Pat::Str(_) | ast::Pat::Char(_) => {}
 
         ast::Pat::Constr(ast::ConstrPattern {
             constr: ast::Constructor { ty_args, .. },

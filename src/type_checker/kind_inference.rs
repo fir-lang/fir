@@ -180,14 +180,14 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             }
             if let Some(ext) = extension {
                 let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Record)));
-                if let Some(Some(old)) = old {
-                    if old != Kind::Row(RecordOrVariant::Record) {
-                        panic!(
-                            "{}: Conflicting kind of type variable {}",
-                            loc_display(loc),
-                            ext,
-                        );
-                    }
+                if let Some(Some(old)) = old
+                    && old != Kind::Row(RecordOrVariant::Record)
+                {
+                    panic!(
+                        "{}: Conflicting kind of type variable {}",
+                        loc_display(loc),
+                        ext,
+                    );
                 }
             }
         }
@@ -202,14 +202,14 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             }
             if let Some(ext) = extension {
                 let old = tvs.insert(ext.clone(), Some(Kind::Row(RecordOrVariant::Variant)));
-                if let Some(Some(old)) = old {
-                    if old != Kind::Row(RecordOrVariant::Variant) {
-                        panic!(
-                            "{}: Conflicting kind of type variable {}",
-                            loc_display(loc),
-                            ext,
-                        );
-                    }
+                if let Some(Some(old)) = old
+                    && old != Kind::Row(RecordOrVariant::Variant)
+                {
+                    panic!(
+                        "{}: Conflicting kind of type variable {}",
+                        loc_display(loc),
+                        ext,
+                    );
                 }
             }
         }
@@ -249,14 +249,14 @@ fn collect_named_ty_tvs(
         match &args[0].node {
             ast::Type::Var(var) => {
                 let old = tvs.insert(var.clone(), Some(kind.clone()));
-                if let Some(Some(old)) = old {
-                    if old != kind {
-                        panic!(
-                            "{}: Conflicting kind of type variable {}",
-                            loc_display(loc),
-                            var,
-                        );
-                    }
+                if let Some(Some(old)) = old
+                    && old != kind
+                {
+                    panic!(
+                        "{}: Conflicting kind of type variable {}",
+                        loc_display(loc),
+                        var,
+                    );
                 }
             }
             _ => panic!(
