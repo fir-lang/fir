@@ -728,17 +728,7 @@ stmt Stmt:
         Stmt.While(WhileStmt(label, cond, body))
 
     label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.While(WhileStmt(
-            label,
-            cond = Expr.ConstrSelect(Constructor(
-                variant = Bool.False,
-                ty = newId("Bool"),
-                constr = Option.Some(newId("True")),
-                userTyArgs = Vec.empty(),
-                tyArgs = Vec.empty(),
-            )),
-            body,
-        ))
+        Stmt.Loop(body)
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:
