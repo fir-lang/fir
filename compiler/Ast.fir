@@ -429,7 +429,7 @@ type Expr:
     ## A character literal.
     Char(Char)
 
-    Self
+    Self(TokenIdx)
 
     ## A binary operator: `x + y`, `i >> 2`.
     ##
@@ -442,9 +442,9 @@ type Expr:
     UnOp(UnOpExpr)
 
     ## A record: `(1, 2)`, `(x = 123, msg = "hi")`.
-    Record(Vec[Named[Expr]])
+    Record(RecordExpr)
 
-    Return(Expr)
+    Return(ReturnExpr)
 
     Match(MatchExpr)
 
@@ -457,14 +457,54 @@ type Expr:
     Do(DoExpr)
 
     # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
-    Seq(
-        ty: Option[Type],
-        elems: Vec[(key: Option[Expr], value: Expr)],
-    )
+    Seq(SeqExpr)
 
 impl Tokens[Expr]:
-    firstToken(self: Expr) TokenIdx: panic("TODO")
-    lastToken(self: Expr) TokenIdx: panic("TODO")
+    firstToken(self: Expr) TokenIdx:
+        match self:
+            Expr.Var(e): e.firstToken()
+            Expr.ConstrSelect(e): e.firstToken()
+            Expr.FieldSelect(e): e.firstToken()
+            Expr.MethodSelect(e): e.firstToken()
+            Expr.AssocFnSelect(e): e.firstToken()
+            Expr.Call(e): e.firstToken()
+            Expr.Int(e): e.firstToken()
+            Expr.Str(e): panic("TODO")
+            Expr.Char(e): panic("TODO")
+            Expr.Self(t): t
+            Expr.BinOp(e): e.firstToken()
+            Expr.UnOp(e): e.firstToken()
+            Expr.Record(e): e.firstToken()
+            Expr.Return(e): e.firstToken()
+            Expr.Match(e): e.firstToken()
+            Expr.If(e): e.firstToken()
+            Expr.Fn_(e): e.firstToken()
+            Expr.Is(e): e.firstToken()
+            Expr.Do(e): e.firstToken()
+            Expr.Seq(e): e.firstToken()
+
+    lastToken(self: Expr) TokenIdx:
+        match self:
+            Expr.Var(e): e.lastToken()
+            Expr.ConstrSelect(e): e.lastToken()
+            Expr.FieldSelect(e): e.lastToken()
+            Expr.MethodSelect(e): e.lastToken()
+            Expr.AssocFnSelect(e): e.lastToken()
+            Expr.Call(e): e.lastToken()
+            Expr.Int(e): e.lastToken()
+            Expr.Str(e): panic("TODO")
+            Expr.Char(e): panic("TODO")
+            Expr.Self(t): t
+            Expr.BinOp(e): e.lastToken()
+            Expr.UnOp(e): e.lastToken()
+            Expr.Record(e): e.lastToken()
+            Expr.Return(e): e.lastToken()
+            Expr.Match(e): e.lastToken()
+            Expr.If(e): e.lastToken()
+            Expr.Fn_(e): e.lastToken()
+            Expr.Is(e): e.lastToken()
+            Expr.Do(e): e.lastToken()
+            Expr.Seq(e): e.lastToken()
 
 type VarExpr(
     id: Id,
@@ -602,7 +642,13 @@ type IntExpr(
     ## This will be the integer value in two's complement, extended to unsiged 32-bit.
     ## E.g. `-1u8` will be `0x000000ff`, instead of `0xffffffff`.
     parsed: U32,
+
+    token: TokenIdx,
 )
+
+impl Tokens[IntExpr]:
+    firstToken(self: IntExpr) TokenIdx: self.token
+    lastToken(self: IntExpr) TokenIdx: self.token
 
 type StrPart:
     Str(Str)
@@ -646,10 +692,37 @@ impl Tokens[UnOpExpr]:
     firstToken(self: UnOpExpr) TokenIdx: self._firstToken
     lastToken(self: UnOpExpr) TokenIdx: self.expr.lastToken()
 
+type RecordExpr(
+    fields: Vec[Named[Expr]],
+    _firstToken: TokenIdx,
+    _lastToken: TokenIdx,
+)
+
+impl Tokens[RecordExpr]:
+    firstToken(self: RecordExpr) TokenIdx: self._firstToken
+    lastToken(self: RecordExpr) TokenIdx: self._lastToken
+
+type ReturnExpr(
+    expr: Option[Expr],
+    _firstToken: TokenIdx,
+)
+
+impl Tokens[ReturnExpr]:
+    firstToken(self: ReturnExpr) TokenIdx: self._firstToken
+
+    lastToken(self: ReturnExpr) TokenIdx:
+        match self.expr:
+            Option.Some(expr): expr.lastToken()
+            Option.None: self._firstToken
+
 type MatchExpr(
     scrutinee: Expr,
     alts: Vec[Alt],
 )
+
+impl Tokens[MatchExpr]:
+    firstToken(self: MatchExpr) TokenIdx: panic("TODO")
+    lastToken(self: MatchExpr) TokenIdx: panic("TODO")
 
 type Alt(
     pattern: Pat,
@@ -680,10 +753,19 @@ type FnExpr(
     idx: U32,
 )
 
+impl Tokens[FnExpr]:
+    firstToken(self: FnExpr) TokenIdx: panic("TODO")
+    lastToken(self: FnExpr) TokenIdx: panic("TODO")
+
+# <expr> is <pat>
 type IsExpr(
     expr: Expr,
     pat: Pat,
 )
+
+impl Tokens[IsExpr]:
+    firstToken(self: IsExpr) TokenIdx: self.expr.firstToken()
+    lastToken(self: IsExpr) TokenIdx: self.pat.lastToken()
 
 type DoExpr(
     body: Vec[Stmt],
@@ -697,6 +779,17 @@ impl Tokens[DoExpr]:
 type UnOp:
     Not
     Neg
+
+type SeqExpr(
+    ty: Option[Type],
+    elems: Vec[(key: Option[Expr], value: Expr)],
+    _firstToken: TokenIdx,
+    _lastToken: TokenIdx,
+)
+
+impl Tokens[SeqExpr]:
+    firstToken(self: SeqExpr) TokenIdx: self._firstToken
+    lastToken(self: SeqExpr) TokenIdx: self._lastToken
 
 # --------------------------------------------------------------------------------------------------
 

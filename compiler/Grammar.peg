@@ -480,17 +480,23 @@ simpleExpr Expr:
         Expr.ConstrSelect(con)
 
     # Records: `(a, b)`, `(a = 1, b = 2)`
-    "(" exprs=(e0=parenExpr es=("," e=parenExpr)* ","?)? ")":
+    first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* ","?)? last=^ ")":
         match exprs:
             Option.None:
-                Expr.Record(Vec.empty())
+                Expr.Record(RecordExpr(
+                    fields = Vec.empty(),
+                    _firstToken = TokenIdx(idx = first),
+                    _lastToken = TokenIdx(idx = last),
+                ))
             Option.Some(fields):
-                Expr.Record(Vec.empty())
+                Expr.Record(RecordExpr(
+                    fields = once(fields.e0).chain(fields.es.iter()).toVec(),
+                    _firstToken = TokenIdx(idx = first),
+                    _lastToken = TokenIdx(idx = last),
+                ))
 
-    "return" expr=inlineExpr?:
-        Expr.Return(match expr:
-            Option.None: Expr.Record(Vec.empty())
-            Option.Some(expr): expr)
+    cur=^ "return" expr=inlineExpr?:
+        Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
 
     "||" ret=returnTy? ":" body=inlineExpr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
@@ -520,7 +526,7 @@ simpleExpr Expr:
             idx = 0,
         ))
 
-    int="Int":
+    cur=^ int="Int":
         let text = int.text
 
         let intStr = StrBuf.withCapacity(text.len())
@@ -536,9 +542,10 @@ simpleExpr Expr:
             suffix = Option.None,
             radix = 10,
             parsed = 0,
+            token = TokenIdx(idx = cur),
         ))
 
-    int="HexInt":
+    cur=^ int="HexInt":
         let text = int.text
 
         # TODO: Make this an assertion
@@ -560,9 +567,10 @@ simpleExpr Expr:
             suffix = Option.None,
             radix = 16,
             parsed = 0,
+            token = TokenIdx(idx = cur),
         ))
 
-    int="BinInt":
+    cur=^ int="BinInt":
         let text = int.text
 
         # TODO: Make this an assertion
@@ -584,6 +592,7 @@ simpleExpr Expr:
             suffix = Option.None,
             radix = 2,
             parsed = 0,
+            token = TokenIdx(idx = cur),
         ))
 
     str="Str":
@@ -594,18 +603,23 @@ simpleExpr Expr:
 
 
 sequence Expr:
-    ty=(type_ _".")? elems=seqElems:
-        Expr.Seq(ty, elems)
+    first=^ ty=(type_ _".")? elems=seqElems:
+        Expr.Seq(SeqExpr(
+            ty,
+            elems = elems.elems,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = elems.last,
+        ))
 
 
-seqElems Vec[(key: Option[Expr], value: Expr)]:
-    "[" "]":
-        Vec.empty()
+seqElems (elems: Vec[(key: Option[Expr], value: Expr)], last: TokenIdx):
+    "[" last=^ "]":
+        (elems = Vec.empty(), last = TokenIdx(idx = last))
 
-    "[" e0=seqElem es=(_"," seqElem)* ","? "]":
+    "[" e0=seqElem es=(_"," seqElem)* ","? last=^ "]":
         let vec: Vec[(key: Option[Expr], value: Expr)] =
             once(e0).chain(es.iter()).toVec()
-        vec
+        (elems = vec, last = TokenIdx(idx = last))
 
 
 seqElem (key: Option[Expr], value: Expr):
