@@ -224,37 +224,54 @@ type Stmt:
     Expr(Expr)
     For(ForStmt)
     While(WhileStmt)
-    Loop(Vec[Stmt])
-    Break(
-        label: Option[Id],
-
-        ## How many levels of loops to break. Parser initializes this as 0, type checker updates
-        ## based on the labels of enclosing loops.
-        level: U32,
-    )
-    Continue(
-        label: Option[Id],
-
-        ## Same as `Break.level`.
-        level: U32,
-    )
+    Loop(LoopStmt)
+    Break(BreakStmt)
+    Continue(ContinueStmt)
 
 impl Tokens[Stmt]:
-    firstToken(self: Stmt) TokenIdx: panic("TODO")
-    lastToken(self: Stmt) TokenIdx: panic("TODO")
+    firstToken(self: Stmt) TokenIdx:
+        match self:
+            Stmt.Let(e): e.firstToken()
+            Stmt.Assign(e): e.firstToken()
+            Stmt.Expr(e): e.firstToken()
+            Stmt.For(e): e.firstToken()
+            Stmt.While(e): e.firstToken()
+            Stmt.Loop(e): e.firstToken()
+            Stmt.Break(e): e.firstToken()
+            Stmt.Continue(e): e.firstToken()
+
+    lastToken(self: Stmt) TokenIdx:
+        match self:
+            Stmt.Let(e): e.lastToken()
+            Stmt.Assign(e): e.lastToken()
+            Stmt.Expr(e): e.lastToken()
+            Stmt.For(e): e.lastToken()
+            Stmt.While(e): e.lastToken()
+            Stmt.Loop(e): e.lastToken()
+            Stmt.Break(e): e.lastToken()
+            Stmt.Continue(e): e.lastToken()
 
 ## A let statement: `let x: T = expr`.
 type LetStmt(
     lhs: Pat,
     ty: Option[Type],
     rhs: Expr,
+    _firstToken: TokenIdx,
 )
+
+impl Tokens[LetStmt]:
+    firstToken(self: LetStmt) TokenIdx: self._firstToken
+    lastToken(self: LetStmt) TokenIdx: self.rhs.lastToken()
 
 type AssignStmt(
     lhs: Expr,
     rhs: Expr,
     op: AssignOp,
 )
+
+impl Tokens[AssignStmt]:
+    firstToken(self: AssignStmt) TokenIdx: self.lhs.firstToken()
+    lastToken(self: AssignStmt) TokenIdx: self.rhs.lastToken()
 
 type AssignOp:
     Eq
@@ -279,13 +296,68 @@ type ForStmt(
     exprTy: Option[Type], # TODO: type-checking type
 
     body: Vec[Stmt],
+
+    _firstToken: TokenIdx,
 )
+
+impl Tokens[ForStmt]:
+    firstToken(self: ForStmt) TokenIdx: self._firstToken
+    lastToken(self: ForStmt) TokenIdx: self.body.last().unwrap().lastToken()
 
 type WhileStmt(
     label: Option[Id],
     cond: Expr,
     body: Vec[Stmt],
+    _firstToken: TokenIdx,
 )
+
+impl Tokens[WhileStmt]:
+    firstToken(self: WhileStmt) TokenIdx: self._firstToken
+    lastToken(self: WhileStmt) TokenIdx: self.body.last().unwrap().lastToken()
+
+type LoopStmt(
+    body: Vec[Stmt],
+    _firstToken: TokenIdx,
+)
+
+impl Tokens[LoopStmt]:
+    firstToken(self: LoopStmt) TokenIdx: self._firstToken
+    lastToken(self: LoopStmt) TokenIdx: self.body.last().unwrap().lastToken()
+
+type BreakStmt(
+    label: Option[Id],
+
+    ## How many levels of loops to break. Parser initializes this as 0, type checker updates
+    ## based on the labels of enclosing loops.
+    level: U32,
+
+    _firstToken: TokenIdx,
+)
+
+impl Tokens[BreakStmt]:
+    firstToken(self: BreakStmt) TokenIdx: self._firstToken
+
+    lastToken(self: BreakStmt) TokenIdx:
+        match self.label:
+            Option.Some(id): id.lastToken()
+            Option.None: self._firstToken
+
+type ContinueStmt(
+    label: Option[Id],
+
+    ## Same as `BreakStmt.level`.
+    level: U32,
+
+    _firstToken: TokenIdx,
+)
+
+impl Tokens[ContinueStmt]:
+    firstToken(self: ContinueStmt) TokenIdx: self._firstToken
+
+    lastToken(self: ContinueStmt) TokenIdx:
+        match self.label:
+            Option.Some(id): id.lastToken()
+            Option.None: self._firstToken
 
 type Pat:
     ## Matches anything, binds it to variable.
@@ -424,10 +496,10 @@ type Expr:
     Int(IntExpr)
 
     ## A string literal.
-    Str(Vec[StrPart])
+    Str(StrExpr)
 
     ## A character literal.
-    Char(Char)
+    Char(CharExpr)
 
     Self(TokenIdx)
 
@@ -469,8 +541,8 @@ impl Tokens[Expr]:
             Expr.AssocFnSelect(e): e.firstToken()
             Expr.Call(e): e.firstToken()
             Expr.Int(e): e.firstToken()
-            Expr.Str(e): panic("TODO")
-            Expr.Char(e): panic("TODO")
+            Expr.Str(e): e.firstToken()
+            Expr.Char(e): e.firstToken()
             Expr.Self(t): t
             Expr.BinOp(e): e.firstToken()
             Expr.UnOp(e): e.firstToken()
@@ -492,8 +564,8 @@ impl Tokens[Expr]:
             Expr.AssocFnSelect(e): e.lastToken()
             Expr.Call(e): e.lastToken()
             Expr.Int(e): e.lastToken()
-            Expr.Str(e): panic("TODO")
-            Expr.Char(e): panic("TODO")
+            Expr.Str(e): e.lastToken()
+            Expr.Char(e): e.lastToken()
             Expr.Self(t): t
             Expr.BinOp(e): e.lastToken()
             Expr.UnOp(e): e.lastToken()
@@ -650,9 +722,27 @@ impl Tokens[IntExpr]:
     firstToken(self: IntExpr) TokenIdx: self.token
     lastToken(self: IntExpr) TokenIdx: self.token
 
+type StrExpr(
+    parts: Vec[StrPart],
+    token: TokenIdx,
+)
+
+impl Tokens[StrExpr]:
+    firstToken(self: StrExpr) TokenIdx: self.token
+    lastToken(self: StrExpr) TokenIdx: self.token
+
 type StrPart:
     Str(Str)
     Expr(Expr)
+
+type CharExpr(
+    char: Char,
+    token: TokenIdx,
+)
+
+impl Tokens[CharExpr]:
+    firstToken(self: CharExpr) TokenIdx: self.token
+    lastToken(self: CharExpr) TokenIdx: self.token
 
 type BinOpExpr(
     left: Expr,
@@ -718,17 +808,22 @@ impl Tokens[ReturnExpr]:
 type MatchExpr(
     scrutinee: Expr,
     alts: Vec[Alt],
+    _firstToken: TokenIdx,
 )
 
 impl Tokens[MatchExpr]:
-    firstToken(self: MatchExpr) TokenIdx: panic("TODO")
-    lastToken(self: MatchExpr) TokenIdx: panic("TODO")
+    firstToken(self: MatchExpr) TokenIdx: self._firstToken
+    lastToken(self: MatchExpr) TokenIdx: self.alts.last().unwrap().lastToken()
 
 type Alt(
     pattern: Pat,
     guard: Option[Expr],
     rhs: Vec[Stmt],
 )
+
+impl Tokens[Alt]:
+    firstToken(self: Alt) TokenIdx: self.pattern.firstToken()
+    lastToken(self: Alt) TokenIdx: self.rhs.last().unwrap().lastToken()
 
 type IfExpr(
     # At least one element
@@ -751,11 +846,12 @@ type FnExpr(
     sig: FunSig,
     body: Vec[Stmt],
     idx: U32,
+    _firstToken: TokenIdx
 )
 
 impl Tokens[FnExpr]:
-    firstToken(self: FnExpr) TokenIdx: panic("TODO")
-    lastToken(self: FnExpr) TokenIdx: panic("TODO")
+    firstToken(self: FnExpr) TokenIdx: self._firstToken
+    lastToken(self: FnExpr) TokenIdx: self.body.last().unwrap().lastToken()
 
 # <expr> is <pat>
 type IsExpr(

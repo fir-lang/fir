@@ -332,8 +332,12 @@ inlineExpr Expr:
 
 # Block expressions include an indented block and always end with DEDENT.
 blockExpr Expr:
-    "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
-        Expr.Match(MatchExpr(scrutinee = scrut, alts))
+    cur=^ "match" scrut=inlineExpr ":" "NEWLINE" "INDENT" alts=matchAlt+ _"DEDENT":
+        Expr.Match(MatchExpr(
+            scrutinee = scrut,
+            alts,
+            _firstToken = TokenIdx(idx = cur)
+        ))
 
     cur=^ "if" cond0=inlineExpr ":" "NEWLINE" "INDENT" body0=stmt+ "DEDENT"
             conds=("elif" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT")*
@@ -350,7 +354,7 @@ blockExpr Expr:
     cur=^ "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
         Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
 
-    "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    cur=^ "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -362,10 +366,11 @@ blockExpr Expr:
             ),
             body,
             idx = 0,
+            _firstToken = TokenIdx(idx = cur),
         ))
 
 
-    "|" args=fnArgs? "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -377,6 +382,7 @@ blockExpr Expr:
             ),
             body,
             idx = 0,
+            _firstToken = TokenIdx(idx = cur),
         ))
 
 
@@ -498,7 +504,7 @@ simpleExpr Expr:
     cur=^ "return" expr=inlineExpr?:
         Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
 
-    "||" ret=returnTy? ":" body=inlineExpr:
+    cur=^ "||" ret=returnTy? ":" body=inlineExpr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -510,9 +516,10 @@ simpleExpr Expr:
             ),
             body = Vec.[Stmt.Expr(body)],
             idx = 0,
+            _firstToken = TokenIdx(idx = cur),
         ))
 
-    "|" args=fnArgs? "|" ret=returnTy? ":" body=inlineExpr:
+    cur=^ "|" args=fnArgs? "|" ret=returnTy? ":" body=inlineExpr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -524,6 +531,7 @@ simpleExpr Expr:
             ),
             body = Vec.[Stmt.Expr(body)],
             idx = 0,
+            _firstToken = TokenIdx(idx = cur),
         ))
 
     cur=^ int="Int":
@@ -595,11 +603,17 @@ simpleExpr Expr:
             token = TokenIdx(idx = cur),
         ))
 
-    str="Str":
-        Expr.Str(parseStrParts(str.text))
+    cur=^ str="Str":
+        Expr.Str(StrExpr(
+            parts = parseStrParts(str.text),
+            token = TokenIdx(idx = cur),
+        ))
 
-    char="Char":
-        Expr.Char(parseCharLit(char.text))
+    cur=^ char="Char":
+        Expr.Char(CharExpr(
+            char = parseCharLit(char.text),
+            token = TokenIdx(idx = cur),
+        ))
 
 
 sequence Expr:
@@ -727,16 +741,24 @@ fnArgs Vec[(name: Id, ty: Option[Type])]:
 
 
 stmt Stmt:
-    "break" labelLoc=^ label="label"? "NEWLINE":
-        Stmt.Break(label = label.map(|l: Token|: newId(labelLoc)), level = 0)
+    cur=^ "break" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Break(BreakStmt(
+            label = label.map(|l: Token|: newId(labelLoc)),
+            level = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
 
-    "continue" labelLoc=^ label="label"? "NEWLINE":
-        Stmt.Continue(label = label.map(|l: Token|: newId(labelLoc)), level = 0)
+    cur=^ "continue" labelLoc=^ label="label"? "NEWLINE":
+        Stmt.Continue(ContinueStmt(
+            label = label.map(|l: Token|: newId(labelLoc)),
+            level = 0,
+            _firstToken = TokenIdx(idx = cur),
+        ))
 
-    "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
-        Stmt.Let(LetStmt(lhs = pat, ty, rhs))
+    cur=^ "let" pat=pat ty=(_":" type_)? "=" rhs=letRhs:
+        Stmt.Let(LetStmt(lhs = pat, ty, rhs, _firstToken = TokenIdx(idx = cur)))
 
-    label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    cur=^ label=loopLabel? "for" pat=pat ty=(_":" type_)? "in" expr=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         Stmt.For(ForStmt(
             label,
             pat,
@@ -745,13 +767,14 @@ stmt Stmt:
             expr,
             exprTy = Option.None,
             body,
+            _firstToken = TokenIdx(idx = cur),
         ))
 
-    label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.While(WhileStmt(label, cond, body))
+    cur=^ label=loopLabel? "while" cond=inlineExpr ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
 
-    label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
-        Stmt.Loop(body)
+    cur=^ label=loopLabel? "loop" ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+        Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
 
     lhs=inlineExpr rhs=stmtExprCont:
         match rhs:
