@@ -8,6 +8,7 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     loop:
         match try(lexer._next):
             Result.Ok(Option.None): break
+            Result.Ok(Option.Some(Token(kind = TokenKind.Comment, ..))): continue
             Result.Ok(Option.Some(t)): tokens.push(t)
             Result.Err(error): return (tokens = tokens, error = Option.Some(error))
     (tokens = tokens, error = Option.None)
@@ -20,6 +21,8 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
 # In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
 # lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
 # remove this once the compiler works and we no longer need the interpreter.
+#
+# This also skips comment tokens as the interpreter doesn't generate comment tokens.
 _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
     let newTokens = Vec.withCapacity(tokens.len())
 
@@ -28,6 +31,10 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
         let token = tokens.get(i)
 
         match token.kind:
+            TokenKind.Comment:
+                i += 1
+                continue
+
             TokenKind.TildeUpperId:
                 if i + 2 < tokens.len()
                         and tokens.get(i + 1).kind is TokenKind.Dot
@@ -46,6 +53,7 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                 if i + 2 < tokens.len():
                     if tokens.get(i + 1).kind is TokenKind.Dot:
                         let next = tokens.get(i + 2)
+
                         if next is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
                             newTokens.push(Token(
                                 kind = TokenKind.UpperIdPath,
@@ -56,7 +64,8 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
                             ))
                             i += 3
                             continue
-                        elif next.kind is TokenKind.LBracket:
+
+                        if next.kind is TokenKind.LBracket:
                             newTokens.push(Token(
                                 kind = TokenKind.UpperIdDotLBracket,
                                 text = contents.substr(token.byteIdx, token.byteIdx + 2),
@@ -106,7 +115,14 @@ type Lexer(
 
 
 Lexer._fail(self, msg: Str) a / Error:
-    throw(Error(loc = Loc(file = self._file, byteIdx = self._byteIdx, byteLen = 0, line = self._line, col = self._col), msg = msg))
+    throw(Error(
+        loc = Loc(file = self._file,
+            byteIdx = self._byteIdx,
+            byteLen = 0,
+            line = self._line,
+            col = self._col),
+        msg = msg
+    ))
 
 
 # NB. Panics if OOB.
@@ -115,33 +131,21 @@ Lexer._nextChar(self) Char:
 
 
 Lexer._next(self) Option[Token] / Error:
-    # Skip whitespace and comments before actual tokens.
-    loop:
-        while self._byteIdx < self._input.len() and self._nextChar() is char and char.isAsciiWhitespace():
-            self._byteIdx += 1
-            if char == '\n':
-                self._line += 1
-                self._col = 0
-            else:
-                self._col += 1
+    self._skipWhitespace()
 
-        if self._byteIdx == self._input.len():
-            return Option.None
+    if self._byteIdx == self._input.len():
+        return Option.None
 
-        if self._nextChar() == '#':
+    if self._nextChar() == '#':
+        self._byteIdx += 1
+        self._col += 1
+
+        if self._byteIdx < self._input.len() and self._nextChar() == '|':
             self._byteIdx += 1
             self._col += 1
-
-            if self._byteIdx < self._input.len() and self._nextChar() == '|':
-                self._byteIdx += 1
-                self._col += 1
-                self._skipMultiLineComment()
-            else:
-                self._skipSingleLineComment()
-
-            continue
-
-        break
+            return Option.Some(self._multiLineComment())
+        else:
+            return Option.Some(self._singleLineComment())
 
     let byteIdx = self._byteIdx
     let line = self._line
@@ -739,18 +743,53 @@ Lexer._char(self) Token / Error:
     Token(kind = TokenKind.Char, text = self._input.substr(idx, self._byteIdx), byteIdx = idx, line, col)
 
 
-Lexer._skipSingleLineComment(self):
+Lexer._skipWhitespace(self):
+    while self._byteIdx < self._input.len() and self._nextChar() is char and char.isAsciiWhitespace():
+        self._byteIdx += 1
+        if char == '\n':
+            self._line += 1
+            self._col = 0
+        else:
+            self._col += 1
+
+
+# Note: '#' will be skipped when called.
+Lexer._singleLineComment(self) Token:
+    let startByteIdx = self._byteIdx - 1
+    let startLine = self._line
+    let startCol = self._col - 1
+
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         self._byteIdx += c.lenUtf8()
         if c == '\n':
             self._col = 0
             self._line += 1
-            return
+            # NB. This includes the newline.
+            return Token(
+                kind = TokenKind.Comment,
+                text = self._input.substr(startByteIdx, self._byteIdx),
+                byteIdx = startByteIdx,
+                line = startLine,
+                col = startCol
+            )
         self._col += 1                          # TODO: Handle wide chars
 
+    return Token(
+        kind = TokenKind.Comment,
+        text = self._input.substr(startByteIdx, self._byteIdx),
+        byteIdx = startByteIdx,
+        line = startLine,
+        col = startCol
+    )
 
-Lexer._skipMultiLineComment(self) () / Error:
+
+# Note: '#|' will be skipped when called.
+Lexer._multiLineComment(self) Token / Error:
+    let startByteIdx = self._byteIdx - 2
+    let startLine = self._line
+    let startCol = self._col - 2
+
     while self._byteIdx < self._input.len():
         let c = self._nextChar()
         if c == '\n':
@@ -766,14 +805,20 @@ Lexer._skipMultiLineComment(self) () / Error:
                 if c == '#':
                     self._byteIdx += 1
                     self._col += 1
-                    return
+                    return Token(
+                        kind = TokenKind.Comment,
+                        text = self._input.substr(startByteIdx, self._byteIdx),
+                        byteIdx = startByteIdx,
+                        line = startLine,
+                        col = startCol
+                    )
         elif c == '#':
             if self._byteIdx < self._input.len():
                 let c = self._nextChar()
                 if c == '|':
                     self._byteIdx += 1
                     self._col += 1
-                    self._skipMultiLineComment()
+                    self._multiLineComment()
 
     self._fail("unterminated multi-line comment")
 
