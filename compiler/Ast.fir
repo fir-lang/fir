@@ -3,6 +3,10 @@ import Error    # imports Loc
 
 type TokenIdx(idx: U32)
 
+trait Tokens[t]:
+    firstToken(self: t) TokenIdx
+    lastToken(self: t) TokenIdx
+
 type Id(token: TokenIdx)
 
 ## A top-level declaration.

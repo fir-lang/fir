@@ -3883,6 +3883,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
+        let labelLoc = cursor
         let symResult = try(||:
             let label = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Label, ..):
                 cursor += 1
@@ -3905,7 +3906,7 @@ stmt(tokens: Vec[Token], cursor: U32) (tree: Stmt, newCursor: U32, newErr: Optio
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            Stmt.Continue(label = label.map(|l: Token|: newId(l.text)), level = 0)
+            Stmt.Continue(label = label.map(|l: Token|: newId(labelLoc)), level = 0)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4309,9 +4310,9 @@ loopLabel(tokens: Vec[Token], cursor: U32) (tree: Id, newCursor: U32, newErr: Op
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let id = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Label, ..):
+        let id = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Label, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
@@ -4319,7 +4320,7 @@ loopLabel(tokens: Vec[Token], cursor: U32) (tree: Id, newCursor: U32, newErr: Op
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            newId(id.text)
+            newId(id)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4509,13 +4510,13 @@ simplePat(tokens: Vec[Token], cursor: U32) (tree: Pat, newCursor: U32, newErr: O
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let var_ = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
+        let var_ = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            Pat.Var(VarPat(var_ = newId(var_.text), ty = Option.None))
+            Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -4811,9 +4812,9 @@ recordFieldPat(tokens: Vec[Token], cursor: U32) (tree: Named[Pat], newCursor: U3
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let name = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
+        let name = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
@@ -4825,7 +4826,7 @@ recordFieldPat(tokens: Vec[Token], cursor: U32) (tree: Named[Pat], newCursor: U3
         curErr = nonTerminalResult.newErr
         let pat = nonTerminalResult.tree
         let value = do:
-            Named(name = Option.Some(newId(name.text)), node = pat)
+            Named(name = Option.Some(newId(name)), node = pat)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5030,9 +5031,9 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let symResult = try(||:
-            let parentTy = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
+            let parentTy = cursor
+            if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
                 cursor += 1
-                sym
             else:
                 throw(
                     ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
@@ -5051,9 +5052,9 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
-        let name = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
+        let name = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let symResult = try(||:
@@ -5093,8 +5094,8 @@ topFunSig(tokens: Vec[Token], cursor: U32) (tree: (parentTy: Option[Id], name: I
         let value = do:
             let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
             (
-                parentTy = parentTy.map(|id: Token|: newId(id.text)),
-                name = newId(name.text),
+                parentTy = parentTy.map(|id: U32|: newId(id)),
+                name = newId(name),
                 sig = FunSig(
                     context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
                     self_ = SelfParam.No,
@@ -5117,9 +5118,9 @@ parentTy(tokens: Vec[Token], cursor: U32) (tree: Id, newCursor: U32, newErr: Opt
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let id = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
+        let id = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
@@ -5127,7 +5128,7 @@ parentTy(tokens: Vec[Token], cursor: U32) (tree: Id, newCursor: U32, newErr: Opt
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
-            newId(id.text)
+            newId(id)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5292,9 +5293,9 @@ param(tokens: Vec[Token], cursor: U32) (tree: (name: Id, ty: Option[Type]), newC
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let name = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
+        let name = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let symResult = try(||:
@@ -5318,7 +5319,7 @@ param(tokens: Vec[Token], cursor: U32) (tree: (name: Id, ty: Option[Type]), newC
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let value = do:
-            (name = newId(name.text), ty = ty)
+            (name = newId(name), ty = ty)
         (value = value, cursor = cursor, err = curErr)
     )
     match altResult:
@@ -5337,9 +5338,9 @@ traitDecl(tokens: Vec[Token], cursor: U32) (tree: TraitDecl, newCursor: U32, new
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        let name = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
+        let name = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
@@ -5371,7 +5372,7 @@ traitDecl(tokens: Vec[Token], cursor: U32) (tree: TraitDecl, newCursor: U32, new
                 Option.Some(ok.val)
         let value = do:
             TraitDecl(
-                name = newId(name.text),
+                name = newId(name),
                 typeParams = tys,
                 typeParamKinds = Vec.empty(),
                 items = rhs.unwrapOr(Vec.empty()),
@@ -5476,9 +5477,9 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ImplDecl, newCursor: U32, newEr
                 cursor = ok.cursor
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
-        let name = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
+        let name = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
@@ -5535,7 +5536,7 @@ implDecl(tokens: Vec[Token], cursor: U32) (tree: ImplDecl, newCursor: U32, newEr
         let value = do:
             ImplDecl(
                 context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
-                trait_ = newId(name.text),
+                trait_ = newId(name),
                 tys = once(t0).chain(ts.iter()).toVec(),
                 items = rhs,
             )
@@ -5766,9 +5767,9 @@ funSig(tokens: Vec[Token], cursor: U32) (tree: (id: Id, sig: FunSig), newCursor:
     let cursor0 = cursor
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let id = if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
+        let id = cursor
+        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             cursor += 1
-            sym
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let symResult = try(||:
@@ -5808,7 +5809,7 @@ funSig(tokens: Vec[Token], cursor: U32) (tree: (id: Id, sig: FunSig), newCursor:
         let value = do:
             let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
             (
-                id = newId(id.text),
+                id = newId(id),
                 sig = FunSig(
                     context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
                     self_ = SelfParam.No,

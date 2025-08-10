@@ -34,10 +34,10 @@ gen(item: Str):
     if result.newCursor != tokens.len():
         panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
 
-    print(genTree(result.tree).render(80))
+    print(genTree(result.tree, tokens).render(80))
 
-genTree(typeDecl: TypeDecl) Doc:
-    let typeName = typeDecl.name.name
+genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
+    let typeName = tokens.get(typeDecl.name.token.idx).text
 
     let methodBody =
         match typeDecl.rhs:
@@ -45,22 +45,22 @@ genTree(typeDecl: TypeDecl) Doc:
                 Doc.empty()
 
             Option.Some(TypeDeclRhs.Sum(cons)):
-                genSumAlts(typeName, cons)
+                genSumAlts(typeName, cons, tokens)
 
             Option.Some(TypeDeclRhs.Product(fields)):
-                genProduct(typeName, fields)
+                genProduct(typeName, fields, tokens)
 
     let preds = Doc.empty()
     if typeDecl.typeParams.len() != 0:
         preds = _brackets(_interleave(
             typeDecl.typeParams,
-            |param|: Doc.str("Eq[") + Doc.str(param.name) + Doc.char(']'),
+            |param|: Doc.str("Eq[") + Doc.str(tokens.get(param.token.idx).text) + Doc.char(']'),
             Doc.str(", ")
         ))
 
     let typeParamsDoc = Doc.empty()
     if typeDecl.typeParams.len() != 0:
-        typeParamsDoc = _brackets(_interleave(typeDecl.typeParams, |param|: Doc.str(param.name), Doc.str(", ")))
+        typeParamsDoc = _brackets(_interleave(typeDecl.typeParams, |param|: Doc.str(tokens.get(param.token.idx).text), Doc.str(", ")))
 
     let typeNameDoc = Doc.str(typeName)
 
@@ -85,15 +85,15 @@ genTree(typeDecl: TypeDecl) Doc:
                     + Doc.hardLine()
                     + methodBody))
 
-genSumAlts(typeName: Str, decls: Vec[ConDecl]) Doc:
+genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Vec[Token]) Doc:
     let alts = Doc.empty()
     let i = u32(0)
     for conDecl: ConDecl in decls.iter():
         if i != 0:
             alts += Doc.hardLine()
         i += 1
-        let l = genConPat('l', typeName, conDecl)
-        let r = genConPat('r', typeName, conDecl)
+        let l = genConPat('l', typeName, conDecl, tokens)
+        let r = genConPat('r', typeName, conDecl, tokens)
         let pat = makeLRRecord(l, r)
         alts += Doc.nested(
                 4,
@@ -105,30 +105,30 @@ genSumAlts(typeName: Str, decls: Vec[ConDecl]) Doc:
             + Doc.hardLine()
             + alts)
 
-genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl) Doc:
+genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) Doc:
     let fieldPats = match conDecl.fields:
         ConFields.Empty:
-            return Doc.str(typeName) + Doc.char('.') + Doc.str(conDecl.name.name)
+            return Doc.str(typeName) + Doc.char('.') + Doc.str(tokens.get(conDecl.name.token.idx).text)
 
         ConFields.Named(fields):
-            genNamedFieldPats(varPrefix, fields)
+            genNamedFieldPats(varPrefix, fields, tokens)
 
         ConFields.Unnamed(fields):
             genUnnamedFieldPats(varPrefix, fields)
 
     Doc.str(typeName)
         + Doc.char('.')
-        + Doc.str(conDecl.name.name)
+        + Doc.str(tokens.get(conDecl.name.token.idx).text)
         + Doc.char('(')
         + fieldPats
         + Doc.char(')')
 
-genNamedFieldPats(varPrefix: Char, fields: Vec[(name: Id, ty: Type)]) Doc:
+genNamedFieldPats(varPrefix: Char, fields: Vec[(name: Id, ty: Type)], tokens: Vec[Token]) Doc:
     let doc = Doc.empty()
     for i: U32 in range(u32(0), fields.len()):
         if i != 0:
             doc += Doc.str(", ")
-        doc += Doc.str(fields.get(i).name.name)
+        doc += Doc.str(tokens.get(fields.get(i).name.token.idx).text)
             + Doc.str(" = ")
             + Doc.char(varPrefix)
             + Doc.str(i.toStr())
@@ -172,7 +172,7 @@ genSumRhs(typeName: Str, conDecl: ConDecl) Doc:
 
     rhs
 
-genProduct(typeName: Str, fields: ConFields) Doc:
+genProduct(typeName: Str, fields: ConFields, tokens: Vec[Token]) Doc:
     match fields:
         ConFields.Empty:
             Doc.empty()
@@ -183,7 +183,10 @@ genProduct(typeName: Str, fields: ConFields) Doc:
             for field: (name: Id, ty: Type) in fields.iter():
                 if i != 0:
                     doc += Doc.break_(1) + Doc.str("&& ")
-                doc += Doc.str("self.") + Doc.str(field.name.name) + Doc.str(" == other.") + Doc.str(field.name.name)
+                doc += Doc.str("self.")
+                    + Doc.str(tokens.get(field.name.token.idx).text)
+                    + Doc.str(" == other.")
+                    + Doc.str(tokens.get(field.name.token.idx).text)
                 i += 1
             doc.nest(4)
 
