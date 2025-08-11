@@ -23,6 +23,12 @@ impl[Eq[t]] Eq[Option[t]]:
             (left = Option.Some(left), right = Option.Some(right)): left == right
             _: Bool.False
 
+impl[Clone[t]] Clone[Option[t]]:
+    clone(self: Option[t]) Option[t]:
+        match self:
+            Option.None: Option.None
+            Option.Some(t): Option.Some(t.clone())
+
 Option.map(self: Option[t1], f: Fn(t1) t2 / exn) Option[t2] / exn:
     match self:
         Option.None: Option.None

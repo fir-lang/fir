@@ -16,6 +16,12 @@ impl[Eq[e], Eq[t]] Eq[Result[e, t]]:
             (l = Result.Ok(l0), r = Result.Ok(r0)):
                 l0 == r0
 
+impl[Clone[e], Clone[t]] Clone[Result[e, t]]:
+    clone(self: Result[e, t]) Result[e, t]:
+        match self:
+            Result.Err(e): Result.Err(e.clone())
+            Result.Ok(t): Result.Ok(t.clone())
+
 Result.map(self: Result[e, t], f: Fn(t) t2 / exn) Result[e, t2] / exn:
     match self:
         Result.Ok(val): Result.Ok(f(val))

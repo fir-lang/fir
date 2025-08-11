@@ -96,6 +96,10 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
             self.current = self.current.step()
             Option.Some(current)
 
+impl[Clone[t]] Clone[RangeIterator[t]]:
+    clone(self: RangeIterator[t]) RangeIterator[t]:
+        RangeIterator(current = self.current.clone(), end = self.end.clone())
+
 # --------------------------------------------------------------------------------------------------
 
 type InclusiveRangeIterator[t](
@@ -111,6 +115,10 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
             let current = self.current
             self.current = self.current.step()
             Option.Some(current)
+
+impl[Clone[t]] Clone[InclusiveRangeIterator[t]]:
+    clone(self: InclusiveRangeIterator[t]) InclusiveRangeIterator[t]:
+        InclusiveRangeIterator(current = self.current.clone(), end = self.end.clone())
 
 # --------------------------------------------------------------------------------------------------
 
@@ -155,6 +163,10 @@ Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]) Option
             self.peeked = self.iter.next()
             self.peeked
 
+impl[Clone[iter], Clone[item]] Clone[Peekable[iter, item, exn]]:
+    clone(self: Peekable[iter, item, exn]) Peekable[iter, item, exn]:
+        Peekable(iter = self.iter.clone(), peeked = self.peeked.clone())
+
 # --------------------------------------------------------------------------------------------------
 
 type MapResult[iter, item, b, exnOld, exnNew](
@@ -185,6 +197,10 @@ impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item]
     size(self: Try[iter, item, exn]) Option[U32] / exn3:
         self.iter.size[iter, item, exn, exn3]()
 
+impl[Clone[iter]] Clone[Try[iter, item, exn]]:
+    clone(self: Try[iter, item, exn]) Try[iter, item, exn]:
+        Try(iter = self.iter.clone())
+
 # --------------------------------------------------------------------------------------------------
 
 type Skip[iter, item, exn](
@@ -204,6 +220,10 @@ impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
             return Option.Some(size - self.amount)
         Option.None
 
+impl[Clone[iter]] Clone[Skip[iter, item, exn]]:
+    clone(self: Skip[iter, item, exn]) Skip[iter, item, exn]:
+        Skip(iter = self.iter.clone(), amount = self.amount)
+
 # --------------------------------------------------------------------------------------------------
 
 type Once[t](
@@ -221,6 +241,10 @@ impl Iterator[Once[t], t, exn]:
 
     size(self: Once[t]) Option[U32]:
         Option.Some(1)
+
+impl[Clone[t]] Clone[Once[t]]:
+    clone(self: Once[t]) Once[t]:
+        Once(val = self.val.clone())
 
 # --------------------------------------------------------------------------------------------------
 
@@ -245,13 +269,9 @@ impl Iterator[OnceWith[t, exn], t, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-# TODO: We don't have a syntax to declare unit types.
-type Empty(
-    x: (),
-)
+type Empty
 
-empty() Empty:
-    Empty(x = ())
+empty() Empty: Empty
 
 impl Iterator[Empty, item, exn]:
     next(self: Empty) Option[item] / exn:
@@ -259,6 +279,9 @@ impl Iterator[Empty, item, exn]:
 
     size(self: Empty) Option[U32]:
         Option.Some(0)
+
+impl Clone[Empty]:
+    clone(self: Empty) Empty: Empty
 
 # --------------------------------------------------------------------------------------------------
 
@@ -300,6 +323,10 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
 
         Option.Some(hint)
 
+impl[Clone[iter1], Clone[iter2]] Clone[Chain[iter1, iter2, item, exn]]:
+    clone(self: Chain[iter1, iter2, item, exn]) Chain[iter1, iter2, item, exn]:
+        Chain(iter1 = self.iter1.clone(), iter2 = self.iter2.clone())
+
 # --------------------------------------------------------------------------------------------------
 
 type Filter[iter, item, exn](
@@ -335,3 +362,7 @@ impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, 
 
     size(self: Enumerate[iter, item, exn]) Option[U32] / exn2:
         self.iter.size[iter, item, exn, exn2]()
+
+impl[Clone[iter]] Clone[Enumerate[iter, item, exn]]:
+    clone(self: Enumerate[iter, item, exn]) Enumerate[iter, item, exn]:
+        Enumerate(iter = self.iter.clone(), idx = self.idx)

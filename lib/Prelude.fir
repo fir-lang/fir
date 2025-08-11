@@ -135,3 +135,6 @@ prim readFileUtf8(path: Str) Str
 
 trait Hash[t]:
     hash(self: t) U32
+
+trait Clone[t]:
+    clone(self: t) t
