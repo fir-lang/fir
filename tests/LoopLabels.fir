@@ -1,6 +1,6 @@
 main():
-    'outer: for i: I32 in range(0, 4):
-        'inner: for j: I32 in range(0, 4):
+    'outer for i: I32 in range(0, 4):
+        'inner for j: I32 in range(0, 4):
             if j & 0b1 == 0b1:
                 continue 'inner
             if i & 0b1 == 0b1:

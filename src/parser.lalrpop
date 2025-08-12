@@ -497,7 +497,8 @@ Stmt: Stmt = {
     <l:@L> <expr:BlockExpr> <r:@R> =>
         Stmt::Expr(L::new(module, l, r, expr)),
 
-    <label:LoopLabel?> "for" <pat:LPat> <ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:Label?> "for" <pat:LPat> <ast_ty:(":" <LType>)?> "in" <expr:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
+        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
         Stmt::For(ForStmt {
             label,
             pat,
@@ -506,16 +507,20 @@ Stmt: Stmt = {
             expr,
             expr_ty: None,
             body,
-        }),
+        })
+    },
 
-    <label:LoopLabel?> "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:Label?> "while" <cond:LExpr> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
+        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
         Stmt::While(WhileStmt {
             label,
             cond,
             body,
-        }),
+        })
+    },
 
-    <label:LoopLabel?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT =>
+    <label:Label?> <l:@L> "loop" <r:@R> ":" NEWLINE INDENT <body:LStmts> DEDENT => {
+        let label = label.map(|l| SmolStr::new(&l.smol_str()[1..]));
         Stmt::While(WhileStmt {
             label,
             cond: L::new(module, l, r, Expr::ConstrSelect(Constructor {
@@ -526,11 +531,8 @@ Stmt: Stmt = {
                 ty_args: vec![],
             })),
             body,
-        }),
-}
-
-LoopLabel: SmolStr = {
-    <label:Label> ":" => SmolStr::new(&label.smol_str().as_str()[1..])
+        })
+    },
 }
 
 Alts: Vec<Alt> = {

@@ -795,7 +795,7 @@ stmtExprCont Option[(op: AssignOp, rhs: Expr)]:
 
 
 loopLabel Id:
-    id=^ "label" ":":
+    id=^ "label":
         newId(id)
 
 

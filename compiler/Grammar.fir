@@ -4290,10 +4290,6 @@ loopLabel(tokens: Vec[Token], cursor: U32) (tree: Id, newCursor: U32, newErr: Op
             cursor += 1
         else:
             throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
-        if tokens.getOpt(cursor) is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
-            cursor += 1
-        else:
-            throw(ParseError.takeAdvanced(curErr, ParseError(cursor = cursor)))
         let value = do:
             newId(id)
         (value = value, cursor = cursor, err = curErr)
