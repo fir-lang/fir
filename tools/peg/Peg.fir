@@ -383,7 +383,7 @@ generateNonTerminalToStr(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
         let capitalName = capitalize(name)
         matchDoc += Doc.hardLine() + Doc.str("`typeName`.`capitalName`: \"`capitalName`\"")
 
-    (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
+    Doc.nested(4, doc + Doc.nested(4, fnDoc + Doc.nested(4, matchDoc)))
 
 generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
     let doc = Doc.str("impl Eq[`typeName`]:")
@@ -398,7 +398,7 @@ generateNonTerminalEq(typeName: Str, nonTerminalNames: Vec[Str]) Doc:
         matchDoc += Doc.hardLine() + Doc.str("(left = `typeName`.`capitalName`, right = `typeName`.`capitalName`): Bool.True")
     matchDoc += Doc.hardLine() + Doc.str("_: Bool.False")
 
-    (doc + (fnDoc + matchDoc.nest(4)).nest(4)).nest(4)
+    Doc.nested(4, doc + Doc.nested(4, fnDoc + Doc.nested(4, matchDoc)))
 
 generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDecl, terminalPats: HashMap[Str, Vec[Token]]) Doc / exn:
     let returnTy = match decl.ty:
