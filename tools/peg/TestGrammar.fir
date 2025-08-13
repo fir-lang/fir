@@ -59,13 +59,13 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.BracketedOneOrMoreA, right = NonTerminal.BracketedOneOrMoreA): Bool.True
             _: Bool.False
 
-terminalA[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+terminalA[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -84,13 +84,13 @@ terminalA[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](ite
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-terminalB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+terminalB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -109,13 +109,13 @@ terminalB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](ite
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-terminalAOrB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+terminalAOrB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -135,7 +135,7 @@ terminalAOrB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -154,13 +154,13 @@ terminalAOrB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-terminalAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+terminalAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -168,7 +168,7 @@ terminalAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -187,7 +187,7 @@ terminalAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-zeroOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+zeroOrMoreAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -196,7 +196,7 @@ zeroOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[ite
             let nodesLen0 = nodes.len()
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                             nodes.push(ParseTree.Terminal(token))
                         else:
@@ -213,7 +213,7 @@ zeroOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[ite
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -232,13 +232,13 @@ zeroOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[ite
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-oneOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+oneOrMoreAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -249,7 +249,7 @@ oneOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
             let nodesLen0 = nodes.len()
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                             nodes.push(ParseTree.Terminal(token))
                         else:
@@ -266,7 +266,7 @@ oneOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -285,7 +285,7 @@ oneOrMoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-zeroOrOneAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+zeroOrOneAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -293,7 +293,7 @@ zeroOrOneAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
         let nodesLen0 = nodes.len()
         let symResult = try(||:
             match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                         nodes.push(ParseTree.Terminal(token))
                     else:
@@ -309,7 +309,7 @@ zeroOrOneAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
             Result.Ok(ok):
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -328,13 +328,13 @@ zeroOrOneAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-ignoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+ignoreAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -342,7 +342,7 @@ ignoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -361,13 +361,13 @@ ignoreAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-ignoreAThenIgnoreB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+ignoreAThenIgnoreB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -375,7 +375,7 @@ ignoreAThenIgnoreB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[i
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
@@ -394,13 +394,13 @@ ignoreAThenIgnoreB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[i
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-ignoreGroupAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+ignoreGroupAThenB[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -408,7 +408,7 @@ ignoreGroupAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[it
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
@@ -427,7 +427,7 @@ ignoreGroupAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[it
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-nonTerminals[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+nonTerminals[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -450,7 +450,7 @@ nonTerminals[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-nonTerminalsBacktrack[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+nonTerminalsBacktrack[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -474,7 +474,7 @@ nonTerminalsBacktrack[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -482,7 +482,7 @@ nonTerminalsBacktrack[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -501,14 +501,14 @@ nonTerminalsBacktrack[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-negLookahead[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+negLookahead[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         let symResult = try(||:
             match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                         ()
                     else:
@@ -521,7 +521,7 @@ negLookahead[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
             Result.Ok(_):
                 iter = iter0.clone()
-                throw(ParseError.takeAdvanced(curErr, ParseError(cursor = iter0.clone().next[iter, (idx: U32, token: Token), ParseError]().unwrap().idx)))
+                throw(ParseError.takeAdvanced(curErr, ParseError(cursor = iter0.clone().next[iter, (idx: U32, item: Token), ParseError]().unwrap().idx)))
         let nonTerminalResult = terminalAOrB(iter)
         curErr = nonTerminalResult.newErr
         nodes.push(nonTerminalResult.tree)
@@ -537,13 +537,13 @@ negLookahead[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-endOfInputTest[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+endOfInputTest[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
@@ -551,15 +551,15 @@ endOfInputTest[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     nodes.push(ParseTree.Terminal(token))
                 else:
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        match iter.next[iter, (idx: U32, token: Token), ParseError]():
-            Option.Some((idx, token)):
+        match iter.next[iter, (idx: U32, item: Token), ParseError]():
+            Option.Some((idx, item = token)):
                 throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 U32.max()
@@ -575,13 +575,13 @@ endOfInputTest[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-bracketedOneOrMoreA[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
+bracketedOneOrMoreA[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: ParseTree[Token, NonTerminal], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
@@ -603,8 +603,8 @@ bracketedOneOrMoreA[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
                     break
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
-        match iter.next[iter, (idx: U32, token: Token), ParseError]():
-            Option.Some((idx, token)):
+        match iter.next[iter, (idx: U32, item: Token), ParseError]():
+            Option.Some((idx, item = token)):
                 throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 U32.max()
@@ -620,12 +620,12 @@ bracketedOneOrMoreA[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionSimple[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Char, newErr: Option[ParseError]) / ParseError:
+semanticActionSimple[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Char, newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -644,7 +644,7 @@ semanticActionSimple[Iterator[iter, (idx: U32, token: Token), ParseError], Clone
             return (tree = value, newErr = newErr)
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
@@ -663,7 +663,7 @@ semanticActionSimple[Iterator[iter, (idx: U32, token: Token), ParseError], Clone
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionZeroOrMore[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Char], newErr: Option[ParseError]) / ParseError:
+semanticActionZeroOrMore[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Char], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -693,7 +693,7 @@ semanticActionZeroOrMore[Iterator[iter, (idx: U32, token: Token), ParseError], C
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionOneOrMore[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Char], newErr: Option[ParseError]) / ParseError:
+semanticActionOneOrMore[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Char], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
@@ -726,12 +726,12 @@ semanticActionOneOrMore[Iterator[iter, (idx: U32, token: Token), ParseError], Cl
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Str], newErr: Option[ParseError]) / ParseError:
+semanticActionGroup[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Str], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -739,7 +739,7 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         let a = match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     token
                 else:
@@ -747,7 +747,7 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         let b = match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     token
                 else:
@@ -756,7 +756,7 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
                 throw(ParseError(cursor = U32.max()))
         let ab = (a = a, b = b)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
@@ -776,13 +776,13 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionOptional[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
+semanticActionOptional[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let symResult = try(||:
             let cs = match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                         token
                     else:
@@ -798,8 +798,8 @@ semanticActionOptional[Iterator[iter, (idx: U32, token: Token), ParseError], Clo
             Result.Ok(ok):
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
-        match iter.next[iter, (idx: U32, token: Token), ParseError]():
-            Option.Some((idx, token)):
+        match iter.next[iter, (idx: U32, item: Token), ParseError]():
+            Option.Some((idx, item = token)):
                 throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 U32.max()
@@ -815,12 +815,12 @@ semanticActionOptional[Iterator[iter, (idx: U32, token: Token), ParseError], Clo
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]), newErr: Option[ParseError]) / ParseError:
+semanticActionComplex[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]), newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -831,7 +831,7 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                             aVec.push(token)
                         else:
@@ -848,7 +848,7 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         let bVec = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     bVec.push(token)
                 else:
@@ -858,7 +858,7 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                             bVec.push(token)
                         else:
@@ -875,7 +875,7 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         let symResult = try(||:
             let cOpt = match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                         token
                     else:
@@ -892,8 +892,8 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let group = (aVec = aVec, bVec = bVec, cOpt = cOpt)
-        match iter.next[iter, (idx: U32, token: Token), ParseError]():
-            Option.Some((idx, token)):
+        match iter.next[iter, (idx: U32, item: Token), ParseError]():
+            Option.Some((idx, item = token)):
                 throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 U32.max()
@@ -909,41 +909,41 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[U32], newErr: Option[ParseError]) / ParseError:
+cursorPositions[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[U32], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
-        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
+        let cursor = iter.next[iter, (idx: U32, item: Token), ParseError]().map(|item: (idx: U32, item: Token)|: item.idx).unwrapOr(U32.max())
         let c0 = cursor
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
+        let cursor = iter.next[iter, (idx: U32, item: Token), ParseError]().map(|item: (idx: U32, item: Token)|: item.idx).unwrapOr(U32.max())
         let c1 = cursor
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     ()
                 else:
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
+        let cursor = iter.next[iter, (idx: U32, item: Token), ParseError]().map(|item: (idx: U32, item: Token)|: item.idx).unwrapOr(U32.max())
         let c2 = cursor
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
+        let cursor = iter.next[iter, (idx: U32, item: Token), ParseError]().map(|item: (idx: U32, item: Token)|: item.idx).unwrapOr(U32.max())
         let c3 = cursor
         let value = do:
             let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
@@ -958,12 +958,12 @@ cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Token, newErr: Option[ParseError]) / ParseError:
+simpleGroup1[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Token, newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -971,7 +971,7 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -979,7 +979,7 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         let x = match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     token
                 else:
@@ -987,7 +987,7 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -995,7 +995,7 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1014,12 +1014,12 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup2[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1027,7 +1027,7 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1036,7 +1036,7 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 throw(ParseError(cursor = U32.max()))
         let symResult = try(||:
             let x = match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                         token
                     else:
@@ -1053,7 +1053,7 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1061,7 +1061,7 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1080,12 +1080,12 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup3[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1093,7 +1093,7 @@ simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1104,7 +1104,7 @@ simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                             x.push(token)
                         else:
@@ -1120,7 +1120,7 @@ simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1128,7 +1128,7 @@ simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1147,12 +1147,12 @@ simpleGroup3[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup4[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1160,7 +1160,7 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1169,7 +1169,7 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 throw(ParseError(cursor = U32.max()))
         let x = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     x.push(token)
                 else:
@@ -1179,7 +1179,7 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                             x.push(token)
                         else:
@@ -1195,7 +1195,7 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1203,7 +1203,7 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1222,12 +1222,12 @@ simpleGroup4[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup5[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Option[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1236,7 +1236,7 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 throw(ParseError(cursor = U32.max()))
         let symResult = try(||:
             match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                         ()
                     else:
@@ -1244,7 +1244,7 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Option.None:
                     throw(ParseError(cursor = U32.max()))
             let x = match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                         token
                     else:
@@ -1252,7 +1252,7 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Option.None:
                     throw(ParseError(cursor = U32.max()))
             match iter.next():
-                Option.Some((idx, token)):
+                Option.Some((idx, item = token)):
                     if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                         ()
                     else:
@@ -1269,7 +1269,7 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1288,12 +1288,12 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup6[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1304,7 +1304,7 @@ simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                             ()
                         else:
@@ -1312,7 +1312,7 @@ simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                     Option.None:
                         throw(ParseError(cursor = U32.max()))
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                             x.push(token)
                         else:
@@ -1320,7 +1320,7 @@ simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                     Option.None:
                         throw(ParseError(cursor = U32.max()))
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                             ()
                         else:
@@ -1336,7 +1336,7 @@ simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1355,12 +1355,12 @@ simpleGroup6[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             return (tree = value, newErr = newErr)
     throw(curErr.unwrap())
 
-simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
+simpleGroup7[Iterator[iter, (idx: U32, item: Token), ParseError], Clone[iter]](iter: iter) (tree: Vec[Token], newErr: Option[ParseError]) / ParseError:
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1369,7 +1369,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 throw(ParseError(cursor = U32.max()))
         let x = Vec.empty()
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     ()
                 else:
@@ -1377,7 +1377,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     x.push(token)
                 else:
@@ -1385,7 +1385,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:
@@ -1395,7 +1395,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
         loop:
             let symResult = try(||:
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                             ()
                         else:
@@ -1403,7 +1403,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                     Option.None:
                         throw(ParseError(cursor = U32.max()))
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                             x.push(token)
                         else:
@@ -1411,7 +1411,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                     Option.None:
                         throw(ParseError(cursor = U32.max()))
                 match iter.next():
-                    Option.Some((idx, token)):
+                    Option.Some((idx, item = token)):
                         if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                             ()
                         else:
@@ -1427,7 +1427,7 @@ simpleGroup7[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         match iter.next():
-            Option.Some((idx, token)):
+            Option.Some((idx, item = token)):
                 if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                     ()
                 else:

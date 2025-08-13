@@ -180,3 +180,7 @@ impl Iterator[VecIter[t], t, exn]:
         let val = self._vec.get(self._idx)
         self._idx += 1
         Option.Some(val)
+
+impl Clone[VecIter[t]]:
+    clone(self: VecIter[t]) VecIter[t]:
+        VecIter(_vec = self._vec, _idx = self._idx)

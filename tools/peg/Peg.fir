@@ -407,7 +407,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
         Option.None:
             Doc.str("ParseTree[`terminalType`, `nonTerminalType`]")
 
-    let doc = Doc.str("`decl.name`[Iterator[iter, (idx: U32, token: `terminalType`), ParseError], Clone[iter]](iter: iter) (tree: ")
+    let doc = Doc.str("`decl.name`[Iterator[iter, (idx: U32, item: `terminalType`), ParseError], Clone[iter]](iter: iter) (tree: ")
                 + returnTy
                 + Doc.str(", newErr: Option[ParseError]) / ParseError:")
                 + Doc.hardLine()
@@ -554,7 +554,7 @@ generateSymbolParser(
                     + Doc.hardLine()
                     + Doc.nested(
                         4,
-                        Doc.str("Option.Some((idx, token)):")
+                        Doc.str("Option.Some((idx, item = token)):")
                             + Doc.hardLine()
                             + Doc.nested(
                                 4,
@@ -855,7 +855,7 @@ generateSymbolParser(
                                 + Doc.hardLine()
                                 + Doc.str("iter = iter0.clone()")
                                 + Doc.hardLine()
-                                + makeThrow(Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = iter0.clone().next[iter, (idx: U32, token: `terminalType`), ParseError]().unwrap().idx))"))))
+                                + makeThrow(Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = iter0.clone().next[iter, (idx: U32, item: `terminalType`), ParseError]().unwrap().idx))"))))
 
         Symbol.Bind(binder, symbol):
             generateSymbolParser(terminalType, symbol, terminalPats, SymbolCont.Bind(binder))
@@ -863,11 +863,11 @@ generateSymbolParser(
         Symbol.EndOfInput:
             Doc.nested(
                 4,
-                Doc.str("match iter.next[iter, (idx: U32, token: `terminalType`), ParseError]():")
+                Doc.str("match iter.next[iter, (idx: U32, item: `terminalType`), ParseError]():")
                     + Doc.hardLine()
                     + Doc.nested(
                         4,
-                        Doc.str("Option.Some((idx, token)):")
+                        Doc.str("Option.Some((idx, item = token)):")
                             + Doc.hardLine()
                             + makeThrow(Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = idx))")))
                     + Doc.hardLine()
@@ -878,7 +878,7 @@ generateSymbolParser(
                             + Doc.str("U32.max()")))
 
         Symbol.Cursor:
-            Doc.str("let cursor = iter.next[iter, (idx: U32, token: `terminalType`), ParseError]().map(|item: (idx: U32, token: `terminalType`)|: item.idx).unwrapOr(U32.max())")
+            Doc.str("let cursor = iter.next[iter, (idx: U32, item: `terminalType`), ParseError]().map(|item: (idx: U32, item: `terminalType`)|: item.idx).unwrapOr(U32.max())")
                 + Doc.hardLine()
                 + (match cont:
                        SymbolCont.Bind(local):

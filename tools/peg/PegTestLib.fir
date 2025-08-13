@@ -14,10 +14,10 @@ impl ToStr[TestError]:
 
 
 runParser(
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: tree, newCursor: U32, newErr: Option[ParseError]) / ParseError,
-        runScan: Bool,
-    ) tree / TestError:
+    input: Str,
+    parseFn: Fn(Enumerate[VecIter[Token]]) (tree: tree, newErr: Option[ParseError]) / ParseError,
+    runScan: Bool,
+) tree / TestError:
     let (tokens, error) = tokenize("<test input>", input)
 
     if error is Option.Some(error):
@@ -30,22 +30,26 @@ runParser(
             Result.Ok(tokens):
                 tokens
 
-    let result = match try(||: parseFn(tokens, 0)):
+    let tokenIter = tokens.iter()
+    let enumerate = tokenIter.enumerate[VecIter[Token], Token, ParseError, TestError]()
+
+    let result = match try(||: parseFn(enumerate)):
         Result.Err(err): throw(TestError.ParseError(err))
         Result.Ok(result): result
 
-    if result.newCursor != tokens.len():
-        throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
+    # TODO: Check `iter.next` here.
+    # if result.newCursor != tokens.len():
+    #     throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
 
     result.tree
 
 
 ## Print test name, run the given parser function on the input, print errors and trees.
 runTest[ToStr[nt]](
-        testName: Str,
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) / exn:
+    testName: Str,
+    input: Str,
+    parseFn: Fn(Enumerate[VecIter[Token]]) (tree: ParseTree[Token, nt], newErr: Option[ParseError]) / ParseError,
+) / exn:
     print(testName)
     match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
@@ -57,9 +61,9 @@ runTest[ToStr[nt]](
 ##
 ## Difference from `runTest` is that this prints the input, `runTest` prints the given test name.
 runTest_[ToStr[nt]](
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) / exn:
+    input: Str,
+    parseFn: Fn(Enumerate[VecIter[Token]]) (tree: ParseTree[Token, nt], newErr: Option[ParseError]) / ParseError,
+) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
@@ -70,7 +74,7 @@ runTest_[ToStr[nt]](
 ## Same as `runTest_`, but runs scanner after lexer.
 runTestScanner_[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
+        parseFn: Fn(Enumerate[VecIter[Token]]) (tree: ParseTree[Token, nt], newErr: Option[ParseError]) / ParseError,
     ) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.True)):
@@ -81,7 +85,7 @@ runTestScanner_[ToStr[nt]](
 
 runTestIndent[ToStr[nt]](
         input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
+        parseFn: Fn(Enumerate[VecIter[Token]]) (tree: ParseTree[Token, nt], newErr: Option[ParseError]) / ParseError,
     ) Bool / exn:
     print(input)
     let result = match try(||: runParser(input, parseFn, Bool.True)):

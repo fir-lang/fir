@@ -68,7 +68,7 @@ trait Iterator[iter, item, exn]:
     size(self: iter) Option[U32]:
         Option.None
 
-    enumerate(self: iter) Enumerate[iter, item, exn]:
+    enumerate(self: iter) Enumerate[iter]:
         Enumerate(iter = self, idx = 0)
 
 # --------------------------------------------------------------------------------------------------
@@ -344,14 +344,14 @@ impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
 
 # --------------------------------------------------------------------------------------------------
 
-type Enumerate[iter, item, exn](
+type Enumerate[iter](
     iter: iter,
     idx: U32,
 )
 
 # TODO: Maybe update item type to `(U32, item)` once we have records with positional fields.
-impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, item: item), exn]:
-    next(self: Enumerate[iter, item, exn]) Option[(idx: U32, item: item)] / exn:
+impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter], (idx: U32, item: item), exn]:
+    next(self: Enumerate[iter]) Option[(idx: U32, item: item)] / exn:
         match self.iter.next():
             Option.None:
                 Option.None
@@ -360,9 +360,9 @@ impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, 
                 self.idx += 1
                 Option.Some((idx = idx, item = item))
 
-    size(self: Enumerate[iter, item, exn]) Option[U32] / exn2:
+    size(self: Enumerate[iter]) Option[U32] / exn2:
         self.iter.size[iter, item, exn, exn2]()
 
-impl[Clone[iter]] Clone[Enumerate[iter, item, exn]]:
-    clone(self: Enumerate[iter, item, exn]) Enumerate[iter, item, exn]:
+impl[Clone[iter]] Clone[Enumerate[iter]]:
+    clone(self: Enumerate[iter]) Enumerate[iter]:
         Enumerate(iter = self.iter.clone(), idx = self.idx)
