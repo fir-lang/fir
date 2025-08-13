@@ -407,12 +407,12 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
         Option.None:
             Doc.str("ParseTree[`terminalType`, `nonTerminalType`]")
 
-    let doc = Doc.str("`decl.name`(tokens: Vec[`terminalType`], cursor: U32) (tree: ")
+    let doc = Doc.str("`decl.name`[Iterator[iter, (idx: U32, token: `terminalType`), ParseError], Clone[iter]](iter: iter) (tree: ")
                 + returnTy
-                + Doc.str(", newCursor: U32, newErr: Option[ParseError]) / ParseError:")
+                + Doc.str(", newErr: Option[ParseError]) / ParseError:")
                 + Doc.hardLine()
 
-    doc += Doc.str("let cursor0 = cursor") + Doc.hardLine()
+    doc += Doc.str("let iter0 = iter.clone()") + Doc.hardLine()
     doc += Doc.str("let curErr: Option[ParseError] = Option.None") + Doc.hardLine()
 
     for alt: Alt in decl.alts.iter():
@@ -430,7 +430,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
             SymbolCont.PushToParseTree("nodes")
 
         for symbol: Symbol in alt.symbols.iter():
-            altResultDoc += generateSymbolParser(symbol, terminalPats, symbolCont) + Doc.hardLine()
+            altResultDoc += generateSymbolParser(terminalType, symbol, terminalPats, symbolCont) + Doc.hardLine()
 
         let valueDoc = match alt.rhs:
             Option.None:
@@ -455,7 +455,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 
         altResultDoc += Doc.hardLine()
 
-        altResultDoc += Doc.str("(value = value, cursor = cursor, err = curErr)")
+        altResultDoc += Doc.str("(value = value, err = curErr)")
 
         altResultDoc = altResultDoc.nest(4)
 
@@ -473,20 +473,22 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                     + Doc.hardLine()
                     + makeUpdateError()
                     + Doc.hardLine()
-                    + Doc.str("cursor = cursor0"))
+                    + Doc.str("iter = iter0.clone()"))
 
         let okAlt =
             Doc.nested(
                 4,
-                Doc.str("Result.Ok((value = value, cursor = newCursor, err = newErr)):")
+                Doc.str("Result.Ok((value = value, err = newErr)):")
                     + Doc.hardLine()
-                    + Doc.str("return (tree = value, newCursor = newCursor, newErr = newErr)"))
+                    + Doc.str("return (tree = value, newErr = newErr)"))
 
         altResultMatchDoc = Doc.nested(4, altResultMatchDoc + errAlt) + Doc.nested(4, Doc.hardLine() + okAlt)
 
         doc += altResultMatchDoc + Doc.hardLine()
 
-    doc += makeThrow(makeUnexpectedTokenError())
+    # We reach here when all of the alternatives fail. Because there needs to be at least one
+    # alternative, it means that at least one of them failed, so `curErr` should be set.
+    doc += makeThrow(Doc.str("curErr.unwrap()"))
 
     doc.nest(4)
 
@@ -519,6 +521,7 @@ type SymbolCont:
 ## use site of this function should return the value of `cursor` from the closure so that the
 ## non-terminal function's `cursor` can be updated with the new value.
 generateSymbolParser(
+    terminalType: Str,
     symbol: Symbol,
     terminalPats: HashMap[Str, Vec[Token]],
     cont: SymbolCont,
@@ -532,43 +535,49 @@ generateSymbolParser(
             if cont is SymbolCont.Bind(local):
                 doc += Doc.str("let `local` = ")
 
-            let tokenKindCheck = Doc.str("if tokens.getOpt(cursor) is Option.Some(sym) and sym is ")
-                + Doc.str(tokensToCode(patToks))
-                + Doc.char(':')
-                + Doc.hardLine()
-
             let nested = match cont:
                 SymbolCont.Bind(local):
-                     Doc.str("cursor += 1")
-                        + Doc.hardLine()
-                        + Doc.str("sym")
+                    Doc.str("token")
 
                 SymbolCont.Push(vecLocal):
-                    Doc.str("`vecLocal`.push(sym)")
-                        + Doc.hardLine()
-                        + Doc.str("cursor += 1")
+                    Doc.str("`vecLocal`.push(token)")
 
                 SymbolCont.PushToParseTree(vecLocal):
-                    Doc.str("`vecLocal`.push(ParseTree.Terminal(sym))")
-                        + Doc.hardLine()
-                        + Doc.str("cursor += 1")
+                    Doc.str("`vecLocal`.push(ParseTree.Terminal(token))")
 
                 SymbolCont.Ignore:
-                    Doc.str("cursor += 1")
+                    Doc.str("()")
 
-            tokenKindCheck = Doc.nested(4, tokenKindCheck + nested) + Doc.hardLine()
-
-            doc + tokenKindCheck +
-                Doc.nested(
-                    4,
-                    Doc.str("else:")
-                        + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError()))
+            Doc.nested(
+                4,
+                Doc.str("match iter.next():")
+                    + Doc.hardLine()
+                    + Doc.nested(
+                        4,
+                        Doc.str("Option.Some((idx, token)):")
+                            + Doc.hardLine()
+                            + Doc.nested(
+                                4,
+                                Doc.str("if token is ")
+                                    + Doc.str(tokensToCode(patToks))
+                                    + Doc.char(':')
+                                    + Doc.hardLine()
+                                    + nested)
+                            + Doc.hardLine()
+                            + Doc.nested(
+                                4,
+                                Doc.str("else:")
+                                    + Doc.hardLine()
+                                    + makeThrow(makeUnexpectedTokenError())))
+                    + Doc.hardLine()
+                    + Doc.nested(
+                        4,
+                        Doc.str("Option.None:")
+                            + Doc.hardLine()
+                            + Doc.str("throw(ParseError(cursor = U32.max()))")))
 
         Symbol.NonTerminal(nonTerminal):
-            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(tokens, cursor)")
-                + Doc.hardLine()
-                + Doc.str("cursor = nonTerminalResult.newCursor")
+            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(iter)")
                 + Doc.hardLine()
                 + Doc.str("curErr = nonTerminalResult.newErr")
 
@@ -604,7 +613,7 @@ generateSymbolParser(
                 else:
                     SymbolCont.Ignore
 
-                doc += generateSymbolParser(symbol, terminalPats, cont)
+                doc += generateSymbolParser(terminalType, symbol, terminalPats, cont)
 
                 symIdx += 1
 
@@ -626,7 +635,7 @@ generateSymbolParser(
                     SymbolCont.PushToParseTree(vecLocal):
                         SymbolCont.PushToParseTree(vecLocal)
 
-                doc += generateSymbolParser(symbol, terminalPats, symbolCont)
+                doc += generateSymbolParser(terminalType, symbol, terminalPats, symbolCont)
 
                 symIdx += 1
 
@@ -694,9 +703,9 @@ generateSymbolParser(
                         4,
                         Doc.str("let symResult = try(||:")
                             + Doc.hardLine()
-                            + generateSymbolParser(symbol, terminalPats, symbolCont)
+                            + generateSymbolParser(terminalType, symbol, terminalPats, symbolCont)
                             + Doc.hardLine()
-                            + Doc.str("(cursor = cursor, err = curErr)"))
+                            + Doc.str("curErr"))
                     + Doc.hardLine()
                     + Doc.str(")")
                     + Doc.hardLine()
@@ -718,11 +727,9 @@ generateSymbolParser(
                             + Doc.hardLine()
                             + Doc.nested(
                                 4,
-                                Doc.str("Result.Ok(ok):")
+                                Doc.str("Result.Ok(newErr):")
                                     + Doc.hardLine()
-                                    + Doc.str("cursor = ok.cursor")
-                                    + Doc.hardLine()
-                                    + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)"))))
+                                    + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, newErr)"))))
 
             doc
 
@@ -747,19 +754,16 @@ generateSymbolParser(
                     # `_"foo"*`.
                     SymbolCont.Ignore
 
-            doc + generateSymbolParser(symbol, terminalPats, symbolCont)
+            doc + generateSymbolParser(terminalType, symbol, terminalPats, symbolCont)
                 + Doc.hardLine()
-                + generateSymbolParser(Symbol.ZeroOrMore(symbol), terminalPats, symbolCont)
+                + generateSymbolParser(terminalType, Symbol.ZeroOrMore(symbol), terminalPats, symbolCont)
 
         Symbol.Optional(symbol):
             # Compile `symbol` with the continuation of the current symbol (`symbol?`), but wrap the
             # code with a try to handle failure.
 
             # On success: update the cursors.
-            let okDoc =
-                Doc.str("cursor = ok.cursor")
-                    + Doc.hardLine()
-                    + Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)")
+            let okDoc = Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, newErr)")
 
             # On failure: update the cursors and pop any pushed tokens.
             let errDoc =
@@ -785,12 +789,12 @@ generateSymbolParser(
                     errDoc += Doc.hardLine() + Doc.str("Option.None")
 
                     # Value of `try`.
-                    Doc.str("(cursor = cursor, err = curErr, val = `local`)")
+                    Doc.str("(err = curErr, val = `local`)")
 
                 SymbolCont.Push(_) | SymbolCont.PushToParseTree(_) | SymbolCont.Ignore:
                     # Value of `try`. Symbol parser directly pushes to the vectors, or ignores, so
                     # we don't have a `val` field here.
-                    Doc.str("(cursor = cursor, err = curErr)")
+                    Doc.str("curErr")
 
             let doc = Doc.empty()
             if cont is SymbolCont.PushToParseTree(_):
@@ -800,7 +804,7 @@ generateSymbolParser(
                       4,
                       Doc.str("let symResult = try(||:")
                           + Doc.hardLine()
-                          + generateSymbolParser(symbol, terminalPats, cont)
+                          + generateSymbolParser(terminalType, symbol, terminalPats, cont)
                           + Doc.hardLine()
                           + resultDoc)
                  + Doc.hardLine()
@@ -819,20 +823,19 @@ generateSymbolParser(
                            + Doc.hardLine()
                            + Doc.nested(
                                4,
-                               Doc.str("Result.Ok(ok):")
+                               Doc.str("Result.Ok(newErr):")
                                    + Doc.hardLine()
                                    + okDoc))
 
         Symbol.Ignore(symbol):
-            generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore)
+            generateSymbolParser(terminalType, symbol, terminalPats, SymbolCont.Ignore)
 
         Symbol.NegLookahead(symbol):
-            let doc = Doc.str("let tokensLen0 = tokens.len()") + Doc.hardLine()
-            doc + Doc.nested(
+            Doc.nested(
                 4,
                 Doc.str("let symResult = try(||:")
                     + Doc.hardLine()
-                    + generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore))
+                    + generateSymbolParser(terminalType, symbol, terminalPats, SymbolCont.Ignore))
                 + Doc.hardLine()
                 + Doc.str(")")
                 + Doc.hardLine()
@@ -844,31 +847,35 @@ generateSymbolParser(
                             4,
                             Doc.str("Result.Err(err):")
                                 + Doc.hardLine()
-                                + makeUpdateError()
-                                + Doc.hardLine()
-                                + Doc.str("tokens.truncate(tokensLen0)"))
+                                + makeUpdateError())
                         + Doc.hardLine()
                         + Doc.nested(
                             4,
                             Doc.str("Result.Ok(_):")
                                 + Doc.hardLine()
-                                + makeThrow(makeUnexpectedTokenError())))
+                                + Doc.str("iter = iter0.clone()")
+                                + Doc.hardLine()
+                                + makeThrow(Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = iter0.clone().next[iter, (idx: U32, token: `terminalType`), ParseError]().unwrap().idx))"))))
 
         Symbol.Bind(binder, symbol):
-            generateSymbolParser(symbol, terminalPats, SymbolCont.Bind(binder))
+            generateSymbolParser(terminalType, symbol, terminalPats, SymbolCont.Bind(binder))
 
         Symbol.EndOfInput:
             Doc.nested(
                 4,
-                Doc.str("if cursor == tokens.len():")
+                Doc.str("match iter.next[iter, (idx: U32, token: `terminalType`), ParseError]():")
                     + Doc.hardLine()
-                    + Doc.str("cursor"))
-                + Doc.hardLine()
-                + Doc.nested(
-                    4,
-                    Doc.str("else:")
-                        + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError()))
+                    + Doc.nested(
+                        4,
+                        Doc.str("Option.Some((idx, token)):")
+                            + Doc.hardLine()
+                            + makeThrow(Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = idx))")))
+                    + Doc.hardLine()
+                    + Doc.nested(
+                        4,
+                        Doc.str("Option.None:")
+                            + Doc.hardLine()
+                            + Doc.str("U32.max()")))
 
         Symbol.Cursor:
             match cont:
@@ -913,10 +920,10 @@ tokensToCode(tokens: Vec[Token]) Str / exn:
     out.toStr()
 
 makeUnexpectedTokenError() Doc:
-    Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = cursor))")
+    Doc.str("ParseError.takeAdvanced(curErr, ParseError(cursor = idx))")
 
 makeThrow(expr: Doc) Doc:
-    Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')')).group()
+    Doc.str("throw(") + expr + Doc.char(')')
 
 # When generating code that backtracks, update the local `curErr: Option[ParseError]` if the new
 # error's cursor is more advanced than the current.
