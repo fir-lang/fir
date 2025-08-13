@@ -548,7 +548,7 @@ generateSymbolParser(
                 SymbolCont.Ignore:
                     Doc.str("()")
 
-            Doc.nested(
+            doc + Doc.nested(
                 4,
                 Doc.str("match iter.next():")
                     + Doc.hardLine()
@@ -763,7 +763,7 @@ generateSymbolParser(
             # code with a try to handle failure.
 
             # On success: update the cursors.
-            let okDoc = Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, newErr)")
+            let okDoc = Doc.str("curErr = ParseError.takeAdvancedOpt(curErr, ok.err)")
 
             # On failure: update the cursors and pop any pushed tokens.
             let errDoc =
@@ -794,7 +794,7 @@ generateSymbolParser(
                 SymbolCont.Push(_) | SymbolCont.PushToParseTree(_) | SymbolCont.Ignore:
                     # Value of `try`. Symbol parser directly pushes to the vectors, or ignores, so
                     # we don't have a `val` field here.
-                    Doc.str("curErr")
+                    Doc.str("(err = curErr)")
 
             let doc = Doc.empty()
             if cont is SymbolCont.PushToParseTree(_):
@@ -823,7 +823,7 @@ generateSymbolParser(
                            + Doc.hardLine()
                            + Doc.nested(
                                4,
-                               Doc.str("Result.Ok(newErr):")
+                               Doc.str("Result.Ok(ok):")
                                    + Doc.hardLine()
                                    + okDoc))
 
@@ -878,18 +878,20 @@ generateSymbolParser(
                             + Doc.str("U32.max()")))
 
         Symbol.Cursor:
-            match cont:
-                SymbolCont.Bind(local):
-                    Doc.str("let `local` = cursor")
+            Doc.str("let cursor = iter.next[iter, (idx: U32, token: `terminalType`), ParseError]().map(|item: (idx: U32, token: `terminalType`)|: item.idx).unwrapOr(U32.max())")
+                + Doc.hardLine()
+                + (match cont:
+                       SymbolCont.Bind(local):
+                           Doc.str("let `local` = cursor")
 
-                SymbolCont.Push(vecLocal):
-                    Doc.str("`vecLocal`.push(cursor)")
+                       SymbolCont.Push(vecLocal):
+                           Doc.str("`vecLocal`.push(cursor)")
 
-                SymbolCont.PushToParseTree(_):
-                    panic("Can't push cursor location to parse tree")
+                       SymbolCont.PushToParseTree(_):
+                           panic("Can't push cursor location to parse tree")
 
-                SymbolCont.Ignore:
-                    Doc.empty()
+                       SymbolCont.Ignore:
+                           Doc.empty())
 
 tokensToCode(tokens: Vec[Token]) Str / exn:
     if tokens.len() == 0:

@@ -300,14 +300,14 @@ zeroOrOneAThenB[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
                         throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
                 Option.None:
                     throw(ParseError(cursor = U32.max()))
-            curErr
+            (err = curErr)
         )
         match symResult:
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 nodes.truncate(nodesLen0)
-            Result.Ok(newErr):
-                curErr = ParseError.takeAdvancedOpt(curErr, newErr)
+            Result.Ok(ok):
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
         match iter.next():
             Option.Some((idx, token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
@@ -738,7 +738,7 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        match iter.next():
+        let a = match iter.next():
             Option.Some((idx, token)):
                 if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                     token
@@ -746,7 +746,7 @@ semanticActionGroup[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        match iter.next():
+        let b = match iter.next():
             Option.Some((idx, token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     token
@@ -781,7 +781,7 @@ semanticActionOptional[Iterator[iter, (idx: U32, token: Token), ParseError], Clo
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
         let symResult = try(||:
-            match iter.next():
+            let cs = match iter.next():
                 Option.Some((idx, token)):
                     if token is Token(kind = TokenKind.LowerId, text = "a", ..):
                         token
@@ -795,8 +795,8 @@ semanticActionOptional[Iterator[iter, (idx: U32, token: Token), ParseError], Clo
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 Option.None
-            Result.Ok(newErr):
-                curErr = ParseError.takeAdvancedOpt(curErr, newErr)
+            Result.Ok(ok):
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         match iter.next[iter, (idx: U32, token: Token), ParseError]():
             Option.Some((idx, token)):
@@ -874,7 +874,7 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
                 Result.Ok(newErr):
                     curErr = ParseError.takeAdvancedOpt(curErr, newErr)
         let symResult = try(||:
-            match iter.next():
+            let cOpt = match iter.next():
                 Option.Some((idx, token)):
                     if token is Token(kind = TokenKind.LowerId, text = "c", ..):
                         token
@@ -888,8 +888,8 @@ semanticActionComplex[Iterator[iter, (idx: U32, token: Token), ParseError], Clon
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 Option.None
-            Result.Ok(newErr):
-                curErr = ParseError.takeAdvancedOpt(curErr, newErr)
+            Result.Ok(ok):
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         let group = (aVec = aVec, bVec = bVec, cOpt = cOpt)
         match iter.next[iter, (idx: U32, token: Token), ParseError]():
@@ -913,6 +913,7 @@ cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
     let iter0 = iter.clone()
     let curErr: Option[ParseError] = Option.None
     let altResult = try(||:
+        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
         let c0 = cursor
         match iter.next():
             Option.Some((idx, token)):
@@ -922,6 +923,7 @@ cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
+        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
         let c1 = cursor
         match iter.next():
             Option.Some((idx, token)):
@@ -931,6 +933,7 @@ cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
+        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
         let c2 = cursor
         match iter.next():
             Option.Some((idx, token)):
@@ -940,6 +943,7 @@ cursorPositions[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
+        let cursor = iter.next[iter, (idx: U32, token: Token), ParseError]().map(|item: (idx: U32, token: Token)|: item.idx).unwrapOr(U32.max())
         let c3 = cursor
         let value = do:
             let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
@@ -974,7 +978,7 @@ simpleGroup1[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                     throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
             Option.None:
                 throw(ParseError(cursor = U32.max()))
-        match iter.next():
+        let x = match iter.next():
             Option.Some((idx, token)):
                 if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                     token
@@ -1031,7 +1035,7 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Option.None:
                 throw(ParseError(cursor = U32.max()))
         let symResult = try(||:
-            match iter.next():
+            let x = match iter.next():
                 Option.Some((idx, token)):
                     if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                         token
@@ -1045,8 +1049,8 @@ simpleGroup2[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 Option.None
-            Result.Ok(newErr):
-                curErr = ParseError.takeAdvancedOpt(curErr, newErr)
+            Result.Ok(ok):
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         match iter.next():
             Option.Some((idx, token)):
@@ -1239,7 +1243,7 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
                         throw(ParseError.takeAdvanced(curErr, ParseError(cursor = idx)))
                 Option.None:
                     throw(ParseError(cursor = U32.max()))
-            match iter.next():
+            let x = match iter.next():
                 Option.Some((idx, token)):
                     if token is Token(kind = TokenKind.LowerId, text = "b", ..):
                         token
@@ -1261,8 +1265,8 @@ simpleGroup5[Iterator[iter, (idx: U32, token: Token), ParseError], Clone[iter]](
             Result.Err(err):
                 curErr = Option.Some(ParseError.takeAdvanced(curErr, err))
                 Option.None
-            Result.Ok(newErr):
-                curErr = ParseError.takeAdvancedOpt(curErr, newErr)
+            Result.Ok(ok):
+                curErr = ParseError.takeAdvancedOpt(curErr, ok.err)
                 Option.Some(ok.val)
         match iter.next():
             Option.Some((idx, token)):
