@@ -1,4 +1,5 @@
 import Error    # imports Loc
+import Token    # imports IntKind
 # TODO: Why is Loc in Error module?
 
 type TokenIdx(idx: U32)
