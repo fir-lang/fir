@@ -75,3 +75,62 @@ ParseTree.asNonTerminal[Eq[nt], ToStr[nt]](self: ParseTree[t, nt], kind_: nt) Ve
             if kind != kind_:
                 panic("ParseTree.asNonTerminal: expected `kind_`, found `kind`")
             nodes
+
+# --------------------------------------------------------------------------------------------------
+
+trait TriviaTokens[t]:
+    isTrivia(self: t) Bool
+
+type ParserState[t](
+    _tokens: Vec[t],
+    _cursor: U32,
+    _errorCursor: Option[U32],
+)
+
+ParserState.new(tokens: Vec[t]) ParserState[t]:
+    ParserState(
+        _tokens = tokens,
+        _cursor = 0,
+        _errorCursor = Option.None,
+    )
+
+## Whether the whole input is consumed.
+ParserState.allConsumed(self: ParserState[t]) Bool:
+    self._tokens.len() == self._cursor
+
+## Returns the most advanced cursor in which an unexpected token was found.
+##
+## The cursor can point to the end of the input, which means an unexpected end-of-file was found.
+ParserState.getErrorCursor(self: ParserState[t]) Option[U32]:
+    self._errorCursor
+
+## For generated code.
+ParserState.peek[TriviaTokens[t]](self: ParserState[t]) Option[t]:
+    loop:
+        match self._tokens.getOpt(self._cursor):
+            Option.Some(t) if t.isTrivia():
+                continue
+
+            other:
+                return other
+
+    panic("unreachable")
+
+## For generated code.
+ParserState.updateErrorCursor(self: ParserState[t], newErrorCursor: U32):
+    match self._errorCursor:
+        Option.None:
+            self._errorCursor = Option.Some(newErrorCursor)
+        Option.Some(err):
+            if newErrorCursor > err:
+                self._errorCursor = Option.Some(newErrorCursor)
+
+## For generated code.
+ParserState.updateErrorCursorOpt(self: ParserState[t], newErrorCursor: Option[U32]):
+    if newErrorCursor is Option.Some(new):
+        self.updateErrorCursor(new)
+
+## For generated code.
+ParserState.nextCursor[TriviaTokens[t]](self: ParserState[t]) U32:
+    self.peek()
+    self._cursor

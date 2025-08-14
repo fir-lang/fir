@@ -145,6 +145,10 @@ type TokenKind:
 
     Label
 
+impl TriviaTokens[Token]:
+    isTrivia(self: Token) Bool:
+        self.kind is TokenKind.Comment
+
 type IntKind:
     I8
     U8
