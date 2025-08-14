@@ -130,3 +130,34 @@ simpleGroup6 Vec[Token]:
 simpleGroup7 Vec[Token]:
     _"a" x=(_"a" "b" _"c")+ _"c":
         x
+
+# --------------------------------------------------------------------------------------------------
+# Test restoring cursor when an optional symbol fails
+
+multipleSymbols Bool:
+    "a" "b" "c":
+        Bool.True
+
+restoreCursorOptional1 Option[Bool]:
+    x=multipleSymbols? "a" "b":
+        x
+
+restoreCursorOptional2 Bool:
+    ("a" "b" "c")? "a" "b":
+        Bool.True
+
+restoreCursorZeroOrMore1 Vec[Bool]:
+    xs=multipleSymbols* "a" "b":
+        xs
+
+restoreCursorZeroOrMore2 Bool:
+    ("a" "b" "c")* "a" "b":
+        Bool.True
+
+restoreCursorOneOrMore1 Vec[Bool]:
+    xs=multipleSymbols+ "a" "b":
+        xs
+
+restoreCursorOneOrMore2 Bool:
+    ("a" "b" "c")+ "a" "b":
+        Bool.True
