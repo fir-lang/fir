@@ -25,19 +25,21 @@ main(args: Array[Str]):
     if tokens.len() == 0:
         panic("Empty file")
 
-    let grammar = match try(||: grammar(tokens, 0)):
-        Result.Err(ParseError(cursor)):
+    let parserState = ParserState.new(tokens)
+
+    let grammar = match try(||: grammar(parserState)):
+        Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Unexpected end of input")
             else:
                 panic("Unexpected token `tokens.get(cursor)`")
-        Result.Ok(result):
-            if result.newCursor != tokens.len():
-                print(result.tree.toDoc().render(80))
-                let lastToken = tokens.get(result.newCursor)
-                panic("Left over tokens (cursor = `result.newCursor`, tokens = `tokens.len()`, last token = `lastToken`)")
+        Result.Ok(tree):
+            if not parserState.allConsumed():
+                print(tree.toDoc().render(80))
+                let lastToken = tokens.get(parserState._cursor)
+                panic("Left over tokens (cursor = `parserState._cursor`, tokens = `tokens.len()`, last token = `lastToken`)")
             # print(result.tree.toDoc().render(80))
-            convertParseTree(result.tree)
+            convertParseTree(tree)
 
     let terminalPats: HashMap[Str, Vec[Token]] = HashMap.withCapacity(grammar.terminalsDecl.terminals.len() * 2)
     for terminalDecl: TerminalDecl in grammar.terminalsDecl.terminals.iter():
