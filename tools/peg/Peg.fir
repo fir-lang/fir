@@ -814,29 +814,33 @@ generateSymbolParser(
             generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore)
 
         Symbol.NegLookahead(symbol):
-            Doc.nested(
-                4,
-                Doc.str("let symResult = try(||:")
-                    + Doc.hardLine()
-                    + generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore))
-                + Doc.hardLine()
-                + Doc.str(")")
+            Doc.str("let state0 = state.clone()")
                 + Doc.hardLine()
                 + Doc.nested(
-                    4,
-                    Doc.str("match symResult:")
-                        + Doc.hardLine()
-                        + Doc.nested(
-                            4,
-                            Doc.str("Result.Err(err):")
-                                + Doc.hardLine()
-                                + makeUpdateError())
-                        + Doc.hardLine()
-                        + Doc.nested(
-                            4,
-                            Doc.str("Result.Ok(_):")
-                                + Doc.hardLine()
-                                + makeThrow(makeUnexpectedTokenError())))
+                      4,
+                      Doc.str("let symResult = try(||:")
+                          + Doc.hardLine()
+                          + generateSymbolParser(symbol, terminalPats, SymbolCont.Ignore))
+                      + Doc.hardLine()
+                      + Doc.str(")")
+                      + Doc.hardLine()
+                      + Doc.nested(
+                          4,
+                          Doc.str("match symResult:")
+                              + Doc.hardLine()
+                              + Doc.nested(
+                                  4,
+                                  Doc.str("Result.Err(err):")
+                                      + Doc.hardLine()
+                                      + Doc.str("state.cloneFrom(state0)"))
+                              + Doc.hardLine()
+                              + Doc.nested(
+                                  4,
+                                  Doc.str("Result.Ok(_):")
+                                      + Doc.hardLine()
+                                      + Doc.str("state.cloneFrom(state0)")
+                                      + Doc.hardLine()
+                                      + makeThrow(makeUnexpectedTokenError())))
 
         Symbol.Bind(binder, symbol):
             generateSymbolParser(symbol, terminalPats, SymbolCont.Bind(binder))

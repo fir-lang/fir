@@ -87,6 +87,19 @@ type ParserState[t](
     _errorCursor: Option[U32],
 )
 
+impl Clone[ParserState[t]]:
+    clone(self: ParserState[t]) ParserState[t]:
+        ParserState(
+            _tokens = self._tokens,
+            _cursor = self._cursor,
+            _errorCursor = self._errorCursor,
+        )
+
+ParserState.cloneFrom(self: ParserState[t], other: ParserState[t]):
+    self._tokens = other._tokens
+    self._cursor = other._cursor
+    self._errorCursor = other._errorCursor
+
 ParserState.new(tokens: Vec[t]) ParserState[t]:
     ParserState(
         _tokens = tokens,

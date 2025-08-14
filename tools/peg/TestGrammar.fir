@@ -419,6 +419,7 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
+        let state0 = state.clone()
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                 state._cursor += 1
@@ -427,8 +428,9 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         )
         match symResult:
             Result.Err(err):
-                state.updateErrorCursor(err)
+                state.cloneFrom(state0)
             Result.Ok(_):
+                state.cloneFrom(state0)
                 throw(state._errorCursor.unwrapOr(state._cursor))
         let nonTerminalResult = terminalAOrB(state)
         nodes.push(nonTerminalResult)
