@@ -28,16 +28,18 @@ main(args: Array[Str]):
         Result.Ok(tokens):
             tokens
 
-    let result = match try(||: module(tokens, 0)):
-        Result.Err(ParseError(cursor)):
+    let parserState = ParserState.new(tokens)
+
+    let tree = match try(||: module(parserState)):
+        Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Parse error: unexpected end of input")
             else:
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
-        Result.Ok(result): result
+        Result.Ok(tree): tree
 
-    if result.newCursor != tokens.len():
-        print("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
+    if not parserState.allConsumed():
+        print("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`")
 
     # if printAst:
     #     let buf = StrBuf.withCapacity(1_000_000)

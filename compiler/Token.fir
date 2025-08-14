@@ -1,3 +1,6 @@
+import Peg.ParseTree
+
+
 type Token(
     kind: TokenKind,
     text: Str,
@@ -144,6 +147,10 @@ type TokenKind:
     Dedent
 
     Label
+
+impl TriviaTokens[Token]:
+    isTrivia(self: Token) Bool:
+        self.kind is TokenKind.Comment
 
 type IntKind:
     I8

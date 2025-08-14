@@ -2,22 +2,22 @@ import Compiler.Scanner
 
 
 type TestError:
-    ParseError(ParseError)
+    ParseError(U32)
     Other(Str)
 
 
 impl ToStr[TestError]:
     toStr(self: TestError) Str:
         match self:
-            TestError.ParseError(parseError): parseError.toStr()
+            TestError.ParseError(errCur): "unexpected token or end of input at cursor `errCur`"
             TestError.Other(msg): msg
 
 
 runParser(
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: tree, newCursor: U32, newErr: Option[ParseError]) / ParseError,
-        runScan: Bool,
-    ) tree / TestError:
+    input: Str,
+    parseFn: Fn(ParserState[Token]) tree / U32,
+    runScan: Bool,
+) tree / TestError:
     let (tokens, error) = tokenize("<test input>", input)
 
     if error is Option.Some(error):
@@ -30,22 +30,24 @@ runParser(
             Result.Ok(tokens):
                 tokens
 
-    let result = match try(||: parseFn(tokens, 0)):
+    let parserState = ParserState.new(tokens)
+
+    let tree = match try(||: parseFn(parserState)):
         Result.Err(err): throw(TestError.ParseError(err))
-        Result.Ok(result): result
+        Result.Ok(tree): tree
 
-    if result.newCursor != tokens.len():
-        throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`"))
+    if not parserState.allConsumed():
+        throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`"))
 
-    result.tree
+    tree
 
 
 ## Print test name, run the given parser function on the input, print errors and trees.
 runTest[ToStr[nt]](
-        testName: Str,
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) / exn:
+    testName: Str,
+    input: Str,
+    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+) / exn:
     print(testName)
     match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
@@ -57,9 +59,9 @@ runTest[ToStr[nt]](
 ##
 ## Difference from `runTest` is that this prints the input, `runTest` prints the given test name.
 runTest_[ToStr[nt]](
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) / exn:
+    input: Str,
+    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
@@ -69,9 +71,9 @@ runTest_[ToStr[nt]](
 
 ## Same as `runTest_`, but runs scanner after lexer.
 runTestScanner_[ToStr[nt]](
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) / exn:
+    input: Str,
+    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+) / exn:
     print(input)
     match try(||: runParser(input, parseFn, Bool.True)):
         Result.Ok(tree): print(tree.toDoc().render(80))
@@ -80,9 +82,9 @@ runTestScanner_[ToStr[nt]](
 
 
 runTestIndent[ToStr[nt]](
-        input: Str,
-        parseFn: Fn(Vec[Token], U32) (tree: ParseTree[Token, nt], newCursor: U32, newErr: Option[ParseError]) / ParseError,
-    ) Bool / exn:
+    input: Str,
+    parseFn: Fn(ParserState[Token]) ParseTree[Token, nt] / U32,
+) Bool / exn:
     print(input)
     let result = match try(||: runParser(input, parseFn, Bool.True)):
         Result.Ok(tree):

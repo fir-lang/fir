@@ -27,14 +27,16 @@ gen(item: Str):
         Result.Ok(tokens):
             tokens
 
-    let result = match try(||: typeDecl(tokens, 0)):
-        Result.Err(err): panic("Unable to parse item as type decl: `err`")
-        Result.Ok(result): result
+    let parserState = ParserState.new(tokens)
 
-    if result.newCursor != tokens.len():
-        panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `result.newCursor`")
+    let tree = match try(||: typeDecl(parserState)):
+        Result.Err(err): panic("Unable to parse item as type decl: unexpected `tokens.get(err)`")
+        Result.Ok(tree): tree
 
-    print(genTree(result.tree, tokens).render(80))
+    if not parserState.allConsumed():
+        panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`")
+
+    print(genTree(tree, tokens).render(80))
 
 genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
     let typeName = tokens.get(typeDecl.name.token.idx).text
