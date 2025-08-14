@@ -100,6 +100,15 @@ main():
     print(try(||: runParser("a a b c c", simpleGroup7, Bool.False)))
     print(try(||: runParser("a a b c a b c c", simpleGroup7, Bool.False)))
 
+    print("")
+    print("# Restoring cursor ---------------------------------------")
+    print(try(||: runParser("a b", restoreCursorOptional1, Bool.False)))
+    print(try(||: runParser("a b", restoreCursorOptional2, Bool.False)))
+    print(try(||: runParser("a b", restoreCursorZeroOrMore1, Bool.False)))
+    print(try(||: runParser("a b", restoreCursorZeroOrMore2, Bool.False)))
+    print(try(||: runParser("a b c a b", restoreCursorZeroOrMore1, Bool.False)))
+    print(try(||: runParser("a b c a b", restoreCursorZeroOrMore2, Bool.False)))
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -233,3 +242,11 @@ main():
 # Result.Err(unexpected token or end of input at cursor 1)
 # Result.Ok([LowerId(1:5:"b")])
 # Result.Ok([LowerId(1:5:"b"),LowerId(1:11:"b")])
+# 
+# # Restoring cursor ---------------------------------------
+# Result.Ok(Option.None)
+# Result.Ok(Bool.True)
+# Result.Ok([])
+# Result.Ok(Bool.True)
+# Result.Ok([Bool.True])
+# Result.Ok(Bool.True)

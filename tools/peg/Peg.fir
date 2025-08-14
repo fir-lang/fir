@@ -2,8 +2,8 @@ import Compiler.Assert
 import Compiler.Lexer
 import Compiler.Scanner
 import Compiler.Token
-import ParseTree
-import PegGrammar
+import Peg.ParseTree
+import Peg.PegGrammar
 
 main(args: Array[Str]):
     if args.len() != 2:
@@ -659,7 +659,7 @@ generateSymbolParser(
             doc
 
         Symbol.ZeroOrMore(symbol):
-            let doc = Doc.empty()
+            let doc = Doc.str("let zeroOrMoreCursor0 = state._cursor") + Doc.hardLine()
 
             let symbolCont = match cont:
                 SymbolCont.Bind(local):
@@ -704,6 +704,8 @@ generateSymbolParser(
                                     + Doc.hardLine()
                                     + makeUpdateError()
                                     + Doc.hardLine()
+                                    + Doc.str("state._cursor = zeroOrMoreCursor0")
+                                    + Doc.hardLine()
                                     + (if symbolCont is SymbolCont.PushToParseTree(_):
                                            Doc.str("nodes.truncate(nodesLen0)") + Doc.hardLine()
                                        else:
@@ -714,7 +716,7 @@ generateSymbolParser(
                                 4,
                                 Doc.str("Result.Ok(ok):")
                                     + Doc.hardLine()
-                                    + Doc.str("()"))))
+                                    + Doc.str("zeroOrMoreCursor0 = state._cursor"))))
 
             doc
 
@@ -747,12 +749,14 @@ generateSymbolParser(
             # Compile `symbol` with the continuation of the current symbol (`symbol?`), but wrap the
             # code with a try to handle failure.
 
-            # On success: update the cursors.
+            # On success: cursors are already updated, nothing to do.
             let okDoc = Doc.str("()")
 
             # On failure: update the cursors and pop any pushed tokens.
             let errDoc =
-                makeUpdateError()
+                Doc.str("state._cursor = optionalCursor0")
+                    + Doc.hardLine()
+                    + makeUpdateError()
                     + (if cont is SymbolCont.PushToParseTree(_):
                            Doc.hardLine() + Doc.str("nodes.truncate(nodesLen0)")
                        else:
@@ -781,7 +785,8 @@ generateSymbolParser(
                     # we don't have a `val` field here.
                     Doc.str("()")
 
-            let doc = Doc.empty()
+            let doc = Doc.str("let optionalCursor0 = state._cursor") + Doc.hardLine()
+
             if cont is SymbolCont.PushToParseTree(_):
                 doc += Doc.str("let nodesLen0 = nodes.len()") + Doc.hardLine()
 

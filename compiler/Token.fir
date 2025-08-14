@@ -1,3 +1,6 @@
+import Peg.ParseTree
+
+
 type Token(
     kind: TokenKind,
     text: Str,

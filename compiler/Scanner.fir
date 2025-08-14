@@ -61,6 +61,9 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     delimKind: IndentedDelimKind,
     lastLoc: Option[(line: U32, col: U32)]
 ) (line: U32, col: U32) / [ScannerError, ..exn]:
+    while tokens.peek() is Option.Some(token) and token.isTrivia():
+        let _: Option[Token] = tokens.next()
+
     if tokens.peek().isNone():
         match delimKind:
             IndentedDelimKind.File:
@@ -81,6 +84,9 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     let indentStack: Vec[U32] = Vec.[lastLoc.col]
 
     for t: Token in tokens:
+        if t.isTrivia():
+            continue
+
         let l = (line = t.line, col = t.col)
 
         if delimKind.terminate(t.kind):
@@ -191,6 +197,9 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     let lastLoc = ldelimLoc
 
     for t: Token in tokens:
+        if t.isTrivia():
+            continue
+
         lastLoc = t.rightLoc()
         let l = lastLoc
 

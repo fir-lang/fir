@@ -1,7 +1,7 @@
 # PEG grammar of PEG grammars.
 
 import Compiler.Token
-import ParseTree
+import Peg.ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal
