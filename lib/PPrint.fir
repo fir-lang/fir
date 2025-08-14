@@ -99,6 +99,12 @@ type _SpaceReq:
     Exact(U32)
     Infinite
 
+impl ToStr[_SpaceReq]:
+    toStr(self: _SpaceReq) Str:
+        match self:
+            _SpaceReq.Exact(req): "_SpaceReq.Exact(`req`)"
+            _SpaceReq.Infinite: "_SpaceReq.Infinite"
+
 impl Add[_SpaceReq]:
     __add(self: _SpaceReq, other: _SpaceReq) _SpaceReq:
         if self is _SpaceReq.Exact(req1) and other is _SpaceReq.Exact(req2):
