@@ -897,7 +897,7 @@ tokensToCode(tokens: Vec[Token]) Str / exn:
     out.toStr()
 
 makeUnexpectedTokenError() Doc:
-    Doc.str("state._cursor")
+    Doc.str("state._errorCursor.unwrapOr(state._cursor)")
 
 makeThrow(expr: Doc) Doc:
     Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')')).group()

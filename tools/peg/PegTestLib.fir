@@ -9,7 +9,7 @@ type TestError:
 impl ToStr[TestError]:
     toStr(self: TestError) Str:
         match self:
-            TestError.ParseError(parseError): parseError.toStr()
+            TestError.ParseError(errCur): "unexpected token or end of input at cursor `errCur`"
             TestError.Other(msg): msg
 
 
@@ -51,7 +51,7 @@ runTest[ToStr[nt]](
     print(testName)
     match try(||: runParser(input, parseFn, Bool.False)):
         Result.Ok(tree): print(tree.toDoc().render(80))
-        Result.Err(err): print("Parse error at cursor `err`")
+        Result.Err(err): print("ERR: `err`")
     print("")
 
 
