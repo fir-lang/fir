@@ -71,7 +71,7 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
             + Doc.str(idText(field, tokens))
             + formatTyArgs(tyArgs, tokens)
 
-    doc.nest(4)
+    doc.nest(4).group()
 
 
 MethodSelectExpr.format(self, tokens: Vec[Token]) Doc:
@@ -79,7 +79,14 @@ MethodSelectExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.nested(
+        4,
+        Doc.str(idText(self.ty, tokens))
+            + Doc.break_(0)
+            + Doc.char('.')
+            + Doc.str(idText(self.member, tokens))
+            + formatTyArgs(self.userTyArgs, tokens))
+        .group()
 
 
 CallExpr.format(self, tokens: Vec[Token]) Doc:
