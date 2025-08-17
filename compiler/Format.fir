@@ -142,7 +142,26 @@ ReturnExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 MatchExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = Doc.str("match ")
+        + Doc.nested(8, self.scrutinee.format(tokens))
+        + Doc.char(':')
+
+    for alt: Alt in self.alts.iter():
+        doc += Doc.hardLine() + alt.format(tokens)
+
+    doc.nest(4)
+
+
+Alt.format(self, tokens: Vec[Token]) Doc:
+    let doc = self.pattern.format(tokens)
+
+    if self.guard is Option.Some(guard):
+        doc += Doc.break_(1) + Doc.str("if ") + guard.format(tokens)
+        doc = Doc.nested(8, doc)
+
+    let body = formatStmts(self.rhs, tokens)
+
+    Doc.nested(4, doc + Doc.char(':') + Doc.hardLine() + body)
 
 
 IfExpr.format(self, tokens: Vec[Token]) Doc:
@@ -164,10 +183,7 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 DoExpr.format(self, tokens: Vec[Token]) Doc:
-    let body = self.body.get(0).format(tokens)
-    for stmt: Stmt in self.body.iter().skip(1):
-        body += Doc.hardLine() + stmt.format(tokens)
-    Doc.nested(4, Doc.str("do:") + Doc.hardLine() + body)
+    Doc.nested(4, Doc.str("do:") + Doc.hardLine() + formatStmts(self.body, tokens))
 
 
 SeqExpr.format(self, tokens: Vec[Token]) Doc:
@@ -176,6 +192,13 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
 # --------------------------------------------------------------------------------------------------
 # Statements
+
+
+formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
+    let doc = stmts.get(0).format(tokens)
+    for stmt: Stmt in stmts.iter().skip(1):
+        doc += Doc.hardLine() + stmt.format(tokens)
+    doc
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
@@ -203,27 +226,19 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
 
 
 WhileStmt.format(self, tokens: Vec[Token]) Doc:
-    let body = self.body.get(0).format(tokens)
-    for stmt: Stmt in self.body.iter().skip(1):
-        body += Doc.hardLine() + stmt.format(tokens)
-
     Doc.nested(
         4,
         Doc.nested(4, Doc.str("while ") + self.cond.format(tokens))
             + Doc.hardLine()
-            + body)
+            + formatStmts(self.body, tokens))
 
 
 LoopStmt.format(self, tokens: Vec[Token]) Doc:
-    let body = self.body.get(0).format(tokens)
-    for stmt: Stmt in self.body.iter().skip(1):
-        body += Doc.hardLine() + stmt.format(tokens)
-
     Doc.nested(
         4,
         Doc.str("loop:")
             + Doc.hardLine()
-            + body)
+            + formatStmts(self.body, tokens))
 
 
 BreakStmt.format(self, tokens: Vec[Token]) Doc:
