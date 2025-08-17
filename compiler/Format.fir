@@ -39,7 +39,39 @@ Constructor.format(self, tokens: Vec[Token]) Doc:
 
 
 FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    #|
+    Group sequence of selections so that we will format like one of the following:
+
+        foo[T1].bar[t].baz[U32]
+
+        foo[T1]
+              .bar[t]
+              .baz[U32]
+
+    and not as:
+
+        foo[T1]
+              .bar[t]
+                   .baz[U32]
+    |#
+
+    let selection = self
+    let fields: Vec[(field: Id, tyArgs: Vec[Type])] = Vec.withCapacity(1)
+    loop:
+        fields.push((field = selection.field, tyArgs = selection.userTyArgs))
+        if selection.object is Expr.FieldSelect(e):
+            selection = e
+        else:
+            break
+
+    let doc = selection.object.format(tokens)
+    while fields.pop() is Option.Some((field, tyArgs)):
+        doc += Doc.break_(0)
+            + Doc.char('.')
+            + Doc.str(idText(field, tokens))
+            + formatTyArgs(tyArgs, tokens)
+
+    doc.nest(4)
 
 
 MethodSelectExpr.format(self, tokens: Vec[Token]) Doc:
