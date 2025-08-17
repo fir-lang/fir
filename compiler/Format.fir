@@ -13,7 +13,6 @@ Expr.format(self: Expr, tokens: Vec[Token]) Doc:
         Expr.Var(e): e.format(tokens)
         Expr.ConstrSelect(e): e.format(tokens)
         Expr.FieldSelect(e): e.format(tokens)
-        Expr.MethodSelect(e): e.format(tokens)
         Expr.AssocFnSelect(e): e.format(tokens)
         Expr.Call(e): e.format(tokens)
         Expr.Int(e): e.format(tokens)
@@ -31,13 +30,28 @@ Expr.format(self: Expr, tokens: Vec[Token]) Doc:
         Expr.Do(e): e.format(tokens)
         Expr.Seq(e): e.format(tokens)
 
+        Expr.MethodSelect(e):
+            # These expressions are intoruduced by the type checker, which we don't run when
+            # formatting.
+            panic("Expr.MethodSelect")
+
 
 VarExpr.format(self, tokens: Vec[Token]) Doc:
     Doc.str(idText(self.id, tokens)) + formatTyArgs(self.userTyArgs, tokens)
 
 
 Constructor.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = if self.variant:
+        Doc.char('~')
+    else:
+        Doc.empty()
+
+    doc += Doc.str(idText(self.ty, tokens))
+
+    if self.constr is Option.Some(con):
+        doc += Doc.char('.') + Doc.str(idText(con, tokens))
+
+    doc + formatTyArgs(self.userTyArgs, tokens)
 
 
 FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
@@ -74,10 +88,6 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
             + formatTyArgs(tyArgs, tokens)
 
     doc.nest(4).group()
-
-
-MethodSelectExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
 
 
 AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
@@ -293,7 +303,7 @@ Pat.format(self, tokens: Vec[Token]) Doc:
 
 
 VarPat.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.str(idText(self.var_, tokens))
 
 
 ConstrPat.format(self, tokens: Vec[Token]) Doc:
