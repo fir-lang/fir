@@ -169,7 +169,69 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
+    match self:
+        Stmt.Let(s): s.format(tokens)
+        Stmt.Assign(s): s.format(tokens)
+        Stmt.Expr(s): s.format(tokens)
+        Stmt.For(s): s.format(tokens)
+        Stmt.While(s): s.format(tokens)
+        Stmt.Loop(s): s.format(tokens)
+        Stmt.Break(s): s.format(tokens)
+        Stmt.Continue(s): s.format(tokens)
+
+
+LetStmt.format(self, tokens: Vec[Token]) Doc:
     panic("TODO")
+
+
+AssignStmt.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+ForStmt.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+WhileStmt.format(self, tokens: Vec[Token]) Doc:
+    let body = self.body.get(0).format(tokens)
+    for stmt: Stmt in self.body.iter().skip(1):
+        body += Doc.hardLine() + stmt.format(tokens)
+
+    Doc.nested(
+        4,
+        Doc.nested(4, Doc.str("while ") + self.cond.format(tokens))
+            + Doc.hardLine()
+            + body)
+
+
+LoopStmt.format(self, tokens: Vec[Token]) Doc:
+    let body = self.body.get(0).format(tokens)
+    for stmt: Stmt in self.body.iter().skip(1):
+        body += Doc.hardLine() + stmt.format(tokens)
+
+    Doc.nested(
+        4,
+        Doc.str("loop:")
+            + Doc.hardLine()
+            + body)
+
+
+BreakStmt.format(self, tokens: Vec[Token]) Doc:
+    match self.label:
+        Option.None:
+            Doc.str("break")
+
+        Option.Some(label):
+            Doc.nested(4, Doc.str("break") + Doc.break_(1) + Doc.str(idText(label, tokens)))
+
+
+ContinueStmt.format(self, tokens: Vec[Token]) Doc:
+    match self.label:
+        Option.None:
+            Doc.str("continue")
+
+        Option.Some(label):
+            Doc.nested(4, Doc.str("continue") + Doc.break_(1) + Doc.str(idText(label, tokens)))
 
 
 # --------------------------------------------------------------------------------------------------
