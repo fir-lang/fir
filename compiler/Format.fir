@@ -3,8 +3,10 @@ import Ast
 main():
     print("hi")
 
+
 # --------------------------------------------------------------------------------------------------
 # Expressions
+
 
 Expr.format(self: Expr, tokens: Vec[Token]) Doc:
     match self:
@@ -17,7 +19,7 @@ Expr.format(self: Expr, tokens: Vec[Token]) Doc:
         Expr.Int(e): e.format(tokens)
         Expr.Str(e): e.format(tokens)
         Expr.Char(e): e.format(tokens)
-        Expr.Self(e): Doc.str(tokenText(tokens, e))
+        Expr.Self(e): Doc.str(tokenText(e, tokens))
         Expr.BinOp(e): e.format(tokens)
         Expr.UnOp(e): e.format(tokens)
         Expr.Record(e): e.format(tokens)
@@ -94,15 +96,15 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 IntExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.str(tokenText(self.token, tokens))
 
 
 StrExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.str(tokenText(self.token, tokens))
 
 
 CharExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.str(tokenText(self.token, tokens))
 
 
 BinOpExpr.format(self, tokens: Vec[Token]) Doc:
@@ -118,7 +120,15 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 ReturnExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    match self.expr:
+        Option.None:
+            Doc.str("return")
+
+        Option.Some(expr):
+            Doc.nested(
+                4,
+                Doc.str("return") + Doc.break_(1) + expr.format(tokens))
+                .group()
 
 
 MatchExpr.format(self, tokens: Vec[Token]) Doc:
@@ -134,14 +144,31 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 IsExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.nested(
+        4,
+        self.expr.format(tokens)
+            + Doc.break_(1)
+            + Doc.str("is ")
+            + self.pat.format(tokens))
+        .group()
 
 
 DoExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let body = self.body.get(0).format(tokens)
+    for stmt: Stmt in self.body.iter().skip(1):
+        body += Doc.hardLine() + stmt.format(tokens)
+    Doc.nested(4, Doc.str("do:") + Doc.hardLine() + body)
 
 
 SeqExpr.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+# --------------------------------------------------------------------------------------------------
+# Statements
+
+
+Stmt.format(self, tokens: Vec[Token]) Doc:
     panic("TODO")
 
 
@@ -175,6 +202,47 @@ FnType.format(self, tokens: Vec[Token]) Doc:
 
 
 # --------------------------------------------------------------------------------------------------
+# Patterns
+
+
+Pat.format(self, tokens: Vec[Token]) Doc:
+    match self:
+        Pat.Var(p):
+            p.format(tokens)
+
+        Pat.Constr(p):
+            p.format(tokens)
+
+        Pat.Record(p):
+            p.format(tokens)
+
+        Pat.Ignore(p)
+            | Pat.Str(_, p)
+            | Pat.Char(_, p): Doc.str(tokenText(p, tokens))
+
+        Pat.Or(p1, p2):
+            Doc.nested(
+                4,
+                p1.format(tokens)
+                    + Doc.break_(1)
+                    + Doc.str("| ")
+                    + p2.format(tokens))
+                .group()
+
+
+VarPat.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+ConstrPat.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+RecordPat.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+# --------------------------------------------------------------------------------------------------
 
 
 formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
@@ -198,5 +266,5 @@ idText(id: Id, tokens: Vec[Token]) Str:
     tokens.get(id.token.idx).text
 
 
-tokenText(tokens: Vec[Token], token: TokenIdx) Str:
+tokenText(token: TokenIdx, tokens: Vec[Token]) Str:
     tokens.get(token.idx).text
