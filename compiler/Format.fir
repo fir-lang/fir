@@ -1,7 +1,40 @@
-import Ast
+import Error
+import Grammar
+import Scanner
 
-main():
-    print("hi")
+main(args: Array[Str]):
+    if args.len() != 2:
+        showUsageAndExit()
+
+    let path = args.get(1)
+    let fileContents = readFileUtf8(path)
+
+    let (tokens, error) = tokenize(path, fileContents)
+    if error is Option.Some(error):
+        print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+
+    let tokens = match try(||: scan[row[]](tokens)):    # Explicitly close the variant (issue #49).
+        Result.Err(~ScannerError(line, col, msg)):
+            panic("`line + 1`:`col + 1`: `msg`")
+        Result.Ok(tokens):
+            tokens
+
+    let parserState = ParserState.new(tokens)
+
+    let tree = match try(||: module(parserState)):
+        Result.Err(cursor):
+            if cursor == tokens.len():
+                panic("Parse error: unexpected end of input")
+            else:
+                panic("Parse error: unexpected token `tokens.get(cursor)`")
+        Result.Ok(tree):
+            tree
+
+    print(formatModule(tree, tokens).render(80))
+
+
+showUsageAndExit() a:
+    panic("USAGE: fir format <file>")
 
 
 formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
