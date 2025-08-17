@@ -4,11 +4,48 @@ main():
     print("hi")
 
 
+formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
+    join(mod.iter().map(|decl: TopDecl|: decl.format(tokens)), Doc.hardLine() + Doc.hardLine())
+
+
+# --------------------------------------------------------------------------------------------------
+# Declarations
+
+
+TopDecl.format(self, tokens: Vec[Token]) Doc:
+    match self:
+        TopDecl.Type(d): d.format(tokens)
+        TopDecl.Fun(d): d.format(tokens)
+        TopDecl.Import(d): d.format(tokens)
+        TopDecl.Trait(d): d.format(tokens)
+        TopDecl.Impl(d): d.format(tokens)
+
+
+TypeDecl.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+FunDecl.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+ImportDecl.format(self, tokens: Vec[Token]) Doc:
+    Doc.str("import ") + join(self.path.iter().map(Doc.str), Doc.char('.'))
+
+
+TraitDecl.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
+ImplDecl.format(self, tokens: Vec[Token]) Doc:
+    panic("TODO")
+
+
 # --------------------------------------------------------------------------------------------------
 # Expressions
 
 
-Expr.format(self: Expr, tokens: Vec[Token]) Doc:
+Expr.format(self, tokens: Vec[Token]) Doc:
     match self:
         Expr.Var(e): e.format(tokens)
         Expr.ConstrSelect(e): e.format(tokens)
@@ -195,10 +232,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
-    let doc = stmts.get(0).format(tokens)
-    for stmt: Stmt in stmts.iter().skip(1):
-        doc += Doc.hardLine() + stmt.format(tokens)
-    doc
+    join(stmts.iter().map(|stmt: Stmt|: stmt.format(tokens)), Doc.hardLine())
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
@@ -355,3 +389,14 @@ idText(id: Id, tokens: Vec[Token]) Str:
 
 tokenText(token: TokenIdx, tokens: Vec[Token]) Str:
     tokens.get(token.idx).text
+
+
+join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
+    let doc = match iter.next():
+        Option.None: return Doc.empty()
+        Option.Some(doc): doc
+
+    for d: Doc in iter:
+        doc += sep + d
+
+    doc
