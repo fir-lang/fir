@@ -172,7 +172,35 @@ AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 CallExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    #|
+    Single line:
+
+        f(e1, e2, e3)
+
+    Or split:
+
+        f(
+            e1,
+            e2,
+            e3,
+        )
+    |#
+
+    # TODO: Add parens to function when necessary.
+    let doc = self.fun.format(tokens) + Doc.char('(') + Doc.break_(0)
+
+    let argIdx: U32 = 0
+    for arg: Named[Expr] in self.args.iter():
+        if argIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        argIdx += 1
+
+        doc += formatNamedExpr(arg, tokens)
+
+    if self.args.len() != 0:
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
 
 IntExpr.format(self, tokens: Vec[Token]) Doc:
@@ -257,7 +285,27 @@ DoExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 SeqExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = match self.ty:
+        Option.None:
+            Doc.char('[')
+        Option.Some(ty):
+            ty.format(tokens) + Doc.str(".[")
+
+    let elemIdx: U32 = 0
+    for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
+        if elemIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        elemIdx += 1
+
+        if elem.key is Option.Some(key):
+            doc += key.format(tokens) + Doc.str(" =") + Doc.break_(1)
+
+        doc += elem.value.format(tokens)
+
+    if self.elems.len() != 0:
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(']'))
 
 
 # --------------------------------------------------------------------------------------------------
@@ -281,11 +329,32 @@ Stmt.format(self, tokens: Vec[Token]) Doc:
 
 
 LetStmt.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = self.lhs.format(tokens)
+
+    if self.ty is Option.Some(ty):
+        doc += Doc.str(": ") + ty.format(tokens)
+
+    Doc.nested(4, doc + Doc.break_(1) + self.rhs.format(tokens))
 
 
 AssignStmt.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.nested(
+        4,
+        self.lhs.format(tokens)
+            + Doc.blank(1)
+            + self.op.format()
+            + Doc.break_(1)
+            + self.rhs.format(tokens))
+        .group()
+
+
+AssignOp.format(self) Doc:
+    Doc.str(match self:
+        AssignOp.Eq: "="
+        AssignOp.PlusEq: "+="
+        AssignOp.MinusEq: "-="
+        AssignOp.StarEq: "*="
+        AssignOp.CaretEq: "^=")
 
 
 ForStmt.format(self, tokens: Vec[Token]) Doc:
@@ -293,6 +362,7 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
 
 
 WhileStmt.format(self, tokens: Vec[Token]) Doc:
+    # TODO: Add loop label
     Doc.nested(
         4,
         Doc.nested(4, Doc.str("while ") + self.cond.format(tokens))
@@ -414,6 +484,21 @@ formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
     doc += Doc.char(']')
 
     doc
+
+
+formatNamedExpr(expr: Named[Expr], tokens: Vec[Token]) Doc:
+    match expr.name:
+        Option.None:
+            expr.node.format(tokens)
+
+        Option.Some(name):
+            Doc.nested(
+                4,
+                Doc.str(idText(name, tokens))
+                    + Doc.str(" =")
+                    + Doc.break_(1)
+                    + expr.node.format(tokens))
+                .group()
 
 
 idText(id: Id, tokens: Vec[Token]) Str:

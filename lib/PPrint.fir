@@ -169,6 +169,9 @@ Doc.group(self) Doc:
     else:
         Doc._Group(req, doc = self)
 
+Doc.grouped(doc: Doc) Doc:
+    doc.group()
+
 Doc.cat(self, doc2: Doc) Doc:
     if self is Doc._Empty:
         return doc2
