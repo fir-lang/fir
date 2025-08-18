@@ -532,6 +532,9 @@ type Expr:
     # A sequence: `[a, b, c]`, `[a = b, c = d]`, `Vec.[...]`. Can be empty.
     Seq(SeqExpr)
 
+    # A parenthesized expression.
+    Paren(Expr)
+
 impl Tokens[Expr]:
     firstToken(self: Expr) TokenIdx:
         match self:
@@ -555,6 +558,7 @@ impl Tokens[Expr]:
             Expr.Is(e): e.firstToken()
             Expr.Do(e): e.firstToken()
             Expr.Seq(e): e.firstToken()
+            Expr.Paren(e): e.firstToken()
 
     lastToken(self: Expr) TokenIdx:
         match self:
@@ -578,6 +582,7 @@ impl Tokens[Expr]:
             Expr.Is(e): e.lastToken()
             Expr.Do(e): e.lastToken()
             Expr.Seq(e): e.lastToken()
+            Expr.Paren(e): e.lastToken()
 
 type VarExpr(
     id: Id,

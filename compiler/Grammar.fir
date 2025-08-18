@@ -2285,19 +2285,22 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                         zeroOrMoreCursor0 = state._cursor
             let optionalCursor0 = state._cursor
             let symResult = try(||:
-                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+                let comma = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
+                    sym
                 else:
                     throw(state._errorCursor.unwrapOr(state._cursor))
-                ()
+                comma
             )
-            match symResult:
+            let comma = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     state.updateErrorCursor(err)
+                    Option.None
                 Result.Ok(ok):
                     ()
-            let exprs = (e0 = e0, es = es)
+                    Option.Some(ok)
+            let exprs = (e0 = e0, es = es, comma = comma)
             exprs
         )
         let exprs = match symResult:
@@ -2322,11 +2325,14 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                         _lastToken = TokenIdx(idx = last),
                     ))
                 Option.Some(fields):
-                    Expr.Record(RecordExpr(
-                        fields = once(fields.e0).chain(fields.es.iter()).toVec(),
-                        _firstToken = TokenIdx(idx = first),
-                        _lastToken = TokenIdx(idx = last),
-                    ))
+                    if fields.es.isEmpty() and fields.comma.isNone() and fields.e0.name.isNone():
+                        Expr.Paren(fields.e0.node)
+                    else:
+                        Expr.Record(RecordExpr(
+                            fields = once(fields.e0).chain(fields.es.iter()).toVec(),
+                            _firstToken = TokenIdx(idx = first),
+                            _lastToken = TokenIdx(idx = last),
+                        ))
         value
     )
     match altResult:

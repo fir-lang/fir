@@ -118,6 +118,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.Is(e): e.format(tokens)
         Expr.Do(e): e.format(tokens)
         Expr.Seq(e): e.format(tokens)
+        Expr.Paren(e): panic("TODO")
 
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when

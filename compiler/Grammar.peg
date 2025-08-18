@@ -485,8 +485,8 @@ simpleExpr Expr:
     con=constructor:
         Expr.ConstrSelect(con)
 
-    # Records: `(a, b)`, `(a = 1, b = 2)`
-    first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* ","?)? last=^ ")":
+    # Records and parenthesized expressions: `(1 + 2)`, `(a, b)`, `(a = 1, b = 2)`.
+    first=^ "(" exprs=(e0=parenExpr es=(_"," parenExpr)* comma=","?)? last=^ ")":
         match exprs:
             Option.None:
                 Expr.Record(RecordExpr(
@@ -495,11 +495,14 @@ simpleExpr Expr:
                     _lastToken = TokenIdx(idx = last),
                 ))
             Option.Some(fields):
-                Expr.Record(RecordExpr(
-                    fields = once(fields.e0).chain(fields.es.iter()).toVec(),
-                    _firstToken = TokenIdx(idx = first),
-                    _lastToken = TokenIdx(idx = last),
-                ))
+                if fields.es.isEmpty() and fields.comma.isNone() and fields.e0.name.isNone():
+                    Expr.Paren(fields.e0.node)
+                else:
+                    Expr.Record(RecordExpr(
+                        fields = once(fields.e0).chain(fields.es.iter()).toVec(),
+                        _firstToken = TokenIdx(idx = first),
+                        _lastToken = TokenIdx(idx = last),
+                    ))
 
     cur=^ "return" expr=inlineExpr?:
         Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
