@@ -169,6 +169,9 @@ Doc.group(self) Doc:
     else:
         Doc._Group(req, doc = self)
 
+Doc.grouped(doc: Doc) Doc:
+    doc.group()
+
 Doc.cat(self, doc2: Doc) Doc:
     if self is Doc._Empty:
         return doc2
@@ -177,6 +180,16 @@ Doc.cat(self, doc2: Doc) Doc:
         return self
 
     Doc._Cat(req = self._req() + doc2._req(), doc1 = self, doc2)
+
+Doc.flow[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
+    let ret = match iter.next():
+        Option.None: return Doc.empty()
+        Option.Some(doc): doc
+
+    for doc: Doc in iter:
+        ret += Doc.grouped(sep + doc)
+
+    ret
 
 impl Add[Doc]:
     __add(self: Doc, other: Doc) Doc: self.cat(other)
