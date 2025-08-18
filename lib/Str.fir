@@ -74,7 +74,7 @@ Str.lines(self) Lines:
     Lines(_str = self, _idx = 0)
 
 impl Eq[Str]:
-    __eq(self: Str, other: Str) Bool:
+    __eq(self, other: Str) Bool:
         if self.len() != other.len():
             return Bool.False
 
@@ -85,7 +85,7 @@ impl Eq[Str]:
         Bool.True
 
 impl Hash[Str]:
-    hash(self: Str) U32:
+    hash(self) U32:
         let hash: U32 = 2166136261
         for byte: U8 in self._bytes.iter():
             hash *= 16777619
@@ -93,7 +93,7 @@ impl Hash[Str]:
         hash
 
 impl ToStr[Str]:
-    toStr(self: Str) Str: self
+    toStr(self) Str: self
 
 type CharIter(
     # UTF-8 encoding of the string.
@@ -108,7 +108,7 @@ CharIter.asStr(self) Str:
     Str(_bytes = self._bytes.slice(self._idx, self._bytes.len()))
 
 impl Iterator[CharIter, Char, exn]:
-    next(self: CharIter) Option[Char] / exn:
+    next(self) Option[Char] / exn:
         if self._idx == self._bytes.len():
             return Option.None
 
@@ -123,7 +123,7 @@ type CharIndices(
 )
 
 impl Iterator[CharIndices, (char: Char, idx: U32), exn]:
-    next(self: CharIndices) Option[(char: Char, idx: U32)] / exn:
+    next(self) Option[(char: Char, idx: U32)] / exn:
         if self._idx == self._str.len():
             return Option.None
 
@@ -168,7 +168,7 @@ type SplitWhitespace(
 )
 
 impl Iterator[SplitWhitespace, Str, exn]:
-    next(self: SplitWhitespace) Option[Str] / exn:
+    next(self) Option[Str] / exn:
         let wordStart = self._idx
         let wordEnd = wordStart
         let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
@@ -208,7 +208,7 @@ type Lines(
 )
 
 impl Iterator[Lines, Str, exn]:
-    next(self: Lines) Option[Str] / exn:
+    next(self) Option[Str] / exn:
         let lineStart = self._idx
         let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
 
