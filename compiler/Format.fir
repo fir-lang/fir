@@ -55,6 +55,25 @@ TopDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 TypeDecl.format(self, tokens: Vec[Token]) Doc:
+    let doc = Doc.str("type ") + Doc.str(idText(self.name, tokens))
+
+    if not self.typeParams.isEmpty():
+        # Top-level declarations always start at column 0, and I don't think it'll be common to have
+        # so many type parameters the parameter list will need line breaks. For now print the header
+        # in one line.
+        doc += Doc.char('[')
+            + join(self.typeParams.iter().map(|id: Id|: Doc.str(idText(id, tokens))), Doc.str(", "))
+            + Doc.char(']')
+
+    if self.rhs is Option.Some(rhs):
+        doc += Doc.char(':') + Doc.hardLine()
+        doc += rhs.format(tokens)
+        doc = doc.nest(4)
+
+    doc
+
+
+TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
     panic("TODO")
 
 
