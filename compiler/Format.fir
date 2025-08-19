@@ -528,7 +528,25 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
 
 
 RecordPat.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = Doc.char('(') + Doc.break_(0)
+
+    let fieldIdx: U32 = 0
+    for field: Named[Pat] in self.fields.iter():
+        if fieldIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        fieldIdx += 1
+
+        doc += formatNamed(field, Pat.format, tokens)
+
+    if self.ignoreRest:
+        if fieldIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+
+        doc += Doc.str("..")
+
+    doc += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
 
 # --------------------------------------------------------------------------------------------------
