@@ -215,7 +215,7 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
             doc += Doc.char(',') + Doc.break_(1)
         argIdx += 1
 
-        doc += formatNamedExpr(arg, tokens)
+        doc += formatNamed(arg, Expr.format, tokens)
 
     if self.args.len() != 0:
         doc += Doc.whenNotFlat(Doc.char(','))
@@ -503,7 +503,28 @@ VarPat.format(self, tokens: Vec[Token]) Doc:
 
 
 ConstrPat.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = self.constr.format(tokens)
+
+    if not self.fields.isEmpty() or self.ignoreRest:
+        doc += Doc.char('(') + Doc.break_(0)
+
+        let fieldIdx: U32 = 0
+        for field: Named[Pat] in self.fields.iter():
+            if fieldIdx != 0:
+                doc += Doc.char(',') + Doc.break_(1)
+            fieldIdx += 1
+
+            doc += formatNamed(field, Pat.format, tokens)
+
+        if self.ignoreRest:
+            if fieldIdx != 0:
+                doc += Doc.char(',') + Doc.break_(1)
+
+            doc += Doc.str("..")
+
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
 
 RecordPat.format(self, tokens: Vec[Token]) Doc:
@@ -530,10 +551,10 @@ formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
     doc
 
 
-formatNamedExpr(expr: Named[Expr], tokens: Vec[Token]) Doc:
-    match expr.name:
+formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[Token]) Doc / exn:
+    match named.name:
         Option.None:
-            expr.node.format(tokens)
+            format(named.node, tokens)
 
         Option.Some(name):
             Doc.nested(
@@ -541,7 +562,7 @@ formatNamedExpr(expr: Named[Expr], tokens: Vec[Token]) Doc:
                 Doc.str(idText(name, tokens))
                     + Doc.str(" =")
                     + Doc.break_(1)
-                    + expr.node.format(tokens))
+                    + format(named.node, tokens))
                 .group()
 
 

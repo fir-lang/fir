@@ -428,7 +428,7 @@ impl Tokens[ConstrPat]:
 
 type RecordPat(
     fields: Vec[Named[Pat]],
-    ignoreRest:Bool,
+    ignoreRest: Bool,
     inferredTy: Option[Type],   # TODO: This should be type-checking type instead of AST type
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
