@@ -283,7 +283,31 @@ Alt.format(self, tokens: Vec[Token]) Doc:
 
 
 IfExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let firstBranch = self.branches.get(0)
+    let doc =
+        Doc.nested(
+            4,
+            Doc.str("if ")
+                + firstBranch.guard.format(tokens)
+                + Doc.char(':')
+                + Doc.hardLine()
+                + formatStmts(firstBranch.body, tokens))
+
+    for branch: (guard: Expr, body: Vec[Stmt]) in self.branches.iter().skip(1):
+        doc += Doc.hardLine()
+        doc += Doc.nested(
+            4,
+            Doc.str("elif ")
+                + branch.guard.format(tokens)
+                + Doc.char(':')
+                + Doc.hardLine()
+                + formatStmts(branch.body, tokens))
+
+    if self.elseBranch is Option.Some(body):
+        doc += Doc.hardLine()
+        doc += Doc.nested(4, Doc.str("else:") + Doc.hardLine() + formatStmts(body, tokens))
+
+    doc
 
 
 FnExpr.format(self, tokens: Vec[Token]) Doc:
