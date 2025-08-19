@@ -118,7 +118,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.Is(e): e.format(tokens)
         Expr.Do(e): e.format(tokens)
         Expr.Seq(e): e.format(tokens)
-        Expr.Paren(e): panic("TODO")
+        Expr.Paren(e): Doc.char('(') + e.format(tokens) + Doc.char(')')
 
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when
@@ -402,7 +402,17 @@ AssignOp.format(self) Doc:
 
 
 ForStmt.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    # TODO: Add loop label
+    let doc = Doc.str("for ") + self.pat.format(tokens)
+
+    if self.astTy is Option.Some(ty):
+        doc += Doc.str(": ") + ty.format(tokens)
+
+    doc += Doc.nested(
+        8,
+        Doc.str(" in") + Doc.break_(1) + self.expr.format(tokens) + Doc.char(':'))
+
+    doc + Doc.hardLine() + formatStmts(self.body, tokens)
 
 
 WhileStmt.format(self, tokens: Vec[Token]) Doc:
