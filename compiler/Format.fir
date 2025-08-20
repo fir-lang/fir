@@ -244,7 +244,17 @@ UnOpExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 RecordExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = Doc.char('(')
+
+    let fieldIdx: U32 = 0
+    for field: Named[Expr] in self.fields.iter():
+        if fieldIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        fieldIdx += 1
+
+        doc += formatNamed(field, Expr.format, tokens)
+
+    Doc.nested(4, doc + Doc.char(')'))
 
 
 ReturnExpr.format(self, tokens: Vec[Token]) Doc:
@@ -311,7 +321,40 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 FnExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    # assert(self.sig.context.typeParams.isEmpty)
+    # assert(self.sig.context.preds.isEmpty)
+    # assert(self.sig.self_ is SelfParam.No)
+
+    let doc = Doc.char('|')
+
+    let paramIdx: U32 = 0
+    for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+        if paramIdx != 0:
+            doc += Doc.str(", ")
+        paramIdx += 1
+
+        doc += Doc.str(idText(param.name, tokens))
+        if param.ty is Option.Some(ty):
+            doc += Doc.str(": ") + ty.format(tokens)
+
+    doc += Doc.char('|')
+
+    if self.sig.returnTy is Option.Some(ret):
+        doc += Doc.blank(1) + ret.format(tokens)
+
+    if self.sig.exceptions is Option.Some(exn):
+        doc += Doc.blank(1) + exn.format(tokens)
+
+    doc += Doc.char(':')
+
+    if self.body.len() > 1:
+        doc += Doc.hardLine()
+    else:
+        doc += Doc.break_(1)
+
+    doc += formatStmts(self.body, tokens)
+
+    doc.nest(4)
 
 
 IsExpr.format(self, tokens: Vec[Token]) Doc:
