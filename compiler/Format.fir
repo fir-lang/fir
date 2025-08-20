@@ -468,15 +468,84 @@ NamedType.format(self, tokens: Vec[Token]) Doc:
 
 
 RecordType.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = if self.isRow:
+        Doc.str("row(")
+    else:
+        Doc.char('(')
+
+    let fieldIdx: U32 = 0
+    for field: Named[Type] in self.fields.iter():
+        if fieldIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        fieldIdx += 1
+
+        doc += formatNamed(field, Type.format, tokens)
+
+    if self.extension is Option.Some(ext):
+        if not self.fields.isEmpty():
+            doc += Doc.str(", ..")
+        else:
+            doc += Doc.str("..")
+
+        doc += Doc.str(idText(ext, tokens))
+
+    doc + Doc.char(')')
 
 
 VariantType.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = Doc.char('[')
+
+    let altIdx: U32 = 0
+    for alt: VariantAlt in self.alts.iter():
+        if altIdx != 0:
+            doc += Doc.str(", ")
+        altIdx += 1
+
+        doc += alt.format(tokens)
+
+    if self.extension is Option.Some(ext):
+        if not self.alts.isEmpty():
+            doc += Doc.str(", ..")
+        else:
+            doc += Doc.str("..")
+
+        doc += Doc.str(idText(ext, tokens))
+
+    doc + Doc.char(']')
+
+
+VariantAlt.format(self, tokens: Vec[Token]) Doc:
+    let doc = Doc.str(idText(self.con, tokens))
+
+    if not self.fields.isEmpty():
+        doc += Doc.char('(') + Doc.break_(0)
+
+        let fieldIdx: U32 = 0
+        for field: Named[Type] in self.fields.iter():
+            if fieldIdx != 0:
+                doc += Doc.char(',') + Doc.break_(1)
+            fieldIdx += 1
+
+            doc += formatNamed(field, Type.format, tokens)
+
+        doc = Doc.nested(4, doc) + Doc.char(')')
+
+    doc
 
 
 FnType.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc =
+        Doc.str("Fn(")
+            + join(self.args.iter().map(|arg: Type|: arg.format(tokens)), Doc.str(", "))
+            + Doc.char(')')
+
+    if self.ret is Option.Some(ret):
+        doc += Doc.blank(1) + ret.format(tokens)
+
+    if self.exceptions is Option.Some(exn):
+        doc += Doc.blank(1) + exn.format(tokens)
+
+    doc
 
 
 # --------------------------------------------------------------------------------------------------
