@@ -90,7 +90,42 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = Doc.str("impl")
+
+    if not self.context.preds.isEmpty():
+        doc += Doc.char('[')
+
+        let predIdx: U32 = 0
+        for pred: Type in self.context.preds.iter():
+            if predIdx != 0:
+                doc += Doc.char(',') + Doc.break_(1)
+            predIdx += 1
+
+            doc += pred.format(tokens)
+
+        doc += Doc.char(']')
+
+    doc +=
+        Doc.blank(1)
+            + Doc.str(idText(self.trait_, tokens))
+            + Doc.char('[')
+
+    let tyIdx: U32 = 0
+    for ty: Type in self.tys.iter():
+        if tyIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        tyIdx += 1
+
+        doc += ty.format(tokens)
+
+    doc += Doc.char(']') + Doc.char(':') + Doc.hardLine()
+
+    doc += join(
+        self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
+        Doc.hardLine()
+    )
+
+    doc.nest(4)
 
 
 # --------------------------------------------------------------------------------------------------
