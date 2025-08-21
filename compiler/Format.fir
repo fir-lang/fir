@@ -137,7 +137,14 @@ ImportDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 TraitDecl.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    Doc.nested(
+        4,
+        Doc.str("trait ") + Doc.str(idText(self.name, tokens))
+            + Doc.char('[')
+            + join(self.typeParams.iter().map(|id: Id|: Doc.str(idText(id,tokens))), Doc.str(", "))
+            + Doc.str("]:")
+            + Doc.hardLine()
+            + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine() + Doc.hardLine()))
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
