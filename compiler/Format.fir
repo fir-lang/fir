@@ -129,7 +129,47 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 
 
 FunDecl.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    let doc = match self.parentTy:
+        Option.Some(id):
+            Doc.str(idText(id, tokens)) + Doc.char('.')
+        Option.None:
+            Doc.empty()
+
+    doc += Doc.str(idText(self.name, tokens))
+
+    if not self.sig.context.preds.isEmpty():
+        doc +=
+            Doc.char('[')
+                + join(self.sig.context.preds.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
+                + Doc.char(']')
+
+    doc += Doc.char('(')
+
+    let argIdx: U32 = 0
+    for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+        if argIdx != 0:
+            doc += Doc.char(',') + Doc.break_(1)
+        argIdx += 1
+
+        doc += Doc.str(idText(arg.name, tokens))
+
+        if arg.ty is Option.Some(ty):
+            doc += Doc.str(": ") + ty.format(tokens)
+
+    if self.sig.params.len() != 0:
+        doc += Doc.whenNotFlat(Doc.char(','))
+
+    if self.sig.returnTy is Option.Some(ret):
+        doc += Doc.blank(1) + ret.format(tokens)
+
+    if self.sig.exceptions is Option.Some(exn):
+        doc += Doc.blank(1) + exn.format(tokens)
+
+    if self.body is Option.Some(stmts):
+        doc += Doc.char(':') + Doc.hardLine() + formatStmts(stmts, tokens)
+        doc = Doc.nested(4, doc)
+
+    doc
 
 
 ImportDecl.format(self, tokens: Vec[Token]) Doc:
