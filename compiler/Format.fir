@@ -373,7 +373,13 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 UnOpExpr.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    self.op.format() + Doc.blank(1) + self.expr.format(tokens)
+
+
+UnOp.format(self) Doc:
+    match self:
+        UnOp.Not: Doc.str("not")
+        UnOp.Neg: Doc.char('-')
 
 
 RecordExpr.format(self, tokens: Vec[Token]) Doc:
