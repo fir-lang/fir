@@ -66,15 +66,66 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
             + Doc.char(']')
 
     if self.rhs is Option.Some(rhs):
-        doc += Doc.char(':') + Doc.hardLine()
-        doc += rhs.format(tokens)
-        doc = doc.nest(4)
+        doc = Doc.nested(4, doc + rhs.format(tokens))
 
     doc
 
 
 TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
-    panic("TODO")
+    match self:
+        TypeDeclRhs.Sum(decls):
+            Doc.char(':')
+                + Doc.hardLine()
+                + join(decls.iter().map(|decl: ConDecl|: decl.format(tokens)), Doc.hardLine())
+                + Doc.hardLine()
+
+        TypeDeclRhs.Product(fields):
+            fields.format(tokens)
+
+
+ConDecl.format(self, tokens: Vec[Token]) Doc:
+    Doc.str(idText(self.name, tokens)) + self.fields.format(tokens)
+
+
+ConFields.format(self, tokens: Vec[Token]) Doc:
+    match self:
+        ConFields.Empty:
+            Doc.empty()
+
+        ConFields.Named(fields):
+            let doc = Doc.char('(') + Doc.break_(0)
+
+            let fieldIdx: U32 = 0
+            for field: (name: Id, ty: Type) in fields.iter():
+                if fieldIdx != 0:
+                    doc += Doc.char(',') + Doc.break_(1)
+                fieldIdx += 1
+
+                doc +=
+                    Doc.str(idText(field.name, tokens))
+                        + Doc.str(": ")
+                        + field.ty.format(tokens)
+
+            if fields.len() != 0:
+                doc += Doc.whenNotFlat(Doc.char(','))
+
+            Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
+
+        ConFields.Unnamed(fields):
+            let doc = Doc.char('(') + Doc.break_(0)
+
+            let fieldIdx: U32 = 0
+            for field: Type in fields.iter():
+                if fieldIdx != 0:
+                    doc += Doc.char(',') + Doc.break_(1)
+                fieldIdx += 1
+
+                doc += field.format(tokens)
+
+            if fields.len() != 0:
+                doc += Doc.whenNotFlat(Doc.char(','))
+
+            Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
 
 FunDecl.format(self, tokens: Vec[Token]) Doc:
