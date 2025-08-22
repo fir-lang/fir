@@ -372,26 +372,44 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     # Binary operators are all left-associative, so the right-hand side can never be a `BinOp`
     # unless it's wrapped with a `Paren`.
     #
-    # When breaking print the operator before the right-hand side. Group associativity changes. For
-    # example:
-    #
-    #     <expr1> + <expr2> * <expr3> * <expr4> + <expr5>
-    #
-    # Should be formatted as: (when breaking)
-    #
-    #     <expr1>
-    #         + <expr2> * <expr3> * <expr4>
-    #         + <expr5>
-    #
-    # Or when breaking the inner group:
-    #
-    #     <expr1>
-    #         + <expr2>
-    #             * <expr3>
-    #             * <expr4>
-    #         + <expr5>
+    # Ignore associativities and print the operator before expressions when breaking into lines.
 
-    panic("TODO")
+    let rhs = self.right
+    let exprs: Vec[(expr: Expr, op: BinOp)] = Vec.withCapacity(1)
+
+    let left = self.left
+    while left is Expr.BinOp(binop):
+        exprs.push((expr = binop.right, op = binop.op))
+        left = binop.left
+
+    let doc = left.format(tokens)
+
+    while exprs.pop() is Option.Some((expr, op)):
+        doc += Doc.break_(1) + op.format() + Doc.blank(1) + expr.format(tokens)
+
+    doc += self.right.format(tokens)
+
+    doc.nest(4).group()
+
+
+BinOp.format(self) Doc:
+    match self:
+        BinOp.Add: Doc.char('+')
+        BinOp.And: Doc.str("and")
+        BinOp.BitAnd: Doc.str("&&")
+        BinOp.BitOr: Doc.str("||")
+        BinOp.Divide: Doc.char('/')
+        BinOp.Equal: Doc.str("==")
+        BinOp.Gt: Doc.char('>')
+        BinOp.GtEq: Doc.str(">=")
+        BinOp.LeftShift: Doc.str("<<")
+        BinOp.Lt: Doc.char('<')
+        BinOp.LtEq: Doc.str("<=")
+        BinOp.Multiply: Doc.char('*')
+        BinOp.NotEqual: Doc.str("!=")
+        BinOp.Or: Doc.str("or")
+        BinOp.RightShift: Doc.str(">>")
+        BinOp.Subtract: Doc.char('-')
 
 
 UnOpExpr.format(self, tokens: Vec[Token]) Doc:
