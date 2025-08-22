@@ -810,28 +810,30 @@ VarPat.format(self, tokens: Vec[Token]) Doc:
 
 
 ConstrPat.format(self, tokens: Vec[Token]) Doc:
-    let doc = self.constr.format(tokens)
+    let con = self.constr.format(tokens)
 
-    if not self.fields.isEmpty() or self.ignoreRest:
-        doc += Doc.char('(') + Doc.break_(0)
+    if self.fields.isEmpty() and not self.ignoreRest:
+        return con
 
-        let fieldIdx: U32 = 0
-        for field: Named[Pat] in self.fields.iter():
-            if fieldIdx != 0:
-                doc += Doc.char(',') + Doc.break_(1)
-            fieldIdx += 1
+    let args = Doc.char('(') + Doc.break_(0)
 
-            doc += formatNamed(field, Pat.format, tokens)
+    let fieldIdx: U32 = 0
+    for field: Named[Pat] in self.fields.iter():
+        if fieldIdx != 0:
+            args += Doc.char(',') + Doc.break_(1)
+        fieldIdx += 1
 
-        if self.ignoreRest:
-            if fieldIdx != 0:
-                doc += Doc.char(',') + Doc.break_(1)
+        args += formatNamed(field, Pat.format, tokens)
 
-            doc += Doc.str("..")
+    if self.ignoreRest:
+        if fieldIdx != 0:
+            args += Doc.char(',') + Doc.break_(1)
 
-        doc += Doc.whenNotFlat(Doc.char(','))
+        args += Doc.str("..")
 
-    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
+    args += Doc.whenNotFlat(Doc.char(','))
+
+    Doc.grouped(con + args.nest(4).group() + Doc.break_(0) + Doc.char(')'))
 
 
 RecordPat.format(self, tokens: Vec[Token]) Doc:
