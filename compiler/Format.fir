@@ -143,31 +143,33 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
                 + join(self.sig.context.preds.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
                 + Doc.char(']')
 
-    doc += Doc.char('(')
+    let argList = Doc.char('(') + Doc.break_(0)
 
     let argIdx: U32 = 0
     for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
         if argIdx != 0:
-            doc += Doc.char(',') + Doc.break_(1)
+            argList += Doc.char(',') + Doc.break_(1)
         argIdx += 1
 
-        doc += Doc.str(idText(arg.name, tokens))
+        argList += Doc.str(idText(arg.name, tokens))
 
         if arg.ty is Option.Some(ty):
-            doc += Doc.str(": ") + ty.format(tokens)
+            argList += Doc.str(": ") + ty.format(tokens)
 
     if self.sig.params.len() != 0:
-        doc += Doc.whenNotFlat(Doc.char(','))
+        argList += Doc.whenNotFlat(Doc.char(','))
+
+    argList = argList.nest(4).group() + Doc.break_(0) + Doc.char(')')
+    doc += argList.group()
 
     if self.sig.returnTy is Option.Some(ret):
         doc += Doc.blank(1) + ret.format(tokens)
 
     if self.sig.exceptions is Option.Some(exn):
-        doc += Doc.blank(1) + exn.format(tokens)
+        doc += Doc.str(" / ") + exn.format(tokens)
 
     if self.body is Option.Some(stmts):
-        doc += Doc.char(':') + Doc.hardLine() + formatStmts(stmts, tokens)
-        doc = Doc.nested(4, doc)
+        doc += Doc.nested(4, Doc.char(':') + Doc.hardLine() + formatStmts(stmts, tokens))
 
     doc
 
@@ -340,20 +342,24 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     |#
 
     # TODO: Add parens to function when necessary.
-    let doc = self.fun.format(tokens) + Doc.char('(') + Doc.break_(0)
+    let fun = self.fun.format(tokens).group()
+
+    let args = Doc.char('(') + Doc.break_(0)
 
     let argIdx: U32 = 0
     for arg: Named[Expr] in self.args.iter():
         if argIdx != 0:
-            doc += Doc.char(',') + Doc.break_(1)
+            args += Doc.char(',') + Doc.break_(1)
         argIdx += 1
 
-        doc += formatNamed(arg, Expr.format, tokens)
+        args += formatNamed(arg, Expr.format, tokens).group()
 
     if self.args.len() != 0:
-        doc += Doc.whenNotFlat(Doc.char(','))
+        args += Doc.whenNotFlat(Doc.char(','))
 
-    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
+    args = Doc.grouped(args.nest(4).group() + Doc.break_(0) + Doc.char(')'))
+
+    Doc.grouped(fun + args)
 
 
 IntExpr.format(self, tokens: Vec[Token]) Doc:
@@ -595,12 +601,12 @@ Stmt.format(self, tokens: Vec[Token]) Doc:
 
 
 LetStmt.format(self, tokens: Vec[Token]) Doc:
-    let doc = self.lhs.format(tokens)
+    let doc = Doc.str("let ") + self.lhs.format(tokens)
 
     if self.ty is Option.Some(ty):
         doc += Doc.str(": ") + ty.format(tokens)
 
-    Doc.nested(4, doc + Doc.break_(1) + self.rhs.format(tokens))
+    Doc.nested(4, doc + Doc.str(" =") + Doc.break_(1) + self.rhs.format(tokens).group()).group()
 
 
 AssignStmt.format(self, tokens: Vec[Token]) Doc:
@@ -625,16 +631,16 @@ AssignOp.format(self) Doc:
 
 ForStmt.format(self, tokens: Vec[Token]) Doc:
     # TODO: Add loop label
-    let doc = Doc.str("for ") + self.pat.format(tokens)
+    let header = Doc.str("for ") + self.pat.format(tokens)
 
     if self.astTy is Option.Some(ty):
-        doc += Doc.str(": ") + ty.format(tokens)
+        header += Doc.str(": ") + ty.format(tokens)
 
-    doc += Doc.nested(
-        8,
+    header += Doc.nested(
+        4,
         Doc.str(" in") + Doc.break_(1) + self.expr.format(tokens) + Doc.char(':'))
 
-    doc + Doc.hardLine() + formatStmts(self.body, tokens)
+    Doc.nested(4, header.group() + Doc.hardLine() + formatStmts(self.body, tokens))
 
 
 WhileStmt.format(self, tokens: Vec[Token]) Doc:
@@ -854,20 +860,12 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
 
 
 formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
-    let doc = Doc.empty()
-
     if tyArgs.isEmpty():
-        return doc
+        return Doc.empty()
 
-    doc += Doc.char('[')
-    let i: U32 = 0
-    for ty: Type in tyArgs.iter():
-        if i != 0:
-            doc += Doc.str(", ")
-        doc += ty.format(tokens)
-    doc += Doc.char(']')
-
-    doc
+    Doc.char('[')
+        + join(tyArgs.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
+        + Doc.char(']')
 
 
 formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[Token]) Doc / exn:
