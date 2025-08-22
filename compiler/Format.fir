@@ -369,6 +369,28 @@ CharExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 BinOpExpr.format(self, tokens: Vec[Token]) Doc:
+    # Binary operators are all left-associative, so the right-hand side can never be a `BinOp`
+    # unless it's wrapped with a `Paren`.
+    #
+    # When breaking print the operator before the right-hand side. Group associativity changes. For
+    # example:
+    #
+    #     <expr1> + <expr2> * <expr3> * <expr4> + <expr5>
+    #
+    # Should be formatted as: (when breaking)
+    #
+    #     <expr1>
+    #         + <expr2> * <expr3> * <expr4>
+    #         + <expr5>
+    #
+    # Or when breaking the inner group:
+    #
+    #     <expr1>
+    #         + <expr2>
+    #             * <expr3>
+    #             * <expr4>
+    #         + <expr5>
+
     panic("TODO")
 
 

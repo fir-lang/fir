@@ -29,6 +29,19 @@ main():
         .render(10)
     )
 
+    print("")
+
+    let binops =
+        Doc.nested(4, Doc.str("<expr1>") + Doc.break_(1) + Doc.char('+') + Doc.blank(1)
+            + Doc.nested(4, Doc.str("<expr2>") + Doc.break_(1) + Doc.char('*')
+                + Doc.blank(1) + Doc.str("<expr3>") + Doc.break_(1) + Doc.char('*')
+                + Doc.blank(1) + Doc.str("<expr4>")).group()
+            + Doc.break_(1) + Doc.char('+') + Doc.blank(1) + Doc.str("<expr5>")).group()
+
+    print(binops.render(80))
+    print(binops.render(40))
+    print(binops.render(20))
+
 
 joinBinOps(exprs: Vec[Str]) Doc:
     let doc = Doc.str(exprs.get(0))
