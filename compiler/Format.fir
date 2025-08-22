@@ -387,7 +387,7 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     while exprs.pop() is Option.Some((expr, op)):
         doc += Doc.break_(1) + op.format() + Doc.blank(1) + expr.format(tokens)
 
-    doc += self.right.format(tokens)
+    doc += Doc.break_(1) + self.op.format() + Doc.blank(1) + self.right.format(tokens)
 
     doc.nest(4).group()
 
