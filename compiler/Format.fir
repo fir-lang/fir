@@ -84,7 +84,7 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
             + Doc.char(']')
 
     if self.rhs is Option.Some(rhs):
-        doc = Doc.nested(4, doc + rhs.format(tokens))
+        doc += rhs.format(tokens)
 
     doc
 
@@ -92,10 +92,9 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
 TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
     match self:
         TypeDeclRhs.Sum(decls):
-            Doc.char(':')
+            Doc.nested(4, Doc.char(':')
                 + Doc.hardLine()
-                + join(decls.iter().map(|decl: ConDecl|: decl.format(tokens)), Doc.hardLine())
-                + Doc.hardLine()
+                + join(decls.iter().map(|decl: ConDecl|: decl.format(tokens)), Doc.hardLine()))
 
         TypeDeclRhs.Product(fields):
             fields.format(tokens)
@@ -204,7 +203,7 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
             + join(self.typeParams.iter().map(|id: Id|: Doc.str(idText(id,tokens))), Doc.str(", "))
             + Doc.str("]:")
             + Doc.hardLine()
-            + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine() + Doc.hardLine()))
+            + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine()))
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
@@ -240,7 +239,7 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
 
     doc += join(
         self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
-        Doc.hardLine()
+        Doc.hardLine() + Doc.hardLine()
     )
 
     doc.nest(4)
@@ -251,7 +250,7 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 Expr.format(self, tokens: Vec[Token]) Doc:
-    match self:
+    Doc.group(match self:
         Expr.Var(e): e.format(tokens)
         Expr.ConstrSelect(e): e.format(tokens)
         Expr.FieldSelect(e): e.format(tokens)
@@ -276,7 +275,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when
             # formatting.
-            panic("Expr.MethodSelect")
+            panic("Expr.MethodSelect"))
 
 
 VarExpr.format(self, tokens: Vec[Token]) Doc:
@@ -325,12 +324,13 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
 
     let doc = selection.object.format(tokens)
     while fields.pop() is Option.Some((field, tyArgs)):
-        doc += Doc.break_(0)
-            + Doc.char('.')
-            + Doc.str(idText(field, tokens))
-            + formatTyArgs(tyArgs, tokens)
+        doc += Doc.nested(4,
+            Doc.break_(0)
+                + Doc.char('.')
+                + Doc.str(idText(field, tokens))
+                + formatTyArgs(tyArgs, tokens)).group()
 
-    doc.nest(4).group()
+    doc.group()
 
 
 AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
@@ -341,7 +341,6 @@ AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
             + Doc.char('.')
             + Doc.str(idText(self.member, tokens))
             + formatTyArgs(self.userTyArgs, tokens))
-        .group()
 
 
 CallExpr.format(self, tokens: Vec[Token]) Doc:
@@ -360,7 +359,7 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     |#
 
     # TODO: Add parens to function when necessary.
-    let fun = self.fun.format(tokens).group()
+    let fun = self.fun.format(tokens)
 
     let args = Doc.char('(') + Doc.break_(0)
 
@@ -375,7 +374,7 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     if self.args.len() != 0:
         args += Doc.whenNotFlat(Doc.char(','))
 
-    args = Doc.grouped(args.nest(4).group() + Doc.break_(0) + Doc.char(')'))
+    args = Doc.grouped(args.nest(4) + Doc.break_(0) + Doc.char(')'))
 
     Doc.grouped(fun + args)
 
@@ -413,7 +412,7 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
 
     doc += Doc.break_(1) + self.op.format() + Doc.blank(1) + self.right.format(tokens)
 
-    doc.nest(4).group()
+    doc.nest(4)
 
 
 BinOp.format(self) Doc:
@@ -469,7 +468,6 @@ ReturnExpr.format(self, tokens: Vec[Token]) Doc:
             Doc.nested(
                 4,
                 Doc.str("return") + Doc.break_(1) + expr.format(tokens))
-                .group()
 
 
 MatchExpr.format(self, tokens: Vec[Token]) Doc:
@@ -492,7 +490,7 @@ Alt.format(self, tokens: Vec[Token]) Doc:
 
     let body = formatStmts(self.rhs, tokens)
 
-    Doc.nested(4, doc + Doc.char(':') + Doc.hardLine() + body)
+    Doc.nested(4, doc + Doc.char(':') + Doc.break_(1) + body).group()
 
 
 IfExpr.format(self, tokens: Vec[Token]) Doc:
@@ -567,7 +565,6 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
             + Doc.break_(1)
             + Doc.str("is ")
             + self.pat.format(tokens))
-        .group()
 
 
 DoExpr.format(self, tokens: Vec[Token]) Doc:
@@ -625,7 +622,7 @@ formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
-    match self:
+    Doc.group(match self:
         Stmt.Let(s): s.format(tokens)
         Stmt.Assign(s): s.format(tokens)
         Stmt.Expr(s): s.format(tokens)
@@ -633,7 +630,7 @@ Stmt.format(self, tokens: Vec[Token]) Doc:
         Stmt.While(s): s.format(tokens)
         Stmt.Loop(s): s.format(tokens)
         Stmt.Break(s): s.format(tokens)
-        Stmt.Continue(s): s.format(tokens)
+        Stmt.Continue(s): s.format(tokens))
 
 
 LetStmt.format(self, tokens: Vec[Token]) Doc:
@@ -642,18 +639,15 @@ LetStmt.format(self, tokens: Vec[Token]) Doc:
     if self.ty is Option.Some(ty):
         doc += Doc.str(": ") + ty.format(tokens)
 
-    Doc.nested(4, doc + Doc.str(" =") + Doc.break_(1) + self.rhs.format(tokens).group()).group()
+    doc + Doc.str(" = ") + self.rhs.format(tokens)
 
 
 AssignStmt.format(self, tokens: Vec[Token]) Doc:
-    Doc.nested(
-        4,
-        self.lhs.format(tokens)
-            + Doc.blank(1)
-            + self.op.format()
-            + Doc.break_(1)
-            + self.rhs.format(tokens))
-        .group()
+    self.lhs.format(tokens)
+        + Doc.blank(1)
+        + self.op.format()
+        + Doc.blank(1)
+        + self.rhs.format(tokens)
 
 
 AssignOp.format(self) Doc:
@@ -753,7 +747,7 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
 
         doc += Doc.str(idText(ext, tokens))
 
-    doc + Doc.char(')')
+    Doc.grouped(doc + Doc.char(')'))
 
 
 VariantType.format(self, tokens: Vec[Token]) Doc:
