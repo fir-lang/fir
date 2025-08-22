@@ -38,7 +38,25 @@ showUsageAndExit() a:
 
 
 formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
-    join(mod.iter().map(|decl: TopDecl|: decl.format(tokens)), Doc.hardLine() + Doc.hardLine())
+    let doc = Doc.empty()
+    let declIdx: U32 = 0
+
+    # Print imports (which should come first) without empty lines in between.
+    while mod.getOpt(declIdx) is Option.Some(TopDecl.Import(importDecl)):
+        if declIdx != 0:
+            doc += Doc.hardLine()
+        doc += importDecl.format(tokens)
+        declIdx += 1
+
+    # Other top-level items get two empty lines in between.
+    let emptyLines = Doc.hardLine() + Doc.hardLine() + Doc.hardLine()
+    while declIdx < mod.len():
+        if declIdx != 0:
+            doc += emptyLines
+        doc += mod.get(declIdx).format(tokens)
+        declIdx += 1
+
+    doc
 
 
 # --------------------------------------------------------------------------------------------------
@@ -585,7 +603,25 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
-    join(stmts.iter().map(|stmt: Stmt|: stmt.format(tokens)), Doc.hardLine())
+    if stmts.isEmpty():
+        Doc.empty()
+
+    let lastStmt = stmts.get(0)
+    let doc = lastStmt.format(tokens)
+
+    for stmt: Stmt in stmts.iter().skip(1):
+        doc += Doc.hardLine()
+
+        # When we have empty lines between the statements, leave one empty line between the
+        # statements.
+        if tokens.get(stmt.firstToken().idx).line - tokens.get(lastStmt.lastToken().idx).line > 1:
+            doc += Doc.hardLine()
+
+        doc += stmt.format(tokens)
+
+        lastStmt = stmt
+
+    doc
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
