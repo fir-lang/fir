@@ -678,6 +678,7 @@ WhileStmt.format(self, tokens: Vec[Token]) Doc:
     Doc.nested(
         4,
         Doc.nested(4, Doc.str("while ") + self.cond.format(tokens))
+            + Doc.char(':')
             + Doc.hardLine()
             + formatStmts(self.body, tokens))
 
