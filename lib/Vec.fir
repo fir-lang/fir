@@ -57,6 +57,13 @@ Vec.push(self: Vec[t], elem: t):
     self._data.set(self._len, elem)
     self._len += 1
 
+Vec.extend[Iterator[iter, t, exn]](self: Vec[t], iter: iter) / exn:
+    if iter.size[iter, t, exn, exn]() is Option.Some(size):
+        self.reserve(size)
+
+    for item: t in iter:
+        self.push(item)
+
 Vec.insert(self: Vec[t], idx: U32, elem: t):
     if idx == self.len():
         self.push(elem)
