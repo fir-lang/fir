@@ -15,7 +15,7 @@ check:
 watch:
     echo src/parser.lalrpop | entr -r lalrpop src/parser.lalrpop & cargo watch
 
-test: build interpreter_unit_test interpreter_golden_test compiler_unit_test compiler_golden_test
+test: build interpreter_unit_test interpreter_golden_test compiler_unit_test compiler_golden_test formatter_golden_test
 
 interpreter_unit_test:
     cargo test
@@ -47,6 +47,13 @@ compiler_update_goldens:
     # them.
     for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
     for f in tools/peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+
+formatter_golden_test:
+    goldentests compiler/tests/format.sh compiler/tests/format '# '
+
+formatter_update_goldens:
+    goldentests compiler/tests/format.sh compiler/tests/format '# ' --overwrite
+    for f in compiler/tests/format/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
     cargo build
