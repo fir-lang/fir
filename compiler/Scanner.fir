@@ -333,3 +333,24 @@ scannerDumpTokens(args: Array[Str]) () / []:
             tokens
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
+
+
+## Check that tokens are sorted based on line and column.
+##
+## This mainly checks the comment tokens as that's where things get tricky.
+##
+## When generating indentation tokens we ignore comments, but we still add them to the tokens as
+## tools need comment tokens. This pass makes sure the comment tokens are added at the right places.
+sanityCheckTokens(tokens: Vec[Token]):
+    if tokens.isEmpty():
+        return
+
+    for i: U32 in range(u32(2), tokens.len()):
+        let t0 = tokens.get(i - 1)
+        let t1 = tokens.get(i)
+
+        # Note: indentation tokens are generated at the same location
+        let ok = t0.line < t1.line or (t0.line == t1.line and t0.col <= t1.col)
+
+        if not ok:
+            panic("Token at index `i-1`=`t0`, index `i`=`t1`")

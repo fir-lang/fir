@@ -19,6 +19,9 @@ main(args: Array[Str]):
         Result.Ok(tokens):
             tokens
 
+    # print(tokens)
+    # sanityCheckTokens(tokens)
+
     let parserState = ParserState.new(tokens)
 
     let tree = match try(||: module(parserState)):
@@ -622,6 +625,10 @@ formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
+    # let comment = findCommentBefore(self.firstToken(), tokens)
+    # if comment is Option.Some(token):
+    #     let token = tokens.get(token.idx)
+    #     print(token)
     Doc.group(match self:
         Stmt.Let(s): s.format(tokens)
         Stmt.Assign(s): s.format(tokens)
@@ -933,3 +940,19 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
         doc += sep + d
 
     doc
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+## Find the index of the first comment token before `token`.
+findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
+    let idx = token.idx
+
+    while idx != 0 and tokens.get(idx - 1).kind is TokenKind.Comment:
+        idx -= 1
+
+    if idx == token.idx:
+        Option.None
+    else:
+        Option.Some(TokenIdx(idx = idx))
