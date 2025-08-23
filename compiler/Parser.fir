@@ -36,10 +36,8 @@ main(args: Array[Str]):
                 panic("Parse error: unexpected end of input")
             else:
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
-        Result.Ok(tree): tree
-
-    if not parserState.allConsumed():
-        print("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`")
+        Result.Ok(tree):
+            tree
 
     # if printAst:
     #     let buf = StrBuf.withCapacity(1_000_000)
