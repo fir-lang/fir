@@ -25,8 +25,9 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
         newTokens,
         (line = u32(0), col = u32(0)),
         IndentedDelimKind.File,
-        Option.None,
     )
+
+    sanityCheckTokens(newTokens)
 
     newTokens
 
@@ -59,7 +60,6 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     newTokens: Vec[Token],
     ldelimLoc: (line: U32, col: U32),
     delimKind: IndentedDelimKind,
-    lastLoc: Option[(line: U32, col: U32)]
 ) (line: U32, col: U32) / [ScannerError, ..exn]:
     while tokens.peek() is Option.Some(token) and token.isTrivia():
         let _: Option[Token] = tokens.next()
@@ -75,11 +75,11 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                     msg = "unterminated '`delimKind.openingDelim()`'"
                 ))
 
-    let generateIndent = lastLoc.isSome()
+    let generateIndent = Bool.False
 
-    let lastLoc: (line: U32, col: U32) = lastLoc.unwrapOrElse(||:
+    let lastLoc: (line: U32, col: U32) = do:
         let tok = tokens.peek().unwrap()
-        (line = tok.line, col = tok.col))
+        (line = tok.line, col = tok.col)
 
     let indentStack: Vec[U32] = Vec.[lastLoc.col]
 
@@ -145,7 +145,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 lastLoc = scanNonIndented(tokens, newTokens, l, NonIndentedDelimKind.Bracket)
 
             TokenKind.LBrace:
-                lastLoc = scanIndented(tokens, newTokens, l, IndentedDelimKind.Brace, Option.None)
+                lastLoc = scanIndented(tokens, newTokens, l, IndentedDelimKind.Brace)
 
             TokenKind.RParen:
                 throw(~ScannerError(
@@ -237,7 +237,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 lastLoc = scanNonIndented(tokens, newTokens, l, NonIndentedDelimKind.Bracket)
 
             TokenKind.LBrace:
-                lastLoc = scanIndented(tokens, newTokens, l, IndentedDelimKind.Brace, Option.None)
+                lastLoc = scanIndented(tokens, newTokens, l, IndentedDelimKind.Brace)
 
             TokenKind.RBrace:
                 throw(~ScannerError(
@@ -247,6 +247,11 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 ))
 
             TokenKind.Colon if tokens.peek() is Option.Some(tNext) and tNext.line != lastLoc.line:
+                # `scanIndented` will generate indentation tokens for the indented block. Generate
+                # the wrapping `NEWLINE` + `INDENT` and `DEDENT` here.
+                newTokens.push(newline(lastLoc))
+                newTokens.push(indent((line = lastLoc.line + 1, col = 0)))
+
                 lastLoc = scanIndented(
                     tokens,
                     newTokens,
@@ -255,14 +260,16 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                     match delimKind:
                         NonIndentedDelimKind.Paren: IndentedDelimKind.Paren
                         NonIndentedDelimKind.Bracket: IndentedDelimKind.Bracket,
-                    # Somewhat hacky: pass column 0 so that we consider the next line as indented
-                    # even if it's dedented.
-                    Option.Some((
-                        line = lastLoc.line,
-                        col = 0,
-                    )),
                 )
-                match newTokens.last().unwrap().kind:
+
+                # `scanIndented` will stop at a ',', ')', or ']'. Pop the last token to generate
+                # `DEDENT` before it.
+                let lastToken = newTokens.pop().unwrap()
+                newTokens.push(dedent((line = lastToken.line, col = lastToken.col)))
+
+                newTokens.push(lastToken)
+
+                match lastToken.kind:
                     TokenKind.Comma:
                         continue
                     TokenKind.RParen:
