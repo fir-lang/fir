@@ -135,7 +135,14 @@ where
 
         if l.line != last_loc.line {
             // Generate indentation tokens.
-            let last_indent = *indent_stack.last().unwrap();
+            let last_indent = *indent_stack.last().unwrap_or_else(|| {
+                panic!(
+                    "{}:{}:{}: BUG: empty indentation stack when scanning",
+                    module,
+                    l.line + 1,
+                    l.col + 1
+                )
+            });
             match l.col.cmp(&last_indent) {
                 Ordering::Greater => {
                     if generate_indent {

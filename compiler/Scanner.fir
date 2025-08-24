@@ -109,7 +109,9 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
 
         if l.line != lastLoc.line:
             # Generate indentation tokens.
-            let lastIndent = indentStack.last().unwrap()
+            let lastIndent = indentStack.last().unwrapOrElse(
+                ||: panic("`l.line + 1`:`l.col + 1`: BUG: Empty indentation stack when scanning")
+            )
             match l.col.cmp(lastIndent):
                 Ordering.Greater:
                     if generateIndent:
