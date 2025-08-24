@@ -22,7 +22,6 @@ where
             byte_idx: 0,
         },
         IndentedDelimKind::File,
-        None,
     );
     assert!(tokens.next().is_none());
     new_tokens
@@ -66,7 +65,6 @@ pub fn scan_indented<I>(
     new_tokens: &mut Vec<(Loc, Token, Loc)>,
     ldelim_loc: Loc,
     delim_kind: IndentedDelimKind,
-    last_loc: Option<Loc>,
 ) -> Loc
 where
     I: Iterator<Item = (Loc, Token, Loc)>,
@@ -99,8 +97,8 @@ where
         }
     }
 
-    let mut generate_indent = last_loc.is_some();
-    let mut last_loc: Loc = last_loc.unwrap_or_else(|| tokens.peek().unwrap().0);
+    let mut generate_indent = false;
+    let mut last_loc: Loc = tokens.peek().unwrap().0;
     let mut indent_stack: Vec<u32> = vec![last_loc.col];
 
     while let Some((l, t, r)) = tokens.next() {
@@ -192,14 +190,7 @@ where
             }
 
             TokenKind::LBrace => {
-                last_loc = scan_indented(
-                    tokens,
-                    module,
-                    new_tokens,
-                    l,
-                    IndentedDelimKind::Brace,
-                    None,
-                );
+                last_loc = scan_indented(tokens, module, new_tokens, l, IndentedDelimKind::Brace);
             }
 
             TokenKind::RParen => {
@@ -321,14 +312,7 @@ where
             }
 
             TokenKind::LBrace => {
-                last_loc = scan_indented(
-                    tokens,
-                    module,
-                    new_tokens,
-                    l,
-                    IndentedDelimKind::Brace,
-                    None,
-                );
+                last_loc = scan_indented(tokens, module, new_tokens, l, IndentedDelimKind::Brace);
             }
 
             TokenKind::RBrace => {
@@ -346,6 +330,16 @@ where
                     && l.line != last_loc.line
                 {
                     let l = *l;
+
+                    // `scanIndented` will generate indentation tokens for the indented block.
+                    // Generate the wrapping `NEWLINE` + `INDENT` and `DEDENT` here.
+                    new_tokens.push(newline(last_loc));
+                    new_tokens.push(indent(Loc {
+                        line: last_loc.line + 1,
+                        col: 0,
+                        byte_idx: last_loc.byte_idx + 1,
+                    }));
+
                     last_loc = scan_indented(
                         tokens,
                         module,
@@ -357,15 +351,21 @@ where
                             NonIndentedDelimKind::Paren => IndentedDelimKind::Paren,
                             NonIndentedDelimKind::Bracket => IndentedDelimKind::Bracket,
                         },
-                        // Somewhat hacky: pass column 0 so that we consider the next line as
-                        // indented even if it's dedented.
-                        Some(Loc {
-                            line: last_loc.line,
-                            col: 0,
-                            byte_idx: 0,
-                        }),
                     );
-                    let last_tok_kind = new_tokens.last().unwrap().1.kind;
+
+                    // `scanIndented` will stop at a ',', ')', or ']'. Pop the last token to generate
+                    // `DEDENT` before it.
+                    let last_token = new_tokens.pop().unwrap();
+                    let last_tok_kind = last_token.1.kind;
+
+                    new_tokens.push(dedent(Loc {
+                        line: last_token.0.line,
+                        col: last_token.0.col,
+                        byte_idx: last_token.0.byte_idx,
+                    }));
+
+                    new_tokens.push(last_token);
+
                     match last_tok_kind {
                         TokenKind::Comma => {
                             continue;

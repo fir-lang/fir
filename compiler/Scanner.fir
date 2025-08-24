@@ -27,6 +27,7 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
         IndentedDelimKind.File,
     )
 
+    # TODO: Make this a debug assertion.
     sanityCheckTokens(newTokens)
 
     newTokens
