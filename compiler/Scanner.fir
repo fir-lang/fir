@@ -23,9 +23,7 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
         Option.None: return newTokens
         Option.Some(t): t
 
-    let startLoc = (line = firstToken.line, col = firstToken.col)
-
-    scanIndented(tokenIter, newTokens, startLoc)
+    scanIndented(tokenIter, newTokens, firstToken.col)
 
     # TODO: Make this a debug assertion.
     sanityCheckTokens(newTokens)
@@ -40,59 +38,54 @@ scan(tokens: Vec[Token]) Vec[Token] / [ScannerError, ..exn]:
 ## - `:` followed by a token in a new line
 ## - `{`
 ##
-## In both cases, `start_loc` should be the location of the token of the first token of the block.
-## I.e. not the location of `{` but the token after it.
+## In both cases, `blockCol` should be the column number of the first token in the indented block.
+## I.e. the column of NOT the `{` but the first non-trivia token after it.
 ##
 ## This function does not consume the token terminating the block, i.e. `}` or the dedented token.
 scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     tokens: Peekable[iter, Token, [ScannerError, ..exn]],
     newTokens: Vec[Token],
-    startLoc: (line: U32, col: U32),
+    blockCol: U32,
 ) / [ScannerError, ..exn]:
-    let generateNewline = Bool.True
-    let lastLoc = startLoc
+    # Don't generate `NEWLINE` before the first token of the block.
+    let generateNewline = Bool.False
 
     while peek(tokens) is Option.Some(t):
         if t.kind is TokenKind.RParen | TokenKind.RBracket | TokenKind.RBrace | TokenKind.Comma:
-            if generateNewline:
-                newTokens.push(newline(lastLoc))
+            if generateNewline and newTokens.last() is Option.Some(tLast):
+                newTokens.push(newline(tLast.rightLoc()))
             return
 
-        if t.line != lastLoc.line:
-            match t.col.cmp(startLoc.col):
+        if newTokens.last() is Option.Some(tLast) and t.line != tLast.line:
+            match t.col.cmp(blockCol):
                 Ordering.Greater: ()
 
                 Ordering.Equal:
                     if generateNewline:
-                        newTokens.push(newline(lastLoc))
+                        newTokens.push(newline(tLast.rightLoc()))
 
                 Ordering.Less:
                     if generateNewline:
-                        newTokens.push(newline(lastLoc))
+                        newTokens.push(newline(tLast.rightLoc()))
                     return
 
         generateNewline = Bool.True
 
-        tokens.next[Peekable[iter, Token, [ScannerError, ..exn]], Token, [ScannerError, ..exn]]() # increment the iterator
-
-        lastLoc = t.rightLoc()
-
+        # Consume the peeked token.
+        tokens.next[Peekable[iter, Token, [ScannerError, ..exn]], Token, [ScannerError, ..exn]]()
         newTokens.push(t)
 
         match t.kind:
             TokenKind.LParen | TokenKind.LParenRow:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Paren)
-                lastLoc = newTokens.last().unwrap().rightLoc()
 
             TokenKind.LBracket | TokenKind.LBracketRow | TokenKind.UpperIdDotLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
-                lastLoc = newTokens.last().unwrap().rightLoc()
 
             TokenKind.LBrace:
                 match peek(tokens):
                     Option.Some(tNext):
-                        let startLoc = (line = tNext.line, col = tNext.col)
-                        scanIndented(tokens, newTokens, startLoc)
+                        scanIndented(tokens, newTokens, tNext.col)
                         match next(tokens):
                             Option.Some(t) if t.kind is TokenKind.RBrace:
                                 newTokens.push(t)
@@ -102,34 +95,40 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                                     col = t.col,
                                     msg = "unterminated '{'"
                                 ))
-                        lastLoc = newTokens.last().unwrap().rightLoc()
                         generateNewline = Bool.False
 
                     Option.None:
                         return
 
-            TokenKind.Colon if peek(tokens) is Option.Some(tNext) and tNext.line != lastLoc.line:
+            TokenKind.Colon if peek(tokens) is Option.Some(tNext) and tNext.line != t.line:
                 # `scanIndented` will generate indentation tokens for the indented block.
                 # Generate the wrapping `NEWLINE` + `INDENT` and `DEDENT` here.
-                newTokens.push(newline(lastLoc))
-                newTokens.push(indent((line = lastLoc.line + 1, col = 0)))
+                let tRightLoc = t.rightLoc()
+                newTokens.push(newline(t.rightLoc()))
+                # TODO: We could generate INDENT at the line of the next non-trivia token.
+                # I.e. in code like:
+                #
+                #     do:
+                #         # hi
+                #         f()
+                #
+                # Generate it on the line of `f()` instead of `# hi`.
+                newTokens.push(indent((line = tRightLoc.line + 1, col = 0)))
 
-                scanIndented(tokens, newTokens, (line = tNext.line, col = tNext.col))
-
-                # Q: Should `scan_indented` return the last token location?
-                lastLoc = newTokens.last().unwrap().rightLoc()
+                scanIndented(tokens, newTokens, tNext.col)
 
                 # Don't generate `NEWLINE` after a recursive call: the block will end with a
                 # `NEWLINE` when it's ends with a non-block, or or it'll end with a `DEDENT`
                 # when it ends with a block. In both cases we don't want a `NEWLINE`.
                 generateNewline = Bool.False
 
-                newTokens.push(dedent(lastLoc))
+                let tLast = newTokens.last().unwrap()
+                newTokens.push(dedent(tLast.rightLoc()))
 
             _: ()
 
-    if generateNewline:
-        newTokens.push(newline(lastLoc))
+    if generateNewline and newTokens.last() is Option.Some(tLast):
+        newTokens.push(newline(tLast.rightLoc()))
 
 
 type NonIndentedDelimKind:
@@ -183,8 +182,8 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.LBrace:
-                let startLoc = peek(tokens).unwrap().rightLoc()
-                scanIndented(tokens, newTokens, startLoc)
+                let tNext = peek(tokens).unwrap()
+                scanIndented(tokens, newTokens, tNext.col)
                 match next(tokens):
                     Option.Some(t) if t.kind is TokenKind.RBrace:
                         newTokens.push(t)
@@ -208,7 +207,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
                 newTokens.push(newline(t.rightLoc()))
                 newTokens.push(indent((line = t.rightLoc().line + 1, col = 0)))
 
-                scanIndented(tokens, newTokens, (line = tNext.line, col = tNext.col))
+                scanIndented(tokens, newTokens, tNext.col)
 
                 # `scanIndented` will stop at a ',', ')', or ']'. Generate `DEDENT` before the
                 # next token.
