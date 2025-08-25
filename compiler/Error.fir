@@ -5,7 +5,7 @@ type Error(
 
 impl ToStr[Error]:
     toStr(self: Error) Str:
-        "`self.loc.line + 1`:`self.loc.col + 1`: `self.msg`"
+        "`self.loc.file`:`self.loc.line + 1`:`self.loc.col + 1`: `self.msg`"
 
 type AssertionError(
     msg: Str,

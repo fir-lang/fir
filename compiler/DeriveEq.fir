@@ -19,7 +19,7 @@ gen(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
 
     if error is Option.Some(error):
-        panic(lexerErrorStr(error))
+        panic(error.toStr())
 
     tokens = match try(||: scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
