@@ -891,6 +891,9 @@ tokensToCode(tokens: Vec[Token]) Str / exn:
     let col0 = lastCol
 
     for token: Token in tokens.iter():
+        if token.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            continue
+
         if token.line != lastLine:
             out.push('\n')
             lastCol = col0

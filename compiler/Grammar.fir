@@ -1981,7 +1981,6 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
             if pfx is Option.Some(pfx):
                 match pfx:
                     ExprPrefix.Tilde(token):
-            
                         ()
                     ExprPrefix.Minus(token):
                         ret = Expr.UnOp(UnOpExpr(
@@ -4110,7 +4109,6 @@ pat(state: ParserState[Token]) Pat / U32:
             if ps.isEmpty():
                 p0
             else:
-            
                 let pRet = ps.pop().unwrap().p
                 if ps.isEmpty():
                     Pat.Or(p0, pRet)
