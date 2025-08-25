@@ -764,10 +764,10 @@ Lexer._singleLineComment(self) Token:
         if c == '\n':
             self._col = 0
             self._line += 1
-            # NB. This includes the newline.
+            # NB. This DOES NOT include the newline.
             return Token(
                 kind = TokenKind.Comment,
-                text = self._input.substr(startByteIdx, self._byteIdx),
+                text = self._input.substr(startByteIdx, self._byteIdx - 1),
                 byteIdx = startByteIdx,
                 line = startLine,
                 col = startCol
