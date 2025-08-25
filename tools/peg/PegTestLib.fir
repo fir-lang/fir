@@ -21,7 +21,7 @@ runParser(
     let (tokens, error) = tokenize("<test input>", input)
 
     if error is Option.Some(error):
-        panic(lexerErrorStr(error))
+        panic(error.toStr())
 
     if runScan:
         tokens = match try(||: scan[row[]](tokens)):
@@ -95,7 +95,3 @@ runTestIndent[ToStr[nt]](
             Bool.False
     print("")
     result
-
-
-lexerErrorStr(err: Error) Str:
-    "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"

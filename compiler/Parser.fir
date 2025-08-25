@@ -20,7 +20,7 @@ main(args: Array[Str]):
 
     let (tokens, error) = tokenize(path, fileContents)
     if error is Option.Some(error):
-        print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+        print("ERROR: `error`")
 
     let tokens = match try(||: scan[row[]](tokens)):    # Explicitly close the variant (issue #49).
         Result.Err(~ScannerError(line, col, msg)):

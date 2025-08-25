@@ -94,7 +94,7 @@ lexerDumpTokens(args: Array[Str]) () / []:
     let (tokens, error) = tokenize(file, fileContents)
     tokens = _combineTokens(fileContents, tokens)
     if error is Option.Some(error):
-        print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+        print("ERROR: `error`")
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
 
