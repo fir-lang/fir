@@ -3,6 +3,10 @@ type Error(
     msg: Str,
 )
 
+impl ToStr[Error]:
+    toStr(self: Error) Str:
+        "`self.loc.line + 1`:`self.loc.col + 1`: `self.msg`"
+
 type AssertionError(
     msg: Str,
 )
