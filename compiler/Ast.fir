@@ -4,6 +4,14 @@ import Token    # imports IntKind
 
 type TokenIdx(idx: U32)
 
+impl Step[TokenIdx]:
+    step(self: TokenIdx) TokenIdx:
+        TokenIdx(idx = self.idx + 1)
+
+impl Ord[TokenIdx]:
+    cmp(self: TokenIdx, other: TokenIdx) Ordering:
+        self.idx.cmp(other.idx)
+
 trait Tokens[t]:
     firstToken(self: t) TokenIdx
     lastToken(self: t) TokenIdx

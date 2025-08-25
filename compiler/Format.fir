@@ -945,14 +945,23 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
 # --------------------------------------------------------------------------------------------------
 
 
-## Find the index of the first comment token before `token`.
+## Find the beginning of comment tokens before `token`.
 findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
     let idx = token.idx
+    let foundComment = Bool.False
 
-    while idx != 0 and tokens.get(idx - 1).kind is TokenKind.Comment:
-        idx -= 1
+    while idx != 0:
+        let prev = tokens.get(idx - 1)
 
-    if idx == token.idx:
-        Option.None
-    else:
+        if prev.kind is TokenKind.Newline | TokenKind.Dedent | TokenKind.Indent:
+            idx -= 1
+        elif prev.kind is TokenKind.Comment:
+            idx -= 1
+            foundComment = Bool.True
+        else:
+            break
+
+    if foundComment:
         Option.Some(TokenIdx(idx = idx))
+    else:
+        Option.None
