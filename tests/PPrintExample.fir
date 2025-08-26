@@ -55,7 +55,7 @@ makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
     if args.len() != 0:
         doc += Doc.whenNotFlat(Doc.char(','))
 
-    (doc.nest(4) + Doc.break_(0) + Doc.char(')')).group()
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
 expectationFailure(expected: Doc, found: Doc) Doc:
     let expectedStr = "Expected: "
