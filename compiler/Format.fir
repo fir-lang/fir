@@ -198,9 +198,9 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
             argList += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
             lastToken = ty.lastToken()
 
-            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
-                trailingComma = Bool.True
-                argList += formatToken(next, tokens)
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
+            argList += formatToken(next, tokens) + Doc.blank(1)
 
     if self.sig.params.len() != 0 and not trailingComma:
         argList += Doc.whenNotFlat(Doc.char(','))
@@ -1049,7 +1049,7 @@ findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
         if prev.kind is TokenKind.Newline | TokenKind.Dedent | TokenKind.Indent:
             idx -= 1
         elif prev.kind is TokenKind.Comment:
-            let prevIdx = TokenIdx(idx = idx)
+            let prevIdx = TokenIdx(idx = idx - 1)
             if commentAtStart(prevIdx, tokens):
                 commentStart = Option.Some(prevIdx)
                 idx -= 1
