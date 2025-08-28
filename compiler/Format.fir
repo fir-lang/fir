@@ -151,17 +151,29 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 FunDecl.format(self, tokens: Vec[Token]) Doc:
     let doc = match self.parentTy:
         Option.Some(id):
-            Doc.str(idText(id, tokens)) + Doc.char('.')
+            let dot = nextNonTrivia(id.token, tokens).unwrap()
+            assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+            formatToken(id.token, tokens) + formatToken(dot, tokens)
         Option.None:
             Doc.empty()
 
-    doc += Doc.str(idText(self.name, tokens))
+    doc += formatToken(self.name.token, tokens)
 
-    if not self.sig.context.preds.isEmpty():
-        doc +=
-            Doc.char('[')
-                + join(self.sig.context.preds.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
-                + Doc.char(']')
+    if self.sig.context is Option.Some(context):
+        let lbracket = context.firstToken()
+        assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+        let rbracket = context.lastToken()
+        assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+        doc += formatToken(lbracket, tokens)
+
+        for ty: Type in context.preds.iter():
+            doc += ty.format(tokens)
+            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                doc += formatToken(next, tokens)
+
+        doc += formatToken(rbracket, tokens)
 
     let argList = Doc.char('(') + Doc.break_(0)
 
@@ -212,11 +224,11 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
     let doc = Doc.str("impl")
 
-    if not self.context.preds.isEmpty():
+    if self.context is Option.Some(context):
         doc += Doc.char('[')
 
         let predIdx: U32 = 0
-        for pred: Type in self.context.preds.iter():
+        for pred: Type in context.preds.iter():
             if predIdx != 0:
                 doc += Doc.char(',') + Doc.break_(1)
             predIdx += 1
@@ -900,8 +912,8 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
 
 
 ## Format a single token, handling comment tokens that are
-##      (1) before the token, that occupy entire lines.
-##      (2) after the token, at the same line with the token.
+##      (1) before the token, that are not with other tokens in their lines.
+##      (2) after the token, at the same line with the token being formatted.
 formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
     let doc = Doc.empty()
 
@@ -916,7 +928,7 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
             if commentToken.rightLoc().line - lastCommentToken.rightLoc().line > 1:
                 doc += Doc.hardLine()
 
-            doc += Doc.str(commentToken.text)
+            doc += Doc.str(commentToken.text) + Doc.hardLine()
 
             lastCommentToken = commentToken
 
@@ -941,11 +953,13 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
         let multiLine = nextToken.text.startsWith("#|")
         if multiLine:
             doc += Doc.blank(1)
+
             # Keep scanning for more multi-line comments.
             trailingTokenIdx += 1
         else:
-            # Single-line comments end with a newline, so there can't be more comments.
             doc += Doc.hardLine()
+
+            # Single-line comments end with a newline, so there can't be more comments.
             break
 
     doc
@@ -997,10 +1011,10 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
 # --------------------------------------------------------------------------------------------------
 
 
-## Find the beginning of comment tokens before `token`.
+## Find the beginning of comment tokens before `token` that belong to `token`.
 findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
     let idx = token.idx
-    let foundComment = Bool.False
+    let commentStart: Option[TokenIdx] = Option.None
 
     while idx != 0:
         let prev = tokens.get(idx - 1)
@@ -1008,12 +1022,50 @@ findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
         if prev.kind is TokenKind.Newline | TokenKind.Dedent | TokenKind.Indent:
             idx -= 1
         elif prev.kind is TokenKind.Comment:
-            idx -= 1
-            foundComment = Bool.True
+            let prevIdx = TokenIdx(idx = idx)
+            if commentAtStart(prevIdx, tokens):
+                commentStart = Option.Some(prevIdx)
+                idx -= 1
+            else:
+                break
         else:
             break
 
-    if foundComment:
-        Option.Some(TokenIdx(idx = idx))
-    else:
-        Option.None
+    commentStart
+
+
+## Whether the given token only has trivia tokens before it.
+##
+## Reminder: trivia is whitespace, indentation, and comments.
+commentAtStart(tokenIdx: TokenIdx, tokens: Vec[Token]) Bool:
+    let idx = tokenIdx.idx
+
+    if idx == 0:
+        return Bool.True
+
+    idx -= 1
+
+    while idx != 0:
+        let prev = tokens.get(idx)
+
+        if prev.kind is TokenKind.Comment | TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            idx -= 1
+            continue
+
+        break
+
+    if idx == 0 and tokens.get(idx).kind is TokenKind.Comment | TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+        return Bool.True
+
+    tokens.get(idx).line != tokens.get(tokenIdx.idx).line
+
+
+nextNonTrivia(tokenIdx: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
+    let idx = tokenIdx.idx + 1
+    while tokens.getOpt(idx) is Option.Some(next):
+        if next.kind is TokenKind.Comment | TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            idx += 1
+        else:
+            return Option.Some(TokenIdx(idx = idx))
+
+    Option.None
