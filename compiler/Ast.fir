@@ -4,6 +4,14 @@ import Token    # imports IntKind
 
 type TokenIdx(idx: U32)
 
+impl Step[TokenIdx]:
+    step(self: TokenIdx) TokenIdx:
+        TokenIdx(idx = self.idx + 1)
+
+impl Ord[TokenIdx]:
+    cmp(self: TokenIdx, other: TokenIdx) Ordering:
+        self.idx.cmp(other.idx)
+
 trait Tokens[t]:
     firstToken(self: t) TokenIdx
     lastToken(self: t) TokenIdx
@@ -88,7 +96,7 @@ type FunDecl(
 )
 
 type FunSig(
-    context: Context,
+    context: Option[Context],
     self_: SelfParam,
     params: Vec[(name: Id, ty: Option[Type])],
     exceptions: Option[Type],
@@ -133,7 +141,7 @@ type ImplDecl(
     ## Predicates of the `impl` block.
     ##
     ## In the example: `[ToStr[a]]`.
-    context: Context,
+    context: Option[Context],
 
     ## The trait name.
     ##
@@ -167,27 +175,84 @@ type Type:
     ## A function type: `Fn(I32): Bool`.
     Fn_(FnType)
 
+impl Tokens[Type]:
+    firstToken(self: Type) TokenIdx:
+        match self:
+            Type.Named(ty): ty.firstToken()
+            Type.Var(id): id.token
+            Type.Record(ty): ty.firstToken()
+            Type.Variant(ty): ty.firstToken()
+            Type.Fn_(ty): ty.firstToken()
+
+    lastToken(self: Type) TokenIdx:
+        match self:
+            Type.Named(ty): ty.lastToken()
+            Type.Var(id): id.token
+            Type.Record(ty): ty.lastToken()
+            Type.Variant(ty): ty.lastToken()
+            Type.Fn_(ty): ty.lastToken()
+
 type RecordType(
     fields: Vec[Named[Type]],
     extension: Option[Id],
     isRow: Bool,
+
+    # Left paren.
+    _firstToken: TokenIdx,
+
+    # Right paren.
+    _lastToken: TokenIdx,
 )
+
+impl Tokens[RecordType]:
+    firstToken(self: RecordType) TokenIdx: self._firstToken
+    lastToken(self: RecordType) TokenIdx: self._lastToken
 
 type VariantType(
     alts: Vec[VariantAlt],
     extension: Option[Id],
     isRow: Bool,
+
+    # Left bracket.
+    _firstToken: TokenIdx,
+
+    # Right bracket.
+    _lastToken: TokenIdx,
 )
+
+impl Tokens[VariantType]:
+    firstToken(self: VariantType) TokenIdx: self._firstToken
+    lastToken(self: VariantType) TokenIdx: self._lastToken
 
 type FnType(
     args: Vec[Type],
 
-    ## Optional return type of the function. `()` when omitted.
+    ## Optional return type of the function.
     ret: Option[Type],
 
     ## Same as `FunSig.exceptions`.
     exceptions: Option[Type],
+
+    # The 'Fn' token.
+    _firstToken: TokenIdx,
+
+    # The ')' token terminating the argument list. Used as last token when `ret` and `exceptions`
+    # are both not available.
+    _rparen: TokenIdx,
 )
+
+impl Tokens[FnType]:
+    firstToken(self: FnType) TokenIdx:
+        self._firstToken
+
+    lastToken(self: FnType) TokenIdx:
+        if self.exceptions is Option.Some(ty):
+            return ty.lastToken()
+
+        if self.ret is Option.Some(ty):
+            return ty.lastToken()
+
+        self._rparen
 
 type VariantAlt(
     con: Id,
@@ -203,7 +268,17 @@ type Context(
 
     ## Predicates: `Iterator[iter, item]` and `Debug[item]` in the example.
     preds: Vec[Type],
+
+    # Left bracket.
+    _firstToken: TokenIdx,
+
+    # Right bracket.
+    _lastToken: TokenIdx,
 )
+
+impl Tokens[Context]:
+    firstToken(self: Context) TokenIdx: self._firstToken
+    lastToken(self: Context) TokenIdx: self._lastToken
 
 ## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 type NamedType(
@@ -212,7 +287,14 @@ type NamedType(
 
     ## Arguments of the type constructor.
     args: Vec[Type],
+
+    # Right bracket when the type has type arguments. Otherwise same as `name`.
+    _lastToken: TokenIdx,
 )
+
+impl Tokens[NamedType]:
+    firstToken(self: NamedType) TokenIdx: self.name.token
+    lastToken(self: NamedType) TokenIdx: self._lastToken
 
 type Named[t](
     name: Option[Id],

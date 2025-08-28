@@ -110,12 +110,12 @@ type_ Type:
 
 
  namedType NamedType:
-    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? "]":
+    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? last=^ "]":
         let args = once(arg0).chain(args.iter()).toVec()
-        NamedType(name = newId(name), args)
+        NamedType(name = newId(name), args, _lastToken = TokenIdx(idx = last))
 
     name=^ "UpperId":
-        NamedType(name = newId(name), args = Vec.empty())
+        NamedType(name = newId(name), args = Vec.empty(), _lastToken = TokenIdx(idx = name))
 
 
 # - ()
@@ -125,21 +125,39 @@ type_ Type:
 # - (x: U32, ..foo)
 # - (..foo)
 recordType RecordType:
-    isRow=recordTypeStart ")":
-        RecordType(fields = Vec.empty(), extension = Option.None, isRow)
+    start=recordTypeStart last=^ ")":
+        RecordType(
+            fields = Vec.empty(),
+            extension = Option.None,
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
+        )
 
-    isRow=recordTypeStart ".." ext=^ "LowerId" ")":
-        RecordType(fields = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
+    start=recordTypeStart ".." ext=^ "LowerId" last=^ ")":
+        RecordType(
+            fields = Vec.empty(),
+            extension = Option.Some(newId(ext)),
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
+        )
 
-    isRow=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? ")":
+    start=recordTypeStart f0=recordTypeField fs=(_"," recordTypeField)* ext=recordTypeCont? last=^ ")":
         let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
-        RecordType(fields, extension = ext.flatten(), isRow)
+        RecordType(
+            fields,
+            extension = ext.flatten(),
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
+        )
 
 
 # Returns whether the type is a row.
-recordTypeStart Bool:
-    "(": Bool.False
-    "row(": Bool.True
+recordTypeStart (start: TokenIdx, isRow: Bool):
+    start=^ "(": (start = TokenIdx(idx = start), isRow = Bool.False)
+    start=^ "row(": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
 recordTypeCont Option[Id]:
@@ -154,24 +172,38 @@ recordTypeCont Option[Id]:
 # - [A, ..foo]
 # - [..foo]
 variantType VariantType:
-    isRow=variantTypeStart "]":
-        VariantType(alts = Vec.empty(), extension = Option.None, isRow)
+    start=variantTypeStart last=^ "]":
+        VariantType(
+            alts = Vec.empty(),
+            extension = Option.None,
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
+        )
 
-    isRow=variantTypeStart ".." ext=^ "LowerId" "]":
-        VariantType(alts = Vec.empty(), extension = Option.Some(newId(ext)), isRow)
+    start=variantTypeStart ".." ext=^ "LowerId" last=^ "]":
+        VariantType(
+            alts = Vec.empty(),
+            extension = Option.Some(newId(ext)),
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
+        )
 
-    isRow=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? "]":
+    start=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? last=^ "]":
         VariantType(
             alts = once(alt0).chain(alts.iter()).toVec(),
             extension = ext.flatten(),
-            isRow,
+            isRow = start.isRow,
+            _firstToken = start.start,
+            _lastToken = TokenIdx(idx = last),
         )
 
 
 # Returns whether the type is a row.
-variantTypeStart Bool:
-    "[": Bool.False
-    "row[": Bool.True
+variantTypeStart (start: TokenIdx, isRow: Bool):
+    start=^ "[": (start = TokenIdx(idx = start), isRow = Bool.False)
+    start=^ "row[": (start = TokenIdx(idx = start), isRow = Bool.True)
 
 
 variantTypeCont Option[Id]:
@@ -208,10 +240,16 @@ recordTypeField Named[Type]:
 
 
 fnType FnType:
-    "Fn" "(" args=fnArgTys? ")" ret=returnTy?:
+    first=^ "Fn" "(" args=fnArgTys? rparen=^ ")" ret=returnTy?:
         let args = args.unwrapOr(Vec.empty())
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
-        FnType(args, ret = ret.ret, exceptions = ret.exn)
+        FnType(
+            args,
+            ret = ret.ret,
+            exceptions = ret.exn,
+            _firstToken = TokenIdx(idx = first),
+            _rparen = TokenIdx(idx = rparen),
+        )
 
 
 fnArgTys Vec[Type]:
@@ -358,7 +396,7 @@ blockExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                context = Option.None,
                 self_ = SelfParam.No,
                 params = Vec.empty(),
                 exceptions = ret.exn,
@@ -374,7 +412,7 @@ blockExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                context = Option.None,
                 self_ = SelfParam.No,
                 params = Vec.empty(),
                 exceptions = ret.exn,
@@ -511,7 +549,7 @@ simpleExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                context = Option.None,
                 self_ = SelfParam.No,
                 params = Vec.empty(),
                 exceptions = ret.exn,
@@ -526,7 +564,7 @@ simpleExpr Expr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
-                context = Context(typeParams = Vec.empty(), preds = Vec.empty()),
+                context = Option.None,
                 self_ = SelfParam.No,
                 params = Vec.empty(),
                 exceptions = ret.exn,
@@ -958,7 +996,7 @@ topFunSig (parentTy: Option[Id], name: Id, sig: FunSig):
             parentTy = parentTy.map(|id: U32|: newId(id)),
             name = newId(name),
             sig = FunSig(
-                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                context = ctx,
                 self_ = SelfParam.No,       # TODO
                 params,
                 exceptions = ret.exn,
@@ -974,10 +1012,12 @@ parentTy Id:
 
 
 context Context:
-    "[" t0=type_ ts=(_"," type_)* ","? "]":
+    first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
         Context(
             typeParams = Vec.empty(),   # generated by the type checker
             preds = once(t0).chain(ts.iter()).toVec(),
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last),
         )
 
 
@@ -1022,7 +1062,7 @@ traitDeclRhs Vec[FunDecl]:
 implDecl ImplDecl:
     "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
-            context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+            context = ctx,
             trait_ = newId(name),
             tys = once(t0).chain(ts.iter()).toVec(),
             items = rhs,
@@ -1071,7 +1111,7 @@ funSig (id: Id, sig: FunSig):
         (
             id = newId(id),
             sig = FunSig(
-                context = ctx.unwrapOr(Context(typeParams = Vec.empty(), preds = Vec.empty())),
+                context = ctx,
                 self_ = SelfParam.No,       # TODO
                 params,
                 exceptions = ret.exn,
