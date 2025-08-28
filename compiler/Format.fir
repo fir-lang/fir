@@ -899,6 +899,58 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
 # --------------------------------------------------------------------------------------------------
 
 
+## Format a single token, handling comment tokens that are
+##      (1) before the token, that occupy entire lines.
+##      (2) after the token, at the same line with the token.
+formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
+    let doc = Doc.empty()
+
+    if findCommentBefore(tokenIdx, tokens) is Option.Some(commentStart):
+        let lastCommentToken = tokens.get(commentStart.idx)
+        for commentTokenIdx: TokenIdx in range(commentStart, tokenIdx):
+            let commentToken = tokens.get(commentTokenIdx.idx)
+
+            if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+                continue
+
+            if commentToken.rightLoc().line - lastCommentToken.rightLoc().line > 1:
+                doc += Doc.hardLine()
+
+            doc += Doc.str(commentToken.text)
+
+            lastCommentToken = commentToken
+
+    let token = tokens.get(tokenIdx.idx)
+    doc += Doc.str(token.text)
+
+    let tokenLastLine = token.rightLoc().line
+    let trailingTokenIdx = tokenIdx.idx + 1
+    while tokens.getOpt(trailingTokenIdx) is Option.Some(nextToken):
+        if nextToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            trailingTokenIdx += 1
+            continue
+
+        if not (nextToken.kind is TokenKind.Comment):
+            break
+
+        if nextToken.line != tokenLastLine:
+            break
+
+        doc += Doc.blank(1) + Doc.str(nextToken.text)
+
+        let multiLine = nextToken.text.startsWith("#|")
+        if multiLine:
+            doc += Doc.blank(1)
+            # Keep scanning for more multi-line comments.
+            trailingTokenIdx += 1
+        else:
+            # Single-line comments end with a newline, so there can't be more comments.
+            doc += Doc.hardLine()
+            break
+
+    doc
+
+
 formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
     if tyArgs.isEmpty():
         return Doc.empty()
