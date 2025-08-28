@@ -175,23 +175,35 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
         doc += formatToken(rbracket, tokens)
 
-    let argList = Doc.char('(') + Doc.break_(0)
+    let lparen = match self.sig.context:
+        Option.Some(context): nextNonTrivia(context.lastToken(), tokens).unwrap()
+        Option.None: nextNonTrivia(self.name.token, tokens).unwrap()
 
-    let argIdx: U32 = 0
+    assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
+
+    let argList = formatToken(lparen, tokens) + Doc.break_(0)
+
+    let trailingComma = Bool.False
     for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
-        if argIdx != 0:
-            argList += Doc.char(',') + Doc.break_(1)
-        argIdx += 1
-
-        argList += Doc.str(idText(arg.name, tokens))
+        argList += formatToken(arg.name.token, tokens)
 
         if arg.ty is Option.Some(ty):
-            argList += Doc.str(": ") + ty.format(tokens)
+            trailingComma = Bool.False
 
-    if self.sig.params.len() != 0:
+            let colon = nextNonTrivia(arg.name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+            argList += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
+
+            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                trailingComma = Bool.True
+                argList += formatToken(next, tokens)
+
+    if self.sig.params.len() != 0 and not trailingComma:
         argList += Doc.whenNotFlat(Doc.char(','))
 
     argList = argList.nest(4).group() + Doc.break_(0) + Doc.char(')')
+
     doc += argList.group()
 
     if self.sig.returnTy is Option.Some(ret):
