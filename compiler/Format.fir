@@ -184,8 +184,10 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
     let argList = formatToken(lparen, tokens) + Doc.break_(0)
 
     let trailingComma = Bool.False
+    let lastToken = lparen
     for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
         argList += formatToken(arg.name.token, tokens)
+        lastToken = arg.name.token
 
         if arg.ty is Option.Some(ty):
             trailingComma = Bool.False
@@ -194,6 +196,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
             argList += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
+            lastToken = ty.lastToken()
 
             if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
@@ -202,18 +205,30 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
     if self.sig.params.len() != 0 and not trailingComma:
         argList += Doc.whenNotFlat(Doc.char(','))
 
-    argList = argList.nest(4).group() + Doc.break_(0) + Doc.char(')')
+    let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+    lastToken = rparen
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+    argList = argList.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens)
 
     doc += argList.group()
 
     if self.sig.returnTy is Option.Some(ret):
+        lastToken = ret.lastToken()
         doc += Doc.blank(1) + ret.format(tokens)
 
     if self.sig.exceptions is Option.Some(exn):
-        doc += Doc.str(" / ") + exn.format(tokens)
+        let slash = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(slash.idx).kind is TokenKind.Slash)
+
+        doc += Doc.blank(1) + formatToken(slash, tokens) + Doc.blank(1) + exn.format(tokens)
+        lastToken = exn.lastToken()
 
     if self.body is Option.Some(stmts):
-        doc += Doc.nested(4, Doc.char(':') + Doc.hardLine() + formatStmts(stmts, tokens))
+        let colon = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+        doc += Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + formatStmts(stmts, tokens))
 
     doc
 
