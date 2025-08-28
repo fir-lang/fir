@@ -200,14 +200,14 @@ pub enum BuiltinFunDecl {
     U32Eq,
     U32Mod,
 
-    /// `prim throw(exn: [..r]): {..r} a`
+    /// `prim throwUnchecked(exn: exn) a / exn?` (`exn?` is implicit)
     ///
     /// This function never throws or returns, so we don't need the exception and return types.
     ThrowUnchecked,
 
-    /// `prim try(cb: Fn(): {..exn} a): {..r} Result[[..exn], a]`
+    /// `prim try(cb: Fn() a / exn) Result[exn, a] / exn?` (`exn?` is implicit)
     ///
-    /// We don't store the `r` type parameter as this function never throws.
+    /// We don't store the `exn?` type parameter as this function never throws.
     Try {
         /// Type of exceptions to catch.
         exn: mono::Type,
@@ -944,25 +944,25 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                     }
 
                     "try" => {
-                        //  prim try(cb: Fn(): {..exn} a): {..r} Result[[..exn], a]
-                        assert_eq!(fun_ty_args.len(), 3); // exn, a, r
-                        let exn = fun_ty_args[0].clone();
-                        let a = fun_ty_args[1].clone();
+                        // prim try(cb: Fn() a / exn) Result[exn, a]
+                        assert_eq!(fun_ty_args.len(), 3); // a, exn, exn? (implicit)
+                        let a = fun_ty_args[0].clone();
+                        let exn = fun_ty_args[1].clone();
                         lowered_pgm
                             .funs
                             .push(Fun::Builtin(BuiltinFunDecl::Try { exn, a }));
                     }
 
                     "throwUnchecked" => {
-                        // prim throwUnchecked(exn: exn): a / {..r}
-                        assert_eq!(fun_ty_args.len(), 3); // exn, a, r
+                        // prim throwUnchecked(exn: exn) a
+                        assert_eq!(fun_ty_args.len(), 3); // exn, a, exn? (implicit)
                         lowered_pgm
                             .funs
                             .push(Fun::Builtin(BuiltinFunDecl::ThrowUnchecked));
                     }
 
                     "readFileUtf8" => {
-                        // prim readFileUtf8(path: Str): Str
+                        // prim readFileUtf8(path: Str) Str
                         assert_eq!(fun_ty_args.len(), 1); // exception
                         lowered_pgm
                             .funs
@@ -1438,16 +1438,16 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }
 
                         ("Array", "new") => {
-                            // prim Array.new(len: U32): Array[t]
+                            // prim Array.new(len: U32) Array[t]
                             assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
-                            let t = fun_ty_args[1].clone();
+                            let t = fun_ty_args[0].clone();
                             lowered_pgm
                                 .funs
                                 .push(Fun::Builtin(BuiltinFunDecl::ArrayNew { t }));
                         }
 
                         ("Array", "len") => {
-                            // prim Array.len(self: Array[t]): U32
+                            // prim Array.len(self: Array[t]) U32
                             assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
                             // All arrays have the length in the same location, ignore `t`.
                             lowered_pgm
@@ -1456,7 +1456,7 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         }
 
                         ("Array", "get") => {
-                            // prim Array.get(self: Array[t], idx: U32): t
+                            // prim Array.get(self: Array[t], idx: U32) t
                             assert_eq!(fun_ty_args.len(), 2); // t, exception (implicit)
                             let t = fun_ty_args[0].clone();
                             lowered_pgm

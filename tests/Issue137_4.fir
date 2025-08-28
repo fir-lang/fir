@@ -57,7 +57,7 @@ main():
             amt = 5,
         )
 
-    try[[AppendAfterStop], (), []](
+    try[(), [AppendAfterStop], []](
         ||: seq.forEach(|i: U32|: print(i)))
 
     ()
