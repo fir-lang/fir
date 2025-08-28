@@ -140,6 +140,15 @@ Vec.sort[Ord[t]](self: Vec[t]):
     if self.len() != 0:
         _quicksort(self, 0, self.len() - 1)
 
+## Take the backing array of this `Vec`.
+##
+## The `Vec` will be reset: it'll have a new empty backing array and its length will be 0.
+Vec.takeArray(self: Vec[t]) Array[t]:
+    let array = self._data.slice(0, self._len)
+    self._data = Array.new(0)
+    self._len = 0
+    array
+
 _quicksort[Ord[t]](vec: Vec[t], low: U32, high: U32):
     if low >= high:
         return

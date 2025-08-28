@@ -49,11 +49,11 @@ fn add_missing_type_params_fun(
             collect_tvs(&param_ty.node, &param_ty.loc, tvs);
         }
     }
-    if let Some(exn) = &sig.exceptions {
-        collect_tvs(&exn.node, &exn.loc, tvs);
-    }
     if let Some(ret) = &sig.return_ty {
         collect_tvs(&ret.node, &ret.loc, tvs);
+    }
+    if let Some(exn) = &sig.exceptions {
+        collect_tvs(&exn.node, &exn.loc, tvs);
     }
 
     // NB. Do not use `Set::difference` here as that will change order of the type variables. We
@@ -219,11 +219,11 @@ pub fn collect_tvs(ty: &ast::Type, loc: &ast::Loc, tvs: &mut OrderMap<Id, Option
             for arg in args {
                 collect_tvs(&arg.node, &arg.loc, tvs);
             }
-            if let Some(exn) = exceptions {
-                collect_tvs(&exn.node, &exn.loc, tvs);
-            }
             if let Some(ret) = ret {
                 collect_tvs(&ret.node, &ret.loc, tvs);
+            }
+            if let Some(exn) = exceptions {
+                collect_tvs(&exn.node, &exn.loc, tvs);
             }
         }
     }

@@ -1,7 +1,7 @@
 main():
     print(Option.None[U32])
-    print(foo[[], U32]())
-    print(T(x = ()).f[U32, [], Str]())
+    print(foo[U32, []]())
+    print(T(x = ()).f[U32, Str, []]())
 
 foo() Option[t]:
     Option.None[t]
