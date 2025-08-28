@@ -147,7 +147,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
     newTokens: Vec[Token],
     delimKind: NonIndentedDelimKind,
 ) / [ScannerError, ..exn]:
-    for t: Token in tokens:
+    while next(tokens, newTokens) is Option.Some(t):
         if t.isTrivia():
             continue
 
