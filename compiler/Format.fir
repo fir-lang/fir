@@ -321,7 +321,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
 
 
 VarExpr.format(self, tokens: Vec[Token]) Doc:
-    Doc.str(idText(self.id, tokens)) + formatTyArgs(self.userTyArgs, tokens)
+    formatToken(self.id.token, tokens) + formatTyArgs(self.userTyArgs, tokens)
 
 
 Constructor.format(self, tokens: Vec[Token]) Doc:
@@ -356,7 +356,7 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
     |#
 
     let selection = self
-    let fields: Vec[(field: Id, tyArgs: Vec[Type])] = Vec.withCapacity(1)
+    let fields: Vec[(field: Id, tyArgs: Option[TyArgs])] = Vec.withCapacity(1)
     loop:
         fields.push((field = selection.field, tyArgs = selection.userTyArgs))
         if selection.object is Expr.FieldSelect(e):
@@ -992,13 +992,15 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
     doc
 
 
-formatTyArgs(tyArgs: Vec[Type], tokens: Vec[Token]) Doc:
-    if tyArgs.isEmpty():
-        return Doc.empty()
+formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
+    match tyArgs:
+        Option.None:
+            Doc.empty()
 
-    Doc.char('[')
-        + join(tyArgs.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
-        + Doc.char(']')
+        Option.Some(tyArgs):
+            Doc.char('[')
+                + join(tyArgs.args.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
+                + Doc.char(']')
 
 
 formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[Token]) Doc / exn:

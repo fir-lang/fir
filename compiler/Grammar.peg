@@ -110,12 +110,19 @@ type_ Type:
 
 
  namedType NamedType:
-    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? last=^ "]":
+    name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = once(arg0).chain(args.iter()).toVec()
-        NamedType(name = newId(name), args, _lastToken = TokenIdx(idx = last))
+        NamedType(
+            name = newId(name),
+            args = Option.Some(TyArgs(
+                args,
+                _firstToken = TokenIdx(idx = argFirst),
+                _lastToken = TokenIdx(idx = argLast)
+            ))
+        )
 
     name=^ "UpperId":
-        NamedType(name = newId(name), args = Vec.empty(), _lastToken = TokenIdx(idx = name))
+        NamedType(name = newId(name), args = Option.None)
 
 
 # - ()
@@ -473,7 +480,7 @@ prefixExpr Expr:
 
 exprSuffix ExprSuffix:
     field=field args=tyArgs?:
-        ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
+        ExprSuffix.Field(field, tyArgs = args)
 
     args=args:
         ExprSuffix.Args(args = args.args, _lastToken = TokenIdx(idx = args.cursorRight))
@@ -514,7 +521,7 @@ simpleExpr Expr:
     var_=^ "LowerId" tyArgs=tyArgs? last=^:
         Expr.Var(VarExpr(
             id = newId(var_),
-            userTyArgs = tyArgs.unwrapOr(Vec.empty()),
+            userTyArgs = tyArgs,
             tyArgs = Vec.empty(),
             _lastToken = TokenIdx(idx = last),
         ))
@@ -693,7 +700,7 @@ constructor Constructor:
             variant = Bool.False,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
-            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
             _lastToken = TokenIdx(idx = last),
@@ -704,17 +711,21 @@ constructor Constructor:
             variant = Bool.True,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
-            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
             _lastToken = TokenIdx(idx = last),
         )
 
 
-tyArgs Vec[Type]:
-    "[" t0=type_ ts=(_"," type_)* ","? "]":
+tyArgs TyArgs:
+    first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
         let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
-        ts
+        TyArgs(
+            args = ts,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last)
+        )
 
 
 parenExpr Named[Expr]:

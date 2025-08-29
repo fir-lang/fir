@@ -188,6 +188,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
             state._cursor += 1
         else:
             throw(state._cursor)
+        let argFirst = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
@@ -226,14 +227,21 @@ namedType(state: ParserState[Token]) NamedType / U32:
                 state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
-        let last = state.nextCursor()
+        let argLast = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
         let value = do:
             let args = once(arg0).chain(args.iter()).toVec()
-            NamedType(name = newId(name), args, _lastToken = TokenIdx(idx = last))
+            NamedType(
+                name = newId(name),
+                args = Option.Some(TyArgs(
+                    args,
+                    _firstToken = TokenIdx(idx = argFirst),
+                    _lastToken = TokenIdx(idx = argLast)
+                ))
+            )
         value
     )
     match altResult:
@@ -249,7 +257,7 @@ namedType(state: ParserState[Token]) NamedType / U32:
         else:
             throw(state._cursor)
         let value = do:
-            NamedType(name = newId(name), args = Vec.empty(), _lastToken = TokenIdx(idx = name))
+            NamedType(name = newId(name), args = Option.None)
         value
     )
     match altResult:
@@ -2076,7 +2084,7 @@ exprSuffix(state: ParserState[Token]) ExprSuffix / U32:
                 ()
                 Option.Some(ok)
         let value = do:
-            ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
+            ExprSuffix.Field(field, tyArgs = args)
         value
     )
     match altResult:
@@ -2280,7 +2288,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let value = do:
             Expr.Var(VarExpr(
                 id = newId(var_),
-                userTyArgs = tyArgs.unwrapOr(Vec.empty()),
+                userTyArgs = tyArgs,
                 tyArgs = Vec.empty(),
                 _lastToken = TokenIdx(idx = last),
             ))
@@ -2880,7 +2888,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
                 variant = Bool.False,
                 ty = newId(ty),
                 constr = con.map(|con: U32|: newId(con)),
-                userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+                userTyArgs,
                 tyArgs = Vec.empty(),
                 _firstToken = TokenIdx(idx = ty),
                 _lastToken = TokenIdx(idx = last),
@@ -2940,7 +2948,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
                 variant = Bool.True,
                 ty = newId(ty),
                 constr = con.map(|con: U32|: newId(con)),
-                userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+                userTyArgs,
                 tyArgs = Vec.empty(),
                 _firstToken = TokenIdx(idx = ty),
                 _lastToken = TokenIdx(idx = last),
@@ -2955,9 +2963,10 @@ constructor(state: ParserState[Token]) Constructor / U32:
             return value
     throw(state._cursor)
 
-tyArgs(state: ParserState[Token]) Vec[Type] / U32:
+tyArgs(state: ParserState[Token]) TyArgs / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let first = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
@@ -2996,13 +3005,18 @@ tyArgs(state: ParserState[Token]) Vec[Type] / U32:
                 state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
+        let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
         let value = do:
             let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
-            ts
+            TyArgs(
+                args = ts,
+                _firstToken = TokenIdx(idx = first),
+                _lastToken = TokenIdx(idx = last)
+            )
         value
     )
     match altResult:

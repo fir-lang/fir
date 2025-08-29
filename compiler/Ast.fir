@@ -286,15 +286,17 @@ type NamedType(
     name: Id,
 
     ## Arguments of the type constructor.
-    args: Vec[Type],
-
-    # Right bracket when the type has type arguments. Otherwise same as `name`.
-    _lastToken: TokenIdx,
+    args: Option[TyArgs],
 )
 
 impl Tokens[NamedType]:
-    firstToken(self: NamedType) TokenIdx: self.name.token
-    lastToken(self: NamedType) TokenIdx: self._lastToken
+    firstToken(self: NamedType) TokenIdx:
+        self.name.token
+
+    lastToken(self: NamedType) TokenIdx:
+        match self.args:
+            Option.Some(args): args.lastToken()
+            Option.None: self.name.token
 
 type Named[t](
     name: Option[Id],
@@ -529,11 +531,10 @@ type Constructor(
     ## Name of the constructor. Only in sum types.
     constr: Option[Id],
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
+    ## Type arguments explicitly passed to the variable.
     ##
-    ## Always empty in patterns.
-    userTyArgs: Vec[Type],
+    ## Always `Option.None` in patterns.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the constructor's type. Filled in by the type checker.
     tyArgs: Vec[Type],
@@ -669,9 +670,8 @@ impl Tokens[Expr]:
 type VarExpr(
     id: Id,
 
-    # Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    # there will be always one element.
-    userTyArgs: Vec[Type],
+    # Type arguments explicitly passed to the variable.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
     tyArgs: Vec[Type],
@@ -683,17 +683,30 @@ impl Tokens[VarExpr]:
     firstToken(self: VarExpr) TokenIdx: self.id.firstToken()
     lastToken(self: VarExpr) TokenIdx: self._lastToken
 
+type TyArgs(
+    args: Vec[Type],
+
+    # Left bracket.
+    _firstToken: TokenIdx,
+
+    # Right bracket.
+    _lastToken: TokenIdx,
+)
+
+impl Tokens[TyArgs]:
+    firstToken(self: TyArgs) TokenIdx: self._firstToken
+    lastToken(self: TyArgs) TokenIdx: self._lastToken
+
 type FieldSelectExpr(
     object: Expr,
 
     field: Id,
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
+    ## Type arguments explicitly passed to the variable.
     ##
     ## Since fields can't have `forall` quantifiers, this will only be valid when the field is a
     ## method, in which case the type checker will convert this node into `MethodSelectExpr`.
-    userTyArgs: Vec[Type],
+    userTyArgs: Option[TyArgs],
 )
 
 impl Tokens[FieldSelectExpr]:
@@ -761,9 +774,8 @@ type AssocFnSelectExpr(
     ty: Id,
     member: Id,
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
-    userTyArgs: Vec[Type],
+    ## Type arguments explicitly passed to the variable.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the type and associated function. Filled in by the type checker.
     tyArgs: Vec[Type],       # TODO: type-checking type

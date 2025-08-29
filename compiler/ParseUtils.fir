@@ -13,7 +13,7 @@ type InlineExprCont:
 
 
 type ExprSuffix:
-    Field(field: Id, tyArgs: Vec[Type])
+    Field(field: Id, tyArgs: Option[TyArgs])
     Args(args: Vec[Named[Expr]], _lastToken: TokenIdx)
 
 
