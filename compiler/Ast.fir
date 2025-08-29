@@ -466,10 +466,10 @@ type Pat:
 impl Tokens[Pat]:
     firstToken(self: Pat) TokenIdx:
         match self:
-            Pat.Var(pat)
-                | Pat.Constr(pat)
-                | Pat.Record(pat)
-                | Pat.Or(_, pat): pat.firstToken()
+            Pat.Var(pat): pat.firstToken()
+            Pat.Constr(pat): pat.firstToken()
+            Pat.Record(pat): pat.firstToken()
+            Pat.Or(_, pat): pat.firstToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
@@ -477,10 +477,10 @@ impl Tokens[Pat]:
 
     lastToken(self: Pat) TokenIdx:
         match self:
-            Pat.Var(pat)
-                | Pat.Constr(pat)
-                | Pat.Record(pat)
-                | Pat.Or(_, pat): pat.lastToken()
+            Pat.Var(pat): pat.lastToken()
+            Pat.Constr(pat): pat.lastToken()
+            Pat.Record(pat): pat.lastToken()
+            Pat.Or(_, pat): pat.lastToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
@@ -516,9 +516,9 @@ type RecordPat(
     _lastToken: TokenIdx,
 )
 
-impl Tokens[Constructor]:
-    firstToken(self: Constructor) TokenIdx: self._firstToken
-    lastToken(self: Constructor) TokenIdx: self._lastToken
+impl Tokens[RecordPat]:
+    firstToken(self: RecordPat) TokenIdx: self._firstToken
+    lastToken(self: RecordPat) TokenIdx: self._lastToken
 
 type Constructor(
     variant: Bool,
