@@ -655,7 +655,16 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 DoExpr.format(self, tokens: Vec[Token]) Doc:
-    Doc.nested(4, Doc.str("do:") + Doc.hardLine() + formatStmts(self.body, tokens))
+    let do_ = self.firstToken()
+
+    let colon = nextNonTrivia(do_, tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    Doc.nested(
+        4,
+        formatToken(do_, tokens)
+            + formatToken(colon, tokens)
+            + Doc.hardLine() + formatStmts(self.body, tokens))
 
 
 SeqExpr.format(self, tokens: Vec[Token]) Doc:
