@@ -2284,13 +2284,11 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
-        let last = state.nextCursor()
         let value = do:
             Expr.Var(VarExpr(
                 id = newId(var_),
                 userTyArgs = tyArgs,
                 tyArgs = Vec.empty(),
-                _lastToken = TokenIdx(idx = last),
             ))
         value
     )

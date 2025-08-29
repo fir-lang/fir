@@ -675,13 +675,16 @@ type VarExpr(
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
     tyArgs: Vec[Type],
-
-    _lastToken: TokenIdx,
 )
 
 impl Tokens[VarExpr]:
-    firstToken(self: VarExpr) TokenIdx: self.id.firstToken()
-    lastToken(self: VarExpr) TokenIdx: self._lastToken
+    firstToken(self: VarExpr) TokenIdx:
+        self.id.token
+
+    lastToken(self: VarExpr) TokenIdx:
+        match self.userTyArgs:
+            Option.Some(tyArgs): tyArgs.lastToken()
+            Option.None: self.id.token
 
 type TyArgs(
     args: Vec[Type],

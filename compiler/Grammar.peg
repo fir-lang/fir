@@ -518,12 +518,11 @@ simpleExpr Expr:
         seq
 
     # Variables
-    var_=^ "LowerId" tyArgs=tyArgs? last=^:
+    var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
             id = newId(var_),
             userTyArgs = tyArgs,
             tyArgs = Vec.empty(),
-            _lastToken = TokenIdx(idx = last),
         ))
 
     # Constructor selection, or sequence
