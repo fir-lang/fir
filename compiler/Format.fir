@@ -565,7 +565,7 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
             4,
             formatToken(elif_, tokens)
                 + branch.guard.format(tokens)
-                + formatToken(colon, tokens) 
+                + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + formatStmts(branch.body, tokens))
 
@@ -593,27 +593,44 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
     # assert(self.sig.context.preds.isEmpty)
     # assert(self.sig.self_ is SelfParam.No)
 
-    let doc = Doc.char('|')
+    let pipe1 = self.firstToken()
+    let doc = formatToken(pipe1, tokens)
 
-    let paramIdx: U32 = 0
+    let lastToken = pipe1
     for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
-        if paramIdx != 0:
-            doc += Doc.str(", ")
-        paramIdx += 1
+        doc += formatToken(param.name.token, tokens)
+        lastToken = param.name.token
 
-        doc += Doc.str(idText(param.name, tokens))
         if param.ty is Option.Some(ty):
-            doc += Doc.str(": ") + ty.format(tokens)
+            let colon = nextNonTrivia(param.name.token, tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc += Doc.char('|')
+            doc += formatToken(colon, tokens) + ty.format(tokens)
+            lastToken = ty.lastToken()
+
+            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                doc += formatToken(next, tokens) + Doc.blank(1)
+                lastToken = next
+
+    let pipe2 = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(pipe2.idx).kind is TokenKind.Pipe)
+
+    doc += formatToken(pipe2, tokens)
+    lastToken = pipe2
 
     if self.sig.returnTy is Option.Some(ret):
         doc += Doc.blank(1) + ret.format(tokens)
+        lastToken = ret.lastToken()
 
     if self.sig.exceptions is Option.Some(exn):
         doc += Doc.blank(1) + exn.format(tokens)
+        lastToken = exn.lastToken()
 
-    doc += Doc.char(':')
+    let colon = nextNonTrivia(lastToken, tokens).unwrap()
+    print(tokens.get(colon.idx))
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    doc += formatToken(colon, tokens)
 
     if self.body.len() > 1:
         doc += Doc.hardLine()
@@ -626,11 +643,14 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 IsExpr.format(self, tokens: Vec[Token]) Doc:
+    let is_ = nextNonTrivia(self.expr.lastToken(), tokens).unwrap()
+    assert(tokens.get(is_.idx).kind is TokenKind.Is)
+
     Doc.nested(
         4,
         self.expr.format(tokens)
             + Doc.break_(1)
-            + Doc.str("is ")
+            + formatToken(is_, tokens)
             + self.pat.format(tokens))
 
 
@@ -1149,4 +1169,3 @@ prevNonTrivia(tokenIdx: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
             return Option.Some(TokenIdx(idx = idx))
 
     Option.None
-
