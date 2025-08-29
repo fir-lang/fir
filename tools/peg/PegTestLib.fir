@@ -33,7 +33,7 @@ runParser(
     let parserState = ParserState.new(tokens)
 
     let tree = match try(||: parseFn(parserState)):
-        Result.Err(err): throw(TestError.ParseError(err))
+        Result.Err(_): throw(TestError.ParseError(parserState._errorCursor.unwrap()))
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():

@@ -67,7 +67,7 @@ terminalA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.TerminalA, nodes)
         value
@@ -78,7 +78,7 @@ terminalA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 terminalB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -88,7 +88,7 @@ terminalB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.TerminalB, nodes)
         value
@@ -99,7 +99,7 @@ terminalB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 terminalAOrB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -109,7 +109,7 @@ terminalAOrB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.TerminalAOrB, nodes)
         value
@@ -126,7 +126,7 @@ terminalAOrB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.TerminalAOrB, nodes)
         value
@@ -137,7 +137,7 @@ terminalAOrB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 terminalAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -147,12 +147,12 @@ terminalAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.TerminalAThenB, nodes)
         value
@@ -163,7 +163,7 @@ terminalAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 zeroOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -177,7 +177,7 @@ zeroOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                     nodes.push(ParseTree.Terminal(sym))
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -191,7 +191,7 @@ zeroOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.ZeroOrMoreAThenB, nodes)
         value
@@ -202,7 +202,7 @@ zeroOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 oneOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -212,7 +212,7 @@ oneOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let nodesLen0 = nodes.len()
@@ -221,7 +221,7 @@ oneOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                     nodes.push(ParseTree.Terminal(sym))
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -235,7 +235,7 @@ oneOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.OneOrMoreAThenB, nodes)
         value
@@ -246,7 +246,7 @@ oneOrMoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 zeroOrOneAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -259,7 +259,7 @@ zeroOrOneAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                 nodes.push(ParseTree.Terminal(sym))
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             ()
         )
         match symResult:
@@ -273,7 +273,7 @@ zeroOrOneAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.ZeroOrOneAThenB, nodes)
         value
@@ -284,7 +284,7 @@ zeroOrOneAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 ignoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -293,12 +293,12 @@ ignoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.IgnoreAThenB, nodes)
         value
@@ -309,7 +309,7 @@ ignoreAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 ignoreAThenIgnoreB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -318,11 +318,11 @@ ignoreAThenIgnoreB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U3
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.IgnoreAThenIgnoreB, nodes)
         value
@@ -333,7 +333,7 @@ ignoreAThenIgnoreB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U3
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 ignoreGroupAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -342,11 +342,11 @@ ignoreGroupAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.IgnoreGroupAThenB, nodes)
         value
@@ -357,7 +357,7 @@ ignoreGroupAThenB(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 nonTerminals(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -377,7 +377,7 @@ nonTerminals(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 nonTerminalsBacktrack(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -403,12 +403,12 @@ nonTerminalsBacktrack(state: ParserState[Token]) ParseTree[Token, NonTerminal] /
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes)
         value
@@ -419,7 +419,7 @@ nonTerminalsBacktrack(state: ParserState[Token]) ParseTree[Token, NonTerminal] /
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -430,14 +430,14 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
         )
         match symResult:
             Result.Err(err):
                 state.cloneFrom(state0)
             Result.Ok(_):
                 state.cloneFrom(state0)
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
         let nonTerminalResult = terminalAOrB(state)
         nodes.push(nonTerminalResult)
         let value = do:
@@ -450,7 +450,7 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 endOfInputTest(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -460,16 +460,16 @@ endOfInputTest(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             nodes.push(ParseTree.Terminal(sym))
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek().isNone():
             state._cursor
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.EndOfInputTest, nodes)
         value
@@ -480,7 +480,7 @@ endOfInputTest(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
@@ -489,7 +489,7 @@ bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let nodesLen0 = nodes.len()
@@ -508,7 +508,7 @@ bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U
         if state.peek().isNone():
             state._cursor
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.BracketedOneOrMoreA, nodes)
         value
@@ -519,7 +519,7 @@ bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionSimple(state: ParserState[Token]) Char / U32:
     let cursor0 = state._cursor
@@ -527,7 +527,7 @@ semanticActionSimple(state: ParserState[Token]) Char / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             'a'
         value
@@ -542,7 +542,7 @@ semanticActionSimple(state: ParserState[Token]) Char / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             'b'
         value
@@ -553,7 +553,7 @@ semanticActionSimple(state: ParserState[Token]) Char / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionZeroOrMore(state: ParserState[Token]) Vec[Char] / U32:
     let cursor0 = state._cursor
@@ -582,7 +582,7 @@ semanticActionZeroOrMore(state: ParserState[Token]) Vec[Char] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionOneOrMore(state: ParserState[Token]) Vec[Char] / U32:
     let cursor0 = state._cursor
@@ -613,7 +613,7 @@ semanticActionOneOrMore(state: ParserState[Token]) Vec[Char] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionGroup(state: ParserState[Token]) Vec[Str] / U32:
     let cursor0 = state._cursor
@@ -621,22 +621,22 @@ semanticActionGroup(state: ParserState[Token]) Vec[Str] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let a = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let b = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let ab = (a = a, b = b)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             let strs: Vec[Str] = Vec.[ab.a.text, ab.b.text]
             strs
@@ -648,7 +648,7 @@ semanticActionGroup(state: ParserState[Token]) Vec[Str] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionOptional(state: ParserState[Token]) Option[Token] / U32:
     let cursor0 = state._cursor
@@ -659,7 +659,7 @@ semanticActionOptional(state: ParserState[Token]) Option[Token] / U32:
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             cs
         )
         let cs = match symResult:
@@ -673,7 +673,7 @@ semanticActionOptional(state: ParserState[Token]) Option[Token] / U32:
         if state.peek().isNone():
             state._cursor
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             cs
         value
@@ -684,7 +684,7 @@ semanticActionOptional(state: ParserState[Token]) Option[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[Token], cOpt: Option[Token]) / U32:
     let cursor0 = state._cursor
@@ -692,7 +692,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         let aVec = Vec.empty()
         loop:
@@ -701,7 +701,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
                     aVec.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -715,7 +715,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
             bVec.push(sym)
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let symResult = try(||:
@@ -723,7 +723,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
                     bVec.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -738,7 +738,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             cOpt
         )
         let cOpt = match symResult:
@@ -753,7 +753,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
         if state.peek().isNone():
             state._cursor
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             group
         value
@@ -764,7 +764,7 @@ semanticActionComplex(state: ParserState[Token]) (aVec: Vec[Token], bVec: Vec[To
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 cursorPositions(state: ParserState[Token]) Vec[U32] / U32:
     let cursor0 = state._cursor
@@ -773,17 +773,17 @@ cursorPositions(state: ParserState[Token]) Vec[U32] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let c1 = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let c2 = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let c3 = state.nextCursor()
         let value = do:
             let vec: Vec[U32] = Vec.[c0, c1, c2, c3]
@@ -796,7 +796,7 @@ cursorPositions(state: ParserState[Token]) Vec[U32] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup1(state: ParserState[Token]) Token / U32:
     let cursor0 = state._cursor
@@ -804,24 +804,24 @@ simpleGroup1(state: ParserState[Token]) Token / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let x = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -832,7 +832,7 @@ simpleGroup1(state: ParserState[Token]) Token / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup2(state: ParserState[Token]) Option[Token] / U32:
     let cursor0 = state._cursor
@@ -840,18 +840,18 @@ simpleGroup2(state: ParserState[Token]) Option[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let x = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             x
         )
         let x = match symResult:
@@ -865,11 +865,11 @@ simpleGroup2(state: ParserState[Token]) Option[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -880,7 +880,7 @@ simpleGroup2(state: ParserState[Token]) Option[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup3(state: ParserState[Token]) Vec[Token] / U32:
     let cursor0 = state._cursor
@@ -888,11 +888,11 @@ simpleGroup3(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         let x = Vec.empty()
         loop:
@@ -901,7 +901,7 @@ simpleGroup3(state: ParserState[Token]) Vec[Token] / U32:
                     x.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -913,11 +913,11 @@ simpleGroup3(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -928,7 +928,7 @@ simpleGroup3(state: ParserState[Token]) Vec[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup4(state: ParserState[Token]) Vec[Token] / U32:
     let cursor0 = state._cursor
@@ -936,17 +936,17 @@ simpleGroup4(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let x = Vec.empty()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             x.push(sym)
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let symResult = try(||:
@@ -954,7 +954,7 @@ simpleGroup4(state: ParserState[Token]) Vec[Token] / U32:
                     x.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -966,11 +966,11 @@ simpleGroup4(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -981,7 +981,7 @@ simpleGroup4(state: ParserState[Token]) Vec[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup5(state: ParserState[Token]) Option[Token] / U32:
     let cursor0 = state._cursor
@@ -989,22 +989,22 @@ simpleGroup5(state: ParserState[Token]) Option[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             let x = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             x
         )
         let x = match symResult:
@@ -1018,7 +1018,7 @@ simpleGroup5(state: ParserState[Token]) Option[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -1029,7 +1029,7 @@ simpleGroup5(state: ParserState[Token]) Option[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup6(state: ParserState[Token]) Vec[Token] / U32:
     let cursor0 = state._cursor
@@ -1037,7 +1037,7 @@ simpleGroup6(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         let x = Vec.empty()
         loop:
@@ -1045,16 +1045,16 @@ simpleGroup6(state: ParserState[Token]) Vec[Token] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                     x.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -1066,7 +1066,7 @@ simpleGroup6(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -1077,7 +1077,7 @@ simpleGroup6(state: ParserState[Token]) Vec[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 simpleGroup7(state: ParserState[Token]) Vec[Token] / U32:
     let cursor0 = state._cursor
@@ -1085,37 +1085,37 @@ simpleGroup7(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let x = Vec.empty()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             x.push(sym)
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let symResult = try(||:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                     x.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -1127,7 +1127,7 @@ simpleGroup7(state: ParserState[Token]) Vec[Token] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -1138,7 +1138,7 @@ simpleGroup7(state: ParserState[Token]) Vec[Token] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 multipleSymbols(state: ParserState[Token]) Bool / U32:
     let cursor0 = state._cursor
@@ -1146,15 +1146,15 @@ multipleSymbols(state: ParserState[Token]) Bool / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             Bool.True
         value
@@ -1165,7 +1165,7 @@ multipleSymbols(state: ParserState[Token]) Bool / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorOptional1(state: ParserState[Token]) Option[Bool] / U32:
     let cursor0 = state._cursor
@@ -1187,11 +1187,11 @@ restoreCursorOptional1(state: ParserState[Token]) Option[Bool] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             x
         value
@@ -1202,7 +1202,7 @@ restoreCursorOptional1(state: ParserState[Token]) Option[Bool] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorOptional2(state: ParserState[Token]) Bool / U32:
     let cursor0 = state._cursor
@@ -1212,15 +1212,15 @@ restoreCursorOptional2(state: ParserState[Token]) Bool / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state._cursor)
             ()
         )
         match symResult:
@@ -1232,11 +1232,11 @@ restoreCursorOptional2(state: ParserState[Token]) Bool / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             Bool.True
         value
@@ -1247,7 +1247,7 @@ restoreCursorOptional2(state: ParserState[Token]) Bool / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorZeroOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
     let cursor0 = state._cursor
@@ -1269,11 +1269,11 @@ restoreCursorZeroOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             xs
         value
@@ -1284,7 +1284,7 @@ restoreCursorZeroOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorZeroOrMore2(state: ParserState[Token]) Bool / U32:
     let cursor0 = state._cursor
@@ -1295,15 +1295,15 @@ restoreCursorZeroOrMore2(state: ParserState[Token]) Bool / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -1315,11 +1315,11 @@ restoreCursorZeroOrMore2(state: ParserState[Token]) Bool / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             Bool.True
         value
@@ -1330,7 +1330,7 @@ restoreCursorZeroOrMore2(state: ParserState[Token]) Bool / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorOneOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
     let cursor0 = state._cursor
@@ -1354,11 +1354,11 @@ restoreCursorOneOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             xs
         value
@@ -1369,7 +1369,7 @@ restoreCursorOneOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)
 
 restoreCursorOneOrMore2(state: ParserState[Token]) Bool / U32:
     let cursor0 = state._cursor
@@ -1377,30 +1377,30 @@ restoreCursorOneOrMore2(state: ParserState[Token]) Bool / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let symResult = try(||:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "c", ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state._cursor)
             )
             match symResult:
                 Result.Err(err):
@@ -1412,11 +1412,11 @@ restoreCursorOneOrMore2(state: ParserState[Token]) Bool / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "a", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, text = "b", ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state._cursor)
         let value = do:
             Bool.True
         value
@@ -1427,4 +1427,4 @@ restoreCursorOneOrMore2(state: ParserState[Token]) Bool / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state._cursor)

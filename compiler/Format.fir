@@ -25,11 +25,11 @@ main(args: Array[Str]):
     let parserState = ParserState.new(tokens)
 
     let tree = match try(||: module(parserState)):
-        Result.Err(cursor):
-            if cursor == tokens.len():
+        Result.Err(_):
+            if parserState._errorCursor.unwrap() == tokens.len():
                 panic("Parse error: unexpected end of input")
             else:
-                panic("Parse error: unexpected token `tokens.get(cursor)`")
+                panic("Parse error: unexpected token `tokens.get(parserState._errorCursor.unwrap())`")
         Result.Ok(tree):
             tree
 
