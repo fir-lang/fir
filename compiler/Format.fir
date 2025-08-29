@@ -325,15 +325,13 @@ VarExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 Constructor.format(self, tokens: Vec[Token]) Doc:
-    let doc = if self.variant:
-        Doc.char('~')
-    else:
-        Doc.empty()
-
-    doc += Doc.str(idText(self.ty, tokens))
+    let doc = formatToken(self.ty.token, tokens)
 
     if self.constr is Option.Some(con):
-        doc += Doc.char('.') + Doc.str(idText(con, tokens))
+        let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
+        assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+
+        doc += formatToken(dot, tokens) + formatToken(con.token, tokens)
 
     doc + formatTyArgs(self.userTyArgs, tokens)
 
@@ -998,9 +996,21 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
             Doc.empty()
 
         Option.Some(tyArgs):
-            Doc.char('[')
-                + join(tyArgs.args.iter().map(|ty: Type|: ty.format(tokens)), Doc.str(", "))
-                + Doc.char(']')
+            let lbracket = tyArgs.firstToken()
+            assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+            let rbracket = tyArgs.lastToken()
+            assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+            let doc = formatToken(lbracket, tokens)
+
+            for tyArg: Type in tyArgs.args.iter():
+                doc += tyArg.format(tokens)
+
+                if nextNonTrivia(tyArg.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                    doc += formatToken(next, tokens)
+
+            doc + formatToken(rbracket, tokens)
 
 
 formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[Token]) Doc / exn:
