@@ -1938,7 +1938,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                 sig = FunSig(
                     context = Option.None,
                     self_ = SelfParam.No,
-                    params = Vec.empty(),
+                    params = args.unwrapOr(Vec.empty()),
                     exceptions = ret.exn,
                     returnTy = ret.ret,
                 ),
@@ -2525,7 +2525,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                 sig = FunSig(
                     context = Option.None,
                     self_ = SelfParam.No,
-                    params = Vec.empty(),
+                    params = args.unwrapOr(Vec.empty()),
                     exceptions = ret.exn,
                     returnTy = ret.ret,
                 ),
