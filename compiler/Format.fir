@@ -767,7 +767,7 @@ Type.format(self, tokens: Vec[Token]) Doc:
 
 
 NamedType.format(self, tokens: Vec[Token]) Doc:
-    Doc.str(idText(self.name, tokens)) + formatTyArgs(self.args, tokens)
+    formatToken(self.name.token, tokens) + formatTyArgs(self.args, tokens)
 
 
 RecordType.format(self, tokens: Vec[Token]) Doc:

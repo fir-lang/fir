@@ -541,13 +541,20 @@ type Constructor(
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,
-
-    _lastToken: TokenIdx,
 )
 
 impl Tokens[Constructor]:
-    firstToken(self: Constructor) TokenIdx: self._firstToken
-    lastToken(self: Constructor) TokenIdx: self._lastToken
+    firstToken(self: Constructor) TokenIdx:
+        self._firstToken
+
+    lastToken(self: Constructor) TokenIdx:
+        match self.userTyArgs:
+            Option.Some(tyArgs):
+                tyArgs.lastToken()
+            Option.None:
+                match self.constr:
+                    Option.Some(con): con.token
+                    Option.None: self.ty.token
 
 type Expr:
     ## A variable: `x`.

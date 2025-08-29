@@ -2186,11 +2186,11 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
+        let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let last = state.nextCursor()
         let value = do:
             (args = match args:
                  Option.None:
@@ -2880,7 +2880,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
-        let last = state.nextCursor()
         let value = do:
             Constructor(
                 variant = Bool.False,
@@ -2889,7 +2888,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
                 userTyArgs,
                 tyArgs = Vec.empty(),
                 _firstToken = TokenIdx(idx = ty),
-                _lastToken = TokenIdx(idx = last),
             )
         value
     )
@@ -2940,7 +2938,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
-        let last = state.nextCursor()
         let value = do:
             Constructor(
                 variant = Bool.True,
@@ -2949,7 +2946,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
                 userTyArgs,
                 tyArgs = Vec.empty(),
                 _firstToken = TokenIdx(idx = ty),
-                _lastToken = TokenIdx(idx = last),
             )
         value
     )
@@ -4261,11 +4257,12 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 Result.Ok(ok):
                     ()
                     Option.Some(ok)
+            let last = state.nextCursor()
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
                 state._cursor += 1
             else:
                 throw(state._cursor)
-            let fs = (p0 = p0, ps = ps, ignoreRest = ignoreRest)
+            let fs = (p0 = p0, ps = ps, ignoreRest = ignoreRest, last = last)
             fs
         )
         let fs = match symResult:
@@ -4276,7 +4273,6 @@ simplePat(state: ParserState[Token]) Pat / U32:
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
-        let last = state.nextCursor()
         let value = do:
             Pat.Constr(ConstrPat(
                 constr = con,
@@ -4290,7 +4286,9 @@ simplePat(state: ParserState[Token]) Pat / U32:
                         Bool.False
                     Option.Some((ignoreRest, ..)):
                         ignoreRest.isSome(),
-                _lastToken = TokenIdx(idx = last),
+                _lastToken = match fs:
+                    Option.None: con.lastToken()
+                    Option.Some((last, ..)): TokenIdx(idx = last),
             ))
         value
     )
@@ -4306,11 +4304,11 @@ simplePat(state: ParserState[Token]) Pat / U32:
             state._cursor += 1
         else:
             throw(state._cursor)
+        let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
                 fields = Vec.empty(),
@@ -4367,11 +4365,11 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
+        let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
                 fields = once(p0).chain(ps.iter()).toVec(),
@@ -4423,11 +4421,11 @@ simplePat(state: ParserState[Token]) Pat / U32:
             sym
         else:
             throw(state._cursor)
+        let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
                 fields = once(p0).chain(ps.iter()).toVec(),

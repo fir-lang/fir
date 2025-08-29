@@ -492,7 +492,7 @@ field Id:
 
 
 args (args: Vec[Named[Expr]], cursorRight: U32):
-    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")" last=^:
+    "(" args=(arg0=arg args=(_"," arg)* ","?)? last=^ ")":
         (args = match args:
              Option.None:
                  Vec.empty()
@@ -694,7 +694,7 @@ seqElem (key: Option[Expr], value: Expr):
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
-    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
             ty = newId(ty),
@@ -702,10 +702,9 @@ constructor Constructor:
             userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
-            _lastToken = TokenIdx(idx = last),
         )
 
-    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
             ty = newId(ty),
@@ -713,7 +712,6 @@ constructor Constructor:
             userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
-            _lastToken = TokenIdx(idx = last),
         )
 
 
@@ -895,7 +893,7 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")? last=^:
+    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? last=^ ")")?:
         Pat.Constr(ConstrPat(
             constr = con,
             fields = match fs:
@@ -908,11 +906,13 @@ simplePat Pat:
                     Bool.False
                 Option.Some((ignoreRest, ..)):
                     ignoreRest.isSome(),
-            _lastToken = TokenIdx(idx = last),
+            _lastToken = match fs:
+                Option.None: con.lastToken()
+                Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
-    first=^ "(" ")" last=^:
+    first=^ "(" last=^ ")":
         Pat.Record(RecordPat(
             fields = Vec.empty(),
             ignoreRest = Bool.False,
@@ -921,7 +921,7 @@ simplePat Pat:
             _lastToken = TokenIdx(idx = last),
         ))
 
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")" last=^:
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? last=^ ")":
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.False,
@@ -930,7 +930,7 @@ simplePat Pat:
             _lastToken = TokenIdx(idx = last),
         ))
 
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")" last=^:
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." last=^ ")":
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.True,
