@@ -303,6 +303,15 @@ type Named[t](
     node: t,
 )
 
+impl[Tokens[t]] Tokens[Named[t]]:
+    firstToken(self: Named[t]) TokenIdx:
+        match self.name:
+            Option.Some(name): name.token
+            Option.None: self.node.firstToken()
+
+    lastToken(self: Named[t]) TokenIdx:
+        self.node.lastToken()
+
 type Stmt:
     Let(LetStmt)
     Assign(AssignStmt)
