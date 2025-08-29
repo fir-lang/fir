@@ -2679,7 +2679,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
 sequence(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
-        let first = state.nextCursor()
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = type_(state)
@@ -2704,8 +2703,8 @@ sequence(state: ParserState[Token]) Expr / U32:
             Expr.Seq(SeqExpr(
                 ty,
                 elems = elems.elems,
-                _firstToken = TokenIdx(idx = first),
-                _lastToken = elems.last,
+                _lbracket = elems.lbracket,
+                _rbracket = elems.rbracket,
             ))
         value
     )
@@ -2717,20 +2716,25 @@ sequence(state: ParserState[Token]) Expr / U32:
             return value
     throw(state._cursor)
 
-seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)], last: TokenIdx) / U32:
+seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbracket: TokenIdx) / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let lbracket = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let last = state.nextCursor()
+        let rbracket = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
         let value = do:
-            (elems = Vec.empty(), last = TokenIdx(idx = last))
+            (
+                elems = Vec.empty(),
+                lbracket = TokenIdx(idx = lbracket),
+                rbracket = TokenIdx(idx = rbracket),
+            )
         value
     )
     match altResult:
@@ -2740,6 +2744,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
         Result.Ok(value):
             return value
     let altResult = try(||:
+        let lbracket = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
@@ -2778,7 +2783,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
                 state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
-        let last = state.nextCursor()
+        let rbracket = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
@@ -2786,7 +2791,11 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
         let value = do:
             let vec: Vec[(key: Option[Expr], value: Expr)] =
                 once(e0).chain(es.iter()).toVec()
-            (elems = vec, last = TokenIdx(idx = last))
+            (
+                elems = vec,
+                lbracket = TokenIdx(idx = lbracket),
+                rbracket = TokenIdx(idx = rbracket),
+            )
         value
     )
     match altResult:

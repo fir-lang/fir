@@ -664,23 +664,31 @@ simpleExpr Expr:
 
 
 sequence Expr:
-    first=^ ty=(type_ _".")? elems=seqElems:
+    ty=(type_ _".")? elems=seqElems:
         Expr.Seq(SeqExpr(
             ty,
             elems = elems.elems,
-            _firstToken = TokenIdx(idx = first),
-            _lastToken = elems.last,
+            _lbracket = elems.lbracket,
+            _rbracket = elems.rbracket,
         ))
 
 
-seqElems (elems: Vec[(key: Option[Expr], value: Expr)], last: TokenIdx):
-    "[" last=^ "]":
-        (elems = Vec.empty(), last = TokenIdx(idx = last))
+seqElems (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbracket: TokenIdx):
+    lbracket=^ "[" rbracket=^ "]":
+        (
+            elems = Vec.empty(),
+            lbracket = TokenIdx(idx = lbracket),
+            rbracket = TokenIdx(idx = rbracket),
+        )
 
-    "[" e0=seqElem es=(_"," seqElem)* ","? last=^ "]":
+    lbracket=^ "[" e0=seqElem es=(_"," seqElem)* ","? rbracket=^ "]":
         let vec: Vec[(key: Option[Expr], value: Expr)] =
             once(e0).chain(es.iter()).toVec()
-        (elems = vec, last = TokenIdx(idx = last))
+        (
+            elems = vec,
+            lbracket = TokenIdx(idx = lbracket),
+            rbracket = TokenIdx(idx = rbracket),
+        )
 
 
 seqElem (key: Option[Expr], value: Expr):

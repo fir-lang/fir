@@ -668,27 +668,38 @@ DoExpr.format(self, tokens: Vec[Token]) Doc:
 
 
 SeqExpr.format(self, tokens: Vec[Token]) Doc:
-    let doc = match self.ty:
-        Option.None:
-            Doc.char('[')
-        Option.Some(ty):
-            ty.format(tokens) + Doc.str(".[")
+    let doc = Doc.empty()
 
-    let elemIdx: U32 = 0
+    if self.ty is Option.Some(ty):
+        doc += ty.format(tokens)
+
+        let dot = prevNonTrivia(self._lbracket, tokens).unwrap()
+        assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+
+        doc += formatToken(dot, tokens)
+
+    doc += formatToken(self._lbracket, tokens)
+
+    let trailingComma = Bool.False
     for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
-        if elemIdx != 0:
-            doc += Doc.char(',') + Doc.break_(1)
-        elemIdx += 1
+        trailingComma = Bool.False
 
         if elem.key is Option.Some(key):
-            doc += key.format(tokens) + Doc.str(" =") + Doc.break_(1)
+            let eq = nextNonTrivia(key.lastToken(), tokens).unwrap()
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+            doc += key.format(tokens) + Doc.blank(1) + formatToken(eq, tokens) + Doc.break_(1)
 
         doc += elem.value.format(tokens)
 
-    if self.elems.len() != 0:
+        if nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            trailingComma = Bool.True
+            doc += formatToken(next, tokens)
+
+    if self.elems.len() != 0 and not trailingComma:
         doc += Doc.whenNotFlat(Doc.char(','))
 
-    Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(']'))
+    Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(self._rbracket, tokens))
 
 
 # --------------------------------------------------------------------------------------------------
