@@ -247,6 +247,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
         if nextNonTrivia(lastToken, tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             argList += formatToken(next, tokens) + Doc.blank(1)
+            lastToken = next
 
     if self.sig.params.len() != 0 and not trailingComma:
         argList += Doc.whenNotFlat(Doc.char(','))
@@ -292,12 +293,34 @@ ImportDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 TraitDecl.format(self, tokens: Vec[Token]) Doc:
-    Doc.nested(
+    let trait_ = prevNonTrivia(self.name.token, tokens).unwrap()
+    assert(tokens.get(trait_.idx).kind is TokenKind.Trait)
+
+    let lbracket = prevNonTrivia(self.typeParams.get(0).token, tokens).unwrap()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+    let doc0 = formatToken(trait_, tokens) + Doc.blank(1) + formatToken(self.name.token, tokens)
+
+    let docRest = formatToken(lbracket, tokens)
+    let lastToken = lbracket
+    for typeParam: Id in self.typeParams.iter():
+        lastToken = typeParam.token
+        docRest += formatToken(typeParam.token, tokens)
+        if nextNonTrivia(typeParam.token, tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            docRest += formatToken(next, tokens)
+            lastToken = next
+
+    let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+    let colon = nextNonTrivia(rbracket, tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    doc0 + Doc.nested(
         4,
-        Doc.str("trait ") + Doc.str(idText(self.name, tokens))
-            + Doc.char('[')
-            + join(self.typeParams.iter().map(|id: Id|: Doc.str(idText(id,tokens))), Doc.str(", "))
-            + Doc.str("]:")
+        docRest
+            + formatToken(rbracket, tokens)
+            + formatToken(colon, tokens)
             + Doc.hardLine()
             + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine()))
 
