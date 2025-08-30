@@ -131,18 +131,17 @@ ParserState.peek[TriviaTokens[t]](self: ParserState[t]) Option[t]:
     panic("unreachable")
 
 ## For generated code.
-ParserState.updateErrorCursor(self: ParserState[t], newErrorCursor: U32):
+ParserState.updateErrorCursor(self: ParserState[t], newErrorCursor: U32) U32:
     match self._errorCursor:
         Option.None:
             self._errorCursor = Option.Some(newErrorCursor)
+            newErrorCursor
         Option.Some(err):
             if newErrorCursor > err:
                 self._errorCursor = Option.Some(newErrorCursor)
-
-## For generated code.
-ParserState.updateErrorCursorOpt(self: ParserState[t], newErrorCursor: Option[U32]):
-    if newErrorCursor is Option.Some(new):
-        self.updateErrorCursor(new)
+                newErrorCursor
+            else:
+                err
 
 ## For generated code.
 ParserState.nextCursor[TriviaTokens[t]](self: ParserState[t]) U32:

@@ -127,6 +127,10 @@ main():
     print(try(||: runParser("a, b, b", zeroOrMoreResultBug3, Bool.False)))
     print(try(||: runParser("a, b, b,", zeroOrMoreResultBug3, Bool.False)))
 
+    print("# Error cursor on failure --------------------------------")
+    print(try(||: runParser("b b b", errorCursorBug, Bool.False)))
+    print(try(||: runParser("b b c", errorCursorBug, Bool.False)))
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -283,3 +287,8 @@ main():
 # Result.Ok(1)
 # Result.Ok(2)
 # Result.Ok(2)
+# # Error cursor on failure --------------------------------
+# Result.Ok(ErrorCursorBug(
+#     ErrorCursorBugAlt2(LowerId(1:1:"b"), LowerId(1:3:"b"), LowerId(1:5:"b")),
+# ))
+# Result.Err(unexpected token or end of input at cursor 2)
