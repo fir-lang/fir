@@ -13,75 +13,6 @@ tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):
     (tokens = tokens, error = Option.None)
 
 
-# This is mainly for compatibility with the interpreter, to make it easier to test the compiler.
-#
-# In the interpreter we combine some of the tokens to make it easier to parse as LR(1).
-#
-# In the compiler we don't use LR(1), and PEG can do arbitrary lookahead (by trying to parse the
-# lookahead and backtracking when failing), so technically we shouldn't need this. We may want to
-# remove this once the compiler works and we no longer need the interpreter.
-#
-# This also skips comment tokens as the interpreter doesn't generate comment tokens.
-_combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
-    let newTokens = Vec.withCapacity(tokens.len())
-
-    let i = u32(0)
-    while i < tokens.len():
-        let token = tokens.get(i)
-
-        match token.kind:
-            TokenKind.Comment:
-                i += 1
-                continue
-
-            TokenKind.TildeUpperId:
-                if i + 2 < tokens.len()
-                        and tokens.get(i + 1).kind is TokenKind.Dot
-                        and tokens.get(i + 2) is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
-                    newTokens.push(Token(
-                        kind = TokenKind.TildeUpperIdPath,
-                        text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
-                        byteIdx = token.byteIdx,
-                        line = token.line,
-                        col = token.col,
-                    ))
-                    i += 3
-                    continue
-
-            TokenKind.UpperId:
-                if i + 2 < tokens.len():
-                    if tokens.get(i + 1).kind is TokenKind.Dot:
-                        let next = tokens.get(i + 2)
-
-                        if next is Token(kind = TokenKind.UpperId, byteIdx = byteIdxRight, text = textRight, ..):
-                            newTokens.push(Token(
-                                kind = TokenKind.UpperIdPath,
-                                text = contents.substr(token.byteIdx, byteIdxRight + textRight.len()),
-                                byteIdx = token.byteIdx,
-                                line = token.line,
-                                col = token.col,
-                            ))
-                            i += 3
-                            continue
-
-                        if next.kind is TokenKind.LBracket:
-                            newTokens.push(Token(
-                                kind = TokenKind.UpperIdDotLBracket,
-                                text = contents.substr(token.byteIdx, token.byteIdx + 2),
-                                byteIdx = token.byteIdx,
-                                line = token.line,
-                                col = token.col,
-                            ))
-                            i += 3
-                            continue
-
-            _: ()
-
-        newTokens.push(token)
-        i += 1
-
-    newTokens
-
 ## Entry point to tokenize a file and print generated tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
@@ -92,16 +23,10 @@ lexerDumpTokens(args: Array[Str]) () / []:
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
     let (tokens, error) = tokenize(file, fileContents)
-    tokens = _combineTokens(fileContents, tokens)
     if error is Option.Some(error):
         print("ERROR: `error`")
     for token: Token in tokens.iter():
         print("`token.line + 1`:`token.col + 1`: `token.kind`")
-
-
-lexerTokenizeForTesting(file: Str, fileContents: Str) Vec[Token]:
-    let (tokens, error) = tokenize(file, fileContents)
-    _combineTokens(fileContents, tokens)
 
 
 type Lexer(

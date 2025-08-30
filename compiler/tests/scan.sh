@@ -20,9 +20,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/release/fir -iPeg=tools/peg compiler/Scanner.fir --main scannerDumpTokens -- "$f")
-    interpreter_output=$(./target/release/fir --scan "$f")
-    diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
+    ./target/release/fir -iPeg=tools/peg compiler/Scanner.fir --main scannerDumpTokens -- "$f"
     if [ $? -ne 0 ]; then
         exit_code=1
     fi

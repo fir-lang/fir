@@ -31,29 +31,8 @@ type TokenKind:
     # An identifier starting with an uppercase letter.
     UpperId
 
-    # `UpperId '.' UpperId`, without spaces in between.
-    UpperIdPath
-
-    # An identifier starting with an uppercase letter, followed by a '.['.
-    #
-    # This starts an iterator syntax.
-    #
-    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
-    # We will be removed once we have our own tests.
-    UpperIdDotLBracket
-
     # An identifier starting with '~', followed by an uppercase letter.
-    #
-    # NOTE: '~' followed by an uppercase letter is tokenized as one in the interpreter, and we do
-    # the same here to be able to compare interpreter's and compiler's tokens when testing. We don't
-    # need to combine them in the compiler. We will remove this once we have our own tests.
     TildeUpperId
-
-    # `'~' UpperId '.' UpperId`, without spaces in between.
-    #
-    # NOTE: This is only used when comparing scanner-generated tokens with the interpreter's tokens.
-    # It will be removed once we have our own tests.
-    TildeUpperIdPath
 
     # An identifier starting with a lowercase letter.
     LowerId
@@ -266,14 +245,11 @@ impl ToStr[TokenKind]:
             TokenKind.Str: "Str"
             TokenKind.Tilde: "Tilde"
             TokenKind.TildeUpperId: "TildeUpperId"
-            TokenKind.TildeUpperIdPath: "TildeUpperIdPath"
             TokenKind.Trait: "Trait"
             TokenKind.Type: "Type"
             TokenKind.Underscore: "Underscore"
             TokenKind.UpperFn: "UpperFn"
             TokenKind.UpperId: "UpperId"
-            TokenKind.UpperIdDotLBracket: "UpperIdDotLBracket"
-            TokenKind.UpperIdPath: "UpperIdPath"
             TokenKind.Var: "Var"
             TokenKind.While: "While"
 
@@ -348,14 +324,11 @@ impl Eq[TokenKind]:
             (left = TokenKind.Str, right = TokenKind.Str): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
             (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId): Bool.True
-            (left = TokenKind.TildeUpperIdPath, right = TokenKind.TildeUpperIdPath): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True
             (left = TokenKind.Underscore, right = TokenKind.Underscore): Bool.True
             (left = TokenKind.UpperFn, right = TokenKind.UpperFn): Bool.True
             (left = TokenKind.UpperId, right = TokenKind.UpperId): Bool.True
-            (left = TokenKind.UpperIdDotLBracket, right = TokenKind.UpperIdDotLBracket): Bool.True
-            (left = TokenKind.UpperIdPath, right = TokenKind.UpperIdPath): Bool.True
             (left = TokenKind.Var, right = TokenKind.Var): Bool.True
             (left = TokenKind.While, right = TokenKind.While): Bool.True
             _: Bool.False

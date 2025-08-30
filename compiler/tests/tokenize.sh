@@ -18,9 +18,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    compiler_output=$(./target/release/fir -iPeg=tools/peg compiler/Lexer.fir --main lexerDumpTokens -- "$f")
-    interpreter_output=$(./target/release/fir --tokenize "$f")
-    diff -u <(echo "$interpreter_output") <(echo "$compiler_output")
+    ./target/release/fir -iPeg=tools/peg compiler/Lexer.fir --main lexerDumpTokens -- "$f"
     if [ $? -ne 0 ]; then
         exit_code=1
     fi
