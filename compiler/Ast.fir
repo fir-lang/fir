@@ -110,8 +110,7 @@ type SelfParam:
 
 type ImportDecl(
     ## Import path, e.g. `Fir.Prelude`.
-    path: Vec[Str],
-    # TODO: Imported thing list, renaming (`as`).
+    path: Vec[Id],
 )
 
 type TraitDecl(
@@ -155,6 +154,9 @@ type ImplDecl(
 
     ## Method implementations.
     items: Vec[FunDecl],
+
+    # The `impl` token.
+    _firstToken: TokenIdx
 )
 
 type Type:
@@ -209,7 +211,7 @@ impl Tokens[RecordType]:
     lastToken(self: RecordType) TokenIdx: self._lastToken
 
 type VariantType(
-    alts: Vec[VariantAlt],
+    alts: Vec[NamedType],
     extension: Option[Id],
     isRow: Bool,
 
@@ -254,11 +256,6 @@ impl Tokens[FnType]:
 
         self._rparen
 
-type VariantAlt(
-    con: Id,
-    fields: Vec[Named[Type]],
-)
-
 ## Type parameter and predicates of an `impl` or function.
 ##
 ## E.g. `[Iterator[iter, item], Debug[item]]`.
@@ -286,20 +283,31 @@ type NamedType(
     name: Id,
 
     ## Arguments of the type constructor.
-    args: Vec[Type],
-
-    # Right bracket when the type has type arguments. Otherwise same as `name`.
-    _lastToken: TokenIdx,
+    args: Option[TyArgs],
 )
 
 impl Tokens[NamedType]:
-    firstToken(self: NamedType) TokenIdx: self.name.token
-    lastToken(self: NamedType) TokenIdx: self._lastToken
+    firstToken(self: NamedType) TokenIdx:
+        self.name.token
+
+    lastToken(self: NamedType) TokenIdx:
+        match self.args:
+            Option.Some(args): args.lastToken()
+            Option.None: self.name.token
 
 type Named[t](
     name: Option[Id],
     node: t,
 )
+
+impl[Tokens[t]] Tokens[Named[t]]:
+    firstToken(self: Named[t]) TokenIdx:
+        match self.name:
+            Option.Some(name): name.token
+            Option.None: self.node.firstToken()
+
+    lastToken(self: Named[t]) TokenIdx:
+        self.node.lastToken()
 
 type Stmt:
     Let(LetStmt)
@@ -460,31 +468,37 @@ type Pat:
     ## Matches the character.
     Char(Char, TokenIdx)
 
-    ## Or pattern: `<pat1> | <pat2>`.
-    Or(Pat, Pat)
+    ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
+    Or(Vec[Pat])
 
 impl Tokens[Pat]:
     firstToken(self: Pat) TokenIdx:
         match self:
             Pat.Var(pat): pat.firstToken()
+
             Pat.Constr(pat): pat.firstToken()
+
             Pat.Record(pat): pat.firstToken()
-            Pat.Or(_, pat): pat.firstToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
                 | Pat.Char(_, tok): tok
+
+            Pat.Or(ps): ps.get(0).firstToken()
 
     lastToken(self: Pat) TokenIdx:
         match self:
             Pat.Var(pat): pat.lastToken()
+
             Pat.Constr(pat): pat.lastToken()
+
             Pat.Record(pat): pat.lastToken()
-            Pat.Or(_, pat): pat.lastToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
                 | Pat.Char(_, tok): tok
+
+            Pat.Or(ps): ps.last().unwrap().lastToken()
 
 type VarPat(
     var_: Id,
@@ -529,24 +543,30 @@ type Constructor(
     ## Name of the constructor. Only in sum types.
     constr: Option[Id],
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
+    ## Type arguments explicitly passed to the variable.
     ##
-    ## Always empty in patterns.
-    userTyArgs: Vec[Type],
+    ## Always `Option.None` in patterns.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the constructor's type. Filled in by the type checker.
     tyArgs: Vec[Type],
 
     # In variant constructors we'll see a '~' before `ty`, so we can't use `ty` as the first token.
     _firstToken: TokenIdx,
-
-    _lastToken: TokenIdx,
 )
 
 impl Tokens[Constructor]:
-    firstToken(self: Constructor) TokenIdx: self._firstToken
-    lastToken(self: Constructor) TokenIdx: self._lastToken
+    firstToken(self: Constructor) TokenIdx:
+        self._firstToken
+
+    lastToken(self: Constructor) TokenIdx:
+        match self.userTyArgs:
+            Option.Some(tyArgs):
+                tyArgs.lastToken()
+            Option.None:
+                match self.constr:
+                    Option.Some(con): con.token
+                    Option.None: self.ty.token
 
 type Expr:
     ## A variable: `x`.
@@ -615,7 +635,7 @@ type Expr:
     Seq(SeqExpr)
 
     # A parenthesized expression.
-    Paren(Expr)
+    Paren(ParenExpr)
 
 impl Tokens[Expr]:
     firstToken(self: Expr) TokenIdx:
@@ -669,31 +689,46 @@ impl Tokens[Expr]:
 type VarExpr(
     id: Id,
 
-    # Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    # there will be always one element.
-    userTyArgs: Vec[Type],
+    # Type arguments explicitly passed to the variable.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the variable. Filled in by the type checker.
     tyArgs: Vec[Type],
-
-    _lastToken: TokenIdx,
 )
 
 impl Tokens[VarExpr]:
-    firstToken(self: VarExpr) TokenIdx: self.id.firstToken()
-    lastToken(self: VarExpr) TokenIdx: self._lastToken
+    firstToken(self: VarExpr) TokenIdx:
+        self.id.token
+
+    lastToken(self: VarExpr) TokenIdx:
+        match self.userTyArgs:
+            Option.Some(tyArgs): tyArgs.lastToken()
+            Option.None: self.id.token
+
+type TyArgs(
+    args: Vec[Type],
+
+    # Left bracket.
+    _firstToken: TokenIdx,
+
+    # Right bracket.
+    _lastToken: TokenIdx,
+)
+
+impl Tokens[TyArgs]:
+    firstToken(self: TyArgs) TokenIdx: self._firstToken
+    lastToken(self: TyArgs) TokenIdx: self._lastToken
 
 type FieldSelectExpr(
     object: Expr,
 
     field: Id,
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
+    ## Type arguments explicitly passed to the variable.
     ##
     ## Since fields can't have `forall` quantifiers, this will only be valid when the field is a
     ## method, in which case the type checker will convert this node into `MethodSelectExpr`.
-    userTyArgs: Vec[Type],
+    userTyArgs: Option[TyArgs],
 )
 
 impl Tokens[FieldSelectExpr]:
@@ -761,9 +796,8 @@ type AssocFnSelectExpr(
     ty: Id,
     member: Id,
 
-    ## Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    ## there will be always one element.
-    userTyArgs: Vec[Type],
+    ## Type arguments explicitly passed to the variable.
+    userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the type and associated function. Filled in by the type checker.
     tyArgs: Vec[Type],       # TODO: type-checking type
@@ -967,13 +1001,28 @@ type UnOp:
 type SeqExpr(
     ty: Option[Type],
     elems: Vec[(key: Option[Expr], value: Expr)],
-    _firstToken: TokenIdx,
-    _lastToken: TokenIdx,
+    _lbracket: TokenIdx,
+    _rbracket: TokenIdx,
 )
 
 impl Tokens[SeqExpr]:
-    firstToken(self: SeqExpr) TokenIdx: self._firstToken
-    lastToken(self: SeqExpr) TokenIdx: self._lastToken
+    firstToken(self: SeqExpr) TokenIdx:
+        match self.ty:
+            Option.Some(ty): ty.firstToken()
+            Option.None: self._lbracket
+
+    lastToken(self: SeqExpr) TokenIdx:
+        self._rbracket
+
+type ParenExpr(
+    expr: Expr,
+    _lparen: TokenIdx,
+    _rparen: TokenIdx,
+)
+
+impl Tokens[ParenExpr]:
+    firstToken(self: ParenExpr) TokenIdx: self._lparen
+    lastToken(self: ParenExpr) TokenIdx: self._rparen
 
 # --------------------------------------------------------------------------------------------------
 
