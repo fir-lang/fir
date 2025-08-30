@@ -682,8 +682,8 @@ generateSymbolParser(
                 4,
                 Doc.str("loop:")
                     + Doc.hardLine()
-                    + (if symbolCont is SymbolCont.PushToParseTree(_):
-                           Doc.str("let nodesLen0 = nodes.len()") + Doc.hardLine()
+                    + (if symbolCont is SymbolCont.PushToParseTree(local) | SymbolCont.Push(local):
+                           Doc.str("let `local`Len0 = `local`.len()") + Doc.hardLine()
                        else:
                            Doc.empty())
                     + Doc.nested(
@@ -706,8 +706,8 @@ generateSymbolParser(
                                     + Doc.hardLine()
                                     + Doc.str("state._cursor = zeroOrMoreCursor0")
                                     + Doc.hardLine()
-                                    + (if symbolCont is SymbolCont.PushToParseTree(_):
-                                           Doc.str("nodes.truncate(nodesLen0)") + Doc.hardLine()
+                                    + (if symbolCont is SymbolCont.PushToParseTree(local) | SymbolCont.Push(local):
+                                           Doc.str("`local`.truncate(`local`Len0)") + Doc.hardLine()
                                        else:
                                            Doc.empty())
                                     + Doc.str("break"))
