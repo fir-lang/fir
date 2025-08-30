@@ -1022,7 +1022,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state._errorCursor.unwrapOr(state._cursor))
-            let params = (params = params)
             params
         )
         let params = match symResult:
@@ -1069,7 +1068,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             TypeDecl(
                 name = newId(name),
                 typeParams = match params:
-                    Option.Some(params): params.params
+                    Option.Some(params): params
                     Option.None: Vec.empty(),
                 typeParamKinds = Vec.empty(),
                 rhs = Option.Some(TypeDeclRhs.Sum(rhs)),
@@ -1104,7 +1103,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state._errorCursor.unwrapOr(state._cursor))
-            let params = (params = params)
             params
         )
         let params = match symResult:
@@ -1139,7 +1137,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state._errorCursor.unwrapOr(state._cursor))
-            let fs = (fs = fs)
             fs
         )
         let fs = match symResult:
@@ -1156,12 +1153,12 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             throw(state._errorCursor.unwrapOr(state._cursor))
         let value = do:
             let fs = match fs:
-                Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+                Option.Some(fs): fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
                 Option.None: ConFields.Empty
             TypeDecl(
                 name = newId(name),
                 typeParams = match params:
-                    Option.Some(params): params.params
+                    Option.Some(params): params
                     Option.None: Vec.empty(),
                 typeParamKinds = Vec.empty(),
                 rhs = Option.Some(TypeDeclRhs.Product(fs))
@@ -1200,7 +1197,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 state._cursor += 1
             else:
                 throw(state._errorCursor.unwrapOr(state._cursor))
-            let params = (params = params)
             params
         )
         let params = match symResult:
@@ -1219,7 +1215,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             TypeDecl(
                 name = newId(name),
                 typeParams = match params:
-                    Option.Some(params): params.params
+                    Option.Some(params): params
                     Option.None: Vec.empty(),
                 typeParamKinds = Vec.empty(),
                 rhs = Option.None,
@@ -1930,7 +1926,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                 sig = FunSig(
                     context = Option.None,
                     self_ = SelfParam.No,
-                    params = Vec.empty(),
+                    params = args.unwrapOr(Vec.empty()),
                     exceptions = ret.exn,
                     returnTy = ret.ret,
                 ),
