@@ -601,7 +601,7 @@ MatchExpr.format(self, tokens: Vec[Token]) Doc:
     let colon = nextNonTrivia(self.scrutinee.lastToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    let doc0 = formatToken(match_, tokens)
+    let doc0 = formatToken(match_, tokens) + Doc.blank(1)
     let docRest =
         Doc.nested(8, self.scrutinee.format(tokens))
             + formatToken(colon, tokens)
@@ -848,7 +848,7 @@ LetStmt.format(self, tokens: Vec[Token]) Doc:
     let let_ = prevNonTrivia(self.lhs.firstToken(), tokens).unwrap()
     assert(tokens.get(let_.idx).kind is TokenKind.Let)
 
-    let doc = formatToken(let_, tokens) + self.lhs.format(tokens)
+    let doc = formatToken(let_, tokens) + Doc.blank(1) + self.lhs.format(tokens)
 
     if self.ty is Option.Some(ty):
         let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
