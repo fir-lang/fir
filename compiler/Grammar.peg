@@ -531,7 +531,11 @@ simpleExpr Expr:
                 ))
             Option.Some(fields):
                 if fields.es.isEmpty() and fields.comma.isNone() and fields.e0.name.isNone():
-                    Expr.Paren(fields.e0.node)
+                    Expr.Paren(ParenExpr(
+                        expr = fields.e0.node,
+                        _lparen = TokenIdx(idx = first),
+                        _rparen = TokenIdx(idx = last)
+                    ))
                 else:
                     Expr.Record(RecordExpr(
                         fields = once(fields.e0).chain(fields.es.iter()).toVec(),

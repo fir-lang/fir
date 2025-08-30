@@ -402,14 +402,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.Is(e): e.format(tokens)
         Expr.Do(e): e.format(tokens)
         Expr.Seq(e): e.format(tokens)
-        Expr.Paren(e):
-            let lparen = prevNonTrivia(e.firstToken(), tokens).unwrap()
-            assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
-
-            let rparen = nextNonTrivia(e.lastToken(), tokens).unwrap()
-            assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
-
-            formatToken(lparen, tokens) + e.format(tokens) + formatToken(rparen, tokens)
+        Expr.Paren(e): e.format(tokens)
 
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when
@@ -803,6 +796,12 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
         docRest += Doc.whenNotFlat(Doc.char(','))
 
     Doc.grouped(doc0 + docRest.nest(4) + Doc.break_(0) + formatToken(self._rbracket, tokens))
+
+
+ParenExpr.format(self, tokens: Vec[Token]) Doc:
+    formatToken(self.firstToken(), tokens)
+        + self.expr.format(tokens)
+        + formatToken(self.lastToken(), tokens)
 
 
 # --------------------------------------------------------------------------------------------------
