@@ -111,17 +111,7 @@ type SelfParam:
 type ImportDecl(
     ## Import path, e.g. `Fir.Prelude`.
     path: Vec[Id],
-
-    # The 'import' token.
-    _firstToken: TokenIdx,
 )
-
-impl Tokens[ImportDecl]:
-    firstToken(self: ImportDecl) TokenIdx:
-        self._firstToken
-
-    lastToken(self: ImportDecl) TokenIdx:
-        self.path.last().unwrap().token
 
 type TraitDecl(
     ## Trait name.

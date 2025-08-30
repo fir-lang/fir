@@ -4339,7 +4339,6 @@ recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
 importDecl(state: ParserState[Token]) ImportDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
-        let first = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Import, ..):
             state._cursor += 1
         else:
@@ -4377,7 +4376,7 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId)).toVec()
-            ImportDecl(path = vec, _firstToken = TokenIdx(idx = first))
+            ImportDecl(path = vec)
         value
     )
     match altResult:

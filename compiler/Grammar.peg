@@ -964,9 +964,9 @@ recordFieldPat Named[Pat]:
 
 
 importDecl ImportDecl:
-    first=^ "import" p0=^ "UpperId" ps=(_"." ^ _"UpperId")* "NEWLINE":
+    "import" p0=^ "UpperId" ps=(_"." ^ _"UpperId")* "NEWLINE":
         let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId)).toVec()
-        ImportDecl(path = vec, _firstToken = TokenIdx(idx = first))
+        ImportDecl(path = vec)
 
 
 # --------------------------------------------------------------------------------------------------
