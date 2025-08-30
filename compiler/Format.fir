@@ -101,8 +101,6 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
                 lastToken = next
 
         let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
-        print(tokens.get(lastToken.idx))
-        print(tokens.get(rbracket.idx))
         assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
         doc += formatToken(rbracket, tokens)
@@ -144,13 +142,24 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 
             let lastToken = lparen
             let trailingComma = Bool.False
+            let fieldIdx: U32 = 0
             for field: (name: Id, ty: Type) in fields.iter():
+                trailingComma = Bool.False
+
+                if fieldIdx != 0:
+                    # If there are empty lines between the two fields in the original source then
+                    # also leave an empty space between them in the formatted code.
+                    let prevLastToken = fields.get(fieldIdx - 1)
+
+                    doc += Doc.break_(1)
+
                 let colon = nextNonTrivia(field.name.token, tokens).unwrap()
                 assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
                 doc +=
                     formatToken(field.name.token, tokens)
                         + formatToken(colon, tokens)
+                        + Doc.blank(1)
                         + field.ty.format(tokens)
 
                 lastToken = field.ty.lastToken()
@@ -159,6 +168,8 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
                     trailingComma = Bool.True
                     doc += formatToken(next, tokens)
                     lastToken = next
+
+                fieldIdx += 1
 
             if fields.len() != 0 and not trailingComma:
                 doc += Doc.whenNotFlat(Doc.char(','))
