@@ -197,7 +197,7 @@ variantType VariantType:
             _lastToken = TokenIdx(idx = last),
         )
 
-    start=variantTypeStart alt0=variantAlt alts=(_"," variantAlt)* ext=variantTypeCont? last=^ "]":
+    start=variantTypeStart alt0=namedType alts=(_"," namedType)* ext=variantTypeCont? last=^ "]":
         VariantType(
             alts = once(alt0).chain(alts.iter()).toVec(),
             extension = ext.flatten(),
@@ -216,14 +216,6 @@ variantTypeStart (start: TokenIdx, isRow: Bool):
 variantTypeCont Option[Id]:
     "," id=(_".." ^ _"LowerId")?:
         id.map(|id: U32|: newId(id))
-
-
-variantAlt VariantAlt:
-    con=^ "UpperId" "(" fields=recordTypeFields ")":
-        VariantAlt(con = newId(con), fields)
-
-    con=^ "UpperId":
-        VariantAlt(con = newId(con), fields = Vec.empty())
 
 
 recordTypeFields Vec[Named[Type]]:

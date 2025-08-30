@@ -399,7 +399,14 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.Is(e): e.format(tokens)
         Expr.Do(e): e.format(tokens)
         Expr.Seq(e): e.format(tokens)
-        Expr.Paren(e): Doc.char('(') + e.format(tokens) + Doc.char(')')
+        Expr.Paren(e):
+            let lparen = prevNonTrivia(e.firstToken(), tokens).unwrap()
+            assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
+
+            let rparen = nextNonTrivia(e.lastToken(), tokens).unwrap()
+            assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+            formatToken(lparen, tokens) + e.format(tokens) + formatToken(rparen, tokens)
 
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when
@@ -960,7 +967,7 @@ ContinueStmt.format(self, tokens: Vec[Token]) Doc:
 Type.format(self, tokens: Vec[Token]) Doc:
     match self:
         Type.Named(t): t.format(tokens)
-        Type.Var(id): Doc.str(idText(id, tokens))
+        Type.Var(id): formatToken(id.token, tokens)
         Type.Record(t): t.format(tokens)
         Type.Variant(t): t.format(tokens)
         Type.Fn_(t): t.format(tokens)
@@ -974,76 +981,87 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow)
 
-    let doc = formatToken(lparen, tokens)
+    let doc0 = formatToken(lparen, tokens)
+    let docRest = Doc.empty()
 
-    let fieldIdx: U32 = 0
+    let trailingComma = Bool.False
+    let lastToken = lparen
     for field: Named[Type] in self.fields.iter():
-        if fieldIdx != 0:
-            doc += Doc.char(',') + Doc.break_(1)
-        fieldIdx += 1
-
-        doc += formatNamed(field, Type.format, tokens)
+        trailingComma = Bool.False
+        docRest += formatNamed(field, Type.format, tokens)
+        lastToken = field.lastToken()
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            docRest += formatToken(next, tokens)
+            trailingComma = Bool.True
+            lastToken = next
 
     if self.extension is Option.Some(ext):
-        if not self.fields.isEmpty():
-            doc += Doc.str(", ..")
-        else:
-            doc += Doc.str("..")
+        let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        doc += Doc.str(idText(ext, tokens))
+        docRest += formatToken(dotdot, tokens) + formatToken(ext.token, tokens)
 
     let rparen = self.lastToken()
-    assert(tokens.get(lparen.idx).kind is TokenKind.RParen)
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    Doc.grouped(doc + formatToken(rparen, tokens))
+    doc0 + Doc.grouped(docRest + formatToken(rparen, tokens))
 
 
 VariantType.format(self, tokens: Vec[Token]) Doc:
-    let doc = Doc.char('[')
+    let lbracket = self.firstToken()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket | TokenKind.LBracketRow)
 
-    let altIdx: U32 = 0
-    for alt: VariantAlt in self.alts.iter():
-        if altIdx != 0:
-            doc += Doc.str(", ")
-        altIdx += 1
+    let rbracket = self.lastToken()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-        doc += alt.format(tokens)
+    let doc0 = formatToken(lbracket, tokens)
+    let docRest = Doc.empty()
+
+    let trailingComma = Bool.False
+    let lastToken = lbracket
+    for alt: NamedType in self.alts.iter():
+        trailingComma = Bool.False
+        docRest += alt.format(tokens)
+        if nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            docRest += formatToken(next, tokens)
+            trailingComma = Bool.True
+            lastToken = next
 
     if self.extension is Option.Some(ext):
-        if not self.alts.isEmpty():
-            doc += Doc.str(", ..")
-        else:
-            doc += Doc.str("..")
+        if not self.alts.isEmpty() and not trailingComma:
+            docRest += Doc.char(',') + Doc.blank(1)
 
-        doc += Doc.str(idText(ext, tokens))
+        let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-    doc + Doc.char(']')
+        docRest += formatToken(dotdot, tokens) + formatToken(ext.token, tokens)
 
-
-VariantAlt.format(self, tokens: Vec[Token]) Doc:
-    let doc = Doc.str(idText(self.con, tokens))
-
-    if not self.fields.isEmpty():
-        doc += Doc.char('(') + Doc.break_(0)
-
-        let fieldIdx: U32 = 0
-        for field: Named[Type] in self.fields.iter():
-            if fieldIdx != 0:
-                doc += Doc.char(',') + Doc.break_(1)
-            fieldIdx += 1
-
-            doc += formatNamed(field, Type.format, tokens)
-
-        doc = Doc.nested(4, doc) + Doc.char(')')
-
-    doc
+    doc0 + docRest + formatToken(rbracket, tokens)
 
 
 FnType.format(self, tokens: Vec[Token]) Doc:
-    let doc =
-        Doc.str("Fn(")
-            + join(self.args.iter().map(|arg: Type|: arg.format(tokens)), Doc.str(", "))
-            + Doc.char(')')
+    let fn_ = self.firstToken()
+
+    let lparen = nextNonTrivia(fn_, tokens).unwrap()
+    assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
+
+    let doc = formatToken(fn_, tokens) + formatToken(lparen, tokens)
+
+    let lastToken = lparen
+    let trailingComma = Bool.False
+    for arg: Type in self.args.iter():
+        trailingComma = Bool.False
+        doc += arg.format(tokens)
+        lastToken = arg.lastToken()
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            doc += formatToken(next, tokens)
+            trailingComma = Bool.True
+            lastToken = next
+
+    let rparen = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+    doc += formatToken(rparen, tokens)
 
     if self.ret is Option.Some(ret):
         doc += Doc.blank(1) + ret.format(tokens)
