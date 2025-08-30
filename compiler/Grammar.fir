@@ -5177,6 +5177,7 @@ traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
 implDecl(state: ParserState[Token]) ImplDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let first = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Impl, ..):
             state._cursor += 1
         else:
@@ -5252,6 +5253,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
                 trait_ = newId(name),
                 tys = once(t0).chain(ts.iter()).toVec(),
                 items = rhs,
+                _firstToken = TokenIdx(idx = first),
             )
         value
     )

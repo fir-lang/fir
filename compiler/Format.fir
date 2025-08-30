@@ -326,42 +326,52 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
-    let doc = Doc.str("impl")
+    let impl_ = self._firstToken
+    let doc0 = formatToken(impl_, tokens)
+
+    let docRest = Doc.empty()
 
     if self.context is Option.Some(context):
-        doc += Doc.char('[')
+        let lbracket = context.firstToken()
+        docRest += formatToken(lbracket, tokens)
 
-        let predIdx: U32 = 0
         for pred: Type in context.preds.iter():
-            if predIdx != 0:
-                doc += Doc.char(',') + Doc.break_(1)
-            predIdx += 1
+            docRest += pred.format(tokens)
+            if nextNonTrivia(pred.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                docRest += formatToken(next, tokens)
 
-            doc += pred.format(tokens)
+        let rbracket = context.lastToken()
+        docRest += formatToken(rbracket, tokens)
 
-        doc += Doc.char(']')
+    docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens)
 
-    doc +=
-        Doc.blank(1)
-            + Doc.str(idText(self.trait_, tokens))
-            + Doc.char('[')
+    let lbracket = nextNonTrivia(self.trait_.token, tokens).unwrap()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
-    let tyIdx: U32 = 0
+    docRest += formatToken(lbracket, tokens)
+
+    let lastToken = lbracket
     for ty: Type in self.tys.iter():
-        if tyIdx != 0:
-            doc += Doc.char(',') + Doc.break_(1)
-        tyIdx += 1
+        docRest += ty.format(tokens)
+        lastToken = ty.lastToken()
+        if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            docRest += formatToken(next, tokens)
+            lastToken = next
 
-        doc += ty.format(tokens)
+    let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-    doc += Doc.char(']') + Doc.char(':') + Doc.hardLine()
+    let colon = nextNonTrivia(rbracket, tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc += join(
+    docRest += formatToken(rbracket, tokens) + formatToken(colon, tokens) + Doc.hardLine()
+
+    docRest += join(
         self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
         Doc.hardLine() + Doc.hardLine()
     )
 
-    doc.nest(4)
+    doc0 + docRest.nest(4)
 
 
 # --------------------------------------------------------------------------------------------------

@@ -164,6 +164,9 @@ type ImplDecl(
 
     ## Method implementations.
     items: Vec[FunDecl],
+
+    # The `impl` token.
+    _firstToken: TokenIdx
 )
 
 type Type:

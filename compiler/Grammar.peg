@@ -1078,12 +1078,13 @@ traitDeclRhs Vec[FunDecl]:
 
 
 implDecl ImplDecl:
-    "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
+    first=^ "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
             context = ctx,
             trait_ = newId(name),
             tys = once(t0).chain(ts.iter()).toVec(),
             items = rhs,
+            _firstToken = TokenIdx(idx = first),
         )
 
 
