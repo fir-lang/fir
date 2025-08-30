@@ -109,6 +109,24 @@ main():
     print(try(||: runParser("a b c a b", restoreCursorZeroOrMore1, Bool.False)))
     print(try(||: runParser("a b c a b", restoreCursorZeroOrMore2, Bool.False)))
 
+    print("# Zero-or-more vec truncate bug regression test ----------")
+    print(try(||: runParser("a,", zeroOrMoreResultBug1, Bool.False)))
+    print(try(||: runParser("a, b", zeroOrMoreResultBug1, Bool.False)))
+    print(try(||: runParser("a, b,", zeroOrMoreResultBug1, Bool.False)))
+    print(try(||: runParser("a, b, b", zeroOrMoreResultBug1, Bool.False)))
+    print(try(||: runParser("a, b, b,", zeroOrMoreResultBug1, Bool.False)))
+
+    print(try(||: runParser("a,", zeroOrMoreResultBug2, Bool.False)))
+    print(try(||: runParser("a, b", zeroOrMoreResultBug2, Bool.False)))
+    print(try(||: runParser("a, b,", zeroOrMoreResultBug2, Bool.False)))
+    print(try(||: runParser("a, b, b", zeroOrMoreResultBug2, Bool.False)))
+
+    print(try(||: runParser("a,", zeroOrMoreResultBug3, Bool.False)))
+    print(try(||: runParser("a, b", zeroOrMoreResultBug3, Bool.False)))
+    print(try(||: runParser("a, b,", zeroOrMoreResultBug3, Bool.False)))
+    print(try(||: runParser("a, b, b", zeroOrMoreResultBug3, Bool.False)))
+    print(try(||: runParser("a, b, b,", zeroOrMoreResultBug3, Bool.False)))
+
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
@@ -250,3 +268,18 @@ main():
 # Result.Ok(Bool.True)
 # Result.Ok([Bool.True])
 # Result.Ok(Bool.True)
+# # Zero-or-more vec truncate bug regression test ----------
+# Result.Ok(0)
+# Result.Ok(1)
+# Result.Ok(1)
+# Result.Ok(2)
+# Result.Ok(2)
+# Result.Ok(Option.None)
+# Result.Ok(Option.Some(2))
+# Result.Ok(Option.Some(2))
+# Result.Err(parser didn't consume all input, input len = 5, cursor after parsing = 4)
+# Result.Err(unexpected token or end of input at cursor 2)
+# Result.Ok(1)
+# Result.Ok(1)
+# Result.Ok(2)
+# Result.Ok(2)

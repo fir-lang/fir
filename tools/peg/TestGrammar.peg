@@ -10,6 +10,7 @@ Terminals:
     "a" = Token(kind = TokenKind.LowerId, text = "a", ..)
     "b" = Token(kind = TokenKind.LowerId, text = "b", ..)
     "c" = Token(kind = TokenKind.LowerId, text = "c", ..)
+    "," = Token(kind = TokenKind.Comma, ..)
 
 terminalA:
     "a"
@@ -161,3 +162,22 @@ restoreCursorOneOrMore1 Vec[Bool]:
 restoreCursorOneOrMore2 Bool:
     ("a" "b" "c")+ "a" "b":
         Bool.True
+
+# --------------------------------------------------------------------------------------------------
+# Regression test for bug: zero-or-more should truncate the result vector on failure.
+#
+# Note that we need a symbol (`"b"` below) after the captured one (`^` below) for the repro.
+#
+# For good coverage we also test with one-or-more and optional.
+
+zeroOrMoreResultBug1 U32:
+    "a" v=(_"," ^ _"b")* ","?:
+        v.len()
+
+zeroOrMoreResultBug2 Option[U32]:
+    "a" v=(_"," ^ _"b")? ","?:
+        v
+
+zeroOrMoreResultBug3 U32:
+    "a" v=(_"," ^ _"b")+ ","?:
+        v.len()

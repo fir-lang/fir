@@ -666,7 +666,6 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
         lastToken = exn.lastToken()
 
     let colon = nextNonTrivia(lastToken, tokens).unwrap()
-    print(tokens.get(colon.idx))
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
     docRest += formatToken(colon, tokens)
