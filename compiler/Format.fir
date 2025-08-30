@@ -539,21 +539,26 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     # Ignore associativities and print the operator before expressions when breaking into lines.
 
     let rhs = self.right
-    let exprs: Vec[(expr: Expr, op: BinOp)] = Vec.withCapacity(1)
+
+    let exprs: Vec[Expr] = Vec.withCapacity(1)
 
     let left = self.left
     while left is Expr.BinOp(binop):
-        exprs.push((expr = binop.right, op = binop.op))
+        exprs.push(binop.right)
         left = binop.left
+    exprs.push(left)
 
-    let doc0 = left.format(tokens)
-    let docRest = Doc.empty()
-    while exprs.pop() is Option.Some((expr, op)):
+    let expr0 = exprs.pop().unwrap() # leftmost expr
+    let doc0 = expr0.format(tokens)
+    let op0 = nextNonTrivia(expr0.lastToken(), tokens).unwrap()
+    let docRest = Doc.break_(1) + formatToken(op0, tokens)
+
+    while exprs.pop() is Option.Some(expr):
         let opToken = nextNonTrivia(expr.lastToken(), tokens).unwrap()
-        docRest += Doc.break_(1) + formatToken(opToken, tokens) + Doc.blank(1) + expr.format(tokens)
+        docRest += Doc.blank(1) + expr.format(tokens) + Doc.break_(1) + formatToken(opToken, tokens)
 
-    let selfOp = nextNonTrivia(self.left.lastToken(), tokens).unwrap()
-    docRest += Doc.break_(1) + formatToken(selfOp, tokens) + Doc.blank(1) + self.right.format(tokens)
+    let rhsOp = prevNonTrivia(rhs.firstToken(), tokens).unwrap()
+    docRest += Doc.blank(1) + rhs.format(tokens)
 
     doc0 + docRest.nest(4)
 
