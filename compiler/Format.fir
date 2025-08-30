@@ -506,7 +506,7 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
         trailingComma = Bool.False
         args += formatNamed(arg, Expr.format, tokens).group()
         if nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
-            args += formatToken(next, tokens)
+            args += formatToken(next, tokens) + Doc.break_(1)
             trailingComma = Bool.True
 
     let rparen = self.lastToken()
@@ -639,6 +639,7 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
 
     let doc =
         formatToken(self.firstToken(), tokens)
+            + Doc.blank(1)
             + Doc.nested(
                 4,
                 firstBranch.guard.format(tokens)
@@ -745,6 +746,7 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
             4,
             Doc.break_(1)
                 + formatToken(is_, tokens)
+                + Doc.blank(1)
                 + self.pat.format(tokens))
 
 
@@ -889,7 +891,7 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
         let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
         assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-        docRest += formatToken(colon, tokens) + ty.format(tokens) + Doc.blank(1)
+        docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens) + Doc.blank(1)
         lastToken = ty.lastToken()
 
     let in_ = nextNonTrivia(lastToken, tokens).unwrap()
