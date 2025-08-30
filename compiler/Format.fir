@@ -149,7 +149,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
                 assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
                 doc +=
-                    Doc.str(idText(field.name, tokens))
+                    formatToken(field.name.token, tokens)
                         + formatToken(colon, tokens)
                         + field.ty.format(tokens)
 
@@ -355,7 +355,7 @@ Expr.format(self, tokens: Vec[Token]) Doc:
         Expr.Int(e): e.format(tokens)
         Expr.Str(e): e.format(tokens)
         Expr.Char(e): e.format(tokens)
-        Expr.Self(e): Doc.str(tokenText(e, tokens))
+        Expr.Self(e): formatToken(e, tokens)
         Expr.BinOp(e): e.format(tokens)
         Expr.UnOp(e): e.format(tokens)
         Expr.Record(e): e.format(tokens)
@@ -801,79 +801,123 @@ Stmt.format(self, tokens: Vec[Token]) Doc:
 
 
 LetStmt.format(self, tokens: Vec[Token]) Doc:
-    let doc = Doc.str("let ") + self.lhs.format(tokens)
+    let let_ = prevNonTrivia(self.lhs.firstToken(), tokens).unwrap()
+    assert(tokens.get(let_.idx).kind is TokenKind.Let)
+
+    let doc = formatToken(let_, tokens) + self.lhs.format(tokens)
 
     if self.ty is Option.Some(ty):
-        doc += Doc.str(": ") + ty.format(tokens)
+        let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
+        assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc + Doc.str(" = ") + self.rhs.format(tokens)
+        doc += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
+
+    let eq = prevNonTrivia(self.rhs.firstToken(), tokens).unwrap()
+    assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+
+    doc + Doc.blank(1) + formatToken(eq, tokens) + Doc.blank(1) + self.rhs.format(tokens)
 
 
 AssignStmt.format(self, tokens: Vec[Token]) Doc:
+    let op = nextNonTrivia(self.lhs.lastToken(), tokens).unwrap()
+
     self.lhs.format(tokens)
         + Doc.blank(1)
-        + self.op.format()
+        + formatToken(op, tokens)
         + Doc.blank(1)
         + self.rhs.format(tokens)
 
 
-AssignOp.format(self) Doc:
-    Doc.str(match self:
-        AssignOp.Eq: "="
-        AssignOp.PlusEq: "+="
-        AssignOp.MinusEq: "-="
-        AssignOp.StarEq: "*="
-        AssignOp.CaretEq: "^=")
-
-
 ForStmt.format(self, tokens: Vec[Token]) Doc:
-    # TODO: Add loop label
-    let header = Doc.str("for ") + self.pat.format(tokens)
+    let doc0 = Doc.empty()
+    let for_ = self.firstToken()
+
+    if self.label is Option.Some(label):
+        doc0 += formatToken(label.token, tokens) + Doc.blank(1)
+        for_ = nextNonTrivia(label.token, tokens).unwrap()
+
+    assert(tokens.get(for_.idx).kind is TokenKind.For)
+
+    doc0 += formatToken(for_, tokens) + Doc.blank(1)
+
+    let docRest = self.pat.format(tokens)
+    let lastToken = self.pat.lastToken()
 
     if self.astTy is Option.Some(ty):
-        header += Doc.str(": ") + ty.format(tokens)
+        let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
+        assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    header += Doc.nested(
+        docRest += formatToken(colon, tokens) + ty.format(tokens) + Doc.blank(1)
+        lastToken = ty.lastToken()
+
+    let in_ = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(in_.idx).kind is TokenKind.In)
+
+    let colon = nextNonTrivia(self.expr.lastToken(), tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    docRest += Doc.nested(
         4,
-        Doc.str(" in") + Doc.break_(1) + self.expr.format(tokens) + Doc.char(':'))
+        formatToken(in_, tokens) + Doc.break_(1) + self.expr.format(tokens) + formatToken(colon, tokens))
 
-    Doc.nested(4, header.group() + Doc.hardLine() + formatStmts(self.body, tokens))
+    doc0 + Doc.nested(4, docRest.group() + Doc.hardLine() + formatStmts(self.body, tokens))
 
 
 WhileStmt.format(self, tokens: Vec[Token]) Doc:
-    # TODO: Add loop label
-    Doc.nested(
-        4,
-        Doc.nested(4, Doc.str("while ") + self.cond.format(tokens))
-            + Doc.char(':')
+    let doc0 = Doc.empty()
+    let while_ = self.firstToken()
+
+    if self.label is Option.Some(label):
+        doc0 += formatToken(label.token, tokens) + Doc.blank(1)
+        while_ = nextNonTrivia(label.token, tokens).unwrap()
+
+    assert(tokens.get(while_.idx).kind is TokenKind.While)
+
+    doc0 += formatToken(while_, tokens) + Doc.blank(1)
+
+    let colon = nextNonTrivia(self.cond.lastToken(), tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    doc0 + Doc.nested(4, self.cond.format(tokens).nest(4)
+            + formatToken(colon, tokens)
             + Doc.hardLine()
             + formatStmts(self.body, tokens))
 
 
 LoopStmt.format(self, tokens: Vec[Token]) Doc:
-    Doc.nested(
+    let loop_ = self.firstToken()
+
+    let colon = nextNonTrivia(loop_, tokens).unwrap()
+    assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+
+    formatToken(loop_, tokens) + Doc.nested(
         4,
-        Doc.str("loop:")
+        formatToken(colon, tokens)
             + Doc.hardLine()
             + formatStmts(self.body, tokens))
 
 
 BreakStmt.format(self, tokens: Vec[Token]) Doc:
+    let break_ = self.firstToken()
+
     match self.label:
         Option.None:
-            Doc.str("break")
+            formatToken(break_, tokens)
 
         Option.Some(label):
-            Doc.nested(4, Doc.str("break") + Doc.break_(1) + Doc.str(idText(label, tokens)))
+            formatToken(break_, tokens) + Doc.nested(4, Doc.break_(1) + formatToken(label.token, tokens))
 
 
 ContinueStmt.format(self, tokens: Vec[Token]) Doc:
+    let continue_ = self.firstToken()
+
     match self.label:
         Option.None:
-            Doc.str("continue")
+            formatToken(continue_, tokens)
+
 
         Option.Some(label):
-            Doc.nested(4, Doc.str("continue") + Doc.break_(1) + Doc.str(idText(label, tokens)))
+            formatToken(continue_, tokens) + Doc.nested(4, Doc.break_(1) + formatToken(label.token, tokens))
 
 
 # --------------------------------------------------------------------------------------------------
