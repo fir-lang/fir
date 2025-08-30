@@ -234,7 +234,15 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 ImportDecl.format(self, tokens: Vec[Token]) Doc:
-    Doc.str("import ") + join(self.path.iter().map(Doc.str), Doc.char('.'))
+    let doc = formatToken(self.firstToken(), tokens) + Doc.blank(1)
+
+    for id: Id in self.path.iter():
+        doc += formatToken(id.token, tokens)
+
+        if nextNonTrivia(id.token, tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Dot:
+            doc += formatToken(next, tokens)
+
+    doc
 
 
 TraitDecl.format(self, tokens: Vec[Token]) Doc:

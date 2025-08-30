@@ -4545,13 +4545,14 @@ recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
 importDecl(state: ParserState[Token]) ImportDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let first = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Import, ..):
             state._cursor += 1
         else:
             throw(state._cursor)
-        let p0 = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
+        let p0 = state.nextCursor()
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
-            sym
         else:
             throw(state._cursor)
         let zeroOrMoreCursor0 = state._cursor
@@ -4562,8 +4563,8 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
                     state._cursor += 1
                 else:
                     throw(state._cursor)
+                ps.push(state.nextCursor())
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-                    ps.push(sym)
                     state._cursor += 1
                 else:
                     throw(state._cursor)
@@ -4580,8 +4581,8 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
         else:
             throw(state._cursor)
         let value = do:
-            let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: Token|: p.text)).toVec()
-            ImportDecl(path = vec)
+            let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId)).toVec()
+            ImportDecl(path = vec, _firstToken = TokenIdx(idx = first))
         value
     )
     match altResult:
