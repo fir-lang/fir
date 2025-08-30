@@ -1089,20 +1089,35 @@ Pat.format(self, tokens: Vec[Token]) Doc:
 
         Pat.Ignore(p)
             | Pat.Str(_, p)
-            | Pat.Char(_, p): Doc.str(tokenText(p, tokens))
+            | Pat.Char(_, p): formatToken(p, tokens)
 
         Pat.Or(p1, p2):
-            Doc.nested(
-                4,
-                p1.format(tokens)
-                    + Doc.break_(1)
-                    + Doc.str("| ")
-                    + p2.format(tokens))
-                .group()
+            # Same formatting as binary operators.
+            let pats: Vec[Pat] = Vec.withCapacity(1)
+
+            let left = p1
+            while left is Pat.Or(left_, right_):
+                pats.push(right_)
+                left = left_
+
+            let doc0 = left.format(tokens)
+            let docRest = Doc.empty()
+            while pats.pop() is Option.Some(pat):
+                let pipe = nextNonTrivia(pat.lastToken(), tokens).unwrap()
+                assert(tokens.get(pipe.idx).kind is TokenKind.Pipe)
+
+                docRest += Doc.break_(1) + formatToken(pipe, tokens) + Doc.blank(1) + pat.format(tokens)
+
+            let pipe = nextNonTrivia(p1.lastToken(), tokens).unwrap()
+            assert(tokens.get(pipe.idx).kind is TokenKind.Pipe)
+
+            docRest += Doc.break_(1) + formatToken(pipe, tokens) + Doc.blank(1) + p2.format(tokens)
+
+            doc0 + docRest.nest(4)
 
 
 VarPat.format(self, tokens: Vec[Token]) Doc:
-    Doc.str(idText(self.var_, tokens))
+    formatToken(self.var_.token, tokens)
 
 
 ConstrPat.format(self, tokens: Vec[Token]) Doc:
