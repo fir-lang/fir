@@ -76,15 +76,41 @@ TopDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 TypeDecl.format(self, tokens: Vec[Token]) Doc:
-    let doc = Doc.str("type ") + Doc.str(idText(self.name, tokens))
+    let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
+    assert(tokens.get(type_.idx).kind is TokenKind.Type)
+
+    let doc = formatToken(type_, tokens) + Doc.blank(1) + formatToken(self.name.token, tokens)
 
     if not self.typeParams.isEmpty():
+        let lbracket = prevNonTrivia(self.typeParams.get(0).firstToken(), tokens).unwrap()
+        assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+        let lastToken = self.typeParams.last().unwrap().lastToken()
+
         # Top-level declarations always start at column 0, and I don't think it'll be common to have
         # so many type parameters the parameter list will need line breaks. For now print the header
         # in one line.
-        doc += Doc.char('[')
-            + join(self.typeParams.iter().map(|id: Id|: Doc.str(idText(id, tokens))), Doc.str(", "))
-            + Doc.char(']')
+        doc += formatToken(lbracket, tokens)
+
+        let trailingComma = Bool.False
+        for typeParam: Id in self.typeParams.iter():
+            trailingComma = Bool.False
+
+            doc += formatToken(typeParam.token, tokens)
+            lastToken = typeParam.token
+
+            if nextNonTrivia(typeParam.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                trailingComma = Bool.True
+                doc += formatToken(next, tokens)
+                lastToken = next
+
+
+        let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
+        print(tokens.get(lastToken.idx))
+        print(tokens.get(rbracket.idx))
+        assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+        doc += formatToken(rbracket, tokens)
 
     if self.rhs is Option.Some(rhs):
         doc += rhs.format(tokens)
@@ -744,10 +770,6 @@ formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
 
 
 Stmt.format(self, tokens: Vec[Token]) Doc:
-    # let comment = findCommentBefore(self.firstToken(), tokens)
-    # if comment is Option.Some(token):
-    #     let token = tokens.get(token.idx)
-    #     print(token)
     Doc.group(match self:
         Stmt.Let(s): s.format(tokens)
         Stmt.Assign(s): s.format(tokens)

@@ -282,35 +282,35 @@ returnTy (ret: Option[Type], exn: Option[Type]):
 
 typeDecl TypeDecl:
     # Sum type: at least one constructors
-    "type" name=^ "UpperId" params=("[" params=typeParams "]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
+    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
             name = newId(name),
             typeParams = match params:
-                Option.Some(params): params.params
+                Option.Some(params): params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
             rhs = Option.Some(TypeDeclRhs.Sum(rhs)),
         )
 
     # Product type
-    "type" name=^ "UpperId" params=("[" params=typeParams "]")? fs=("(" fs=conFields? ")")? "NEWLINE":
+    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=(_"(" conFields? _")")? "NEWLINE":
         let fs = match fs:
-            Option.Some(fs): fs.fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+            Option.Some(fs): fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
             Option.None: ConFields.Empty
         TypeDecl(
             name = newId(name),
             typeParams = match params:
-                Option.Some(params): params.params
+                Option.Some(params): params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
             rhs = Option.Some(TypeDeclRhs.Product(fs))
         )
 
-    "prim" "type" name=^ "UpperId" params=("[" params=typeParams "]")? "NEWLINE":
+    "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
             name = newId(name),
             typeParams = match params:
-                Option.Some(params): params.params
+                Option.Some(params): params
                 Option.None: Vec.empty(),
             typeParamKinds = Vec.empty(),
             rhs = Option.None,
