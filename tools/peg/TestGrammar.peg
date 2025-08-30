@@ -181,3 +181,16 @@ zeroOrMoreResultBug2 Option[U32]:
 zeroOrMoreResultBug3 U32:
     "a" v=(_"," ^ _"b")+ ","?:
         v.len()
+
+# --------------------------------------------------------------------------------------------------
+# Regression test error cursor bug: #202
+
+errorCursorBug:
+    errorCursorBugAlt1 $ # this should fail at cursor 0 for the repro
+    errorCursorBugAlt2 $
+
+errorCursorBugAlt1:
+    "a"
+
+errorCursorBugAlt2:
+    "b" "b" "b"

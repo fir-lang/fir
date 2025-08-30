@@ -471,8 +471,6 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
                 4,
                 Doc.str("Result.Err(err):")
                     + Doc.hardLine()
-                    + makeUpdateError()
-                    + Doc.hardLine()
                     + Doc.str("state._cursor = cursor0"))
 
         let okAlt =
@@ -486,7 +484,7 @@ generateNonTerminal(terminalType: Str, nonTerminalType: Str, decl: NonTerminalDe
 
         doc += altResultMatchDoc + Doc.hardLine()
 
-    doc += makeThrow(makeUnexpectedTokenError())
+    doc += makeThrow()
 
     doc.nest(4)
 
@@ -563,7 +561,7 @@ generateSymbolParser(
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError()))
+                        + makeThrow())
 
         Symbol.NonTerminal(nonTerminal):
             let doc = Doc.str("let nonTerminalResult = `nonTerminal`(state)")
@@ -702,8 +700,6 @@ generateSymbolParser(
                                 4,
                                 Doc.str("Result.Err(err):")
                                     + Doc.hardLine()
-                                    + makeUpdateError()
-                                    + Doc.hardLine()
                                     + Doc.str("state._cursor = zeroOrMoreCursor0")
                                     + Doc.hardLine()
                                     + (if symbolCont is SymbolCont.PushToParseTree(local) | SymbolCont.Push(local):
@@ -755,8 +751,6 @@ generateSymbolParser(
             # On failure: update the cursors and pop any pushed tokens.
             let errDoc =
                 Doc.str("state._cursor = optionalCursor0")
-                    + Doc.hardLine()
-                    + makeUpdateError()
                     + (if cont is SymbolCont.PushToParseTree(_):
                            Doc.hardLine() + Doc.str("nodes.truncate(nodesLen0)")
                        else:
@@ -847,7 +841,7 @@ generateSymbolParser(
                                       + Doc.hardLine()
                                       + Doc.str("state.cloneFrom(state0)")
                                       + Doc.hardLine()
-                                      + makeThrow(makeUnexpectedTokenError())))
+                                      + makeThrow()))
 
         Symbol.Bind(binder, symbol):
             generateSymbolParser(symbol, terminalPats, SymbolCont.Bind(binder))
@@ -863,7 +857,7 @@ generateSymbolParser(
                     4,
                     Doc.str("else:")
                         + Doc.hardLine()
-                        + makeThrow(makeUnexpectedTokenError()))
+                        + makeThrow())
 
         Symbol.Cursor:
             match cont:
@@ -910,18 +904,8 @@ tokensToCode(tokens: Vec[Token]) Str / exn:
 
     out.toStr()
 
-makeUnexpectedTokenError() Doc:
-    Doc.str("state._errorCursor.unwrapOr(state._cursor)")
-
-makeThrow(expr: Doc) Doc:
-    Doc.nested(4, Doc.str("throw(") + Doc.break_(0) + expr + Doc.char(')')).group()
-
-# When generating code that backtracks, update the local `curErr: Option[ParseError]` if the new
-# error's cursor is more advanced than the current.
-#
-# The new error value should be named `err`.
-makeUpdateError() Doc:
-    Doc.str("state.updateErrorCursor(err)")
+makeThrow() Doc:
+    Doc.str("throw(state.updateErrorCursor(state._cursor))")
 
 generateType(nodes: Vec[ParseTree[Token, NonTerminal]]) Str:
     let tokens: Vec[Token] = Vec.withCapacity(4)

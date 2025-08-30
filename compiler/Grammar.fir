@@ -19,7 +19,6 @@ module(state: ParserState[Token]) Vec[TopDecl] / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ds.truncate(dsLen0)
                     break
@@ -28,18 +27,17 @@ module(state: ParserState[Token]) Vec[TopDecl] / U32:
         if state.peek().isNone():
             state._cursor
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ds
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 topDecl(state: ParserState[Token]) TopDecl / U32:
     let cursor0 = state._cursor
@@ -52,7 +50,6 @@ topDecl(state: ParserState[Token]) TopDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -65,7 +62,6 @@ topDecl(state: ParserState[Token]) TopDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -78,7 +74,6 @@ topDecl(state: ParserState[Token]) TopDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -91,7 +86,6 @@ topDecl(state: ParserState[Token]) TopDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -104,11 +98,10 @@ topDecl(state: ParserState[Token]) TopDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 type_(state: ParserState[Token]) Type / U32:
     let cursor0 = state._cursor
@@ -121,7 +114,6 @@ type_(state: ParserState[Token]) Type / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -130,14 +122,13 @@ type_(state: ParserState[Token]) Type / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Type.Var(newId(id))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -150,7 +141,6 @@ type_(state: ParserState[Token]) Type / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -163,7 +153,6 @@ type_(state: ParserState[Token]) Type / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -176,11 +165,10 @@ type_(state: ParserState[Token]) Type / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 namedType(state: ParserState[Token]) NamedType / U32:
     let cursor0 = state._cursor
@@ -189,11 +177,11 @@ namedType(state: ParserState[Token]) NamedType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let arg0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -204,13 +192,12 @@ namedType(state: ParserState[Token]) NamedType / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = type_(state)
                 args.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     args.truncate(argsLen0)
                     break
@@ -221,20 +208,19 @@ namedType(state: ParserState[Token]) NamedType / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let args = once(arg0).chain(args.iter()).toVec()
             NamedType(name = newId(name), args, _lastToken = TokenIdx(idx = last))
@@ -242,7 +228,6 @@ namedType(state: ParserState[Token]) NamedType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -251,18 +236,17 @@ namedType(state: ParserState[Token]) NamedType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             NamedType(name = newId(name), args = Vec.empty(), _lastToken = TokenIdx(idx = name))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordType(state: ParserState[Token]) RecordType / U32:
     let cursor0 = state._cursor
@@ -273,7 +257,7 @@ recordType(state: ParserState[Token]) RecordType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             RecordType(
                 fields = Vec.empty(),
@@ -286,7 +270,6 @@ recordType(state: ParserState[Token]) RecordType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -296,17 +279,17 @@ recordType(state: ParserState[Token]) RecordType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let ext = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             RecordType(
                 fields = Vec.empty(),
@@ -319,7 +302,6 @@ recordType(state: ParserState[Token]) RecordType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -336,13 +318,12 @@ recordType(state: ParserState[Token]) RecordType / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = recordTypeField(state)
                 fs.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     fs.truncate(fsLen0)
                     break
@@ -357,7 +338,6 @@ recordType(state: ParserState[Token]) RecordType / U32:
         let ext = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -366,7 +346,7 @@ recordType(state: ParserState[Token]) RecordType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let fields: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
             RecordType(
@@ -380,11 +360,10 @@ recordType(state: ParserState[Token]) RecordType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32:
     let cursor0 = state._cursor
@@ -393,14 +372,13 @@ recordTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             (start = TokenIdx(idx = start), isRow = Bool.False)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -409,18 +387,17 @@ recordTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParenRow, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             (start = TokenIdx(idx = start), isRow = Bool.True)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordTypeCont(state: ParserState[Token]) Option[Id] / U32:
     let cursor0 = state._cursor
@@ -428,24 +405,23 @@ recordTypeCont(state: ParserState[Token]) Option[Id] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let id = state.nextCursor()
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             id
         )
         let id = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -456,11 +432,10 @@ recordTypeCont(state: ParserState[Token]) Option[Id] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 variantType(state: ParserState[Token]) VariantType / U32:
     let cursor0 = state._cursor
@@ -471,7 +446,7 @@ variantType(state: ParserState[Token]) VariantType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             VariantType(
                 alts = Vec.empty(),
@@ -484,7 +459,6 @@ variantType(state: ParserState[Token]) VariantType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -494,17 +468,17 @@ variantType(state: ParserState[Token]) VariantType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let ext = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             VariantType(
                 alts = Vec.empty(),
@@ -517,7 +491,6 @@ variantType(state: ParserState[Token]) VariantType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -534,13 +507,12 @@ variantType(state: ParserState[Token]) VariantType / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = variantAlt(state)
                 alts.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     alts.truncate(altsLen0)
                     break
@@ -555,7 +527,6 @@ variantType(state: ParserState[Token]) VariantType / U32:
         let ext = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -564,7 +535,7 @@ variantType(state: ParserState[Token]) VariantType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             VariantType(
                 alts = once(alt0).chain(alts.iter()).toVec(),
@@ -577,11 +548,10 @@ variantType(state: ParserState[Token]) VariantType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 variantTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32:
     let cursor0 = state._cursor
@@ -590,14 +560,13 @@ variantTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             (start = TokenIdx(idx = start), isRow = Bool.False)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -606,18 +575,17 @@ variantTypeStart(state: ParserState[Token]) (start: TokenIdx, isRow: Bool) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracketRow, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             (start = TokenIdx(idx = start), isRow = Bool.True)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 variantTypeCont(state: ParserState[Token]) Option[Id] / U32:
     let cursor0 = state._cursor
@@ -625,24 +593,23 @@ variantTypeCont(state: ParserState[Token]) Option[Id] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let id = state.nextCursor()
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             id
         )
         let id = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -653,11 +620,10 @@ variantTypeCont(state: ParserState[Token]) Option[Id] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 variantAlt(state: ParserState[Token]) VariantAlt / U32:
     let cursor0 = state._cursor
@@ -666,24 +632,23 @@ variantAlt(state: ParserState[Token]) VariantAlt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = recordTypeFields(state)
         let fields = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             VariantAlt(con = newId(con), fields)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -692,18 +657,17 @@ variantAlt(state: ParserState[Token]) VariantAlt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             VariantAlt(con = newId(con), fields = Vec.empty())
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
     let cursor0 = state._cursor
@@ -718,13 +682,12 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = recordTypeField(state)
                 fs.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     fs.truncate(fsLen0)
                     break
@@ -733,15 +696,15 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[Named[Type]] = once(f0).chain(fs.iter()).toVec()
             vec
@@ -749,7 +712,6 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -764,13 +726,12 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = recordTypeField(state)
                 fs.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     fs.truncate(fsLen0)
                     break
@@ -781,13 +742,12 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let value = do:
@@ -797,11 +757,10 @@ recordTypeFields(state: ParserState[Token]) Vec[Named[Type]] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordTypeField(state: ParserState[Token]) Named[Type] / U32:
     let cursor0 = state._cursor
@@ -810,11 +769,11 @@ recordTypeField(state: ParserState[Token]) Named[Type] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let ty = nonTerminalResult
         let value = do:
@@ -823,7 +782,6 @@ recordTypeField(state: ParserState[Token]) Named[Type] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -836,11 +794,10 @@ recordTypeField(state: ParserState[Token]) Named[Type] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 fnType(state: ParserState[Token]) FnType / U32:
     let cursor0 = state._cursor
@@ -849,11 +806,11 @@ fnType(state: ParserState[Token]) FnType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperFn, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = fnArgTys(state)
@@ -863,7 +820,6 @@ fnType(state: ParserState[Token]) FnType / U32:
         let args = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -872,7 +828,7 @@ fnType(state: ParserState[Token]) FnType / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = returnTy(state)
@@ -882,7 +838,6 @@ fnType(state: ParserState[Token]) FnType / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -901,11 +856,10 @@ fnType(state: ParserState[Token]) FnType / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 fnArgTys(state: ParserState[Token]) Vec[Type] / U32:
     let cursor0 = state._cursor
@@ -920,13 +874,12 @@ fnArgTys(state: ParserState[Token]) Vec[Type] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = type_(state)
                 ts.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ts.truncate(tsLen0)
                     break
@@ -937,13 +890,12 @@ fnArgTys(state: ParserState[Token]) Vec[Type] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let value = do:
@@ -953,11 +905,10 @@ fnArgTys(state: ParserState[Token]) Vec[Type] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32:
     let cursor0 = state._cursor
@@ -967,7 +918,7 @@ returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Slash, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let exn = nonTerminalResult
         let value = do:
@@ -976,7 +927,6 @@ returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -989,7 +939,6 @@ returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -997,7 +946,7 @@ returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Slash, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let exn = nonTerminalResult
         let value = do:
@@ -1006,11 +955,10 @@ returnTy(state: ParserState[Token]) (ret: Option[Type], exn: Option[Type]) / U32
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 typeDecl(state: ParserState[Token]) TypeDecl / U32:
     let cursor0 = state._cursor
@@ -1018,30 +966,29 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Type, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let name = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = typeParams(state)
             let params = nonTerminalResult
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             params
         )
         let params = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1049,15 +996,15 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let rhs = Vec.empty()
         let nonTerminalResult = conDecl(state)
         rhs.push(nonTerminalResult)
@@ -1070,7 +1017,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     rhs.truncate(rhsLen0)
                     break
@@ -1079,7 +1025,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             TypeDecl(
                 name = newId(name),
@@ -1093,7 +1039,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1101,30 +1046,29 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Type, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let name = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = typeParams(state)
             let params = nonTerminalResult
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             params
         )
         let params = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1134,7 +1078,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let optionalCursor0 = state._cursor
             let symResult = try(||:
                 let nonTerminalResult = conFields(state)
@@ -1144,7 +1088,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             let fs = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
-                    state.updateErrorCursor(err)
                     Option.None
                 Result.Ok(ok):
                     ()
@@ -1152,13 +1095,12 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             fs
         )
         let fs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1166,7 +1108,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let fs = match fs:
                 Option.Some(fs): fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
@@ -1183,7 +1125,6 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1191,34 +1132,33 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Type, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let name = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = typeParams(state)
             let params = nonTerminalResult
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             params
         )
         let params = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1226,7 +1166,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             TypeDecl(
                 name = newId(name),
@@ -1240,11 +1180,10 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 typeParams(state: ParserState[Token]) Vec[Id] / U32:
     let cursor0 = state._cursor
@@ -1253,7 +1192,7 @@ typeParams(state: ParserState[Token]) Vec[Id] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let zeroOrMoreCursor0 = state._cursor
         let ids = Vec.empty()
         loop:
@@ -1262,16 +1201,15 @@ typeParams(state: ParserState[Token]) Vec[Id] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 ids.push(state.nextCursor())
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ids.truncate(idsLen0)
                     break
@@ -1282,13 +1220,12 @@ typeParams(state: ParserState[Token]) Vec[Id] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let value = do:
@@ -1299,11 +1236,10 @@ typeParams(state: ParserState[Token]) Vec[Id] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 conDecl(state: ParserState[Token]) ConDecl / U32:
     let cursor0 = state._cursor
@@ -1312,11 +1248,11 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = conFields(state)
@@ -1326,7 +1262,6 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
         let fs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1334,11 +1269,11 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ConDecl(
                 name = newId(name),
@@ -1348,7 +1283,6 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1357,11 +1291,11 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ConDecl(
                 name = newId(name),
@@ -1371,11 +1305,10 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 conFields(state: ParserState[Token]) ConFields / U32:
     let cursor0 = state._cursor
@@ -1390,13 +1323,12 @@ conFields(state: ParserState[Token]) ConFields / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = conField(state)
                 fs.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     fs.truncate(fsLen0)
                     break
@@ -1407,13 +1339,12 @@ conFields(state: ParserState[Token]) ConFields / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let value = do:
@@ -1424,11 +1355,10 @@ conFields(state: ParserState[Token]) ConFields / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 conField(state: ParserState[Token]) (name: Option[Id], ty: Type) / U32:
     let cursor0 = state._cursor
@@ -1439,17 +1369,16 @@ conField(state: ParserState[Token]) (name: Option[Id], ty: Type) / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             name
         )
         let name = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1462,11 +1391,10 @@ conField(state: ParserState[Token]) (name: Option[Id], ty: Type) / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 expr(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -1479,7 +1407,6 @@ expr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1492,11 +1419,10 @@ expr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 inlineExpr(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -1513,7 +1439,6 @@ inlineExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     cont.truncate(contLen0)
                     break
@@ -1532,11 +1457,10 @@ inlineExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 blockExpr(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -1545,21 +1469,21 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Match, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let scrut = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let alts = Vec.empty()
         let nonTerminalResult = matchAlt(state)
         alts.push(nonTerminalResult)
@@ -1572,7 +1496,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     alts.truncate(altsLen0)
                     break
@@ -1581,7 +1504,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Expr.Match(MatchExpr(
                 scrutinee = scrut,
@@ -1592,7 +1515,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1601,21 +1523,21 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.If, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let cond0 = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body0 = Vec.empty()
         let nonTerminalResult = stmt(state)
         body0.push(nonTerminalResult)
@@ -1628,7 +1550,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body0.truncate(body0Len0)
                     break
@@ -1637,7 +1558,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let zeroOrMoreCursor0 = state._cursor
         let conds = Vec.empty()
         loop:
@@ -1646,21 +1567,21 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Elif, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = inlineExpr(state)
                 let cond = nonTerminalResult
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let body = Vec.empty()
                 let nonTerminalResult = stmt(state)
                 body.push(nonTerminalResult)
@@ -1673,7 +1594,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                     )
                     match symResult:
                         Result.Err(err):
-                            state.updateErrorCursor(err)
                             state._cursor = zeroOrMoreCursor0
                             body.truncate(bodyLen0)
                             break
@@ -1682,12 +1602,11 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 conds.push((cond = cond, body = body))
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     conds.truncate(condsLen0)
                     break
@@ -1698,19 +1617,19 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Else, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let else_ = Vec.empty()
             let nonTerminalResult = stmt(state)
             else_.push(nonTerminalResult)
@@ -1723,7 +1642,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                 )
                 match symResult:
                     Result.Err(err):
-                        state.updateErrorCursor(err)
                         state._cursor = zeroOrMoreCursor0
                         else_.truncate(else_Len0)
                         break
@@ -1732,13 +1650,12 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             else_
         )
         let else_ = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1756,7 +1673,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1765,19 +1681,19 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Do, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -1790,7 +1706,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -1799,14 +1714,13 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1815,7 +1729,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.PipePipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = returnTy(state)
@@ -1825,7 +1739,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1833,15 +1746,15 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -1854,7 +1767,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -1863,7 +1775,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
             Expr.Fn_(FnExpr(
@@ -1882,7 +1794,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -1891,7 +1802,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = fnArgs(state)
@@ -1901,7 +1812,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         let args = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1909,7 +1819,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = returnTy(state)
@@ -1919,7 +1829,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -1927,15 +1836,15 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -1948,7 +1857,6 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -1957,7 +1865,7 @@ blockExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
             Expr.Fn_(FnExpr(
@@ -1976,11 +1884,10 @@ blockExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 inlineExprCont(state: ParserState[Token]) InlineExprCont / U32:
     let cursor0 = state._cursor
@@ -1995,7 +1902,6 @@ inlineExprCont(state: ParserState[Token]) InlineExprCont / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2003,7 +1909,7 @@ inlineExprCont(state: ParserState[Token]) InlineExprCont / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Is, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = pat(state)
         let pat = nonTerminalResult
         let value = do:
@@ -2012,11 +1918,10 @@ inlineExprCont(state: ParserState[Token]) InlineExprCont / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 prefixExpr(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -2030,7 +1935,6 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
         let pfx = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2047,7 +1951,6 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     suffix.truncate(suffixLen0)
                     break
@@ -2086,11 +1989,10 @@ prefixExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 exprSuffix(state: ParserState[Token]) ExprSuffix / U32:
     let cursor0 = state._cursor
@@ -2106,7 +2008,6 @@ exprSuffix(state: ParserState[Token]) ExprSuffix / U32:
         let args = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2117,7 +2018,6 @@ exprSuffix(state: ParserState[Token]) ExprSuffix / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2130,11 +2030,10 @@ exprSuffix(state: ParserState[Token]) ExprSuffix / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 field(state: ParserState[Token]) Id / U32:
     let cursor0 = state._cursor
@@ -2142,23 +2041,22 @@ field(state: ParserState[Token]) Id / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let field = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             newId(field)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32:
     let cursor0 = state._cursor
@@ -2166,7 +2064,7 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = arg(state)
@@ -2179,13 +2077,12 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
                     if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                         state._cursor += 1
                     else:
-                        throw(state._errorCursor.unwrapOr(state._cursor))
+                        throw(state.updateErrorCursor(state._cursor))
                     let nonTerminalResult = arg(state)
                     args.push(nonTerminalResult)
                 )
                 match symResult:
                     Result.Err(err):
-                        state.updateErrorCursor(err)
                         state._cursor = zeroOrMoreCursor0
                         args.truncate(argsLen0)
                         break
@@ -2196,13 +2093,12 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 ()
             )
             match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
-                    state.updateErrorCursor(err)
                 Result.Ok(ok):
                     ()
             let args = (arg0 = arg0, args = args)
@@ -2211,7 +2107,6 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
         let args = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2219,7 +2114,7 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         let value = do:
             (args = match args:
@@ -2234,11 +2129,10 @@ args(state: ParserState[Token]) (args: Vec[Named[Expr]], cursorRight: U32) / U32
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 arg(state: ParserState[Token]) Named[Expr] / U32:
     let cursor0 = state._cursor
@@ -2247,11 +2141,11 @@ arg(state: ParserState[Token]) Named[Expr] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = expr(state)
         let expr = nonTerminalResult
         let value = do:
@@ -2260,7 +2154,6 @@ arg(state: ParserState[Token]) Named[Expr] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2273,11 +2166,10 @@ arg(state: ParserState[Token]) Named[Expr] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 simpleExpr(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -2290,7 +2182,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2299,7 +2190,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = tyArgs(state)
@@ -2309,7 +2200,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let tyArgs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2326,7 +2216,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2339,7 +2228,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2348,7 +2236,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = parenExpr(state)
@@ -2361,13 +2249,12 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                     if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                         state._cursor += 1
                     else:
-                        throw(state._errorCursor.unwrapOr(state._cursor))
+                        throw(state.updateErrorCursor(state._cursor))
                     let nonTerminalResult = parenExpr(state)
                     es.push(nonTerminalResult)
                 )
                 match symResult:
                     Result.Err(err):
-                        state.updateErrorCursor(err)
                         state._cursor = zeroOrMoreCursor0
                         es.truncate(esLen0)
                         break
@@ -2379,13 +2266,12 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
                     state._cursor += 1
                     sym
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 comma
             )
             let comma = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
-                    state.updateErrorCursor(err)
                     Option.None
                 Result.Ok(ok):
                     ()
@@ -2396,7 +2282,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let exprs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2405,7 +2290,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             match exprs:
                 Option.None:
@@ -2427,7 +2312,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2436,7 +2320,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Return, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = inlineExpr(state)
@@ -2446,7 +2330,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let expr = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2457,7 +2340,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2466,7 +2348,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.PipePipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = returnTy(state)
@@ -2476,7 +2358,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2484,7 +2365,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let body = nonTerminalResult
         let value = do:
@@ -2505,7 +2386,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2514,7 +2394,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = fnArgs(state)
@@ -2524,7 +2404,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let args = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2532,7 +2411,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = returnTy(state)
@@ -2542,7 +2421,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2550,7 +2428,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let body = nonTerminalResult
         let value = do:
@@ -2571,7 +2449,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2581,7 +2458,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let text = int.text
             let intStr = StrBuf.withCapacity(text.len())
@@ -2600,7 +2477,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2610,7 +2486,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let text = int.text
             if not text.startsWith("0x"):
@@ -2632,7 +2508,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2642,7 +2517,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let text = int.text
             if not text.startsWith("0b"):
@@ -2664,7 +2539,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2674,7 +2548,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Expr.Str(StrExpr(
                 parts = parseStrParts(str.text),
@@ -2684,7 +2558,6 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2694,7 +2567,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Expr.Char(CharExpr(
                 char = parseCharLit(char.text),
@@ -2704,11 +2577,10 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 sequence(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -2721,13 +2593,12 @@ sequence(state: ParserState[Token]) Expr / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ty
         )
         let ty = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2745,11 +2616,10 @@ sequence(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)], last: TokenIdx) / U32:
     let cursor0 = state._cursor
@@ -2757,19 +2627,18 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             (elems = Vec.empty(), last = TokenIdx(idx = last))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2777,7 +2646,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = seqElem(state)
         let e0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -2788,13 +2657,12 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = seqElem(state)
                 es.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     es.truncate(esLen0)
                     break
@@ -2805,20 +2673,19 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[(key: Option[Expr], value: Expr)] =
                 once(e0).chain(es.iter()).toVec()
@@ -2827,11 +2694,10 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
     let cursor0 = state._cursor
@@ -2843,7 +2709,7 @@ seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = inlineExpr(state)
             let e = nonTerminalResult
             let e2 = (e = e)
@@ -2852,7 +2718,6 @@ seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
         let e2 = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2867,11 +2732,10 @@ seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 constructor(state: ParserState[Token]) Constructor / U32:
     let cursor0 = state._cursor
@@ -2880,24 +2744,23 @@ constructor(state: ParserState[Token]) Constructor / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let con = state.nextCursor()
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             con
         )
         let con = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2911,7 +2774,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
         let userTyArgs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2931,7 +2793,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -2940,24 +2801,23 @@ constructor(state: ParserState[Token]) Constructor / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.TildeUpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let con = state.nextCursor()
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             con
         )
         let con = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2971,7 +2831,6 @@ constructor(state: ParserState[Token]) Constructor / U32:
         let userTyArgs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -2991,11 +2850,10 @@ constructor(state: ParserState[Token]) Constructor / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 tyArgs(state: ParserState[Token]) Vec[Type] / U32:
     let cursor0 = state._cursor
@@ -3003,7 +2861,7 @@ tyArgs(state: ParserState[Token]) Vec[Type] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let t0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -3014,13 +2872,12 @@ tyArgs(state: ParserState[Token]) Vec[Type] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = type_(state)
                 ts.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ts.truncate(tsLen0)
                     break
@@ -3031,19 +2888,18 @@ tyArgs(state: ParserState[Token]) Vec[Type] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
             ts
@@ -3051,11 +2907,10 @@ tyArgs(state: ParserState[Token]) Vec[Type] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 parenExpr(state: ParserState[Token]) Named[Expr] / U32:
     let cursor0 = state._cursor
@@ -3064,11 +2919,11 @@ parenExpr(state: ParserState[Token]) Named[Expr] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = expr(state)
         let expr = nonTerminalResult
         let value = do:
@@ -3077,7 +2932,6 @@ parenExpr(state: ParserState[Token]) Named[Expr] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3090,11 +2944,10 @@ parenExpr(state: ParserState[Token]) Named[Expr] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
     let cursor0 = state._cursor
@@ -3103,14 +2956,13 @@ exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Tilde, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ExprPrefix.Tilde(TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3119,14 +2971,13 @@ exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Minus, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ExprPrefix.Minus(TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3135,18 +2986,17 @@ exprPrefix(state: ParserState[Token]) ExprPrefix / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Not, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             ExprPrefix.Not(TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 binOp(state: ParserState[Token]) BinOp / U32:
     let cursor0 = state._cursor
@@ -3154,14 +3004,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Plus, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Add
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3169,14 +3018,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Minus, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Subtract
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3184,14 +3032,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Star, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Multiply
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3199,14 +3046,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Slash, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Divide
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3214,14 +3060,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.EqEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Equal
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3229,14 +3074,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.ExclamationEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.NotEqual
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3244,14 +3088,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.And, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.And
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3259,14 +3102,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Or, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Or
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3274,14 +3116,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.BitOr
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3289,14 +3130,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Amp, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.BitAnd
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3304,14 +3144,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RAngle, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Gt
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3319,14 +3158,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DoubleRAngle, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.RightShift
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3334,14 +3172,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RAngleEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.GtEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3349,14 +3186,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LAngle, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.Lt
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3364,14 +3200,13 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DoubleLAngle, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.LeftShift
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3379,18 +3214,17 @@ binOp(state: ParserState[Token]) BinOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LAngleEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             BinOp.LtEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 matchAlt(state: ParserState[Token]) Alt / U32:
     let cursor0 = state._cursor
@@ -3406,7 +3240,6 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         let guard = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3414,15 +3247,15 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -3435,7 +3268,6 @@ matchAlt(state: ParserState[Token]) Alt / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -3444,14 +3276,13 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Alt(pattern, guard, rhs = body)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3467,7 +3298,6 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         let guard = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3475,7 +3305,7 @@ matchAlt(state: ParserState[Token]) Alt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = stmt(state)
         let body = nonTerminalResult
         let value = do:
@@ -3484,11 +3314,10 @@ matchAlt(state: ParserState[Token]) Alt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 altGuard(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -3496,7 +3325,7 @@ altGuard(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.If, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = expr(state)
         let expr = nonTerminalResult
         let value = do:
@@ -3505,11 +3334,10 @@ altGuard(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
     let cursor0 = state._cursor
@@ -3518,13 +3346,13 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = type_(state)
             let ty0 = nonTerminalResult
             ty0
@@ -3532,7 +3360,6 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
         let ty0 = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3545,18 +3372,18 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let v = state.nextCursor()
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let optionalCursor0 = state._cursor
                 let symResult = try(||:
                     if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                         state._cursor += 1
                     else:
-                        throw(state._errorCursor.unwrapOr(state._cursor))
+                        throw(state.updateErrorCursor(state._cursor))
                     let nonTerminalResult = type_(state)
                     let ty = nonTerminalResult
                     ty
@@ -3564,7 +3391,6 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
                 let ty = match symResult:
                     Result.Err(err):
                         state._cursor = optionalCursor0
-                        state.updateErrorCursor(err)
                         Option.None
                     Result.Ok(ok):
                         ()
@@ -3573,7 +3399,6 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     vs.truncate(vsLen0)
                     break
@@ -3584,13 +3409,12 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let value = do:
@@ -3603,11 +3427,10 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 stmt(state: ParserState[Token]) Stmt / U32:
     let cursor0 = state._cursor
@@ -3616,7 +3439,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Break, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let labelLoc = state.nextCursor()
         let optionalCursor0 = state._cursor
         let symResult = try(||:
@@ -3624,13 +3447,12 @@ stmt(state: ParserState[Token]) Stmt / U32:
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             label
         )
         let label = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3638,7 +3460,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Stmt.Break(BreakStmt(
                 label = label.map(|l: Token|: newId(labelLoc)),
@@ -3649,7 +3471,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3658,7 +3479,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Continue, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let labelLoc = state.nextCursor()
         let optionalCursor0 = state._cursor
         let symResult = try(||:
@@ -3666,13 +3487,12 @@ stmt(state: ParserState[Token]) Stmt / U32:
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             label
         )
         let label = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3680,7 +3500,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Stmt.Continue(ContinueStmt(
                 label = label.map(|l: Token|: newId(labelLoc)),
@@ -3691,7 +3511,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3700,7 +3519,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Let, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = pat(state)
         let pat = nonTerminalResult
         let optionalCursor0 = state._cursor
@@ -3708,7 +3527,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = type_(state)
             let ty = nonTerminalResult
             ty
@@ -3716,7 +3535,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
         let ty = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3724,7 +3542,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = letRhs(state)
         let rhs = nonTerminalResult
         let value = do:
@@ -3733,7 +3551,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3748,7 +3565,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
         let label = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3756,7 +3572,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.For, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = pat(state)
         let pat = nonTerminalResult
         let optionalCursor0 = state._cursor
@@ -3764,7 +3580,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = type_(state)
             let ty = nonTerminalResult
             ty
@@ -3772,7 +3588,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
         let ty = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3780,21 +3595,21 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.In, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let expr = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -3807,7 +3622,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -3816,7 +3630,7 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Stmt.For(ForStmt(
                 label,
@@ -3832,7 +3646,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3847,7 +3660,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
         let label = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3855,21 +3667,21 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.While, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let cond = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -3882,7 +3694,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -3891,14 +3702,13 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Stmt.While(WhileStmt(label, cond, body, _firstToken = TokenIdx(idx = cur)))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3913,7 +3723,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
         let label = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -3921,19 +3730,19 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Loop, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -3946,7 +3755,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -3955,14 +3763,13 @@ stmt(state: ParserState[Token]) Stmt / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Stmt.Loop(LoopStmt(body, _firstToken = TokenIdx(idx = cur)))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3981,7 +3788,6 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -3994,11 +3800,10 @@ stmt(state: ParserState[Token]) Stmt / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 stmtExprCont(state: ParserState[Token]) Option[(op: AssignOp, rhs: Expr)] / U32:
     let cursor0 = state._cursor
@@ -4006,14 +3811,13 @@ stmtExprCont(state: ParserState[Token]) Option[(op: AssignOp, rhs: Expr)] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Option.None
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4028,7 +3832,6 @@ stmtExprCont(state: ParserState[Token]) Option[(op: AssignOp, rhs: Expr)] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4040,18 +3843,17 @@ stmtExprCont(state: ParserState[Token]) Option[(op: AssignOp, rhs: Expr)] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Option.Some((op = op, rhs = expr))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 loopLabel(state: ParserState[Token]) Id / U32:
     let cursor0 = state._cursor
@@ -4060,18 +3862,17 @@ loopLabel(state: ParserState[Token]) Id / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Label, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             newId(id)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 letRhs(state: ParserState[Token]) Expr / U32:
     let cursor0 = state._cursor
@@ -4081,14 +3882,13 @@ letRhs(state: ParserState[Token]) Expr / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             expr
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4101,11 +3901,10 @@ letRhs(state: ParserState[Token]) Expr / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 assignOp(state: ParserState[Token]) AssignOp / U32:
     let cursor0 = state._cursor
@@ -4113,14 +3912,13 @@ assignOp(state: ParserState[Token]) AssignOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             AssignOp.Eq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4128,14 +3926,13 @@ assignOp(state: ParserState[Token]) AssignOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.PlusEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             AssignOp.PlusEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4143,14 +3940,13 @@ assignOp(state: ParserState[Token]) AssignOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.MinusEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             AssignOp.MinusEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4158,14 +3954,13 @@ assignOp(state: ParserState[Token]) AssignOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.StarEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             AssignOp.StarEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4173,18 +3968,17 @@ assignOp(state: ParserState[Token]) AssignOp / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.CaretEq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             AssignOp.CaretEq
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 pat(state: ParserState[Token]) Pat / U32:
     let cursor0 = state._cursor
@@ -4199,14 +3993,13 @@ pat(state: ParserState[Token]) Pat / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = simplePat(state)
                 let p = nonTerminalResult
                 ps.push((p = p))
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ps.truncate(psLen0)
                     break
@@ -4231,11 +4024,10 @@ pat(state: ParserState[Token]) Pat / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 simplePat(state: ParserState[Token]) Pat / U32:
     let cursor0 = state._cursor
@@ -4244,14 +4036,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4263,7 +4054,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = recordFieldPat(state)
             let p0 = nonTerminalResult
             let zeroOrMoreCursor0 = state._cursor
@@ -4274,13 +4065,12 @@ simplePat(state: ParserState[Token]) Pat / U32:
                     if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                         state._cursor += 1
                     else:
-                        throw(state._errorCursor.unwrapOr(state._cursor))
+                        throw(state.updateErrorCursor(state._cursor))
                     let nonTerminalResult = recordFieldPat(state)
                     ps.push(nonTerminalResult)
                 )
                 match symResult:
                     Result.Err(err):
-                        state.updateErrorCursor(err)
                         state._cursor = zeroOrMoreCursor0
                         ps.truncate(psLen0)
                         break
@@ -4291,18 +4081,17 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let ignoreRest = ()
                 ignoreRest
             )
             let ignoreRest = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
-                    state.updateErrorCursor(err)
                     Option.None
                 Result.Ok(ok):
                     ()
@@ -4310,14 +4099,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let fs = (p0 = p0, ps = ps, ignoreRest = ignoreRest)
             fs
         )
         let fs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -4342,7 +4130,6 @@ simplePat(state: ParserState[Token]) Pat / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4351,11 +4138,11 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
@@ -4369,7 +4156,6 @@ simplePat(state: ParserState[Token]) Pat / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4378,7 +4164,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = recordFieldPat(state)
         let p0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -4389,13 +4175,12 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = recordFieldPat(state)
                 ps.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ps.truncate(psLen0)
                     break
@@ -4406,19 +4191,18 @@ simplePat(state: ParserState[Token]) Pat / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
@@ -4432,7 +4216,6 @@ simplePat(state: ParserState[Token]) Pat / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4441,7 +4224,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = recordFieldPat(state)
         let p0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -4452,13 +4235,12 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = recordFieldPat(state)
                 ps.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ps.truncate(psLen0)
                     break
@@ -4467,16 +4249,16 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let ignoreRest = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let last = state.nextCursor()
         let value = do:
             Pat.Record(RecordPat(
@@ -4490,7 +4272,6 @@ simplePat(state: ParserState[Token]) Pat / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4499,14 +4280,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Underscore, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Pat.Ignore(TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4516,14 +4296,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Pat.Str(str.text, TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4533,18 +4312,17 @@ simplePat(state: ParserState[Token]) Pat / U32:
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
     let cursor0 = state._cursor
@@ -4553,11 +4331,11 @@ recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Eq, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = pat(state)
         let pat = nonTerminalResult
         let value = do:
@@ -4566,7 +4344,6 @@ recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4579,11 +4356,10 @@ recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 importDecl(state: ParserState[Token]) ImportDecl / U32:
     let cursor0 = state._cursor
@@ -4591,12 +4367,12 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Import, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let p0 = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
             sym
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let zeroOrMoreCursor0 = state._cursor
         let ps = Vec.empty()
         loop:
@@ -4605,16 +4381,15 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
                     ps.push(sym)
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ps.truncate(psLen0)
                     break
@@ -4623,7 +4398,7 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[Str] = once(p0.text).chain(ps.iter().map(|p: Token|: p.text)).toVec()
             ImportDecl(path = vec)
@@ -4631,11 +4406,10 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 topFunDecl(state: ParserState[Token]) FunDecl / U32:
     let cursor0 = state._cursor
@@ -4643,13 +4417,13 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = topFunSig(state)
         let sig = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
                 parentTy = sig.parentTy,
@@ -4661,7 +4435,6 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4671,15 +4444,15 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let body = Vec.empty()
         let nonTerminalResult = stmt(state)
         body.push(nonTerminalResult)
@@ -4692,7 +4465,6 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     body.truncate(bodyLen0)
                     break
@@ -4701,7 +4473,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
                 parentTy = sig.parentTy,
@@ -4713,7 +4485,6 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4723,13 +4494,13 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let body = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
                 parentTy = sig.parentTy,
@@ -4741,11 +4512,10 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSig) / U32:
     let cursor0 = state._cursor
@@ -4756,17 +4526,16 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             parentTy
         )
         let parentTy = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -4775,7 +4544,7 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = context(state)
@@ -4785,7 +4554,6 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
         let ctx = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -4801,7 +4569,6 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -4823,11 +4590,10 @@ topFunSig(state: ParserState[Token]) (parentTy: Option[Id], name: Id, sig: FunSi
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 parentTy(state: ParserState[Token]) Id / U32:
     let cursor0 = state._cursor
@@ -4836,22 +4602,21 @@ parentTy(state: ParserState[Token]) Id / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dot, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             newId(id)
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 context(state: ParserState[Token]) Context / U32:
     let cursor0 = state._cursor
@@ -4860,7 +4625,7 @@ context(state: ParserState[Token]) Context / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let t0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -4871,13 +4636,12 @@ context(state: ParserState[Token]) Context / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = type_(state)
                 ts.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ts.truncate(tsLen0)
                     break
@@ -4888,20 +4652,19 @@ context(state: ParserState[Token]) Context / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Context(
                 typeParams = Vec.empty(),
@@ -4913,11 +4676,10 @@ context(state: ParserState[Token]) Context / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
     let cursor0 = state._cursor
@@ -4925,18 +4687,17 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Vec.empty()
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -4944,7 +4705,7 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = param(state)
         let p0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -4955,13 +4716,12 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = param(state)
                 ps.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ps.truncate(psLen0)
                     break
@@ -4972,19 +4732,18 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[(name: Id, ty: Option[Type])] =
                 once(p0).chain(ps.iter()).toVec()
@@ -4993,11 +4752,10 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
     let cursor0 = state._cursor
@@ -5006,13 +4764,13 @@ param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             let nonTerminalResult = type_(state)
             let ty = nonTerminalResult
             ty
@@ -5020,7 +4778,6 @@ param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
         let ty = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5031,11 +4788,10 @@ param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 traitDecl(state: ParserState[Token]) TraitDecl / U32:
     let cursor0 = state._cursor
@@ -5043,22 +4799,22 @@ traitDecl(state: ParserState[Token]) TraitDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Trait, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let name = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = typeParams(state)
         let tys = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = traitDeclRhs(state)
@@ -5068,7 +4824,6 @@ traitDecl(state: ParserState[Token]) TraitDecl / U32:
         let rhs = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5084,11 +4839,10 @@ traitDecl(state: ParserState[Token]) TraitDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
     let cursor0 = state._cursor
@@ -5096,14 +4850,13 @@ traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Vec.empty()
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -5111,15 +4864,15 @@ traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let fs = Vec.empty()
         let nonTerminalResult = funDecl(state)
         fs.push(nonTerminalResult)
@@ -5132,7 +4885,6 @@ traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     fs.truncate(fsLen0)
                     break
@@ -5141,18 +4893,17 @@ traitDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             fs
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 implDecl(state: ParserState[Token]) ImplDecl / U32:
     let cursor0 = state._cursor
@@ -5160,7 +4911,7 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Impl, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = context(state)
@@ -5170,7 +4921,6 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
         let ctx = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5179,11 +4929,11 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = type_(state)
         let t0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -5194,13 +4944,12 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
                 if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                     state._cursor += 1
                 else:
-                    throw(state._errorCursor.unwrapOr(state._cursor))
+                    throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = type_(state)
                 ts.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     ts.truncate(tsLen0)
                     break
@@ -5211,19 +4960,18 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
             if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
                 state._cursor += 1
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             ()
         )
         match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
             Result.Ok(ok):
                 ()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RBracket, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = implDeclRhs(state)
         let rhs = nonTerminalResult
         let value = do:
@@ -5237,11 +4985,10 @@ implDecl(state: ParserState[Token]) ImplDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
     let cursor0 = state._cursor
@@ -5249,14 +4996,13 @@ implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Vec.empty()
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -5264,15 +5010,15 @@ implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let funs = Vec.empty()
         let nonTerminalResult = funDecl(state)
         funs.push(nonTerminalResult)
@@ -5285,7 +5031,6 @@ implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     funs.truncate(funsLen0)
                     break
@@ -5294,18 +5039,17 @@ implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             funs
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 funDecl(state: ParserState[Token]) FunDecl / U32:
     let cursor0 = state._cursor
@@ -5316,13 +5060,12 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
                 state._cursor += 1
                 sym
             else:
-                throw(state._errorCursor.unwrapOr(state._cursor))
+                throw(state.updateErrorCursor(state._cursor))
             prim_
         )
         let prim_ = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5332,7 +5075,7 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
                 parentTy = Option.None,
@@ -5344,7 +5087,6 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -5364,11 +5106,10 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
     let cursor0 = state._cursor
@@ -5376,15 +5117,15 @@ funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Indent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let stmts = Vec.empty()
         let nonTerminalResult = stmt(state)
         stmts.push(nonTerminalResult)
@@ -5397,7 +5138,6 @@ funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
             )
             match symResult:
                 Result.Err(err):
-                    state.updateErrorCursor(err)
                     state._cursor = zeroOrMoreCursor0
                     stmts.truncate(stmtsLen0)
                     break
@@ -5406,14 +5146,13 @@ funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Dedent, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             stmts
         value
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
@@ -5421,13 +5160,13 @@ funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Colon, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = inlineExpr(state)
         let expr = nonTerminalResult
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[Stmt] = Vec.[Stmt.Expr(expr)]
             vec
@@ -5435,11 +5174,10 @@ funDeclRhs(state: ParserState[Token]) Vec[Stmt] / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
 
 funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
     let cursor0 = state._cursor
@@ -5448,7 +5186,7 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LowerId, ..):
             state._cursor += 1
         else:
-            throw(state._errorCursor.unwrapOr(state._cursor))
+            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = context(state)
@@ -5458,7 +5196,6 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
         let ctx = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5474,7 +5211,6 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
         let ret = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
-                state.updateErrorCursor(err)
                 Option.None
             Result.Ok(ok):
                 ()
@@ -5495,8 +5231,7 @@ funSig(state: ParserState[Token]) (id: Id, sig: FunSig) / U32:
     )
     match altResult:
         Result.Err(err):
-            state.updateErrorCursor(err)
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    throw(state._errorCursor.unwrapOr(state._cursor))
+    throw(state.updateErrorCursor(state._cursor))
