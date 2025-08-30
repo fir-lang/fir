@@ -810,7 +810,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
         if (nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            docRest += formatToken(next, tokens)
+            docRest += formatToken(next, tokens) + Doc.break_(1)
 
     if self.elems.len() != 0 and not trailingComma:
         docRest += Doc.whenNotFlat(Doc.char(','))
