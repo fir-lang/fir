@@ -1126,25 +1126,32 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
     if self.fields.isEmpty() and not self.ignoreRest:
         return con
 
-    let args = Doc.char('(') + Doc.break_(0)
+    let lparen = nextNonTrivia(self.constr.lastToken(), tokens).unwrap()
+    assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let fieldIdx: U32 = 0
+    let args = formatToken(lparen, tokens) + Doc.break_(0)
+
+    let trailingComma = Bool.False
+    let lastToken = lparen
     for field: Named[Pat] in self.fields.iter():
-        if fieldIdx != 0:
-            args += Doc.char(',') + Doc.break_(1)
-        fieldIdx += 1
-
+        trailingComma = Bool.False
         args += formatNamed(field, Pat.format, tokens)
+        lastToken = field.lastToken()
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+            args += formatToken(next, tokens)
+            trailingComma = Bool.True
+            lastToken = next
 
     if self.ignoreRest:
-        if fieldIdx != 0:
-            args += Doc.char(',') + Doc.break_(1)
+        let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        args += Doc.str("..")
+        args += formatToken(dotdot, tokens)
+    elif not trailingComma:
+        args += Doc.whenNotFlat(Doc.char(','))
 
-    args += Doc.whenNotFlat(Doc.char(','))
-
-    Doc.grouped(con + args.nest(4).group() + Doc.break_(0) + Doc.char(')'))
+    let rparen = self.lastToken()
+    Doc.grouped(con + args.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens))
 
 
 RecordPat.format(self, tokens: Vec[Token]) Doc:
