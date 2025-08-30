@@ -264,8 +264,9 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
         argList += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = nextNonTrivia(lastToken, tokens).unwrap()
-    lastToken = rparen
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+
+    lastToken = rparen
 
     argList = argList.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens)
 
@@ -1082,13 +1083,19 @@ FnType.format(self, tokens: Vec[Token]) Doc:
     let rparen = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
+    lastToken = rparen
+
     doc += formatToken(rparen, tokens)
 
     if self.ret is Option.Some(ret):
         doc += Doc.blank(1) + ret.format(tokens)
+        lastToken = ret.lastToken()
 
     if self.exceptions is Option.Some(exn):
-        doc += Doc.blank(1) + exn.format(tokens)
+        let slash = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(slash.idx).kind is TokenKind.Slash)
+
+        doc += Doc.blank(1) + formatToken(slash, tokens) + Doc.blank(1) + exn.format(tokens)
 
     doc
 
