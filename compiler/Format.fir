@@ -1271,7 +1271,7 @@ formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[To
 
         Option.Some(name):
             let eq = nextNonTrivia(name.token, tokens).unwrap()
-            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+            assert(tokens.get(eq.idx).kind is TokenKind.Eq | TokenKind.Colon)
 
             Doc.nested(
                 4,

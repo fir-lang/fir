@@ -428,11 +428,6 @@ Lexer._next(self) Option[Token] / Error:
         self._col += 2
         return Option.Some(Token(kind = TokenKind.Or, text = "or", byteIdx, line, col))
 
-    if input.startsWith("||"):
-        self._byteIdx += 2
-        self._col += 2
-        return Option.Some(Token(kind = TokenKind.PipePipe, text = "||", byteIdx, line, col))
-
     if input.startsWith("|"):
         self._byteIdx += 1
         self._col += 1

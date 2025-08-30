@@ -1690,7 +1690,11 @@ blockExpr(state: ParserState[Token]) Expr / U32:
             return value
     let altResult = try(||:
         let cur = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.PipePipe, ..):
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
             throw(state.updateErrorCursor(state._cursor))
@@ -2307,7 +2311,11 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             return value
     let altResult = try(||:
         let cur = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.PipePipe, ..):
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Pipe, ..):
             state._cursor += 1
         else:
             throw(state.updateErrorCursor(state._cursor))
