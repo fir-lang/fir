@@ -164,7 +164,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 
                 lastToken = field.ty.lastToken()
 
-                if nextNonTrivia(field.ty.lastToken(), tokens) is Option.Some(next) and tokens.get(next.idx).kind is TokenKind.Comma:
+                if (nextNonTrivia(field.ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
                     trailingComma = Bool.True
                     doc += formatToken(next, tokens)
                     lastToken = next
