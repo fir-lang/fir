@@ -118,9 +118,21 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
             let colon = prevNonTrivia(decls.get(0).name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            Doc.nested(4, formatToken(colon, tokens)
-                + Doc.hardLine()
-                + join(decls.iter().map(|decl: ConDecl|: decl.format(tokens)), Doc.hardLine()))
+            let cons = Doc.empty()
+            let conIdx: U32 = 0
+            for con: ConDecl in decls.iter():
+                if conIdx != 0:
+                    cons += Doc.hardLine()
+
+                    let lastConLastLine = tokens.get(decls.get(conIdx - 1)._lastToken.idx).rightLoc().line
+                    if tokens.get(con.name.token.idx).line - lastConLastLine > 1:
+                        cons += Doc.hardLine()
+
+                cons += con.format(tokens)
+
+                conIdx += 1
+
+            Doc.nested(4, formatToken(colon, tokens) + Doc.hardLine() + cons)
 
         TypeDeclRhs.Product(fields):
             fields.format(tokens)

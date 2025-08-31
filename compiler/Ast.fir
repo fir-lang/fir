@@ -66,6 +66,7 @@ type TypeDeclRhs:
 type ConDecl(
     name: Id,
     fields: ConFields,
+    _lastToken: TokenIdx
 )
 
 type Kind:
