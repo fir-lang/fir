@@ -1369,6 +1369,7 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
 
                 if (nextNonTrivia(tyArg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
                     doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+                    trailingComma = Bool.True
 
             doc + formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
 
