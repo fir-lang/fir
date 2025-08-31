@@ -732,8 +732,14 @@ type FieldSelectExpr(
 )
 
 impl Tokens[FieldSelectExpr]:
-    firstToken(self: FieldSelectExpr) TokenIdx: self.object.firstToken()
-    lastToken(self: FieldSelectExpr) TokenIdx: self.field.lastToken()
+    firstToken(self: FieldSelectExpr) TokenIdx:
+        self.object.firstToken()
+
+    lastToken(self: FieldSelectExpr) TokenIdx:
+        match self.userTyArgs:
+            Option.Some(tyArgs): tyArgs.lastToken()
+            Option.None: self.field.lastToken()
+
 
 ## A method selection: `<expr>.method`.
 ##
