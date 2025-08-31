@@ -79,8 +79,8 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
     let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(type_.idx).kind is TokenKind.Type)
 
-    let doc = formatToken(type_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
-        + formatToken(self.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc = formatToken(type_, tokens, Doc.blank(1), Doc.blank(1))
+        + formatToken(self.name.token, tokens, Doc.empty(), Doc.blank(1))
 
     if not self.typeParams.isEmpty():
         let lbracket = prevNonTrivia(self.typeParams.get(0).firstToken(), tokens).unwrap()
@@ -91,7 +91,7 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
         # Top-level declarations always start at column 0, and I don't think it'll be common to have
         # so many type parameters the parameter list will need line breaks. For now print the header
         # in one line.
-        doc += formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
 
         let trailingComma = Bool.False
         for typeParam: Id in self.typeParams.iter():
@@ -99,18 +99,18 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
                 doc += Doc.blank(1)
                 trailingComma = Bool.False
 
-            doc += formatToken(typeParam.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            doc += formatToken(typeParam.token, tokens, Doc.empty(), Doc.blank(1))
             lastToken = typeParam.token
 
             if (nextNonTrivia(typeParam.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+                doc += formatToken(next, tokens, Doc.empty(), Doc.empty())
                 lastToken = next
                 trailingComma = Bool.True
 
         let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-        doc += formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(rbracket, tokens, Doc.empty(), Doc.blank(1))
 
     if self.rhs is Option.Some(rhs):
         doc += rhs.format(tokens)
@@ -124,7 +124,7 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
             let colon = prevNonTrivia(decls.get(0).name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            Doc.nested(4, formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
+            Doc.nested(4, formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
                 + join(decls.iter().map(|decl: ConDecl|: decl.format(tokens)), Doc.hardLine()))
 
         TypeDeclRhs.Product(fields):
@@ -132,7 +132,7 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
 
 
 ConDecl.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)) + self.fields.format(tokens)
+    formatToken(self.name.token, tokens, Doc.empty(), Doc.blank(1)) + self.fields.format(tokens)
 
 
 ConFields.format(self, tokens: Vec[Token]) Doc:
@@ -144,7 +144,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let lparen = prevNonTrivia(fields.get(0).name.token, tokens).unwrap()
             assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-            let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(1))
+            let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(1))
 
             let lastToken = lparen
             let trailingComma = Bool.False
@@ -157,15 +157,15 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
                 assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
                 doc +=
-                    formatToken(field.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-                        + formatToken(colon, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
-                        + field.ty.format(tokens)
+                    formatToken(field.name.token, tokens, Doc.empty(), Doc.blank(1))
+                        + formatToken(colon, tokens, Doc.blank(1), Doc.blank(1))
+                        + field.ty.format(tokens, Doc.empty(), Doc.empty())
 
                 lastToken = field.ty.lastToken()
 
                 if (nextNonTrivia(field.ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
                     trailingComma = Bool.True
-                    doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+                    doc += formatToken(next, tokens, Doc.empty(), Doc.empty())
                     lastToken = next
 
             if fields.len() != 0 and not trailingComma:
@@ -174,13 +174,13 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let rparen = nextNonTrivia(lastToken, tokens).unwrap()
             assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-            Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)))
+            Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.empty()))
 
         ConFields.Unnamed(fields):
             let lparen = prevNonTrivia(fields.get(0).firstToken(), tokens).unwrap()
             assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-            let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(0))
+            let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(0))
 
             let lastToken = lparen
             let trailingComma = Bool.False
@@ -189,12 +189,12 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
                     doc += Doc.break_(1)
                     trailingComma = Bool.False
 
-                doc += field.format(tokens)
+                doc += field.format(tokens, Doc.empty(), Doc.empty())
                 lastToken = field.lastToken()
 
                 if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
                     trailingComma = Bool.True
-                    doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+                    doc += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
                     lastToken = next
 
             if fields.len() != 0 and not trailingComma:
@@ -203,7 +203,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let rparen = nextNonTrivia(lastToken, tokens).unwrap()
             assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-            Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)))
+            Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.empty()))
 
 
 FunDecl.format(self, tokens: Vec[Token]) Doc:
@@ -211,12 +211,12 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
         Option.Some(id):
             let dot = nextNonTrivia(id.token, tokens).unwrap()
             assert(tokens.get(dot.idx).kind is TokenKind.Dot)
-            formatToken(id.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-                + formatToken(dot, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            formatToken(id.token, tokens, Doc.empty(), Doc.blank(1))
+                + formatToken(dot, tokens, Doc.empty(), Doc.blank(1))
         Option.None:
             Doc.empty()
 
-    doc += formatToken(self.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    doc += formatToken(self.name.token, tokens, Doc.empty(), Doc.blank(1))
 
     if self.sig.context is Option.Some(context):
         let lbracket = context.firstToken()
@@ -225,7 +225,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
         let rbracket = context.lastToken()
         assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-        doc += formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
 
         let trailingComma = Bool.False
         for ty: Type in context.preds.iter():
@@ -233,13 +233,13 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
                 doc += Doc.blank(1)
                 trailingComma = Bool.False
 
-            doc += ty.format(tokens)
+            doc += ty.format(tokens, Doc.empty(), Doc.empty())
 
             if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+                doc += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
                 trailingComma = Bool.True
 
-        doc += formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(rbracket, tokens, Doc.empty(), Doc.blank(1))
 
     let lparen = match self.sig.context:
         Option.Some(context): nextNonTrivia(context.lastToken(), tokens).unwrap()
@@ -247,7 +247,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let argList = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(1))
+    let argList = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(1))
 
     let trailingComma = Bool.False
     let lastToken = lparen
@@ -256,19 +256,21 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
             argList += Doc.blank(1)
             trailingComma = Bool.False
 
-        argList += formatToken(arg.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        argList += formatToken(arg.name.token, tokens, Doc.empty(), Doc.blank(1))
         lastToken = arg.name.token
 
         if arg.ty is Option.Some(ty):
             let colon = nextNonTrivia(arg.name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            argList += formatToken(colon, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + ty.format(tokens)
+            argList += formatToken(colon, tokens, Doc.blank(1), Doc.blank(1))
+                + ty.format(tokens, Doc.empty(), Doc.empty())
+
             lastToken = ty.lastToken()
 
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            argList += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            argList += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
             lastToken = next
 
     if self.sig.params.len() != 0 and not trailingComma:
@@ -279,26 +281,30 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
     lastToken = rparen
 
-    argList = argList.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    argList = argList.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.empty())
 
     doc += argList.group()
 
     if self.sig.returnTy is Option.Some(ret):
         lastToken = ret.lastToken()
-        doc += Doc.blank(1) + ret.format(tokens)
+        doc += Doc.blank(1) + ret.format(tokens, Doc.empty(), Doc.empty())
 
     if self.sig.exceptions is Option.Some(exn):
         let slash = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(slash.idx).kind is TokenKind.Slash)
 
-        doc += Doc.blank(1) + formatToken(slash, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + exn.format(tokens)
+        doc += Doc.blank(1)
+            + formatToken(slash, tokens, Doc.blank(1), Doc.blank(1))
+            + exn.format(tokens, Doc.empty(), Doc.empty())
+
         lastToken = exn.lastToken()
 
     if self.body is Option.Some(stmts):
         let colon = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-        doc += Doc.nested(4, formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine()) + formatStmts(stmts, tokens))
+        doc += Doc.nested(4, formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+            + formatStmts(stmts, tokens, Doc.hardLine(), Doc.hardLine()))
 
     doc
 
@@ -307,13 +313,13 @@ ImportDecl.format(self, tokens: Vec[Token]) Doc:
     let import_ = prevNonTrivia(self.path.get(0).token, tokens).unwrap()
     assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
-    let doc = formatToken(import_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+    let doc = formatToken(import_, tokens, Doc.blank(1), Doc.blank(1))
 
     for id: Id in self.path.iter():
-        doc += formatToken(id.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(id.token, tokens, Doc.empty(), Doc.blank(1))
 
         if (nextNonTrivia(id.token, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Dot):
-            doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            doc += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
 
     doc
 
@@ -325,10 +331,10 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
     let lbracket = prevNonTrivia(self.typeParams.get(0).token, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
-    let doc0 = formatToken(trait_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
-        + formatToken(self.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc0 = formatToken(trait_, tokens, Doc.blank(1), Doc.blank(1))
+        + formatToken(self.name.token, tokens, Doc.empty(), Doc.blank(1))
 
-    let docRest = formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let docRest = formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
     let lastToken = lbracket
     let trailingComma = Bool.False
     for typeParam: Id in self.typeParams.iter():
@@ -337,17 +343,17 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
             trailingComma = Bool.False
 
         lastToken = typeParam.token
-        docRest += formatToken(typeParam.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        docRest += formatToken(typeParam.token, tokens, Doc.empty(), Doc.blank(1))
 
         if (nextNonTrivia(typeParam.token, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
             lastToken = next
             trailingComma = Bool.True
 
     let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-    docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.blank(1))
 
     if self.items.isEmpty():
         return doc0 + docRest
@@ -358,19 +364,19 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
     doc0 + Doc.nested(
         4,
         docRest
-            + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
+            + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
             + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine()))
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
     let impl_ = self._firstToken
-    let doc0 = formatToken(impl_, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc0 = formatToken(impl_, tokens, Doc.empty(), Doc.blank(1))
 
     let docRest = Doc.empty()
 
     if self.context is Option.Some(context):
         let lbracket = context.firstToken()
-        docRest += formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        docRest += formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
 
         let trailingComma = Bool.False
         for pred: Type in context.preds.iter():
@@ -378,21 +384,21 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
                 docRest += Doc.blank(1)
                 trailingComma = Bool.False
 
-            docRest += pred.format(tokens)
+            docRest += pred.format(tokens, Doc.empty(), Doc.empty())
 
             if (nextNonTrivia(pred.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+                docRest += formatToken(next, tokens, Doc.empty(), Doc.empty())
                 trailingComma = Bool.True
 
         let rbracket = context.lastToken()
-        docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.empty())
 
-    docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    docRest += Doc.blank(1) + formatToken(self.trait_.token, tokens, Doc.empty(), Doc.blank(1))
 
     let lbracket = nextNonTrivia(self.trait_.token, tokens).unwrap()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
 
-    docRest += formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    docRest += formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
 
     let lastToken = lbracket
     let trailingComma = Bool.False
@@ -401,11 +407,11 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
 
-        docRest += ty.format(tokens)
+        docRest += ty.format(tokens, Doc.empty(), Doc.empty())
         lastToken = ty.lastToken()
 
         if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
             lastToken = next
             trailingComma = Bool.True
 
@@ -415,7 +421,8 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
     let colon = nextNonTrivia(rbracket, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)) + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
+    docRest += formatToken(rbracket, tokens, Doc.empty(), Doc.blank(1))
+        + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
 
     docRest += join(
         self.items.iter().map(|decl: FunDecl|: decl.format(tokens)),
@@ -429,28 +436,33 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
 # Expressions
 
 
-Expr.format(self, tokens: Vec[Token]) Doc:
+Expr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     Doc.group(match self:
-        Expr.Var(e): e.format(tokens)
-        Expr.ConstrSelect(e): e.format(tokens)
-        Expr.FieldSelect(e): e.format(tokens)
-        Expr.AssocFnSelect(e): e.format(tokens)
-        Expr.Call(e): e.format(tokens)
-        Expr.Int(e): e.format(tokens)
-        Expr.Str(e): e.format(tokens)
-        Expr.Char(e): e.format(tokens)
-        Expr.Self(e): formatToken(e, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
-        Expr.BinOp(e): e.format(tokens)
-        Expr.UnOp(e): e.format(tokens)
-        Expr.Record(e): e.format(tokens)
-        Expr.Return(e): e.format(tokens)
-        Expr.Match(e): e.format(tokens)
-        Expr.If(e): e.format(tokens)
-        Expr.Fn_(e): e.format(tokens)
-        Expr.Is(e): e.format(tokens)
-        Expr.Do(e): e.format(tokens)
-        Expr.Seq(e): e.format(tokens)
-        Expr.Paren(e): e.format(tokens)
+        Expr.Var(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.ConstrSelect(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.FieldSelect(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.AssocFnSelect(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Call(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Int(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Str(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Char(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Self(e): formatToken(e, tokens, noCommentTerminator, multiLineTerminator)
+        Expr.BinOp(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.UnOp(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Record(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Return(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Match(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.If(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Fn_(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Is(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Do(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Seq(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
+        Expr.Paren(e): e.format(tokens, noCommentTerminator, multiLineTerminator)
 
         Expr.MethodSelect(e):
             # These expressions are intoruduced by the type checker, which we don't run when
@@ -458,24 +470,39 @@ Expr.format(self, tokens: Vec[Token]) Doc:
             panic("Expr.MethodSelect"))
 
 
-VarExpr.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.id.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-        + formatTyArgs(self.userTyArgs, tokens)
+VarExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.id.token, tokens, Doc.empty(), Doc.blank(1))
+        + formatTyArgs(self.userTyArgs, tokens, noCommentTerminator, multiLineTerminator)
 
 
-Constructor.format(self, tokens: Vec[Token]) Doc:
-    let doc = formatToken(self.ty.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+Constructor.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    let doc = formatToken(self.ty.token, tokens, Doc.empty(), Doc.blank(1))
 
     if self.constr is Option.Some(con):
         let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
         assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
-        doc += formatToken(dot, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)) + formatToken(con.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc += formatToken(dot, tokens, Doc.empty(), Doc.blank(1)) + formatToken(con.token, tokens, Doc.empty(), Doc.blank(1))
 
-    doc + formatTyArgs(self.userTyArgs, tokens)
+    doc + formatTyArgs(self.userTyArgs, tokens, noCommentTerminator, multiLineTerminator)
 
 
-FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
+FieldSelectExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     #|
     Group sequence of selections so that we will format like one of the following:
 
@@ -501,33 +528,55 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
         else:
             break
 
-    let doc = selection.object.format(tokens)
+    let doc = selection.object.format(tokens, Doc.empty(), Doc.blank(1))
     while fields.pop() is Option.Some((field, tyArgs)):
         let dot = prevNonTrivia(field.token, tokens).unwrap()
         assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
+        let last = fields.isEmpty()
+
+        let field = if last and tyArgs.isNone():
+            formatToken(field.token, tokens, noCommentTerminator, multiLineTerminator)
+        else:
+            formatToken(field.token, tokens, Doc.empty(), Doc.blank(1))
+
+        let tyArgs = if last:
+            formatTyArgs(tyArgs, tokens, Doc.empty(), Doc.blank(1))
+        else:
+            formatTyArgs(tyArgs, tokens, noCommentTerminator, multiLineTerminator)
+
         doc += Doc.nested(4,
             Doc.break_(0)
-                + formatToken(dot, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-                + formatToken(field.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-                + formatTyArgs(tyArgs, tokens)).group()
+                + formatToken(dot, tokens, Doc.empty(), Doc.blank(1))
+                + field
+                + tyArgs).group()
 
     doc.group()
 
 
-AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
+AssocFnSelectExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
     Doc.nested(
         4,
-        formatToken(self.ty.token, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(1))
-            + formatToken(dot, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-            + formatToken(self.member.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-            + formatTyArgs(self.userTyArgs, tokens))
+        formatToken(self.ty.token, tokens, Doc.break_(0), Doc.break_(1))
+            + formatToken(dot, tokens, Doc.empty(), Doc.blank(1))
+            + formatToken(self.member.token, tokens, Doc.empty(), Doc.blank(1))
+            + formatTyArgs(self.userTyArgs, tokens, noCommentTerminator, multiLineTerminator))
 
 
-CallExpr.format(self, tokens: Vec[Token]) Doc:
+CallExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     #|
     Single line:
 
@@ -543,22 +592,22 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     |#
 
     # TODO: Add parens to function when necessary.
-    let fun = self.fun.format(tokens)
+    let fun = self.fun.format(tokens, Doc.empty(), Doc.blank(1))
 
     let lparen = nextNonTrivia(self.fun.lastToken(), tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let args = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(1))
+    let args = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(1))
     let trailingComma = Bool.False
     for arg: Named[Expr] in self.args.iter():
         if trailingComma:
             args += Doc.break_(1)
             trailingComma = Bool.False
 
-        args += formatNamed(arg, Expr.format, tokens).group()
+        args += formatNamed(arg, Expr.format, tokens, Doc.empty(), Doc.empty()).group()
 
         if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            args += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            args += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
 
     let rparen = self.lastToken()
@@ -567,24 +616,47 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     if self.args.len() != 0 and not trailingComma:
         args += Doc.whenNotFlat(Doc.char(','))
 
-    args = Doc.grouped(args.nest(4) + Doc.break_(0)) + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    args = Doc.grouped(
+        args.nest(4)
+            + Doc.break_(0))
+        + formatToken(rparen, tokens, noCommentTerminator, multiLineTerminator)
 
     Doc.grouped(fun + args)
 
 
-IntExpr.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+IntExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.token, tokens, noCommentTerminator, multiLineTerminator)
 
 
-StrExpr.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+StrExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.token, tokens, noCommentTerminator, multiLineTerminator)
 
 
-CharExpr.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+CharExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.token, tokens, noCommentTerminator, multiLineTerminator)
 
 
-BinOpExpr.format(self, tokens: Vec[Token]) Doc:
+BinOpExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     # Binary operators are all left-associative, so the right-hand side can never be a `BinOp`
     # unless it's wrapped with a `Paren`.
     #
@@ -601,30 +673,41 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     exprs.push(left)
 
     let expr0 = exprs.pop().unwrap() # leftmost expr
-    let doc0 = expr0.format(tokens)
+    let doc0 = expr0.format(tokens, Doc.empty(), Doc.blank(1))
     let op0 = nextNonTrivia(expr0.lastToken(), tokens).unwrap()
-    let docRest = Doc.break_(1) + formatToken(op0, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    let docRest = Doc.break_(1) + formatToken(op0, tokens, Doc.empty(), Doc.empty())
 
     while exprs.pop() is Option.Some(expr):
         let opToken = nextNonTrivia(expr.lastToken(), tokens).unwrap()
-        docRest += Doc.blank(1) + expr.format(tokens) + Doc.break_(1) + formatToken(opToken, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        docRest += Doc.blank(1) + expr.format(tokens, Doc.break_(1), Doc.break_(1)) + formatToken(opToken, tokens, Doc.empty(), Doc.empty())
 
     let rhsOp = prevNonTrivia(rhs.firstToken(), tokens).unwrap()
-    docRest += Doc.blank(1) + rhs.format(tokens)
+    docRest += Doc.blank(1) + rhs.format(tokens, noCommentTerminator, multiLineTerminator)
 
     doc0 + docRest.nest(4)
 
 
-UnOpExpr.format(self, tokens: Vec[Token]) Doc:
+UnOpExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let op = self.firstToken()
-    formatToken(op, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + self.expr.format(tokens)
+    formatToken(op, tokens, Doc.blank(1), Doc.blank(1))
+        + self.expr.format(tokens, noCommentTerminator, multiLineTerminator)
 
 
-RecordExpr.format(self, tokens: Vec[Token]) Doc:
+RecordExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let doc0 = formatToken(lparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    let doc0 = formatToken(lparen, tokens, Doc.empty(), Doc.empty())
 
     let docRest = Doc.empty()
     let fieldIdx: U32 = 0
@@ -634,80 +717,121 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
 
-        docRest += formatNamed(field, Expr.format, tokens)
+        docRest += formatNamed(field, Expr.format, tokens, Doc.empty(), Doc.empty())
 
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
 
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    doc0 + Doc.nested(4, docRest + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+    doc0 + Doc.nested(4, docRest + formatToken(rparen, tokens, Doc.empty(), Doc.empty()))
 
 
-ReturnExpr.format(self, tokens: Vec[Token]) Doc:
+ReturnExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let ret = self.firstToken()
     assert(tokens.get(ret.idx).kind is TokenKind.Return)
 
-    let doc = formatToken(ret, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    let doc = formatToken(ret, tokens, Doc.empty(), Doc.empty())
 
     match self.expr:
-        Option.None: doc
-        Option.Some(expr): doc + Doc.nested(4, Doc.break_(1) + expr.format(tokens))
+        Option.None:
+            formatToken(ret, tokens, noCommentTerminator, multiLineTerminator)
+
+        Option.Some(expr):
+            Doc.nested(
+                4,
+                formatToken(ret, tokens, Doc.empty(), Doc.empty())
+                    + Doc.break_(1) + expr.format(tokens, noCommentTerminator, multiLineTerminator))
 
 
-MatchExpr.format(self, tokens: Vec[Token]) Doc:
+MatchExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let match_ = self.firstToken()
     assert(tokens.get(match_.idx).kind is TokenKind.Match)
 
     let colon = nextNonTrivia(self.scrutinee.lastToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    let doc0 = formatToken(match_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+    let doc0 = formatToken(match_, tokens, Doc.blank(1), Doc.blank(1))
     let docRest =
-        Doc.nested(8, self.scrutinee.format(tokens))
-            + formatToken(colon, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        Doc.nested(8, self.scrutinee.format(tokens, Doc.empty(), Doc.empty()))
+            + formatToken(colon, tokens, Doc.empty(), Doc.empty())
 
+    let altIdx: U32 = 0
     for alt: Alt in self.alts.iter():
-        docRest += Doc.hardLine() + alt.format(tokens)
+        let last = altIdx == self.alts.len() - 1
+
+        docRest += if last:
+            alt.format(tokens, noCommentTerminator, multiLineTerminator)
+        else:
+            alt.format(tokens, Doc.hardLine(), Doc.hardLine())
+
+        altIdx += 1
 
     doc0 + docRest.nest(4)
 
 
-Alt.format(self, tokens: Vec[Token]) Doc:
-    let doc0 = self.pattern.format(tokens)
+Alt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    let doc0 = self.pattern.format(tokens, Doc.empty(), Doc.empty())
     let docRest = Doc.empty()
 
     if self.guard is Option.Some(guard):
         let if_ = prevNonTrivia(guard.firstToken(), tokens).unwrap()
         assert(tokens.get(if_.idx).kind is TokenKind.If)
 
-        docRest += Doc.break_(1) + formatToken(if_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + guard.format(tokens)
+        docRest += Doc.break_(1)
+            + formatToken(if_, tokens, Doc.blank(1), Doc.blank(1))
+            + guard.format(tokens, Doc.empty(), Doc.empty())
+
         docRest = Doc.nested(8, docRest)
 
-    let body = formatStmts(self.rhs, tokens)
+    let body = formatStmts(self.rhs, tokens, noCommentTerminator, multiLineTerminator)
 
     let colon = prevNonTrivia(self.rhs.get(0).firstToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc0 + Doc.nested(4, docRest + formatToken(colon, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1)) + body).group()
+    doc0 + Doc.nested(4, docRest + formatToken(colon, tokens, Doc.break_(1), Doc.break_(1)) + body).group()
 
 
-IfExpr.format(self, tokens: Vec[Token]) Doc:
+IfExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let firstBranch = self.branches.get(0)
 
     let colon = nextNonTrivia(firstBranch.guard.lastToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
     let doc =
-        formatToken(self.firstToken(), tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+        formatToken(self.firstToken(), tokens, Doc.blank(1), Doc.blank(1))
             + Doc.nested(
                 4,
-                firstBranch.guard.format(tokens)
-                + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-                + formatStmts(firstBranch.body, tokens))
+                firstBranch.guard.format(tokens, Doc.empty(), Doc.empty())
+                    + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+                    + (if self.branches.isEmpty() and self.elseBranch.isNone():
+                            formatStmts(firstBranch.body, tokens, noCommentTerminator, multiLineTerminator)
+                       else:
+                            formatStmts(firstBranch.body, tokens, Doc.hardLine(), Doc.hardLine())))
 
+    let branchIdx: U32 = 0
     for branch: (guard: Expr, body: Vec[Stmt]) in self.branches.iter().skip(1):
         let elif_ = prevNonTrivia(branch.guard.firstToken(), tokens).unwrap()
         assert(tokens.get(elif_.idx).kind is TokenKind.Elif)
@@ -715,14 +839,21 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
         let colon = nextNonTrivia(branch.guard.lastToken(), tokens).unwrap()
         assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
+        let last = self.elseBranch.isNone() and branchIdx == self.branches.len() - 1
+
         doc += Doc.hardLine()
         doc +=
-            formatToken(elif_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+            formatToken(elif_, tokens, Doc.blank(1), Doc.blank(1))
                 + Doc.nested(
                     4,
-                    branch.guard.format(tokens)
-                        + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-                        + formatStmts(branch.body, tokens))
+                    branch.guard.format(tokens, Doc.empty(), Doc.empty())
+                        + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+                        + (if last:
+                                formatStmts(branch.body, tokens, noCommentTerminator, multiLineTerminator)
+                           else:
+                                formatStmts(branch.body, tokens, Doc.hardLine(), Doc.hardLine())))
+
+        branchIdx += 1
 
     if self.elseBranch is Option.Some(body):
         let colon = prevNonTrivia(body.get(0).firstToken(), tokens).unwrap()
@@ -733,22 +864,27 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
 
         doc += Doc.hardLine()
         doc +=
-            formatToken(else_, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            formatToken(else_, tokens, Doc.empty(), Doc.blank(1))
                 + Doc.nested(
                     4,
-                    formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-                        + formatStmts(body, tokens))
+                    formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+                        + formatStmts(body, tokens, noCommentTerminator, multiLineTerminator))
 
     doc
 
 
-FnExpr.format(self, tokens: Vec[Token]) Doc:
+FnExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     # assert(self.sig.context.typeParams.isEmpty)
     # assert(self.sig.context.preds.isEmpty)
     # assert(self.sig.self_ is SelfParam.No)
 
     let pipe1 = self.firstToken()
-    let doc0 = formatToken(pipe1, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc0 = formatToken(pipe1, tokens, Doc.empty(), Doc.blank(1))
 
     let docRest = Doc.empty()
     let lastToken = pipe1
@@ -758,18 +894,20 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
 
-        docRest += formatToken(param.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        docRest += formatToken(param.name.token, tokens, Doc.empty(), Doc.blank(1))
         lastToken = param.name.token
 
         if param.ty is Option.Some(ty):
             let colon = nextNonTrivia(param.name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            docRest += formatToken(colon, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)) + ty.format(tokens)
+            docRest += formatToken(colon, tokens, Doc.empty(), Doc.blank(1))
+                + ty.format(tokens, Doc.empty(), Doc.empty())
+
             lastToken = ty.lastToken()
 
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.empty())
             lastToken = next
             trailingComma = Bool.True
 
@@ -780,15 +918,15 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
         Doc.blank(1)
     else:
         Doc.empty()
-    docRest += formatToken(pipe2, tokens, pipe2Cont, Doc.hardLine(), pipe2Cont)
+    docRest += formatToken(pipe2, tokens, pipe2Cont, pipe2Cont)
     lastToken = pipe2
 
     if self.sig.returnTy is Option.Some(ret):
-        docRest += Doc.blank(1) + ret.format(tokens)
+        docRest += Doc.blank(1) + ret.format(tokens, Doc.empty(), Doc.empty())
         lastToken = ret.lastToken()
 
     if self.sig.exceptions is Option.Some(exn):
-        docRest += Doc.blank(1) + exn.format(tokens)
+        docRest += Doc.blank(1) + exn.format(tokens, Doc.empty(), Doc.empty())
         lastToken = exn.lastToken()
 
     let colon = nextNonTrivia(lastToken, tokens).unwrap()
@@ -798,50 +936,66 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
         Doc.hardLine()
     else:
         Doc.break_(1)
-    docRest += formatToken(colon, tokens, colonCont, colonCont, colonCont)
 
-    docRest += formatStmts(self.body, tokens)
+    docRest += formatToken(colon, tokens, colonCont, colonCont)
+
+    docRest += formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator)
 
     doc0 + docRest.nest(4)
 
 
-IsExpr.format(self, tokens: Vec[Token]) Doc:
+IsExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let is_ = nextNonTrivia(self.expr.lastToken(), tokens).unwrap()
     assert(tokens.get(is_.idx).kind is TokenKind.Is)
 
-    self.expr.format(tokens)
+    self.expr.format(tokens, Doc.empty(), Doc.empty())
         + Doc.nested(
             4,
             Doc.break_(1)
-                + formatToken(is_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
-                + self.pat.format(tokens))
+                + formatToken(is_, tokens, Doc.blank(1), Doc.blank(1))
+                + self.pat.format(tokens, noCommentTerminator, multiLineTerminator))
 
 
-DoExpr.format(self, tokens: Vec[Token]) Doc:
+DoExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let do_ = self.firstToken()
 
     let colon = nextNonTrivia(do_, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    formatToken(do_, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    formatToken(do_, tokens, Doc.empty(), Doc.empty())
         + Doc.nested(
             4,
-            formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-                + formatStmts(self.body, tokens))
+            formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+                + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator))
 
 
-SeqExpr.format(self, tokens: Vec[Token]) Doc:
+SeqExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let doc0 = Doc.empty()
 
     if self.ty is Option.Some(ty):
-        doc0 += ty.format(tokens)
+        doc0 += ty.format(tokens, Doc.empty(), Doc.empty())
 
         let dot = prevNonTrivia(self._lbracket, tokens).unwrap()
         assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
-        doc0 += formatToken(dot, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+        doc0 += formatToken(dot, tokens, Doc.empty(), Doc.blank(1))
 
-    doc0 += formatToken(self._lbracket, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(1))
+    doc0 += formatToken(self._lbracket, tokens, Doc.break_(0), Doc.break_(1))
 
     let docRest = Doc.empty()
 
@@ -855,111 +1009,145 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
             let eq = nextNonTrivia(key.lastToken(), tokens).unwrap()
             assert(tokens.get(eq.idx).kind is TokenKind.Eq)
 
-            docRest += key.format(tokens) + Doc.blank(1) + formatToken(eq, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1))
+            docRest += key.format(tokens, Doc.blank(1), Doc.blank(1))
+                + formatToken(eq, tokens, Doc.break_(1), Doc.break_(1))
 
-        docRest += elem.value.format(tokens)
+        docRest += elem.value.format(tokens, Doc.empty(), Doc.empty())
 
         if (nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
             trailingComma = Bool.True
 
     if self.elems.len() != 0 and not trailingComma:
         docRest += Doc.whenNotFlat(Doc.char(','))
 
-    Doc.grouped(doc0 + docRest.nest(4) + Doc.break_(0) + formatToken(self._rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+    Doc.grouped(doc0 + docRest.nest(4) + Doc.break_(0) + formatToken(self._rbracket, tokens, Doc.empty(), Doc.empty()))
 
 
-ParenExpr.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.firstToken(), tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-        + self.expr.format(tokens)
-        + formatToken(self.lastToken(), tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+ParenExpr.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.firstToken(), tokens, Doc.empty(), Doc.blank(1))
+        + self.expr.format(tokens, Doc.empty(), Doc.empty())
+        + formatToken(self.lastToken(), tokens, Doc.empty(), Doc.empty())
 
 
 # --------------------------------------------------------------------------------------------------
 # Statements
 
 
-formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
+formatStmts(
+    stmts: Vec[Stmt],
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    let doc = Doc.empty()
+
     if stmts.isEmpty():
-        Doc.empty()
+        return doc
 
-    let lastStmt = stmts.get(0)
-    let doc = lastStmt.format(tokens)
+    let stmtIdx: U32 = 0
+    for stmt: Stmt in stmts.iter():
+        let last = stmtIdx == stmts.len() - 1
 
-    for stmt: Stmt in stmts.iter().skip(1):
-        doc += Doc.hardLine()
-
-        # When we have empty lines between the statements, leave one empty line between the
-        # statements.
-        if tokens.get(stmt.firstToken().idx).line - tokens.get(lastStmt.lastToken().idx).line > 1:
-            doc += Doc.hardLine()
-
-        doc += stmt.format(tokens)
-
-        lastStmt = stmt
+        let cont = if last:
+            doc += stmt.format(tokens, noCommentTerminator, multiLineTerminator)
+        else:
+            doc += stmt.format(tokens, Doc.hardLine(), Doc.hardLine())
 
     doc
 
 
-Stmt.format(self, tokens: Vec[Token]) Doc:
+Stmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     Doc.group(match self:
-        Stmt.Let(s): s.format(tokens)
-        Stmt.Assign(s): s.format(tokens)
-        Stmt.Expr(s): s.format(tokens)
-        Stmt.For(s): s.format(tokens)
-        Stmt.While(s): s.format(tokens)
-        Stmt.Loop(s): s.format(tokens)
-        Stmt.Break(s): s.format(tokens)
-        Stmt.Continue(s): s.format(tokens))
+        Stmt.Let(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.Assign(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.Expr(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.For(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.While(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.Loop(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.Break(s): s.format(tokens, noCommentTerminator, multiLineTerminator)
+        Stmt.Continue(s): s.format(tokens, noCommentTerminator, multiLineTerminator))
 
 
-LetStmt.format(self, tokens: Vec[Token]) Doc:
+LetStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let let_ = prevNonTrivia(self.lhs.firstToken(), tokens).unwrap()
     assert(tokens.get(let_.idx).kind is TokenKind.Let)
 
-    let doc = formatToken(let_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + self.lhs.format(tokens)
+    let doc = formatToken(let_, tokens, Doc.blank(1), Doc.blank(1))
+        + self.lhs.format(tokens, Doc.empty(), Doc.empty())
 
     if self.ty is Option.Some(ty):
         let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
         assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-        doc += formatToken(colon, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + ty.format(tokens)
+        doc += formatToken(colon, tokens, Doc.blank(1), Doc.blank(1))
+            + ty.format(tokens, Doc.empty(), Doc.empty())
 
     let eq = prevNonTrivia(self.rhs.firstToken(), tokens).unwrap()
     assert(tokens.get(eq.idx).kind is TokenKind.Eq)
 
-    doc + Doc.blank(1) + formatToken(eq, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + self.rhs.format(tokens)
+    doc
+        + Doc.blank(1)
+        + formatToken(eq, tokens, Doc.blank(1), Doc.blank(1))
+        + self.rhs.format(tokens, noCommentTerminator, multiLineTerminator)
 
 
-AssignStmt.format(self, tokens: Vec[Token]) Doc:
+AssignStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let op = nextNonTrivia(self.lhs.lastToken(), tokens).unwrap()
 
-    self.lhs.format(tokens)
-        + Doc.blank(1)
-        + formatToken(op, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
-        + self.rhs.format(tokens)
+    self.lhs.format(tokens, Doc.blank(1), Doc.blank(1))
+        + formatToken(op, tokens, Doc.blank(1), Doc.blank(1))
+        + self.rhs.format(tokens, noCommentTerminator, multiLineTerminator)
 
 
-ForStmt.format(self, tokens: Vec[Token]) Doc:
+ForStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let doc0 = Doc.empty()
     let for_ = self.firstToken()
 
     if self.label is Option.Some(label):
-        doc0 += formatToken(label.token, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+        doc0 += formatToken(label.token, tokens, Doc.blank(1), Doc.blank(1))
         for_ = nextNonTrivia(label.token, tokens).unwrap()
 
     assert(tokens.get(for_.idx).kind is TokenKind.For)
 
-    doc0 += formatToken(for_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+    doc0 += formatToken(for_, tokens, Doc.blank(1), Doc.blank(1))
 
-    let docRest = self.pat.format(tokens)
+    let docRest = self.pat.format(tokens, Doc.empty(), Doc.empty())
     let lastToken = self.pat.lastToken()
 
     if self.astTy is Option.Some(ty):
         let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
         assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-        docRest += formatToken(colon, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + ty.format(tokens) + Doc.blank(1)
+        docRest += formatToken(colon, tokens, Doc.blank(1), Doc.blank(1))
+            + ty.format(tokens, Doc.empty(), Doc.empty())
+            + Doc.blank(1)
+
         lastToken = ty.lastToken()
 
     let in_ = nextNonTrivia(lastToken, tokens).unwrap()
@@ -970,106 +1158,146 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
 
     docRest += Doc.nested(
         4,
-        formatToken(in_, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1))
-            + self.expr.format(tokens)
-            + formatToken(colon, tokens, Doc.empty(), Doc.empty(), Doc.empty()))
+        formatToken(in_, tokens, Doc.break_(1), Doc.break_(1))
+            + self.expr.format(tokens, Doc.empty(), Doc.empty())
+            + formatToken(colon, tokens, Doc.empty(), Doc.empty()))
 
-    doc0 + Doc.nested(4, docRest.group() + Doc.hardLine() + formatStmts(self.body, tokens))
+    doc0 + Doc.nested(4, docRest.group() + Doc.hardLine() + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator))
 
 
-WhileStmt.format(self, tokens: Vec[Token]) Doc:
+WhileStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let doc0 = Doc.empty()
     let while_ = self.firstToken()
 
     if self.label is Option.Some(label):
-        doc0 += formatToken(label.token, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+        doc0 += formatToken(label.token, tokens, Doc.blank(1), Doc.blank(1))
         while_ = nextNonTrivia(label.token, tokens).unwrap()
 
     assert(tokens.get(while_.idx).kind is TokenKind.While)
 
-    doc0 += formatToken(while_, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+    doc0 += formatToken(while_, tokens, Doc.blank(1), Doc.blank(1))
 
     let colon = nextNonTrivia(self.cond.lastToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc0 + Doc.nested(4, self.cond.format(tokens).nest(4)
-            + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-            + formatStmts(self.body, tokens))
+    doc0 + Doc.nested(4, self.cond.format(tokens, Doc.empty(), Doc.empty()).nest(4)
+            + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+            + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator))
 
 
-LoopStmt.format(self, tokens: Vec[Token]) Doc:
+LoopStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let loop_ = self.firstToken()
 
     let colon = nextNonTrivia(loop_, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    formatToken(loop_, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()) + Doc.nested(
+    formatToken(loop_, tokens, Doc.empty(), Doc.empty()) + Doc.nested(
         4,
-        formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine(), Doc.hardLine())
-            + formatStmts(self.body, tokens))
+        formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
+            + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator))
 
 
-BreakStmt.format(self, tokens: Vec[Token]) Doc:
+BreakStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let break_ = self.firstToken()
 
     match self.label:
         Option.None:
-            formatToken(break_, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            formatToken(break_, tokens, noCommentTerminator, multiLineTerminator)
 
         Option.Some(label):
             Doc.nested(
                 4,
-                formatToken(break_, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1))
-                    + formatToken(label.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+                formatToken(break_, tokens, Doc.break_(1), Doc.break_(1))
+                    + formatToken(label.token, tokens, noCommentTerminator, multiLineTerminator))
 
 
-ContinueStmt.format(self, tokens: Vec[Token]) Doc:
+ContinueStmt.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let continue_ = self.firstToken()
 
     match self.label:
         Option.None:
-            formatToken(continue_, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            formatToken(continue_, tokens, noCommentTerminator, multiLineTerminator)
 
         Option.Some(label):
             Doc.nested(
                 4,
-                formatToken(continue_, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1))
-                    + formatToken(label.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+                formatToken(continue_, tokens, Doc.break_(1), Doc.break_(1))
+                    + formatToken(label.token, tokens, noCommentTerminator, multiLineTerminator))
 
 
 # --------------------------------------------------------------------------------------------------
 # Types
 
 
-Type.format(self, tokens: Vec[Token]) Doc:
+Type.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     match self:
-        Type.Named(t): t.format(tokens)
-        Type.Var(id): formatToken(id.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-        Type.Record(t): t.format(tokens)
-        Type.Variant(t): t.format(tokens)
-        Type.Fn_(t): t.format(tokens)
+        Type.Named(t): t.format(tokens, noCommentTerminator, multiLineTerminator)
+        Type.Var(id): formatToken(id.token, tokens, noCommentTerminator, multiLineTerminator)
+        Type.Record(t): t.format(tokens, noCommentTerminator, multiLineTerminator)
+        Type.Variant(t): t.format(tokens, noCommentTerminator, multiLineTerminator)
+        Type.Fn_(t): t.format(tokens, noCommentTerminator, multiLineTerminator)
 
 
-NamedType.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-        + formatTyArgs(self.args, tokens)
+NamedType.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.name.token, tokens, Doc.empty(), Doc.blank(1))
+        + formatTyArgs(self.args, tokens, noCommentTerminator, multiLineTerminator)
 
 
-RecordType.format(self, tokens: Vec[Token]) Doc:
+RecordType.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow)
 
-    let doc0 = formatToken(lparen, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc0 = formatToken(lparen, tokens, Doc.empty(), Doc.blank(1))
     let docRest = Doc.empty()
 
     let trailingComma = Bool.False
     let lastToken = lparen
     for field: Named[Type] in self.fields.iter():
-        trailingComma = Bool.False
-        docRest += formatNamed(field, Type.format, tokens)
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
+        docRest += formatNamed(field, Type.format, tokens, Doc.empty(), Doc.empty())
+
         lastToken = field.lastToken()
+
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1))
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
             lastToken = next
 
@@ -1077,22 +1305,27 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        docRest += formatToken(dotdot, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()) + formatToken(ext.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        docRest += formatToken(dotdot, tokens, Doc.empty(), Doc.empty()) + formatToken(ext.token, tokens, Doc.empty(), Doc.empty())
 
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    doc0 + Doc.grouped(docRest + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)))
+    doc0 + Doc.grouped(docRest + formatToken(rparen, tokens, noCommentTerminator, multiLineTerminator))
 
 
-VariantType.format(self, tokens: Vec[Token]) Doc:
+VariantType.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let lbracket = self.firstToken()
     assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket | TokenKind.LBracketRow)
 
     let rbracket = self.lastToken()
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-    let doc0 = formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    let doc0 = formatToken(lbracket, tokens, Doc.empty(), Doc.empty())
     let docRest = Doc.empty()
 
     let lastToken = lbracket
@@ -1102,10 +1335,10 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
             docRest += Doc.blank(1)
             trailingComma = Bool.False
 
-        docRest += alt.format(tokens)
+        docRest += alt.format(tokens, Doc.empty(), Doc.empty())
 
         if (nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            docRest += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
             lastToken = next
 
@@ -1116,20 +1349,25 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
-        docRest += formatToken(dotdot, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
-            + formatToken(ext.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        docRest += formatToken(dotdot, tokens, Doc.empty(), Doc.empty())
+            + formatToken(ext.token, tokens, Doc.empty(), Doc.empty())
 
-    doc0 + docRest + formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    doc0 + docRest + formatToken(rbracket, tokens, noCommentTerminator, multiLineTerminator)
 
 
-FnType.format(self, tokens: Vec[Token]) Doc:
+FnType.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let fn_ = self.firstToken()
 
     let lparen = nextNonTrivia(fn_, tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let doc = formatToken(fn_, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
-        + formatToken(lparen, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+    let doc = formatToken(fn_, tokens, Doc.empty(), Doc.blank(1))
+        + formatToken(lparen, tokens, Doc.empty(), Doc.blank(1))
 
     let lastToken = lparen
     let trailingComma = Bool.False
@@ -1138,11 +1376,11 @@ FnType.format(self, tokens: Vec[Token]) Doc:
             doc += Doc.blank(1)
             trailingComma = Bool.False
 
-        doc += arg.format(tokens)
+        doc += arg.format(tokens, Doc.empty(), Doc.empty())
         lastToken = arg.lastToken()
 
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            doc += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
             lastToken = next
 
@@ -1151,17 +1389,25 @@ FnType.format(self, tokens: Vec[Token]) Doc:
 
     lastToken = rparen
 
-    doc += formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+    if self.ret.isNone() and self.exceptions.isNone():
+        doc += formatToken(rparen, tokens, noCommentTerminator, multiLineTerminator)
+    else:
+        doc += formatToken(rparen, tokens, Doc.empty(), Doc.empty())
 
     if self.ret is Option.Some(ret):
-        doc += Doc.blank(1) + ret.format(tokens)
+        if self.exceptions.isNone():
+            doc += Doc.blank(1) + ret.format(tokens, noCommentTerminator, multiLineTerminator)
+        else:
+            doc += Doc.blank(1) + ret.format(tokens, Doc.empty(), Doc.empty())
         lastToken = ret.lastToken()
 
     if self.exceptions is Option.Some(exn):
         let slash = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(slash.idx).kind is TokenKind.Slash)
 
-        doc += Doc.blank(1) + formatToken(slash, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + exn.format(tokens)
+        doc += Doc.blank(1)
+            + formatToken(slash, tokens, Doc.blank(1), Doc.blank(1))
+            + exn.format(tokens, noCommentTerminator, multiLineTerminator)
 
     doc
 
@@ -1170,41 +1416,65 @@ FnType.format(self, tokens: Vec[Token]) Doc:
 # Patterns
 
 
-Pat.format(self, tokens: Vec[Token]) Doc:
+Pat.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     match self:
         Pat.Var(p):
-            p.format(tokens)
+            p.format(tokens, noCommentTerminator, multiLineTerminator)
 
         Pat.Constr(p):
-            p.format(tokens)
+            p.format(tokens, noCommentTerminator, multiLineTerminator)
 
         Pat.Record(p):
-            p.format(tokens)
+            p.format(tokens, noCommentTerminator, multiLineTerminator)
 
         Pat.Ignore(p)
             | Pat.Str(_, p)
-            | Pat.Char(_, p): formatToken(p, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            | Pat.Char(_, p): formatToken(p, tokens, noCommentTerminator, multiLineTerminator)
 
         Pat.Or(ps):
             # Same formatting as binary operators.
-            let doc0 = ps.get(0).format(tokens)
+            let doc0 = ps.get(0).format(tokens, Doc.empty(), Doc.empty())
 
             let docRest = Doc.empty()
+            let patIdx: U32 = 1
             for p: Pat in ps.iter().skip(1):
                 let pipe = prevNonTrivia(p.firstToken(), tokens).unwrap()
                 assert(tokens.get(pipe.idx).kind is TokenKind.Pipe)
 
-                docRest += Doc.break_(1) + formatToken(pipe, tokens, Doc.blank(1), Doc.hardLine(), Doc.blank(1)) + p.format(tokens)
+                let last = patIdx == ps.len() - 1
+
+                docRest += Doc.break_(1)
+                    + formatToken(pipe, tokens, Doc.blank(1), Doc.blank(1))
+                
+                if last:
+                    docRest += p.format(tokens, noCommentTerminator, multiLineTerminator)
+                else:
+                    docRest += p.format(tokens, Doc.empty(), Doc.empty())
 
             doc0 + docRest.nest(4)
 
 
-VarPat.format(self, tokens: Vec[Token]) Doc:
-    formatToken(self.var_.token, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+VarPat.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    formatToken(self.var_.token, tokens, noCommentTerminator, multiLineTerminator)
 
 
-ConstrPat.format(self, tokens: Vec[Token]) Doc:
-    let con = self.constr.format(tokens)
+ConstrPat.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
+    let con = self.constr.format(tokens, Doc.empty(), Doc.empty())
 
     if self.fields.isEmpty() and not self.ignoreRest:
         return con
@@ -1212,7 +1482,7 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
     let lparen = nextNonTrivia(self.constr.lastToken(), tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let args = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(0))
+    let args = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(0))
 
     let lastToken = lparen
     let trailingComma = Bool.False
@@ -1221,18 +1491,18 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
             args += Doc.break_(1)
             trailingComma = Bool.False
 
-        args += formatNamed(field, Pat.format, tokens)
+        args += formatNamed(field, Pat.format, tokens, Doc.empty(), Doc.empty())
         lastToken = field.lastToken()
 
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            args += formatToken(next, tokens, Doc.empty(), Doc.empty(), Doc.empty())
+            args += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
             lastToken = next
 
     if self.ignoreRest:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-        args += formatToken(dotdot, tokens, Doc.empty(), Doc.empty(), Doc.empty())
+        args += formatToken(dotdot, tokens, Doc.empty(), Doc.empty())
     elif not trailingComma:
         args += Doc.whenNotFlat(Doc.char(','))
 
@@ -1241,12 +1511,17 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
         con
             + args.nest(4).group()
             + Doc.break_(0)
-            + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+            + formatToken(rparen, tokens, noCommentTerminator, multiLineTerminator))
 
 
-RecordPat.format(self, tokens: Vec[Token]) Doc:
+RecordPat.format(
+    self,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     let lparen = self.firstToken()
-    let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.hardLine(), Doc.break_(0))
+    let doc = formatToken(lparen, tokens, Doc.break_(0), Doc.break_(0))
 
     let trailingComma = Bool.False
     let lastToken = lparen
@@ -1255,23 +1530,27 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
             doc += Doc.break_(1)
             trailingComma = Bool.False
 
-        doc += formatNamed(field, Pat.format, tokens)
+        doc += formatNamed(field, Pat.format, tokens, Doc.empty(), Doc.empty())
         lastToken = field.lastToken()
 
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            doc += formatToken(next, tokens, Doc.empty(), Doc.empty())
             trailingComma = Bool.True
             lastToken = next
 
     if self.ignoreRest:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
-        doc += formatToken(dotdot, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+        doc += formatToken(dotdot, tokens, Doc.empty(), Doc.empty())
     elif not trailingComma:
         doc += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken()
-    Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens, Doc.empty(), Doc.hardLine(), Doc.empty()))
+    Doc.grouped(
+        doc.nest(4)
+            + Doc.break_(0)
+            + formatToken(rparen, tokens, noCommentTerminator, multiLineTerminator)
+    )
 
 
 # --------------------------------------------------------------------------------------------------
@@ -1289,7 +1568,6 @@ formatToken(
     tokenIdx: TokenIdx,
     tokens: Vec[Token],
     noCommentTerminator: Doc,
-    singleLineTerminator: Doc,
     multiLineTerminator: Doc,
 ) Doc:
     let doc = Doc.empty()
@@ -1336,7 +1614,7 @@ formatToken(
             trailingTokenIdx += 1
         else:
             # Single-line comments end with a newline, so there can't be more comments.
-            return doc + singleLineTerminator
+            return doc + Doc.hardLine()
 
     doc +
         (if printedMultiLineComment:
@@ -1345,7 +1623,12 @@ formatToken(
             noCommentTerminator)
 
 
-formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
+formatTyArgs(
+    tyArgs: Option[TyArgs],
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc:
     match tyArgs:
         Option.None:
             Doc.empty()
@@ -1357,7 +1640,7 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
             let rbracket = tyArgs.lastToken()
             assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
-            let doc = formatToken(lbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            let doc = formatToken(lbracket, tokens, Doc.empty(), Doc.blank(1))
 
             let trailingComma = Bool.False
             for tyArg: Type in tyArgs.args.iter():
@@ -1365,19 +1648,25 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
                     doc += Doc.blank(1)
                     trailingComma = Bool.False
 
-                doc += tyArg.format(tokens)
+                doc += tyArg.format(tokens, Doc.empty(), Doc.empty())
 
                 if (nextNonTrivia(tyArg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                    doc += formatToken(next, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+                    doc += formatToken(next, tokens, Doc.empty(), Doc.blank(1))
                     trailingComma = Bool.True
 
-            doc + formatToken(rbracket, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
+            doc + formatToken(rbracket, tokens, Doc.empty(), Doc.blank(1))
 
 
-formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[Token]) Doc / exn:
+formatNamed(
+    named: Named[a],
+    format: Fn(a, Vec[Token], Doc, Doc) Doc / exn,
+    tokens: Vec[Token],
+    noCommentTerminator: Doc,
+    multiLineTerminator: Doc,
+) Doc / exn:
     match named.name:
         Option.None:
-            format(named.node, tokens)
+            format(named.node, tokens, noCommentTerminator, multiLineTerminator)
 
         Option.Some(name):
             let op = nextNonTrivia(name.token, tokens).unwrap()
@@ -1392,9 +1681,9 @@ formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[To
 
             Doc.nested(
                 4,
-                formatToken(name.token, tokens, sep, Doc.hardLine(), Doc.blank(1))
-                    + formatToken(op, tokens, Doc.break_(1), Doc.hardLine(), Doc.break_(1))
-                    + format(named.node, tokens))
+                formatToken(name.token, tokens, sep, Doc.blank(1))
+                    + formatToken(op, tokens, Doc.break_(1), Doc.break_(1))
+                    + format(named.node, tokens, noCommentTerminator, multiLineTerminator))
                 .group()
 
 
