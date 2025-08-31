@@ -1271,31 +1271,31 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
     let token = tokens.get(tokenIdx.idx)
 
     if findCommentBefore(tokenIdx, tokens) is Option.Some(commentStart):
-        let lastCommentToken = tokens.get(commentStart.idx)
+        let maxEmptyLines: U32 = if token.col == 0:
+            2
+        else:
+            1
+
+        let prevCommentToken = tokens.get(commentStart.idx)
         for commentTokenIdx: TokenIdx in range(commentStart, tokenIdx):
             let commentToken = tokens.get(commentTokenIdx.idx)
 
             if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
                 continue
 
-            if commentToken.rightLoc().line - lastCommentToken.rightLoc().line > 1:
-                doc += Doc.hardLine()
+            let prevCommentTokenLine = prevCommentToken.rightLoc().line
+            if commentToken.line != prevCommentTokenLine:
+                let emptyLines = commentToken.line - prevCommentTokenLine - 1
+                if emptyLines > maxEmptyLines:
+                    emptyLines = maxEmptyLines
+
+                for _: U32 in range(u32(0), emptyLines):
+                    doc += Doc.hardLine()
 
             doc += Doc.str(commentToken.text) + Doc.hardLine()
 
-            lastCommentToken = commentToken
+            prevCommentToken = commentToken
 
-
-        let maxEmptyLines: U32 = if token.col == 0:
-            2
-        else:
-            1
-
-        let lastCommentLine = lastCommentToken.rightLoc().line
-
-        if token.line != lastCommentLine and token.line - lastCommentLine > maxEmptyLines:
-            for _: U32 in range(u32(0), maxEmptyLines):
-                doc += Doc.hardLine()
 
     doc += Doc.str(token.text)
 
@@ -1451,7 +1451,7 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Vec[Token]) Bool:
 
         break
 
-    if idx == 0 and tokens.get(idx).kind is TokenKind.Comment | TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+    if idx == 0 and (tokens.get(idx).kind is TokenKind.Comment | TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent):
         return Bool.True
 
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
