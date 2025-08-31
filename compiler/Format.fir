@@ -766,7 +766,7 @@ MatchExpr.format(
     let doc0 = formatToken(match_, tokens, Doc.blank(1), Doc.blank(1))
     let docRest =
         Doc.nested(8, self.scrutinee.format(tokens, Doc.empty(), Doc.empty()))
-            + formatToken(colon, tokens, Doc.empty(), Doc.empty())
+            + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
 
     let altIdx: U32 = 0
     for alt: Alt in self.alts.iter():
@@ -1059,6 +1059,8 @@ formatStmts(
         else:
             doc += stmt.format(tokens, Doc.hardLine(), Doc.hardLine())
 
+        stmtIdx += 1
+
     doc
 
 
@@ -1185,9 +1187,9 @@ WhileStmt.format(
     let colon = nextNonTrivia(self.cond.lastToken(), tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    doc0 + Doc.nested(4, self.cond.format(tokens, Doc.empty(), Doc.empty()).nest(4)
+    doc0 + Doc.nested(4, Doc.nested(4, self.cond.format(tokens, Doc.empty(), Doc.empty()).nest(4)
             + formatToken(colon, tokens, Doc.hardLine(), Doc.hardLine())
-            + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator))
+            + formatStmts(self.body, tokens, noCommentTerminator, multiLineTerminator)))
 
 
 LoopStmt.format(
