@@ -1205,6 +1205,8 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
 formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
     let doc = Doc.empty()
 
+    let token = tokens.get(tokenIdx.idx)
+
     if findCommentBefore(tokenIdx, tokens) is Option.Some(commentStart):
         let lastCommentToken = tokens.get(commentStart.idx)
         for commentTokenIdx: TokenIdx in range(commentStart, tokenIdx):
@@ -1220,7 +1222,18 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
 
             lastCommentToken = commentToken
 
-    let token = tokens.get(tokenIdx.idx)
+
+        let maxEmptyLines: U32 = if token.col == 0:
+            2
+        else:
+            1
+
+        let lastCommentLine = lastCommentToken.rightLoc().line
+
+        if token.line != lastCommentLine and token.line - lastCommentLine > maxEmptyLines:
+            for _: U32 in range(u32(0), maxEmptyLines):
+                doc += Doc.hardLine()
+
     doc += Doc.str(token.text)
 
     let tokenLastLine = token.rightLoc().line
