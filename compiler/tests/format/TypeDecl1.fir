@@ -16,8 +16,10 @@ type IntExpr(
 # type IntExpr(
 #     ## Blah blah blah
 #     text: Str,
+#     
 #     ## Blah blah
 #     suffix: Option[IntKind],
+#     
 #     ## Blah
 #     radix: U32,
 # )

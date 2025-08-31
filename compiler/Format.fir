@@ -145,14 +145,17 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let trailingComma = Bool.False
             let fieldIdx: U32 = 0
             for field: (name: Id, ty: Type) in fields.iter():
-                trailingComma = Bool.False
+                if trailingComma:
+                    doc += Doc.hardLine()
+                    trailingComma = Bool.False
 
                 if fieldIdx != 0:
                     # If there are empty lines between the two fields in the original source then
                     # also leave an empty space between them in the formatted code.
-                    let prevLastToken = fields.get(fieldIdx - 1)
-
-                    doc += Doc.break_(1)
+                    let prevFieldLine = tokens.get(lastToken.idx).line
+                    let currentFieldLine = tokens.get(field.name.token.idx).line
+                    if currentFieldLine - prevFieldLine > 1:
+                        doc += Doc.hardLine()
 
                 let colon = nextNonTrivia(field.name.token, tokens).unwrap()
                 assert(tokens.get(colon.idx).kind is TokenKind.Colon)
@@ -189,6 +192,10 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let lastToken = lparen
             let trailingComma = Bool.False
             for field: Type in fields.iter():
+                if trailingComma:
+                    doc += Doc.break_(1)
+                    trailingComma = Bool.False
+
                 doc += field.format(tokens)
                 lastToken = field.lastToken()
 
@@ -519,8 +526,8 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
         trailingComma = Bool.False
         args += formatNamed(arg, Expr.format, tokens).group()
         if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            args += formatToken(next, tokens) + Doc.break_(1)
             trailingComma = Bool.True
+            args += formatToken(next, tokens) + Doc.break_(1)
 
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
@@ -806,7 +813,9 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
     let trailingComma = Bool.False
     for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
 
         if elem.key is Option.Some(key):
             let eq = nextNonTrivia(key.lastToken(), tokens).unwrap()
@@ -818,7 +827,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
 
         if (nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            docRest += formatToken(next, tokens) + Doc.break_(1)
+            docRest += formatToken(next, tokens)
 
     if self.elems.len() != 0 and not trailingComma:
         docRest += Doc.whenNotFlat(Doc.char(','))
@@ -1021,8 +1030,8 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
         docRest += formatNamed(field, Type.format, tokens)
         lastToken = field.lastToken()
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens) + Doc.blank(1)
             trailingComma = Bool.True
+            docRest += formatToken(next, tokens) + Doc.blank(1)
             lastToken = next
 
     if self.extension is Option.Some(ext):
@@ -1053,8 +1062,8 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
         trailingComma = Bool.False
         docRest += alt.format(tokens)
         if (nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            docRest += formatToken(next, tokens)
             trailingComma = Bool.True
+            docRest += formatToken(next, tokens)
             lastToken = next
 
     if self.extension is Option.Some(ext):
@@ -1084,8 +1093,8 @@ FnType.format(self, tokens: Vec[Token]) Doc:
         doc += arg.format(tokens)
         lastToken = arg.lastToken()
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            doc += formatToken(next, tokens)
             trailingComma = Bool.True
+            doc += formatToken(next, tokens)
             lastToken = next
 
     let rparen = nextNonTrivia(lastToken, tokens).unwrap()
@@ -1163,8 +1172,8 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
         args += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            args += formatToken(next, tokens)
             trailingComma = Bool.True
+            args += formatToken(next, tokens)
             lastToken = next
 
     if self.ignoreRest:
@@ -1189,8 +1198,8 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
         doc += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            doc += formatToken(next, tokens)
             trailingComma = Bool.True
+            doc += formatToken(next, tokens)
             lastToken = next
 
     if self.ignoreRest:
@@ -1288,10 +1297,16 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
 
             let doc = formatToken(lbracket, tokens)
 
+            let trailingComma = Bool.False
             for tyArg: Type in tyArgs.args.iter():
+                if trailingComma:
+                    doc += Doc.blank(1)
+                    trailingComma = Bool.False
+
                 doc += tyArg.format(tokens)
 
                 if (nextNonTrivia(tyArg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                    trailingComma = Bool.True
                     doc += formatToken(next, tokens)
 
             doc + formatToken(rbracket, tokens)
