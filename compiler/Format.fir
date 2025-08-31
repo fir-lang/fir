@@ -1363,7 +1363,11 @@ formatNamed(named: Named[a], format: Fn(a, Vec[Token]) Doc / exn, tokens: Vec[To
                        else:
                          Doc.empty())
                     + formatToken(op, tokens)
-                    + Doc.break_(1)
+                    # We can't have a line break after `:` as that starts a new block.
+                    + (if opKind is TokenKind.Eq:
+                          Doc.break_(1)
+                       else:
+                           Doc.blank(1))
                     + format(named.node, tokens))
                 .group()
 
