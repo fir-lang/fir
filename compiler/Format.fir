@@ -77,10 +77,15 @@ TopDecl.format(self, tokens: Vec[Token]) Doc:
 
 
 TypeDecl.format(self, tokens: Vec[Token]) Doc:
+    let doc = Doc.empty()
+
+    if self.prim_ is Option.Some(prim_):
+        doc += formatToken(prim_, tokens) + Doc.blank(1)
+
     let type_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(type_.idx).kind is TokenKind.Type)
 
-    let doc = formatToken(type_, tokens) + Doc.blank(1) + formatToken(self.name.token, tokens)
+    doc += formatToken(type_, tokens) + Doc.blank(1) + formatToken(self.name.token, tokens)
 
     if not self.typeParams.isEmpty():
         let lbracket = prevNonTrivia(self.typeParams.get(0).firstToken(), tokens).unwrap()
@@ -226,13 +231,15 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 
 
 FunDecl.format(self, tokens: Vec[Token]) Doc:
-    let doc = match self.parentTy:
-        Option.Some(id):
-            let dot = nextNonTrivia(id.token, tokens).unwrap()
-            assert(tokens.get(dot.idx).kind is TokenKind.Dot)
-            formatToken(id.token, tokens) + formatToken(dot, tokens)
-        Option.None:
-            Doc.empty()
+    let doc = Doc.empty()
+
+    if self.prim_ is Option.Some(prim_):
+        doc += formatToken(prim_, tokens) + Doc.blank(1)
+
+    if self.parentTy is Option.Some(parentTy):
+        let dot = nextNonTrivia(parentTy.token, tokens).unwrap()
+        assert(tokens.get(dot.idx).kind is TokenKind.Dot)
+        doc += formatToken(parentTy.token, tokens) + formatToken(dot, tokens)
 
     doc += formatToken(self.name.token, tokens)
 

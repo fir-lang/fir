@@ -275,6 +275,7 @@ typeDecl TypeDecl:
     # Sum type: at least one constructors
     "type" name=^ "UpperId" params=(_"[" typeParams _"]")? ":" "NEWLINE" "INDENT" rhs=conDecl+ "DEDENT":
         TypeDecl(
+            prim_ = Option.None,
             name = newId(name),
             typeParams = match params:
                 Option.Some(params): params
@@ -289,6 +290,7 @@ typeDecl TypeDecl:
             Option.Some(fs): fs.fields
             Option.None: ConFields.Empty
         TypeDecl(
+            prim_ = Option.None,
             name = newId(name),
             typeParams = match params:
                 Option.Some(params): params
@@ -297,8 +299,9 @@ typeDecl TypeDecl:
             rhs = Option.Some(TypeDeclRhs.Product(fs))
         )
 
-    "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
+    prim_=^ "prim" "type" name=^ "UpperId" params=(_"[" typeParams _"]")? "NEWLINE":
         TypeDecl(
+            prim_ = Option.Some(TokenIdx(idx = prim_)),
             name = newId(name),
             typeParams = match params:
                 Option.Some(params): params
@@ -970,8 +973,9 @@ importDecl ImportDecl:
 
 
 topFunDecl FunDecl:
-    "prim" sig=topFunSig "NEWLINE":
+    prim_=^ "prim" sig=topFunSig "NEWLINE":
         FunDecl(
+            prim_ = Option.Some(TokenIdx(idx = prim_)),
             parentTy = sig.parentTy,
             name = sig.name,
             sig = sig.sig,
@@ -980,6 +984,7 @@ topFunDecl FunDecl:
 
     sig=topFunSig ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         FunDecl(
+            prim_ = Option.None,
             parentTy = sig.parentTy,
             name = sig.name,
             sig = sig.sig,
@@ -988,6 +993,7 @@ topFunDecl FunDecl:
 
     sig=topFunSig ":" body=inlineExpr "NEWLINE":
         FunDecl(
+            prim_ = Option.None,
             parentTy = sig.parentTy,
             name = sig.name,
             sig = sig.sig,
@@ -1085,9 +1091,10 @@ implDeclRhs Vec[FunDecl]:
 
 
 funDecl FunDecl:
-    prim_="prim"? sig=funSig _"NEWLINE":
+    prim_=^ primKw="prim"? sig=funSig _"NEWLINE":
         # TODO: Add prim to FunDecl
         FunDecl(
+            prim_ = primKw.map(|kw|: TokenIdx(idx = prim_)),
             parentTy = Option.None,
             name = sig.id,
             sig = sig.sig,
@@ -1096,6 +1103,7 @@ funDecl FunDecl:
 
     sig=funSig stmts=funDeclRhs:
         FunDecl(
+            prim_ = Option.None,
             parentTy = Option.None,
             name = sig.id,
             sig = sig.sig,

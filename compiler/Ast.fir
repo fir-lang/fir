@@ -41,6 +41,9 @@ type TopDecl:
 
 ## A type declaration: `type Vec[t]: ...`.
 type TypeDecl(
+    ## When the type is a primitive, the `prim` token.
+    prim_: Option[TokenIdx],
+
     ## The type name. `Vec` in the example.
     name: Id,
 
@@ -83,6 +86,9 @@ type ConFields:
     Unnamed(Vec[Type])
 
 type FunDecl(
+    ## When the function is a primitive, the `prim` token.
+    prim_: Option[TokenIdx],
+
     ## Only in associated functions: the parent type. E.g. `Vec` in `Vec.push(...) = ...`.
     parentTy: Option[Id],
 
