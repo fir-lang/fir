@@ -1004,13 +1004,18 @@ type UnOp:
 type SeqExpr(
     ty: Option[Type],
     elems: Vec[(key: Option[Expr], value: Expr)],
-    _firstToken: TokenIdx,
-    _lastToken: TokenIdx,
+    _lbracket: TokenIdx,
+    _rbracket: TokenIdx,
 )
 
 impl Tokens[SeqExpr]:
-    firstToken(self: SeqExpr) TokenIdx: self._firstToken
-    lastToken(self: SeqExpr) TokenIdx: self._lastToken
+    firstToken(self: SeqExpr) TokenIdx:
+        match self.ty:
+            Option.Some(ty): ty.firstToken()
+            Option.None: self._lbracket
+
+    lastToken(self: SeqExpr) TokenIdx:
+        self._rbracket
 
 # --------------------------------------------------------------------------------------------------
 
