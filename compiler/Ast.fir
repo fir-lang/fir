@@ -110,8 +110,7 @@ type SelfParam:
 
 type ImportDecl(
     ## Import path, e.g. `Fir.Prelude`.
-    path: Vec[Str],
-    # TODO: Imported thing list, renaming (`as`).
+    path: Vec[Id],
 )
 
 type TraitDecl(
