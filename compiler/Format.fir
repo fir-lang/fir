@@ -381,9 +381,16 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
         let lbracket = context.firstToken()
         docRest += formatToken(lbracket, tokens)
 
+        let trailingComma = Bool.False
         for pred: Type in context.preds.iter():
+            if trailingComma:
+                docRest += Doc.blank(1)
+                trailingComma = Bool.False
+
             docRest += pred.format(tokens)
+
             if (nextNonTrivia(pred.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                trailingComma = Bool.True
                 docRest += formatToken(next, tokens)
 
         let rbracket = context.lastToken()
@@ -397,10 +404,17 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
     docRest += formatToken(lbracket, tokens)
 
     let lastToken = lbracket
+    let trailingComma = Bool.False
     for ty: Type in self.tys.iter():
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
         docRest += ty.format(tokens)
         lastToken = ty.lastToken()
+
         if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+            trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
 
