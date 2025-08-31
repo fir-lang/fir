@@ -13,7 +13,8 @@ main(args: Array[Str]):
     if error is Option.Some(error):
         print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
 
-    let tokens = match try(||: scan[row[]](tokens)):    # Explicitly close the variant (issue #49).
+    # Explicitly close the variant with `row[]` (issue #49).
+    let tokens = match try(||: scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
         Result.Ok(tokens):
@@ -623,8 +624,15 @@ MatchExpr.format(self, tokens: Vec[Token]) Doc:
         Doc.nested(8, self.scrutinee.format(tokens))
             + formatToken(colon, tokens)
 
+    let altIdx: U32 = 0
     for alt: Alt in self.alts.iter():
         docRest += Doc.hardLine() + alt.format(tokens)
+
+        if self.alts.getOpt(altIdx + 1) is Option.Some(nextAlt):
+            if tokens.get(nextAlt.firstToken().idx).line - tokens.get(alt.lastToken().idx).rightLoc().line > 1:
+                docRest += Doc.hardLine()
+
+        altIdx += 1
 
     doc0 + docRest.nest(4)
 
