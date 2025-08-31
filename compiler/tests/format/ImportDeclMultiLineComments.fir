@@ -7,4 +7,4 @@ import #|3|# Foo #|4|#
 # #|1|#
 # 
 # #|2|#
-# import #|3|# Foo #|4|#
+# import #|3|#  Foo #|4|#
