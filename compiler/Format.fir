@@ -1080,16 +1080,23 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     let lastToken = lbracket
     for alt: NamedType in self.alts.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
         docRest += alt.format(tokens)
+
         if (nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
 
     if self.extension is Option.Some(ext):
-        if not self.alts.isEmpty() and not trailingComma:
-            docRest += Doc.char(',') + Doc.blank(1)
+        if not self.alts.isEmpty():
+            if trailingComma:
+                docRest += Doc.blank(1)
+            else:
+                docRest += Doc.char(',') + Doc.blank(1)
 
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
