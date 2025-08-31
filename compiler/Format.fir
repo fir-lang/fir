@@ -780,7 +780,10 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
         lastToken = ret.lastToken()
 
     if self.sig.exceptions is Option.Some(exn):
-        docRest += Doc.blank(1) + exn.format(tokens)
+        let slash = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(slash.idx).kind is TokenKind.Slash)
+
+        docRest += Doc.blank(1) + formatToken(slash, tokens) + Doc.blank(1) + exn.format(tokens)
         lastToken = exn.lastToken()
 
     let colon = nextNonTrivia(lastToken, tokens).unwrap()
