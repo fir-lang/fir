@@ -287,7 +287,9 @@ typeDecl TypeDecl:
 
     # Product type
     "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
-        let fs = fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
+        let fs = match fs:
+            Option.Some(fs): fs.fields
+            Option.None: ConFields.Empty
         TypeDecl(
             prim_ = Option.None,
             name = newId(name),
