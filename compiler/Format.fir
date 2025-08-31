@@ -943,12 +943,16 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
     let docRest = self.pat.format(tokens)
     let lastToken = self.pat.lastToken()
 
-    if self.astTy is Option.Some(ty):
-        let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
-        assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+    match self.astTy:
+        Option.Some(ty):
+            let colon = prevNonTrivia(ty.firstToken(), tokens).unwrap()
+            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-        docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens) + Doc.blank(1)
-        lastToken = ty.lastToken()
+            docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens) + Doc.blank(1)
+            lastToken = ty.lastToken()
+
+        Option.None:
+            docRest += Doc.blank(1)
 
     let in_ = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(in_.idx).kind is TokenKind.In)
