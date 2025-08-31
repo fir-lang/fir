@@ -1189,7 +1189,7 @@ Pat.format(self, tokens: Vec[Token]) Doc:
 
                 docRest += Doc.break_(1) + formatToken(pipe, tokens) + Doc.blank(1) + p.format(tokens)
 
-            doc0 + docRest.nest(4)
+            Doc.grouped(doc0 + docRest.nest(4))
 
 
 VarPat.format(self, tokens: Vec[Token]) Doc:
