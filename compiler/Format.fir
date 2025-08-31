@@ -673,8 +673,8 @@ Alt.format(self, tokens: Vec[Token]) Doc:
         let if_ = prevNonTrivia(guard.firstToken(), tokens).unwrap()
         assert(tokens.get(if_.idx).kind is TokenKind.If)
 
-        docRest += Doc.break_(1) + formatToken(if_, tokens) + guard.format(tokens)
-        docRest = Doc.nested(8, docRest)
+        docRest += Doc.break_(1) + formatToken(if_, tokens) + Doc.blank(1) + guard.format(tokens)
+        docRest = Doc.nested(4, docRest)
 
     let body = formatStmts(self.rhs, tokens)
 
@@ -1200,9 +1200,13 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     let lastToken = lparen
     for field: Named[Pat] in self.fields.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            args += Doc.break_(1)
+            trailingComma = Bool.False
+
         args += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
+
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
             args += formatToken(next, tokens)
