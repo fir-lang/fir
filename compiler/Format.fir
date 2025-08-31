@@ -1226,8 +1226,8 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
         args += formatToken(dotdot, tokens)
-    elif not trailingComma:
-        args += Doc.whenNotFlat(Doc.char(','))
+
+    # Note: trailing commas are not accepted in con pats, see #203.
 
     let rparen = self.lastToken()
     Doc.grouped(con + args.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens))
