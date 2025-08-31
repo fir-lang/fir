@@ -348,13 +348,17 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
     let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
 
+    docRest += formatToken(rbracket, tokens)
+
+    if self.items.isEmpty():
+        return doc0 + docRest
+
     let colon = nextNonTrivia(rbracket, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
     doc0 + Doc.nested(
         4,
         docRest
-            + formatToken(rbracket, tokens)
             + formatToken(colon, tokens)
             + Doc.hardLine()
             + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine()))
