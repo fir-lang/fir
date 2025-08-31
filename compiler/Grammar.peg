@@ -110,12 +110,19 @@ type_ Type:
 
 
  namedType NamedType:
-    name=^ "UpperId" "[" arg0=type_ args=(_"," type_)* ","? last=^ "]":
+    name=^ "UpperId" argFirst=^ "[" arg0=type_ args=(_"," type_)* ","? argLast=^ "]":
         let args = once(arg0).chain(args.iter()).toVec()
-        NamedType(name = newId(name), args, _lastToken = TokenIdx(idx = last))
+        NamedType(
+            name = newId(name),
+            args = Option.Some(TyArgs(
+                args,
+                _firstToken = TokenIdx(idx = argFirst),
+                _lastToken = TokenIdx(idx = argLast)
+            ))
+        )
 
     name=^ "UpperId":
-        NamedType(name = newId(name), args = Vec.empty(), _lastToken = TokenIdx(idx = name))
+        NamedType(name = newId(name), args = Option.None)
 
 
 # - ()
@@ -468,7 +475,7 @@ prefixExpr Expr:
 
 exprSuffix ExprSuffix:
     field=field args=tyArgs?:
-        ExprSuffix.Field(field, tyArgs = args.unwrapOr(Vec.empty()))
+        ExprSuffix.Field(field, tyArgs = args)
 
     args=args:
         ExprSuffix.Args(args = args.args, _lastToken = TokenIdx(idx = args.cursorRight))
@@ -480,7 +487,7 @@ field Id:
 
 
 args (args: Vec[Named[Expr]], cursorRight: U32):
-    "(" args=(arg0=arg args=(_"," arg)* ","?)? ")" last=^:
+    "(" args=(arg0=arg args=(_"," arg)* ","?)? last=^ ")":
         (args = match args:
              Option.None:
                  Vec.empty()
@@ -506,12 +513,11 @@ simpleExpr Expr:
         seq
 
     # Variables
-    var_=^ "LowerId" tyArgs=tyArgs? last=^:
+    var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
             id = newId(var_),
-            userTyArgs = tyArgs.unwrapOr(Vec.empty()),
+            userTyArgs = tyArgs,
             tyArgs = Vec.empty(),
-            _lastToken = TokenIdx(idx = last),
         ))
 
     # Constructor selection, or sequence
@@ -683,33 +689,35 @@ seqElem (key: Option[Expr], value: Expr):
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
 constructor Constructor:
-    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+    ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
-            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
-            _lastToken = TokenIdx(idx = last),
         )
 
-    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs? last=^:
+    ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
             ty = newId(ty),
             constr = con.map(|con: U32|: newId(con)),
-            userTyArgs = userTyArgs.unwrapOr(Vec.empty()),
+            userTyArgs,
             tyArgs = Vec.empty(),
             _firstToken = TokenIdx(idx = ty),
-            _lastToken = TokenIdx(idx = last),
         )
 
 
-tyArgs Vec[Type]:
-    "[" t0=type_ ts=(_"," type_)* ","? "]":
+tyArgs TyArgs:
+    first=^ "[" t0=type_ ts=(_"," type_)* ","? last=^ "]":
         let ts: Vec[Type] = once(t0).chain(ts.iter()).toVec()
-        ts
+        TyArgs(
+            args = ts,
+            _firstToken = TokenIdx(idx = first),
+            _lastToken = TokenIdx(idx = last)
+        )
 
 
 parenExpr Named[Expr]:
@@ -880,7 +888,7 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? ")")? last=^:
+    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? last=^ ")")?:
         Pat.Constr(ConstrPat(
             constr = con,
             fields = match fs:
@@ -893,11 +901,13 @@ simplePat Pat:
                     Bool.False
                 Option.Some((ignoreRest, ..)):
                     ignoreRest.isSome(),
-            _lastToken = TokenIdx(idx = last),
+            _lastToken = match fs:
+                Option.None: con.lastToken()
+                Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 
     # Records: `(pat, pat)`, `(var = pat, ...)`
-    first=^ "(" ")" last=^:
+    first=^ "(" last=^ ")":
         Pat.Record(RecordPat(
             fields = Vec.empty(),
             ignoreRest = Bool.False,
@@ -906,7 +916,7 @@ simplePat Pat:
             _lastToken = TokenIdx(idx = last),
         ))
 
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? ")" last=^:
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? last=^ ")":
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.False,
@@ -915,7 +925,7 @@ simplePat Pat:
             _lastToken = TokenIdx(idx = last),
         ))
 
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." ")" last=^:
+    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." last=^ ")":
         Pat.Record(RecordPat(
             fields = once(p0).chain(ps.iter()).toVec(),
             ignoreRest = Bool.True,
