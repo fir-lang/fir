@@ -633,7 +633,7 @@ type Expr:
     Seq(SeqExpr)
 
     # A parenthesized expression.
-    Paren(Expr)
+    Paren(ParenExpr)
 
 impl Tokens[Expr]:
     firstToken(self: Expr) TokenIdx:
@@ -1016,6 +1016,16 @@ impl Tokens[SeqExpr]:
 
     lastToken(self: SeqExpr) TokenIdx:
         self._rbracket
+
+type ParenExpr(
+    expr: Expr,
+    _lparen: TokenIdx,
+    _rparen: TokenIdx,
+)
+
+impl Tokens[ParenExpr]:
+    firstToken(self: ParenExpr) TokenIdx: self._lparen
+    lastToken(self: ParenExpr) TokenIdx: self._rparen
 
 # --------------------------------------------------------------------------------------------------
 
