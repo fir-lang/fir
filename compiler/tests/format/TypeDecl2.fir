@@ -30,7 +30,7 @@ type Foo(
 # 
 # type Foo(
 #     x: U32,
-#     
+# 
 #     y: U32,
 # )
 # 
@@ -38,7 +38,7 @@ type Foo(
 # type Foo(
 #     # hi
 #     x: U32,
-#     
+# 
 #     # hi
 #     y: U32,
 # )

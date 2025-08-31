@@ -40,6 +40,12 @@ type _State(
     width: U32,
     column: U32,
     output: StrBuf,
+
+    ## Whether to generate indentation before emitting a character.
+    ##
+    ## We don't want to generate indentation right after a line break to avoid generating empty
+    ## lines with just spaces.
+    indentTo: Option[U32]
 )
 
 Doc.render(self, width: U32) Str:
@@ -50,7 +56,7 @@ Doc.render(self, width: U32) Str:
     output.toStr()
 
 Doc.renderToBuf(self, width: U32, buf: StrBuf):
-    let state = _State(width, column = 0, output = buf)
+    let state = _State(width, column = 0, output = buf, indentTo = Option.None)
     self._render(state, 0, Bool.False)
 
 Doc._render(self, state: _State, indent: U32, flatten: Bool):
@@ -58,10 +64,22 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
         Doc._Empty: ()
 
         Doc._Str(str, lenChars):
+            if state.indentTo is Option.Some(indent):
+                for _: U32 in range(u32(0), indent):
+                    state.output.push(' ')
+                state.indentTo = Option.None
+                state.column = indent
+
             state.output.pushStr(str)
             state.column += lenChars
 
         Doc._Blank(spaces):
+            if state.indentTo is Option.Some(indent):
+                for _: U32 in range(u32(0), indent):
+                    state.output.push(' ')
+                state.indentTo = Option.None
+                state.column = indent
+
             for _: U32 in range(u32(0), spaces):
                 state.output.push(' ')
             state.column += spaces
@@ -70,8 +88,7 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
             if flatten:
                 panic("")
             state.output.push('\n')
-            for _: U32 in range(u32(0), indent):
-                state.output.push(' ')
+            state.indentTo = Option.Some(indent)
             state.column = indent
 
         Doc._IfFlat(flat, notFlat):
