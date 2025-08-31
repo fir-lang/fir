@@ -1242,6 +1242,25 @@ conFields(state: ParserState[Token]) (fields: ConFields, lastToken: TokenIdx) / 
             state._cursor += 1
         else:
             throw(state.updateErrorCursor(state._cursor))
+        let last = state.nextCursor()
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            (fields = ConFields.Unnamed(Vec.empty()), lastToken = TokenIdx(idx = last))
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = conField(state)
         let f0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
