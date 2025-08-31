@@ -321,21 +321,31 @@ typeParams Vec[Id]:
 
 conDecl ConDecl:
     name=^ "UpperId" fs=conFields? "NEWLINE":
-        ConDecl(
-            name = newId(name),
-            fields = fs.unwrapOr(ConFields.Empty),
-        )
+        let name = newId(name)
+        match fs:
+            Option.Some(fs):
+                ConDecl(
+                    name,
+                    fields = fs.fields,
+                    _lastToken = fs.lastToken,
+                )
+            Option.None:
+                ConDecl(
+                    name,
+                    fields = ConFields.Empty,
+                    _lastToken = name.token,
+                )
 
 
 # One or more fields, with optional trailing comma.
-conFields ConFields:
-    "(" ")":
-        ConFields.Unnamed(Vec.empty())
+conFields (fields: ConFields, lastToken: TokenIdx):
+    "(" last=^ ")":
+        (fields = ConFields.Empty, lastToken = TokenIdx(idx = last))
 
-    "(" f0=conField fs=(_"," conField)* ","? ")":
+    "(" f0=conField fs=(_"," conField)* ","? last=^ ")":
         let vec: Vec[(name: Option[Id], ty: Type)] =
             once(f0).chain(fs.iter()).toVec()
-        processFields(vec)
+        (fields = processFields(vec), lastToken = TokenIdx(idx = last))
 
 
 # A constructor field with optional name: `Type` or `foo: Type`.
@@ -568,7 +578,7 @@ simpleExpr Expr:
             sig = FunSig(
                 context = Option.None,
                 self_ = SelfParam.No,
-                params = Vec.empty(),
+                params = args.unwrapOr(Vec.empty()),
                 exceptions = ret.exn,
                 returnTy = ret.ret,
             ),
@@ -1063,12 +1073,13 @@ traitDeclRhs Vec[FunDecl]:
 
 
 implDecl ImplDecl:
-    "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
+    first=^ "impl" ctx=context? name=^ "UpperId" "[" t0=type_ ts=(_"," type_)* ","? "]" rhs=implDeclRhs:
         ImplDecl(
             context = ctx,
             trait_ = newId(name),
             tys = once(t0).chain(ts.iter()).toVec(),
             items = rhs,
+            _firstToken = TokenIdx(idx = first),
         )
 
 

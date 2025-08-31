@@ -69,6 +69,7 @@ type TypeDeclRhs:
 type ConDecl(
     name: Id,
     fields: ConFields,
+    _lastToken: TokenIdx
 )
 
 type Kind:
@@ -160,6 +161,9 @@ type ImplDecl(
 
     ## Method implementations.
     items: Vec[FunDecl],
+
+    # The `impl` token.
+    _firstToken: TokenIdx
 )
 
 type Type:
