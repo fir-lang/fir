@@ -209,7 +209,7 @@ impl Tokens[RecordType]:
     lastToken(self: RecordType) TokenIdx: self._lastToken
 
 type VariantType(
-    alts: Vec[VariantAlt],
+    alts: Vec[NamedType],
     extension: Option[Id],
     isRow: Bool,
 
@@ -253,11 +253,6 @@ impl Tokens[FnType]:
             return ty.lastToken()
 
         self._rparen
-
-type VariantAlt(
-    con: Id,
-    fields: Vec[Named[Type]],
-)
 
 ## Type parameter and predicates of an `impl` or function.
 ##

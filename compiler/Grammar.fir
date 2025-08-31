@@ -505,7 +505,7 @@ variantType(state: ParserState[Token]) VariantType / U32:
     let altResult = try(||:
         let nonTerminalResult = variantTypeStart(state)
         let start = nonTerminalResult
-        let nonTerminalResult = variantAlt(state)
+        let nonTerminalResult = namedType(state)
         let alt0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
         let alts = Vec.empty()
@@ -516,7 +516,7 @@ variantType(state: ParserState[Token]) VariantType / U32:
                     state._cursor += 1
                 else:
                     throw(state.updateErrorCursor(state._cursor))
-                let nonTerminalResult = variantAlt(state)
+                let nonTerminalResult = namedType(state)
                 alts.push(nonTerminalResult)
             )
             match symResult:
@@ -624,50 +624,6 @@ variantTypeCont(state: ParserState[Token]) Option[Id] / U32:
                 Option.Some(ok)
         let value = do:
             id.map(|id: U32|: newId(id))
-        value
-    )
-    match altResult:
-        Result.Err(err):
-            state._cursor = cursor0
-        Result.Ok(value):
-            return value
-    throw(state.updateErrorCursor(state._cursor))
-
-variantAlt(state: ParserState[Token]) VariantAlt / U32:
-    let cursor0 = state._cursor
-    let altResult = try(||:
-        let con = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let nonTerminalResult = recordTypeFields(state)
-        let fields = nonTerminalResult
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let value = do:
-            VariantAlt(con = newId(con), fields)
-        value
-    )
-    match altResult:
-        Result.Err(err):
-            state._cursor = cursor0
-        Result.Ok(value):
-            return value
-    let altResult = try(||:
-        let con = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let value = do:
-            VariantAlt(con = newId(con), fields = Vec.empty())
         value
     )
     match altResult:
