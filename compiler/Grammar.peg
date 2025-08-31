@@ -284,10 +284,8 @@ typeDecl TypeDecl:
         )
 
     # Product type
-    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=(_"(" conFields? _")")? "NEWLINE":
-        let fs = match fs:
-            Option.Some(fs): fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
-            Option.None: ConFields.Empty
+    "type" name=^ "UpperId" params=(_"[" typeParams _"]")? fs=conFields? "NEWLINE":
+        let fs = fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
         TypeDecl(
             name = newId(name),
             typeParams = match params:
@@ -316,22 +314,16 @@ typeParams Vec[Id]:
 
 
 conDecl ConDecl:
-    name=^ "UpperId" "(" fs=conFields? ")" "NEWLINE":
+    name=^ "UpperId" fs=conFields? "NEWLINE":
         ConDecl(
             name = newId(name),
             fields = fs.unwrapOr(ConFields.Empty),
         )
 
-    name=^ "UpperId" "NEWLINE":
-        ConDecl(
-            name = newId(name),
-            fields = ConFields.Empty
-        )
-
 
 # One or more fields, with optional trailing comma.
 conFields ConFields:
-    f0=conField fs=(_"," conField)* ","?:
+    "(" f0=conField fs=(_"," conField)* ","? ")":
         let vec: Vec[(name: Option[Id], ty: Type)] =
             once(f0).chain(fs.iter()).toVec()
         processFields(vec)

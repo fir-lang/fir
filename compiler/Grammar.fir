@@ -1039,27 +1039,8 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
                 Option.Some(ok)
         let optionalCursor0 = state._cursor
         let symResult = try(||:
-            if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let optionalCursor0 = state._cursor
-            let symResult = try(||:
-                let nonTerminalResult = conFields(state)
-                let fs = nonTerminalResult
-                fs
-            )
-            let fs = match symResult:
-                Result.Err(err):
-                    state._cursor = optionalCursor0
-                    Option.None
-                Result.Ok(ok):
-                    ()
-                    Option.Some(ok)
-            if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
+            let nonTerminalResult = conFields(state)
+            let fs = nonTerminalResult
             fs
         )
         let fs = match symResult:
@@ -1074,9 +1055,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         else:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
-            let fs = match fs:
-                Option.Some(fs): fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
-                Option.None: ConFields.Empty
+            let fs = fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
             TypeDecl(
                 name = newId(name),
                 typeParams = match params:
@@ -1213,10 +1192,6 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
             state._cursor += 1
         else:
             throw(state.updateErrorCursor(state._cursor))
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
         let optionalCursor0 = state._cursor
         let symResult = try(||:
             let nonTerminalResult = conFields(state)
@@ -1230,10 +1205,6 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
             Result.Ok(ok):
                 ()
                 Option.Some(ok)
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
             state._cursor += 1
         else:
@@ -1250,33 +1221,15 @@ conDecl(state: ParserState[Token]) ConDecl / U32:
             state._cursor = cursor0
         Result.Ok(value):
             return value
-    let altResult = try(||:
-        let name = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.UpperId, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Newline, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let value = do:
-            ConDecl(
-                name = newId(name),
-                fields = ConFields.Empty
-            )
-        value
-    )
-    match altResult:
-        Result.Err(err):
-            state._cursor = cursor0
-        Result.Ok(value):
-            return value
     throw(state.updateErrorCursor(state._cursor))
 
 conFields(state: ParserState[Token]) ConFields / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
         let nonTerminalResult = conField(state)
         let f0 = nonTerminalResult
         let zeroOrMoreCursor0 = state._cursor
@@ -1311,6 +1264,10 @@ conFields(state: ParserState[Token]) ConFields / U32:
                 state._cursor = optionalCursor0
             Result.Ok(ok):
                 ()
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
         let value = do:
             let vec: Vec[(name: Option[Id], ty: Type)] =
                 once(f0).chain(fs.iter()).toVec()
