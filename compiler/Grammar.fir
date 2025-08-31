@@ -992,6 +992,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             TypeDecl(
+                prim_ = Option.None,
                 name = newId(name),
                 typeParams = match params:
                     Option.Some(params): params
@@ -1057,6 +1058,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         let value = do:
             let fs = fs.unwrapOr(ConFields.Unnamed(Vec.empty()))
             TypeDecl(
+                prim_ = Option.None,
                 name = newId(name),
                 typeParams = match params:
                     Option.Some(params): params
@@ -1072,6 +1074,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
         Result.Ok(value):
             return value
     let altResult = try(||:
+        let prim_ = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
             state._cursor += 1
         else:
@@ -1112,6 +1115,7 @@ typeDecl(state: ParserState[Token]) TypeDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             TypeDecl(
+                prim_ = Option.Some(TokenIdx(idx = prim_)),
                 name = newId(name),
                 typeParams = match params:
                     Option.Some(params): params
@@ -4354,6 +4358,7 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
 topFunDecl(state: ParserState[Token]) FunDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let prim_ = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
             state._cursor += 1
         else:
@@ -4366,6 +4371,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
+                prim_ = Option.Some(TokenIdx(idx = prim_)),
                 parentTy = sig.parentTy,
                 name = sig.name,
                 sig = sig.sig,
@@ -4416,6 +4422,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
+                prim_ = Option.None,
                 parentTy = sig.parentTy,
                 name = sig.name,
                 sig = sig.sig,
@@ -4443,6 +4450,7 @@ topFunDecl(state: ParserState[Token]) FunDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
+                prim_ = Option.None,
                 parentTy = sig.parentTy,
                 name = sig.name,
                 sig = sig.sig,
@@ -4994,16 +5002,17 @@ implDeclRhs(state: ParserState[Token]) Vec[FunDecl] / U32:
 funDecl(state: ParserState[Token]) FunDecl / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
+        let prim_ = state.nextCursor()
         let optionalCursor0 = state._cursor
         let symResult = try(||:
-            let prim_ = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
+            let primKw = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Prim, ..):
                 state._cursor += 1
                 sym
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            prim_
+            primKw
         )
-        let prim_ = match symResult:
+        let primKw = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
                 Option.None
@@ -5018,6 +5027,7 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             FunDecl(
+                prim_ = primKw.map(|kw|: TokenIdx(idx = prim_)),
                 parentTy = Option.None,
                 name = sig.id,
                 sig = sig.sig,
@@ -5037,6 +5047,7 @@ funDecl(state: ParserState[Token]) FunDecl / U32:
         let stmts = nonTerminalResult
         let value = do:
             FunDecl(
+                prim_ = Option.None,
                 parentTy = Option.None,
                 name = sig.id,
                 sig = sig.sig,
