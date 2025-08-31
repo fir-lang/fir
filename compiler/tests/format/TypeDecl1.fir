@@ -13,6 +13,7 @@ type IntExpr(
 
 # expected stdout:
 # # Below we want one empty line between the fields.
+# 
 # type IntExpr(
 #     ## Blah blah blah
 #     text: Str,

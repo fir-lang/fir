@@ -12,6 +12,7 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
 
 # expected stdout:
 # # The line with `+ join(...)` ends at column 81, it should be broken down.
+# 
 # TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
 #     match self:
 #         TypeDeclRhs.Sum(decls):

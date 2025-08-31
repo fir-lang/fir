@@ -1296,6 +1296,15 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
 
             prevCommentToken = commentToken
 
+        let prevCommentTokenLine = prevCommentToken.rightLoc().line
+        if token.line != prevCommentTokenLine:
+            if token.line != prevCommentTokenLine:
+                let emptyLines = token.line - prevCommentTokenLine - 1
+                if emptyLines > maxEmptyLines:
+                    emptyLines = maxEmptyLines
+
+                for _: U32 in range(u32(0), emptyLines):
+                    doc += Doc.hardLine()
 
     doc += Doc.str(token.text)
 
