@@ -742,29 +742,39 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
     # assert(self.sig.self_ is SelfParam.No)
 
     let pipe1 = self.firstToken()
-    let doc0 = formatToken(pipe1, tokens)
+    let doc0 = formatToken_(pipe1, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
 
     let docRest = Doc.empty()
     let lastToken = pipe1
+    let trailingComma = Bool.False
     for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
-        docRest += formatToken(param.name.token, tokens)
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
+        docRest += formatToken_(param.name.token, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1))
         lastToken = param.name.token
 
         if param.ty is Option.Some(ty):
             let colon = nextNonTrivia(param.name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            docRest += formatToken(colon, tokens) + ty.format(tokens)
+            docRest += formatToken_(colon, tokens, Doc.empty(), Doc.hardLine(), Doc.blank(1)) + ty.format(tokens)
             lastToken = ty.lastToken()
 
-            if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                docRest += formatToken(next, tokens) + Doc.blank(1)
-                lastToken = next
+        if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+            docRest += formatToken_(next, tokens, Doc.empty(), Doc.hardLine(), Doc.empty())
+            lastToken = next
+            trailingComma = Bool.True
 
     let pipe2 = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(pipe2.idx).kind is TokenKind.Pipe)
 
-    docRest += formatToken(pipe2, tokens)
+    let pipe2Cont = if self.sig.returnTy.isSome() or self.sig.exceptions.isSome():
+        Doc.blank(1)
+    else:
+        Doc.empty()
+    docRest += formatToken_(pipe2, tokens, pipe2Cont, Doc.hardLine(), pipe2Cont)
     lastToken = pipe2
 
     if self.sig.returnTy is Option.Some(ret):
@@ -778,12 +788,11 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
     let colon = nextNonTrivia(lastToken, tokens).unwrap()
     assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-    docRest += formatToken(colon, tokens)
-
-    if self.body.len() > 1:
-        docRest += Doc.hardLine()
+    let colonCont = if self.body.len() > 1:
+        Doc.hardLine()
     else:
-        docRest += Doc.break_(1)
+        Doc.break_(1)
+    docRest += formatToken_(colon, tokens, colonCont, colonCont, colonCont)
 
     docRest += formatStmts(self.body, tokens)
 
