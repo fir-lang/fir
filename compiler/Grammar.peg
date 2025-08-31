@@ -336,7 +336,7 @@ conDecl ConDecl:
 # One or more fields, with optional trailing comma.
 conFields (fields: ConFields, lastToken: TokenIdx):
     "(" last=^ ")":
-        (fields = ConFields.Unnamed(Vec.empty()), lastToken = TokenIdx(idx = last))
+        (fields = ConFields.Empty, lastToken = TokenIdx(idx = last))
 
     "(" f0=conField fs=(_"," conField)* ","? last=^ ")":
         let vec: Vec[(name: Option[Id], ty: Type)] =

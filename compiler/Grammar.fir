@@ -1248,7 +1248,7 @@ conFields(state: ParserState[Token]) (fields: ConFields, lastToken: TokenIdx) / 
         else:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
-            (fields = ConFields.Unnamed(Vec.empty()), lastToken = TokenIdx(idx = last))
+            (fields = ConFields.Empty, lastToken = TokenIdx(idx = last))
         value
     )
     match altResult:
