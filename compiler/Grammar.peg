@@ -856,22 +856,8 @@ assignOp AssignOp:
 
 
 pat Pat:
-    p0=simplePat ps=("|" p=simplePat)*:
-        if ps.isEmpty():
-            p0
-        else:
-            # foldr1 Pat.Or (p0 : ps)
-            let pRet = ps.pop().unwrap().p
-            if ps.isEmpty():
-                Pat.Or(p0, pRet)
-            else:
-                let i: U32 = ps.len() - 1
-                loop:
-                    pRet = Pat.Or(ps.get(i).p, pRet)
-                    if i == 0:
-                        break
-                    i -= 1
-                Pat.Or(p0, pRet)
+    p0=simplePat ps=(_"|" simplePat)*:
+        Pat.Or(once(p0).chain(ps.iter()).toVec())
 
 
 simplePat Pat:

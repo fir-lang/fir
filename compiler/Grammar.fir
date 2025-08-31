@@ -3934,8 +3934,7 @@ pat(state: ParserState[Token]) Pat / U32:
                 else:
                     throw(state.updateErrorCursor(state._cursor))
                 let nonTerminalResult = simplePat(state)
-                let p = nonTerminalResult
-                ps.push((p = p))
+                ps.push(nonTerminalResult)
             )
             match symResult:
                 Result.Err(err):
@@ -3945,20 +3944,7 @@ pat(state: ParserState[Token]) Pat / U32:
                 Result.Ok(ok):
                     zeroOrMoreCursor0 = state._cursor
         let value = do:
-            if ps.isEmpty():
-                p0
-            else:
-                let pRet = ps.pop().unwrap().p
-                if ps.isEmpty():
-                    Pat.Or(p0, pRet)
-                else:
-                    let i: U32 = ps.len() - 1
-                    loop:
-                        pRet = Pat.Or(ps.get(i).p, pRet)
-                        if i == 0:
-                            break
-                        i -= 1
-                    Pat.Or(p0, pRet)
+            Pat.Or(once(p0).chain(ps.iter()).toVec())
         value
     )
     match altResult:

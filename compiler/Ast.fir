@@ -466,31 +466,37 @@ type Pat:
     ## Matches the character.
     Char(Char, TokenIdx)
 
-    ## Or pattern: `<pat1> | <pat2>`.
-    Or(Pat, Pat)
+    ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
+    Or(Vec[Pat])
 
 impl Tokens[Pat]:
     firstToken(self: Pat) TokenIdx:
         match self:
             Pat.Var(pat): pat.firstToken()
+
             Pat.Constr(pat): pat.firstToken()
+
             Pat.Record(pat): pat.firstToken()
-            Pat.Or(_, pat): pat.firstToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
                 | Pat.Char(_, tok): tok
+
+            Pat.Or(ps): ps.get(0).firstToken()
 
     lastToken(self: Pat) TokenIdx:
         match self:
             Pat.Var(pat): pat.lastToken()
+
             Pat.Constr(pat): pat.lastToken()
+
             Pat.Record(pat): pat.lastToken()
-            Pat.Or(_, pat): pat.lastToken()
 
             Pat.Ignore(tok)
                 | Pat.Str(_, tok)
                 | Pat.Char(_, tok): tok
+
+            Pat.Or(ps): ps.last().unwrap().lastToken()
 
 type VarPat(
     var_: Id,
