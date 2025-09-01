@@ -1354,35 +1354,37 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
         else:
             1
 
-        let prevCommentToken = tokens.get(commentStart.idx)
+        let prevCommentToken: Option[Token] = Option.None
         for commentTokenIdx: TokenIdx in range(commentStart, tokenIdx):
             let commentToken = tokens.get(commentTokenIdx.idx)
 
             if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
                 continue
 
-            let prevCommentTokenLine = prevCommentToken.rightLoc().line
-            if commentToken.line != prevCommentTokenLine:
-                let emptyLines = commentToken.line - prevCommentTokenLine - 1
-                if emptyLines > maxEmptyLines:
-                    emptyLines = maxEmptyLines
+            if prevCommentToken is Option.Some(prevCommentToken):
+                let prevCommentTokenLine = prevCommentToken.rightLoc().line
+                if commentToken.line != prevCommentTokenLine:
+                    let emptyLines = commentToken.line - prevCommentTokenLine - 1
+                    if emptyLines > maxEmptyLines:
+                        emptyLines = maxEmptyLines
 
-                for _: U32 in range(u32(0), emptyLines):
-                    doc += Doc.hardLine()
+                    for _: U32 in range(u32(0), emptyLines):
+                        doc += Doc.hardLine()
 
             doc += Doc.str(commentToken.text) + Doc.hardLine()
 
-            prevCommentToken = commentToken
+            prevCommentToken = Option.Some(commentToken)
 
-        let prevCommentTokenLine = prevCommentToken.rightLoc().line
-        if token.line != prevCommentTokenLine:
+        if prevCommentToken is Option.Some(prevCommentToken):
+            let prevCommentTokenLine = prevCommentToken.rightLoc().line
             if token.line != prevCommentTokenLine:
-                let emptyLines = token.line - prevCommentTokenLine - 1
-                if emptyLines > maxEmptyLines:
-                    emptyLines = maxEmptyLines
+                if token.line != prevCommentTokenLine:
+                    let emptyLines = token.line - prevCommentTokenLine - 1
+                    if emptyLines > maxEmptyLines:
+                        emptyLines = maxEmptyLines
 
-                for _: U32 in range(u32(0), emptyLines):
-                    doc += Doc.hardLine()
+                    for _: U32 in range(u32(0), emptyLines):
+                        doc += Doc.hardLine()
 
     doc += Doc.str(token.text)
 
