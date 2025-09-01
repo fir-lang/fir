@@ -18,8 +18,8 @@ jobs:
       - name: Build
         run: cargo build --verbose
 
-  check_formatting:
-    name: Check formatting
+  check_rust_formatting:
+    name: Check Rust formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,8 +30,27 @@ jobs:
             toolchain: stable
             override: true
 
-      - name: 'Check formatting'
+      - name: 'Check Rust formatting'
         run: cargo fmt --all --check
+
+  check_fir_formatting:
+    name: Check Fir formatting
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: 'Check Fir formatting'
+        run: |
+          ./tools/format/FormatRepo.sh
+          git diff
+          git diff --quiet
 
   check_lints:
     name: Check lints
