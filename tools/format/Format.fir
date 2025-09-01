@@ -360,10 +360,17 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
 
     let docRest = formatToken(lbracket, tokens)
     let lastToken = lbracket
+    let trailingComma = Bool.False
     for typeParam: Id in self.typeParams.iter():
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
         lastToken = typeParam.token
         docRest += formatToken(typeParam.token, tokens)
+
         if (nextNonTrivia(typeParam.token, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+            trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
 
@@ -383,7 +390,7 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
         docRest
             + formatToken(colon, tokens)
             + Doc.hardLine()
-            + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine()))
+            + join(self.items.iter().map(|decl: FunDecl|: decl.format(tokens)), Doc.hardLine() + Doc.hardLine()))
 
 
 ImplDecl.format(self, tokens: Vec[Token]) Doc:
