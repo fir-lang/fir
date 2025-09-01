@@ -4019,41 +4019,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let nonTerminalResult = recordFieldPat(state)
-            let p0 = nonTerminalResult
-            let zeroOrMoreCursor0 = state._cursor
-            let ps = Vec.empty()
-            loop:
-                let psLen0 = ps.len()
-                let symResult = try(||:
-                    if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                        state._cursor += 1
-                    else:
-                        throw(state.updateErrorCursor(state._cursor))
-                    let nonTerminalResult = recordFieldPat(state)
-                    ps.push(nonTerminalResult)
-                )
-                match symResult:
-                    Result.Err(err):
-                        state._cursor = zeroOrMoreCursor0
-                        ps.truncate(psLen0)
-                        break
-                    Result.Ok(ok):
-                        zeroOrMoreCursor0 = state._cursor
             let optionalCursor0 = state._cursor
             let symResult = try(||:
-                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                    state._cursor += 1
-                else:
-                    throw(state.updateErrorCursor(state._cursor))
-                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
-                    state._cursor += 1
-                else:
-                    throw(state.updateErrorCursor(state._cursor))
-                let ignoreRest = ()
-                ignoreRest
+                let nonTerminalResult = conFieldPats(state)
+                let pats = nonTerminalResult
+                pats
             )
-            let ignoreRest = match symResult:
+            let pats = match symResult:
                 Result.Err(err):
                     state._cursor = optionalCursor0
                     Option.None
@@ -4065,7 +4037,7 @@ simplePat(state: ParserState[Token]) Pat / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
-            let fs = (p0 = p0, ps = ps, ignoreRest = ignoreRest, last = last)
+            let fs = (pats = pats, last = last)
             fs
         )
         let fs = match symResult:
@@ -4079,15 +4051,13 @@ simplePat(state: ParserState[Token]) Pat / U32:
             Pat.Constr(ConstrPat(
                 constr = con,
                 fields = match fs:
-                    Option.None:
-                        Vec.empty()
-                    Option.Some((p0, ps, ..)):
-                        once(p0).chain(ps.iter()).toVec(),
+                    Option.None: Vec.empty()
+                    Option.Some((pats, ..)): pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
                 ignoreRest = match fs:
                     Option.None:
                         Bool.False
-                    Option.Some((ignoreRest, ..)):
-                        ignoreRest.isSome(),
+                    Option.Some((pats, ..)):
+                        pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
                 _lastToken = match fs:
                     Option.None: con.lastToken()
                     Option.Some((last, ..)): TokenIdx(idx = last),
@@ -4105,66 +4075,19 @@ simplePat(state: ParserState[Token]) Pat / U32:
             state._cursor += 1
         else:
             throw(state.updateErrorCursor(state._cursor))
-        let last = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let value = do:
-            Pat.Record(RecordPat(
-                fields = Vec.empty(),
-                ignoreRest = Bool.False,
-                inferredTy = Option.None,
-                _firstToken = TokenIdx(idx = first),
-                _lastToken = TokenIdx(idx = last),
-            ))
-        value
-    )
-    match altResult:
-        Result.Err(err):
-            state._cursor = cursor0
-        Result.Ok(value):
-            return value
-    let altResult = try(||:
-        let first = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let nonTerminalResult = recordFieldPat(state)
-        let p0 = nonTerminalResult
-        let zeroOrMoreCursor0 = state._cursor
-        let ps = Vec.empty()
-        loop:
-            let psLen0 = ps.len()
-            let symResult = try(||:
-                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                    state._cursor += 1
-                else:
-                    throw(state.updateErrorCursor(state._cursor))
-                let nonTerminalResult = recordFieldPat(state)
-                ps.push(nonTerminalResult)
-            )
-            match symResult:
-                Result.Err(err):
-                    state._cursor = zeroOrMoreCursor0
-                    ps.truncate(psLen0)
-                    break
-                Result.Ok(ok):
-                    zeroOrMoreCursor0 = state._cursor
         let optionalCursor0 = state._cursor
         let symResult = try(||:
-            if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            ()
+            let nonTerminalResult = conFieldPats(state)
+            let pats = nonTerminalResult
+            pats
         )
-        match symResult:
+        let pats = match symResult:
             Result.Err(err):
                 state._cursor = optionalCursor0
+                Option.None
             Result.Ok(ok):
                 ()
+                Option.Some(ok)
         let last = state.nextCursor()
         if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
             state._cursor += 1
@@ -4172,64 +4095,8 @@ simplePat(state: ParserState[Token]) Pat / U32:
             throw(state.updateErrorCursor(state._cursor))
         let value = do:
             Pat.Record(RecordPat(
-                fields = once(p0).chain(ps.iter()).toVec(),
-                ignoreRest = Bool.False,
-                inferredTy = Option.None,
-                _firstToken = TokenIdx(idx = first),
-                _lastToken = TokenIdx(idx = last),
-            ))
-        value
-    )
-    match altResult:
-        Result.Err(err):
-            state._cursor = cursor0
-        Result.Ok(value):
-            return value
-    let altResult = try(||:
-        let first = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.LParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let nonTerminalResult = recordFieldPat(state)
-        let p0 = nonTerminalResult
-        let zeroOrMoreCursor0 = state._cursor
-        let ps = Vec.empty()
-        loop:
-            let psLen0 = ps.len()
-            let symResult = try(||:
-                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                    state._cursor += 1
-                else:
-                    throw(state.updateErrorCursor(state._cursor))
-                let nonTerminalResult = recordFieldPat(state)
-                ps.push(nonTerminalResult)
-            )
-            match symResult:
-                Result.Err(err):
-                    state._cursor = zeroOrMoreCursor0
-                    ps.truncate(psLen0)
-                    break
-                Result.Ok(ok):
-                    zeroOrMoreCursor0 = state._cursor
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let ignoreRest = if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
-            state._cursor += 1
-            sym
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let last = state.nextCursor()
-        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.RParen, ..):
-            state._cursor += 1
-        else:
-            throw(state.updateErrorCursor(state._cursor))
-        let value = do:
-            Pat.Record(RecordPat(
-                fields = once(p0).chain(ps.iter()).toVec(),
-                ignoreRest = Bool.True,
+                fields = pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
+                ignoreRest = pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
                 inferredTy = Option.None,
                 _firstToken = TokenIdx(idx = first),
                 _lastToken = TokenIdx(idx = last),
@@ -4290,7 +4157,106 @@ simplePat(state: ParserState[Token]) Pat / U32:
             return value
     throw(state.updateErrorCursor(state._cursor))
 
-recordFieldPat(state: ParserState[Token]) Named[Pat] / U32:
+conFieldPats(state: ParserState[Token]) (fields: Vec[Named[Pat]], ignoreRest: Bool) / U32:
+    let cursor0 = state._cursor
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            (fields = Vec.empty(), ignoreRest = Bool.True)
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    let altResult = try(||:
+        let nonTerminalResult = conFieldPat(state)
+        let p0 = nonTerminalResult
+        let zeroOrMoreCursor0 = state._cursor
+        let ps = Vec.empty()
+        loop:
+            let psLen0 = ps.len()
+            let symResult = try(||:
+                if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+                    state._cursor += 1
+                else:
+                    throw(state.updateErrorCursor(state._cursor))
+                let nonTerminalResult = conFieldPat(state)
+                ps.push(nonTerminalResult)
+            )
+            match symResult:
+                Result.Err(err):
+                    state._cursor = zeroOrMoreCursor0
+                    ps.truncate(psLen0)
+                    break
+                Result.Ok(ok):
+                    zeroOrMoreCursor0 = state._cursor
+        let optionalCursor0 = state._cursor
+        let symResult = try(||:
+            let nonTerminalResult = conFieldPatsCont(state)
+            let ignoreRest = nonTerminalResult
+            ignoreRest
+        )
+        let ignoreRest = match symResult:
+            Result.Err(err):
+                state._cursor = optionalCursor0
+                Option.None
+            Result.Ok(ok):
+                ()
+                Option.Some(ok)
+        let value = do:
+            let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
+            (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    throw(state.updateErrorCursor(state._cursor))
+
+conFieldPatsCont(state: ParserState[Token]) Bool / U32:
+    let cursor0 = state._cursor
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            Bool.True
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            Bool.False
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    throw(state.updateErrorCursor(state._cursor))
+
+conFieldPat(state: ParserState[Token]) Named[Pat] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let name = state.nextCursor()
