@@ -803,7 +803,7 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
                         + Doc.hardLine()
                         + formatStmts(body, tokens))
 
-    doc.align()
+    doc
 
 
 FnExpr.format(self, tokens: Vec[Token]) Doc:
