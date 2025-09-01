@@ -98,11 +98,17 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
         # in one line.
         doc += formatToken(lbracket, tokens)
 
+        let trailingComma = Bool.False
         for typeParam: Id in self.typeParams.iter():
+            if trailingComma:
+                doc += Doc.blank(1)
+                trailingComma = Bool.False
+
             doc += formatToken(typeParam.token, tokens)
             lastToken = typeParam.token
 
             if (nextNonTrivia(typeParam.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                trailingComma = Bool.True
                 doc += formatToken(next, tokens)
                 lastToken = next
 
