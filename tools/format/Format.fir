@@ -666,7 +666,7 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let doc0 = formatToken(lparen, tokens)
+    let lparen = formatToken(lparen, tokens)
 
     let docRest = Doc.empty()
     let fieldIdx: U32 = 0
@@ -688,8 +688,12 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    doc0 + Doc.nested(4, docRest + formatToken(rparen, tokens)).group()
-
+    lparen
+        + Doc.grouped(
+            Doc.nested(4, Doc.break_(0) + docRest.group())
+                + Doc.break_(0)
+                + formatToken(rparen, tokens)
+        )
 
 ReturnExpr.format(self, tokens: Vec[Token]) Doc:
     let ret = self.firstToken()
@@ -799,7 +803,7 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
                         + Doc.hardLine()
                         + formatStmts(body, tokens))
 
-    doc
+    doc.align()
 
 
 FnExpr.format(self, tokens: Vec[Token]) Doc:

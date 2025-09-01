@@ -31,6 +31,11 @@ type Doc:
         doc: Doc,
     )
 
+    _Align(
+        req: _SpaceReq,
+        doc: Doc,
+    )
+
     _Group(
         req: _SpaceReq,
         doc: Doc,
@@ -104,6 +109,9 @@ Doc._render(self, state: _State, indent: U32, flatten: Bool):
         Doc._Nest(req, indent = extraIndent, doc):
             doc._render(state, indent + extraIndent, flatten)
 
+        Doc._Align(req, doc):
+            doc._render(state, state.column, flatten)
+
         Doc._Group(req, doc):
             if not flatten:
                 flatten = match req:
@@ -135,7 +143,10 @@ Doc._req(self) _SpaceReq:
         Doc._Blank(spaces): _SpaceReq.Exact(spaces)
         Doc._IfFlat(flat, ..): flat._req()
         Doc._HardLine: _SpaceReq.Infinite
-        Doc._Cat(req, ..) | Doc._Nest(req, ..) | Doc._Group(req, ..): req
+        Doc._Cat(req, ..)
+            | Doc._Nest(req, ..)
+            | Doc._Group(req, ..)
+            | Doc._Align(req, ..): req
 
 _countChars(s: Str) U32:
     let i = u32(0)
@@ -207,6 +218,14 @@ Doc.flow[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
         ret += Doc.grouped(sep + doc)
 
     ret
+
+Doc.aligned(doc: Doc) Doc:
+    doc.align()
+
+Doc.align(self) Doc:
+    match self:
+        Doc._Empty: Doc._Empty
+        other: Doc._Align(req = self._req(), doc = self)
 
 impl Add[Doc]:
     __add(self: Doc, other: Doc) Doc: self.cat(other)
