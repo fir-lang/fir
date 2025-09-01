@@ -358,10 +358,8 @@ nonTerminals(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        let nonTerminalResult = terminalAOrB(state)
-        nodes.push(nonTerminalResult)
-        let nonTerminalResult = terminalAOrB(state)
-        nodes.push(nonTerminalResult)
+        nodes.push(terminalAOrB(state))
+        nodes.push(terminalAOrB(state))
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.NonTerminals, nodes)
         value
@@ -377,10 +375,8 @@ nonTerminalsBacktrack(state: ParserState[Token]) ParseTree[Token, NonTerminal] /
     let cursor0 = state._cursor
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        let nonTerminalResult = terminalAOrB(state)
-        nodes.push(nonTerminalResult)
-        let nonTerminalResult = terminalAOrB(state)
-        nodes.push(nonTerminalResult)
+        nodes.push(terminalAOrB(state))
+        nodes.push(terminalAOrB(state))
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.NonTerminalsBacktrack, nodes)
         value
@@ -430,8 +426,7 @@ negLookahead(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             Result.Ok(_):
                 state.cloneFrom(state0)
                 throw(state.updateErrorCursor(state._cursor))
-        let nonTerminalResult = terminalAOrB(state)
-        nodes.push(nonTerminalResult)
+        nodes.push(terminalAOrB(state))
         let value = do:
             ParseTree.NonTerminal(kind = NonTerminal.NegLookahead, nodes)
         value
@@ -484,8 +479,7 @@ bracketedOneOrMoreA(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U
         loop:
             let nodesLen0 = nodes.len()
             let symResult = try(||:
-                let nonTerminalResult = oneOrMoreAThenB(state)
-                nodes.push(nonTerminalResult)
+                nodes.push(oneOrMoreAThenB(state))
             )
             match symResult:
                 Result.Err(err):
@@ -549,8 +543,7 @@ semanticActionZeroOrMore(state: ParserState[Token]) Vec[Char] / U32:
         loop:
             let csLen0 = cs.len()
             let symResult = try(||:
-                let nonTerminalResult = semanticActionSimple(state)
-                cs.push(nonTerminalResult)
+                cs.push(semanticActionSimple(state))
             )
             match symResult:
                 Result.Err(err):
@@ -574,14 +567,12 @@ semanticActionOneOrMore(state: ParserState[Token]) Vec[Char] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let cs = Vec.empty()
-        let nonTerminalResult = semanticActionSimple(state)
-        cs.push(nonTerminalResult)
+        cs.push(semanticActionSimple(state))
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let csLen0 = cs.len()
             let symResult = try(||:
-                let nonTerminalResult = semanticActionSimple(state)
-                cs.push(nonTerminalResult)
+                cs.push(semanticActionSimple(state))
             )
             match symResult:
                 Result.Err(err):
@@ -1148,8 +1139,7 @@ restoreCursorOptional1(state: ParserState[Token]) Option[Bool] / U32:
     let altResult = try(||:
         let optionalCursor0 = state._cursor
         let symResult = try(||:
-            let nonTerminalResult = multipleSymbols(state)
-            let x = nonTerminalResult
+            let x = multipleSymbols(state)
             x
         )
         let x = match symResult:
@@ -1229,8 +1219,7 @@ restoreCursorZeroOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
         loop:
             let xsLen0 = xs.len()
             let symResult = try(||:
-                let nonTerminalResult = multipleSymbols(state)
-                xs.push(nonTerminalResult)
+                xs.push(multipleSymbols(state))
             )
             match symResult:
                 Result.Err(err):
@@ -1306,14 +1295,12 @@ restoreCursorOneOrMore1(state: ParserState[Token]) Vec[Bool] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let xs = Vec.empty()
-        let nonTerminalResult = multipleSymbols(state)
-        xs.push(nonTerminalResult)
+        xs.push(multipleSymbols(state))
         let zeroOrMoreCursor0 = state._cursor
         loop:
             let xsLen0 = xs.len()
             let symResult = try(||:
-                let nonTerminalResult = multipleSymbols(state)
-                xs.push(nonTerminalResult)
+                xs.push(multipleSymbols(state))
             )
             match symResult:
                 Result.Err(err):
@@ -1567,8 +1554,7 @@ errorCursorBug(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        let nonTerminalResult = errorCursorBugAlt1(state)
-        nodes.push(nonTerminalResult)
+        nodes.push(errorCursorBugAlt1(state))
         if state.peek().isNone():
             state._cursor
         else:
@@ -1584,8 +1570,7 @@ errorCursorBug(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
             return value
     let altResult = try(||:
         let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-        let nonTerminalResult = errorCursorBugAlt2(state)
-        nodes.push(nonTerminalResult)
+        nodes.push(errorCursorBugAlt2(state))
         if state.peek().isNone():
             state._cursor
         else:
