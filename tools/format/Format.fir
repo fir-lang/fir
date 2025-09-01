@@ -644,11 +644,20 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
 
     let docRest = Doc.empty()
     let fieldIdx: U32 = 0
+    let trailingComma = Bool.False
     for field: Named[Expr] in self.fields.iter():
+        if trailingComma:
+            docRest += Doc.break_(1)
+            trailingComma = Bool.False
+
         docRest += formatNamed(field, Expr.format, tokens)
 
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+            trailingComma = Bool.True
             docRest += formatToken(next, tokens)
+
+    if self.fields.len() != 0 and not trailingComma:
+        docRest += Doc.whenNotFlat(Doc.char(','))
 
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
@@ -664,7 +673,7 @@ ReturnExpr.format(self, tokens: Vec[Token]) Doc:
 
     match self.expr:
         Option.None: doc
-        Option.Some(expr): doc + Doc.nested(4, Doc.break_(1) + expr.format(tokens))
+        Option.Some(expr): Doc.grouped(doc + Doc.nested(4, Doc.break_(1) + expr.format(tokens)))
 
 
 MatchExpr.format(self, tokens: Vec[Token]) Doc:
