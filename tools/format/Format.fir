@@ -270,12 +270,14 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     let lastToken = lparen
     for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+        if trailingComma:
+            argList += Doc.break_(1)
+            trailingComma = Bool.False
+
         argList += formatToken(arg.name.token, tokens)
         lastToken = arg.name.token
 
         if arg.ty is Option.Some(ty):
-            trailingComma = Bool.False
-
             let colon = nextNonTrivia(arg.name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
@@ -284,7 +286,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            argList += formatToken(next, tokens) + Doc.blank(1)
+            argList += formatToken(next, tokens)
             lastToken = next
 
     if self.sig.params.len() != 0 and not trailingComma:
@@ -565,11 +567,15 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     let args = formatToken(lparen, tokens) + Doc.break_(0)
     let trailingComma = Bool.False
     for arg: Named[Expr] in self.args.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            args += Doc.break_(1)
+            trailingComma = Bool.False
+
         args += formatNamed(arg, Expr.format, tokens).group()
+
         if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            args += formatToken(next, tokens) + Doc.break_(1)
+            args += formatToken(next, tokens)
 
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
@@ -859,7 +865,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
         if trailingComma:
-            docRest += Doc.blank(1)
+            docRest += Doc.break_(1)
             trailingComma = Bool.False
 
         if elem.key is Option.Some(key):
@@ -1075,12 +1081,16 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     let lastToken = lparen
     for field: Named[Type] in self.fields.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            docRest += Doc.blank(1)
+            trailingComma = Bool.False
+
         docRest += formatNamed(field, Type.format, tokens)
         lastToken = field.lastToken()
+
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
-            docRest += formatToken(next, tokens) + Doc.blank(1)
+            docRest += formatToken(next, tokens)
             lastToken = next
 
     if self.extension is Option.Some(ext):
@@ -1145,9 +1155,13 @@ FnType.format(self, tokens: Vec[Token]) Doc:
     let lastToken = lparen
     let trailingComma = Bool.False
     for arg: Type in self.args.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            doc += Doc.blank(1)
+            trailingComma = Bool.False
+
         doc += arg.format(tokens)
         lastToken = arg.lastToken()
+
         if (nextNonTrivia(lastToken, tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
             doc += formatToken(next, tokens)
@@ -1254,9 +1268,13 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
     let trailingComma = Bool.False
     let lastToken = lparen
     for field: Named[Pat] in self.fields.iter():
-        trailingComma = Bool.False
+        if trailingComma:
+            doc += Doc.blank(1)
+            trailingComma = Bool.False
+
         doc += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
+
         if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
             doc += formatToken(next, tokens)
