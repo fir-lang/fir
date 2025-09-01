@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s globstar
+
 SCRIPT_DIR="$(dirname "$0")"
 
 cargo build --release
