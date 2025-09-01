@@ -794,7 +794,7 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
             let colon = nextNonTrivia(param.name.token, tokens).unwrap()
             assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            docRest += formatToken(colon, tokens) + ty.format(tokens)
+            docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
             lastToken = ty.lastToken()
 
             if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
