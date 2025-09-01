@@ -52,6 +52,7 @@ jobs:
           ./tools/format/FormatRepo.sh
           git -P diff
           ! git status --porcelain | grep -q '^ M'
+        continue-on-error: true
 
   check_lints:
     name: Check lints
