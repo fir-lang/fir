@@ -564,19 +564,15 @@ generateSymbolParser(
                         + makeThrow())
 
         Symbol.NonTerminal(nonTerminal):
-            let doc = Doc.str("let nonTerminalResult = `nonTerminal`(state)")
-
             match cont:
                 SymbolCont.Bind(local):
-                    doc += Doc.hardLine() + Doc.str("let `local` = nonTerminalResult")
+                    Doc.str("let `local` = `nonTerminal`(state)")
 
                 SymbolCont.Push(vecLocal) | SymbolCont.PushToParseTree(vecLocal):
-                    doc += Doc.hardLine() + Doc.str("`vecLocal`.push(nonTerminalResult)")
+                    Doc.str("`vecLocal`.push(`nonTerminal`(state))")
 
                 SymbolCont.Ignore:
-                    ()
-
-            doc
+                    Doc.str("`nonTerminal`(state)")
 
         # Special case for simple groups: the value of the group should be the value of the only
         # matched symbol in the group.
