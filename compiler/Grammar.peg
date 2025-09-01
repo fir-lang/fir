@@ -893,47 +893,30 @@ simplePat Pat:
         Pat.Var(VarPat(var_ = newId(var_), ty = Option.None))
 
     # Constructors
-    con=constructor fs=("(" p0=recordFieldPat ps=(_"," recordFieldPat)* ignoreRest=("," "..")? last=^ ")")?:
+    con=constructor fs=("(" pats=conFieldPats? last=^ ")")?:
         Pat.Constr(ConstrPat(
             constr = con,
+
             fields = match fs:
-                Option.None:
-                    Vec.empty()
-                Option.Some((p0, ps, ..)):
-                    once(p0).chain(ps.iter()).toVec(),
+                Option.None: Vec.empty()
+                Option.Some((pats, ..)): pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
+
             ignoreRest = match fs:
                 Option.None:
                     Bool.False
-                Option.Some((ignoreRest, ..)):
-                    ignoreRest.isSome(),
+                Option.Some((pats, ..)):
+                    pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
+
             _lastToken = match fs:
                 Option.None: con.lastToken()
                 Option.Some((last, ..)): TokenIdx(idx = last),
         ))
 
-    # Records: `(pat, pat)`, `(var = pat, ...)`
-    first=^ "(" last=^ ")":
+    # Records
+    first=^ "(" pats=conFieldPats? last=^ ")":
         Pat.Record(RecordPat(
-            fields = Vec.empty(),
-            ignoreRest = Bool.False,
-            inferredTy = Option.None,
-            _firstToken = TokenIdx(idx = first),
-            _lastToken = TokenIdx(idx = last),
-        ))
-
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* ","? last=^ ")":
-        Pat.Record(RecordPat(
-            fields = once(p0).chain(ps.iter()).toVec(),
-            ignoreRest = Bool.False,
-            inferredTy = Option.None,
-            _firstToken = TokenIdx(idx = first),
-            _lastToken = TokenIdx(idx = last),
-        ))
-
-    first=^ "(" p0=recordFieldPat ps=(_"," recordFieldPat)* "," ignoreRest=".." last=^ ")":
-        Pat.Record(RecordPat(
-            fields = once(p0).chain(ps.iter()).toVec(),
-            ignoreRest = Bool.True,
+            fields = pats.map(|ps|: ps.fields).unwrapOr(Vec.empty()),
+            ignoreRest = pats.map(|ps|: ps.ignoreRest).unwrapOr(Bool.False),
             inferredTy = Option.None,
             _firstToken = TokenIdx(idx = first),
             _lastToken = TokenIdx(idx = last),
@@ -951,7 +934,19 @@ simplePat Pat:
         Pat.Char(parseCharLit(char.text), TokenIdx(idx = cur))
 
 
-recordFieldPat Named[Pat]:
+# Contents of parens in a constructor or record pattern `Ty.Con(...)`.
+#
+# Note: you want to use this with `?` as this does not accept empty contents.
+conFieldPats (fields: Vec[Named[Pat]], ignoreRest: Bool):
+    "..": (fields = Vec.empty(), ignoreRest = Bool.True)
+
+    p0=conFieldPat ps=(_"," conFieldPat)* ignoreRest=("," "..")?:
+        let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
+        (fields = fields, ignoreRest = ignoreRest.isSome())
+
+
+# A single constructor field (including records), named or unnamed.
+conFieldPat Named[Pat]:
     name=^ "LowerId" "=" pat=pat:
         Named(name = Option.Some(newId(name)), node = pat)
 
