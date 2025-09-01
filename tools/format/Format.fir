@@ -252,9 +252,16 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
         doc += formatToken(lbracket, tokens)
 
+        let trailingComma = Bool.False
         for ty: Type in context.preds.iter():
+            if trailingComma:
+                doc += Doc.blank(1)
+                trailingComma = Bool.False
+
             doc += ty.format(tokens)
+
             if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                trailingComma = Bool.True
                 doc += formatToken(next, tokens)
 
         doc += formatToken(rbracket, tokens)
