@@ -162,7 +162,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let lparen = prevNonTrivia(fields.get(0).name.token, tokens).unwrap()
             assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-            let doc = formatToken(lparen, tokens) + Doc.break_(0)
+            let doc = formatToken(lparen, tokens) + Doc.hardLine()
 
             let lastToken = lparen
             let trailingComma = Bool.False
@@ -204,7 +204,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             let rparen = nextNonTrivia(lastToken, tokens).unwrap()
             assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-            Doc.grouped(doc.nest(4) + Doc.break_(0) + formatToken(rparen, tokens))
+            doc.nest(4) + Doc.hardLine() + formatToken(rparen, tokens)
 
         ConFields.Unnamed(fields):
             let lparen = prevNonTrivia(fields.get(0).firstToken(), tokens).unwrap()
