@@ -673,7 +673,10 @@ ReturnExpr.format(self, tokens: Vec[Token]) Doc:
 
     match self.expr:
         Option.None: doc
-        Option.Some(expr): Doc.grouped(doc + Doc.nested(4, Doc.break_(1) + expr.format(tokens)))
+        Option.Some(expr):
+            # Note: in some cases we may want the `blank` below to be a `break`, e.g. maybe when the
+            # expression is a binary operation.
+            doc + Doc.blank(1) + expr.format(tokens)
 
 
 MatchExpr.format(self, tokens: Vec[Token]) Doc:
@@ -1106,6 +1109,9 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
 
+        if trailingComma:
+            docRest += Doc.blank(1)
+
         docRest += formatToken(dotdot, tokens) + formatToken(ext.token, tokens)
 
     let rparen = self.lastToken()
@@ -1139,11 +1145,8 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
             lastToken = next
 
     if self.extension is Option.Some(ext):
-        if not self.alts.isEmpty():
-            if trailingComma:
-                docRest += Doc.blank(1)
-            else:
-                docRest += Doc.char(',') + Doc.blank(1)
+        if trailingComma:
+            docRest += Doc.blank(1)
 
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
@@ -1260,8 +1263,12 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
             lastToken = next
 
     if self.ignoreRest:
+        if trailingComma:
+            args += Doc.break_(1)
+
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
         args += formatToken(dotdot, tokens)
 
     # Note: trailing commas are not accepted in con pats, see #203.
@@ -1290,8 +1297,12 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
             lastToken = next
 
     if self.ignoreRest:
+        if trailingComma:
+            doc += Doc.blank(1)
+
         let dotdot = nextNonTrivia(lastToken, tokens).unwrap()
         assert(tokens.get(dotdot.idx).kind is TokenKind.DotDot)
+
         doc += formatToken(dotdot, tokens)
     elif not trailingComma:
         doc += Doc.whenNotFlat(Doc.char(','))
