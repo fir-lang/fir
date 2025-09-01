@@ -7,7 +7,8 @@ TEMP_DIR=$(mktemp -d)
 
 echo "Formatted code generated to $TEMP_DIR"
 
-found_files=0
+script_failed=0
+
 for file in compiler/**/*.fir lib/**/*.fir tools/**/*.fir; do
   # Skip test directories.
   if [[ "$file" == *"/"tests"/"* || "$file" == "tests/"* ]]; then
