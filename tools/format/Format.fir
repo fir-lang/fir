@@ -1300,7 +1300,7 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
     # Note: trailing commas are not accepted in con pats, see #203.
 
     let rparen = self.lastToken()
-    Doc.grouped(con + args.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens))
+    Doc.grouped(con + Doc.grouped(args.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens)))
 
 
 RecordPat.format(self, tokens: Vec[Token]) Doc:
