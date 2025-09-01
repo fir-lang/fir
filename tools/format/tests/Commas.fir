@@ -39,7 +39,6 @@ f():
     (x, y)
     (x, y,)
 
-    # Sequences
     Vec.[1, 2]
     Vec.[1, 2,]
 
@@ -114,14 +113,10 @@ trait Foo[a, b,]:
 #     C(x, y,)
 # 
 #     # Record args
-#     (x,
-#         y,)
+#     (x, y)
 #     (x, y,)
 # 
-#     # Sequences
-#     Vec.[1,
-#         2,
-#     ]
+#     Vec.[1, 2]
 #     Vec.[1, 2,]
 # 
 # 

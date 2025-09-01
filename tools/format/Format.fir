@@ -688,7 +688,7 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
     let rparen = self.lastToken()
     assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    doc0 + Doc.nested(4, docRest + formatToken(rparen, tokens))
+    doc0 + Doc.nested(4, docRest + formatToken(rparen, tokens)).group()
 
 
 ReturnExpr.format(self, tokens: Vec[Token]) Doc:
@@ -900,19 +900,30 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
     else:
         doc0 += formatToken(self._lbracket, tokens)
 
+    if self.elems.isEmpty():
+        return doc0 + formatToken(self._rbracket, tokens)
+
+    docRest += Doc.break_(0)
+
     let trailingComma = Bool.False
     for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
         if trailingComma:
             docRest += Doc.break_(1)
             trailingComma = Bool.False
 
-        if elem.key is Option.Some(key):
-            let eq = nextNonTrivia(key.lastToken(), tokens).unwrap()
-            assert(tokens.get(eq.idx).kind is TokenKind.Eq)
+        docRest += match elem.key:
+            Option.None: elem.value.format(tokens)
+            Option.Some(key):
+                let eq = nextNonTrivia(key.lastToken(), tokens).unwrap()
+                assert(tokens.get(eq.idx).kind is TokenKind.Eq)
 
-            docRest += key.format(tokens) + Doc.blank(1) + formatToken(eq, tokens) + Doc.break_(1)
-
-        docRest += elem.value.format(tokens)
+                Doc.grouped(
+                    key.format(tokens)
+                        + Doc.blank(1)
+                        + formatToken(eq, tokens)
+                        + Doc.break_(1)
+                        + elem.value.format(tokens)
+                )
 
         if (nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
             trailingComma = Bool.True
@@ -921,7 +932,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
     if self.elems.len() != 0 and not trailingComma:
         docRest += Doc.whenNotFlat(Doc.char(','))
 
-    Doc.grouped(doc0 + docRest.nest(4) + Doc.break_(0) + formatToken(self._rbracket, tokens))
+    Doc.grouped(doc0 + Doc.grouped(docRest.nest(4) + Doc.break_(0)) + formatToken(self._rbracket, tokens))
 
 
 ParenExpr.format(self, tokens: Vec[Token]) Doc:
