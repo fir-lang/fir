@@ -48,9 +48,10 @@ jobs:
 
       - name: 'Check Fir formatting'
         run: |
+          export FIR_ROOT=`pwd`
           ./tools/format/FormatRepo.sh
-          git diff
-          git diff --quiet
+          git -P diff
+          ! git status --porcelain | grep -q '^ M'
 
   check_lints:
     name: Check lints
