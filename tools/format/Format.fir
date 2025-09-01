@@ -1,6 +1,6 @@
-import Error
-import Grammar
-import Scanner
+import Compiler.Error
+import Compiler.Grammar
+import Compiler.Scanner
 
 main(args: Array[Str]):
     if args.len() != 2:

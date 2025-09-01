@@ -11,7 +11,7 @@ for f in "$@"; do
         echo "$f"
     fi
 
-    ./target/release/fir -iCompiler=compiler -iPeg=tools/peg compiler/Format.fir -- "$f"
+    ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$f"
 
     if [ $? -ne 0 ]; then
         exit_code=1
