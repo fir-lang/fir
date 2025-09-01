@@ -164,8 +164,6 @@ Doc.char(c: Char) Doc:
     buf.push(c)
     Doc.str(buf.toStr())
 
-Doc.space() Doc: Doc._Str(str = " ", lenChars = 1)
-
 Doc.hardLine() Doc: Doc._HardLine
 
 Doc.blank(spaces: U32) Doc: Doc._Blank(spaces)
