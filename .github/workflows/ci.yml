@@ -50,10 +50,7 @@ jobs:
           export FIR_ROOT=`pwd`
           ./tools/format/FormatRepo.sh
           git -P diff
-          if git status --porcelain | grep -q '^ M'; then
-            echo "::warning ::Fir formatting issues detected"
-          fi
-        continue-on-error: true
+          ! git status --porcelain | grep -q '^ M'; then
 
   check_lints:
     name: Check lints
