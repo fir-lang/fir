@@ -6,6 +6,9 @@ show_recipes:
 format:
     cargo fmt
 
+format_fir_changes:
+    ./tools/format/FormatChanges.sh
+
 lint:
     cargo clippy --all-targets
 
