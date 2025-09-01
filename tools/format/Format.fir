@@ -310,7 +310,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
     lastToken = rparen
 
-    argList = argList.nest(4).group() + Doc.break_(0) + formatToken(rparen, tokens)
+    argList = argList.nest(4) + Doc.break_(0) + formatToken(rparen, tokens)
 
     doc += argList.group()
 
