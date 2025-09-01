@@ -36,7 +36,6 @@ jobs:
   check_fir_formatting:
     name: Check Fir formatting
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v2
 
@@ -51,7 +50,9 @@ jobs:
           export FIR_ROOT=`pwd`
           ./tools/format/FormatRepo.sh
           git -P diff
-          ! git status --porcelain | grep -q '^ M'
+          if git status --porcelain | grep -q '^ M'; then
+            echo "::warning ::Fir formatting issues detected"
+          fi
         continue-on-error: true
 
   check_lints:
