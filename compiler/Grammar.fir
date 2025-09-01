@@ -4189,15 +4189,8 @@ conFieldPats(state: ParserState[Token]) (fields: Vec[Named[Pat]], ignoreRest: Bo
                     zeroOrMoreCursor0 = state._cursor
         let optionalCursor0 = state._cursor
         let symResult = try(||:
-            if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
-            let ignoreRest = ()
+            let nonTerminalResult = conFieldPatsCont(state)
+            let ignoreRest = nonTerminalResult
             ignoreRest
         )
         let ignoreRest = match symResult:
@@ -4209,7 +4202,43 @@ conFieldPats(state: ParserState[Token]) (fields: Vec[Named[Pat]], ignoreRest: Bo
                 Option.Some(ok)
         let value = do:
             let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
-            (fields = fields, ignoreRest = ignoreRest.isSome())
+            (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    throw(state.updateErrorCursor(state._cursor))
+
+conFieldPatsCont(state: ParserState[Token]) Bool / U32:
+    let cursor0 = state._cursor
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.DotDot, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            Bool.True
+        value
+    )
+    match altResult:
+        Result.Err(err):
+            state._cursor = cursor0
+        Result.Ok(value):
+            return value
+    let altResult = try(||:
+        if state.peek() is Option.Some(sym) and sym is Token(kind = TokenKind.Comma, ..):
+            state._cursor += 1
+        else:
+            throw(state.updateErrorCursor(state._cursor))
+        let value = do:
+            Bool.False
         value
     )
     match altResult:

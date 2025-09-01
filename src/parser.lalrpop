@@ -1053,17 +1053,10 @@ Pat: Pat = {
 
     <constr:ConstrPattern> => Pat::Constr(constr),
 
-    "(" <fields:Sep<PatternField, ",">> ")" =>
+    "(" <fields:FieldPats> ")" =>
         Pat::Record(RecordPattern {
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
-            ignore_rest: false,
-            inferred_ty: None,
-        }),
-
-    "(" <fields:(<PatternField> ",")+> ".." ")" =>
-        Pat::Record(RecordPattern {
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
-            ignore_rest: true,
+            fields: fields.0,
+            ignore_rest: fields.1,
             inferred_ty: None,
         }),
 
@@ -1110,34 +1103,28 @@ ConstrPattern: ConstrPattern = {
     <constr:Constructor> =>
         ConstrPattern { constr, fields: vec![], ignore_rest: false },
 
-    <constr:Constructor> "(" ".." ")" =>
+    <constr:Constructor> "(" <fields:FieldPats> ")" =>
         ConstrPattern {
             constr,
-            fields: vec![],
-            ignore_rest: true,
-        },
-
-    <constr:Constructor> "(" <fields:Sep<PatternField, ",">> ")" =>
-        ConstrPattern {
-            constr,
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
-            ignore_rest: false,
-        },
-
-    <constr:Constructor> "(" <fields:(<PatternField> ",")+> ".." ")" =>
-        ConstrPattern {
-            constr,
-            fields: fields.into_iter().map(|(name, pat)| Named { name, node: pat }).collect(),
-            ignore_rest: true,
+            fields: fields.0,
+            ignore_rest: fields.1,
         },
 }
 
-PatternField: (Option<Id>, L<Pat>) = {
+FieldPats: (Vec<Named<L<Pat>>>, bool) = {
+    ".." => (vec![], true),
+
+    <fields:Sep<FieldPat, ",">> => (fields, false),
+
+    <fields:(<FieldPat> ",")+> ".." => (fields, true),
+}
+
+FieldPat: Named<L<Pat>> = {
     <id:LowerId> "=" <pat:LPat> =>
-        (Some(id.smol_str()), pat),
+        Named { name: Some(id.smol_str()), node: pat },
 
     <pat:LPat> =>
-        (None, pat),
+        Named { name: None, node: pat },
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

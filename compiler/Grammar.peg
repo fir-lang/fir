@@ -940,9 +940,14 @@ simplePat Pat:
 conFieldPats (fields: Vec[Named[Pat]], ignoreRest: Bool):
     "..": (fields = Vec.empty(), ignoreRest = Bool.True)
 
-    p0=conFieldPat ps=(_"," conFieldPat)* ignoreRest=("," "..")?:
+    p0=conFieldPat ps=(_"," conFieldPat)* ignoreRest=conFieldPatsCont?:
         let fields: Vec[Named[Pat]] = once(p0).chain(ps.iter()).toVec()
-        (fields = fields, ignoreRest = ignoreRest.isSome())
+        (fields = fields, ignoreRest = ignoreRest.unwrapOr(Bool.False))
+
+
+conFieldPatsCont Bool:
+    "," "..": Bool.True
+    ",": Bool.False
 
 
 # A single constructor field (including records), named or unnamed.
