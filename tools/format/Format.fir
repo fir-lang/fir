@@ -577,26 +577,32 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     let lparen = nextNonTrivia(self.fun.lastToken(), tokens).unwrap()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
-    let args = formatToken(lparen, tokens) + Doc.break_(0)
-    let trailingComma = Bool.False
-    for arg: Named[Expr] in self.args.iter():
-        if trailingComma:
-            args += Doc.break_(1)
-            trailingComma = Bool.False
+    let args = if self.args.isEmpty():
+        let rparen = nextNonTrivia(lparen, tokens).unwrap()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-        args += formatNamed(arg, Expr.format, tokens).group()
+        formatToken(lparen, tokens) + formatToken(rparen, tokens)
+    else:
+        let args = formatToken(lparen, tokens) + Doc.break_(0)
+        let trailingComma = Bool.False
+        for arg: Named[Expr] in self.args.iter():
+            if trailingComma:
+                args += Doc.break_(1)
+                trailingComma = Bool.False
 
-        if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-            trailingComma = Bool.True
-            args += formatToken(next, tokens)
+            args += formatNamed(arg, Expr.format, tokens).group()
 
-    let rparen = self.lastToken()
-    assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
+            if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                trailingComma = Bool.True
+                args += formatToken(next, tokens)
 
-    if self.args.len() != 0 and not trailingComma:
-        args += Doc.whenNotFlat(Doc.char(','))
+        let rparen = self.lastToken()
+        assert(tokens.get(rparen.idx).kind is TokenKind.RParen)
 
-    args = Doc.grouped(args.nest(4) + Doc.break_(0)) + formatToken(rparen, tokens)
+        if self.args.len() != 0 and not trailingComma:
+            args += Doc.whenNotFlat(Doc.char(','))
+
+        Doc.grouped(args.nest(4) + Doc.break_(0)) + formatToken(rparen, tokens)
 
     Doc.grouped(fun + args)
 
