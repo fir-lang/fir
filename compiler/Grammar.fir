@@ -1349,14 +1349,7 @@ inlineExpr(state: ParserState[Token]) Expr / U32:
                 Result.Ok(ok):
                     zeroOrMoreCursor0 = state._cursor
         let value = do:
-            let ret = expr
-            for cont_: InlineExprCont in cont.iter():
-                match cont_:
-                    InlineExprCont.BinOp(op, rhs):
-                        ret = Expr.BinOp(BinOpExpr(left = ret, right = rhs, op))
-                    InlineExprCont.Is(pat):
-                        ret = Expr.Is(IsExpr(expr = ret, pat))
-            ret
+            associate(expr, cont)
         value
     )
     match altResult:
