@@ -365,15 +365,7 @@ expr Expr:
 # Inline expressions don't end with a NEWLINE or DEDENT.
 inlineExpr Expr:
     expr=prefixExpr cont=inlineExprCont*:
-        let ret = expr
-        for cont_: InlineExprCont in cont.iter():
-            match cont_:
-                InlineExprCont.BinOp(op, rhs):
-                    ret = Expr.BinOp(BinOpExpr(left = ret, right = rhs, op))
-
-                InlineExprCont.Is(pat):
-                    ret = Expr.Is(IsExpr(expr = ret, pat))
-        ret
+        associate(expr, cont)
 
 
 # Block expressions include an indented block and always end with DEDENT.

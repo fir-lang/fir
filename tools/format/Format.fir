@@ -637,7 +637,7 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     let exprs: Vec[Expr] = Vec.withCapacity(1)
 
     let left = self.left
-    while left is Expr.BinOp(binop):
+    while left is Expr.BinOp(binop) and binop.op == self.op:
         exprs.push(binop.right)
         left = binop.left
     exprs.push(left)
@@ -654,7 +654,7 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     let rhsOp = prevNonTrivia(rhs.firstToken(), tokens).unwrap()
     docRest += Doc.blank(1) + rhs.format(tokens)
 
-    doc0 + docRest.nest(4)
+    Doc.grouped(doc0.group() + docRest.nest(4).group())
 
 
 UnOpExpr.format(self, tokens: Vec[Token]) Doc:
@@ -867,13 +867,15 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
     let is_ = nextNonTrivia(self.expr.lastToken(), tokens).unwrap()
     assert(tokens.get(is_.idx).kind is TokenKind.Is)
 
-    self.expr.format(tokens)
-        + Doc.nested(
-            4,
-            Doc.break_(1)
-                + formatToken(is_, tokens)
-                + Doc.blank(1)
-                + self.pat.format(tokens))
+    Doc.grouped(
+        self.expr.format(tokens)
+            + Doc.nested(
+                4,
+                Doc.break_(1)
+                    + formatToken(is_, tokens)
+                    + Doc.blank(1)
+                    + self.pat.format(tokens))
+    )
 
 
 DoExpr.format(self, tokens: Vec[Token]) Doc:
