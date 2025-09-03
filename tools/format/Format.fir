@@ -33,14 +33,14 @@ main(args: Array[Str]):
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
         Result.Ok(tree): tree
 
-    print(formatModule(tree, tokens).render(80))
+    print(formatModule(tree, tokens.takeArray()).render(80))
 
 
 showUsageAndExit() a:
     panic("USAGE: fir format <file>")
 
 
-formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
+formatModule(mod: Vec[TopDecl], tokens: Array[Token]) Doc:
     let doc = Doc.empty()
     let declIdx: U32 = 0
 
@@ -78,7 +78,7 @@ formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
 # Declarations
 
 
-TopDecl.format(self, tokens: Vec[Token]) Doc:
+TopDecl.format(self, tokens: Array[Token]) Doc:
     match self:
         TopDecl.Type(d): d.format(tokens)
         TopDecl.Fun(d): d.format(tokens)
@@ -87,7 +87,7 @@ TopDecl.format(self, tokens: Vec[Token]) Doc:
         TopDecl.Impl(d): d.format(tokens)
 
 
-TypeDecl.format(self, tokens: Vec[Token]) Doc:
+TypeDecl.format(self, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     if self.prim_ is Option.Some(prim_):
@@ -138,7 +138,7 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
     doc
 
 
-TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
+TypeDeclRhs.format(self, tokens: Array[Token]) Doc:
     match self:
         TypeDeclRhs.Sum(decls):
             let colon = prevNonTrivia(decls.get(0).name.token, tokens).unwrap()
@@ -165,11 +165,11 @@ TypeDeclRhs.format(self, tokens: Vec[Token]) Doc:
         TypeDeclRhs.Product(fields): fields.format(tokens)
 
 
-ConDecl.format(self, tokens: Vec[Token]) Doc:
+ConDecl.format(self, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + self.fields.format(tokens)
 
 
-ConFields.format(self, tokens: Vec[Token]) Doc:
+ConFields.format(self, tokens: Array[Token]) Doc:
     match self:
         ConFields.Empty: Doc.empty()
 
@@ -256,7 +256,7 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
             )
 
 
-FunDecl.format(self, tokens: Vec[Token]) Doc:
+FunDecl.format(self, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     if self.prim_ is Option.Some(prim_):
@@ -367,7 +367,7 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
     doc
 
 
-ImportDecl.format(self, tokens: Vec[Token]) Doc:
+ImportDecl.format(self, tokens: Array[Token]) Doc:
     let import_ = prevNonTrivia(self.path.get(0).token, tokens).unwrap()
     assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
@@ -383,7 +383,7 @@ ImportDecl.format(self, tokens: Vec[Token]) Doc:
     doc
 
 
-TraitDecl.format(self, tokens: Vec[Token]) Doc:
+TraitDecl.format(self, tokens: Array[Token]) Doc:
     let trait_ = prevNonTrivia(self.name.token, tokens).unwrap()
     assert(tokens.get(trait_.idx).kind is TokenKind.Trait)
 
@@ -435,7 +435,7 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-ImplDecl.format(self, tokens: Vec[Token]) Doc:
+ImplDecl.format(self, tokens: Array[Token]) Doc:
     let impl_ = self._firstToken
     let doc0 = formatToken(impl_, tokens)
 
@@ -509,7 +509,7 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
 # Expressions
 
 
-Expr.format(self, tokens: Vec[Token]) Doc:
+Expr.format(self, tokens: Array[Token]) Doc:
     Doc.group(
         match self:
             Expr.Var(e): e.format(tokens)
@@ -540,11 +540,11 @@ Expr.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-VarExpr.format(self, tokens: Vec[Token]) Doc:
+VarExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.id.token, tokens) + formatTyArgs(self.userTyArgs, tokens)
 
 
-Constructor.format(self, tokens: Vec[Token]) Doc:
+Constructor.format(self, tokens: Array[Token]) Doc:
     let doc = formatToken(self.ty.token, tokens)
 
     if self.constr is Option.Some(con):
@@ -556,7 +556,7 @@ Constructor.format(self, tokens: Vec[Token]) Doc:
     doc + formatTyArgs(self.userTyArgs, tokens)
 
 
-FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
+FieldSelectExpr.format(self, tokens: Array[Token]) Doc:
     #|
     Group sequence of selections so that we will format like one of the following:
 
@@ -598,7 +598,7 @@ FieldSelectExpr.format(self, tokens: Vec[Token]) Doc:
     doc.group()
 
 
-AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
+AssocFnSelectExpr.format(self, tokens: Array[Token]) Doc:
     let dot = nextNonTrivia(self.ty.token, tokens).unwrap()
     assert(tokens.get(dot.idx).kind is TokenKind.Dot)
 
@@ -612,7 +612,7 @@ AssocFnSelectExpr.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-CallExpr.format(self, tokens: Vec[Token]) Doc:
+CallExpr.format(self, tokens: Array[Token]) Doc:
     #|
     Single line:
 
@@ -664,19 +664,19 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
     Doc.grouped(fun + args)
 
 
-IntExpr.format(self, tokens: Vec[Token]) Doc:
+IntExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.token, tokens)
 
 
-StrExpr.format(self, tokens: Vec[Token]) Doc:
+StrExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.token, tokens)
 
 
-CharExpr.format(self, tokens: Vec[Token]) Doc:
+CharExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.token, tokens)
 
 
-BinOpExpr.format(self, tokens: Vec[Token]) Doc:
+BinOpExpr.format(self, tokens: Array[Token]) Doc:
     # Binary operators are all left-associative, so the right-hand side can never be a `BinOp`
     # unless it's wrapped with a `Paren`.
     #
@@ -712,12 +712,12 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
     Doc.grouped(doc0.group() + docRest.nest(4).group())
 
 
-UnOpExpr.format(self, tokens: Vec[Token]) Doc:
+UnOpExpr.format(self, tokens: Array[Token]) Doc:
     let op = self.firstToken()
     formatToken(op, tokens) + Doc.blank(1) + self.expr.format(tokens)
 
 
-RecordExpr.format(self, tokens: Vec[Token]) Doc:
+RecordExpr.format(self, tokens: Array[Token]) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen)
 
@@ -752,7 +752,7 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-ReturnExpr.format(self, tokens: Vec[Token]) Doc:
+ReturnExpr.format(self, tokens: Array[Token]) Doc:
     let ret = self.firstToken()
     assert(tokens.get(ret.idx).kind is TokenKind.Return)
 
@@ -766,7 +766,7 @@ ReturnExpr.format(self, tokens: Vec[Token]) Doc:
             doc + Doc.blank(1) + expr.format(tokens)
 
 
-MatchExpr.format(self, tokens: Vec[Token]) Doc:
+MatchExpr.format(self, tokens: Array[Token]) Doc:
     let match_ = self.firstToken()
     assert(tokens.get(match_.idx).kind is TokenKind.Match)
 
@@ -791,7 +791,7 @@ MatchExpr.format(self, tokens: Vec[Token]) Doc:
     doc0 + docRest.nest(4)
 
 
-Alt.format(self, tokens: Vec[Token]) Doc:
+Alt.format(self, tokens: Array[Token]) Doc:
     let doc0 = self.pattern.format(tokens)
     let docRest = Doc.empty()
 
@@ -817,7 +817,7 @@ Alt.format(self, tokens: Vec[Token]) Doc:
         ).group()
 
 
-IfExpr.format(self, tokens: Vec[Token]) Doc:
+IfExpr.format(self, tokens: Array[Token]) Doc:
     let firstBranch = self.branches.get(0)
 
     let colon = nextNonTrivia(firstBranch.guard.lastToken(), tokens).unwrap()
@@ -870,7 +870,7 @@ IfExpr.format(self, tokens: Vec[Token]) Doc:
     doc
 
 
-FnExpr.format(self, tokens: Vec[Token]) Doc:
+FnExpr.format(self, tokens: Array[Token]) Doc:
     # assert(self.sig.context.typeParams.isEmpty)
     # assert(self.sig.context.preds.isEmpty)
     # assert(self.sig.self_ is SelfParam.No)
@@ -935,7 +935,7 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
     doc0 + docRest.nest(4)
 
 
-IsExpr.format(self, tokens: Vec[Token]) Doc:
+IsExpr.format(self, tokens: Array[Token]) Doc:
     let is_ = nextNonTrivia(self.expr.lastToken(), tokens).unwrap()
     assert(tokens.get(is_.idx).kind is TokenKind.Is)
 
@@ -951,7 +951,7 @@ IsExpr.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-DoExpr.format(self, tokens: Vec[Token]) Doc:
+DoExpr.format(self, tokens: Array[Token]) Doc:
     let do_ = self.firstToken()
 
     let colon = nextNonTrivia(do_, tokens).unwrap()
@@ -966,7 +966,7 @@ DoExpr.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-SeqExpr.format(self, tokens: Vec[Token]) Doc:
+SeqExpr.format(self, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let docRest = Doc.empty()
 
@@ -1021,7 +1021,7 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-ParenExpr.format(self, tokens: Vec[Token]) Doc:
+ParenExpr.format(self, tokens: Array[Token]) Doc:
     formatToken(self.firstToken(), tokens)
         + self.expr.format(tokens)
         + formatToken(self.lastToken(), tokens)
@@ -1031,7 +1031,7 @@ ParenExpr.format(self, tokens: Vec[Token]) Doc:
 # Statements
 
 
-formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
+formatStmts(stmts: Vec[Stmt], tokens: Array[Token]) Doc:
     if stmts.isEmpty():
         Doc.empty()
 
@@ -1054,7 +1054,7 @@ formatStmts(stmts: Vec[Stmt], tokens: Vec[Token]) Doc:
     doc
 
 
-Stmt.format(self, tokens: Vec[Token]) Doc:
+Stmt.format(self, tokens: Array[Token]) Doc:
     Doc.group(
         match self:
             Stmt.Let(s): s.format(tokens)
@@ -1068,7 +1068,7 @@ Stmt.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-LetStmt.format(self, tokens: Vec[Token]) Doc:
+LetStmt.format(self, tokens: Array[Token]) Doc:
     let let_ = prevNonTrivia(self.lhs.firstToken(), tokens).unwrap()
     assert(tokens.get(let_.idx).kind is TokenKind.Let)
 
@@ -1090,7 +1090,7 @@ LetStmt.format(self, tokens: Vec[Token]) Doc:
         + self.rhs.format(tokens)
 
 
-AssignStmt.format(self, tokens: Vec[Token]) Doc:
+AssignStmt.format(self, tokens: Array[Token]) Doc:
     let op = nextNonTrivia(self.lhs.lastToken(), tokens).unwrap()
 
     self.lhs.format(tokens)
@@ -1100,7 +1100,7 @@ AssignStmt.format(self, tokens: Vec[Token]) Doc:
         + self.rhs.format(tokens)
 
 
-ForStmt.format(self, tokens: Vec[Token]) Doc:
+ForStmt.format(self, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let for_ = self.firstToken()
 
@@ -1149,7 +1149,7 @@ ForStmt.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-WhileStmt.format(self, tokens: Vec[Token]) Doc:
+WhileStmt.format(self, tokens: Array[Token]) Doc:
     let doc0 = Doc.empty()
     let while_ = self.firstToken()
 
@@ -1174,7 +1174,7 @@ WhileStmt.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-LoopStmt.format(self, tokens: Vec[Token]) Doc:
+LoopStmt.format(self, tokens: Array[Token]) Doc:
     let loop_ = self.firstToken()
 
     let colon = nextNonTrivia(loop_, tokens).unwrap()
@@ -1189,7 +1189,7 @@ LoopStmt.format(self, tokens: Vec[Token]) Doc:
         )
 
 
-BreakStmt.format(self, tokens: Vec[Token]) Doc:
+BreakStmt.format(self, tokens: Array[Token]) Doc:
     let break_ = self.firstToken()
 
     match self.label:
@@ -1200,7 +1200,7 @@ BreakStmt.format(self, tokens: Vec[Token]) Doc:
                 + Doc.nested(4, Doc.break_(1) + formatToken(label.token, tokens))
 
 
-ContinueStmt.format(self, tokens: Vec[Token]) Doc:
+ContinueStmt.format(self, tokens: Array[Token]) Doc:
     let continue_ = self.firstToken()
 
     match self.label:
@@ -1215,7 +1215,7 @@ ContinueStmt.format(self, tokens: Vec[Token]) Doc:
 # Types
 
 
-Type.format(self, tokens: Vec[Token]) Doc:
+Type.format(self, tokens: Array[Token]) Doc:
     match self:
         Type.Named(t): t.format(tokens)
         Type.Var(id): formatToken(id.token, tokens)
@@ -1224,11 +1224,11 @@ Type.format(self, tokens: Vec[Token]) Doc:
         Type.Fn_(t): t.format(tokens)
 
 
-NamedType.format(self, tokens: Vec[Token]) Doc:
+NamedType.format(self, tokens: Array[Token]) Doc:
     formatToken(self.name.token, tokens) + formatTyArgs(self.args, tokens)
 
 
-RecordType.format(self, tokens: Vec[Token]) Doc:
+RecordType.format(self, tokens: Array[Token]) Doc:
     let lparen = self.firstToken()
     assert(tokens.get(lparen.idx).kind is TokenKind.LParen | TokenKind.LParenRow)
 
@@ -1266,7 +1266,7 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
     doc0 + Doc.grouped(docRest + formatToken(rparen, tokens))
 
 
-VariantType.format(self, tokens: Vec[Token]) Doc:
+VariantType.format(self, tokens: Array[Token]) Doc:
     let lbracket = self.firstToken()
     assert(
         tokens.get(lbracket.idx).kind
@@ -1306,7 +1306,7 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
     doc0 + docRest + formatToken(rbracket, tokens)
 
 
-FnType.format(self, tokens: Vec[Token]) Doc:
+FnType.format(self, tokens: Array[Token]) Doc:
     let fn_ = self.firstToken()
 
     let lparen = nextNonTrivia(fn_, tokens).unwrap()
@@ -1357,7 +1357,7 @@ FnType.format(self, tokens: Vec[Token]) Doc:
 # Patterns
 
 
-Pat.format(self, tokens: Vec[Token]) Doc:
+Pat.format(self, tokens: Array[Token]) Doc:
     match self:
         Pat.Var(p): p.format(tokens)
 
@@ -1384,11 +1384,11 @@ Pat.format(self, tokens: Vec[Token]) Doc:
             Doc.grouped(doc0 + docRest.nest(4))
 
 
-VarPat.format(self, tokens: Vec[Token]) Doc:
+VarPat.format(self, tokens: Array[Token]) Doc:
     formatToken(self.var_.token, tokens)
 
 
-ConstrPat.format(self, tokens: Vec[Token]) Doc:
+ConstrPat.format(self, tokens: Array[Token]) Doc:
     let con = self.constr.format(tokens)
 
     if self.fields.isEmpty() and not self.ignoreRest:
@@ -1437,7 +1437,7 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
     )
 
 
-RecordPat.format(self, tokens: Vec[Token]) Doc:
+RecordPat.format(self, tokens: Array[Token]) Doc:
     let lparen = self.firstToken()
     let doc = formatToken(lparen, tokens) + Doc.break_(0)
 
@@ -1478,7 +1478,7 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
 ## Format a single token, handling comment tokens that are
 ##      (1) before the token, that are not with other tokens in their lines.
 ##      (2) after the token, at the same line with the token being formatted.
-formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
+formatToken(tokenIdx: TokenIdx, tokens: Array[Token]) Doc:
     let doc = Doc.empty()
 
     let token = tokens.get(tokenIdx.idx)
@@ -1545,7 +1545,7 @@ formatLeadingComments(
     commentStart: TokenIdx,
     commentEnd: TokenIdx,
     maxEmptyLines: U32,
-    tokens: Vec[Token],
+    tokens: Array[Token],
 ) (doc: Doc, lastCommentIdx: TokenIdx):
     let doc = Doc.empty()
 
@@ -1576,7 +1576,7 @@ formatLeadingComments(
     (doc = doc, lastCommentIdx = prevCommentTokenIdx.unwrap())
 
 
-formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
+formatTyArgs(tyArgs: Option[TyArgs], tokens: Array[Token]) Doc:
     match tyArgs:
         Option.None: Doc.empty()
 
@@ -1607,8 +1607,8 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
 
 formatNamed(
     named: Named[a],
-    format: Fn(a, Vec[Token]) Doc / exn,
-    tokens: Vec[Token],
+    format: Fn(a, Array[Token]) Doc / exn,
+    tokens: Array[Token],
 ) Doc / exn:
     match named.name:
         Option.None: format(named.node, tokens)
@@ -1636,11 +1636,11 @@ formatNamed(
             ).group()
 
 
-idText(id: Id, tokens: Vec[Token]) Str:
+idText(id: Id, tokens: Array[Token]) Str:
     tokens.get(id.token.idx).text
 
 
-tokenText(token: TokenIdx, tokens: Vec[Token]) Str:
+tokenText(token: TokenIdx, tokens: Array[Token]) Str:
     tokens.get(token.idx).text
 
 
@@ -1659,7 +1659,7 @@ join[Iterator[iter, Doc, exn]](iter: iter, sep: Doc) Doc / exn:
 
 
 ## Find the beginning of comment tokens before `token` that belong to `token`.
-findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
+findCommentBefore(token: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     let idx = token.idx
     let commentStart: Option[TokenIdx] = Option.None
 
@@ -1684,7 +1684,7 @@ findCommentBefore(token: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
 ## Whether the given token only has trivia tokens before it.
 ##
 ## Reminder: trivia is whitespace, indentation, and comments.
-commentAtStart(tokenIdx: TokenIdx, tokens: Vec[Token]) Bool:
+commentAtStart(tokenIdx: TokenIdx, tokens: Array[Token]) Bool:
     let idx = tokenIdx.idx
 
     if idx == 0:
@@ -1716,7 +1716,7 @@ commentAtStart(tokenIdx: TokenIdx, tokens: Vec[Token]) Bool:
     tokens.get(idx).line != tokens.get(tokenIdx.idx).line
 
 
-nextNonTrivia(tokenIdx: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
+nextNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     let idx = tokenIdx.idx + 1
     while tokens.getOpt(idx) is Option.Some(next):
         if next.kind
@@ -1731,7 +1731,7 @@ nextNonTrivia(tokenIdx: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
     Option.None
 
 
-prevNonTrivia(tokenIdx: TokenIdx, tokens: Vec[Token]) Option[TokenIdx]:
+prevNonTrivia(tokenIdx: TokenIdx, tokens: Array[Token]) Option[TokenIdx]:
     let idx = tokenIdx.idx
     while idx != 0:
         idx -= 1
