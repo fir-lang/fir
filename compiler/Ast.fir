@@ -1,26 +1,44 @@
-import Error    # imports Loc
-import Token    # imports IntKind
+import Error # imports Loc
+
+import Token # imports IntKind
+
+
+
 # TODO: Why is Loc in Error module?
 
-type TokenIdx(idx: U32)
+type TokenIdx(
+    idx: U32,
+)
+
 
 impl Step[TokenIdx]:
     step(self: TokenIdx) TokenIdx:
         TokenIdx(idx = self.idx + 1)
 
+
 impl Ord[TokenIdx]:
     cmp(self: TokenIdx, other: TokenIdx) Ordering:
         self.idx.cmp(other.idx)
 
+
 trait Tokens[t]:
     firstToken(self: t) TokenIdx
+
     lastToken(self: t) TokenIdx
 
-type Id(token: TokenIdx)
+
+type Id(
+    token: TokenIdx,
+)
+
 
 impl Tokens[Id]:
-    firstToken(self: Id) TokenIdx: self.token
-    lastToken(self: Id) TokenIdx: self.token
+    firstToken(self: Id) TokenIdx:
+        self.token
+
+    lastToken(self: Id) TokenIdx:
+        self.token
+
 
 ## A top-level declaration.
 type TopDecl:
@@ -38,6 +56,7 @@ type TopDecl:
 
     ## An `impl` block, implementing a trait or associated methods for a type.
     Impl(ImplDecl)
+
 
 ## A type declaration: `type Vec[t]: ...`.
 type TypeDecl(
@@ -57,6 +76,7 @@ type TypeDecl(
     rhs: Option[TypeDeclRhs],
 )
 
+
 ## Constructors of a type declaration.
 type TypeDeclRhs:
     ## A sum type, with more than one constructor.
@@ -65,25 +85,30 @@ type TypeDeclRhs:
     ## A product type uses the type name as the constructor and only has fields.
     Product(ConFields)
 
+
 ## A sum type constructor.
 type ConDecl(
     name: Id,
     fields: ConFields,
-    _lastToken: TokenIdx
+    _lastToken: TokenIdx,
 )
+
 
 type Kind:
     Star
     Row(RecordOrVariant)
 
+
 type RecordOrVariant:
     Record
     Variant
+
 
 type ConFields:
     Empty
     Named(Vec[(name: Id, ty: Type)])
     Unnamed(Vec[Type])
+
 
 type FunDecl(
     ## When the function is a primitive, the `prim` token.
@@ -102,6 +127,7 @@ type FunDecl(
     body: Option[Vec[Stmt]],
 )
 
+
 type FunSig(
     context: Option[Context],
     self_: SelfParam,
@@ -110,15 +136,18 @@ type FunSig(
     returnTy: Option[Type],
 )
 
+
 type SelfParam:
     No
     Implicit
     Explicit(Type)
 
+
 type ImportDecl(
     ## Import path, e.g. `Fir.Prelude`.
     path: Vec[Id],
 )
+
 
 type TraitDecl(
     ## Trait name.
@@ -133,6 +162,7 @@ type TraitDecl(
     ## Methods of the trait.
     items: Vec[FunDecl],
 )
+
 
 ## An `impl` block, implementing a trait for a type.
 ##
@@ -163,8 +193,9 @@ type ImplDecl(
     items: Vec[FunDecl],
 
     # The `impl` token.
-    _firstToken: TokenIdx
+    _firstToken: TokenIdx,
 )
+
 
 type Type:
     ## A type constructor, potentially applied some number of arguments. E.g. `I32`, `Vec[T]`.
@@ -184,6 +215,7 @@ type Type:
     ## A function type: `Fn(I32): Bool`.
     Fn_(FnType)
 
+
 impl Tokens[Type]:
     firstToken(self: Type) TokenIdx:
         match self:
@@ -201,6 +233,7 @@ impl Tokens[Type]:
             Type.Variant(ty): ty.lastToken()
             Type.Fn_(ty): ty.lastToken()
 
+
 type RecordType(
     fields: Vec[Named[Type]],
     extension: Option[Id],
@@ -213,9 +246,14 @@ type RecordType(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[RecordType]:
-    firstToken(self: RecordType) TokenIdx: self._firstToken
-    lastToken(self: RecordType) TokenIdx: self._lastToken
+    firstToken(self: RecordType) TokenIdx:
+        self._firstToken
+
+    lastToken(self: RecordType) TokenIdx:
+        self._lastToken
+
 
 type VariantType(
     alts: Vec[NamedType],
@@ -229,9 +267,14 @@ type VariantType(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[VariantType]:
-    firstToken(self: VariantType) TokenIdx: self._firstToken
-    lastToken(self: VariantType) TokenIdx: self._lastToken
+    firstToken(self: VariantType) TokenIdx:
+        self._firstToken
+
+    lastToken(self: VariantType) TokenIdx:
+        self._lastToken
+
 
 type FnType(
     args: Vec[Type],
@@ -250,6 +293,7 @@ type FnType(
     _rparen: TokenIdx,
 )
 
+
 impl Tokens[FnType]:
     firstToken(self: FnType) TokenIdx:
         self._firstToken
@@ -262,6 +306,7 @@ impl Tokens[FnType]:
             return ty.lastToken()
 
         self._rparen
+
 
 ## Type parameter and predicates of an `impl` or function.
 ##
@@ -280,9 +325,14 @@ type Context(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[Context]:
-    firstToken(self: Context) TokenIdx: self._firstToken
-    lastToken(self: Context) TokenIdx: self._lastToken
+    firstToken(self: Context) TokenIdx:
+        self._firstToken
+
+    lastToken(self: Context) TokenIdx:
+        self._lastToken
+
 
 ## A named type, e.g. `I32`, `Vec[I32]`, `Iterator[coll, Str]`.
 type NamedType(
@@ -293,6 +343,7 @@ type NamedType(
     args: Option[TyArgs],
 )
 
+
 impl Tokens[NamedType]:
     firstToken(self: NamedType) TokenIdx:
         self.name.token
@@ -302,10 +353,12 @@ impl Tokens[NamedType]:
             Option.Some(args): args.lastToken()
             Option.None: self.name.token
 
+
 type Named[t](
     name: Option[Id],
     node: t,
 )
+
 
 impl[Tokens[t]] Tokens[Named[t]]:
     firstToken(self: Named[t]) TokenIdx:
@@ -316,6 +369,7 @@ impl[Tokens[t]] Tokens[Named[t]]:
     lastToken(self: Named[t]) TokenIdx:
         self.node.lastToken()
 
+
 type Stmt:
     Let(LetStmt)
     Assign(AssignStmt)
@@ -325,6 +379,7 @@ type Stmt:
     Loop(LoopStmt)
     Break(BreakStmt)
     Continue(ContinueStmt)
+
 
 impl Tokens[Stmt]:
     firstToken(self: Stmt) TokenIdx:
@@ -349,6 +404,7 @@ impl Tokens[Stmt]:
             Stmt.Break(e): e.lastToken()
             Stmt.Continue(e): e.lastToken()
 
+
 ## A let statement: `let x: T = expr`.
 type LetStmt(
     lhs: Pat,
@@ -357,9 +413,14 @@ type LetStmt(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[LetStmt]:
-    firstToken(self: LetStmt) TokenIdx: self._firstToken
-    lastToken(self: LetStmt) TokenIdx: self.rhs.lastToken()
+    firstToken(self: LetStmt) TokenIdx:
+        self._firstToken
+
+    lastToken(self: LetStmt) TokenIdx:
+        self.rhs.lastToken()
+
 
 type AssignStmt(
     lhs: Expr,
@@ -367,9 +428,14 @@ type AssignStmt(
     op: AssignOp,
 )
 
+
 impl Tokens[AssignStmt]:
-    firstToken(self: AssignStmt) TokenIdx: self.lhs.firstToken()
-    lastToken(self: AssignStmt) TokenIdx: self.rhs.lastToken()
+    firstToken(self: AssignStmt) TokenIdx:
+        self.lhs.firstToken()
+
+    lastToken(self: AssignStmt) TokenIdx:
+        self.rhs.lastToken()
+
 
 type AssignOp:
     Eq
@@ -377,6 +443,7 @@ type AssignOp:
     MinusEq
     StarEq
     CaretEq
+
 
 type ForStmt(
     label: Option[Id],
@@ -386,21 +453,28 @@ type ForStmt(
     astTy: Option[Type],
 
     ## `ast_ty`, converted to type checking types by the type checker.
-    tcTy: Option[Type],  # TODO: type-checking type
+    tcTy: Option[Type], # TODO: type-checking type
+
 
     expr: Expr,
 
     ## Filled in by the type checker: the iterator type. `iter` in `Iterator[iter, item]`.
     exprTy: Option[Type], # TODO: type-checking type
 
+
     body: Vec[Stmt],
 
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[ForStmt]:
-    firstToken(self: ForStmt) TokenIdx: self._firstToken
-    lastToken(self: ForStmt) TokenIdx: self.body.last().unwrap().lastToken()
+    firstToken(self: ForStmt) TokenIdx:
+        self._firstToken
+
+    lastToken(self: ForStmt) TokenIdx:
+        self.body.last().unwrap().lastToken()
+
 
 type WhileStmt(
     label: Option[Id],
@@ -409,18 +483,28 @@ type WhileStmt(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[WhileStmt]:
-    firstToken(self: WhileStmt) TokenIdx: self._firstToken
-    lastToken(self: WhileStmt) TokenIdx: self.body.last().unwrap().lastToken()
+    firstToken(self: WhileStmt) TokenIdx:
+        self._firstToken
+
+    lastToken(self: WhileStmt) TokenIdx:
+        self.body.last().unwrap().lastToken()
+
 
 type LoopStmt(
     body: Vec[Stmt],
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[LoopStmt]:
-    firstToken(self: LoopStmt) TokenIdx: self._firstToken
-    lastToken(self: LoopStmt) TokenIdx: self.body.last().unwrap().lastToken()
+    firstToken(self: LoopStmt) TokenIdx:
+        self._firstToken
+
+    lastToken(self: LoopStmt) TokenIdx:
+        self.body.last().unwrap().lastToken()
+
 
 type BreakStmt(
     label: Option[Id],
@@ -432,13 +516,16 @@ type BreakStmt(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[BreakStmt]:
-    firstToken(self: BreakStmt) TokenIdx: self._firstToken
+    firstToken(self: BreakStmt) TokenIdx:
+        self._firstToken
 
     lastToken(self: BreakStmt) TokenIdx:
         match self.label:
             Option.Some(id): id.lastToken()
             Option.None: self._firstToken
+
 
 type ContinueStmt(
     label: Option[Id],
@@ -449,13 +536,16 @@ type ContinueStmt(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[ContinueStmt]:
-    firstToken(self: ContinueStmt) TokenIdx: self._firstToken
+    firstToken(self: ContinueStmt) TokenIdx:
+        self._firstToken
 
     lastToken(self: ContinueStmt) TokenIdx:
         match self.label:
             Option.Some(id): id.lastToken()
             Option.None: self._firstToken
+
 
 type Pat:
     ## Matches anything, binds it to variable.
@@ -478,6 +568,7 @@ type Pat:
     ## Or pattern: `<pat1> | <pat2> | ...`. At least two patterns.
     Or(Vec[Pat])
 
+
 impl Tokens[Pat]:
     firstToken(self: Pat) TokenIdx:
         match self:
@@ -487,9 +578,7 @@ impl Tokens[Pat]:
 
             Pat.Record(pat): pat.firstToken()
 
-            Pat.Ignore(tok)
-                | Pat.Str(_, tok)
-                | Pat.Char(_, tok): tok
+            Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
 
             Pat.Or(ps): ps.get(0).firstToken()
 
@@ -501,22 +590,27 @@ impl Tokens[Pat]:
 
             Pat.Record(pat): pat.lastToken()
 
-            Pat.Ignore(tok)
-                | Pat.Str(_, tok)
-                | Pat.Char(_, tok): tok
+            Pat.Ignore(tok) | Pat.Str(_, tok) | Pat.Char(_, tok): tok
 
             Pat.Or(ps): ps.last().unwrap().lastToken()
+
 
 type VarPat(
     var_: Id,
 
     ## Inferred type of the binder. Filled in by the type checker.
-    ty: Option[Type],    # TODO: This should be type-checking type instead of AST type
+    ty: Option[Type], # TODO: This should be type-checking type instead of AST type
+
 )
 
+
 impl Tokens[VarPat]:
-    firstToken(self: VarPat) TokenIdx: self.var_.firstToken()
-    lastToken(self: VarPat) TokenIdx: self.var_.lastToken()
+    firstToken(self: VarPat) TokenIdx:
+        self.var_.firstToken()
+
+    lastToken(self: VarPat) TokenIdx:
+        self.var_.lastToken()
+
 
 type ConstrPat(
     constr: Constructor,
@@ -525,21 +619,32 @@ type ConstrPat(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[ConstrPat]:
-    firstToken(self: ConstrPat) TokenIdx: self.constr.firstToken()
-    lastToken(self: ConstrPat) TokenIdx: self._lastToken
+    firstToken(self: ConstrPat) TokenIdx:
+        self.constr.firstToken()
+
+    lastToken(self: ConstrPat) TokenIdx:
+        self._lastToken
+
 
 type RecordPat(
     fields: Vec[Named[Pat]],
     ignoreRest: Bool,
-    inferredTy: Option[Type],   # TODO: This should be type-checking type instead of AST type
+    inferredTy: Option[Type], # TODO: This should be type-checking type instead of AST type
+
     _firstToken: TokenIdx,
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[RecordPat]:
-    firstToken(self: RecordPat) TokenIdx: self._firstToken
-    lastToken(self: RecordPat) TokenIdx: self._lastToken
+    firstToken(self: RecordPat) TokenIdx:
+        self._firstToken
+
+    lastToken(self: RecordPat) TokenIdx:
+        self._lastToken
+
 
 type Constructor(
     variant: Bool,
@@ -562,18 +667,19 @@ type Constructor(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[Constructor]:
     firstToken(self: Constructor) TokenIdx:
         self._firstToken
 
     lastToken(self: Constructor) TokenIdx:
         match self.userTyArgs:
-            Option.Some(tyArgs):
-                tyArgs.lastToken()
+            Option.Some(tyArgs): tyArgs.lastToken()
             Option.None:
                 match self.constr:
                     Option.Some(con): con.token
                     Option.None: self.ty.token
+
 
 type Expr:
     ## A variable: `x`.
@@ -644,6 +750,7 @@ type Expr:
     # A parenthesized expression.
     Paren(ParenExpr)
 
+
 impl Tokens[Expr]:
     firstToken(self: Expr) TokenIdx:
         match self:
@@ -693,6 +800,7 @@ impl Tokens[Expr]:
             Expr.Seq(e): e.lastToken()
             Expr.Paren(e): e.lastToken()
 
+
 type VarExpr(
     id: Id,
 
@@ -703,6 +811,7 @@ type VarExpr(
     tyArgs: Vec[Type],
 )
 
+
 impl Tokens[VarExpr]:
     firstToken(self: VarExpr) TokenIdx:
         self.id.token
@@ -711,6 +820,7 @@ impl Tokens[VarExpr]:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken()
             Option.None: self.id.token
+
 
 type TyArgs(
     args: Vec[Type],
@@ -722,9 +832,14 @@ type TyArgs(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[TyArgs]:
-    firstToken(self: TyArgs) TokenIdx: self._firstToken
-    lastToken(self: TyArgs) TokenIdx: self._lastToken
+    firstToken(self: TyArgs) TokenIdx:
+        self._firstToken
+
+    lastToken(self: TyArgs) TokenIdx:
+        self._lastToken
+
 
 type FieldSelectExpr(
     object: Expr,
@@ -738,6 +853,7 @@ type FieldSelectExpr(
     userTyArgs: Option[TyArgs],
 )
 
+
 impl Tokens[FieldSelectExpr]:
     firstToken(self: FieldSelectExpr) TokenIdx:
         self.object.firstToken()
@@ -746,6 +862,7 @@ impl Tokens[FieldSelectExpr]:
         match self.userTyArgs:
             Option.Some(tyArgs): tyArgs.lastToken()
             Option.None: self.field.lastToken()
+
 
 ## A method selection: `<expr>.method`.
 ##
@@ -768,7 +885,8 @@ type MethodSelectExpr(
     # TODO: We could also add types to every expression if it's going to help with monomorphisation.
     #       For efficiency though, we should only annotate inferred types and then type check from
     #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[Type],  # TODO: type-checking type
+    objectTy: Option[Type], # TODO: type-checking type
+
 
     ## The type or trait id that defines the method.
     ##
@@ -790,15 +908,20 @@ type MethodSelectExpr(
     ##
     ## (If the method is not a trait method, then we don't care about the type parameter order.. I
     ## think?)
-    tyArgs: Vec[Type],       # TODO: type-checking type
+    tyArgs: Vec[Type], # TODO: type-checking type
 
-    _lastToken: TokenIdx
+
+    _lastToken: TokenIdx,
 )
 
 
 impl Tokens[MethodSelectExpr]:
-    firstToken(self: MethodSelectExpr) TokenIdx: self.object.firstToken()
-    lastToken(self: MethodSelectExpr) TokenIdx: self._lastToken
+    firstToken(self: MethodSelectExpr) TokenIdx:
+        self.object.firstToken()
+
+    lastToken(self: MethodSelectExpr) TokenIdx:
+        self._lastToken
+
 
 ## An associated function or method selection:
 ##
@@ -812,24 +935,35 @@ type AssocFnSelectExpr(
     userTyArgs: Option[TyArgs],
 
     ## Inferred type arguments of the type and associated function. Filled in by the type checker.
-    tyArgs: Vec[Type],       # TODO: type-checking type
+    tyArgs: Vec[Type], # TODO: type-checking type
 
-    _lastToken: TokenIdx
+
+    _lastToken: TokenIdx,
 )
 
+
 impl Tokens[AssocFnSelectExpr]:
-    firstToken(self: AssocFnSelectExpr) TokenIdx: self.ty.firstToken()
-    lastToken(self: AssocFnSelectExpr) TokenIdx: self._lastToken
+    firstToken(self: AssocFnSelectExpr) TokenIdx:
+        self.ty.firstToken()
+
+    lastToken(self: AssocFnSelectExpr) TokenIdx:
+        self._lastToken
+
 
 type CallExpr(
     fun: Expr,
     args: Vec[Named[Expr]],
-    _lastToken: TokenIdx
+    _lastToken: TokenIdx,
 )
 
+
 impl Tokens[CallExpr]:
-    firstToken(self: CallExpr) TokenIdx: self.fun.firstToken()
-    lastToken(self: CallExpr) TokenIdx: self._lastToken
+    firstToken(self: CallExpr) TokenIdx:
+        self.fun.firstToken()
+
+    lastToken(self: CallExpr) TokenIdx:
+        self._lastToken
+
 
 type IntExpr(
     ## The digits of the integer, without any prefix ("0x" or "0b") and suffix ("u32" etc.).
@@ -852,31 +986,47 @@ type IntExpr(
     token: TokenIdx,
 )
 
+
 impl Tokens[IntExpr]:
-    firstToken(self: IntExpr) TokenIdx: self.token
-    lastToken(self: IntExpr) TokenIdx: self.token
+    firstToken(self: IntExpr) TokenIdx:
+        self.token
+
+    lastToken(self: IntExpr) TokenIdx:
+        self.token
+
 
 type StrExpr(
     parts: Vec[StrPart],
     token: TokenIdx,
 )
 
+
 impl Tokens[StrExpr]:
-    firstToken(self: StrExpr) TokenIdx: self.token
-    lastToken(self: StrExpr) TokenIdx: self.token
+    firstToken(self: StrExpr) TokenIdx:
+        self.token
+
+    lastToken(self: StrExpr) TokenIdx:
+        self.token
+
 
 type StrPart:
     Str(Str)
     Expr(Expr)
+
 
 type CharExpr(
     char: Char,
     token: TokenIdx,
 )
 
+
 impl Tokens[CharExpr]:
-    firstToken(self: CharExpr) TokenIdx: self.token
-    lastToken(self: CharExpr) TokenIdx: self.token
+    firstToken(self: CharExpr) TokenIdx:
+        self.token
+
+    lastToken(self: CharExpr) TokenIdx:
+        self.token
+
 
 type BinOpExpr(
     left: Expr,
@@ -884,9 +1034,14 @@ type BinOpExpr(
     op: BinOp,
 )
 
+
 impl Tokens[BinOpExpr]:
-    firstToken(self: BinOpExpr) TokenIdx: self.left.firstToken()
-    lastToken(self: BinOpExpr) TokenIdx: self.right.lastToken()
+    firstToken(self: BinOpExpr) TokenIdx:
+        self.left.firstToken()
+
+    lastToken(self: BinOpExpr) TokenIdx:
+        self.right.lastToken()
+
 
 type BinOp:
     Add
@@ -906,15 +1061,21 @@ type BinOp:
     RightShift
     Subtract
 
+
 type UnOpExpr(
     op: UnOp,
     expr: Expr,
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[UnOpExpr]:
-    firstToken(self: UnOpExpr) TokenIdx: self._firstToken
-    lastToken(self: UnOpExpr) TokenIdx: self.expr.lastToken()
+    firstToken(self: UnOpExpr) TokenIdx:
+        self._firstToken
+
+    lastToken(self: UnOpExpr) TokenIdx:
+        self.expr.lastToken()
+
 
 type RecordExpr(
     fields: Vec[Named[Expr]],
@@ -922,22 +1083,30 @@ type RecordExpr(
     _lastToken: TokenIdx,
 )
 
+
 impl Tokens[RecordExpr]:
-    firstToken(self: RecordExpr) TokenIdx: self._firstToken
-    lastToken(self: RecordExpr) TokenIdx: self._lastToken
+    firstToken(self: RecordExpr) TokenIdx:
+        self._firstToken
+
+    lastToken(self: RecordExpr) TokenIdx:
+        self._lastToken
+
 
 type ReturnExpr(
     expr: Option[Expr],
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[ReturnExpr]:
-    firstToken(self: ReturnExpr) TokenIdx: self._firstToken
+    firstToken(self: ReturnExpr) TokenIdx:
+        self._firstToken
 
     lastToken(self: ReturnExpr) TokenIdx:
         match self.expr:
             Option.Some(expr): expr.lastToken()
             Option.None: self._firstToken
+
 
 type MatchExpr(
     scrutinee: Expr,
@@ -945,9 +1114,14 @@ type MatchExpr(
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[MatchExpr]:
-    firstToken(self: MatchExpr) TokenIdx: self._firstToken
-    lastToken(self: MatchExpr) TokenIdx: self.alts.last().unwrap().lastToken()
+    firstToken(self: MatchExpr) TokenIdx:
+        self._firstToken
+
+    lastToken(self: MatchExpr) TokenIdx:
+        self.alts.last().unwrap().lastToken()
+
 
 type Alt(
     pattern: Pat,
@@ -955,16 +1129,22 @@ type Alt(
     rhs: Vec[Stmt],
 )
 
+
 impl Tokens[Alt]:
-    firstToken(self: Alt) TokenIdx: self.pattern.firstToken()
-    lastToken(self: Alt) TokenIdx: self.rhs.last().unwrap().lastToken()
+    firstToken(self: Alt) TokenIdx:
+        self.pattern.firstToken()
+
+    lastToken(self: Alt) TokenIdx:
+        self.rhs.last().unwrap().lastToken()
+
 
 type IfExpr(
     # At least one element
     branches: Vec[(guard: Expr, body: Vec[Stmt])],
     elseBranch: Option[Vec[Stmt]],
-    _firstToken: TokenIdx
+    _firstToken: TokenIdx,
 )
+
 
 impl Tokens[IfExpr]:
     firstToken(self: IfExpr) TokenIdx:
@@ -976,16 +1156,22 @@ impl Tokens[IfExpr]:
 
         self.branches.last().unwrap().body.last().unwrap().lastToken()
 
+
 type FnExpr(
     sig: FunSig,
     body: Vec[Stmt],
     idx: U32,
-    _firstToken: TokenIdx
+    _firstToken: TokenIdx,
 )
 
+
 impl Tokens[FnExpr]:
-    firstToken(self: FnExpr) TokenIdx: self._firstToken
-    lastToken(self: FnExpr) TokenIdx: self.body.last().unwrap().lastToken()
+    firstToken(self: FnExpr) TokenIdx:
+        self._firstToken
+
+    lastToken(self: FnExpr) TokenIdx:
+        self.body.last().unwrap().lastToken()
+
 
 # <expr> is <pat>
 type IsExpr(
@@ -993,22 +1179,33 @@ type IsExpr(
     pat: Pat,
 )
 
+
 impl Tokens[IsExpr]:
-    firstToken(self: IsExpr) TokenIdx: self.expr.firstToken()
-    lastToken(self: IsExpr) TokenIdx: self.pat.lastToken()
+    firstToken(self: IsExpr) TokenIdx:
+        self.expr.firstToken()
+
+    lastToken(self: IsExpr) TokenIdx:
+        self.pat.lastToken()
+
 
 type DoExpr(
     body: Vec[Stmt],
     _firstToken: TokenIdx,
 )
 
+
 impl Tokens[DoExpr]:
-    firstToken(self: DoExpr) TokenIdx: self._firstToken
-    lastToken(self: DoExpr) TokenIdx: self.body.last().unwrap().lastToken()
+    firstToken(self: DoExpr) TokenIdx:
+        self._firstToken
+
+    lastToken(self: DoExpr) TokenIdx:
+        self.body.last().unwrap().lastToken()
+
 
 type UnOp:
     Not
     Neg
+
 
 type SeqExpr(
     ty: Option[Type],
@@ -1016,6 +1213,7 @@ type SeqExpr(
     _lbracket: TokenIdx,
     _rbracket: TokenIdx,
 )
+
 
 impl Tokens[SeqExpr]:
     firstToken(self: SeqExpr) TokenIdx:
@@ -1026,15 +1224,21 @@ impl Tokens[SeqExpr]:
     lastToken(self: SeqExpr) TokenIdx:
         self._rbracket
 
+
 type ParenExpr(
     expr: Expr,
     _lparen: TokenIdx,
     _rparen: TokenIdx,
 )
 
+
 impl Tokens[ParenExpr]:
-    firstToken(self: ParenExpr) TokenIdx: self._lparen
-    lastToken(self: ParenExpr) TokenIdx: self._rparen
+    firstToken(self: ParenExpr) TokenIdx:
+        self._lparen
+
+    lastToken(self: ParenExpr) TokenIdx:
+        self._rparen
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -1057,6 +1261,7 @@ impl ToStr[BinOp]:
             BinOp.Or: "Or"
             BinOp.RightShift: "RightShift"
             BinOp.Subtract: "Subtract"
+
 
 impl Eq[BinOp]:
     __eq(self: BinOp, other: BinOp) Bool:

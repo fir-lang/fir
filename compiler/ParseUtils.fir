@@ -8,13 +8,24 @@ type ExprPrefix:
 
 
 type InlineExprCont:
-    BinOp(op: BinOp, rhs: Expr)
-    Is(pat: Pat)
+    BinOp(
+        op: BinOp,
+        rhs: Expr,
+    )
+    Is(
+        pat: Pat,
+    )
 
 
 type ExprSuffix:
-    Field(field: Id, tyArgs: Option[TyArgs])
-    Args(args: Vec[Named[Expr]], _lastToken: TokenIdx)
+    Field(
+        field: Id,
+        tyArgs: Option[TyArgs],
+    )
+    Args(
+        args: Vec[Named[Expr]],
+        _lastToken: TokenIdx,
+    )
 
 
 parseCharLit(text: Str) Char:
@@ -43,6 +54,7 @@ parseStrParts(text: Str) Vec[StrPart]:
     Vec.empty() # TODO
 
 
+
 newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
 
@@ -64,12 +76,15 @@ processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
         panic("Field list cannot have both named and unnamed fields")
 
     if foundNamed:
-        let fs: Vec[(name: Id, ty: Type)] =
-            fields.iter().map(|f: (name: Option[Id], ty: Type)|: (name = f.name.unwrap(), ty = f.ty)).toVec()
+        let fs: Vec[(name: Id, ty: Type)] = fields.iter().map(
+            |f: (name: Option[Id], ty: Type)|:
+                (name = f.name.unwrap(), ty = f.ty),
+        ).toVec()
         ConFields.Named(fs)
     else:
-        let fs: Vec[Type] =
-            fields.iter().map(|f: (name: Option[Id], ty: Type)|: f.ty).toVec()
+        let fs: Vec[Type] = fields.iter().map(
+            |f: (name: Option[Id], ty: Type)|: f.ty,
+        ).toVec()
         ConFields.Unnamed(fs)
 
 
@@ -103,7 +118,6 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
             parts.push((left = currentLeft, conts = currentConts))
             currentConts = Vec.empty()
             currentLeft = rhs
-
         else:
             currentConts.push(node)
 
@@ -122,23 +136,28 @@ associate(left: Expr, nodes: Vec[InlineExprCont]) Expr:
     for part: (left: Expr, conts: Vec[InlineExprCont]) in parts.iter():
         let partLeft = part.left
         let partConts = part.conts
-        let expr =
-            if partConts.isEmpty():
-                partLeft
-            else:
-                match partConts.remove(0):
-                    InlineExprCont.Is(pat):
-                        assert(partConts.isEmpty())
-                        Expr.Is(IsExpr(expr = partLeft, pat = pat))
-                    InlineExprCont.BinOp(op, rhs):
-                        let leftAssoc = makeLeftAssoc(partLeft, op, rhs, 0, partConts, Option.None)
-                        if leftAssoc.newIdx != partConts.len():
-                            panic("Parse error")
-                        leftAssoc.expr
+        let expr = if partConts.isEmpty():
+            partLeft
+        else:
+            match partConts.remove(0):
+                InlineExprCont.Is(pat):
+                    assert(partConts.isEmpty())
+                    Expr.Is(IsExpr(expr = partLeft, pat = pat))
+                InlineExprCont.BinOp(op, rhs):
+                    let leftAssoc = makeLeftAssoc(
+                        partLeft,
+                        op,
+                        rhs,
+                        0,
+                        partConts,
+                        Option.None,
+                    )
+                    if leftAssoc.newIdx != partConts.len():
+                        panic("Parse error")
+                    leftAssoc.expr
 
         ret = match ret:
-            Option.None:
-                Option.Some(expr)
+            Option.None: Option.Some(expr)
             Option.Some(ret_):
                 Option.Some(Expr.BinOp(BinOpExpr(left = ret_, right = expr, op)))
 
@@ -155,13 +174,25 @@ makeLeftAssoc(
 ) (expr: Expr, newIdx: U32):
     loop:
         if nextNodeIdx == nodes.len():
-            return (expr = Expr.BinOp(BinOpExpr(left, right, op)), newIdx = nextNodeIdx)
+            return (
+                expr = Expr.BinOp(BinOpExpr(left, right, op)),
+                newIdx = nextNodeIdx,
+            )
 
         let nextNode = nodes.get(nextNodeIdx)
 
         let nextOpThings = match nextNode:
             InlineExprCont.Is(pat):
-                return (expr = Expr.Is(IsExpr(expr = Expr.BinOp(BinOpExpr(left, right, op)), pat)), newIdx = nextNodeIdx + 1)
+                return (
+                    expr =
+                        Expr.Is(
+                            IsExpr(
+                                expr = Expr.BinOp(BinOpExpr(left, right, op)),
+                                pat,
+                            ),
+                        ),
+                    newIdx = nextNodeIdx + 1,
+                )
             InlineExprCont.BinOp(op = nextOp, rhs = nextRhs):
                 (op = nextOp, rhs = nextRhs)
 
@@ -170,24 +201,29 @@ makeLeftAssoc(
 
         match assoc(op, nextOp):
             Assoc.Left:
-                left = Expr.BinOp(BinOpExpr(
-                    left = left,
-                    right = right,
-                    op = op,
-                ))
-                if prec is Option.Some(prec) and assoc(prec, nextOp) is Assoc.Left | Assoc.Fail:
+                left = Expr.BinOp(
+                    BinOpExpr(left = left, right = right, op = op,),
+                )
+                if prec is Option.Some(prec)
+                        and assoc(prec, nextOp) is Assoc.Left | Assoc.Fail:
                     return (expr = left, newIdx = nextNodeIdx)
                 op = nextOp
                 right = nextExpr
                 nextNodeIdx += 1
 
             Assoc.Right:
-                let scanResult = makeLeftAssoc(right, nextOp, nextExpr, nextNodeIdx + 1, nodes, Option.Some(nextOp))
+                let scanResult = makeLeftAssoc(
+                    right,
+                    nextOp,
+                    nextExpr,
+                    nextNodeIdx + 1,
+                    nodes,
+                    Option.Some(nextOp),
+                )
                 right = scanResult.expr
                 nextNodeIdx = scanResult.newIdx
 
-            Assoc.Fail:
-                panic("Binary operator can't be associated")
+            Assoc.Fail: panic("Binary operator can't be associated")
 
     panic("unreachable")
 
@@ -212,7 +248,11 @@ assoc(left: BinOp, right: BinOp) Assoc:
         BinOp.Multiply | BinOp.Divide:
             # `*` and `/` don't commute with bitwise operators, and bind more tightly than other
             # operators.
-            if right is BinOp.BitAnd | BinOp.BitOr | BinOp.LeftShift | BinOp.RightShift:
+            if right
+                    is BinOp.BitAnd
+                        | BinOp.BitOr
+                        | BinOp.LeftShift
+                        | BinOp.RightShift:
                 return Assoc.Fail
 
             Assoc.Left
@@ -226,7 +266,15 @@ assoc(left: BinOp, right: BinOp) Assoc:
             if right is BinOp.Multiply | BinOp.Divide:
                 return Assoc.Right
 
-            if right is BinOp.Equal | BinOp.Gt | BinOp.GtEq | BinOp.Lt | BinOp.LtEq | BinOp.NotEqual | BinOp.And | BinOp.Or:
+            if right
+                    is BinOp.Equal
+                        | BinOp.Gt
+                        | BinOp.GtEq
+                        | BinOp.Lt
+                        | BinOp.LtEq
+                        | BinOp.NotEqual
+                        | BinOp.And
+                        | BinOp.Or:
                 return Assoc.Left
 
             Assoc.Fail
@@ -237,7 +285,15 @@ assoc(left: BinOp, right: BinOp) Assoc:
             if right is BinOp.BitAnd:
                 return Assoc.Left
 
-            if right is BinOp.Equal | BinOp.Gt | BinOp.GtEq | BinOp.Lt | BinOp.LtEq | BinOp.NotEqual | BinOp.And | BinOp.Or:
+            if right
+                    is BinOp.Equal
+                        | BinOp.Gt
+                        | BinOp.GtEq
+                        | BinOp.Lt
+                        | BinOp.LtEq
+                        | BinOp.NotEqual
+                        | BinOp.And
+                        | BinOp.Or:
                 return Assoc.Left
 
             Assoc.Fail
@@ -247,7 +303,15 @@ assoc(left: BinOp, right: BinOp) Assoc:
             if right is BinOp.BitOr:
                 return Assoc.Left
 
-            if right is BinOp.Equal | BinOp.Gt | BinOp.GtEq | BinOp.Lt | BinOp.LtEq | BinOp.NotEqual | BinOp.And | BinOp.Or:
+            if right
+                    is BinOp.Equal
+                        | BinOp.Gt
+                        | BinOp.GtEq
+                        | BinOp.Lt
+                        | BinOp.LtEq
+                        | BinOp.NotEqual
+                        | BinOp.And
+                        | BinOp.Or:
                 return Assoc.Left
 
             Assoc.Fail
@@ -255,15 +319,36 @@ assoc(left: BinOp, right: BinOp) Assoc:
         BinOp.LeftShift | BinOp.RightShift:
             # `<<` and `>>` don't commute, and bind more tightly than relational and binary
             # operators.
-            if right is BinOp.Equal | BinOp.Gt | BinOp.GtEq | BinOp.Lt | BinOp.LtEq | BinOp.NotEqual | BinOp.And | BinOp.Or:
+            if right
+                    is BinOp.Equal
+                        | BinOp.Gt
+                        | BinOp.GtEq
+                        | BinOp.Lt
+                        | BinOp.LtEq
+                        | BinOp.NotEqual
+                        | BinOp.And
+                        | BinOp.Or:
                 return Assoc.Left
 
             Assoc.Fail
 
-        BinOp.Equal | BinOp.Gt | BinOp.GtEq | BinOp.Lt | BinOp.LtEq | BinOp.NotEqual:
+        BinOp.Equal
+            | BinOp.Gt
+            | BinOp.GtEq
+            | BinOp.Lt
+            | BinOp.LtEq
+            | BinOp.NotEqual:
             # Relational operators don't commute. They bind less tightly than bitwise and arithmetic
             # operators, and more tightly than logical operators.
-            if right is BinOp.Multiply | BinOp.Divide | BinOp.Add | BinOp.Subtract | BinOp.LeftShift | BinOp.RightShift | BinOp.BitAnd | BinOp.BitOr:
+            if right
+                    is BinOp.Multiply
+                        | BinOp.Divide
+                        | BinOp.Add
+                        | BinOp.Subtract
+                        | BinOp.LeftShift
+                        | BinOp.RightShift
+                        | BinOp.BitAnd
+                        | BinOp.BitOr:
                 return Assoc.Right
 
             if right is BinOp.And | BinOp.Or:

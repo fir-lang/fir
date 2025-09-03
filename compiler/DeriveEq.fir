@@ -3,6 +3,7 @@ import Lexer
 import Peg.PegTestLib
 import Compiler.Scanner
 
+
 main(args: Array[Str]):
     if args.len() < 2:
         # TODO: print usage
@@ -15,6 +16,7 @@ main(args: Array[Str]):
         "--file": gen(readFileUtf8(args.get(2)))
         other: print("Unknown mode: `other`")
 
+
 gen(item: Str):
     let (tokens, error) = tokenize("<ToStr item>", item)
 
@@ -24,45 +26,58 @@ gen(item: Str):
     tokens = match try(||: scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
             panic("Scanner error: `line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens):
-            tokens
+        Result.Ok(tokens): tokens
 
     let parserState = ParserState.new(tokens)
 
     let tree = match try(||: typeDecl(parserState)):
-        Result.Err(err): panic("Unable to parse item as type decl: unexpected `tokens.get(err)`")
+        Result.Err(err):
+            panic(
+                "Unable to parse item as type decl: unexpected `tokens.get(err)`",
+            )
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():
-        panic("Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`")
+        panic(
+            "Parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`",
+        )
 
     print(genTree(tree, tokens).render(80))
+
 
 genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
     let typeName = tokens.get(typeDecl.name.token.idx).text
 
-    let methodBody =
-        match typeDecl.rhs:
-            Option.None:
-                Doc.empty()
+    let methodBody = match typeDecl.rhs:
+        Option.None: Doc.empty()
 
-            Option.Some(TypeDeclRhs.Sum(cons)):
-                genSumAlts(typeName, cons, tokens)
+        Option.Some(TypeDeclRhs.Sum(cons)): genSumAlts(typeName, cons, tokens)
 
-            Option.Some(TypeDeclRhs.Product(fields)):
-                genProduct(typeName, fields, tokens)
+        Option.Some(TypeDeclRhs.Product(fields)):
+            genProduct(typeName, fields, tokens)
 
     let preds = Doc.empty()
     if typeDecl.typeParams.len() != 0:
-        preds = _brackets(_interleave(
-            typeDecl.typeParams,
-            |param|: Doc.str("Eq[") + Doc.str(tokens.get(param.token.idx).text) + Doc.char(']'),
-            Doc.str(", ")
-        ))
+        preds = _brackets(
+            _interleave(
+                typeDecl.typeParams,
+                |param|:
+                    Doc.str("Eq[")
+                        + Doc.str(tokens.get(param.token.idx).text)
+                        + Doc.char(']'),
+                Doc.str(", "),
+            ),
+        )
 
     let typeParamsDoc = Doc.empty()
     if typeDecl.typeParams.len() != 0:
-        typeParamsDoc = _brackets(_interleave(typeDecl.typeParams, |param|: Doc.str(tokens.get(param.token.idx).text), Doc.str(", ")))
+        typeParamsDoc = _brackets(
+            _interleave(
+                typeDecl.typeParams,
+                |param|: Doc.str(tokens.get(param.token.idx).text),
+                Doc.str(", "),
+            ),
+        )
 
     let typeNameDoc = Doc.str(typeName)
 
@@ -85,7 +100,10 @@ genTree(typeDecl: TypeDecl, tokens: Vec[Token]) Doc:
                     + typeParamsDoc
                     + Doc.str(") Bool:")
                     + Doc.hardLine()
-                    + methodBody))
+                    + methodBody,
+            ),
+    )
+
 
 genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Vec[Token]) Doc:
     let alts = Doc.empty()
@@ -98,25 +116,25 @@ genSumAlts(typeName: Str, decls: Vec[ConDecl], tokens: Vec[Token]) Doc:
         let r = genConPat('r', typeName, conDecl, tokens)
         let pat = makeLRRecord(l, r)
         alts += Doc.nested(
-                4,
-                pat + Doc.char(':') + Doc.hardLine()
-                    + genSumRhs(typeName, conDecl))
+            4,
+            pat + Doc.char(':') + Doc.hardLine() + genSumRhs(typeName, conDecl),
+        )
     Doc.nested(
         4,
-        Doc.str("match (l = self, r = other):")
-            + Doc.hardLine()
-            + alts)
+        Doc.str("match (l = self, r = other):") + Doc.hardLine() + alts,
+    )
+
 
 genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) Doc:
     let fieldPats = match conDecl.fields:
         ConFields.Empty:
-            return Doc.str(typeName) + Doc.char('.') + Doc.str(tokens.get(conDecl.name.token.idx).text)
+            return Doc.str(typeName)
+                + Doc.char('.')
+                + Doc.str(tokens.get(conDecl.name.token.idx).text)
 
-        ConFields.Named(fields):
-            genNamedFieldPats(varPrefix, fields, tokens)
+        ConFields.Named(fields): genNamedFieldPats(varPrefix, fields, tokens)
 
-        ConFields.Unnamed(fields):
-            genUnnamedFieldPats(varPrefix, fields)
+        ConFields.Unnamed(fields): genUnnamedFieldPats(varPrefix, fields)
 
     Doc.str(typeName)
         + Doc.char('.')
@@ -125,7 +143,12 @@ genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) 
         + fieldPats
         + Doc.char(')')
 
-genNamedFieldPats(varPrefix: Char, fields: Vec[(name: Id, ty: Type)], tokens: Vec[Token]) Doc:
+
+genNamedFieldPats(
+    varPrefix: Char,
+    fields: Vec[(name: Id, ty: Type)],
+    tokens: Vec[Token],
+) Doc:
     let doc = Doc.empty()
     for i: U32 in range(u32(0), fields.len()):
         if i != 0:
@@ -136,6 +159,7 @@ genNamedFieldPats(varPrefix: Char, fields: Vec[(name: Id, ty: Type)], tokens: Ve
             + Doc.str(i.toStr())
     doc
 
+
 genUnnamedFieldPats(varPrefix: Char, fields: Vec[Type]) Doc:
     let doc = Doc.empty()
     for i: U32 in range(u32(0), fields.len()):
@@ -143,6 +167,7 @@ genUnnamedFieldPats(varPrefix: Char, fields: Vec[Type]) Doc:
             doc += Doc.str(", ")
         doc += Doc.char(varPrefix) + Doc.str(i.toStr())
     doc
+
 
 genUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
     let doc = conName + Doc.char('(')
@@ -152,32 +177,33 @@ genUnnamedFieldsBody(conName: Doc, numFields: U32) Doc:
         doc += Doc.char('x') + Doc.str(i.toStr())
     doc + Doc.char(')')
 
+
 genSumRhs(typeName: Str, conDecl: ConDecl) Doc:
     let numFields = match conDecl.fields:
-        ConFields.Empty:
-            return Doc.str("Bool.True")
+        ConFields.Empty: return Doc.str("Bool.True")
 
-        ConFields.Named(fields):
-            fields.len()
+        ConFields.Named(fields): fields.len()
 
-        ConFields.Unnamed(fields):
-            fields.len()
+        ConFields.Unnamed(fields): fields.len()
 
     let rhs = Doc.empty()
 
     for i: U32 in range(u32(0), numFields):
         if i != 0:
             rhs += Doc.str(" && ")
-        rhs += Doc.char('l') + Doc.str(i.toStr()) + Doc.str(" == ")
-            + Doc.char('r') + Doc.str(i.toStr())
+        rhs += Doc.char('l')
+            + Doc.str(i.toStr())
+            + Doc.str(" == ")
+            + Doc.char('r')
+            + Doc.str(i.toStr())
         i += 1
 
     rhs
 
+
 genProduct(typeName: Str, fields: ConFields, tokens: Vec[Token]) Doc:
     match fields:
-        ConFields.Empty:
-            Doc.empty()
+        ConFields.Empty: Doc.empty()
 
         ConFields.Named(fields):
             let doc = Doc.empty()
@@ -192,11 +218,12 @@ genProduct(typeName: Str, fields: ConFields, tokens: Vec[Token]) Doc:
                 i += 1
             doc.nest(4)
 
-        ConFields.Unnamed(_):
-            panic("TODO")
+        ConFields.Unnamed(_): panic("TODO")
+
 
 makeLRRecord(l: Doc, r: Doc) Doc:
     Doc.str("(l = ") + l + Doc.str(", r = ") + r + Doc.char(')')
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -210,8 +237,10 @@ _interleave(things: Vec[a], toDoc: Fn(a) Doc / exn, sep: Doc) Doc / exn:
         i += 1
     ret
 
+
 _brackets(doc: Doc) Doc:
     Doc.char('[') + doc + Doc.char(']')
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -234,13 +263,15 @@ type Result[e, t]:
 
     print("")
 
-    gen("\
+    gen(
+        "\
 type Token(
     kind: TokenKind,
     text: Str,
     byteIdx: U32,
     line: U32,
-    col: U32)")
+    col: U32)",
+    )
 
     print("")
 
@@ -248,6 +279,7 @@ type Token(
 type Foo:
     A(x: U32)
     B(y: Str, z: Bool)")
+
 
 # args: -iPeg=tools/peg -iCompiler=compiler
 # args after: -- --test
@@ -287,3 +319,4 @@ type Foo:
 #                 l0 == r0
 #             (l = Foo.B(y = l0, z = l1), r = Foo.B(y = r0, z = r1)):
 #                 l0 == r0 && l1 == r1
+

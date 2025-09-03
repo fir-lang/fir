@@ -9,6 +9,7 @@ import Compiler.Lexer
 import PegTestLib
 import TestGrammar
 
+
 main():
     runTest("'a' as terminalA", "a", terminalA)
     runTest("'b' as terminalA (should fail)", "b", terminalA)
@@ -39,7 +40,11 @@ main():
     runTest("'a b' as endOfInputTest", "a b", endOfInputTest)
     runTest("'a b ' as endOfInputTest", "a b ", endOfInputTest)
     runTest("'a b a' as endOfInputTest (should fail)", "a b a", endOfInputTest)
-    runTest("'b a a a c b' as bracketedOneOrMoreA (should fail)", "b a a a c b", bracketedOneOrMoreA)
+    runTest(
+        "'b a a a c b' as bracketedOneOrMoreA (should fail)",
+        "b a a a c b",
+        bracketedOneOrMoreA,
+    )
 
     print("# Simple cases -------------------------------------------")
     print(try(||: runParser("a", semanticActionSimple, Bool.False)))
@@ -65,8 +70,7 @@ main():
 
     print("# Complex group ------------------------------------------")
     match try(||: runParser("a a a b b b c", semanticActionComplex, Bool.False)):
-        Result.Err(err):
-            print(err)
+        Result.Err(err): print(err)
         Result.Ok(result):
             print("aVec = `result.aVec`")
             print("bVec = `result.bVec`")
@@ -130,6 +134,7 @@ main():
     print("# Error cursor on failure --------------------------------")
     print(try(||: runParser("b b b", errorCursorBug, Bool.False)))
     print(try(||: runParser("b b c", errorCursorBug, Bool.False)))
+
 
 # args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
@@ -292,3 +297,4 @@ main():
 #     ErrorCursorBugAlt2(LowerId(1:1:"b"), LowerId(1:3:"b"), LowerId(1:5:"b")),
 # ))
 # Result.Err(unexpected token or end of input at cursor 2)
+

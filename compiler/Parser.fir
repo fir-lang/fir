@@ -2,6 +2,7 @@ import Error
 import Grammar
 import Scanner
 
+
 main(args: Array[Str]):
     let printAst = Bool.False
     let path: Option[Str] = Option.None
@@ -22,11 +23,11 @@ main(args: Array[Str]):
     if error is Option.Some(error):
         print("ERROR: `error`")
 
-    let tokens = match try(||: scan[row[]](tokens)):    # Explicitly close the variant (issue #49).
+    let tokens = match try(||: scan[row[]](tokens)): # Explicitly close the variant (issue #49).
+
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")
-        Result.Ok(tokens):
-            tokens
+        Result.Ok(tokens): tokens
 
     let parserState = ParserState.new(tokens)
 
@@ -36,15 +37,15 @@ main(args: Array[Str]):
                 panic("Parse error: unexpected end of input")
             else:
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
-        Result.Ok(tree):
-            tree
+        Result.Ok(tree): tree
 
-    # if printAst:
-    #     let buf = StrBuf.withCapacity(1_000_000)
-    #     for topDecl: ParseTree[Token, NonTerminal] in result.tree.asNonTerminal(NonTerminal.Module).iter():
-    #         topDecl.toDoc().renderToBuf(80, buf)
-    #         print(buf.toStr())
-    #         buf.clear()
+
+# if printAst:
+#     let buf = StrBuf.withCapacity(1_000_000)
+#     for topDecl: ParseTree[Token, NonTerminal] in result.tree.asNonTerminal(NonTerminal.Module).iter():
+#         topDecl.toDoc().renderToBuf(80, buf)
+#         print(buf.toStr())
+#         buf.clear()
 
 showUsageAndExit() a:
     panic("USAGE: fir compiler/Parser.fir -- <file> [--print]")

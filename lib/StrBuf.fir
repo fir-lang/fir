@@ -3,14 +3,18 @@ type StrBuf(
     _bytes: Vec[U8],
 )
 
+
 StrBuf.withCapacity(cap: U32) StrBuf:
     StrBuf(_bytes = Vec.withCapacity(cap))
+
 
 StrBuf.len(self) U32:
     self._bytes.len()
 
+
 StrBuf.clear(self):
     self._bytes.clear()
+
 
 StrBuf.push(self, char: Char):
     let code = char._codePoint
@@ -39,11 +43,13 @@ StrBuf.push(self, char: Char):
         self._bytes.push(b2)
         self._bytes.push(b3)
 
+
 StrBuf.pushStr(self, str: Str):
     # TODO: Maybe consider memcpy-ing the bytes.
     self._bytes.reserve(str.len())
     for char: Char in str.chars():
         self.push(char)
+
 
 impl ToStr[StrBuf]:
     toStr(self: StrBuf) Str:
