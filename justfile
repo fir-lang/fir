@@ -52,10 +52,10 @@ compiler_update_goldens:
     for f in tools/peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 formatter_golden_test:
-    goldentests tools/format/Format.sh tools/format/tests '# '
+    goldentests tools/format/FormatGoldenTest.sh tools/format/tests '# '
 
 formatter_update_goldens:
-    goldentests tools/format/Format.sh tools/format/tests '# ' --overwrite
+    goldentests tools/format/FormatGoldenTest.sh tools/format/tests '# ' --overwrite
     for f in tools/format/tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
@@ -82,6 +82,8 @@ update_generated_files:
 
     tools/peg/Peg.sh tools/peg/TestGrammar.peg > tools/peg/TestGrammar.fir
     tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
+    
+    tools/format/Format.sh tools/peg/{PegGrammar,TestGrammar}.fir compiler/Grammar.fir
 
 # build_site tested with:
 #

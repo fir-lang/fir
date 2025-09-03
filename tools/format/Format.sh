@@ -1,34 +1,37 @@
 #!/bin/bash
 
-# This script is used for testing and it drops the golden test expectations
-# before running the formatter (in a temporary file), which are assumed to be
-# at the end of the file (argument to this script) and start with
-# '# expected stdout:'.
+shopt -s globstar
 
-set -e
+echo "Building Fir..."
+cargo build --release
 
-SCRIPT_DIR="$(dirname "$0")"
+TEMP_DIR=$(mktemp -d)
+# trap 'echo "Cleaning up temp dir"; rm -rf "$TEMP_DIR"' EXIT
 
-cargo build --release 2>/dev/null
+echo "Formatted code generated to $TEMP_DIR"
 
-exit_code=0
+script_failed=0
 
-output_file=$(mktemp)
-trap 'rm -rf "$output_file"' EXIT
+for file in "$@"; do
+  echo "$file"
 
-for f in "$@"; do
-    if [ $# -gt 1 ]; then
-        echo "$f"
-    fi
+  OUTPUT_FILE="$TEMP_DIR/$file"
+  mkdir -p "$(dirname "$OUTPUT_FILE")"
 
-    contents_without_test_expectations=$(sed '/^# expected stdout:/,$d' "$f")
-    echo "$contents_without_test_expectations" > "$output_file"
-
-    ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$output_file"
-
-    if [ $? -ne 0 ]; then
-        exit_code=1
-    fi
+  # Note: we can't use Format.sh here as it drops the golden test expectations
+  # before calling the formatter.
+  if ! ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$file" > "$OUTPUT_FILE"; then
+    script_failed=1
+  fi
 done
 
-exit $exit_code
+if [ "$script_failed" -ne 0 ]; then
+  echo "Formatting failed, see errors above."
+  echo "NOT copying formatted files to working directory."
+else
+  echo "Copying formatted files to working directory..."
+  rsync -a "$TEMP_DIR/" .
+  echo "Done."
+fi
+
+exit "$script_failed"
