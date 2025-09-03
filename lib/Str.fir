@@ -242,8 +242,9 @@ impl Iterator[Lines, Str, exn]:
         for (char = char, idx = idx): (char: Char, idx: U32) in charIdxIter:
             if char == '\n':
                 let substr = self._str.substr(lineStart, self._idx + idx)
-                self._idx += idx
-                    + 1 # continue with the next char
+
+                # Continue with the next char
+                self._idx += idx + 1
 
                 return Option.Some(substr)
 

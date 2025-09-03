@@ -866,9 +866,11 @@ Lexer._string(self) Token / Error:
     let startIdx = self._byteIdx
     let startLine = self._line
     let startCol = self._col
-    self._byteIdx += 1 # Skip initial '#'
 
+    # Skip initial '#'
+    self._byteIdx += 1
     self._col += 1
+
     while self._byteIdx < self._input.len():
         match self._nextChar():
             '"':
@@ -921,8 +923,9 @@ Lexer._string(self) Token / Error:
 
             other:
                 self._byteIdx += other.lenUtf8()
-                self._col += 1 # TODO: Handle wide chars
 
+                # TODO: Handle wide chars
+                self._col += 1
 
     self._fail("unterminated string literal")
 
@@ -950,8 +953,11 @@ Lexer._char(self) Token / Error:
                         "invalid escape character in character literal: '`other`'",
                     )
         c: c
+
     self._byteIdx += char.lenUtf8()
-    self._col += 1 # TODO: Handle wide chars
+
+    # TODO: Handle wide chars
+    self._col += 1
 
     if self._nextChar() != '\'':
         self._fail("unterminated character literal")
@@ -1000,8 +1006,9 @@ Lexer._singleLineComment(self) Token:
                 line = startLine,
                 col = startCol,
             )
-        self._col += 1 # TODO: Handle wide chars
 
+        # TODO: Handle wide chars
+        self._col += 1
 
     return Token(
         kind = TokenKind.Comment,
@@ -1026,7 +1033,9 @@ Lexer._multiLineComment(self) Token / Error:
             self._col = 0
         else:
             self._byteIdx += c.lenUtf8()
-            self._col += 1 # TODO: Handle wide chars
+
+            # TODO: Handle wide chars
+            self._col += 1
 
         if c == '|':
             if self._byteIdx < self._input.len():
