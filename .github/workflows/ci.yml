@@ -18,8 +18,8 @@ jobs:
       - name: Build
         run: cargo build --verbose
 
-  check_formatting:
-    name: Check formatting
+  check_rust_formatting:
+    name: Check Rust formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,8 +30,25 @@ jobs:
             toolchain: stable
             override: true
 
-      - name: 'Check formatting'
+      - name: 'Check Rust formatting'
         run: cargo fmt --all --check
+
+  run_fir_formatter:
+    name: Run Fir formatter on the repo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: 'Run formatter'
+        run: |
+          export FIR_ROOT=`pwd`
+          ./tools/format/FormatRepo.sh
 
   check_lints:
     name: Check lints
@@ -183,6 +200,31 @@ jobs:
         run: |
           export FIR_ROOT=`pwd`
           ./compiler/tests/parse.sh
+
+  run_formatter_golden_tests:
+    name: Formatter golden tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+
+      - name: Install just
+        run: sudo apt install -y just
+
+      - name: Install goldentests
+        run: cargo install --git https://github.com/osa1/golden-tests --branch fir --features=binary
+
+      - name: Build interpreter
+        run: cargo build --release --verbose
+
+      - name: Test
+        run: just formatter_golden_test
 
   check_web_build:
     name: Check web build

@@ -1,0 +1,3 @@
+# hi
+
+# expected stdout: # hi
