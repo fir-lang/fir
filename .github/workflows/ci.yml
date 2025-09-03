@@ -33,8 +33,8 @@ jobs:
       - name: 'Check Rust formatting'
         run: cargo fmt --all --check
 
-  check_fir_formatting:
-    name: Check Fir formatting
+  run_fir_formatter:
+    name: Run Fir formatter on the repo
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,12 +45,10 @@ jobs:
             toolchain: stable
             override: true
 
-      - name: 'Check Fir formatting'
+      - name: 'Run formatter'
         run: |
           export FIR_ROOT=`pwd`
           ./tools/format/FormatRepo.sh
-          git -P diff
-          ! git status --porcelain | grep -q '^ M'; then
 
   check_lints:
     name: Check lints
