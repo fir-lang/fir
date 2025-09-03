@@ -7,9 +7,8 @@ import Token
 module(state: ParserState[Token]) Vec[TopDecl] / U32:
     let cursor0 = state._cursor
     let altResult = try(||:
-        let ds = Vec.empty()
-        ds.push(topDecl(state))
         let zeroOrMoreCursor0 = state._cursor
+        let ds = Vec.empty()
         loop:
             let dsLen0 = ds.len()
             let symResult = try(||:
