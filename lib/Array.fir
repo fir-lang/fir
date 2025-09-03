@@ -20,6 +20,13 @@ prim Array.slice(self: Array[t], start: U32, end: U32) Array[t]
 prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
 
 
+Array.getOpt(self: Array[t], idx: U32) Option[t]:
+    if idx < self.len():
+        Option.Some(self.get(idx))
+    else:
+        Option.None
+
+
 Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
     let size = match iter.size[iter, item, exn, exn]():
         Option.Some(size): size
