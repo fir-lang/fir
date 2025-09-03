@@ -1,13 +1,24 @@
 prim type Array[t]
 
+
 prim Array.new(len: U32) Array[t]
+
+
 prim Array.len(self: Array[t]) U32
+
+
 prim Array.get(self: Array[t], idx: U32) t
+
+
 prim Array.set(self: Array[t], idx: U32, elem: t)
+
+
 prim Array.slice(self: Array[t], start: U32, end: U32) Array[t]
+
 
 # memmove
 prim Array.copyWithin(self: Array[t], src: U32, dst: U32, len: U32)
+
 
 Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
     let size = match iter.size[iter, item, exn, exn]():
@@ -21,11 +32,10 @@ Array.fromIter[Iterator[iter, item, exn]](iter: iter) Array[item] / exn:
 
     array
 
+
 Array.iter(self: Array[t]) ArrayIter[t]:
-    ArrayIter(
-        _array = self,
-        _idx = 0,
-    )
+    ArrayIter(_array = self, _idx = 0,)
+
 
 impl[ToStr[t]] ToStr[Array[t]]:
     toStr(self: Array[t]) Str:
@@ -38,10 +48,12 @@ impl[ToStr[t]] ToStr[Array[t]]:
         buf.push(']')
         buf.toStr()
 
+
 type ArrayIter[t](
     _array: Array[t],
     _idx: U32,
 )
+
 
 impl Iterator[ArrayIter[t], t, exn]:
     next(self: ArrayIter[t]) Option[t] / exn:

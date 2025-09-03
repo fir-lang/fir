@@ -2,17 +2,22 @@ type HashMap[k, v](
     _elems: Vec[Option[Elem[k, v]]],
 )
 
+
 type Elem[k, v](
     key: k,
     value: v,
     next: Option[Elem[k, v]],
 )
 
-HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](iter: iter) HashMap[k, v] / exn:
+
+HashMap.fromIter[Iterator[iter, (key: k, value: v), exn], Eq[k], Hash[k]](
+    iter: iter,
+) HashMap[k, v] / exn:
     let map = HashMap.withCapacity(10)
     for item: (key: k, value: v) in iter:
         map.insert(item.key, item.value)
     map
+
 
 HashMap.withCapacity(cap: U32) HashMap[k, v]:
     let elems: Vec[Option[Elem[k, v]]] = Vec.withCapacity(cap)
@@ -20,13 +25,17 @@ HashMap.withCapacity(cap: U32) HashMap[k, v]:
         elems.push(Option.None)
     HashMap(_elems = elems)
 
+
 # Insert new value, return old value.
 HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
     let hash = key.hash()
     let index = hash.mod(self._elems.len())
     match self._elems.get(index):
         Option.None:
-            self._elems.set(index, Option.Some(Elem(key = key, value = value, next = Option.None)))
+            self._elems.set(
+                index,
+                Option.Some(Elem(key = key, value = value, next = Option.None)),
+            )
             return Option.None
         Option.Some(elem):
             loop:
@@ -36,13 +45,19 @@ HashMap.insert[Hash[k], Eq[k]](self: HashMap[k, v], key: k, value: v) Option[v]:
                     return Option.Some(old)
                 else:
                     match elem.next:
-                        Option.Some(next):
-                            elem = next
+                        Option.Some(next): elem = next
                         Option.None:
-                            elem.next = Option.Some(Elem(key = key, value = value, next = Option.None))
+                            elem.next = Option.Some(
+                                Elem(
+                                    key = key,
+                                    value = value,
+                                    next = Option.None,
+                                ),
+                            )
                             return Option.None
 
     panic("unreachable")
+
 
 HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
     let hash = key.hash()
@@ -58,6 +73,7 @@ HashMap.get[Hash[k], Eq[k]](self: HashMap[k, v], key: k) Option[v]:
                     elem = elem_.next
 
     panic("unreachable")
+
 
 impl[ToStr[k], ToStr[v]] ToStr[HashMap[k, v]]:
     toStr(self: HashMap[k, v]) Str:

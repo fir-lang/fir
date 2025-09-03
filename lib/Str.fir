@@ -4,6 +4,7 @@ type Str(
     _bytes: Array[U8],
 )
 
+
 # Copies the bytes, does not validate UTF-8.
 Str.fromUtf8Vec(bytes: Vec[U8]) Str:
     let copied = Array.new(bytes.len())
@@ -11,14 +12,20 @@ Str.fromUtf8Vec(bytes: Vec[U8]) Str:
         copied.set(i, bytes.get(i))
     Str(_bytes = copied)
 
-# UTF-8 encoding size of the string.
-Str.len(self) U32: self._bytes.len()
 
-Str.isEmpty(self) Bool: self.len() == 0
+# UTF-8 encoding size of the string.
+Str.len(self) U32:
+    self._bytes.len()
+
+
+Str.isEmpty(self) Bool:
+    self.len() == 0
+
 
 # TODO: This should check that `byteStart` and `byteEnd` are on character boundaries.
 Str.substr(self, byteStart: U32, byteEnd: U32) Str:
     Str(_bytes = self._bytes.slice(byteStart, byteEnd))
+
 
 Str.startsWith(self, prefix: Str) Bool:
     if self.len() < prefix.len():
@@ -29,6 +36,7 @@ Str.startsWith(self, prefix: Str) Bool:
             return Bool.False
 
     Bool.True
+
 
 # Get the character at given byte index. Panics if the byte is not a first byte of a UTF-8
 # code point.
@@ -61,17 +69,22 @@ Str.charAt(self, byteIndex: U32) Char:
         let b3 = (self._bytes.get(byteIndex + 3) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
+
 Str.chars(self) CharIter:
     CharIter(_bytes = self._bytes, _idx = 0)
+
 
 Str.charIndices(self) CharIndices:
     CharIndices(_str = self, _idx = 0)
 
+
 Str.splitWhitespace(self) SplitWhitespace:
     SplitWhitespace(_str = self, _idx = 0)
 
+
 Str.lines(self) Lines:
     Lines(_str = self, _idx = 0)
+
 
 impl Eq[Str]:
     __eq(self: Str, other: Str) Bool:
@@ -84,6 +97,7 @@ impl Eq[Str]:
 
         Bool.True
 
+
 impl Hash[Str]:
     hash(self: Str) U32:
         let hash: U32 = 2166136261
@@ -92,8 +106,11 @@ impl Hash[Str]:
             hash ^= byte.asU32()
         hash
 
+
 impl ToStr[Str]:
-    toStr(self: Str) Str: self
+    toStr(self: Str) Str:
+        self
+
 
 type CharIter(
     # UTF-8 encoding of the string.
@@ -103,9 +120,11 @@ type CharIter(
     _idx: U32,
 )
 
+
 # Get the slice of the original string, starting from the current iteration point.
 CharIter.asStr(self) Str:
     Str(_bytes = self._bytes.slice(self._idx, self._bytes.len()))
+
 
 impl Iterator[CharIter, Char, exn]:
     next(self: CharIter) Option[Char] / exn:
@@ -117,10 +136,12 @@ impl Iterator[CharIter, Char, exn]:
         self._idx += charLength
         Option.Some(char)
 
+
 type CharIndices(
     _str: Str,
     _idx: U32,
 )
+
 
 impl Iterator[CharIndices, (char: Char, idx: U32), exn]:
     next(self: CharIndices) Option[(char: Char, idx: U32)] / exn:
@@ -132,6 +153,7 @@ impl Iterator[CharIndices, (char: Char, idx: U32), exn]:
         let idx = self._idx
         self._idx += charLength
         Option.Some((char = char, idx = idx))
+
 
 _charAt(bytes: Array[U8], idx: U32) Char:
     let byte = bytes.get(idx)
@@ -162,16 +184,19 @@ _charAt(bytes: Array[U8], idx: U32) Char:
         let b3 = (bytes.get(idx + 3) & 0b111111).asU32()
         Char(_codePoint = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3)
 
+
 type SplitWhitespace(
     _str: Str,
     _idx: U32,
 )
 
+
 impl Iterator[SplitWhitespace, Str, exn]:
     next(self: SplitWhitespace) Option[Str] / exn:
         let wordStart = self._idx
         let wordEnd = wordStart
-        let charIdxIter = self._str.substr(wordStart, self._str.len()).charIndices()
+        let charIdxIter = self._str.substr(wordStart, self._str.len())
+            .charIndices()
 
         # Skip initial whitespace, initialize `wordStart` and `wordEnd`.
         loop:
@@ -183,8 +208,7 @@ impl Iterator[SplitWhitespace, Str, exn]:
                         wordEnd = wordStart
                         break
 
-                Option.None:
-                    return Option.None
+                Option.None: return Option.None
 
         # Scan word, update `wordEnd`.
         loop:
@@ -202,20 +226,25 @@ impl Iterator[SplitWhitespace, Str, exn]:
         self._idx = wordEnd
         Option.Some(self._str.substr(wordStart, wordEnd))
 
+
 type Lines(
     _str: Str,
     _idx: U32,
 )
 
+
 impl Iterator[Lines, Str, exn]:
     next(self: Lines) Option[Str] / exn:
         let lineStart = self._idx
-        let charIdxIter = self._str.substr(lineStart, self._str.len()).charIndices()
+        let charIdxIter = self._str.substr(lineStart, self._str.len())
+            .charIndices()
 
         for (char = char, idx = idx): (char: Char, idx: U32) in charIdxIter:
             if char == '\n':
                 let substr = self._str.substr(lineStart, self._idx + idx)
-                self._idx += idx + 1 # continue with the next char
+                self._idx += idx
+                    + 1 # continue with the next char
+
                 return Option.Some(substr)
 
         let lineEnd = self._str.len()

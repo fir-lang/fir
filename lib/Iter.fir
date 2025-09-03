@@ -36,7 +36,9 @@ trait Iterator[iter, item, exn]:
 
     # Temporary: in the long term we probably want something like `FromIter`.
     toVec(self: iter) Vec[item] / exn:
-        let vec = Vec[item].withCapacity(self.size[iter, item, exn, exn]().unwrapOr(10))
+        let vec = Vec[item].withCapacity(
+            self.size[iter, item, exn, exn]().unwrapOr(10),
+        )
         for item: item in self:
             vec.push(item)
         vec
@@ -71,21 +73,26 @@ trait Iterator[iter, item, exn]:
     enumerate(self: iter) Enumerate[iter, item, exn]:
         Enumerate(iter = self, idx = 0)
 
+
 # --------------------------------------------------------------------------------------------------
 
 trait Step[t]:
     step(self: t) t
 
+
 range(start: t, end: t) RangeIterator[t]:
     RangeIterator(current = start, end = end)
 
+
 irange(start: t, end: t) InclusiveRangeIterator[t]:
     InclusiveRangeIterator(current = start, end = end)
+
 
 type RangeIterator[t](
     current: t,
     end: t,
 )
+
 
 impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
     next(self: RangeIterator[t]) Option[t] / exn:
@@ -96,9 +103,11 @@ impl[Step[t], Ord[t]] Iterator[RangeIterator[t], t, exn]:
             self.current = self.current.step()
             Option.Some(current)
 
+
 impl[Clone[t]] Clone[RangeIterator[t]]:
     clone(self: RangeIterator[t]) RangeIterator[t]:
         RangeIterator(current = self.current.clone(), end = self.end.clone())
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -106,6 +115,7 @@ type InclusiveRangeIterator[t](
     current: t,
     end: t,
 )
+
 
 impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
     next(self: InclusiveRangeIterator[t]) Option[t] / exn:
@@ -116,9 +126,14 @@ impl[Step[t], Ord[t]] Iterator[InclusiveRangeIterator[t], t, exn]:
             self.current = self.current.step()
             Option.Some(current)
 
+
 impl[Clone[t]] Clone[InclusiveRangeIterator[t]]:
     clone(self: InclusiveRangeIterator[t]) InclusiveRangeIterator[t]:
-        InclusiveRangeIterator(current = self.current.clone(), end = self.end.clone())
+        InclusiveRangeIterator(
+            current = self.current.clone(),
+            end = self.end.clone(),
+        )
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -126,6 +141,7 @@ type Map[iter, a, b, exn](
     iter: iter,
     f: Fn(a) b / exn,
 )
+
 
 impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
     next(self: Map[iter, a, b, exn]) Option[b] / exn:
@@ -136,6 +152,7 @@ impl[Iterator[iter, a, exn]] Iterator[Map[iter, a, b, exn], b, exn]:
     size(self: Map[iter, a, b, exn]) Option[U32] / exn2:
         self.iter.size[iter, a, exn, exn2]()
 
+
 # --------------------------------------------------------------------------------------------------
 
 type Peekable[iter, item, exn](
@@ -143,29 +160,31 @@ type Peekable[iter, item, exn](
     peeked: Option[item],
 )
 
+
 impl[Iterator[iter, item, exn]] Iterator[Peekable[iter, item, exn], item, exn]:
     next(self: Peekable[iter, item, exn]) Option[item] / exn:
         match self.peeked:
             Option.Some(peeked):
                 self.peeked = Option.None
                 Option.Some(peeked)
-            Option.None:
-                self.iter.next()
+            Option.None: self.iter.next()
 
     size(self: Peekable[iter, item, exn]) Option[U32] / exn2:
         self.iter.size[iter, item, exn, exn2]()
 
+
 Peekable.peek[Iterator[iter, item, exn]](self: Peekable[iter, item, exn]) Option[item] / exn:
     match self.peeked:
-        Option.Some(peeked):
-            Option.Some(peeked)
+        Option.Some(peeked): Option.Some(peeked)
         Option.None:
             self.peeked = self.iter.next()
             self.peeked
 
+
 impl[Clone[iter], Clone[item]] Clone[Peekable[iter, item, exn]]:
     clone(self: Peekable[iter, item, exn]) Peekable[iter, item, exn]:
         Peekable(iter = self.iter.clone(), peeked = self.peeked.clone())
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -174,6 +193,7 @@ type MapResult[iter, item, b, exnOld, exnNew](
     f: Fn(Result[exnOld, Option[item]]) Option[b] / exnNew,
 )
 
+
 impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, exnNew], b1, exnNew]:
     next(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[b1] / exnNew:
         self.f(try(self.iter.next))
@@ -181,11 +201,13 @@ impl[Iterator[iter, item, exnOld]] Iterator[MapResult[iter, item, b1, exnOld, ex
     size(self: MapResult[iter, item, b1, exnOld, exnNew]) Option[U32] / exn3:
         self.iter.size[iter, item, exnOld, exn3]()
 
+
 # --------------------------------------------------------------------------------------------------
 
 type Try[iter, item, exn](
     iter: iter,
 )
+
 
 impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item], exn2]:
     next(self: Try[iter, item, exn]) Option[Result[exn, item]] / exn2:
@@ -197,9 +219,11 @@ impl[Iterator[iter, item, exn]] Iterator[Try[iter, item, exn], Result[exn, item]
     size(self: Try[iter, item, exn]) Option[U32] / exn3:
         self.iter.size[iter, item, exn, exn3]()
 
+
 impl[Clone[iter]] Clone[Try[iter, item, exn]]:
     clone(self: Try[iter, item, exn]) Try[iter, item, exn]:
         Try(iter = self.iter.clone())
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -207,6 +231,7 @@ type Skip[iter, item, exn](
     iter: iter,
     amount: U32,
 )
+
 
 impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
     next(self: Skip[iter, item, exn]) Option[item] / exn:
@@ -220,9 +245,11 @@ impl[Iterator[iter, item, exn]] Iterator[Skip[iter, item, exn], item, exn]:
             return Option.Some(size - self.amount)
         Option.None
 
+
 impl[Clone[iter]] Clone[Skip[iter, item, exn]]:
     clone(self: Skip[iter, item, exn]) Skip[iter, item, exn]:
         Skip(iter = self.iter.clone(), amount = self.amount)
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -230,8 +257,10 @@ type Once[t](
     val: Option[t],
 )
 
+
 once(val: t) Once[t]:
     Once(val = Option.Some(val))
+
 
 impl Iterator[Once[t], t, exn]:
     next(self: Once[t]) Option[t] / exn:
@@ -242,9 +271,11 @@ impl Iterator[Once[t], t, exn]:
     size(self: Once[t]) Option[U32]:
         Option.Some(1)
 
+
 impl[Clone[t]] Clone[Once[t]]:
     clone(self: Once[t]) Once[t]:
         Once(val = self.val.clone())
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -252,14 +283,15 @@ type OnceWith[t, exn](
     f: Option[Fn() t / exn],
 )
 
+
 onceWith(f: Fn() t / exn) OnceWith[t, exn]:
     OnceWith(f = Option.Some(f))
+
 
 impl Iterator[OnceWith[t, exn], t, exn]:
     next(self: OnceWith[t, exn]) Option[t] / exn:
         match self.f:
-            Option.None:
-                Option.None
+            Option.None: Option.None
             Option.Some(f):
                 self.f = Option.None
                 Option.Some(f())
@@ -267,11 +299,15 @@ impl Iterator[OnceWith[t, exn], t, exn]:
     size(self: OnceWith[t, exn]) Option[U32]:
         Option.Some(1)
 
+
 # --------------------------------------------------------------------------------------------------
 
 type Empty
 
-empty() Empty: Empty
+
+empty() Empty:
+    Empty
+
 
 impl Iterator[Empty, item, exn]:
     next(self: Empty) Option[item] / exn:
@@ -280,8 +316,11 @@ impl Iterator[Empty, item, exn]:
     size(self: Empty) Option[U32]:
         Option.Some(0)
 
+
 impl Clone[Empty]:
-    clone(self: Empty) Empty: Empty
+    clone(self: Empty) Empty:
+        Empty
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -290,21 +329,18 @@ type Chain[iter1, iter2, item, exn](
     iter2: Option[iter2],
 )
 
+
 impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter1, iter2, item, exn], item, exn]:
     next(self: Chain[iter1, iter2, item, exn]) Option[item] / exn:
         if self.iter1 is Option.Some(iter1):
             match iter1.next():
-                Option.Some(val):
-                    return Option.Some(val)
-                Option.None:
-                    self.iter1 = Option.None
+                Option.Some(val): return Option.Some(val)
+                Option.None: self.iter1 = Option.None
 
         if self.iter2 is Option.Some(iter2):
             match iter2.next():
-                Option.Some(val):
-                    return Option.Some(val)
-                Option.None:
-                    self.iter2 = Option.None
+                Option.Some(val): return Option.Some(val)
+                Option.None: self.iter2 = Option.None
 
         Option.None
 
@@ -323,9 +359,11 @@ impl[Iterator[iter1, item, exn], Iterator[iter2, item, exn]] Iterator[Chain[iter
 
         Option.Some(hint)
 
+
 impl[Clone[iter1], Clone[iter2]] Clone[Chain[iter1, iter2, item, exn]]:
     clone(self: Chain[iter1, iter2, item, exn]) Chain[iter1, iter2, item, exn]:
         Chain(iter1 = self.iter1.clone(), iter2 = self.iter2.clone())
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -333,6 +371,7 @@ type Filter[iter, item, exn](
     iter: iter,
     f: Fn(item) Bool / exn,
 )
+
 
 impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
     next(self: Filter[iter, item, exn]) Option[item] / exn:
@@ -342,6 +381,7 @@ impl[Iterator[iter, item, exn]] Iterator[Filter[iter, item, exn], item, exn]:
 
         Option.None
 
+
 # --------------------------------------------------------------------------------------------------
 
 type Enumerate[iter, item, exn](
@@ -349,12 +389,12 @@ type Enumerate[iter, item, exn](
     idx: U32,
 )
 
+
 # TODO: Maybe update item type to `(U32, item)` once we have records with positional fields.
 impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, item: item), exn]:
     next(self: Enumerate[iter, item, exn]) Option[(idx: U32, item: item)] / exn:
         match self.iter.next():
-            Option.None:
-                Option.None
+            Option.None: Option.None
             Option.Some(item):
                 let idx = self.idx
                 self.idx += 1
@@ -362,6 +402,7 @@ impl[Iterator[iter, item, exn]] Iterator[Enumerate[iter, item, exn], (idx: U32, 
 
     size(self: Enumerate[iter, item, exn]) Option[U32] / exn2:
         self.iter.size[iter, item, exn, exn2]()
+
 
 impl[Clone[iter]] Clone[Enumerate[iter, item, exn]]:
     clone(self: Enumerate[iter, item, exn]) Enumerate[iter, item, exn]:

@@ -148,9 +148,11 @@ type TokenKind:
 
     Label
 
+
 impl TriviaTokens[Token]:
     isTrivia(self: Token) Bool:
         self.kind is TokenKind.Comment
+
 
 type IntKind:
     I8
@@ -158,14 +160,17 @@ type IntKind:
     I32
     U32
 
+
 impl ToStr[Token]:
     toStr(self: Token) Str:
-        let text = if self.kind is TokenKind.Str | TokenKind.Newline | TokenKind.Indent:
+        let text = if self.kind
+                is TokenKind.Str | TokenKind.Newline | TokenKind.Indent:
             _escape(self.text)
         else:
             self.text
 
         "`self.kind`(`self.line + 1`:`self.col + 1`:\"`text`\")"
+
 
 _escape(s: Str) Str:
     let buf = StrBuf.withCapacity(s.len() + 10)
@@ -187,9 +192,9 @@ _escape(s: Str) Str:
             '\\':
                 buf.push('\\')
                 buf.push('\\')
-            other:
-                buf.push(other)
+            other: buf.push(other)
     buf.toStr()
+
 
 impl ToStr[TokenKind]:
     toStr(self: TokenKind) Str:
@@ -279,6 +284,7 @@ impl ToStr[TokenKind]:
             TokenKind.Var: "Var"
             TokenKind.While: "While"
 
+
 impl Eq[TokenKind]:
     __eq(self: TokenKind, other: TokenKind) Bool:
         match (left = self, right = other):
@@ -298,14 +304,18 @@ impl Eq[TokenKind]:
             (left = TokenKind.Dollar, right = TokenKind.Dollar): Bool.True
             (left = TokenKind.Dot, right = TokenKind.Dot): Bool.True
             (left = TokenKind.DotDot, right = TokenKind.DotDot): Bool.True
-            (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle): Bool.True
-            (left = TokenKind.DoubleRAngle, right = TokenKind.DoubleRAngle): Bool.True
+            (left = TokenKind.DoubleLAngle, right = TokenKind.DoubleLAngle):
+                Bool.True
+            (left = TokenKind.DoubleRAngle, right = TokenKind.DoubleRAngle):
+                Bool.True
             (left = TokenKind.Elif, right = TokenKind.Elif): Bool.True
             (left = TokenKind.Else, right = TokenKind.Else): Bool.True
             (left = TokenKind.Eq, right = TokenKind.Eq): Bool.True
             (left = TokenKind.EqEq, right = TokenKind.EqEq): Bool.True
-            (left = TokenKind.Exclamation, right = TokenKind.Exclamation): Bool.True
-            (left = TokenKind.ExclamationEq, right = TokenKind.ExclamationEq): Bool.True
+            (left = TokenKind.Exclamation, right = TokenKind.Exclamation):
+                Bool.True
+            (left = TokenKind.ExclamationEq, right = TokenKind.ExclamationEq):
+                Bool.True
             (left = TokenKind.Fn_, right = TokenKind.Fn_): Bool.True
             (left = TokenKind.For, right = TokenKind.For): Bool.True
             (left = TokenKind.HexInt, right = TokenKind.HexInt): Bool.True
@@ -321,7 +331,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.LAngleEq, right = TokenKind.LAngleEq): Bool.True
             (left = TokenKind.LBrace, right = TokenKind.LBrace): Bool.True
             (left = TokenKind.LBracket, right = TokenKind.LBracket): Bool.True
-            (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow): Bool.True
+            (left = TokenKind.LBracketRow, right = TokenKind.LBracketRow):
+                Bool.True
             (left = TokenKind.Let, right = TokenKind.Let): Bool.True
             (left = TokenKind.Loop, right = TokenKind.Loop): Bool.True
             (left = TokenKind.LowerId, right = TokenKind.LowerId): Bool.True
@@ -344,24 +355,35 @@ impl Eq[TokenKind]:
             (left = TokenKind.RBracket, right = TokenKind.RBracket): Bool.True
             (left = TokenKind.Return, right = TokenKind.Return): Bool.True
             (left = TokenKind.RParen, right = TokenKind.RParen): Bool.True
-            (left = TokenKind.SingleQuote, right = TokenKind.SingleQuote): Bool.True
+            (left = TokenKind.SingleQuote, right = TokenKind.SingleQuote):
+                Bool.True
             (left = TokenKind.Slash, right = TokenKind.Slash): Bool.True
             (left = TokenKind.Star, right = TokenKind.Star): Bool.True
             (left = TokenKind.StarEq, right = TokenKind.StarEq): Bool.True
             (left = TokenKind.Str, right = TokenKind.Str): Bool.True
             (left = TokenKind.Tilde, right = TokenKind.Tilde): Bool.True
-            (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId): Bool.True
-            (left = TokenKind.TildeUpperIdPath, right = TokenKind.TildeUpperIdPath): Bool.True
+            (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId):
+                Bool.True
+            (
+                left = TokenKind.TildeUpperIdPath, right =
+                    TokenKind.TildeUpperIdPath,
+            ): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True
-            (left = TokenKind.Underscore, right = TokenKind.Underscore): Bool.True
+            (left = TokenKind.Underscore, right = TokenKind.Underscore):
+                Bool.True
             (left = TokenKind.UpperFn, right = TokenKind.UpperFn): Bool.True
             (left = TokenKind.UpperId, right = TokenKind.UpperId): Bool.True
-            (left = TokenKind.UpperIdDotLBracket, right = TokenKind.UpperIdDotLBracket): Bool.True
-            (left = TokenKind.UpperIdPath, right = TokenKind.UpperIdPath): Bool.True
+            (
+                left = TokenKind.UpperIdDotLBracket, right =
+                    TokenKind.UpperIdDotLBracket,
+            ): Bool.True
+            (left = TokenKind.UpperIdPath, right = TokenKind.UpperIdPath):
+                Bool.True
             (left = TokenKind.Var, right = TokenKind.Var): Bool.True
             (left = TokenKind.While, right = TokenKind.While): Bool.True
             _: Bool.False
+
 
 impl Eq[IntKind]:
     __eq(self: IntKind, other: IntKind) Bool:

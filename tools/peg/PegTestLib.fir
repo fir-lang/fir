@@ -9,7 +9,8 @@ type TestError:
 impl ToStr[TestError]:
     toStr(self: TestError) Str:
         match self:
-            TestError.ParseError(errCur): "unexpected token or end of input at cursor `errCur`"
+            TestError.ParseError(errCur):
+                "unexpected token or end of input at cursor `errCur`"
             TestError.Other(msg): msg
 
 
@@ -26,9 +27,10 @@ runParser(
     if runScan:
         tokens = match try(||: scan[row[]](tokens)):
             Result.Err(~ScannerError(line, col, msg)):
-                throw(TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"))
-            Result.Ok(tokens):
-                tokens
+                throw(
+                    TestError.Other("scanner error: `line + 1`:`col + 1`: `msg`"),
+                )
+            Result.Ok(tokens): tokens
 
     let parserState = ParserState.new(tokens)
 
@@ -37,7 +39,11 @@ runParser(
         Result.Ok(tree): tree
 
     if not parserState.allConsumed():
-        throw(TestError.Other("parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`"))
+        throw(
+            TestError.Other(
+                "parser didn't consume all input, input len = `tokens.len()`, cursor after parsing = `parserState._cursor`",
+            ),
+        )
 
     tree
 
