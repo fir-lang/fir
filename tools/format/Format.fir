@@ -121,9 +121,8 @@ TypeDecl.format(self, tokens: Vec[Token]) Doc:
             doc += formatToken(typeParam.token, tokens)
             lastToken = typeParam.token
 
-            if (nextNonTrivia(typeParam.lastToken(), tokens)
-                    is Option.Some(next))
-                    and (tokens.get(next.idx).kind is TokenKind.Comma):
+            if nextNonTrivia(typeParam.lastToken(), tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
                 doc += formatToken(next, tokens)
                 lastToken = next
@@ -206,9 +205,9 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
 
                 lastToken = field.ty.lastToken()
 
-                if (nextNonTrivia(field.ty.lastToken(), tokens)
-                        is Option.Some(next))
-                        and (tokens.get(next.idx).kind is TokenKind.Comma):
+                if nextNonTrivia(field.ty.lastToken(), tokens)
+                        is Option.Some(next)
+                        and tokens.get(next.idx).kind is TokenKind.Comma:
                     trailingComma = Bool.True
                     doc += formatToken(next, tokens)
                     lastToken = next
@@ -240,8 +239,8 @@ ConFields.format(self, tokens: Vec[Token]) Doc:
                 doc += field.format(tokens)
                 lastToken = field.lastToken()
 
-                if (nextNonTrivia(lastToken, tokens) is Option.Some(next))
-                        and (tokens.get(next.idx).kind is TokenKind.Comma):
+                if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                        and tokens.get(next.idx).kind is TokenKind.Comma:
                     trailingComma = Bool.True
                     doc += formatToken(next, tokens)
                     lastToken = next
@@ -287,8 +286,8 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
 
             doc += ty.format(tokens)
 
-            if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next))
-                    and (tokens.get(next.idx).kind is TokenKind.Comma):
+            if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
                 doc += formatToken(next, tokens)
 
@@ -322,8 +321,8 @@ FunDecl.format(self, tokens: Vec[Token]) Doc:
                 + ty.format(tokens)
             lastToken = ty.lastToken()
 
-        if (nextNonTrivia(lastToken, tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             argList += formatToken(next, tokens)
             lastToken = next
@@ -377,8 +376,8 @@ ImportDecl.format(self, tokens: Vec[Token]) Doc:
     for id: Id in self.path.iter():
         doc += formatToken(id.token, tokens)
 
-        if (nextNonTrivia(id.token, tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Dot):
+        if nextNonTrivia(id.token, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Dot:
             doc += formatToken(next, tokens)
 
     doc
@@ -406,8 +405,8 @@ TraitDecl.format(self, tokens: Vec[Token]) Doc:
         lastToken = typeParam.token
         docRest += formatToken(typeParam.token, tokens)
 
-        if (nextNonTrivia(typeParam.token, tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(typeParam.token, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
@@ -454,8 +453,8 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
 
             docRest += pred.format(tokens)
 
-            if (nextNonTrivia(pred.lastToken(), tokens) is Option.Some(next))
-                    and (tokens.get(next.idx).kind is TokenKind.Comma):
+            if nextNonTrivia(pred.lastToken(), tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
                 docRest += formatToken(next, tokens)
 
@@ -479,8 +478,8 @@ ImplDecl.format(self, tokens: Vec[Token]) Doc:
         docRest += ty.format(tokens)
         lastToken = ty.lastToken()
 
-        if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
@@ -649,8 +648,8 @@ CallExpr.format(self, tokens: Vec[Token]) Doc:
 
             args += formatNamed(arg, Expr.format, tokens).group()
 
-            if (nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next))
-                    and (tokens.get(next.idx).kind is TokenKind.Comma):
+            if nextNonTrivia(arg.lastToken(), tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Comma:
                 trailingComma = Bool.True
                 args += formatToken(next, tokens)
 
@@ -695,6 +694,7 @@ BinOpExpr.format(self, tokens: Vec[Token]) Doc:
 
     let expr0 = exprs.pop().unwrap() # leftmost expr
 
+
     let doc0 = expr0.format(tokens)
     let op0 = nextNonTrivia(expr0.lastToken(), tokens).unwrap()
     let docRest = Doc.break_(1) + formatToken(op0, tokens)
@@ -733,8 +733,8 @@ RecordExpr.format(self, tokens: Vec[Token]) Doc:
 
         docRest += formatNamed(field, Expr.format, tokens)
 
-        if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
 
@@ -895,8 +895,8 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
                     + ty.format(tokens)
                 lastToken = ty.lastToken()
 
-                if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next))
-                        and (tokens.get(next.idx).kind is TokenKind.Comma):
+                if nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)
+                        and tokens.get(next.idx).kind is TokenKind.Comma:
                     docRest += formatToken(next, tokens) + Doc.blank(1)
                     lastToken = next
 
@@ -1006,8 +1006,8 @@ SeqExpr.format(self, tokens: Vec[Token]) Doc:
                         + elem.value.format(tokens),
                 )
 
-        if (nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(elem.value.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
 
@@ -1245,8 +1245,8 @@ RecordType.format(self, tokens: Vec[Token]) Doc:
         docRest += formatNamed(field, Type.format, tokens)
         lastToken = field.lastToken()
 
-        if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
@@ -1288,8 +1288,8 @@ VariantType.format(self, tokens: Vec[Token]) Doc:
 
         docRest += alt.format(tokens)
 
-        if (nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(alt.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             docRest += formatToken(next, tokens)
             lastToken = next
@@ -1324,8 +1324,8 @@ FnType.format(self, tokens: Vec[Token]) Doc:
         doc += arg.format(tokens)
         lastToken = arg.lastToken()
 
-        if (nextNonTrivia(lastToken, tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             doc += formatToken(next, tokens)
             lastToken = next
@@ -1409,8 +1409,8 @@ ConstrPat.format(self, tokens: Vec[Token]) Doc:
         args += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
 
-        if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             args += formatToken(next, tokens)
             lastToken = next
@@ -1451,8 +1451,8 @@ RecordPat.format(self, tokens: Vec[Token]) Doc:
         doc += formatNamed(field, Pat.format, tokens)
         lastToken = field.lastToken()
 
-        if (nextNonTrivia(field.lastToken(), tokens) is Option.Some(next))
-                and (tokens.get(next.idx).kind is TokenKind.Comma):
+        if nextNonTrivia(field.lastToken(), tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
             trailingComma = Bool.True
             doc += formatToken(next, tokens)
             lastToken = next
@@ -1597,9 +1597,8 @@ formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
 
                 doc += tyArg.format(tokens)
 
-                if (nextNonTrivia(tyArg.lastToken(), tokens)
-                        is Option.Some(next))
-                        and (tokens.get(next.idx).kind is TokenKind.Comma):
+                if nextNonTrivia(tyArg.lastToken(), tokens) is Option.Some(next)
+                        and tokens.get(next.idx).kind is TokenKind.Comma:
                     trailingComma = Bool.True
                     doc += formatToken(next, tokens)
 
