@@ -2,6 +2,9 @@
 
 shopt -s globstar
 
+echo "Building Fir..."
+cargo build --release
+
 TEMP_DIR=$(mktemp -d)
 # trap 'echo "Cleaning up temp dir"; rm -rf "$TEMP_DIR"' EXIT
 
