@@ -823,26 +823,28 @@ FnExpr.format(self, tokens: Vec[Token]) Doc:
 
     let docRest = Doc.empty()
     let lastToken = pipe1
-    for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
-        docRest += formatToken(param.name.token, tokens)
-        lastToken = param.name.token
 
-        if param.ty is Option.Some(ty):
-            let colon = nextNonTrivia(param.name.token, tokens).unwrap()
-            assert(tokens.get(colon.idx).kind is TokenKind.Colon)
+    if not (tokens.get(pipe1.idx).kind is TokenKind.PipePipe):
+        for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+            docRest += formatToken(param.name.token, tokens)
+            lastToken = param.name.token
 
-            docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
-            lastToken = ty.lastToken()
+            if param.ty is Option.Some(ty):
+                let colon = nextNonTrivia(param.name.token, tokens).unwrap()
+                assert(tokens.get(colon.idx).kind is TokenKind.Colon)
 
-            if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
-                docRest += formatToken(next, tokens) + Doc.blank(1)
-                lastToken = next
+                docRest += formatToken(colon, tokens) + Doc.blank(1) + ty.format(tokens)
+                lastToken = ty.lastToken()
 
-    let pipe2 = nextNonTrivia(lastToken, tokens).unwrap()
-    assert(tokens.get(pipe2.idx).kind is TokenKind.Pipe)
+                if (nextNonTrivia(ty.lastToken(), tokens) is Option.Some(next)) and (tokens.get(next.idx).kind is TokenKind.Comma):
+                    docRest += formatToken(next, tokens) + Doc.blank(1)
+                    lastToken = next
 
-    docRest += formatToken(pipe2, tokens)
-    lastToken = pipe2
+        let pipe2 = nextNonTrivia(lastToken, tokens).unwrap()
+        assert(tokens.get(pipe2.idx).kind is TokenKind.Pipe)
+
+        docRest += formatToken(pipe2, tokens)
+        lastToken = pipe2
 
     if self.sig.returnTy is Option.Some(ret):
         docRest += Doc.blank(1) + ret.format(tokens)

@@ -80,7 +80,7 @@ scanIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
             TokenKind.LParen | TokenKind.LParenRow:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Paren)
 
-            TokenKind.LBracket | TokenKind.LBracketRow:
+            TokenKind.LBracket | TokenKind.LBracketRow | TokenKind.UpperIdDotLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.LBrace:
@@ -181,7 +181,7 @@ scanNonIndented[Iterator[iter, Token, [ScannerError, ..exn]]](
             TokenKind.LParen | TokenKind.LParenRow:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Paren)
 
-            TokenKind.LBracket | TokenKind.LBracketRow:
+            TokenKind.LBracket | TokenKind.LBracketRow | TokenKind.UpperIdDotLBracket:
                 scanNonIndented(tokens, newTokens, NonIndentedDelimKind.Bracket)
 
             TokenKind.LBrace:
@@ -286,16 +286,12 @@ dedent(loc: (line: U32, col: U32)) Token:
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
 scannerDumpTokens(args: Array[Str]) () / []:
-    if args.len() > 2:
+    if args.len() != 2:
         panic("USAGE: fir compiler/Scanner.fir --main scannerDumpTokens -- <file>")
 
     let file = args.get(1)
     let fileContents = readFileUtf8(file)
-    let tokens = do:
-        let result = tokenize(file, fileContents)
-        if result.error is Option.Some(error):
-            panic(error.toStr())
-        result.tokens
+    let tokens = lexerTokenizeForTesting(file, fileContents)
     let tokens = match try(||: scan[row[]](tokens)):    # Explicitly close the variant (issue #49).
         Result.Err(~ScannerError(line, col, msg)):
             panic("`line + 1`:`col + 1`: `msg`")

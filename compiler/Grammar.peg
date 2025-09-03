@@ -60,6 +60,7 @@ Terminals:
     "/" = Token(kind = TokenKind.Slash, ..)
     "*" = Token(kind = TokenKind.Star, ..)
     "|" = Token(kind = TokenKind.Pipe, ..)
+    "||" = Token(kind = TokenKind.PipePipe, ..)
     "&" = Token(kind = TokenKind.Amp, ..)
     "/" = Token(kind = TokenKind.Slash, ..)
     "_" = Token(kind = TokenKind.Underscore, ..)
@@ -392,7 +393,7 @@ blockExpr Expr:
     cur=^ "do" ":" "NEWLINE" "INDENT" body=stmt+ _"DEDENT":
         Expr.Do(DoExpr(body, _firstToken = TokenIdx(idx = cur)))
 
-    cur=^ "|" "|" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
+    cur=^ "||" ret=returnTy? ":" "NEWLINE" "INDENT" body=stmt+ "DEDENT":
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(
@@ -548,7 +549,7 @@ simpleExpr Expr:
     cur=^ "return" expr=inlineExpr?:
         Expr.Return(ReturnExpr(expr, _firstToken = TokenIdx(idx = cur)))
 
-    cur=^ "|" "|" ret=returnTy? ":" body=inlineExpr:
+    cur=^ "||" ret=returnTy? ":" body=inlineExpr:
         let ret = ret.unwrapOr((ret = Option.None, exn = Option.None))
         Expr.Fn_(FnExpr(
             sig = FunSig(

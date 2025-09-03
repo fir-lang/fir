@@ -35,6 +35,8 @@ interpreter_update_goldens: build
 
 compiler_unit_test:
     cargo run -- compiler/Main.fir -iPeg=tools/peg
+    ./compiler/tests/tokenize.sh
+    ./compiler/tests/scan.sh
 
 compiler_golden_test:
     goldentests target/debug/fir tools/peg/Tests.fir '# '
