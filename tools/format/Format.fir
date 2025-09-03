@@ -1378,6 +1378,7 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
             if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
                 continue
 
+            # Keep empty lines between comments.
             if prevCommentToken is Option.Some(prevCommentToken):
                 let prevCommentTokenLine = prevCommentToken.rightLoc().line
                 if commentToken.line != prevCommentTokenLine:
@@ -1392,16 +1393,16 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
 
             prevCommentToken = Option.Some(commentToken)
 
+        # Keep empty lines between the last comment token and the token being formatted.
         if prevCommentToken is Option.Some(prevCommentToken):
             let prevCommentTokenLine = prevCommentToken.rightLoc().line
             if token.line != prevCommentTokenLine:
-                if token.line != prevCommentTokenLine:
-                    let emptyLines = token.line - prevCommentTokenLine - 1
-                    if emptyLines > maxEmptyLines:
-                        emptyLines = maxEmptyLines
+                let emptyLines = token.line - prevCommentTokenLine - 1
+                if emptyLines > maxEmptyLines:
+                    emptyLines = maxEmptyLines
 
-                    for _: U32 in range(u32(0), emptyLines):
-                        doc += Doc.hardLine()
+                for _: U32 in range(u32(0), emptyLines):
+                    doc += Doc.hardLine()
 
     doc += Doc.str(token.text)
 
