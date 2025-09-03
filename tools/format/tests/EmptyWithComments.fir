@@ -1,1 +1,3 @@
 # hi
+
+# expected stdout: # hi

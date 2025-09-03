@@ -19,9 +19,10 @@ for file in compiler/**/*.fir lib/**/*.fir tools/**/*.fir; do
 
   OUTPUT_FILE="$TEMP_DIR/$file"
   mkdir -p "$(dirname "$OUTPUT_FILE")"
-  ./tools/format/Format.sh "$file" > "$OUTPUT_FILE"
 
-  if ! ./tools/format/Format.sh "$file" > "$OUTPUT_FILE"; then
+  # Note: we can't use Format.sh here as it drops the golden test expectations
+  # before calling the formatter.
+  if ! ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$file" > "$OUTPUT_FILE"; then
     script_failed=1
   fi
 done

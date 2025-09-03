@@ -60,6 +60,13 @@ formatModule(mod: Vec[TopDecl], tokens: Vec[Token]) Doc:
         doc += mod.get(declIdx).format(tokens)
         declIdx += 1
 
+    let eofTokenIdx = TokenIdx(idx = tokens.len())
+    if findCommentBefore(eofTokenIdx, tokens) is Option.Some(commentStart):
+        if not mod.isEmpty():
+            doc += emptyLines
+        let comments = formatLeadingComments(commentStart, eofTokenIdx, 2, tokens)
+        doc += comments.doc
+
     doc
 
 
@@ -1371,38 +1378,19 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
         else:
             1
 
-        let prevCommentToken: Option[Token] = Option.None
-        for commentTokenIdx: TokenIdx in range(commentStart, tokenIdx):
-            let commentToken = tokens.get(commentTokenIdx.idx)
-
-            if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
-                continue
-
-            # Keep empty lines between comments.
-            if prevCommentToken is Option.Some(prevCommentToken):
-                let prevCommentTokenLine = prevCommentToken.rightLoc().line
-                if commentToken.line != prevCommentTokenLine:
-                    let emptyLines = commentToken.line - prevCommentTokenLine - 1
-                    if emptyLines > maxEmptyLines:
-                        emptyLines = maxEmptyLines
-
-                    for _: U32 in range(u32(0), emptyLines):
-                        doc += Doc.hardLine()
-
-            doc += Doc.str(commentToken.text) + Doc.hardLine()
-
-            prevCommentToken = Option.Some(commentToken)
+        let leading = formatLeadingComments(commentStart, tokenIdx, maxEmptyLines, tokens)
+        doc += leading.doc
+        let lastCommentToken = tokens.get(leading.lastCommentIdx.idx)
 
         # Keep empty lines between the last comment token and the token being formatted.
-        if prevCommentToken is Option.Some(prevCommentToken):
-            let prevCommentTokenLine = prevCommentToken.rightLoc().line
-            if token.line != prevCommentTokenLine:
-                let emptyLines = token.line - prevCommentTokenLine - 1
-                if emptyLines > maxEmptyLines:
-                    emptyLines = maxEmptyLines
+        let lastCommentTokenLine = lastCommentToken.rightLoc().line
+        if token.line != lastCommentTokenLine:
+            let emptyLines = token.line - lastCommentTokenLine - 1
+            if emptyLines > maxEmptyLines:
+                emptyLines = maxEmptyLines
 
-                for _: U32 in range(u32(0), emptyLines):
-                    doc += Doc.hardLine()
+            for _: U32 in range(u32(0), emptyLines):
+                doc += Doc.hardLine()
 
     doc += Doc.str(token.text)
 
@@ -1434,6 +1422,40 @@ formatToken(tokenIdx: TokenIdx, tokens: Vec[Token]) Doc:
             break
 
     doc
+
+
+formatLeadingComments(
+    commentStart: TokenIdx,
+    commentEnd: TokenIdx,
+    maxEmptyLines: U32,
+    tokens: Vec[Token],
+) (doc: Doc, lastCommentIdx: TokenIdx):
+    let doc = Doc.empty()
+
+    let prevCommentTokenIdx: Option[TokenIdx] = Option.None
+    for commentTokenIdx: TokenIdx in range(commentStart, commentEnd):
+        let commentToken = tokens.get(commentTokenIdx.idx)
+
+        if commentToken.kind is TokenKind.Newline | TokenKind.Indent | TokenKind.Dedent:
+            continue
+
+        # Keep empty lines between comments.
+        if prevCommentTokenIdx is Option.Some(prevCommentTokenIdx):
+            let prevCommentToken = tokens.get(prevCommentTokenIdx.idx)
+            let prevCommentTokenLine = prevCommentToken.rightLoc().line
+            if commentToken.line != prevCommentTokenLine:
+                let emptyLines = commentToken.line - prevCommentTokenLine - 1
+                if emptyLines > maxEmptyLines:
+                    emptyLines = maxEmptyLines
+
+                for _: U32 in range(u32(0), emptyLines):
+                    doc += Doc.hardLine()
+
+        doc += Doc.str(commentToken.text) + Doc.hardLine()
+
+        prevCommentTokenIdx = Option.Some(commentTokenIdx)
+
+    (doc = doc, lastCommentIdx = prevCommentTokenIdx.unwrap())
 
 
 formatTyArgs(tyArgs: Option[TyArgs], tokens: Vec[Token]) Doc:
