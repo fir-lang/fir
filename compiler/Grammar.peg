@@ -85,7 +85,7 @@ Terminals:
 
 
 module Vec[TopDecl]:
-    ds=topDecl+ $: ds
+    ds=topDecl* $: ds
 
 
 topDecl TopDecl:
