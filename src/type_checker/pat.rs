@@ -220,10 +220,55 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
         ast::Pat::Char(_) => Ty::char(),
 
         ast::Pat::Or(pat1, pat2) => {
+            // Collect binders for `pat1` and `pat2` in separate envs.
+            tc_state.env.enter();
             let pat1_ty = check_pat(tc_state, pat1, level);
+            let pat1_binders = tc_state.env.exit();
+
+            tc_state.env.enter();
             let pat2_ty = check_pat(tc_state, pat2, level);
-            // TODO: Check that the patterns bind the same variables of same types.
-            // TODO: Any other checks here?
+            let pat2_binders = tc_state.env.exit();
+
+            // Check that patterns bind the same variables.
+            let pat1_binder_keys: Set<&Id> = pat1_binders.keys().collect();
+            let pat2_binder_keys: Set<&Id> = pat2_binders.keys().collect();
+
+            if pat1_binder_keys != pat2_binder_keys {
+                let mut left_vars: Vec<Id> =
+                    pat1_binder_keys.iter().map(|id| (*id).clone()).collect();
+                left_vars.sort();
+                let mut right_vars: Vec<Id> =
+                    pat2_binder_keys.iter().map(|id| (*id).clone()).collect();
+                right_vars.sort();
+                panic!(
+                    "{}: Or pattern alternatives bind different set of variables:
+                     Left = {}
+                     Right = {}",
+                    loc_display(&pat.loc),
+                    left_vars.join(", "),
+                    right_vars.join(", "),
+                )
+            }
+
+            // Unify pattern binders to make sure they bind the values with same types.
+            for binder in pat1_binder_keys {
+                let ty1 = pat1_binders.get(binder).unwrap();
+                let ty2 = pat2_binders.get(binder).unwrap();
+                unify(
+                    ty1,
+                    ty2,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &pat.loc,
+                );
+            }
+
+            // Add bound variables back to the env.
+            for (k, v) in pat1_binders {
+                tc_state.env.insert(k, v);
+            }
+
             unify(
                 &pat1_ty,
                 &pat2_ty,
@@ -232,6 +277,7 @@ pub(super) fn check_pat(tc_state: &mut TcFunState, pat: &mut ast::L<ast::Pat>, l
                 level,
                 &pat.loc,
             );
+
             pat1_ty
         }
     }
