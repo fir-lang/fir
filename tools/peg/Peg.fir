@@ -15,7 +15,7 @@ main(args: Array[Str]):
     let (tokens, error) = tokenize(input, contents)
 
     if error is Option.Some(error):
-        panic(errStr(error))
+        panic(error.toStr())
 
     let tokens = match try(||: scan[row[]](tokens)):
         Result.Err(~ScannerError(line, col, msg)):
@@ -111,10 +111,6 @@ main(args: Array[Str]):
         )
         print(doc.render(80))
         nonTerminalDeclIdx += 1
-
-
-errStr(err: Error) Str:
-    "`err.loc.file`:`err.loc.line + 1`:`err.loc.col + 1`: `err.msg`"
 
 
 capitalize(s: Str) Str / exn:
