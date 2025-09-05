@@ -540,7 +540,7 @@ impl Expr {
 
             Expr::UnOp(UnOpExpr { op, expr }) => {
                 match op {
-                    UnOp::Not => buffer.push('!'),
+                    UnOp::Not => buffer.push_str("not "),
                     UnOp::Neg => buffer.push('-'),
                 }
                 let parens = expr_parens(&expr.node);

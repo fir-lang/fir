@@ -321,11 +321,6 @@ impl Expr {
                 buffer.push('\'');
             }
 
-            Expr::BoolNot(e) => {
-                buffer.push('!');
-                e.node.print(buffer, indent);
-            }
-
             Expr::BoolAnd(e1, e2) => {
                 e1.node.print(buffer, indent);
                 buffer.push_str(" && ");

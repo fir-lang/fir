@@ -834,17 +834,6 @@ fn eval<W: Write>(
             ))
         }
 
-        Expr::BoolNot(e) => {
-            let e = val!(eval(w, pgm, heap, locals, &e.node, &e.loc, call_stack));
-            let val = if e == pgm.true_alloc {
-                pgm.false_alloc
-            } else {
-                debug_assert_eq!(e, pgm.false_alloc);
-                pgm.true_alloc
-            };
-            ControlFlow::Val(val)
-        }
-
         Expr::BoolAnd(left, right) => {
             let left = val!(eval(
                 w, pgm, heap, locals, &left.node, &left.loc, call_stack

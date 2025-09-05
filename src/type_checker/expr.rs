@@ -776,6 +776,23 @@ pub(super) fn check_expr(
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: arg }) => match op {
             ast::UnOp::Not => {
                 let (ty, _) = check_expr(tc_state, arg, Some(&Ty::bool()), level, loop_stack);
+                let desugared = ast::L {
+                    loc: expr.loc.clone(),
+                    node: ast::Expr::Call(ast::CallExpr {
+                        fun: Box::new(ast::L {
+                            loc: arg.loc.clone(),
+                            node: ast::Expr::MethodSelect(ast::MethodSelectExpr {
+                                object: arg.clone(),
+                                object_ty: Some(Ty::bool()),
+                                method_ty_id: SmolStr::new_static("Bool"),
+                                ty_args: vec![],
+                                method: SmolStr::new_static("__not"),
+                            }),
+                        }),
+                        args: vec![],
+                    }),
+                };
+                *expr = desugared;
                 (ty, Default::default())
             }
 

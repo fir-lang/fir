@@ -411,7 +411,6 @@ pub enum Expr {
     Int(IntExpr),
     String(Vec<StringPart>),
     Char(char),
-    BoolNot(Box<L<Expr>>),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
     Record(RecordExpr),
@@ -1796,12 +1795,9 @@ fn lower_expr(
 
         mono::Expr::BinOp(_) => panic!("Non-desugared BinOp"),
 
-        mono::Expr::UnOp(mono::UnOpExpr { op, expr }) => match op {
+        mono::Expr::UnOp(mono::UnOpExpr { op, expr: _ }) => match op {
             UnOp::Neg => panic!("Neg unop wasn't desugred"),
-            UnOp::Not => (
-                Expr::BoolNot(lower_bl_expr(expr, closures, indices, scope).0),
-                Default::default(),
-            ),
+            UnOp::Not => panic!("Not unop wasn't desugared"),
         },
 
         mono::Expr::Record(fields) => {

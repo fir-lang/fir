@@ -153,6 +153,12 @@ type Bool:
     True
 
 
+Bool.__not(self) Bool:
+    match self:
+        Bool.True: Bool.False
+        Bool.False: Bool.True
+
+
 impl ToStr[Bool]:
     toStr(self: Bool) Str:
         match self:
