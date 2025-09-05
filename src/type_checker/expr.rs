@@ -774,7 +774,10 @@ pub(super) fn check_expr(
         }
 
         ast::Expr::UnOp(ast::UnOpExpr { op, expr: arg }) => match op {
-            ast::UnOp::Not => check_expr(tc_state, arg, Some(&Ty::bool()), level, loop_stack),
+            ast::UnOp::Not => {
+                let (ty, _) = check_expr(tc_state, arg, Some(&Ty::bool()), level, loop_stack);
+                (ty, Default::default())
+            }
 
             ast::UnOp::Neg => {
                 let desugared = ast::L {
