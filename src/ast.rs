@@ -3,7 +3,7 @@
 pub mod printer;
 
 use crate::collections::Map;
-use crate::interpolation::StringPart;
+use crate::interpolation::StrPart;
 pub use crate::token::IntKind;
 use crate::type_checker::{Kind, Ty};
 
@@ -492,7 +492,7 @@ pub enum Expr {
     Int(IntExpr),
 
     /// A string literal.
-    String(Vec<StringPart>),
+    Str(Vec<StrPart>),
 
     /// A character literal.
     Char(char),
@@ -1031,11 +1031,11 @@ impl Expr {
                 }
             }
 
-            Expr::String(parts) => {
+            Expr::Str(parts) => {
                 for part in parts {
                     match part {
-                        StringPart::Str(_) => {}
-                        StringPart::Expr(expr) => expr.node.subst_ty_ids(substs),
+                        StrPart::Str(_) => {}
+                        StrPart::Expr(expr) => expr.node.subst_ty_ids(substs),
                     }
                 }
             }

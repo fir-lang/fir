@@ -1,6 +1,6 @@
 use crate::ast::{self, Id, Named};
 use crate::collections::*;
-use crate::interpolation::StringPart;
+use crate::interpolation::StrPart;
 use crate::mono_ast as mono;
 use crate::mono_ast::MonoPgm;
 use crate::type_checker::{FunArgs, Kind, RecordOrVariant, Ty};
@@ -638,12 +638,12 @@ fn mono_expr(
                 .collect(),
         }),
 
-        ast::Expr::String(parts) => mono::Expr::String(
+        ast::Expr::Str(parts) => mono::Expr::Str(
             parts
                 .iter()
                 .map(|part| match part {
-                    StringPart::Str(str) => mono::StringPart::Str(str.clone()),
-                    StringPart::Expr(expr) => mono::StringPart::Expr(mono_l_expr(
+                    StrPart::Str(str) => mono::StringPart::Str(str.clone()),
+                    StrPart::Expr(expr) => mono::StringPart::Expr(mono_l_expr(
                         expr, ty_map, poly_pgm, mono_pgm, locals,
                     )),
                 })

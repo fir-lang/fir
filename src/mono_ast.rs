@@ -207,7 +207,7 @@ pub enum Expr {
     AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
     Call(CallExpr),
     Int(IntExpr),
-    String(Vec<StringPart>),
+    Str(Vec<StringPart>),
     Char(char),
     BinOp(BinOpExpr),
     UnOp(UnOpExpr),

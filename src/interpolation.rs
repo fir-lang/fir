@@ -9,7 +9,7 @@ use lexgen_util::Loc;
 use smol_str::SmolStr;
 
 #[derive(Debug, Clone)]
-pub enum StringPart {
+pub enum StrPart {
     Str(String),
     Expr(ast::L<ast::Expr>),
 }
@@ -17,8 +17,8 @@ pub enum StringPart {
 // Lexer ensures any interpolation (the part between `$(` and `)`) have balanced parens. In
 // addition, we don't handle string literals inside interpolations, so interpolations can't be
 // nested.
-pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<StringPart> {
-    let mut parts: Vec<StringPart> = vec![];
+pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<StrPart> {
+    let mut parts: Vec<StrPart> = vec![];
 
     let mut escape = false;
     let mut chars = s.char_indices().peekable();
@@ -59,7 +59,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
                 byte_idx: loc.byte_idx,
             };
 
-            parts.push(StringPart::Str(copy_update_escapes(
+            parts.push(StrPart::Str(copy_update_escapes(
                 &s[str_part_start..byte_idx],
             )));
 
@@ -96,7 +96,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
                         Ok(expr) => expr,
                         Err(err) => crate::report_parse_error(&SmolStr::new(module), err),
                     };
-                    parts.push(StringPart::Expr(expr));
+                    parts.push(StrPart::Expr(expr));
                     str_part_start = byte_idx + 1;
                     continue 'outer;
                 }
@@ -105,7 +105,7 @@ pub fn parse_string_parts(module: &Rc<str>, s: &str, mut loc: Loc) -> Vec<String
     }
 
     if str_part_start != s.len() {
-        parts.push(StringPart::Str(copy_update_escapes(
+        parts.push(StrPart::Str(copy_update_escapes(
             &s[str_part_start..s.len()],
         )));
     }
@@ -167,18 +167,18 @@ pub(crate) fn copy_update_escapes(s: &str) -> String {
 }
 
 #[cfg(test)]
-impl StringPart {
+impl StrPart {
     fn as_str(&self) -> &str {
         match self {
-            StringPart::Str(str) => str,
-            StringPart::Expr(_) => panic!(),
+            StrPart::Str(str) => str,
+            StrPart::Expr(_) => panic!(),
         }
     }
 
     fn as_expr(&self) -> &ast::L<ast::Expr> {
         match self {
-            StringPart::Str(_) => panic!(),
-            StringPart::Expr(expr) => expr,
+            StrPart::Str(_) => panic!(),
+            StrPart::Expr(expr) => expr,
         }
     }
 }

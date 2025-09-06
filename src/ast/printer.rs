@@ -574,12 +574,12 @@ impl Expr {
                 }
             }
 
-            Expr::String(parts) => {
+            Expr::Str(parts) => {
                 buffer.push('"');
                 for part in parts {
                     match part {
-                        StringPart::Str(str) => buffer.push_str(str), // TODO: escaping
-                        StringPart::Expr(expr) => {
+                        StrPart::Str(str) => buffer.push_str(str), // TODO: escaping
+                        StrPart::Expr(expr) => {
                             buffer.push('`');
                             expr.node.print(buffer, 0);
                             buffer.push('`');

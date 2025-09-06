@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::*;
-use crate::interpolation::StringPart;
+use crate::interpolation::StrPart;
 use crate::type_checker::convert::convert_ast_ty;
 use crate::type_checker::pat::{check_pat, refine_pat_binders};
 use crate::type_checker::stmt::check_stmts;
@@ -618,11 +618,11 @@ pub(super) fn check_expr(
             }
         }
 
-        ast::Expr::String(parts) => {
+        ast::Expr::Str(parts) => {
             for part in parts {
                 match part {
-                    StringPart::Str(_) => continue,
-                    StringPart::Expr(expr) => {
+                    StrPart::Str(_) => continue,
+                    StrPart::Expr(expr) => {
                         let expr_var =
                             tc_state
                                 .var_gen

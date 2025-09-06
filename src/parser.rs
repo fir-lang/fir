@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: bec5c6f120db47dadaab36a99ec3fe4fe80fe8e9b7ffcb96971c4c185dbee368
+// sha3: b7f392a9678d62869d3a86c77a7d7992f79bd1868223c8b96ac66e11c769aeed
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -47518,7 +47518,7 @@ fn __action105<'a>(
             col: l.col + 1,
             byte_idx: l.byte_idx + 1,
         };
-        Expr::String(parse_string_parts(
+        Expr::Str(parse_string_parts(
             module,
             &string.text[1..string.text.len() - 1],
             l,

@@ -788,7 +788,7 @@ InlineExpr: Expr = {
 
     <l:@L> <string:StringLit> => {
         let l = Loc { line: l.line, col: l.col + 1, byte_idx: l.byte_idx + 1 };
-        Expr::String(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
+        Expr::Str(parse_string_parts(module, &string.text[1..string.text.len() - 1], l))
     },
 
     <char:CharLit> => Expr::Char(parse_char_lit(&char.text)),

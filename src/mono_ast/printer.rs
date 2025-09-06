@@ -477,7 +477,7 @@ impl Expr {
                 }
             }
 
-            Expr::String(parts) => {
+            Expr::Str(parts) => {
                 buffer.push('"');
                 for part in parts {
                     match part {

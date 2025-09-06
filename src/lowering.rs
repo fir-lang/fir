@@ -409,7 +409,7 @@ pub enum Expr {
     AssocFnSelect(FunIdx),          // <id>.<id>
     Call(CallExpr),
     Int(u64), // two's complement representation, unsigned extended to u64
-    String(Vec<StringPart>),
+    Str(Vec<StringPart>),
     BoolAnd(Box<L<Expr>>, Box<L<Expr>>),
     BoolOr(Box<L<Expr>>, Box<L<Expr>>),
     Record(RecordExpr),
@@ -1750,8 +1750,8 @@ fn lower_expr(
 
         mono::Expr::Int(int) => (Expr::Int(int.parsed), Default::default()),
 
-        mono::Expr::String(parts) => (
-            Expr::String(
+        mono::Expr::Str(parts) => (
+            Expr::Str(
                 parts
                     .iter()
                     .map(|part| match part {

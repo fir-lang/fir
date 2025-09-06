@@ -1,6 +1,6 @@
 use crate::ast::{self, Id};
 use crate::collections::ScopeMap;
-use crate::interpolation::StringPart;
+use crate::interpolation::StrPart;
 use crate::type_checker::TyCon;
 
 pub(super) fn normalize_instantiation_types(stmt: &mut ast::Stmt, cons: &ScopeMap<Id, TyCon>) {
@@ -62,9 +62,9 @@ fn normalize_expr(expr: &mut ast::Expr, cons: &ScopeMap<Id, TyCon>) {
 
         ast::Expr::Int(_) | ast::Expr::Char(_) | ast::Expr::Self_ => {}
 
-        ast::Expr::String(parts) => parts.iter_mut().for_each(|part| match part {
-            StringPart::Str(_) => {}
-            StringPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
+        ast::Expr::Str(parts) => parts.iter_mut().for_each(|part| match part {
+            StrPart::Str(_) => {}
+            StrPart::Expr(expr) => normalize_expr(&mut expr.node, cons),
         }),
 
         ast::Expr::FieldSelect(ast::FieldSelectExpr {

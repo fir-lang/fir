@@ -300,7 +300,7 @@ impl Expr {
 
             Expr::Int(int) => write!(buffer, "{:#x}", int).unwrap(),
 
-            Expr::String(parts) => {
+            Expr::Str(parts) => {
                 buffer.push('"');
                 for part in parts {
                     match part {

@@ -241,7 +241,7 @@ fn visit_expr(expr: &mono::Expr, records: &mut Set<RecordShape>) {
         | mono::Expr::Int(_)
         | mono::Expr::Char(_) => {}
 
-        mono::Expr::String(parts) => {
+        mono::Expr::Str(parts) => {
             for part in parts {
                 match part {
                     mono::StringPart::Str(_) => {}

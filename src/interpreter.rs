@@ -804,7 +804,7 @@ fn eval<W: Write>(
 
         Expr::Int(int) => ControlFlow::Val(*int),
 
-        Expr::String(parts) => {
+        Expr::Str(parts) => {
             let mut bytes: Vec<u8> = vec![];
             for part in parts {
                 match part {
