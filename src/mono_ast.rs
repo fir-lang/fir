@@ -202,7 +202,7 @@ pub enum Expr {
     LocalVar(Id),                     // a local variable
     TopVar(VarExpr),                  // a top-level function reference
     ConstrSelect(Constructor),        // a product or sum constructor
-    FieldSelect(FieldSelectExpr),     // <expr>.<id> (TODO: This could be lowered as function calls)
+    FieldSelect(FieldSelectExpr),     // <expr>.<id>
     MethodSelect(MethodSelectExpr),   // <id>.<id>, with an object captured as receiver
     AssocFnSelect(AssocFnSelectExpr), // <id>.<id>
     Call(CallExpr),

@@ -298,7 +298,7 @@ impl Expr {
                 buffer.push(')');
             }
 
-            Expr::Int(int) => mono::Expr::Int(int.clone()).print(buffer, 0),
+            Expr::Int(int) => write!(buffer, "{:#x}", int).unwrap(),
 
             Expr::String(parts) => {
                 buffer.push('"');
@@ -313,12 +313,6 @@ impl Expr {
                     }
                 }
                 buffer.push('"');
-            }
-
-            Expr::Char(char) => {
-                buffer.push('\'');
-                buffer.push(*char); // TODO: escaping
-                buffer.push('\'');
             }
 
             Expr::BoolAnd(e1, e2) => {

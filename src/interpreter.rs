@@ -802,14 +802,7 @@ fn eval<W: Write>(
             call_closure(w, pgm, heap, locals, fun, args, loc, call_stack)
         }
 
-        Expr::Int(ast::IntExpr { parsed, .. }) => ControlFlow::Val(*parsed),
-
-        Expr::Char(char) => {
-            let alloc = heap.allocate(2);
-            heap[alloc] = pgm.char_con_idx.as_u64();
-            heap[alloc + 1] = u32_as_val(*char as u32);
-            ControlFlow::Val(alloc)
-        }
+        Expr::Int(int) => ControlFlow::Val(*int),
 
         Expr::String(parts) => {
             let mut bytes: Vec<u8> = vec![];
