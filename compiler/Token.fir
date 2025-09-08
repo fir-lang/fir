@@ -365,8 +365,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.TildeUpperId, right = TokenKind.TildeUpperId):
                 Bool.True
             (
-                left = TokenKind.TildeUpperIdPath, right =
-                    TokenKind.TildeUpperIdPath,
+                left = TokenKind.TildeUpperIdPath,
+                right = TokenKind.TildeUpperIdPath,
             ): Bool.True
             (left = TokenKind.Trait, right = TokenKind.Trait): Bool.True
             (left = TokenKind.Type, right = TokenKind.Type): Bool.True
@@ -375,8 +375,8 @@ impl Eq[TokenKind]:
             (left = TokenKind.UpperFn, right = TokenKind.UpperFn): Bool.True
             (left = TokenKind.UpperId, right = TokenKind.UpperId): Bool.True
             (
-                left = TokenKind.UpperIdDotLBracket, right =
-                    TokenKind.UpperIdDotLBracket,
+                left = TokenKind.UpperIdDotLBracket,
+                right = TokenKind.UpperIdDotLBracket,
             ): Bool.True
             (left = TokenKind.UpperIdPath, right = TokenKind.UpperIdPath):
                 Bool.True

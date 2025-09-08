@@ -1445,7 +1445,7 @@ RecordPat.format(self, tokens: Array[Token]) Doc:
     let lastToken = lparen
     for field: Named[Pat] in self.fields.iter():
         if trailingComma:
-            doc += Doc.blank(1)
+            doc += Doc.break_(1)
             trailingComma = Bool.False
 
         doc += formatNamed(field, Pat.format, tokens)

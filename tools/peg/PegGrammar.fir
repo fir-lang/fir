@@ -96,22 +96,22 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.TypeDecl, right = NonTerminal.TypeDecl):
                 Bool.True
             (
-                left = NonTerminal.TerminalsDecl, right =
-                    NonTerminal.TerminalsDecl,
+                left = NonTerminal.TerminalsDecl,
+                right = NonTerminal.TerminalsDecl,
             ): Bool.True
             (left = NonTerminal.TerminalDecl, right = NonTerminal.TerminalDecl):
                 Bool.True
             (
-                left = NonTerminal.NonTerminalDecls, right =
-                    NonTerminal.NonTerminalDecls,
+                left = NonTerminal.NonTerminalDecls,
+                right = NonTerminal.NonTerminalDecls,
             ): Bool.True
             (
-                left = NonTerminal.NonTerminalDecl, right =
-                    NonTerminal.NonTerminalDecl,
+                left = NonTerminal.NonTerminalDecl,
+                right = NonTerminal.NonTerminalDecl,
             ): Bool.True
             (
-                left = NonTerminal.NonTerminalAlt, right =
-                    NonTerminal.NonTerminalAlt,
+                left = NonTerminal.NonTerminalAlt,
+                right = NonTerminal.NonTerminalAlt,
             ): Bool.True
             (left = NonTerminal.Symbol, right = NonTerminal.Symbol): Bool.True
             (left = NonTerminal.SymbolPrefix, right = NonTerminal.SymbolPrefix):
@@ -121,64 +121,64 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.SymbolSuffix, right = NonTerminal.SymbolSuffix):
                 Bool.True
             (
-                left = NonTerminal.NonTerminalRhs, right =
-                    NonTerminal.NonTerminalRhs,
+                left = NonTerminal.NonTerminalRhs,
+                right = NonTerminal.NonTerminalRhs,
             ): Bool.True
             (
-                left = NonTerminal.InlineTokenTree, right =
-                    NonTerminal.InlineTokenTree,
+                left = NonTerminal.InlineTokenTree,
+                right = NonTerminal.InlineTokenTree,
             ): Bool.True
             (
-                left = NonTerminal.InlineTokenTreeSingle, right =
-                    NonTerminal.InlineTokenTreeSingle,
+                left = NonTerminal.InlineTokenTreeSingle,
+                right = NonTerminal.InlineTokenTreeSingle,
             ): Bool.True
             (
-                left = NonTerminal.InlineTokenTreeTerminator, right =
-                    NonTerminal.InlineTokenTreeTerminator,
+                left = NonTerminal.InlineTokenTreeTerminator,
+                right = NonTerminal.InlineTokenTreeTerminator,
             ): Bool.True
             (
-                left = NonTerminal.IndentedTokenTree, right =
-                    NonTerminal.IndentedTokenTree,
+                left = NonTerminal.IndentedTokenTree,
+                right = NonTerminal.IndentedTokenTree,
             ): Bool.True
             (
-                left = NonTerminal.IndentedTokenTreeSingle, right =
-                    NonTerminal.IndentedTokenTreeSingle,
+                left = NonTerminal.IndentedTokenTreeSingle,
+                right = NonTerminal.IndentedTokenTreeSingle,
             ): Bool.True
             (
-                left = NonTerminal.IndentedTokenTreeTerminator, right =
-                    NonTerminal.IndentedTokenTreeTerminator,
+                left = NonTerminal.IndentedTokenTreeTerminator,
+                right = NonTerminal.IndentedTokenTreeTerminator,
             ): Bool.True
             (left = NonTerminal.Type_, right = NonTerminal.Type_): Bool.True
             (left = NonTerminal.RecordType, right = NonTerminal.RecordType):
                 Bool.True
             (
-                left = NonTerminal.RecordTypeStart, right =
-                    NonTerminal.RecordTypeStart,
+                left = NonTerminal.RecordTypeStart,
+                right = NonTerminal.RecordTypeStart,
             ): Bool.True
             (
-                left = NonTerminal.RecordTypeCont, right =
-                    NonTerminal.RecordTypeCont,
+                left = NonTerminal.RecordTypeCont,
+                right = NonTerminal.RecordTypeCont,
             ): Bool.True
             (left = NonTerminal.VariantType, right = NonTerminal.VariantType):
                 Bool.True
             (
-                left = NonTerminal.VariantTypeStart, right =
-                    NonTerminal.VariantTypeStart,
+                left = NonTerminal.VariantTypeStart,
+                right = NonTerminal.VariantTypeStart,
             ): Bool.True
             (
-                left = NonTerminal.VariantTypeCont, right =
-                    NonTerminal.VariantTypeCont,
+                left = NonTerminal.VariantTypeCont,
+                right = NonTerminal.VariantTypeCont,
             ): Bool.True
             (left = NonTerminal.FnType, right = NonTerminal.FnType): Bool.True
             (left = NonTerminal.NamedType, right = NonTerminal.NamedType):
                 Bool.True
             (
-                left = NonTerminal.RecordTypeFields, right =
-                    NonTerminal.RecordTypeFields,
+                left = NonTerminal.RecordTypeFields,
+                right = NonTerminal.RecordTypeFields,
             ): Bool.True
             (
-                left = NonTerminal.RecordTypeField, right =
-                    NonTerminal.RecordTypeField,
+                left = NonTerminal.RecordTypeField,
+                right = NonTerminal.RecordTypeField,
             ): Bool.True
             (left = NonTerminal.VariantAlt, right = NonTerminal.VariantAlt):
                 Bool.True

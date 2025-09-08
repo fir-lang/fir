@@ -58,58 +58,58 @@ impl Eq[NonTerminal]:
             (left = NonTerminal.TerminalAOrB, right = NonTerminal.TerminalAOrB):
                 Bool.True
             (
-                left = NonTerminal.TerminalAThenB, right =
-                    NonTerminal.TerminalAThenB,
+                left = NonTerminal.TerminalAThenB,
+                right = NonTerminal.TerminalAThenB,
             ): Bool.True
             (
-                left = NonTerminal.ZeroOrMoreAThenB, right =
-                    NonTerminal.ZeroOrMoreAThenB,
+                left = NonTerminal.ZeroOrMoreAThenB,
+                right = NonTerminal.ZeroOrMoreAThenB,
             ): Bool.True
             (
-                left = NonTerminal.OneOrMoreAThenB, right =
-                    NonTerminal.OneOrMoreAThenB,
+                left = NonTerminal.OneOrMoreAThenB,
+                right = NonTerminal.OneOrMoreAThenB,
             ): Bool.True
             (
-                left = NonTerminal.ZeroOrOneAThenB, right =
-                    NonTerminal.ZeroOrOneAThenB,
+                left = NonTerminal.ZeroOrOneAThenB,
+                right = NonTerminal.ZeroOrOneAThenB,
             ): Bool.True
             (left = NonTerminal.IgnoreAThenB, right = NonTerminal.IgnoreAThenB):
                 Bool.True
             (
-                left = NonTerminal.IgnoreAThenIgnoreB, right =
-                    NonTerminal.IgnoreAThenIgnoreB,
+                left = NonTerminal.IgnoreAThenIgnoreB,
+                right = NonTerminal.IgnoreAThenIgnoreB,
             ): Bool.True
             (
-                left = NonTerminal.IgnoreGroupAThenB, right =
-                    NonTerminal.IgnoreGroupAThenB,
+                left = NonTerminal.IgnoreGroupAThenB,
+                right = NonTerminal.IgnoreGroupAThenB,
             ): Bool.True
             (left = NonTerminal.NonTerminals, right = NonTerminal.NonTerminals):
                 Bool.True
             (
-                left = NonTerminal.NonTerminalsBacktrack, right =
-                    NonTerminal.NonTerminalsBacktrack,
+                left = NonTerminal.NonTerminalsBacktrack,
+                right = NonTerminal.NonTerminalsBacktrack,
             ): Bool.True
             (left = NonTerminal.NegLookahead, right = NonTerminal.NegLookahead):
                 Bool.True
             (
-                left = NonTerminal.EndOfInputTest, right =
-                    NonTerminal.EndOfInputTest,
+                left = NonTerminal.EndOfInputTest,
+                right = NonTerminal.EndOfInputTest,
             ): Bool.True
             (
-                left = NonTerminal.BracketedOneOrMoreA, right =
-                    NonTerminal.BracketedOneOrMoreA,
+                left = NonTerminal.BracketedOneOrMoreA,
+                right = NonTerminal.BracketedOneOrMoreA,
             ): Bool.True
             (
-                left = NonTerminal.ErrorCursorBug, right =
-                    NonTerminal.ErrorCursorBug,
+                left = NonTerminal.ErrorCursorBug,
+                right = NonTerminal.ErrorCursorBug,
             ): Bool.True
             (
-                left = NonTerminal.ErrorCursorBugAlt1, right =
-                    NonTerminal.ErrorCursorBugAlt1,
+                left = NonTerminal.ErrorCursorBugAlt1,
+                right = NonTerminal.ErrorCursorBugAlt1,
             ): Bool.True
             (
-                left = NonTerminal.ErrorCursorBugAlt2, right =
-                    NonTerminal.ErrorCursorBugAlt2,
+                left = NonTerminal.ErrorCursorBugAlt2,
+                right = NonTerminal.ErrorCursorBugAlt2,
             ): Bool.True
             _: Bool.False
 
