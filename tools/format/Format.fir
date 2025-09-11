@@ -1167,7 +1167,7 @@ WhileStmt.format(self, tokens: Array[Token]) Doc:
     doc0
         + Doc.nested(
             4,
-            self.cond.format(tokens).nest(4)
+            self.cond.format(tokens)
                 + formatToken(colon, tokens)
                 + Doc.hardLine()
                 + formatStmts(self.body, tokens),

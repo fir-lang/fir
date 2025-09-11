@@ -717,7 +717,7 @@ Lexer._next(self) Option[Token] / Error:
                         self._byteIdx += 1
                         self._col += 1
                         while self._byteIdx < self._input.len()
-                                    and _isIdCont(self._nextChar()):
+                                and _isIdCont(self._nextChar()):
                             self._byteIdx += 1
                             self._col += 1
                         return Option.Some(
@@ -788,7 +788,7 @@ Lexer._next(self) Option[Token] / Error:
             self._byteIdx += 1
             self._col += 1
             while self._byteIdx < self._input.len()
-                        and _isIdCont(self._nextChar()):
+                    and _isIdCont(self._nextChar()):
                 self._byteIdx += 1
                 self._col += 1
             return Option.Some(
@@ -833,7 +833,7 @@ Lexer._next(self) Option[Token] / Error:
     # other case is handled above. This character specifies the casing.
     let caseCheckIdx = self._byteIdx
     while caseCheckIdx < self._input.len()
-                and self._input.charAt(caseCheckIdx) == '_':
+            and self._input.charAt(caseCheckIdx) == '_':
         caseCheckIdx += 1
 
     if caseCheckIdx == self._input.len():
@@ -847,7 +847,7 @@ Lexer._next(self) Option[Token] / Error:
         let endIdx = self._byteIdx + 1
         self._col += 1
         while self._input.len() > endIdx
-                    and _isIdCont(self._input.charAt(endIdx)):
+                and _isIdCont(self._input.charAt(endIdx)):
             endIdx += 1
             self._col += 1
         let id = self._input.substr(self._byteIdx, endIdx)
@@ -975,8 +975,8 @@ Lexer._char(self) Token / Error:
 
 Lexer._skipWhitespace(self):
     while self._byteIdx < self._input.len()
-                and self._nextChar() is char
-                and char.isAsciiWhitespace():
+            and self._nextChar() is char
+            and char.isAsciiWhitespace():
         self._byteIdx += 1
         if char == '\n':
             self._line += 1
