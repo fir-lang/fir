@@ -1146,10 +1146,11 @@ impl fmt::Display for Ty {
                     }
                 }
                 write!(f, ") ")?;
+                write!(f, "{ret}")?;
                 if let Some(exn) = exceptions {
-                    write!(f, "{exn} ")?;
+                    write!(f, " / {exn}")?;
                 }
-                write!(f, "{ret}")
+                Ok(())
             }
         }
     }

@@ -12,5 +12,5 @@ impl T[Str]:
 # expected exit status: 101
 # expected stderr:
 # tests/TcFail1.fir:8:5: Trait method implementation of toStr does not match the trait method type
-#                                 Trait method type:          [?exn#0: *] Fn(Str) ?exn#0 Str
-#                                 Implementation method type: [?exn: *] Fn(Str) ?exn I32
+#                                 Trait method type:          [?exn#0: *] Fn(Str) Str / ?exn#0
+#                                 Implementation method type: [?exn: *] Fn(Str) I32 / ?exn
