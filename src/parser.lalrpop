@@ -801,8 +801,14 @@ InlineExpr: Expr = {
 
     <l:@L> <expr:InlineExpr> <r:@R> "." <field:LowerId> <user_ty_args:UserTyArgs> =>
         match expr {
-            Expr::ConstrSelect(Constructor { variant: false, ty: id, constr: None, user_ty_args: _, ty_args: _ }) =>
-                Expr::AssocFnSelect(AssocFnSelectExpr { ty: id, member: field.smol_str(), user_ty_args, ty_args: vec![] }),
+            Expr::ConstrSelect(Constructor { variant: false, ty: id, constr: None, user_ty_args: ty_user_ty_args, ty_args: _ }) =>
+                Expr::AssocFnSelect(AssocFnSelectExpr {
+                    ty: id,
+                    ty_user_ty_args,
+                    member: field.smol_str(),
+                    user_ty_args,
+                    ty_args: vec![]
+                }),
 
             _ => Expr::FieldSelect(FieldSelectExpr {
                 object: Box::new(L::new(module, l, r, expr)),

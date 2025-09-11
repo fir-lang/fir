@@ -559,6 +559,7 @@ fn mono_expr(
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
+            ty_user_ty_args: _,
             member,
             user_ty_args: _,
             ty_args,

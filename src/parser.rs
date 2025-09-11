@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.22.2"
-// sha3: b7f392a9678d62869d3a86c77a7d7992f79bd1868223c8b96ac66e11c769aeed
+// sha3: 6450f7dba525dd438aab84c3ee2ae911a05026a99922470ca199b3c01d057031
 #![allow(clippy::all)]
 use crate::ast::*;
 use crate::interpolation::{copy_update_escapes, parse_string_parts};
@@ -47577,10 +47577,11 @@ fn __action108<'a>(
             variant: false,
             ty: id,
             constr: None,
-            user_ty_args: _,
+            user_ty_args: ty_user_ty_args,
             ty_args: _,
         }) => Expr::AssocFnSelect(AssocFnSelectExpr {
             ty: id,
+            ty_user_ty_args,
             member: field.smol_str(),
             user_ty_args,
             ty_args: vec![],

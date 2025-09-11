@@ -290,11 +290,29 @@ pub(super) fn check_expr(
 
         ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
             ty,
+            ty_user_ty_args,
             member,
             user_ty_args,
             ty_args,
         }) => {
             assert!(ty_args.is_empty());
+
+            if !ty_user_ty_args.is_empty() {
+                let con =
+                    tc_state.tys.tys.get_con(ty).unwrap_or_else(|| {
+                        panic!("{}: Unknown type {}", loc_display(&expr.loc), ty)
+                    });
+
+                if con.ty_params.len() != ty_user_ty_args.len() {
+                    panic!(
+                        "{}: Type {} takes {} type arguments, but applied to {}",
+                        loc_display(&expr.loc),
+                        ty,
+                        con.ty_params.len(),
+                        ty_user_ty_args.len(),
+                    );
+                }
+            }
 
             let scheme = tc_state
                 .tys
@@ -319,12 +337,50 @@ pub(super) fn check_expr(
                     )
                 });
 
-            let method_ty = if user_ty_args.is_empty() {
+            let ty_user_ty_args_converted: Vec<Ty> = ty_user_ty_args
+                .iter()
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .collect();
+
+            let user_ty_args_converted: Vec<Ty> = user_ty_args
+                .iter()
+                .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
+                .collect();
+
+            for (ty_ty_arg, method_ty_arg) in ty_user_ty_args_converted
+                .iter()
+                .zip(user_ty_args_converted.iter())
+            {
+                unify(
+                    ty_ty_arg,
+                    method_ty_arg,
+                    tc_state.tys.tys.cons(),
+                    tc_state.var_gen,
+                    level,
+                    &expr.loc,
+                );
+            }
+
+            let method_ty = if user_ty_args_converted.is_empty() {
                 let (method_ty, method_ty_args) =
                     scheme.instantiate(level, tc_state.var_gen, tc_state.preds, &expr.loc);
 
+                for (ty_ty_arg, method_ty_arg) in
+                    ty_user_ty_args_converted.iter().zip(method_ty_args.iter())
+                {
+                    unify(
+                        ty_ty_arg,
+                        &Ty::Var(method_ty_arg.clone()),
+                        tc_state.tys.tys.cons(),
+                        tc_state.var_gen,
+                        level,
+                        &expr.loc,
+                    );
+                }
+
                 expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                     ty: ty.clone(),
+                    ty_user_ty_args: vec![],
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: method_ty_args.into_iter().map(Ty::Var).collect(),
@@ -343,16 +399,12 @@ pub(super) fn check_expr(
                     );
                 }
 
-                let user_ty_args_converted: Vec<Ty> = user_ty_args
-                    .iter()
-                    .map(|ty| convert_ast_ty(&tc_state.tys.tys, &ty.node, &ty.loc))
-                    .collect();
-
                 let method_ty =
                     scheme.instantiate_with_tys(&user_ty_args_converted, tc_state.preds, &expr.loc);
 
                 expr.node = ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                     ty: ty.clone(),
+                    ty_user_ty_args: vec![],
                     member: member.clone(),
                     user_ty_args: vec![],
                     ty_args: user_ty_args_converted,
@@ -1237,6 +1289,7 @@ pub(super) fn check_expr(
                         loc: ast::Loc::dummy(),
                         node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                             ty: iter_ty,
+                            ty_user_ty_args: vec![],
                             member: SmolStr::new_static("fromIter"),
                             user_ty_args: vec![],
                             ty_args: vec![],
@@ -1264,6 +1317,7 @@ pub(super) fn check_expr(
                                     loc: ast::Loc::dummy(),
                                     node: ast::Expr::AssocFnSelect(ast::AssocFnSelectExpr {
                                         ty: con,
+                                        ty_user_ty_args: vec![],
                                         member: SmolStr::new_static("fromIter"),
                                         user_ty_args: vec![],
                                         ty_args: vec![],

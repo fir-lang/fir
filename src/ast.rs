@@ -619,15 +619,24 @@ pub struct MethodSelectExpr {
 
 /// An associated function or method selection:
 ///
-/// - Associated function: `Vec.withCapacity`.
+/// - Associated function: `Vec[U32].withCapacity`.
 /// - Method: `Vec.push`.
 #[derive(Debug, Clone)]
 pub struct AssocFnSelectExpr {
+    /// The type: `Vec` in the examples.
     pub ty: Id,
+
+    /// Type arguments explicitly passed to the constructor. `[U32]` in the first example above.
+    ///
+    /// Only empty when not specified. Otherwise there will be at least one element.
+    pub ty_user_ty_args: Vec<L<Type>>,
+
+    /// The associated function being selected: `withCapacity` and `push` in the examples.
     pub member: Id,
 
-    /// Type arguments explicitly passed to the variable. Only empty when not specified. Otherwise
-    /// there will be always one element.
+    /// Type arguments explicitly passed to the variable.
+    ///
+    /// Only empty when not specified. Otherwise there will be at least one element.
     pub user_ty_args: Vec<L<Type>>,
 
     /// Inferred type arguments of the type and associated function. Filled in by the type checker.
@@ -992,11 +1001,15 @@ impl Expr {
 
             Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty: _,
+                ty_user_ty_args,
                 member: _,
                 user_ty_args,
                 ty_args,
             }) => {
                 assert!(ty_args.is_empty());
+                for ty_arg in ty_user_ty_args.iter_mut() {
+                    ty_arg.node = ty_arg.node.subst_ids(substs);
+                }
                 for ty_arg in user_ty_args.iter_mut() {
                     ty_arg.node = ty_arg.node.subst_ids(substs);
                 }

@@ -512,11 +512,13 @@ impl Expr {
 
             Expr::AssocFnSelect(AssocFnSelectExpr {
                 ty,
+                ty_user_ty_args,
                 member,
                 user_ty_args,
                 ty_args,
             }) => {
                 buffer.push_str(ty);
+                print_user_ty_args(ty_user_ty_args, buffer);
                 buffer.push('.');
                 buffer.push_str(member);
                 print_user_ty_args(user_ty_args, buffer);
