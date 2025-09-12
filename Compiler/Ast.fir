@@ -1,8 +1,8 @@
 # imports Loc
 # TODO: Why is Loc in Error module?
-import Compiler.Error
+import Compiler/Error
 # imports IntKind
-import Compiler.Token
+import Compiler/Token
 
 
 type TokenIdx(

@@ -1,9 +1,9 @@
-import Compiler.Assert
-import Compiler.Lexer
-import Compiler.Scanner
-import Compiler.Token
-import Tool.Peg.ParseTree
-import Tool.Peg.PegGrammar
+import Compiler/Assert
+import Compiler/Lexer
+import Compiler/Scanner
+import Compiler/Token
+import Tool/Peg/ParseTree
+import Tool/Peg/PegGrammar
 
 
 main(args: Array[Str]):
@@ -152,8 +152,9 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
         importStr.clear()
         for i: U32 in range(u32(0), importDeclNodes.len()):
             if i != 0:
-                importStr.push('.')
+                importStr.push('/')
             importStr.pushStr(importDeclNodes.get(i).asTerminal().text)
+            i += 1
         imports.push(importStr.toStr())
 
     let typeDecls = grammar.get(1).asNonTerminal(NonTerminal.TypeDecls)

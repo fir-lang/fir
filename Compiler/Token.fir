@@ -1,4 +1,4 @@
-import Tool.Peg.ParseTree
+import Tool/Peg/ParseTree
 
 
 type Token(

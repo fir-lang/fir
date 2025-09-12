@@ -1,7 +1,7 @@
 # This is generated file, do not edit.
 
-import Compiler.Token
-import Tool.Peg.ParseTree
+import Compiler/Token
+import Tool/Peg/ParseTree
 
 
 type NonTerminal:

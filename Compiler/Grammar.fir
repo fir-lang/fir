@@ -1,8 +1,8 @@
 # This is generated file, do not edit.
 
-import Compiler.ParseUtils
-import Compiler.Token
-import Tool.Peg.ParseTree
+import Compiler/ParseUtils
+import Compiler/Token
+import Tool/Peg/ParseTree
 
 
 module(state: ParserState[Token]) Vec[TopDecl] / U32:
@@ -4399,7 +4399,7 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
                 let symResult = try(
                     ||:
                         if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.Dot, ..):
+                                and sym is Token(kind = TokenKind.Slash, ..):
                             state._cursor += 1
                         else:
                             throw(state.updateErrorCursor(state._cursor))

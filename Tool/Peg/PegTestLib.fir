@@ -1,4 +1,4 @@
-import Compiler.Scanner
+import Compiler/Scanner
 
 
 type TestError:

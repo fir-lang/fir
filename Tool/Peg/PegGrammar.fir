@@ -1,7 +1,7 @@
 # This is generated file, do not edit.
 
-import Compiler.Token
-import Tool.Peg.ParseTree
+import Compiler/Token
+import Tool/Peg/ParseTree
 
 
 type NonTerminal:
@@ -259,7 +259,7 @@ importDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                 let symResult = try(
                     ||:
                         if state.peek() is Option.Some(sym)
-                                and sym is Token(kind = TokenKind.Dot, ..):
+                                and sym is Token(kind = TokenKind.Slash, ..):
                             state._cursor += 1
                         else:
                             throw(state.updateErrorCursor(state._cursor))

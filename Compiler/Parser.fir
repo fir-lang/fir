@@ -1,6 +1,6 @@
-import Compiler.Error
-import Compiler.Grammar
-import Compiler.Scanner
+import Compiler/Error
+import Compiler/Grammar
+import Compiler/Scanner
 
 
 main(args: Array[Str]):

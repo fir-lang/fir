@@ -1,6 +1,6 @@
-import Compiler.ParseUtils
-import Compiler.Token
-import Tool.Peg.ParseTree
+import Compiler/ParseUtils
+import Compiler/Token
+import Tool/Peg/ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal
@@ -956,7 +956,7 @@ conFieldPat Named[Pat]:
 
 
 importDecl ImportDecl:
-    "import" p0=^ "UpperId" ps=(_"." ^ _"UpperId")* "NEWLINE":
+    "import" p0=^ "UpperId" ps=(_"/" ^ _"UpperId")* "NEWLINE":
         let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId)).toVec()
         ImportDecl(path = vec)
 

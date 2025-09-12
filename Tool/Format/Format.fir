@@ -1,6 +1,6 @@
-import Compiler.Error
-import Compiler.Grammar
-import Compiler.Scanner
+import Compiler/Error
+import Compiler/Grammar
+import Compiler/Scanner
 
 
 main(args: Array[Str]):
@@ -377,7 +377,7 @@ ImportDecl.format(self, tokens: Array[Token]) Doc:
         doc += formatToken(id.token, tokens)
 
         if nextNonTrivia(id.token, tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Dot:
+                and tokens.get(next.idx).kind is TokenKind.Slash:
             doc += formatToken(next, tokens)
 
     doc

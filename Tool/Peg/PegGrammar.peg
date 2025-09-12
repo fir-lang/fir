@@ -1,7 +1,7 @@
 # PEG grammar of PEG grammars.
 
-import Compiler.Token
-import Tool.Peg.ParseTree
+import Compiler/Token
+import Tool/Peg/ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal
@@ -49,7 +49,7 @@ importDecls:
     importDecl*
 
 importDecl:
-    _"import" "UpperId" (_"." "UpperId")* _"NEWLINE"
+    _"import" "UpperId" (_"/" "UpperId")* _"NEWLINE"
 
 typeDecls:
     typeDecl*
