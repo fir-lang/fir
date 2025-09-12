@@ -982,7 +982,7 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
         doc0 += formatToken(self._lbracket, tokens)
 
     if self.elems.isEmpty():
-        return doc0 + formatToken(self._rbracket, tokens)
+        return doc0 + docRest + formatToken(self._rbracket, tokens)
 
     docRest += Doc.break_(0)
 
