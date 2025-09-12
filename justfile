@@ -4,11 +4,14 @@ show_recipes:
 format:
     cargo fmt
 
+check_rust_formatting:
+    cargo fmt --all --check
+
 format_fir_changes:
     ./Tool/Format/FormatChanges.sh
 
 lint:
-    cargo clippy --all-targets
+    cargo clippy --all-targets --all -- -Dwarnings
 
 check:
     cargo check
@@ -36,6 +39,9 @@ compiler_unit_test:
     ./Compiler/tests/tokenize.sh
     ./Compiler/tests/scan.sh
 
+compiler_parser_test:
+    ./Compiler/tests/parse.sh
+
 compiler_golden_test:
     goldentests target/debug/fir Tool/Peg/Tests.fir '# '
     goldentests target/debug/fir Compiler/DeriveEq.fir '# '
@@ -49,6 +55,9 @@ compiler_update_goldens:
     for f in Compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
     for f in Tool/Peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
+format_repo:
+    ./Tool/Format/FormatRepo.sh
+
 formatter_golden_test:
     goldentests Tool/Format/FormatGoldenTest.sh Tool/Format/tests '# '
 
@@ -56,7 +65,7 @@ formatter_update_goldens:
     goldentests Tool/Format/FormatGoldenTest.sh Tool/Format/tests '# ' --overwrite
     for f in Tool/Format/tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
-build: generate_parser
+build:
     cargo build
 
 generate_parser:
@@ -82,6 +91,10 @@ update_generated_files:
     Tool/Peg/Peg.sh Compiler/Grammar.peg > Compiler/Grammar.fir
 
     Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
+
+check_generated_files: update_generated_files
+    git -P diff
+    ! git status --porcelain | grep -q '^ M'
 
 # build_site tested with:
 #

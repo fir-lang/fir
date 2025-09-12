@@ -15,8 +15,11 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: Build
-        run: cargo build --verbose
+        run: just build
 
   check_rust_formatting:
     name: Check Rust formatting
@@ -30,8 +33,11 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: 'Check Rust formatting'
-        run: cargo fmt --all --check
+        run: just check_rust_formatting
 
   run_fir_formatter:
     name: Run Fir formatter on the repo
@@ -45,8 +51,11 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: 'Run formatter'
-        run: ./Tool/Format/FormatRepo.sh
+        run: just format_repo
 
   check_lints:
     name: Check lints
@@ -61,8 +70,11 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: Check lints
-        run: cargo clippy --all-targets --all -- -Dwarnings
+        run: just lint
 
   run_compiler_unit_tests:
     name: Compiler unit tests
@@ -175,10 +187,7 @@ jobs:
         run: cargo build --verbose
 
       - name: Check
-        run: |
-            just update_generated_files
-            git -P diff
-            ! git status --porcelain | grep -q '^ M'
+        run: just check_generated_files
 
   # This step takes long, so it's a separate step.
   run_compiler_parser_tests:
@@ -194,8 +203,11 @@ jobs:
             toolchain: stable
             override: true
 
+      - name: Install just
+        run: sudo apt install -y just
+
       - name: Test
-        run: ./Compiler/tests/parse.sh
+        run: just compiler_parser_test
 
   run_formatter_golden_tests:
     name: Formatter golden tests
@@ -222,8 +234,8 @@ jobs:
       - name: Test
         run: just formatter_golden_test
 
-  check_web_build:
-    name: Check web build
+  check_wasm_build:
+    name: Check Wasm build
     needs: [build]
     runs-on: ubuntu-latest
     steps:
@@ -236,5 +248,5 @@ jobs:
             override: true
             target: wasm32-unknown-unknown
 
-      - name: Make web build
+      - name: Make Wasm build
         run: cargo build --lib --release --target=wasm32-unknown-unknown
