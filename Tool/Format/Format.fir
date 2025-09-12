@@ -33,7 +33,7 @@ main(args: Array[Str]):
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
         Result.Ok(tree): tree
 
-    print(formatModule(tree, tokens.takeArray()).render(80))
+    print(formatModule(tree, tokens.takeArray()).render(80).trimAscii())
 
 
 showUsageAndExit() a:
