@@ -6,10 +6,8 @@ main():
             Doc.str("longArgument1"),
             makeCallSyntax(
                 Doc.str("myOtherFunction"),
-                Vec.[
-                    Doc.str("arg1"),
-                    Doc.str("arg2"),
-                ]),
+                Vec.[Doc.str("arg1"), Doc.str("arg2")],
+            ),
             makeCallSyntax(Doc.str("yetAnotherFunction"), Vec.[]),
         ],
     )
@@ -31,10 +29,23 @@ main():
     # `expectationFailure` generates an error message. As arguments, we pass `Doc`s with multiple
     # lines and indentation. In the output, the second lines are indented the same amount relative
     # to the first lines.
-    print(expectationFailure(
-        Doc.nested(2, Doc.str("First user line") + Doc.hardLine() + Doc.str("indented 2")),
-        Doc.nested(4, Doc.str("Second user line") + Doc.hardLine() + Doc.str("indented 4")),
-    ).render(80))
+    print(
+        expectationFailure(
+            Doc.nested(
+                2,
+                Doc.str("First user line")
+                    + Doc.hardLine()
+                    + Doc.str("indented 2"),
+            ),
+            Doc.nested(
+                4,
+                Doc.str("Second user line")
+                    + Doc.hardLine()
+                    + Doc.str("indented 4"),
+            ),
+        ).render(80),
+    )
+
 
 makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
     if args.len() == 0:
@@ -57,12 +68,14 @@ makeCallSyntax(fun: Doc, args: Vec[Doc]) Doc:
 
     Doc.grouped(doc.nest(4) + Doc.break_(0) + Doc.char(')'))
 
+
 expectationFailure(expected: Doc, found: Doc) Doc:
     let expectedStr = "Expected: "
     let foundStr = "Found: "
     Doc.nested(expectedStr.len(), Doc.str(expectedStr) + expected)
         + Doc.hardLine()
         + Doc.nested(foundStr.len(), Doc.str(foundStr) + found)
+
 
 # expected stdout:
 # myFunction(
