@@ -34,13 +34,13 @@ syntax region firLineComment start="#" end="$"  contains=@Spell
 
 syntax match firNumber display "\<\(0x\|0X\|0b\|0B\)\?[a-fA-F0-9][a-fA-F0-9_]*\(u8\|u16\|u32\|u64\|i8\|i16\|i32\|i64\)\?\>"
 
-syntax match firType "\<_\?[A-Z][a-zA-Z0-9_']*\>"
+syntax match firType "\<_\?[A-Z][a-zA-Z0-9_]*\>"
 
-syntax match firVariable "\<_\?[a-z][a-zA-Z0-9_']*\>"
+syntax match firVariable "\<_\?[a-z][a-zA-Z0-9_]*\>"
 
 syntax cluster firStringContains contains=firInterpolation
 syntax region firString matchgroup=firStringDelimiter start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell,@firStringContains
-syntax region firChar start=+'+ skip=+\\\\\|\\'+ end=+'+
+syntax match firChar /'\(.\|\\.\)'/ contains=@NONE
 syntax match firInterpolation contained "`\([^`]\+\)`" extend
 
 syntax match firParenStart "("
