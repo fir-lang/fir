@@ -182,6 +182,19 @@ impl Step[I8]:
 prim type U8
 
 
+U8.isAsciiWhitespace(self) Bool:
+    # space
+    self == 0x20
+        # horizontal tab
+        or self == 0x09
+        # new line
+        or self == 0x0A
+        # carriage return
+        or self == 0x0D
+        # form feed
+        or self == 0x0C
+
+
 impl Add[U8]:
     prim __add(self: U8, other: U8) U8
 

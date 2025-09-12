@@ -40,9 +40,8 @@ Char.isAsciiWhitespace(self) Bool:
         or self == '\t'
         or self == '\n'
         or self == '\r'
-        or self._codePoint
-            == 0x0C # form feed
-
+        # form feed
+        or self._codePoint == 0x0C
 
 
 Char.isAsciiUppercase(self) Bool:

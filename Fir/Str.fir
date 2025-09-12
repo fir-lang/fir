@@ -86,6 +86,27 @@ Str.lines(self) Lines:
     Lines(_str = self, _idx = 0)
 
 
+Str.trimAscii(self) Str:
+    if self.isEmpty():
+        return self
+
+    let start: U32 = 0
+    while start < self._bytes.len():
+        if self._bytes.get(start).isAsciiWhitespace():
+            start += 1
+        else:
+            break
+
+    let end = self._bytes.len() - 1
+    while end > start:
+        if self._bytes.get(end).isAsciiWhitespace():
+            end -= 1
+        else:
+            break
+
+    self.substr(start, end + 1)
+
+
 impl Eq[Str]:
     __eq(self: Str, other: Str) Bool:
         if self.len() != other.len():
