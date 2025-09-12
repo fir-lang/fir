@@ -1,5 +1,3 @@
-export FIR_ROOT := justfile_directory()
-
 show_recipes:
     @just --list
 
@@ -7,7 +5,7 @@ format:
     cargo fmt
 
 format_fir_changes:
-    ./tools/format/FormatChanges.sh
+    ./Tool/Format/FormatChanges.sh
 
 lint:
     cargo clippy --all-targets
@@ -34,29 +32,29 @@ interpreter_update_goldens: build
     for f in tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 compiler_unit_test:
-    cargo run -- compiler/Main.fir -iPeg=tools/peg
-    ./compiler/tests/tokenize.sh
-    ./compiler/tests/scan.sh
+    cargo run -- Compiler/Main.fir
+    ./Compiler/tests/tokenize.sh
+    ./Compiler/tests/scan.sh
 
 compiler_golden_test:
-    goldentests target/debug/fir tools/peg/Tests.fir '# '
-    goldentests target/debug/fir compiler/DeriveEq.fir '# '
+    goldentests target/debug/fir Tool/Peg/Tests.fir '# '
+    goldentests target/debug/fir Compiler/DeriveEq.fir '# '
 
 compiler_update_goldens:
-    goldentests target/debug/fir tools/peg/Tests.fir '# ' --overwrite
-    goldentests target/debug/fir compiler/DeriveEq.fir '# ' --overwrite
+    goldentests target/debug/fir Tool/Peg/Tests.fir '# ' --overwrite
+    goldentests target/debug/fir Compiler/DeriveEq.fir '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.
-    for f in compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
-    for f in tools/peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+    for f in Compiler/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+    for f in Tool/Peg/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 formatter_golden_test:
-    goldentests tools/format/FormatGoldenTest.sh tools/format/tests '# '
+    goldentests Tool/Format/FormatGoldenTest.sh Tool/Format/tests '# '
 
 formatter_update_goldens:
-    goldentests tools/format/FormatGoldenTest.sh tools/format/tests '# ' --overwrite
-    for f in tools/format/tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
+    goldentests Tool/Format/FormatGoldenTest.sh Tool/Format/tests '# ' --overwrite
+    for f in Tool/Format/tests/*.fir; do sed -i -e ':a' -e '/^\n*$/{$d;N;ba' -e '}' -e '$a\' "$f"; done
 
 build: generate_parser
     cargo build
@@ -72,18 +70,18 @@ update_generated_files:
     # We can't redirect PegGrammar.peg compilation output to PegGrammar.fir, as
     # the PEG compiler itself uses the file. Save the output to a local and
     # then update the file.
-    output=$(tools/peg/Peg.sh tools/peg/PegGrammar.peg)
+    output=$(Tool/Peg/Peg.sh Tool/Peg/PegGrammar.peg)
     if [ $? -eq 0 ]; then
-        echo "$output" > tools/peg/PegGrammar.fir
+        echo "$output" > Tool/Peg/PegGrammar.fir
     else
         echo "generated file update failed"
         exit 1
     fi
 
-    tools/peg/Peg.sh tools/peg/TestGrammar.peg > tools/peg/TestGrammar.fir
-    tools/peg/Peg.sh compiler/Grammar.peg > compiler/Grammar.fir
-    
-    tools/format/Format.sh tools/peg/{PegGrammar,TestGrammar}.fir compiler/Grammar.fir
+    Tool/Peg/Peg.sh Tool/Peg/TestGrammar.peg > Tool/Peg/TestGrammar.fir
+    Tool/Peg/Peg.sh Compiler/Grammar.peg > Compiler/Grammar.fir
+
+    Tool/Format/Format.sh Tool/Peg/{PegGrammar,TestGrammar}.fir Compiler/Grammar.fir
 
 # build_site tested with:
 #
@@ -110,8 +108,8 @@ build_site: generate_parser
         $OUT_DIR/fir_bg.wasm -o $OUT_DIR/fir_bg.wasm
 
     # Copy standard library
-    rm $OUT_DIR/fir/lib/*
-    cp lib/* $OUT_DIR/fir/lib/
+    rm -rf $OUT_DIR/Fir
+    cp -r Fir $OUT_DIR/
 
     # Copy samples
     cp tests/ErrorHandling.fir $OUT_DIR/ErrorHandling.fir

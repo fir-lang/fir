@@ -46,9 +46,7 @@ jobs:
             override: true
 
       - name: 'Run formatter'
-        run: |
-          export FIR_ROOT=`pwd`
-          ./tools/format/FormatRepo.sh
+        run: ./Tool/Format/FormatRepo.sh
 
   check_lints:
     name: Check lints
@@ -197,9 +195,7 @@ jobs:
             override: true
 
       - name: Test
-        run: |
-          export FIR_ROOT=`pwd`
-          ./compiler/tests/parse.sh
+        run: ./Compiler/tests/parse.sh
 
   run_formatter_golden_tests:
     name: Formatter golden tests

@@ -5,4 +5,4 @@
 set -e
 set -x
 
-cargo run --release -- -iCompiler=compiler -iPeg=tools/peg tools/peg/Peg.fir -- $@
+cargo run --release -- Tool/Peg/Peg.fir -- $@

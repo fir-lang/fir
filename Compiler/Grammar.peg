@@ -1,6 +1,6 @@
-import ParseUtils
-import Peg.ParseTree
-import Token
+import Compiler.ParseUtils
+import Compiler.Token
+import Tool.Peg.ParseTree
 
 type Terminal = Token
 type NonTerminal = NonTerminal

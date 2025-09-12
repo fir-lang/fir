@@ -24,7 +24,7 @@ for f in "$@"; do
     contents_without_test_expectations=$(sed '/^# expected stdout:/,$d' "$f")
     echo "$contents_without_test_expectations" > "$output_file"
 
-    ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$output_file"
+    ./target/release/fir Tool/Format/Format.fir -- "$output_file"
 
     if [ $? -ne 0 ]; then
         exit_code=1

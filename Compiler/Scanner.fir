@@ -1,6 +1,6 @@
-import Assert
-import Lexer
-import Token
+import Compiler.Assert
+import Compiler.Lexer
+import Compiler.Token
 
 
 type ScannerError(

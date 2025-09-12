@@ -38,7 +38,6 @@ pub struct CompilerOpts {
     pub print_mono_ast: bool,
     pub print_lowered_ast: bool,
     pub main: String,
-    pub import_paths: collections::Map<String, String>,
 }
 
 fn lexgen_loc_display(module: &SmolStr, lexgen_loc: lexgen_util::Loc) -> String {
@@ -109,7 +108,7 @@ mod native {
     use smol_str::SmolStr;
     use std::path::Path;
 
-    pub fn main(mut opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
+    pub fn main(opts: CompilerOpts, program: String, mut program_args: Vec<String>) {
         if opts.tokenize {
             let file_contents = std::fs::read_to_string(program).unwrap();
             for (l, t, _) in crate::lexer::lex(&file_contents, "test") {
@@ -129,27 +128,6 @@ mod native {
             return;
         }
 
-        let fir_root = match std::env::var("FIR_ROOT") {
-            Ok(fir_root) => {
-                let mut path = std::path::PathBuf::new();
-                path.push(fir_root);
-                path.push("lib");
-                path.to_string_lossy().to_string()
-            }
-            Err(_) => {
-                eprintln!("Fir uses FIR_ROOT environment variable to find standard libraries.");
-                eprintln!("Please set FIR_ROOT to Fir git repo root.");
-                std::process::exit(1);
-            }
-        };
-
-        let old_fir_root = opts
-            .import_paths
-            .insert("Fir".to_string(), fir_root.clone());
-        if old_fir_root.is_some() {
-            eprintln!("WARNING: Fir root specified multiple times. Using {fir_root} as root.");
-        }
-
         if opts.no_backtrace {
             std::panic::set_hook(Box::new(|panic_info| {
                 if let Some(s) = panic_info.payload().downcast_ref::<String>() {
@@ -164,12 +142,9 @@ mod native {
 
         let file_path = Path::new(&program); // "examples/Foo.fir"
         let file_name_wo_ext = file_path.file_stem().unwrap(); // "Foo"
-        let root_path = file_path.parent().unwrap(); // "examples/"
 
         let module = parse_file(file_path, &SmolStr::new(file_name_wo_ext.to_str().unwrap()));
         let mut module = import_resolver::resolve_imports(
-            &opts.import_paths,
-            root_path.to_str().unwrap(),
             module,
             !opts.no_prelude, // import_prelude
         );
@@ -334,9 +309,7 @@ mod wasm {
 
         let module_name = SmolStr::new_static("FirWeb");
         let module = parse_module(&module_name, pgm);
-        let mut import_path: crate::collections::Map<String, String> = Default::default();
-        import_path.insert("Fir".to_string(), "fir/lib".to_string());
-        let mut module = import_resolver::resolve_imports(&import_path, "", module, true);
+        let mut module = import_resolver::resolve_imports(module, true);
 
         type_checker::check_module(&mut module);
 

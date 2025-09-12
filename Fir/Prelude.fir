@@ -1,15 +1,15 @@
-import Array
-import Char
-import Exn
-import HashMap
-import Iter
-import Num
-import Option
-import PPrint
-import Result
-import Str
-import StrBuf
-import Vec
+import Fir.Array
+import Fir.Char
+import Fir.Exn
+import Fir.HashMap
+import Fir.Iter
+import Fir.Num
+import Fir.Option
+import Fir.PPrint
+import Fir.Result
+import Fir.Str
+import Fir.StrBuf
+import Fir.Vec
 
 
 # A marker trait used to mark a type parameter as a record row.

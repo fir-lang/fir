@@ -12,12 +12,7 @@ echo "Formatted code generated to $TEMP_DIR"
 
 script_failed=0
 
-for file in compiler/**/*.fir lib/**/*.fir tools/**/*.fir; do
-  # Skip test directories.
-  if [[ "$file" == *"/"tests"/"* || "$file" == "tests/"* ]]; then
-    continue
-  fi
-
+for file in "$@"; do
   echo "$file"
 
   OUTPUT_FILE="$TEMP_DIR/$file"
@@ -25,7 +20,7 @@ for file in compiler/**/*.fir lib/**/*.fir tools/**/*.fir; do
 
   # Note: we can't use Format.sh here as it drops the golden test expectations
   # before calling the formatter.
-  if ! ./target/release/fir -iCompiler=compiler -iPeg=tools/peg tools/format/Format.fir -- "$file" > "$OUTPUT_FILE"; then
+  if ! ./target/release/fir Tool/Format/Format.fir -- "$file" > "$OUTPUT_FILE"; then
     script_failed=1
   fi
 done

@@ -14,7 +14,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 for f in "${files[@]}"; do
     echo $f
-    ./target/release/fir -iCompiler=compiler -iPeg=tools/peg compiler/Parser.fir -- "$f"
+    ./target/release/fir Compiler/Parser.fir -- "$f"
     if [ $? -ne 0 ]; then
         exit_code=1
     fi

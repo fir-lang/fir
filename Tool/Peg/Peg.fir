@@ -2,8 +2,8 @@ import Compiler.Assert
 import Compiler.Lexer
 import Compiler.Scanner
 import Compiler.Token
-import Peg.ParseTree
-import Peg.PegGrammar
+import Tool.Peg.ParseTree
+import Tool.Peg.PegGrammar
 
 
 main(args: Array[Str]):

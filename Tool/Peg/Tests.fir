@@ -6,8 +6,8 @@
 
 import Compiler.Error
 import Compiler.Lexer
-import PegTestLib
-import TestGrammar
+import Tool.Peg.PegTestLib
+import Tool.Peg.TestGrammar
 
 
 main():
@@ -136,7 +136,6 @@ main():
     print(try(||: runParser("b b c", errorCursorBug, Bool.False)))
 
 
-# args: -iCompiler=compiler -iPeg=tools/peg
 # expected stdout:
 # 'a' as terminalA
 # TerminalA(LowerId(1:1:"a"))
@@ -297,4 +296,3 @@ main():
 #     ErrorCursorBugAlt2(LowerId(1:1:"b"), LowerId(1:3:"b"), LowerId(1:5:"b")),
 # ))
 # Result.Err(unexpected token or end of input at cursor 2)
-

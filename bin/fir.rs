@@ -11,7 +11,7 @@ fn main() {
             clap::Arg::new(NO_PRELUDE)
                 .long(NO_PRELUDE)
                 .num_args(0)
-                .help("Don't implicitly import Prelude."),
+                .help("Don't implicitly import Fir.Prelude."),
         )
         .arg(
             clap::Arg::new(NO_BACKTRACE)
@@ -70,14 +70,6 @@ fn main() {
                 .help("Path to the program to run."),
         )
         .arg(
-            clap::Arg::new(IMPORT_PATH)
-                .long(IMPORT_PATH)
-                .short('i')
-                .action(clap::ArgAction::Append)
-                .help("<module name>=<file path> pairs for resolving imports")
-                .value_parser(parse_key_val),
-        )
-        .arg(
             clap::Arg::new(PROGRAM_ARGS)
                 .last(true)
                 .allow_hyphen_values(true)
@@ -96,10 +88,6 @@ fn main() {
         print_mono_ast: matches.get_flag(PRINT_MONO_AST),
         print_lowered_ast: matches.get_flag(PRINT_LOWERED_AST),
         main: matches.get_one(MAIN).cloned().unwrap(),
-        import_paths: matches
-            .get_many::<(String, String)>(IMPORT_PATH)
-            .map(|pairs| pairs.map(|(k, v)| (k.clone(), v.clone())).collect())
-            .unwrap_or_default(),
     };
 
     let program: String = matches.get_one::<String>(PROGRAM).unwrap().clone();
@@ -124,7 +112,6 @@ const PRINT_LOWERED_AST: &str = "print-lowered-ast";
 const MAIN: &str = "main";
 const PROGRAM: &str = "program";
 const PROGRAM_ARGS: &str = "program-args";
-const IMPORT_PATH: &str = "import-path";
 
 // This is the same as `VersionInfo`'s `Display`, except it doesn't show the crate name as clap adds
 // command name as prefix in `--version`.
@@ -146,12 +133,4 @@ fn version_info_str(version_info: rustc_tools_util::VersionInfo) -> String {
             version_info.major, version_info.minor, version_info.patch
         )
     }
-}
-
-fn parse_key_val(s: &str) -> Result<(String, String), String> {
-    let parts: Vec<&str> = s.splitn(2, '=').collect();
-    if parts.len() != 2 {
-        return Err(format!("invalid key=value: `{s}`"));
-    }
-    Ok((parts[0].to_string(), parts[1].to_string()))
 }

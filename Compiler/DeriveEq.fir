@@ -1,7 +1,7 @@
-import Grammar
-import Lexer
-import Peg.PegTestLib
+import Compiler.Grammar
+import Compiler.Lexer
 import Compiler.Scanner
+import Tool.Peg.PegTestLib
 
 
 main(args: Array[Str]):
@@ -281,7 +281,6 @@ type Foo:
     B(y: Str, z: Bool)")
 
 
-# args: -iPeg=tools/peg -iCompiler=compiler
 # args after: -- --test
 # expected stdout:
 # impl[Eq[t]] Eq[Option[t]]:
@@ -319,4 +318,3 @@ type Foo:
 #                 l0 == r0
 #             (l = Foo.B(y = l0, z = l1), r = Foo.B(y = r0, z = r1)):
 #                 l0 == r0 && l1 == r1
-
