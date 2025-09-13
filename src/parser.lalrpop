@@ -1140,8 +1140,20 @@ FieldPat: Named<L<Pat>> = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ImportDecl: L<ImportDecl> = {
-    <l:@L> "import" <path:Sep<UpperId, "/">> NEWLINE <r:@R> =>
-        L::new(module, l, r, ImportDecl { path: path.into_iter().map(|t| t.smol_str()).collect() }),
+    <l:@L> "import" "[" <path0:ImportPath> <paths:("," <ImportPath>)*> ","? "]" NEWLINE <r:@R> =>
+        L::new(
+            module,
+            l,
+            r,
+            ImportDecl {
+                paths: std::iter::once(path0).chain(paths.into_iter()).collect(),
+            }
+        ),
+}
+
+ImportPath: Vec<Id> = {
+    <path:Sep1<UpperId, "/">> =>
+        path.into_iter().map(|t| t.smol_str()).collect(),
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

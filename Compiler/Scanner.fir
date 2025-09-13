@@ -1,6 +1,8 @@
-import Compiler/Assert
-import Compiler/Lexer
-import Compiler/Token
+import [
+    Compiler/Assert,
+    Compiler/Lexer,
+    Compiler/Token,
+]
 
 
 type ScannerError(

@@ -1,7 +1,9 @@
 # PEG grammar of PEG grammars.
 
-import Compiler/Token
-import Tool/Peg/ParseTree
+import [
+    Compiler/Token,
+    Tool/Peg/ParseTree,
+]
 
 type Terminal = Token
 type NonTerminal = NonTerminal
@@ -43,13 +45,13 @@ Terminals:
     "row[" = Token(kind = TokenKind.LBracketRow, ..)
 
 grammar:
-    importDecls typeDecls terminalsDecl nonTerminalDecls $
-
-importDecls:
-    importDecl*
+    importDecl? typeDecls terminalsDecl nonTerminalDecls $
 
 importDecl:
-    _"import" "UpperId" (_"/" "UpperId")* _"NEWLINE"
+    _"import" _"[" path (_"," path)* _","? _"]" _"NEWLINE"
+
+path:
+    "UpperId" (_"/" "UpperId")*
 
 typeDecls:
     typeDecl*

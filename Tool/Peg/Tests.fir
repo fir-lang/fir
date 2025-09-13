@@ -4,10 +4,12 @@
 # Without vector literals it's painful to compare parse trees with expected trees, so for now, this
 # prints parse trees, which we then compare with expected output using `goldentests`.
 
-import Compiler/Error
-import Compiler/Lexer
-import Tool/Peg/PegTestLib
-import Tool/Peg/TestGrammar
+import [
+    Compiler/Error,
+    Compiler/Lexer,
+    Tool/Peg/PegTestLib,
+    Tool/Peg/TestGrammar,
+]
 
 
 main():

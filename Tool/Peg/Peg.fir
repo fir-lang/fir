@@ -1,9 +1,11 @@
-import Compiler/Assert
-import Compiler/Lexer
-import Compiler/Scanner
-import Compiler/Token
-import Tool/Peg/ParseTree
-import Tool/Peg/PegGrammar
+import [
+    Compiler/Assert,
+    Compiler/Lexer,
+    Compiler/Scanner,
+    Compiler/Token,
+    Tool/Peg/ParseTree,
+    Tool/Peg/PegGrammar,
+]
 
 
 main(args: Array[Str]):
@@ -76,10 +78,13 @@ main(args: Array[Str]):
     print("# This is generated file, do not edit.")
     print("")
 
-    for import_: Str in grammar.imports.iter():
-        print("import `import_`")
+    if not grammar.imports.isEmpty():
+        print("import [")
 
-    if grammar.imports.len() != 0:
+        for import_: Str in grammar.imports.iter():
+            print("    `import_`,")
+
+        print("]")
         print("")
 
     if not nonTerminalNames.isEmpty():
@@ -144,18 +149,22 @@ convertParseTree(tree: ParseTree[Token, NonTerminal]) Grammar:
     # This code is a bit hacky.. We used to have a proper AST type that we kept after bootstrapping,
     # but that AST didn't have imports and types, and I don't want make it more complicated. So for
     # now we print the imports directly and generate the AST for the rest.
-    let importDecls = grammar.get(0).asNonTerminal(NonTerminal.ImportDecls)
-    let imports: Vec[Str] = Vec.withCapacity(importDecls.len())
-    let importStr = StrBuf.withCapacity(50)
-    for importDecl: ParseTree[Token, NonTerminal] in importDecls.iter():
-        let importDeclNodes = importDecl.asNonTerminal(NonTerminal.ImportDecl)
-        importStr.clear()
-        for i: U32 in range(u32(0), importDeclNodes.len()):
-            if i != 0:
-                importStr.push('/')
-            importStr.pushStr(importDeclNodes.get(i).asTerminal().text)
-            i += 1
-        imports.push(importStr.toStr())
+    let imports: Vec[Str] = Vec.empty()
+    if grammar.get(0)
+            is ParseTree.NonTerminal(
+                kind = NonTerminal.ImportDecl,
+                nodes = importDeclNodes
+            ):
+        let importStr = StrBuf.withCapacity(50)
+        for pathTree: ParseTree[Token, NonTerminal] in importDeclNodes.iter():
+            let pathNodes = pathTree.asNonTerminal(NonTerminal.Path)
+            importStr.clear()
+            for i: U32 in range(u32(0), pathNodes.len()):
+                if i != 0:
+                    importStr.push('/')
+                importStr.pushStr(pathNodes.get(i).asTerminal().text)
+                i += 1
+            imports.push(importStr.toStr())
 
     let typeDecls = grammar.get(1).asNonTerminal(NonTerminal.TypeDecls)
     let terminalType: Option[Str] = Option.None

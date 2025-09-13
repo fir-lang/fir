@@ -1,7 +1,9 @@
-import Compiler/Grammar
-import Compiler/Lexer
-import Compiler/Scanner
-import Tool/Peg/PegTestLib
+import [
+    Compiler/Grammar,
+    Compiler/Lexer,
+    Compiler/Scanner,
+    Tool/Peg/PegTestLib,
+]
 
 
 main(args: Array[Str]):

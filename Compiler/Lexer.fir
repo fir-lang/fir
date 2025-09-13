@@ -1,5 +1,7 @@
-import Compiler/Error
-import Compiler/Token
+import [
+    Compiler/Error,
+    Compiler/Token,
+]
 
 
 tokenize(file: Str, contents: Str) (tokens: Vec[Token], error: Option[Error]):

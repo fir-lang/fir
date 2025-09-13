@@ -1,8 +1,10 @@
-# imports Loc
-# TODO: Why is Loc in Error module?
-import Compiler/Error
-# imports IntKind
-import Compiler/Token
+import [
+    # imports Loc
+    # TODO: Why is Loc in Error module?
+    Compiler/Error,
+    # imports IntKind
+    Compiler/Token,
+]
 
 
 type TokenIdx(
@@ -143,8 +145,8 @@ type SelfParam:
 
 
 type ImportDecl(
-    ## Import path, e.g. `Fir.Prelude`.
-    path: Vec[Id],
+    ## Import paths, e.g. `[Fir/Prelude, Compiler/Parser]`.
+    paths: Vec[Vec[Id]],
 )
 
 

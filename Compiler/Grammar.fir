@@ -1,8 +1,10 @@
 # This is generated file, do not edit.
 
-import Compiler/ParseUtils
-import Compiler/Token
-import Tool/Peg/ParseTree
+import [
+    Compiler/ParseUtils,
+    Compiler/Token,
+    Tool/Peg/ParseTree,
+]
 
 
 module(state: ParserState[Token]) Vec[TopDecl] / U32:
@@ -4386,6 +4388,69 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let p0 = path(state)
+            let zeroOrMoreCursor0 = state._cursor
+            let ps = Vec.empty()
+            loop:
+                let psLen0 = ps.len()
+                let symResult = try(
+                    ||:
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        ps.push(path(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        ps.truncate(psLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                ||:
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Comma, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let value = do:
+                ps.insert(0, p0)
+                ImportDecl(paths = ps)
+            value,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(value): return value
+    throw(state.updateErrorCursor(state._cursor))
+
+
+path(state: ParserState[Token]) Vec[Id] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        ||:
             let p0 = state.nextCursor()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
@@ -4416,15 +4481,10 @@ importDecl(state: ParserState[Token]) ImportDecl / U32:
                         ps.truncate(psLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Newline, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
             let value = do:
                 let vec: Vec[Id] = once(newId(p0)).chain(ps.iter().map(newId))
                     .toVec()
-                ImportDecl(path = vec)
+                vec
             value,
     )
     match altResult:

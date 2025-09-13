@@ -1,6 +1,8 @@
-import Compiler/Ast
-import Compiler/Lexer
-import Compiler/Scanner
+import [
+    Compiler/Ast,
+    Compiler/Lexer,
+    Compiler/Scanner,
+]
 
 
 main(args: Array[Str]):

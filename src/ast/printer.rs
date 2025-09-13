@@ -138,12 +138,11 @@ impl FunDecl {
 
 impl ImportDecl {
     pub fn print(&self, buffer: &mut String) {
-        buffer.push_str("import ");
-        for (i, part) in self.path.iter().enumerate() {
-            if i != 0 {
-                buffer.push('.');
-            }
-            buffer.push_str(part);
+        buffer.push_str("import [\n");
+        for path in self.paths.iter() {
+            let parts: Vec<&str> = path.iter().map(|s| s.as_str()).collect();
+            buffer.push_str(&parts.join("/"));
+            buffer.push_str(",\n");
         }
     }
 }

@@ -1,13 +1,15 @@
 # This is generated file, do not edit.
 
-import Compiler/Token
-import Tool/Peg/ParseTree
+import [
+    Compiler/Token,
+    Tool/Peg/ParseTree,
+]
 
 
 type NonTerminal:
     Grammar
-    ImportDecls
     ImportDecl
+    Path
     TypeDecls
     TypeDecl
     TerminalsDecl
@@ -46,8 +48,8 @@ impl ToStr[NonTerminal]:
     toStr(self: NonTerminal) Str:
         match self:
             NonTerminal.Grammar: "Grammar"
-            NonTerminal.ImportDecls: "ImportDecls"
             NonTerminal.ImportDecl: "ImportDecl"
+            NonTerminal.Path: "Path"
             NonTerminal.TypeDecls: "TypeDecls"
             NonTerminal.TypeDecl: "TypeDecl"
             NonTerminal.TerminalsDecl: "TerminalsDecl"
@@ -87,10 +89,9 @@ impl Eq[NonTerminal]:
     __eq(self: NonTerminal, other: NonTerminal) Bool:
         match (left = self, right = other):
             (left = NonTerminal.Grammar, right = NonTerminal.Grammar): Bool.True
-            (left = NonTerminal.ImportDecls, right = NonTerminal.ImportDecls):
-                Bool.True
             (left = NonTerminal.ImportDecl, right = NonTerminal.ImportDecl):
                 Bool.True
+            (left = NonTerminal.Path, right = NonTerminal.Path): Bool.True
             (left = NonTerminal.TypeDecls, right = NonTerminal.TypeDecls):
                 Bool.True
             (left = NonTerminal.TypeDecl, right = NonTerminal.TypeDecl):
@@ -194,7 +195,18 @@ grammar(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
     let altResult = try(
         ||:
             let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-            nodes.push(importDecls(state))
+            let optionalCursor0 = state._cursor
+            let nodesLen0 = nodes.len()
+            let symResult = try(
+                ||:
+                    nodes.push(importDecl(state))
+                    (),
+            )
+            match symResult:
+                Result.Err(err):
+                    state._cursor = optionalCursor0
+                    nodes.truncate(nodesLen0)
+                Result.Ok(ok): ()
             nodes.push(typeDecls(state))
             nodes.push(terminalsDecl(state))
             nodes.push(nonTerminalDecls(state))
@@ -204,31 +216,6 @@ grammar(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
                 ParseTree.NonTerminal(kind = NonTerminal.Grammar, nodes)
-            value,
-    )
-    match altResult:
-        Result.Err(err): state._cursor = cursor0
-        Result.Ok(value): return value
-    throw(state.updateErrorCursor(state._cursor))
-
-
-importDecls(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
-    let cursor0 = state._cursor
-    let altResult = try(
-        ||:
-            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
-            let zeroOrMoreCursor0 = state._cursor
-            loop:
-                let nodesLen0 = nodes.len()
-                let symResult = try(||: nodes.push(importDecl(state)))
-                match symResult:
-                    Result.Err(err):
-                        state._cursor = zeroOrMoreCursor0
-                        nodes.truncate(nodesLen0)
-                        break
-                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            let value = do:
-                ParseTree.NonTerminal(kind = NonTerminal.ImportDecls, nodes)
             value,
     )
     match altResult:
@@ -247,6 +234,68 @@ importDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                 state._cursor += 1
             else:
                 throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.LBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            nodes.push(path(state))
+            let zeroOrMoreCursor0 = state._cursor
+            loop:
+                let nodesLen0 = nodes.len()
+                let symResult = try(
+                    ||:
+                        if state.peek() is Option.Some(sym)
+                                and sym is Token(kind = TokenKind.Comma, ..):
+                            state._cursor += 1
+                        else:
+                            throw(state.updateErrorCursor(state._cursor))
+                        nodes.push(path(state)),
+                )
+                match symResult:
+                    Result.Err(err):
+                        state._cursor = zeroOrMoreCursor0
+                        nodes.truncate(nodesLen0)
+                        break
+                    Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
+            let optionalCursor0 = state._cursor
+            let symResult = try(
+                ||:
+                    if state.peek() is Option.Some(sym)
+                            and sym is Token(kind = TokenKind.Comma, ..):
+                        state._cursor += 1
+                    else:
+                        throw(state.updateErrorCursor(state._cursor))
+                    (),
+            )
+            match symResult:
+                Result.Err(err): state._cursor = optionalCursor0
+                Result.Ok(ok): ()
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.RBracket, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            if state.peek() is Option.Some(sym)
+                    and sym is Token(kind = TokenKind.Newline, ..):
+                state._cursor += 1
+            else:
+                throw(state.updateErrorCursor(state._cursor))
+            let value = do:
+                ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes)
+            value,
+    )
+    match altResult:
+        Result.Err(err): state._cursor = cursor0
+        Result.Ok(value): return value
+    throw(state.updateErrorCursor(state._cursor))
+
+
+path(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
+    let cursor0 = state._cursor
+    let altResult = try(
+        ||:
+            let nodes: Vec[ParseTree[Token, NonTerminal]] = Vec.empty()
             if state.peek() is Option.Some(sym)
                     and sym is Token(kind = TokenKind.UpperId, ..):
                 nodes.push(ParseTree.Terminal(sym))
@@ -276,13 +325,8 @@ importDecl(state: ParserState[Token]) ParseTree[Token, NonTerminal] / U32:
                         nodes.truncate(nodesLen0)
                         break
                     Result.Ok(ok): zeroOrMoreCursor0 = state._cursor
-            if state.peek() is Option.Some(sym)
-                    and sym is Token(kind = TokenKind.Newline, ..):
-                state._cursor += 1
-            else:
-                throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                ParseTree.NonTerminal(kind = NonTerminal.ImportDecl, nodes)
+                ParseTree.NonTerminal(kind = NonTerminal.Path, nodes)
             value,
     )
     match altResult:

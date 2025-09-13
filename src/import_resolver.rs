@@ -50,19 +50,19 @@ fn resolve_imports_(
             | ast::TopDecl::Trait(_)
             | ast::TopDecl::Impl(_) => new_module.push(decl),
 
-            ast::TopDecl::Import(import) => {
-                let path = &import.node.path;
+            ast::TopDecl::Import(paths) => {
+                for path in paths.node.paths.iter() {
+                    if imported_modules.contains(path) {
+                        continue;
+                    }
 
-                if imported_modules.contains(path) {
-                    continue;
+                    imported_modules.insert(path.clone());
+
+                    let imported_module_path = module_path(path);
+                    let imported_module =
+                        crate::parse_file(&imported_module_path, path.last().unwrap());
+                    resolve_imports_(imported_module, new_module, imported_modules);
                 }
-
-                imported_modules.insert(path.clone());
-
-                let imported_module_path = module_path(path);
-                let imported_module =
-                    crate::parse_file(&imported_module_path, path.last().unwrap());
-                resolve_imports_(imported_module, new_module, imported_modules);
             }
         }
     }

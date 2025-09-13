@@ -1,6 +1,9 @@
-import Compiler/Error
-import Compiler/Grammar
-import Compiler/Scanner
+import [
+    Compiler/Ast,
+    Compiler/Error,
+    Compiler/Grammar,
+    Compiler/Scanner,
+]
 
 
 main(args: Array[Str]):
@@ -368,19 +371,52 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
 
 
 ImportDecl.format(self, tokens: Array[Token]) Doc:
-    let import_ = prevNonTrivia(self.path.get(0).token, tokens).unwrap()
+    assert(not self.paths.isEmpty())
+
+    let lbracket = prevNonTrivia(self.paths.get(0).get(0).token, tokens).unwrap()
+    assert(tokens.get(lbracket.idx).kind is TokenKind.LBracket)
+
+    let import_ = prevNonTrivia(lbracket, tokens).unwrap()
     assert(tokens.get(import_.idx).kind is TokenKind.Import)
 
-    let doc = formatToken(import_, tokens) + Doc.blank(1)
+    let doc = formatToken(import_, tokens)
+        + Doc.blank(1)
+        + formatToken(lbracket, tokens)
 
-    for id: Id in self.path.iter():
-        doc += formatToken(id.token, tokens)
+    let docRest = if self.paths.len() == 1:
+        Doc.empty()
+    else:
+        Doc.hardLine()
 
-        if nextNonTrivia(id.token, tokens) is Option.Some(next)
-                and tokens.get(next.idx).kind is TokenKind.Slash:
-            doc += formatToken(next, tokens)
+    let lastToken = lbracket
 
-    doc
+    let pathIdx: U32 = 0
+    for path: Vec[Id] in self.paths.iter():
+        for id: Id in path.iter():
+            lastToken = id.token
+            docRest += formatToken(id.token, tokens)
+            if nextNonTrivia(id.token, tokens) is Option.Some(next)
+                    and tokens.get(next.idx).kind is TokenKind.Slash:
+                lastToken = next
+                docRest += formatToken(next, tokens)
+
+        if nextNonTrivia(lastToken, tokens) is Option.Some(next)
+                and tokens.get(next.idx).kind is TokenKind.Comma:
+            lastToken = next
+            docRest += formatToken(next, tokens)
+
+        if pathIdx != self.paths.len() - 1:
+            docRest += Doc.hardLine()
+
+        pathIdx += 1
+
+    let rbracket = nextNonTrivia(lastToken, tokens).unwrap()
+    assert(tokens.get(rbracket.idx).kind is TokenKind.RBracket)
+
+    if self.paths.len() == 1:
+        doc + docRest.nest(4) + formatToken(rbracket, tokens)
+    else:
+        doc + docRest.nest(4) + Doc.hardLine() + formatToken(rbracket, tokens)
 
 
 TraitDecl.format(self, tokens: Array[Token]) Doc:

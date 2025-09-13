@@ -721,9 +721,8 @@ pub struct IsExpr {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportDecl {
-    /// Import path, e.g. `Fir.Prelude`.
-    pub path: Vec<Id>,
-    // TODO: Imported thing list, renaming (`as`).
+    /// Import paths, e.g. `[Fir/Prelude, Compiler/Parser]`.
+    pub paths: Vec<Vec<Id>>,
 }
 
 #[derive(Debug, Clone)]
