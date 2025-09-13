@@ -174,7 +174,7 @@ impl Heap {
         call_stack: &[Frame],
     ) {
         let array_len = val_as_u32(self[array + ARRAY_LEN_FIELD_IDX]);
-        if src + dst >= array_len || dst + len >= array_len {
+        if src + len > array_len || dst + len > array_len {
             let mut msg_str = format!("{}: OOB array access\n", loc_display(loc));
             msg_str.push_str("\nFIR STACK:\n");
             crate::interpreter::write_call_stack(call_stack, &mut msg_str);
