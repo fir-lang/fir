@@ -91,3 +91,9 @@ impl ToStr[Char]:
         strBuf.push(self)
         strBuf.push('\'')
         strBuf.toStr() # TODO: This copies the array, maybe add an internal version that doesn't
+
+
+
+impl ToDoc[Char]:
+    toDoc(self: Char) Doc:
+        Doc.str(self.toStr())

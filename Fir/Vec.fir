@@ -207,6 +207,24 @@ impl[ToStr[t]] ToStr[Vec[t]]:
         buf.toStr()
 
 
+impl[ToDoc[t]] ToDoc[Vec[t]]:
+    toDoc(self: Vec[t]) Doc:
+        if self.isEmpty():
+            return Doc.str("Vec.[]")
+
+        let args = Doc.empty()
+        for i: U32 in range(u32(0), self.len()):
+            if i != 0:
+                args += Doc.char(',') + Doc.break_(1)
+            args += self.get(i).toDoc()
+        Doc.grouped(
+            Doc.str("Vec.[")
+                + Doc.nested(4, Doc.break_(0) + args).group()
+                + Doc.break_(0)
+                + Doc.char(']'),
+        )
+
+
 type VecIter[t](
     _vec: Vec[t],
     _idx: U32,

@@ -33,21 +33,19 @@ main(args: Array[Str]):
 
     let parserState = ParserState.new(tokens)
 
-    let tree = match try(||: module(parserState)):
+    let mod = match try(||: module(parserState)):
         Result.Err(cursor):
             if cursor == tokens.len():
                 panic("Parse error: unexpected end of input")
             else:
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
-        Result.Ok(tree): tree
+        Result.Ok(mod): mod
 
+    if printAst:
+        for decl: TopDecl in mod.iter():
+            print(decl.toDoc().render(80))
+            print("")
 
-# if printAst:
-#     let buf = StrBuf.withCapacity(1_000_000)
-#     for topDecl: ParseTree[Token, NonTerminal] in result.tree.asNonTerminal(NonTerminal.Module).iter():
-#         topDecl.toDoc().renderToBuf(80, buf)
-#         print(buf.toStr())
-#         buf.clear()
 
 showUsageAndExit() a:
     panic("USAGE: fir compiler/Parser.fir -- <file> [--print]")

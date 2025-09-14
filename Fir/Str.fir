@@ -133,6 +133,11 @@ impl ToStr[Str]:
         self
 
 
+impl ToDoc[Str]:
+    toDoc(self: Str) Doc:
+        Doc.str("\"`self.toStr()`\"")
+
+
 type CharIter(
     # UTF-8 encoding of the string.
     _bytes: Array[U8],

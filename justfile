@@ -45,10 +45,12 @@ compiler_parser_test:
 compiler_golden_test:
     goldentests target/debug/fir Tool/Peg/Tests.fir '# '
     goldentests target/debug/fir Compiler/DeriveEq.fir '# '
+    goldentests target/debug/fir Compiler/DeriveToDoc.fir '# '
 
 compiler_update_goldens:
     goldentests target/debug/fir Tool/Peg/Tests.fir '# ' --overwrite
     goldentests target/debug/fir Compiler/DeriveEq.fir '# ' --overwrite
+    goldentests target/debug/fir Compiler/DeriveToDoc.fir '# ' --overwrite
 
     # goldentests leaves two newlines at the end of the files, remove one of
     # them.

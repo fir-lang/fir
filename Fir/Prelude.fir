@@ -117,6 +117,10 @@ impl ToStr[()]:
         "()"
 
 
+trait ToDoc[t]:
+    toDoc(self: t) Doc
+
+
 prim printStrNoNl(s: Str)
 
 
@@ -166,6 +170,11 @@ impl ToStr[Bool]:
         match self:
             Bool.True: "Bool.True"
             Bool.False: "Bool.False"
+
+
+impl ToDoc[Bool]:
+    toDoc(self: Bool) Doc:
+        Doc.str(self.toStr())
 
 
 prim readFileUtf8(path: Str) Str

@@ -154,11 +154,21 @@ impl TriviaTokens[Token]:
         self.kind is TokenKind.Comment
 
 
+#[derive(ToDoc)]
 type IntKind:
     I8
     U8
     I32
     U32
+
+
+impl ToDoc[IntKind]:
+    toDoc(self: IntKind) Doc:
+        match self:
+            IntKind.I8: Doc.str("IntKind.I8")
+            IntKind.U8: Doc.str("IntKind.U8")
+            IntKind.I32: Doc.str("IntKind.I32")
+            IntKind.U32: Doc.str("IntKind.U32")
 
 
 impl ToStr[Token]:

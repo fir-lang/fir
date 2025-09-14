@@ -55,6 +55,11 @@ impl ToStr[I32]:
     prim toStr(self: I32) Str
 
 
+impl ToDoc[I32]:
+    toDoc(self: I32) Doc:
+        Doc.str(self.toStr())
+
+
 impl Step[I32]:
     step(self: I32) I32:
         self + 1
@@ -115,6 +120,11 @@ impl ToStr[U32]:
     prim toStr(self: U32) Str
 
 
+impl ToDoc[U32]:
+    toDoc(self: U32) Doc:
+        Doc.str(self.toStr())
+
+
 impl Step[U32]:
     step(self: U32) U32:
         self + 1
@@ -172,6 +182,11 @@ impl Neg[I8]:
 
 impl ToStr[I8]:
     prim toStr(self: I8) Str
+
+
+impl ToDoc[I8]:
+    toDoc(self: I8) Doc:
+        Doc.str(self.toStr())
 
 
 impl Step[I8]:
@@ -237,6 +252,11 @@ impl Shr[U8]:
 
 impl ToStr[U8]:
     prim toStr(self: U8) Str
+
+
+impl ToDoc[U8]:
+    toDoc(self: U8) Doc:
+        Doc.str(self.toStr())
 
 
 impl Step[U8]:

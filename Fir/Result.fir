@@ -1,6 +1,22 @@
+#[derive(ToDoc)]
 type Result[e, t]:
     Err(e)
     Ok(t)
+
+
+impl[ToDoc[e], ToDoc[t]] ToDoc[Result[e, t]]:
+    toDoc(self: Result[e, t]) Doc:
+        match self:
+            Result.Err(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Result.Err") + Doc.char('(') + args)
+            Result.Ok(i0):
+                let args = Doc.break_(0)
+                args += i0.toDoc()
+                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+                Doc.grouped(Doc.str("Result.Ok") + Doc.char('(') + args)
 
 
 impl[ToStr[e], ToStr[t]] ToStr[Result[e, t]]:
