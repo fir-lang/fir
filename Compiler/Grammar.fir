@@ -1624,10 +1624,10 @@ blockExpr(state: ParserState[Token]) Expr / U32:
                     IfExpr(
                         _firstToken = TokenIdx(idx = cur),
                         branches =
-                            once((guard = cond0, body = body0)).chain(
+                            once(IfBranch(guard = cond0, body = body0)).chain(
                                 conds.iter().map(
                                     |branch: (cond: Expr, body: Vec[Stmt])|:
-                                        (
+                                        IfBranch(
                                             guard = branch.cond,
                                             body = branch.body,
                                         ),
@@ -2630,7 +2630,7 @@ sequence(state: ParserState[Token]) Expr / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbracket: TokenIdx) / U32:
+seqElems(state: ParserState[Token]) (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx) / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -2705,9 +2705,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[(key: Option[Expr], value: Expr)] = once(e0).chain(
-                    es.iter(),
-                ).toVec()
+                let vec: Vec[SeqElem] = once(e0).chain(es.iter()).toVec()
                 (
                     elems = vec,
                     lbracket = TokenIdx(idx = lbracket),
@@ -2721,7 +2719,7 @@ seqElems(state: ParserState[Token]) (elems: Vec[(key: Option[Expr], value: Expr)
     throw(state.updateErrorCursor(state._cursor))
 
 
-seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
+seqElem(state: ParserState[Token]) SeqElem / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -2747,8 +2745,9 @@ seqElem(state: ParserState[Token]) (key: Option[Expr], value: Expr) / U32:
                     Option.Some(ok)
             let value = do:
                 match e2:
-                    Option.None: (key = Option.None, value = e1)
-                    Option.Some((e = e2)): (key = Option.Some(e1), value = e2)
+                    Option.None: SeqElem(key = Option.None, value = e1)
+                    Option.Some((e = e2)):
+                        SeqElem(key = Option.Some(e1), value = e2)
             value,
     )
     match altResult:
@@ -3366,7 +3365,7 @@ altGuard(state: ParserState[Token]) Expr / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
+fnArgs(state: ParserState[Token]) Vec[FunArg] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -3452,12 +3451,11 @@ fnArgs(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
                 Result.Err(err): state._cursor = optionalCursor0
                 Result.Ok(ok): ()
             let value = do:
-                let vec: Vec[(name: Id, ty: Option[Type])] = once(
-                    (name = newId(v0), ty = ty0),
-                ).chain(
+                let vec: Vec[FunArg] = once(FunArg(name = newId(v0), ty = ty0))
+                    .chain(
                     vs.iter().map(
                         |v: (v: U32, ty: Option[Type])|:
-                            (name = newId(v.v), ty = v.ty),
+                            FunArg(name = newId(v.v), ty = v.ty),
                     ),
                 ).toVec()
                 vec
@@ -4771,7 +4769,7 @@ context(state: ParserState[Token]) Context / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
+paramList(state: ParserState[Token]) Vec[FunArg] / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -4838,9 +4836,7 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
             else:
                 throw(state.updateErrorCursor(state._cursor))
             let value = do:
-                let vec: Vec[(name: Id, ty: Option[Type])] = once(p0).chain(
-                    ps.iter(),
-                ).toVec()
+                let vec: Vec[FunArg] = once(p0).chain(ps.iter()).toVec()
                 vec
             value,
     )
@@ -4850,7 +4846,7 @@ paramList(state: ParserState[Token]) Vec[(name: Id, ty: Option[Type])] / U32:
     throw(state.updateErrorCursor(state._cursor))
 
 
-param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
+param(state: ParserState[Token]) FunArg / U32:
     let cursor0 = state._cursor
     let altResult = try(
         ||:
@@ -4879,7 +4875,7 @@ param(state: ParserState[Token]) (name: Id, ty: Option[Type]) / U32:
                     ()
                     Option.Some(ok)
             let value = do:
-                (name = newId(name), ty = ty)
+                FunArg(name = newId(name), ty = ty)
             value,
     )
     match altResult:

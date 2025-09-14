@@ -146,11 +146,7 @@ genConPat(varPrefix: Char, typeName: Str, conDecl: ConDecl, tokens: Vec[Token]) 
         + Doc.char(')')
 
 
-genNamedFieldPats(
-    varPrefix: Char,
-    fields: Vec[(name: Id, ty: Type)],
-    tokens: Vec[Token],
-) Doc:
+genNamedFieldPats(varPrefix: Char, fields: Vec[NamedField], tokens: Vec[Token],) Doc:
     let doc = Doc.empty()
     for i: U32 in range(u32(0), fields.len()):
         if i != 0:
@@ -210,7 +206,7 @@ genProduct(typeName: Str, fields: ConFields, tokens: Vec[Token]) Doc:
         ConFields.Named(fields):
             let doc = Doc.empty()
             let i = u32(0)
-            for field: (name: Id, ty: Type) in fields.iter():
+            for field: NamedField in fields.iter():
                 if i != 0:
                     doc += Doc.break_(1) + Doc.str("&& ")
                 doc += Doc.str("self.")

@@ -76,9 +76,9 @@ processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
         panic("Field list cannot have both named and unnamed fields")
 
     if foundNamed:
-        let fs: Vec[(name: Id, ty: Type)] = fields.iter().map(
+        let fs: Vec[NamedField] = fields.iter().map(
             |f: (name: Option[Id], ty: Type)|:
-                (name = f.name.unwrap(), ty = f.ty),
+                NamedField(name = f.name.unwrap(), ty = f.ty),
         ).toVec()
         ConFields.Named(fs)
     else:

@@ -13,7 +13,11 @@ main(args: Array[Str]):
     let path = args.get(1)
     let fileContents = readFileUtf8(path)
 
-    let (tokens, error) = tokenize(path, fileContents)
+    print(formatModuleStr(path, fileContents))
+
+
+formatModuleStr(moduleName: Str, moduleContents: Str) Str:
+    let (tokens, error) = tokenize(moduleName, moduleContents)
     if error is Option.Some(error):
         print("ERROR: `error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
 
@@ -36,7 +40,7 @@ main(args: Array[Str]):
                 panic("Parse error: unexpected token `tokens.get(cursor)`")
         Result.Ok(tree): tree
 
-    print(formatModule(tree, tokens.takeArray()).render(80).trimAscii())
+    formatModule(tree, tokens.takeArray()).render(80).trimAscii()
 
 
 showUsageAndExit() a:
@@ -185,7 +189,7 @@ ConFields.format(self, tokens: Array[Token]) Doc:
             let lastToken = lparen
             let trailingComma = Bool.False
             let fieldIdx: U32 = 0
-            for field: (name: Id, ty: Type) in fields.iter():
+            for field: NamedField in fields.iter():
                 if trailingComma:
                     doc += Doc.hardLine()
                     trailingComma = Bool.False
@@ -307,7 +311,7 @@ FunDecl.format(self, tokens: Array[Token]) Doc:
 
     let trailingComma = Bool.False
     let lastToken = lparen
-    for arg: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+    for arg: FunArg in self.sig.params.iter():
         if trailingComma:
             argList += Doc.break_(1)
             trailingComma = Bool.False
@@ -869,7 +873,7 @@ IfExpr.format(self, tokens: Array[Token]) Doc:
                 + formatStmts(firstBranch.body, tokens),
         )
 
-    for branch: (guard: Expr, body: Vec[Stmt]) in self.branches.iter().skip(1):
+    for branch: IfBranch in self.branches.iter().skip(1):
         let elif_ = prevNonTrivia(branch.guard.firstToken(), tokens).unwrap()
         assert(tokens.get(elif_.idx).kind is TokenKind.Elif)
 
@@ -918,7 +922,7 @@ FnExpr.format(self, tokens: Array[Token]) Doc:
     let lastToken = pipe1
 
     if not (tokens.get(pipe1.idx).kind is TokenKind.PipePipe):
-        for param: (name: Id, ty: Option[Type]) in self.sig.params.iter():
+        for param: FunArg in self.sig.params.iter():
             docRest += formatToken(param.name.token, tokens)
             lastToken = param.name.token
 
@@ -1023,7 +1027,7 @@ SeqExpr.format(self, tokens: Array[Token]) Doc:
     docRest += Doc.break_(0)
 
     let trailingComma = Bool.False
-    for elem: (key: Option[Expr], value: Expr) in self.elems.iter():
+    for elem: SeqElem in self.elems.iter():
         if trailingComma:
             docRest += Doc.break_(1)
             trailingComma = Bool.False

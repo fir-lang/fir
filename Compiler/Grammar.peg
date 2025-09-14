@@ -386,8 +386,8 @@ blockExpr Expr:
         Expr.If(IfExpr(
             _firstToken = TokenIdx(idx = cur),
             branches =
-                once((guard = cond0, body = body0))
-                    .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: (guard = branch.cond, body = branch.body)))
+                once(IfBranch(guard = cond0, body = body0))
+                    .chain(conds.iter().map(|branch: (cond: Expr, body: Vec[Stmt])|: IfBranch(guard = branch.cond, body = branch.body)))
                     .toVec(),
             elseBranch = else_,
         ))
@@ -673,7 +673,7 @@ sequence Expr:
         ))
 
 
-seqElems (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbracket: TokenIdx):
+seqElems (elems: Vec[SeqElem], lbracket: TokenIdx, rbracket: TokenIdx):
     lbracket=^ "[" rbracket=^ "]":
         (
             elems = Vec.empty(),
@@ -682,7 +682,7 @@ seqElems (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbra
         )
 
     lbracket=^ "[" e0=seqElem es=(_"," seqElem)* ","? rbracket=^ "]":
-        let vec: Vec[(key: Option[Expr], value: Expr)] =
+        let vec: Vec[SeqElem] =
             once(e0).chain(es.iter()).toVec()
         (
             elems = vec,
@@ -691,13 +691,13 @@ seqElems (elems: Vec[(key: Option[Expr], value: Expr)], lbracket: TokenIdx, rbra
         )
 
 
-seqElem (key: Option[Expr], value: Expr):
+seqElem SeqElem:
     e1=inlineExpr e2=("=" e=inlineExpr)?:
         match e2:
             Option.None:
-                (key = Option.None, value = e1)
+                SeqElem(key = Option.None, value = e1)
             Option.Some((e = e2)):
-                (key = Option.Some(e1), value = e2)
+                SeqElem(key = Option.Some(e1), value = e2)
 
 
 # TODO: With PEG we don't need to combine tilde with the upper ids, get rid of TildeUpperId.
@@ -779,11 +779,11 @@ altGuard Expr:
         expr
 
 
-fnArgs Vec[(name: Id, ty: Option[Type])]:
+fnArgs Vec[FunArg]:
     v0=^ "LowerId" ty0=(_":" type_)? vs=("," v=^ "LowerId" ty=(_":" type_)?)* ","?:
-        let vec: Vec[(name: Id, ty: Option[Type])] =
-            once((name = newId(v0), ty = ty0))
-                .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: (name = newId(v.v), ty = v.ty)))
+        let vec: Vec[FunArg] =
+            once(FunArg(name = newId(v0), ty = ty0))
+                .chain(vs.iter().map(|v: (v: U32, ty: Option[Type])|: FunArg(name = newId(v.v), ty = v.ty)))
                 .toVec()
         vec
 
@@ -1034,19 +1034,19 @@ context Context:
         )
 
 
-paramList Vec[(name: Id, ty: Option[Type])]:
+paramList Vec[FunArg]:
     "(" ")":
         Vec.empty()
 
     "(" p0=param ps=(_"," param)* ","? ")":
-        let vec: Vec[(name: Id, ty: Option[Type])] =
+        let vec: Vec[FunArg] =
             once(p0).chain(ps.iter()).toVec()
         vec
 
 
-param (name: Id, ty: Option[Type]):
+param FunArg:
     name=^ "LowerId" ty=(_":" type_)?:
-        (name = newId(name), ty = ty)
+        FunArg(name = newId(name), ty = ty)
 
 
 # --------------------------------------------------------------------------------------------------
