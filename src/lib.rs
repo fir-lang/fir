@@ -153,7 +153,7 @@ mod native {
             ast::printer::print_module(&module);
         }
 
-        type_checker::check_module(&mut module);
+        let tys = type_checker::check_module(&mut module, &opts.main);
 
         if opts.print_checked_ast {
             ast::printer::print_module(&module);
@@ -162,6 +162,8 @@ mod native {
         if opts.typecheck {
             return;
         }
+
+        type_checker::check_main_type(&tys, &opts.main);
 
         let mut mono_pgm = monomorph::monomorphise(&module, &opts.main);
 
@@ -177,7 +179,7 @@ mod native {
 
         let mut w = std::io::stdout();
         program_args.insert(0, program);
-        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, &program_args);
+        interpreter::run_with_args(&mut w, lowered_pgm, &opts.main, program_args);
     }
 
     pub fn parse_file<P: AsRef<Path> + Clone>(path: P, module: &SmolStr) -> ast::Module {
@@ -311,13 +313,13 @@ mod wasm {
         let module = parse_module(&module_name, pgm);
         let mut module = import_resolver::resolve_imports(module, true);
 
-        type_checker::check_module(&mut module);
+        type_checker::check_module(&mut module, "main");
 
         let mut mono_pgm = monomorph::monomorphise(&module, "main");
         let lowered_pgm = lowering::lower(&mut mono_pgm);
 
         let mut w = WasmOutput;
-        interpreter::run_with_args(&mut w, lowered_pgm, "main", &args);
+        interpreter::run_with_args(&mut w, lowered_pgm, "main", args);
     }
 
     #[wasm_bindgen(js_name = "version")]

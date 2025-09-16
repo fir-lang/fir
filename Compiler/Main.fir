@@ -5,5 +5,5 @@ import [
 ]
 
 
-main(args: Array[Str]):
+main():
     ()

@@ -65,8 +65,8 @@ pub struct PgmTypes {
 ///
 /// Returns schemes of top-level functions, associated functions (includes trait methods), and
 /// details of type constructors (`TyCon`).
-pub fn check_module(module: &mut ast::Module) -> PgmTypes {
-    add_exception_types(module);
+pub(crate) fn check_module(module: &mut ast::Module, main: &str) -> PgmTypes {
+    add_exception_types(module, main);
     kind_inference::add_missing_type_params(module);
     let mut tys = collect_types(module);
     let trait_env = collect_trait_env(module, &mut tys.tys);
@@ -89,13 +89,37 @@ pub fn check_module(module: &mut ast::Module) -> PgmTypes {
     tys
 }
 
+pub(crate) fn check_main_type(tys: &PgmTypes, main: &str) {
+    let main_scheme = tys
+        .top_schemes
+        .get(main)
+        .unwrap_or_else(|| panic!("Main function `{main}` is not defined."));
+
+    if !main_scheme.quantified_vars.is_empty() || !main_scheme.preds.is_empty() {
+        panic!("Main function `{main}` can't have quantified variables and predicates.");
+    }
+
+    unification::unify(
+        &main_scheme.ty,
+        &Ty::Fun {
+            args: FunArgs::Positional(vec![]),
+            ret: Box::new(Ty::unit()),
+            exceptions: Some(Box::new(Ty::empty_variant())),
+        },
+        tys.tys.cons(),
+        &mut TyVarGen::default(),
+        0,
+        &main_scheme.loc,
+    );
+}
+
 /// Add exception types to functions without one.
-fn add_exception_types(module: &mut ast::Module) {
+fn add_exception_types(module: &mut ast::Module, main: &str) {
     for decl in module {
         match &mut decl.node {
             ast::TopDecl::Fun(ast::L { node: fun, .. }) => {
                 if fun.sig.exceptions.is_none() {
-                    if fun.name.node == "main" {
+                    if fun.name.node == main {
                         fun.sig.exceptions = Some(ast::L {
                             node: ast::Type::Variant {
                                 alts: Default::default(),

@@ -21,6 +21,7 @@ struct Pgm {
     heap_objs: Vec<HeapObj>,
     funs: Vec<Fun>,
     closures: Vec<Closure>,
+    cli_args: Vec<String>,
 
     // Some allocations and type tags for the built-ins.
     true_alloc: u64,
@@ -55,7 +56,7 @@ enum FrameKind {
 }
 
 impl Pgm {
-    fn init(lowered_pgm: LoweredPgm, heap: &mut Heap) -> Pgm {
+    fn init(lowered_pgm: LoweredPgm, heap: &mut Heap, cli_args: Vec<String>) -> Pgm {
         let LoweredPgm {
             mut heap_objs,
             funs,
@@ -106,6 +107,7 @@ impl Pgm {
             heap_objs,
             funs,
             closures,
+            cli_args,
             true_alloc,
             false_alloc,
             ordering_less_alloc,
@@ -124,9 +126,9 @@ impl Pgm {
 }
 
 /// Run the program, passing the arguments `args` as the `Array[Str]` argument to `main`.
-pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[String]) {
+pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: Vec<String>) {
     let mut heap = Heap::new();
-    let pgm = Pgm::init(pgm, &mut heap);
+    let pgm = Pgm::init(pgm, &mut heap, args);
 
     let main_fun: &SourceFunDecl = pgm
         .funs
@@ -150,37 +152,6 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         byte_offset_end: 0,
     };
 
-    // Check if main takes an input argument.
-    let arg_vec: Vec<u64> = match main_fun.params.len() {
-        0 => {
-            if args.len() > 1 {
-                println!(
-                    "WARNING: Main function `{main}` does not take command line arguments, but command line arguments are passed to the interpreter"
-                );
-            }
-            vec![]
-        }
-
-        1 => {
-            let arg_array =
-                heap.allocate_array(pgm.array_u64_con_idx.as_u64(), Repr::U64, args.len() as u32);
-            for (i, arg) in args.iter().enumerate() {
-                let arg_val = heap.allocate_str(
-                    pgm.str_con_idx.as_u64(),
-                    pgm.array_u8_con_idx.as_u64(),
-                    Repr::U8,
-                    arg.as_bytes(),
-                );
-                heap.array_set(arg_array, i as u32, arg_val, Repr::U64, &call_loc, &[]);
-            }
-            vec![arg_array]
-        }
-
-        other => panic!(
-            "Main function `{main}` needs to take 0 or 1 argument, but it takes {other} arguments"
-        ),
-    };
-
     // Note: normally `call_fun` adjusts the stack, but when calling `main` we don't call
     // `call_fun`, so we add `main` here.
     let mut call_stack = vec![Frame {
@@ -193,7 +164,7 @@ pub fn run_with_args<W: Write>(w: &mut W, pgm: LoweredPgm, main: &str, args: &[S
         &pgm,
         &mut heap,
         main_fun,
-        arg_vec,
+        vec![],
         &call_loc,
         &mut call_stack,
     );
@@ -1638,6 +1609,25 @@ fn call_builtin_fun<W: Write>(
                 Repr::U8,
                 file_contents.as_bytes(),
             ))
+        }
+
+        BuiltinFunDecl::GetArgs => {
+            debug_assert_eq!(args.len(), 0);
+            let arg_array = heap.allocate_array(
+                pgm.array_u64_con_idx.as_u64(),
+                Repr::U64,
+                pgm.cli_args.len() as u32,
+            );
+            for (i, arg) in pgm.cli_args.iter().enumerate() {
+                let arg_val = heap.allocate_str(
+                    pgm.str_con_idx.as_u64(),
+                    pgm.array_u8_con_idx.as_u64(),
+                    Repr::U8,
+                    arg.as_bytes(),
+                );
+                heap.array_set(arg_array, i as u32, arg_val, Repr::U64, loc, &[]);
+            }
+            FunRet::Val(arg_array)
         }
     }
 }

@@ -315,7 +315,9 @@ dedent(loc: (line: U32, col: U32)) Token:
 ## Entry point to scan a file print generated tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
-scannerDumpTokens(args: Array[Str]) () / []:
+scannerDumpTokens():
+    let args = getArgs()
+
     if args.len() != 2:
         panic(
             "USAGE: fir compiler/Scanner.fir --main scannerDumpTokens -- <file>",

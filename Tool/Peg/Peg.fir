@@ -8,7 +8,9 @@ import [
 ]
 
 
-main(args: Array[Str]):
+main():
+    let args = getArgs()
+
     if args.len() != 2:
         panic("Usage: Peg.fir <peg file>")
 

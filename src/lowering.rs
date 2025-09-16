@@ -239,6 +239,8 @@ pub enum BuiltinFunDecl {
     },
 
     ReadFileUtf8,
+
+    GetArgs,
 }
 
 #[derive(Debug)]
@@ -965,6 +967,12 @@ pub fn lower(mono_pgm: &mut mono::MonoPgm) -> LoweredPgm {
                         lowered_pgm
                             .funs
                             .push(Fun::Builtin(BuiltinFunDecl::ReadFileUtf8));
+                    }
+
+                    "getArgs" => {
+                        // prim getArgs() Array[Str]
+                        assert_eq!(fun_ty_args.len(), 1); // exception
+                        lowered_pgm.funs.push(Fun::Builtin(BuiltinFunDecl::GetArgs));
                     }
 
                     other => {

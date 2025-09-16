@@ -125,7 +125,9 @@ _combineTokens(contents: Str, tokens: Vec[Token]) Vec[Token]:
 ## Entry point to tokenize a file and print generated tokens.
 ##
 ## Used in tests to compare generated tokens with the interpreter's tokens.
-lexerDumpTokens(args: Array[Str]) () / []:
+lexerDumpTokens():
+    let args = getArgs()
+
     if args.len() != 2:
         panic("USAGE: fir compiler/Lexer.fir --main lexerDumpTokens -- <file>")
 

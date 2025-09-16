@@ -180,6 +180,10 @@ impl ToDoc[Bool]:
 prim readFileUtf8(path: Str) Str
 
 
+## Get command line arguments passed to the program.
+prim getArgs() Array[Str]
+
+
 trait Hash[t]:
     hash(self: t) U32
 

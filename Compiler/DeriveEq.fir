@@ -6,7 +6,9 @@ import [
 ]
 
 
-main(args: Array[Str]):
+main():
+    let args = getArgs()
+
     if args.len() < 2:
         # TODO: print usage
         panic("Incorrect invocation of DeriveEq")

@@ -5,7 +5,9 @@ import [
 ]
 
 
-main(args: Array[Str]):
+main():
+    let args = getArgs()
+
     let printAst = Bool.False
     let path: Option[Str] = Option.None
 

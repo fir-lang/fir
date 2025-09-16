@@ -9,7 +9,9 @@ import [
 ]
 
 
-deriveToDoc(args: Array[Str]) / []:
+deriveToDoc():
+    let args = getArgs()
+
     if args.len() < 2:
         # TODO: print usage
         panic("Incorrect invocation of DeriveToDoc")
