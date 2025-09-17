@@ -26,7 +26,7 @@ function! FirIndent()
   if synName =~? 'comment'
     " If the previous line is a comment, use its indentation level.
     let indentTo = indent(previousNonBlankLine)
-  elseif previousLine =~# '[:=]$'
+  elseif previousLine =~# '[:=([{]$'
     let indentTo = indent(previousNonBlankLine) + &shiftwidth
   endif
 
