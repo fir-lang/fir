@@ -30,5 +30,13 @@ function! FirIndent()
     let indentTo = indent(previousNonBlankLine) + &shiftwidth
   endif
 
+  let currentLine = getline(v:lnum)
+  if currentLine =~# '^\s*[])}]'
+    let indentTo = indentTo - &shiftwidth
+    if indentTo < 0
+      let indentTo = 0
+    endif
+  endif
+
   return indentTo
 endfunction
