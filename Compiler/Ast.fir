@@ -704,12 +704,13 @@ impl Tokens[RecordPat]:
         self._lastToken
 
 
+## A sum or product constructor, in patterns and expressions.
 #[derive(ToDoc)]
 type Constructor(
     variant: Bool,
 
     ## Type of the constructor.
-    ty: Id,
+    ty: TyId,
 
     ## Name of the constructor. Only in sum types.
     constr: Option[Id],
@@ -949,15 +950,15 @@ type MethodSelectExpr(
     # TODO: We could also add types to every expression if it's going to help with monomorphisation.
     #       For efficiency though, we should only annotate inferred types and then type check from
     #       the top-level expression every time we need to compute type of an expr.
-    objectTy: Option[Type], # TODO: type-checking type
-
+    # TODO: This should be a type-checking type.
+    objectTy: Option[Type],
 
     ## The type or trait id that defines the method.
     ##
     ## E.g. `Vec`, `Iterator`.
     ##
     ## Note: when calling trait methods, this will be the trait type rather than the receiver type.
-    methodTyId: Id,
+    methodTyId: TyId,
 
     ## The method id.
     ##
@@ -993,7 +994,11 @@ impl Tokens[MethodSelectExpr]:
 ## - Method: `Vec.push`.
 #[derive(ToDoc)]
 type AssocFnSelectExpr(
-    ty: Id,
+    # The type of the associated function: `Vec` in the examples above.
+    ty: TyId,
+
+    # The associated function name: `withCapacity` and `push` in the examples
+    # above.
     member: Id,
 
     ## Type arguments explicitly passed to the variable.
@@ -1009,7 +1014,7 @@ type AssocFnSelectExpr(
 
 impl Tokens[AssocFnSelectExpr]:
     firstToken(self: AssocFnSelectExpr) TokenIdx:
-        self.ty.firstToken()
+        self.ty.token
 
     lastToken(self: AssocFnSelectExpr) TokenIdx:
         self._lastToken

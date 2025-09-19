@@ -706,7 +706,7 @@ constructor Constructor:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
-            ty = newId(ty),
+            ty = newTyId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
@@ -716,7 +716,7 @@ constructor Constructor:
     ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
-            ty = newId(ty),
+            ty = newTyId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),

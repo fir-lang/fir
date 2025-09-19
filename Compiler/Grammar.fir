@@ -2806,7 +2806,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.False,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -2864,7 +2864,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.True,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),

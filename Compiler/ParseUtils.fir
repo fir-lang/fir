@@ -66,6 +66,10 @@ newVarId(cursor: U32) VarId:
     VarId(token = TokenIdx(idx = cursor), _resolved = Option.None)
 
 
+newTyId(cursor: U32) TyId:
+    TyId(token = TokenIdx(idx = cursor), _resolved = Option.None)
+
+
 processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:
     if fields.isEmpty():
         return ConFields.Empty
