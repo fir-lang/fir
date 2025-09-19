@@ -863,7 +863,7 @@ impl Tokens[Expr]:
 
 #[derive(ToDoc)]
 type VarExpr(
-    id: Id,
+    id: VarId,
 
     # Type arguments explicitly passed to the variable.
     userTyArgs: Option[TyArgs],

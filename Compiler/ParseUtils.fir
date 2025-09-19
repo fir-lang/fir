@@ -1,4 +1,7 @@
-import [Compiler/Ast]
+import [
+    Compiler/Ast,
+    Compiler/Defs,
+]
 
 
 type ExprPrefix:
@@ -57,6 +60,10 @@ parseStrParts(text: Str) Vec[StrPart]:
 
 newId(cursor: U32) Id:
     Id(token = TokenIdx(idx = cursor))
+
+
+newVarId(cursor: U32) VarId:
+    VarId(token = TokenIdx(idx = cursor), _resolved = Option.None)
 
 
 processFields(fields: Vec[(name: Option[Id], ty: Type)]) ConFields:

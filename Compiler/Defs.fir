@@ -14,13 +14,13 @@ import [Compiler/Ast]
 ## functions.
 #[derive(ToDoc)]
 type VarId(
-    _token: TokenIdx,
+    token: TokenIdx,
     _resolved: Option[VarDefIdx],
 )
 
 
 VarId.new(token: TokenIdx) VarId:
-    VarId(_token = token, _resolved = Option.None)
+    VarId(token, _resolved = Option.None)
 
 
 ## A type id.
@@ -28,13 +28,13 @@ VarId.new(token: TokenIdx) VarId:
 ## These can refer to: product and sum types, traits.
 #[derive(ToDoc)]
 type TyId(
-    _token: TokenIdx,
+    token: TokenIdx,
     _resolved: Option[TyDefIdx],
 )
 
 
 TyId.new(token: TokenIdx) TyId:
-    TyId(_token = token, _resolved = Option.None)
+    TyId(token, _resolved = Option.None)
 
 
 # ------------------------------------------------------------------------------
@@ -152,8 +152,8 @@ impl ToDoc[VarId]:
     toDoc(self: VarId) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
-            Doc.str("_token =")
-                + Doc.nested(4, Doc.break_(1) + self._token.toDoc()),
+            Doc.str("token =")
+                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
@@ -168,8 +168,8 @@ impl ToDoc[TyId]:
     toDoc(self: TyId) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
-            Doc.str("_token =")
-                + Doc.nested(4, Doc.break_(1) + self._token.toDoc()),
+            Doc.str("token =")
+                + Doc.nested(4, Doc.break_(1) + self.token.toDoc()),
         )
         args += Doc.char(',') + Doc.break_(1)
         args += Doc.grouped(
