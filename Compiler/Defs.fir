@@ -18,24 +18,6 @@ type VarId(
 )
 
 
-## A sum constructor id. E.g. `None` in `Option.None`.
-##
-## Because product constructors have the same name as the type they use
-## `TypeId`.
-type ConId(
-    _token: TokenIdx,
-    _resolved: Option[ConDefIdx],
-)
-
-
-## A type variable id.
-##
-## These can refer to: trait, impl, type, function type parameters.
-type TyVarId(
-    _token: TokenIdx,
-)
-
-
 ## A type id.
 ##
 ## These can refer to: product and sum types, traits.
@@ -70,11 +52,8 @@ type Module(
     _idx: ModuleIdx,
 
     ## Module-level items that `VarId`s resolve to: top-level variables,
-    ## associated functions, trait methods.
+    ## associated functions.
     _varItems: Vec[VarDef],
-
-    ## Module-level items that `ConId`s resolve to: sum constructors.
-    _conItems: Vec[ConDef],
 
     ## Module-level items that `TypeId`s resolve to: types, traits.
     _tyItems: Vec[TyDef],
@@ -88,13 +67,12 @@ type Module(
 type VarDef:
     Top(TopFunDef)
     Assoc(AssocFunDef)
-    Trait(TraitFunDef)
 
 
 type VarDefIdx:
+    Local
     Top(TopFunDefIdx)
     Assoc(AssocFunDefIdx)
-    Trait(TraitFunDefIdx)
 
 
 type TopFunDef(
@@ -125,41 +103,6 @@ type AssocFunDefIdx(
 
     ## Index into the module's `_varItems`.
     _funIdx: U32,
-)
-
-
-type TraitFunDef(
-    _ast: FunDecl,
-    _idx: TraitFunDefIdx,
-)
-
-
-type TraitFunDefIdx(
-    _mod: ModuleIdx,
-
-    ## Index into the module's `_typeItems`.
-    _tyIdx: U32,
-
-    ## Index into the module's `_varItems`.
-    _funIdx: U32,
-)
-
-
-# ------------------------------------------------------------------------------
-# Constructor items
-
-
-type ConDef(
-    _ast: ConDecl,
-    _idx: ConDefIdx,
-)
-
-
-type ConDefIdx(
-    _mod: ModuleIdx,
-
-    ## Index into the module's `_conItems`.
-    _conIdx: U32,
 )
 
 
