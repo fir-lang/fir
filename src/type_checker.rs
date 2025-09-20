@@ -875,7 +875,7 @@ fn collect_schemes(
                         for con in cons {
                             let fields = &con.fields;
                             // TODO: loc should be con loc, add loc to cons
-                            let ty = match convert_fields(tys, fields, &ty_decl.loc) {
+                            let ty = match convert_fields(tys, fields) {
                                 None => ret.clone(),
                                 Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                     args: FunArgs::Positional(tys),
@@ -915,7 +915,7 @@ fn collect_schemes(
                         }
                     }
                     ast::TypeDeclRhs::Product(fields) => {
-                        let ty = match convert_fields(tys, fields, &ty_decl.loc) {
+                        let ty = match convert_fields(tys, fields) {
                             None => ret,
                             Some(ConFields::Unnamed(tys)) => Ty::Fun {
                                 args: FunArgs::Positional(tys),

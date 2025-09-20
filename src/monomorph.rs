@@ -1735,14 +1735,19 @@ fn mono_fields(
         ast::ConstructorFields::Named(fields) => mono::ConstructorFields::Named(
             fields
                 .iter()
-                .map(|(name, ty)| (name.clone(), mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm)))
+                .map(|(name, ty)| {
+                    (
+                        name.clone(),
+                        mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm),
+                    )
+                })
                 .collect(),
         ),
 
         ast::ConstructorFields::Unnamed(fields) => mono::ConstructorFields::Unnamed(
             fields
                 .iter()
-                .map(|ty| mono_ast_ty(ty, ty_map, poly_pgm, mono_pgm))
+                .map(|ty| mono_ast_ty(&ty.node, ty_map, poly_pgm, mono_pgm))
                 .collect(),
         ),
     }

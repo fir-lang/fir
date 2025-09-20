@@ -61,7 +61,7 @@ pub(crate) fn path_parts(path: &SmolStr) -> Vec<SmolStr> {
 }
 
 pub(crate) fn process_fields(
-    fields: Vec<(Option<Id>, ast::Type)>,
+    fields: Vec<(Option<Id>, L<ast::Type>)>,
     module: &std::rc::Rc<str>,
     loc: &lexgen_util::Loc,
 ) -> ast::ConstructorFields {
