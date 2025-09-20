@@ -15,6 +15,10 @@ type Program(
 )
 
 
+Program.new() Program:
+    Program(_modules = Vec.empty())
+
+
 ## Load a module, or return it from the cache if it's already loaded.
 ##
 ## Follows imports in the module to transitively import all referred modules.
@@ -22,6 +26,8 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     for module: Module in self._modules.iter():
         if module._path == path:
             return module._idx
+
+    print("Loading path: `path`...")
 
     let filePath = _modulePathToFilePath(path)
     let parsedModule = _parseFile(filePath)
