@@ -33,20 +33,27 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
 
     let varItems: Vec[VarDef] = Vec.empty()
     let tyItems: Vec[TyDef] = Vec.empty()
+    let traitItems: Vec[TraitDef] = Vec.empty()
+    let impls: Vec[ImplDecl] = Vec.empty()
     let imports: Vec[Vec[Str]] = Vec.empty()
     for decl: TopDecl in moduleDecls.iter():
         match decl:
             TopDecl.Type(typeDecl):
-                let idx = TyDefIdx(_mod = moduleIdx, _tyIdx = tyItems.len())
+                let idx = TyDefIdx_(_mod = moduleIdx, _tyIdx = tyItems.len())
                 tyItems.push(TyDef(_ast = typeDecl, _idx = idx))
 
             TopDecl.Fun(funDecl):
                 let idx = TopVarDefIdx(_mod = moduleIdx, _idx = varItems.len())
                 varItems.push(VarDef(_ast = funDecl, _idx = idx))
 
-            TopDecl.Trait(traitDecl): panic("TODO")
+            TopDecl.Trait(traitDecl):
+                let idx = TraitDefIdx(
+                    _mod = moduleIdx,
+                    _traitIdx = traitItems.len(),
+                )
+                traitItems.push(TraitDef(_ast = traitDecl, _idx = idx))
 
-            TopDecl.Impl(implDecl): panic("TODO")
+            TopDecl.Impl(implDecl): impls.push(implDecl)
 
             TopDecl.Import(importDecl):
                 for path: Vec[Id] in importDecl.paths.iter():
@@ -62,6 +69,8 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _idx = moduleIdx,
         _varItems = varItems,
         _tyItems = tyItems,
+        _traitItems = traitItems,
+        _impls = impls,
         _imports = Vec.withCapacity(imports.len()),
         _tokens = tokens,
     )
