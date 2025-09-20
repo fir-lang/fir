@@ -24,7 +24,9 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
             return module._idx
 
     let filePath = _modulePathToFilePath(path)
-    let moduleDecls = _parseFile(filePath)
+    let parsedModule = _parseFile(filePath)
+    let moduleDecls = parsedModule.decls
+    let tokens = parsedModule.tokens
 
     # Add the module to the program first to handle recursive imports.
     let moduleIdx = ModuleIdx(_idx = self._modules.len())
@@ -34,11 +36,25 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
     let imports: Vec[Vec[Str]] = Vec.empty()
     for decl: TopDecl in moduleDecls.iter():
         match decl:
-            TopDecl.Type(typeDecl): panic("TODO")
-            TopDecl.Fun(funDecl): panic("TODO")
-            TopDecl.Import(importDecl): panic("TODO")
+            TopDecl.Type(typeDecl):
+                let idx = TyDefIdx(_mod = moduleIdx, _tyIdx = tyItems.len())
+                tyItems.push(TyDef(_ast = typeDecl, _idx = idx))
+
+            TopDecl.Fun(funDecl):
+                let idx = TopVarDefIdx(_mod = moduleIdx, _idx = varItems.len())
+                varItems.push(VarDef(_ast = funDecl, _idx = idx))
+
             TopDecl.Trait(traitDecl): panic("TODO")
+
             TopDecl.Impl(implDecl): panic("TODO")
+
+            TopDecl.Import(importDecl):
+                for path: Vec[Id] in importDecl.paths.iter():
+                    imports.push(
+                        path.iter().map(
+                            |id: Id| Str: tokens.get(id.token.idx).text,
+                        ).toVec(),
+                    )
 
     let module = Module(
         _package = _defaultPackage(),
@@ -46,17 +62,20 @@ Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
         _idx = moduleIdx,
         _varItems = varItems,
         _tyItems = tyItems,
+        _imports = Vec.withCapacity(imports.len()),
+        _tokens = tokens,
     )
 
     self._modules.push(module)
 
     for import_: Vec[Str] in imports.iter():
-        self.loadCachedModule(import_)
+        let importedModuleIdx = self.loadCachedModule(import_)
+        module._imports.push(importedModuleIdx)
 
     moduleIdx
 
 
-_parseFile(path: Str) Vec[TopDecl]:
+_parseFile(path: Str) (decls: Vec[TopDecl], tokens: Array[Token]):
     let fileContents = readFileUtf8(path)
 
     let (tokens, error) = tokenize(path, fileContents)
@@ -77,7 +96,7 @@ _parseFile(path: Str) Vec[TopDecl]:
                     panic(
                         "`path`:`token.line + 1`:`token.col + 1`: unexpected token `token`",
                     )
-        Result.Ok(mod): mod
+        Result.Ok(mod): (decls = mod, tokens = tokens.takeArray())
 
 
 _modulePathToFilePath(path: Vec[Str]) Str:

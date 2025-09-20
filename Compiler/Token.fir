@@ -182,6 +182,11 @@ impl ToStr[Token]:
         "`self.kind`(`self.line + 1`:`self.col + 1`:\"`text`\")"
 
 
+impl ToDoc[Token]:
+    toDoc(self: Token) Doc:
+        Doc.str(self.toStr())
+
+
 _escape(s: Str) Str:
     let buf = StrBuf.withCapacity(s.len() + 10)
 

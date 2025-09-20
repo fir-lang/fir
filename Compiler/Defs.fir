@@ -70,6 +70,11 @@ type Module(
 
     ## Module-level items that `TypeId`s resolve to: types, traits.
     _tyItems: Vec[TyDef],
+
+    ## Imported modules. These are used when resolving identifiers.
+    _imports: Vec[ModuleIdx],
+
+    _tokens: Array[Token],
 )
 
 
@@ -78,52 +83,23 @@ type Module(
 
 
 #[derive(ToDoc)]
-type VarDef:
-    Top(TopFunDef)
-    Assoc(AssocFunDef)
+type VarDef(
+    _ast: FunDecl,
+    _idx: TopVarDefIdx,
+)
 
 
 #[derive(ToDoc)]
 type VarDefIdx:
     Local
-    Top(TopFunDefIdx)
-    Assoc(AssocFunDefIdx)
-
+    Top(TopVarDefIdx)
 
 #[derive(ToDoc)]
-type TopFunDef(
-    _ast: FunDecl,
-    _idx: TopFunDefIdx,
-)
-
-
-#[derive(ToDoc)]
-type TopFunDefIdx(
+type TopVarDefIdx (
     _mod: ModuleIdx,
 
     ## Index into the module's `_varItems`.
     _idx: U32,
-)
-
-
-#[derive(ToDoc)]
-type AssocFunDef(
-    _ast: FunDecl,
-    _idx: AssocFunDefIdx,
-)
-
-
-#[derive(ToDoc)]
-type AssocFunDefIdx(
-    _mod: ModuleIdx,
-
-    ## Index into the module's `_typeItems`.
-    ##
-    ## Needs to be resolved by the name resolving pass.
-    _tyIdx: Option[U32],
-
-    ## Index into the module's `_varItems`.
-    _funIdx: U32,
 )
 
 
@@ -133,7 +109,7 @@ type AssocFunDefIdx(
 
 #[derive(ToDoc)]
 type TyDef(
-    _ast: ConDecl,
+    _ast: TypeDecl,
     _idx: TyDefIdx,
 )
 
@@ -228,23 +204,32 @@ impl ToDoc[Module]:
             Doc.str("_tyItems =")
                 + Doc.nested(4, Doc.break_(1) + self._tyItems.toDoc()),
         )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_imports =")
+                + Doc.nested(4, Doc.break_(1) + self._imports.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_tokens =")
+                + Doc.nested(4, Doc.break_(1) + self._tokens.toDoc()),
+        )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("Module") + Doc.char('(') + args)
 
 
 impl ToDoc[VarDef]:
     toDoc(self: VarDef) Doc:
-        match self:
-            VarDef.Top(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("VarDef.Top") + Doc.char('(') + args)
-            VarDef.Assoc(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("VarDef.Assoc") + Doc.char('(') + args)
+        let args = Doc.break_(0)
+        args += Doc.grouped(
+            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
+        )
+        args += Doc.char(',') + Doc.break_(1)
+        args += Doc.grouped(
+            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
+        )
+        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
+        Doc.grouped(Doc.str("VarDef") + Doc.char('(') + args)
 
 
 impl ToDoc[VarDefIdx]:
@@ -256,29 +241,10 @@ impl ToDoc[VarDefIdx]:
                 args += i0.toDoc()
                 args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
                 Doc.grouped(Doc.str("VarDefIdx.Top") + Doc.char('(') + args)
-            VarDefIdx.Assoc(i0):
-                let args = Doc.break_(0)
-                args += i0.toDoc()
-                args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-                Doc.grouped(Doc.str("VarDefIdx.Assoc") + Doc.char('(') + args)
 
 
-impl ToDoc[TopFunDef]:
-    toDoc(self: TopFunDef) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TopFunDef") + Doc.char('(') + args)
-
-
-impl ToDoc[TopFunDefIdx]:
-    toDoc(self: TopFunDefIdx) Doc:
+impl ToDoc[TopVarDefIdx]:
+    toDoc(self: TopVarDefIdx) Doc:
         let args = Doc.break_(0)
         args += Doc.grouped(
             Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
@@ -288,41 +254,7 @@ impl ToDoc[TopFunDefIdx]:
             Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("TopFunDefIdx") + Doc.char('(') + args)
-
-
-impl ToDoc[AssocFunDef]:
-    toDoc(self: AssocFunDef) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_ast =") + Doc.nested(4, Doc.break_(1) + self._ast.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_idx =") + Doc.nested(4, Doc.break_(1) + self._idx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("AssocFunDef") + Doc.char('(') + args)
-
-
-impl ToDoc[AssocFunDefIdx]:
-    toDoc(self: AssocFunDefIdx) Doc:
-        let args = Doc.break_(0)
-        args += Doc.grouped(
-            Doc.str("_mod =") + Doc.nested(4, Doc.break_(1) + self._mod.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_tyIdx =")
-                + Doc.nested(4, Doc.break_(1) + self._tyIdx.toDoc()),
-        )
-        args += Doc.char(',') + Doc.break_(1)
-        args += Doc.grouped(
-            Doc.str("_funIdx =")
-                + Doc.nested(4, Doc.break_(1) + self._funIdx.toDoc()),
-        )
-        args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
-        Doc.grouped(Doc.str("AssocFunDefIdx") + Doc.char('(') + args)
+        Doc.grouped(Doc.str("TopVarDefIdx") + Doc.char('(') + args)
 
 
 impl ToDoc[TyDef]:
@@ -352,3 +284,4 @@ impl ToDoc[TyDefIdx]:
         )
         args = args.nest(4).group() + Doc.break_(0) + Doc.char(')')
         Doc.grouped(Doc.str("TyDefIdx") + Doc.char('(') + args)
+

@@ -56,6 +56,24 @@ impl[ToStr[t]] ToStr[Array[t]]:
         buf.toStr()
 
 
+impl[ToDoc[t]] ToDoc[Array[t]]:
+    toDoc(self: Array[t]) Doc:
+        if self.len() == 0:
+            return Doc.str("Array.[]")
+
+        let args = Doc.empty()
+        for i: U32 in range(u32(0), self.len()):
+            if i != 0:
+                args += Doc.char(',') + Doc.break_(1)
+            args += self.get(i).toDoc()
+        Doc.grouped(
+            Doc.str("Array.[")
+                + Doc.nested(4, Doc.break_(0) + args).group()
+                + Doc.break_(0)
+                + Doc.char(']'),
+        )
+
+
 type ArrayIter[t](
     _array: Array[t],
     _idx: U32,
