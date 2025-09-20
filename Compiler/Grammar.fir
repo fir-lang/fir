@@ -1,6 +1,7 @@
 # This is generated file, do not edit.
 
 import [
+    Compiler/Defs,
     Compiler/ParseUtils,
     Compiler/Token,
     Tool/Peg/ParseTree,
@@ -2183,7 +2184,7 @@ simpleExpr(state: ParserState[Token]) Expr / U32:
             let value = do:
                 Expr.Var(
                     VarExpr(
-                        id = newId(var_),
+                        id = newVarId(var_),
                         userTyArgs = tyArgs,
                         tyArgs = Vec.empty(),
                     ),
@@ -2805,7 +2806,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.False,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),
@@ -2863,7 +2864,7 @@ constructor(state: ParserState[Token]) Constructor / U32:
             let value = do:
                 Constructor(
                     variant = Bool.True,
-                    ty = newId(ty),
+                    ty = newTyId(ty),
                     constr = con.map(|con: U32|: newId(con)),
                     userTyArgs,
                     tyArgs = Vec.empty(),

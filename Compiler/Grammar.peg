@@ -1,4 +1,5 @@
 import [
+    Compiler/Defs,
     Compiler/ParseUtils,
     Compiler/Token,
     Tool/Peg/ParseTree,
@@ -516,7 +517,7 @@ simpleExpr Expr:
     # Variables
     var_=^ "LowerId" tyArgs=tyArgs?:
         Expr.Var(VarExpr(
-            id = newId(var_),
+            id = newVarId(var_),
             userTyArgs = tyArgs,
             tyArgs = Vec.empty(),
         ))
@@ -705,7 +706,7 @@ constructor Constructor:
     ty=^ "UpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.False,
-            ty = newId(ty),
+            ty = newTyId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
@@ -715,7 +716,7 @@ constructor Constructor:
     ty=^ "TildeUpperId" con=(_"." ^ _"UpperId")? userTyArgs=tyArgs?:
         Constructor(
             variant = Bool.True,
-            ty = newId(ty),
+            ty = newTyId(ty),
             constr = con.map(|con: U32|: newId(con)),
             userTyArgs,
             tyArgs = Vec.empty(),
