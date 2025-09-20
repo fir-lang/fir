@@ -58,13 +58,23 @@ main():
     let _: Option[Char] = charIter.next()
     printStr("\"`charIter.asStr()`\"")
 
-
 # expected stdout:
 # Bool.True
 # Bool.True
 # Bool.True
 # Bool.True
 # Bool.False
+# ---
+# Bool.True
+# Bool.True
+# Bool.True
+# Bool.True
+# Bool.True
+# Bool.False
+# Bool.False
+# Bool.True
+# Bool.False
+# ---
 # 'a'
 # 's'
 # 'd'
