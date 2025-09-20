@@ -225,6 +225,18 @@ impl[ToDoc[t]] ToDoc[Vec[t]]:
         )
 
 
+impl[Eq[t]] Eq[Vec[t]]:
+    __eq(self: Vec[t], other: Vec[t]) Bool:
+        if self.len() != other.len():
+            return Bool.False
+
+        for i: U32 in range(u32(0), self.len()):
+            if self.get(i) != other.get(i):
+                return Bool.False
+
+        Bool.True
+
+
 type VecIter[t](
     _vec: Vec[t],
     _idx: U32,
