@@ -71,7 +71,7 @@ impl TypeDeclRhs {
                                 buffer.push_str(&INDENTS[0..indent as usize]);
                                 buffer.push_str(field_name);
                                 buffer.push_str(": ");
-                                field_ty.print(buffer);
+                                field_ty.node.print(buffer);
                             }
                         }
 
@@ -81,7 +81,7 @@ impl TypeDeclRhs {
                                 if i != 0 {
                                     buffer.push_str(", ");
                                 }
-                                field_ty.print(buffer);
+                                field_ty.node.print(buffer);
                             }
                             buffer.push(')');
                         }
@@ -101,7 +101,7 @@ impl TypeDeclRhs {
                         buffer.push_str(&INDENTS[0..indent as usize]);
                         buffer.push_str(field_name);
                         buffer.push_str(": ");
-                        field_ty.print(buffer);
+                        field_ty.node.print(buffer);
                     }
                 }
 
@@ -111,7 +111,7 @@ impl TypeDeclRhs {
                         if i != 0 {
                             buffer.push_str(", ");
                         }
-                        field_ty.print(buffer);
+                        field_ty.node.print(buffer);
                     }
                     buffer.push(')');
                 }

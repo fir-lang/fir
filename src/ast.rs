@@ -165,8 +165,8 @@ pub struct ConstructorDecl {
 #[derive(Debug, Clone)]
 pub enum ConstructorFields {
     Empty,
-    Named(Vec<(Id, Type)>),
-    Unnamed(Vec<Type>),
+    Named(Vec<(Id, L<Type>)>),
+    Unnamed(Vec<L<Type>>),
 }
 
 #[derive(Debug, Clone)]

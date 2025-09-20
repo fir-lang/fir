@@ -210,8 +210,8 @@ ConstructorDecl: ConstructorDecl = {
     }
 }
 
-Field: (Option<Id>, Type) = {
-    <name:(<LowerId> ":")?> <type_:Type> =>
+Field: (Option<Id>, L<Type>) = {
+    <name:(<LowerId> ":")?> <type_:LType> =>
         (name.map(|n| n.smol_str()), type_),
 }
 
