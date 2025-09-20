@@ -4,6 +4,21 @@ main():
     printStr("asdf".startsWith("asd").toStr())
     printStr("asdf".startsWith("asdf").toStr())
     printStr("asdf".startsWith("asdfg").toStr())
+
+    printStr("---")
+
+    print("asdf".endsWith("").toStr())
+    print("asdf".endsWith("f").toStr())
+    print("asdf".endsWith("df").toStr())
+    print("asdf".endsWith("sdf").toStr())
+    print("asdf".endsWith("asdf").toStr())
+    print("asdf".endsWith("bsdf").toStr())
+    print("asdf".endsWith("0asdf").toStr())
+    print("".endsWith("").toStr())
+    print("".endsWith("a").toStr())
+
+    printStr("---")
+
     printStr("asdf".charAt(0).toStr())
     printStr("asdf".charAt(1).toStr())
     printStr("asdf".charAt(2).toStr())
@@ -42,6 +57,7 @@ main():
     printStr("\"`charIter.asStr()`\"")
     let _: Option[Char] = charIter.next()
     printStr("\"`charIter.asStr()`\"")
+
 
 # expected stdout:
 # Bool.True
