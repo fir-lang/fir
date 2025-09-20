@@ -118,7 +118,9 @@ type AssocFunDefIdx(
     _mod: ModuleIdx,
 
     ## Index into the module's `_typeItems`.
-    _tyIdx: U32,
+    ##
+    ## Needs to be resolved by the name resolving pass.
+    _tyIdx: Option[U32],
 
     ## Index into the module's `_varItems`.
     _funIdx: U32,

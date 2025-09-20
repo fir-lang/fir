@@ -1,7 +1,13 @@
 ## Defines the program-level state: package and module database.
 
 
-import [Compiler/Defs]
+import [
+    Compiler/Ast,
+    Compiler/Defs,
+    Compiler/Error,
+    Compiler/Grammar,
+    Compiler/Scanner,
+]
 
 
 type Program(
@@ -9,5 +15,83 @@ type Program(
 )
 
 
-Program.loadModule(self, path: Vec[Str]) ModuleIdx:
-    panic("TODO")
+## Load a module, or return it from the cache if it's already loaded.
+##
+## Follows imports in the module to transitively import all referred modules.
+Program.loadCachedModule(self, path: Vec[Str]) ModuleIdx:
+    for module: Module in self._modules.iter():
+        if module._path == path:
+            return module._idx
+
+    let filePath = _modulePathToFilePath(path)
+    let moduleDecls = _parseFile(filePath)
+
+    # Add the module to the program first to handle recursive imports.
+    let moduleIdx = ModuleIdx(_idx = self._modules.len())
+
+    let varItems: Vec[VarDef] = Vec.empty()
+    let tyItems: Vec[TyDef] = Vec.empty()
+    let imports: Vec[Vec[Str]] = Vec.empty()
+    for decl: TopDecl in moduleDecls.iter():
+        match decl:
+            TopDecl.Type(typeDecl): panic("TODO")
+            TopDecl.Fun(funDecl): panic("TODO")
+            TopDecl.Import(importDecl): panic("TODO")
+            TopDecl.Trait(traitDecl): panic("TODO")
+            TopDecl.Impl(implDecl): panic("TODO")
+
+    let module = Module(
+        _package = _defaultPackage(),
+        _path = path,
+        _idx = moduleIdx,
+        _varItems = varItems,
+        _tyItems = tyItems,
+    )
+
+    self._modules.push(module)
+
+    for import_: Vec[Str] in imports.iter():
+        self.loadCachedModule(import_)
+
+    moduleIdx
+
+
+_parseFile(path: Str) Vec[TopDecl]:
+    let fileContents = readFileUtf8(path)
+
+    let (tokens, error) = tokenize(path, fileContents)
+    if error is Option.Some(error):
+        panic("`path`:`error.loc.line + 1`:`error.loc.col + 1`: `error.msg`")
+
+    # Explicitly close the variant with `row[]`. (#49)
+    let tokens = match try(||: scan[row[]](tokens)):
+        Result.Err(~ScannerError(line, col, msg)):
+            panic("`path`:`line + 1`:`col + 1`: `msg`")
+        Result.Ok(tokens): tokens
+
+    match try(||: module(ParserState.new(tokens))):
+        Result.Err(cursor):
+            match tokens.getOpt(cursor):
+                Option.None: panic("`path`: unexpected end of input")
+                Option.Some(token):
+                    panic(
+                        "`path`:`token.line + 1`:`token.col + 1`: unexpected token `token`",
+                    )
+        Result.Ok(mod): mod
+
+
+_modulePathToFilePath(path: Vec[Str]) Str:
+    let filePath = StrBuf.withCapacity(80)
+
+    for i: U32 in range(u32(0), path.len()):
+        if i != 0:
+            filePath.push('/')
+        filePath.pushStr(path.get(i))
+        i += 1
+
+    filePath.pushStr(".fir")
+    filePath.toStr()
+
+
+_defaultPackage() PackageUri:
+    PackageUri(_uri = "pgk:default")
