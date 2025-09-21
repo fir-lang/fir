@@ -164,9 +164,7 @@ _sccs(pgm: Program) Vec[HashSet[ModuleIdx]]:
 
     # Because the module indices are consecutive numbers between 0 to number of
     # nodes, we use a `Vec` to map module ids to things.
-    # TODO: We can't allocate an Array directly here because `RangeIterator`
-    # doesn't implement `size`.
-    let nodes: Array[SccNode] = Vec.fromIter(
+    let nodes: Array[SccNode] = Array.fromIter(
         range(u32(0), pgm._modules.len()).map(
             |i: U32|:
                 SccNode(
@@ -176,7 +174,7 @@ _sccs(pgm: Program) Vec[HashSet[ModuleIdx]]:
                     onStack = Bool.False,
                 ),
         ),
-    ).takeArray()
+    )
 
     let output: Vec[HashSet[ModuleIdx]] = Vec.withCapacity(pgm._modules.len())
 
