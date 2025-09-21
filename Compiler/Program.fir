@@ -98,10 +98,11 @@ Program.prepModuleEnvs(self):
     # and allow running the bootstrap compiler with the interpreter:
     #
     # - All module-level items are exported.
+    #
     # - Imports work as importing `*`, i.e. all exported items are imported and
     #   used directly with their names (no module prefix or renaming).
     #
-    # That means each SCC has access to every top-level item in all of the nodes
+    # This means each SCC has access to every top-level item in all of the nodes
     # in the SCC. So we create SCCs, and then create one module env for each
     # SCC, which is shared with all of the modules of the SCC.
     let sccs = _sccs(self)
@@ -116,6 +117,36 @@ Program.prepModuleEnvs(self):
     let sccs = _revTopSort(self, sccs)
     print("Program SCCs, sorted:")
     print(sccs.toDoc().render(80))
+
+    for scc: HashSet[ModuleIdx] in sccs.iter():
+        let termEnv: HashMap[Str, VarDefIdx] = HashMap.withCapacity(50)
+        let typeEnv: HashMap[Str, TyDefIdx] = HashMap.withCapacity(25)
+
+        # Add items in the modules in the SCC to the envs.
+        for modIdx: ModuleIdx in scc.iter():
+            let mod = self._modules.get(modIdx._idx)
+            let tokens = mod._tokens
+
+            for tyDef: TyDef in mod._tyItems.iter():
+                let tyName = tokens.get(tyDef._ast.name.token.idx).text
+                let defIdx = TyDefIdx.Type(tyDef._idx)
+                let old = typeEnv.insert(tyName, defIdx)
+                if old is Option.Some(_):
+                    panic("Type `tyName` defined multiple times")
+
+            for traitDef: TraitDef in mod._traitItems.iter():
+                let tyName = tokens.get(traitDef._ast.name.token.idx).text
+                let defIdx = TyDefIdx.Trait(traitDef._idx)
+                let old = typeEnv.insert(tyName, defIdx)
+                if old is Option.Some(_):
+                    panic("Trait `tyName` defined multiple times")
+
+            for varDef: VarDef in mod._varItems.iter():
+                ()
+
+            ()
+
+        ()
 
 
 # ------------------------------------------------------------------------------
