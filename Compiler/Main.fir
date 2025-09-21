@@ -11,6 +11,9 @@ import [
 main():
     let args = getArgs()
 
+    if args.len() == 1:
+        return
+
     if args.len() != 2:
         panic("USAGE: fir Compiler/Main.fir -- <path>")
 
