@@ -3,6 +3,7 @@ import [
     Fir/Char,
     Fir/Exn,
     Fir/HashMap,
+    Fir/HashSet,
     Fir/Iter,
     Fir/Num,
     Fir/Option,
