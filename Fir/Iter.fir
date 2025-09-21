@@ -79,6 +79,9 @@ trait Iterator[iter, item, exn]:
                 return Option.Some(item)
         Option.None
 
+    take(self: iter, n: U32) Take[iter, item, exn]:
+        Take(iter = self, n)
+
 
 # --------------------------------------------------------------------------------------------------
 
@@ -454,3 +457,21 @@ repeatWith(f: Fn() item / exn) RepeatWith[item, exn]:
 impl Iterator[RepeatWith[item, exn], item, exn]:
     next(self: RepeatWith[item, exn]) Option[item] / exn:
         Option.Some(self.f())
+
+
+# --------------------------------------------------------------------------------------------------
+
+
+type Take[iter, item, exn](
+    iter: iter,
+    n: U32,
+)
+
+
+impl[Iterator[iter, item, exn]] Iterator[Take[iter, item, exn], item, exn]:
+    next(self: Take[iter, item, exn]) Option[item] / exn:
+        if self.n == 0:
+            Option.None
+        else:
+            self.n -= 1
+            self.iter.next()
